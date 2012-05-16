@@ -26,6 +26,8 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWannierSpace.h"
+
 
 #include <iostream>
 #include <cstring>
@@ -63,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume that the FCI states are made of two decoupled FCI copies");
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
+  (*SystemGroup) += new BooleanOption  ('\n', "Wannier", "Wannier basis");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
 #ifdef __LAPACK__
@@ -102,6 +105,7 @@ int main(int argc, char** argv)
   bool FlagDecoupled = Manager.GetBoolean("decoupled");
   int TotalSpin = 0;
   int NbrBands = Manager.GetInteger("nbr-subbands");
+  bool FlagWannier = Manager.GetBoolean("Wannier");
 
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
@@ -120,7 +124,6 @@ int main(int argc, char** argv)
       cout << "can't open file " << Manager.GetString("degenerated-groundstate") << endl;
       return -1;
     }
-
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -149,7 +152,7 @@ int main(int argc, char** argv)
        for (int i = 0; i < NbrSpaces; ++i)
 	 {
 	   GroundStateFiles[i] = new char [strlen(DegeneratedFile(0, i)) + 1];
-	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));      	   
+	   strcpy (GroundStateFiles[i], DegeneratedFile(0, i));		   
 	 }
        if (DegeneratedFile.GetNbrColumns() == 1)
 	 {
@@ -180,11 +183,23 @@ int main(int argc, char** argv)
 	  double Mass = 0.0;
 	  if (FlagDecoupled == false)
 	    {
-	      if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-								      NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Mass, Statistics) == false)
+	      if(FlagWannier == false) 
 		{
-		  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-		  return -1;
+		  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+								      NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Mass, Statistics) == false)
+		    {
+		      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+		      return -1;
+		    }
+		}
+	      else
+		{
+		  if (FQHEOnSquareLatticeWannierFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+								      NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Statistics) == false)
+		    {
+		      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+		      return -1;
+		    }
 		}
 	    }
 	  else
@@ -215,9 +230,12 @@ int main(int argc, char** argv)
 	}
     }
 
-
   GroundStates = new ComplexVector [NbrSpaces];  
-  int TotalNbrSites = NbrSiteX * NbrSiteY * NbrSiteZ;
+  int TotalNbrSites;
+  if(FlagWannier == false || (FlagWannier == true &&  TotalKx[0]>-1))
+    TotalNbrSites = NbrSiteX * NbrSiteY * NbrSiteZ;
+  else
+    TotalNbrSites = NbrSiteY * NbrSiteZ;
   int* NbrGroundStatePerMomentumSector = new int[TotalNbrSites];
   ComplexVector** GroundStatePerMomentumSector = new ComplexVector*[TotalNbrSites];
   double** CoefficientPerMomentumSector = new double*[TotalNbrSites];
@@ -234,9 +252,14 @@ int main(int argc, char** argv)
 	  cout << "can't open vector file " << GroundStateFiles[i] << endl;
 	  return -1;      
 	}
-      int TmpIndex = (((TotalKx[i] * NbrSiteY) + TotalKy[i]) * NbrSiteZ) + TotalKz[i];
+      int TmpIndex;
+      if(FlagWannier == false  || (FlagWannier == true &&  TotalKx[0]>-1) )
+	TmpIndex = (((TotalKx[i] * NbrSiteY) + TotalKy[i]) * NbrSiteZ) + TotalKz[i];
+      else
+	TmpIndex = TotalKy[i] * NbrSiteZ + TotalKz[i];
       NbrGroundStatePerMomentumSector[TmpIndex]++; 
     }
+
   for (int i = 0; i < TotalNbrSites; ++i)
     {
       if (NbrGroundStatePerMomentumSector[i] > 0)
@@ -246,13 +269,19 @@ int main(int argc, char** argv)
 	}
       NbrGroundStatePerMomentumSector[i] = 0;
     }
+  cout << "c" << endl;
   for (int i = 0; i < NbrSpaces; ++i)
     {
-      int TmpIndex = (((TotalKx[i] * NbrSiteY) + TotalKy[i]) * NbrSiteZ) + TotalKz[i];
+      int TmpIndex;
+      if(FlagWannier == false  || (FlagWannier == true &&  TotalKx[0]>-1) )
+	TmpIndex = (((TotalKx[i] * NbrSiteY) + TotalKy[i]) * NbrSiteZ) + TotalKz[i];
+      else
+	TmpIndex = TotalKy[i] * NbrSiteZ + TotalKz[i];
       GroundStatePerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[TmpIndex]] = GroundStates[i];
       CoefficientPerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[TmpIndex]] = Coefficients[i];
       NbrGroundStatePerMomentumSector[TmpIndex]++;
     }  
+
 
   if (DensityMatrixFileName != 0)
     {
@@ -262,7 +291,10 @@ int main(int argc, char** argv)
 	{
 	  if (FlagDecoupled == false)
 	    {
-	      DensityMatrixFile << "#  N    Kx    Ky    lambda";
+	      if(FlagWannier == false  || (FlagWannier == true &&  TotalKx[0]>-1) )
+		DensityMatrixFile << "#  N    Kx    Ky    lambda";
+	      else
+		DensityMatrixFile << "#  N    Ky    lambda";
 	    }
 	  else
 	    {
@@ -277,7 +309,11 @@ int main(int argc, char** argv)
       DensityMatrixFile.close();
     }
 
-  int MaxNbrSpaces = NbrSiteX * NbrSiteY * NbrSiteZ;
+  int MaxNbrSpaces; 
+  if(FlagWannier == false  || (FlagWannier == true &&  TotalKx[0]>-1) )
+    MaxNbrSpaces = NbrSiteX * NbrSiteY * NbrSiteZ;
+  else
+    MaxNbrSpaces = NbrSiteY * NbrSiteZ;
   ParticleOnSphere** Spaces = new ParticleOnSphere*[MaxNbrSpaces];
   for (int i = 0; i < MaxNbrSpaces; ++i)
     {
@@ -285,7 +321,11 @@ int main(int argc, char** argv)
     }
   for (int i = 0; i < NbrSpaces; ++i)
     {
-      int TmpIndex = (((TotalKx[i] * NbrSiteY) + TotalKy[i]) * NbrSiteZ) + TotalKz[i];
+      int TmpIndex;
+      if(FlagWannier == false  || (FlagWannier == true &&  TotalKx[0]>-1) )
+	TmpIndex = (((TotalKx[i] * NbrSiteY) + TotalKy[i]) * NbrSiteZ) + TotalKz[i];
+      else
+	TmpIndex = TotalKy[i] * NbrSiteZ + TotalKz[i];
       if (Spaces[TmpIndex] == 0)
 	{
 	  if (Flag3d == false)
@@ -295,7 +335,12 @@ int main(int argc, char** argv)
 		  if (Statistics == true)
 		    Spaces[TmpIndex] = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
 		  else
-		    Spaces[TmpIndex] = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+		    {
+		      if(FlagWannier == false)
+			Spaces[TmpIndex] = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+		      else
+			Spaces[TmpIndex] = new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKy[i], TotalKx[i]);
+		    }
 		}
 	      else
 		{
@@ -363,16 +408,34 @@ int main(int argc, char** argv)
 	  MinSz = 0;
 	  MaxSz = 0;
 	}
+      int SubsystemTotalKxMin;
+      int SubsystemTotalKxMax;
+      if(FlagWannier == false  || (FlagWannier == true &&  TotalKx[0]>-1) )
+	{
+	  SubsystemTotalKxMin = 0;
+	  SubsystemTotalKxMax = NbrSiteX;
+	}
+      else
+	{
+	  SubsystemTotalKxMin = -1;
+	  SubsystemTotalKxMax = 0;
+	}
+
       for (int SubsystemTotalSz = MinSz; SubsystemTotalSz <= MaxSz; SubsystemTotalSz += 2)
 	{
-	  for (int SubsystemTotalKx = 0; SubsystemTotalKx < NbrSiteX; ++SubsystemTotalKx)
+	  for (int SubsystemTotalKx = SubsystemTotalKxMin; SubsystemTotalKx < SubsystemTotalKxMax; ++SubsystemTotalKx)
 	    {
 	      for (int SubsystemTotalKy = 0; SubsystemTotalKy < NbrSiteY; ++SubsystemTotalKy)
 		{
 		  for (int SubsystemTotalKz = 0; SubsystemTotalKz < NbrSiteZ; ++SubsystemTotalKz)
 		    {
 		      if (Flag3d == false)
-			cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
+			{
+			  if(FlagWannier == false || (FlagWannier == true &&  TotalKx[0]>-1))
+			    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
+			  else
+			    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " Ky=" << SubsystemTotalKy << endl;
+			}
 		      else
 			cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << " Kz=" << SubsystemTotalKz << endl;
 		      
@@ -406,12 +469,18 @@ int main(int argc, char** argv)
 				{
 				  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
 				    {
-				      PartialDensityMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      if(FlagWannier == false)
+					PartialDensityMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      else
+					PartialDensityMatrix = ((BosonOnSquareLatticeWannierSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
 				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
 				    }
 				  else
 				    {
-				      PartialDensityMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+				      if(FlagWannier == false)
+					PartialDensityMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+				      else
+					PartialDensityMatrix = ((BosonOnSquareLatticeWannierSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
 				    }
 				}
 			    }
@@ -533,14 +602,22 @@ int main(int argc, char** argv)
 					{
 					  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
 					    {
-					      HermitianMatrix TmpMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+					      HermitianMatrix TmpMatrix;
+					      if(FlagWannier == false)
+						 TmpMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+					      else
+						TmpMatrix = ((BosonOnSquareLatticeWannierSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
 					      TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
 					      PartialDensityMatrix += TmpMatrix;
 					    }
 					  else
 					    {
-					      // 				      HermitianMatrix TmpMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
-					      // 				      PartialDensityMatrix += TmpMatrix;
+					      HermitianMatrix TmpMatrix;
+					      if(FlagWannier == false)
+						TmpMatrix = ((BosonOnSquareLatticeMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+					      else
+						TmpMatrix = ((BosonOnSquareLatticeWannierSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+					      PartialDensityMatrix += TmpMatrix;
 					    }
 					}
 				    }

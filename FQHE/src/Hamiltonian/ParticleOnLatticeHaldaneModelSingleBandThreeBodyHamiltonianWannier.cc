@@ -1,4 +1,4 @@
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -76,9 +76,13 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
-        double uPotential, double vPotential, double wPotential, double sPotential,
-															 double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+																       double uPotential, double vPotential, double wPotential, double sPotential,
+																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, AbstractArchitecture* architecture, long memory)
 {
+
+  this->GaugeBFlag = gaugeBFlag;
+  this->A=a;
+  this->B=b;
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
   this->NbrSiteX = nbrSiteX;
@@ -160,7 +164,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
   if (this->FlatBand == false)
     this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
   this->ComputeOneBodyMatrices(OneBodyBasis);
-	      	  cout << "End of ComputeOneBodyMatrices" <<endl; 
+  cout << "End of ComputeOneBodyMatrices" <<endl; 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
@@ -207,11 +211,11 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
           double FactorU = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
           double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
           for (int i = 0; i < this->NbrSectorSums; ++i)
-          {
+	    {
               this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
               int Index = 0;
               for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1) // annihilation operators
-              {
+		{
                   int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
                   int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
                   int kx1 = Index1 / this->NbrSiteY;
@@ -219,7 +223,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
                   int kx2 = Index2 / this->NbrSiteY;
                   int ky2 = Index2 % this->NbrSiteY;
                   for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2) // creation operators
-                  {
+		    {
                       int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
                       int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
                       int kx3 = Index3 / this->NbrSiteY;
@@ -230,34 +234,34 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
                       // tricky part: OneBodyBasis[Index] stores the result of LapackDiagonalize
                       // and its [0][_] elements are the COMPLEX CONJUGATE of wave functions < _ |lower band>. (See the end of HermitianMatrix.cc)
                       this->InteractionFactors[i][Index]  = FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
-                                                                    * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
+			* this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
                       this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
-                                                                    * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
+			* this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
                       this->InteractionFactors[i][Index] -= FactorU * (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1])
-                                                                    * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
+			* this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
                       this->InteractionFactors[i][Index] += FactorU * (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1])
-                                                                    * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
+			* this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
 
                       this->InteractionFactors[i][Index] += FactorV * (  (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0])
-                                                                       + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]))
-                                                                    * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx4, ky4);
+									 + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]))
+			* this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx4, ky4);
                       this->InteractionFactors[i][Index] -= FactorV * (  (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0])
-                                                                       + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]))
-                                                                    * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx4, ky4);
+									 + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]))
+			* this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx4, ky4);
                       this->InteractionFactors[i][Index] -= FactorV * (  (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0])
-                                                                       + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]))
-                                                                    * this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx3, ky3);
+									 + (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]))
+			* this->ComputeTwoBodyMatrixElementAA(kx2, ky2, kx3, ky3);
                       this->InteractionFactors[i][Index] += FactorV * (  (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0])
-                                                                       + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]))
-                                                                    * this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx3, ky3);
+									 + (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]))
+			* this->ComputeTwoBodyMatrixElementAA(kx1, ky1, kx3, ky3);
 
                       this->InteractionFactors[i][Index] *= -2.0;
 
                       TotalNbrInteractionFactors++;
                       ++Index;
-                  }
-              }
-          }
+		    }
+		}
+	    }
 	}
       cout << "nbr 2-body interaction = " << TotalNbrInteractionFactors << endl;
       TotalNbrInteractionFactors=0;
@@ -344,294 +348,294 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 
 
                   sumW += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx6, ky6);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx6, ky6);
                   sumW -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx5, ky5);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx5, ky5);
                   sumW -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx6, ky6);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx6, ky6);
                   sumW += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx4, ky4);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx4, ky4);
                   sumW += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx5, ky5);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx5, ky5);
                   sumW -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx4, ky4);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx4, ky4);
                   sumW -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx6, ky6);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx6, ky6);
                   sumW += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx5, ky5);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx5, ky5);
                   sumW += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx6, ky6);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx6, ky6);
                   sumW -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx4, ky4);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx4, ky4);
                   sumW -= Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx5, ky5);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx5, ky5);
                   sumW += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx4, ky4);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx4, ky4);
                   sumW -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx6, ky6);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx6, ky6);
                   sumW += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx5, ky5);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx5, ky5);
                   sumW += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx6, ky6);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx6, ky6);
                   sumW -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx4, ky4);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx4, ky4);
                   sumW -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx5, ky5);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx5, ky5);
                   sumW += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx4, ky4);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx4, ky4);
                   sumW += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx6, ky6);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx6, ky6);
                   sumW -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx5, ky5);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx5, ky5);
                   sumW -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx6, ky6);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx6, ky6);
                   sumW += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx4, ky4);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx4, ky4);
                   sumW += Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx5, ky5);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx5, ky5);
                   sumW -= Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx4, ky4);
+		    * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx4, ky4);
                   sumW += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx6, ky6);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx6, ky6);
                   sumW -= Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5);
                   sumW -= Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx6, ky6);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx6, ky6);
                   sumW += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4);
                   sumW += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx5, ky5);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx5, ky5);
                   sumW -= Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx4, ky4);
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx4, ky4);
                   sumW -= Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx6, ky6);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx6, ky6);
                   sumW += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx5, ky5);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx5, ky5);
                   sumW += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx6, ky6);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx6, ky6);
                   sumW -= Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx4, ky4);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx4, ky4);
                   sumW -= Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx5, ky5);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx5, ky5);
                   sumW += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx4, ky4);
+		    * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+		    * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+		    * this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx4, ky4);
 
                   sumW += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx6, ky6));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx6, ky6));
                   sumW -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx5, ky5));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx5, ky5));
                   sumW -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx6, ky6));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx6, ky6));
                   sumW += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx4, ky4));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx6, ky6, kx4, ky4));
                   sumW += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx5, ky5));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx4, ky4, kx5, ky5));
                   sumW -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx4, ky4));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx3, ky3, kx5, ky5, kx4, ky4));
                   sumW -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx6, ky6));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx6, ky6));
                   sumW += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx5, ky5));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx5, ky5));
                   sumW += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx6, ky6));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx6, ky6));
                   sumW -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx4, ky4));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx6, ky6, kx4, ky4));
                   sumW -= Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx5, ky5));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx4, ky4, kx5, ky5));
                   sumW += Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx4, ky4));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx2, ky2, kx5, ky5, kx4, ky4));
                   sumW -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx6, ky6));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx6, ky6));
                   sumW += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx5, ky5));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx5, ky5));
                   sumW += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx6, ky6));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx6, ky6));
                   sumW -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx4, ky4));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx6, ky6, kx4, ky4));
                   sumW -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx5, ky5));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx4, ky4, kx5, ky5));
                   sumW += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx4, ky4));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx3, ky3, kx5, ky5, kx4, ky4));
                   sumW += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx6, ky6));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx6, ky6));
                   sumW -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx5, ky5));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx5, ky5));
                   sumW -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx6, ky6));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx6, ky6));
                   sumW += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx4, ky4));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx6, ky6, kx4, ky4));
                   sumW += Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx5, ky5));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx4, ky4, kx5, ky5));
                   sumW -= Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx4, ky4));
+		    * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx3, ky3, kx1, ky1, kx5, ky5, kx4, ky4));
                   sumW += Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx6, ky6));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx6, ky6));
                   sumW -= Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5));
                   sumW -= Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx6, ky6));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx6, ky6));
                   sumW += Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4));
                   sumW += Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx5, ky5));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx4, ky4, kx5, ky5));
                   sumW -= Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx4, ky4));
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx1, ky1, kx2, ky2, kx5, ky5, kx4, ky4));
                   sumW -= Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx6, ky6));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx6, ky6));
                   sumW += Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx5, ky5));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx5, ky5));
                   sumW += Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx6, ky6));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx6, ky6));
                   sumW -= Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx4, ky4));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx6, ky6, kx4, ky4));
                   sumW -= Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx5, ky5));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx4, ky4, kx5, ky5));
                   sumW += Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                        * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                        * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                        * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx4, ky4));
+		    * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+		    * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+		    * Conj(this->ComputeThreeBodyMatrixElementABB(kx2, ky2, kx1, ky1, kx5, ky5, kx4, ky4));
 
 
 
@@ -639,292 +643,292 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 
 
                   sumS += (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx5, ky5, kx6, ky6);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx5, ky5, kx6, ky6);
 
                   sumS -= (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx6, ky6, kx5, ky5);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx6, ky6, kx5, ky5);
 
                   sumS -= (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx4, ky4, kx6, ky6);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx4, ky4, kx6, ky6);
 
                   sumS += (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx6, ky6, kx4, ky4);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx6, ky6, kx4, ky4);
 
                   sumS += (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx4, ky4, kx5, ky5);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx4, ky4, kx5, ky5);
 
                   sumS -= (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx5, ky5, kx4, ky4);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx3, ky3, kx5, ky5, kx4, ky4);
 
                   sumS -= (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx5, ky5, kx6, ky6);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx5, ky5, kx6, ky6);
 
                   sumS += (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx6, ky6, kx5, ky5);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx6, ky6, kx5, ky5);
 
                   sumS += (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx4, ky4, kx6, ky6);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx4, ky4, kx6, ky6);
 
                   sumS -= (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx6, ky6, kx4, ky4);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx6, ky6, kx4, ky4);
 
                   sumS -= (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx4, ky4, kx5, ky5);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx4, ky4, kx5, ky5);
 
                   sumS += (  Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx5, ky5, kx4, ky4);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx2, ky2, kx5, ky5, kx4, ky4);
 
                   sumS -= (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx5, ky5, kx6, ky6);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx5, ky5, kx6, ky6);
 
                   sumS += (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx6, ky6, kx5, ky5);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx6, ky6, kx5, ky5);
 
                   sumS += (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx4, ky4, kx6, ky6);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx4, ky4, kx6, ky6);
 
                   sumS -= (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx6, ky6, kx4, ky4);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx6, ky6, kx4, ky4);
 
                   sumS -= (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx4, ky4, kx5, ky5);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx4, ky4, kx5, ky5);
 
                   sumS += (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx5, ky5, kx4, ky4);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx3, ky3, kx5, ky5, kx4, ky4);
 
                   sumS += (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx5, ky5, kx6, ky6);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx5, ky5, kx6, ky6);
 
                   sumS -= (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx6, ky6, kx5, ky5);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx6, ky6, kx5, ky5);
 
                   sumS -= (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx4, ky4, kx6, ky6);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx4, ky4, kx6, ky6);
 
                   sumS += (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx6, ky6, kx4, ky4);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx6, ky6, kx4, ky4);
 
                   sumS += (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx4, ky4, kx5, ky5);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx4, ky4, kx5, ky5);
 
                   sumS -= (  Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx5, ky5, kx4, ky4);
+			     * Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx3, ky3, kx1, ky1, kx5, ky5, kx4, ky4);
 
                   sumS += (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx5, ky5, kx6, ky6);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx5, ky5, kx6, ky6);
 
                   sumS -= (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5);
 
                   sumS -= (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx4, ky4, kx6, ky6);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx4, ky4, kx6, ky6);
 
                   sumS += (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4);
 
                   sumS += (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx4, ky4, kx5, ky5);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx4, ky4, kx5, ky5);
 
                   sumS -= (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx5, ky5, kx4, ky4);
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx1, ky1, kx2, ky2, kx5, ky5, kx4, ky4);
 
                   sumS -= (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx5, ky5, kx6, ky6);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx5, ky5, kx6, ky6);
 
                   sumS += (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx6, ky6, kx5, ky5);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx6, ky6, kx5, ky5);
 
                   sumS += (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx4, ky4, kx6, ky6);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index6][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index6][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx4, ky4, kx6, ky6);
 
                   sumS -= (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx6, ky6, kx4, ky4);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index6][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx6, ky6, kx4, ky4);
 
                   sumS -= (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx4, ky4, kx5, ky5);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index5][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx4, ky4, kx5, ky5);
 
                   sumS += (  Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0]
-                           * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
-                           * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
-                          +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
-                           * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
-                           * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
-                        * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx5, ky5, kx4, ky4);
+			     * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index5][0][0]
+			     * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]
+			     +  Conj(OneBodyBasis[Index3][0][1]) * OneBodyBasis[Index6][0][1]
+			     * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1]
+			     * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1])
+		    * this->ComputeThreeBodyMatrixElementAAA(kx2, ky2, kx1, ky1, kx5, ky5, kx4, ky4);
 
 
 
@@ -943,83 +947,124 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
   // Bosonic case
   else
     {
-
       // Two-Body
-      this->NbrSectorSums = this->NbrSiteY;
-      this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
-      	this->NbrSectorIndicesPerSum[i] = 0;      
-      for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
-      	for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
-      	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-      	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-      	      {
-      		int Index1 = (x1 * this->NbrSiteY) + ky1;
-      		int Index2 = (x2 * this->NbrSiteY) + ky2;
-      		if (Index1 <= Index2)
-      		  ++this->NbrSectorIndicesPerSum[((ky1 + ky2) % this->NbrSiteY)];    
-      	      }
-      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
-      	{
-      	  if (this->NbrSectorIndicesPerSum[i]  > 0)
-      	    {
-      	      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
-      	      this->NbrSectorIndicesPerSum[i] = 0;
-      	    }
-      	}
-      for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
-      	for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
-      	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-      	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-      	      {
-      		int Index1 = (x1 * this->NbrSiteY) + ky1;
-      		int Index2 = (x2 * this->NbrSiteY) + ky2;
-      		if (Index1 <= Index2)
-      		  {
-      		    int TmpSum =  ((ky1 + ky2) % this->NbrSiteY);
-      		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
-      		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
-      		    ++this->NbrSectorIndicesPerSum[TmpSum];    
-      		  }
-      	      }
+      if(this->A != 0)
+	{
+	  this->NbrSectorSums = this->NbrSiteY;
+	  this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    this->NbrSectorIndicesPerSum[i] = 0;      
+	  for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
+	    for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
+	      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		  {
+		    int Index1 = (x1 * this->NbrSiteY) + ky1;
+		    int Index2 = (x2 * this->NbrSiteY) + ky2;
+		    if (Index1 <= Index2)
+		      ++this->NbrSectorIndicesPerSum[((ky1 + ky2) % this->NbrSiteY)];    
+		  }
+	  this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    {
+	      if (this->NbrSectorIndicesPerSum[i]  > 0)
+		{
+		  this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+		  this->NbrSectorIndicesPerSum[i] = 0;
+		}
+	    }
+	  for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
+	    for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
+	      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		  {
+		    int Index1 = (x1 * this->NbrSiteY) + ky1;
+		    int Index2 = (x2 * this->NbrSiteY) + ky2;
+		    if (Index1 <= Index2)
+		      {
+			int TmpSum =  ((ky1 + ky2) % this->NbrSiteY);
+			this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+			this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+			++this->NbrSectorIndicesPerSum[TmpSum];    
+		      }
+		  }
+	}
+      else
+	{
+	  this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
+	  this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    this->NbrSectorIndicesPerSum[i] = 0;      
+	  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		  {
+		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
+		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		    if (Index1 <= Index2)
+		      ++this->NbrSectorIndicesPerSum[( (kx1 + kx2) *  this->NbrSiteY + (ky1 + ky2)) % (this->NbrSiteX * this->NbrSiteY)];    
+		  }
+	  this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+	  for (int i = 0; i < this->NbrSectorSums; ++i)
+	    {
+	      if (this->NbrSectorIndicesPerSum[i]  > 0)
+		{
+		  this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+		  this->NbrSectorIndicesPerSum[i] = 0;
+		}
+	    }
+	  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		  {
+		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
+		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		    if (Index1 <= Index2)
+		      {
+			int TmpSum = ( (kx1 + kx2) *  this->NbrSiteY + (ky1 + ky2)) % (this->NbrSiteX * this->NbrSiteY);
+			this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+			this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+			++this->NbrSectorIndicesPerSum[TmpSum];    
+		      }
+		  }
 
+	}
 
-      	
-      	  double FactorU = this->UPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-
+      double FactorU = this->UPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
 	  
-      	  this->InteractionFactors = new Complex* [this->NbrSectorSums];
-      	  for (int i = 0; i < this->NbrSectorSums; ++i)
-      	    {
-      	      this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
-      	      int Index = 0;
-      	      for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
-      		{
-      		  int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
-      		  int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
-      		  int x1 = Index1 / this->NbrSiteY;
-      		  int ky1 = Index1 % this->NbrSiteY;
-      		  int x2 = Index2 / this->NbrSiteY;
-      		  int ky2 = Index2 % this->NbrSiteY;
-      		  for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
-      		    {
-      		      int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
-      		      int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
-      		      int x3 = Index3 / this->NbrSiteY;
-      		      int ky3 = Index3 % this->NbrSiteY;
-      		      int x4 = Index4 / this->NbrSiteY;
-      		      int ky4 = Index4 % this->NbrSiteY;
+      this->InteractionFactors = new Complex* [this->NbrSectorSums];
+      for (int i = 0; i < this->NbrSectorSums; ++i)
+	{
+	  this->InteractionFactors[i] = new Complex[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+	    {
+	      int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
+	      int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int x1 = Index1 / this->NbrSiteY;
+	      int ky1 = Index1 % this->NbrSiteY;
+	      int x2 = Index2 / this->NbrSiteY;
+	      int ky2 = Index2 % this->NbrSiteY;
+	      for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+		{
+		  int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+		  int x3 = Index3 / this->NbrSiteY;
+		  int ky3 = Index3 % this->NbrSiteY;
+		  int x4 = Index4 / this->NbrSiteY;
+		  int ky4 = Index4 % this->NbrSiteY;
 
-      		      Complex sumU=0.0;
+		  Complex sumU=0.0;
 
-		      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-			for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-			  for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
-			    for (int kx4 = 0; kx4 < this->NbrSiteX; ++kx4) 
+		  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+		    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+		      for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
+			for (int kx4 = 0; kx4 < this->NbrSiteX; ++kx4) 
+			  {
+			    if( (kx1+kx2-kx3-kx4) %  this->NbrSiteX == 0)
 			      {
-				if( (kx1+kx2-kx3-kx4) %  this->NbrSiteX == 0)
-				  {
 
 				int IndexBis1 = kx1 * this->NbrSiteY + ky1;
 				int IndexBis2 = kx2 * this->NbrSiteY + ky2;
@@ -1028,41 +1073,77 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 
 				Complex tmpsumU;
 			      
-      		      tmpsumU = (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				tmpsumU = (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
 
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
-      		      tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+				tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+				tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
-		      tmpsumU *= Conj(Conj(WannierBasis[ky1][x1][kx1])*Conj(WannierBasis[ky2][x2][kx2])*WannierBasis[ky3][x3][kx3]*WannierBasis[ky4][x4][kx4]);
+				tmpsumU *= Conj(Conj(WannierBasis[ky1][x1][kx1])*Conj(WannierBasis[ky2][x2][kx2])*WannierBasis[ky3][x3][kx3]*WannierBasis[ky4][x4][kx4]);
 
-		      sumU += tmpsumU;
+				sumU += tmpsumU;
 
-				  }
 			      }
+			  }
 
+		  sumU *=  2.0 * FactorU ;
 
-      		      if (Index3 == Index4)
-      			{
-      			  sumU *= 0.5;
-      			}
-      		      if (Index1 == Index2)
-      			{
-      			  sumU *= 0.5;
-      			}
+		  if (Index3 == Index4)
+		    {
+		      sumU *= 0.5;
+		    }
+		  if (Index1 == Index2)
+		    {
+		      sumU *= 0.5;
+		    }
 
-      		      this->InteractionFactors[i][Index] = 2.0 * FactorU * sumU ;
+		  if((Index1+Index2-Index3-Index4) %  (this->NbrSiteX*this->NbrSiteY) != 0) // Off Block Diagonal Term 
+		    {
+		      sumU *= this->A;
+		      this->InteractionFactors[i][Index] = sumU ;
+		      //cout << "Off Block Diagonal Term = " << sumU << endl;
+		    }
+		  else
+		    {
+		      // Calculation of H_FQHE
+		      double sumUFQHE = 0.0;
+		      if (Index2 > Index1)
+			{
+			  if (Index3 != Index4)
+			    {
+			      sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					  + this->EvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
+					  + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
+					  + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+			    }
+			  else
+			    sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					+ this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
 
-      		      TotalNbrInteractionFactors++;
-      		      ++Index;
-
-      		    }
-      		}
-      	    }
+			}
+		      else
+			if (Index1 == Index2)
+			  {
+			    if (Index3 != Index4)
+			      sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					  + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
+			    else
+			      sumUFQHE = this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
+			  }
+		      //cout << "Block diagonal term. FQHE = " << sumUFQHE << endl;
+		      //cout << "Block diagonal term. FCI = " << sumU << endl;
+		      this->InteractionFactors[i][Index] = this->B * sumU + (1.0 - this->B) * sumUFQHE ;
+		      //cout << "Block Diagonal Term = " <<  this->InteractionFactors[i][Index] << endl;
+		    }
+		  TotalNbrInteractionFactors++;
+		  ++Index;
+		}
+	    }
+	}
       	
 
 
@@ -1163,10 +1244,10 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		{
 		  int* TmpPerm = Permutations[l1];
 		  Complex SumTmpAAAIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0]) ;
- 		  Complex SumTmpBBBIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1]) ;
+		  Complex SumTmpBBBIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1]) ;
 		  
- 		  Complex SumTmpAAAOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] ;
- 		  Complex SumTmpBBBOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] ;
+		  Complex SumTmpAAAOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] ;
+		  Complex SumTmpBBBOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] ;
 
 				  
 		  if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) && (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]))
@@ -1181,26 +1262,26 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		    {
 		      if( (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]])  || (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])  || (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]) )
 			{
-            	      	  SumTmpAAAIn2 *= 0.5;
+			  SumTmpAAAIn2 *= 0.5;
 			  SumTmpBBBIn2 *= 0.5;
 			  SumTmpAAAOut2 *= 0.5;
 			  SumTmpBBBOut2 *= 0.5;
 			}
 		    }
 		  
- 		  TmpAAAIn2 += SumTmpAAAIn2 ;
- 		  TmpBBBIn2 += SumTmpBBBIn2 ;
+		  TmpAAAIn2 += SumTmpAAAIn2 ;
+		  TmpBBBIn2 += SumTmpBBBIn2 ;
 		  
- 		  TmpAAAOut2 += SumTmpAAAOut2 ;
- 		  TmpBBBOut2 += SumTmpBBBOut2 ;
+		  TmpAAAOut2 += SumTmpAAAOut2 ;
+		  TmpBBBOut2 += SumTmpBBBOut2 ;
 
 
- 		}
+		}
 
- 	      TmpAAAIn[j1] =  TmpAAAIn2;
- 	      TmpAAAOut[j1] = TmpAAAOut2;
- 	      TmpBBBIn[j1] =  TmpBBBIn2;
- 	      TmpBBBOut[j1] = TmpBBBOut2;
+	      TmpAAAIn[j1] =  TmpAAAIn2;
+	      TmpAAAOut[j1] = TmpAAAOut2;
+	      TmpBBBIn[j1] =  TmpBBBIn2;
+	      TmpBBBOut[j1] = TmpBBBOut2;
 
 
 	    }
@@ -1299,12 +1380,12 @@ Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Comp
 
 Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ComputeThreeBodyMatrixElementAAA(int kx2, int ky2, int kx3, int ky3, int kx5, int ky5, int kx6, int ky6)
 {
-    double dx2 = ((double)(kx2 - kx5)) * this->KxFactor;
-    double dx3 = ((double)(kx3 - kx6)) * this->KxFactor;
-    double dy2 = ((double)(ky2 - ky5)) * this->KyFactor;
-    double dy3 = ((double)(ky3 - ky6)) * this->KyFactor;
-    Complex Tmp = Phase(dx2 + dy2) * (Phase(dx3) + Phase(dy3));
-    return Tmp;
+  double dx2 = ((double)(kx2 - kx5)) * this->KxFactor;
+  double dx3 = ((double)(kx3 - kx6)) * this->KxFactor;
+  double dy2 = ((double)(ky2 - ky5)) * this->KyFactor;
+  double dy3 = ((double)(ky3 - ky6)) * this->KyFactor;
+  Complex Tmp = Phase(dx2 + dy2) * (Phase(dx3) + Phase(dy3));
+  return Tmp;
 }
 
 // compute the matrix element for on-site two body interaction involving A sites
@@ -1372,14 +1453,14 @@ Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Comp
 
 Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6)
 {
-//   Complex Tmp = Phase (0.5 * ((((double) (kx6 + kx5 + kx4 - kx3 - kx2 - kx1)) * this->KxFactor)
-// 			      + ((((double) (ky6 + ky5 + ky4 - ky3 - ky2 - ky1)) * this->KyFactor))));
-//   return Tmp;
+  //   Complex Tmp = Phase (0.5 * ((((double) (kx6 + kx5 + kx4 - kx3 - kx2 - kx1)) * this->KxFactor)
+  // 			      + ((((double) (ky6 + ky5 + ky4 - ky3 - ky2 - ky1)) * this->KyFactor))));
+  //   return Tmp;
 
-    //   double dx = ((double)(-kx1-kx2-kx3+kx4+kx5+kx6)) * this->KxFactor;
-    //    double dy = ((double)(-ky1-ky2-ky3+ky4+ky5+ky6)) * this->KyFactor;
-    //    Complex Tmp = Phase((-dx-2.0*dy)/3.0);
-    //return Tmp;
+  //   double dx = ((double)(-kx1-kx2-kx3+kx4+kx5+kx6)) * this->KxFactor;
+  //    double dy = ((double)(-ky1-ky2-ky3+ky4+ky5+ky6)) * this->KyFactor;
+  //    Complex Tmp = Phase((-dx-2.0*dy)/3.0);
+  //return Tmp;
   
   return 1.0;
 }
@@ -1392,122 +1473,105 @@ Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Comp
 void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
-  {
-    double kxl=((double)kx + this->GammaX) * this->KxFactor;
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-        double kyl=((double)ky + this->GammaY) * this->KyFactor;
-	int Index = (kx * this->NbrSiteY) + ky;
-
-	// My Convention
-        // Complex B1 = - this->NNHoping * Complex(1 + cos(kxl) + cos(kyl), - sin(kxl) - sin(kyl));
-	// Complex B2 = - this->NextNextNNHoping * Complex(cos(kxl+kyl)+2*cos(kxl-kyl),-sin(kxl+kyl) );
-        // double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl-kyl));
-        // double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) - sin(kyl) - sin(kxl-kyl)) + this->MuS;
-
-        Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
-	Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
-        double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
-        double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
-
-	HermitianMatrix TmpOneBodyHamiltonian(2, true);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1+B2);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	oneBodyBasis[Index] = TmpMatrix;
-	if(Real(TmpMatrix[0][1])<0.0)
-	  {
-	    TmpMatrix[0][0]*= -1.0;
-	    TmpMatrix[0][1]*= -1.0;
-	  }	
-
-// if (this->FlatBand == false)
-	//   {
-	//     this->OneBodyInteractionFactors[Index] = 0.5*TmpDiag(0, 0);
-	//     // The 1/2 factor is needed because this one body term is counted twice somewhere in ChernInsulatorSingleBandHamiltonian because it was written for spin half particles. This factor is also present for the Kagome Lattice
-	//   }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
-      }
-  }
-
- // OneBodyBasis for BerryConnection
-
-  this->CA = new Complex* [this->NbrSiteY+1];
-  this->CB = new Complex* [this->NbrSiteY+1];
-
-  for (int ky = 0; ky < this->NbrSiteY+1; ++ky)
-  {
-     cout << "ky = " << ky << endl;
-    this->CA[ky] = new Complex[this->NbrSiteX+1];
-    this->CB[ky] = new Complex[this->NbrSiteX+1];
-    double kyl=((double)ky + this->GammaY) * this->KyFactor;
-    for (int kx = 0; kx < this->NbrSiteX+1; ++kx)
-      {
-	cout << "kx = " << kx << endl;
-        double kxl=((double)kx + this->GammaX) * this->KxFactor;
-	int Index = (kx * this->NbrSiteY) + ky;
-
-        Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
-	Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
-        double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
-        double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
-
-	HermitianMatrix TmpOneBodyHamiltonian(2, true);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1+B2);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif  
-	if(Real(TmpMatrix[0][1])<0.0)
-	  {
-	    TmpMatrix[0][0]*= -1.0;
-	    TmpMatrix[0][1]*= -1.0;
-	  } 
-	CA[ky][kx] = Conj(TmpMatrix[0][0]);
-  	CB[ky][kx] = Conj(TmpMatrix[0][1]);//*Phase((kxl+2.0*kyl)/3.0);
-	cout << "CA = " << CA[ky][kx] << endl;
-	cout << "CB = " << CB[ky][kx] << endl;
-
-      }
-  }
-
-  // Enforce Ay = 0
-  for (int kx = 0; kx < this->NbrSiteX+1; ++kx)
     {
       double kxl=((double)kx + this->GammaX) * this->KxFactor;
       for (int ky = 0; ky < this->NbrSiteY; ++ky)
 	{
 	  double kyl=((double)ky + this->GammaY) * this->KyFactor;
 	  int Index = (kx * this->NbrSiteY) + ky;
-	  double ArgTemp;
-	  ArgTemp = Arg(CA[ky+1][kx]*Conj(CA[ky][kx])+CB[ky+1][kx]*Conj(CB[ky][kx]));
-	  CA[ky][kx]*=Phase(ArgTemp);
-	  CB[ky][kx]*=Phase(ArgTemp);
 
-	  if(Index< this->NbrSiteX*this->NbrSiteY)
+	  // My Convention
+	  // Complex B1 = - this->NNHoping * Complex(1 + cos(kxl) + cos(kyl), - sin(kxl) - sin(kyl));
+	  // Complex B2 = - this->NextNextNNHoping * Complex(cos(kxl+kyl)+2*cos(kxl-kyl),-sin(kxl+kyl) );
+	  // double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl-kyl));
+	  // double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) - sin(kyl) - sin(kxl-kyl)) + this->MuS;
+
+	  Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
+	  Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
+	  double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
+	  double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
+
+	  HermitianMatrix TmpOneBodyHamiltonian(2, true);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1+B2);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
+	  ComplexMatrix TmpMatrix(2, 2, true);
+	  TmpMatrix[0][0] = 1.0;
+	  TmpMatrix[1][1] = 1.0;
+	  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif   
+	  oneBodyBasis[Index] = TmpMatrix;
+	  if(Real(TmpMatrix[0][1])<0.0)
 	    {
-	      ComplexMatrix TmpMatrix(2, 2, true);
-	      TmpMatrix = oneBodyBasis[Index];
-	      TmpMatrix[0][0] *= Phase(-ArgTemp);
-	      TmpMatrix[0][1] *= Phase(-ArgTemp);
-	      oneBodyBasis[Index] = TmpMatrix;
+	      TmpMatrix[0][0]*= -1.0;
+	      TmpMatrix[0][1]*= -1.0;
+	    }	
+
+	  // if (this->FlatBand == false)
+	  //   {
+	  //     this->OneBodyInteractionFactors[Index] = 0.5*TmpDiag(0, 0);
+	  //     // The 1/2 factor is needed because this one body term is counted twice somewhere in ChernInsulatorSingleBandHamiltonian because it was written for spin half particles. This factor is also present for the Kagome Lattice
+	  //   }
+	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
+	}
+    }
+
+  // OneBodyBasis for BerryConnection
+
+  this->CA = new Complex* [this->NbrSiteY+1];
+  this->CB = new Complex* [this->NbrSiteY+1];
+
+  for (int ky = 0; ky < this->NbrSiteY+1; ++ky)
+    {
+      cout << "ky = " << ky << endl;
+      this->CA[ky] = new Complex[this->NbrSiteX+1];
+      this->CB[ky] = new Complex[this->NbrSiteX+1];
+      double kyl=((double)ky + this->GammaY) * this->KyFactor;
+      for (int kx = 0; kx < this->NbrSiteX+1; ++kx)
+	{
+	  cout << "kx = " << kx << endl;
+	  double kxl=((double)kx + this->GammaX) * this->KxFactor;
+	  int Index = (kx * this->NbrSiteY) + ky;
+
+	  Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
+	  Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
+	  double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
+	  double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
+
+	  HermitianMatrix TmpOneBodyHamiltonian(2, true);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1+B2);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
+	  ComplexMatrix TmpMatrix(2, 2, true);
+	  TmpMatrix[0][0] = 1.0;
+	  TmpMatrix[1][1] = 1.0;
+	  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif  
+	  if(Real(TmpMatrix[0][1])<0.0)
+	    {
+	      TmpMatrix[0][0]*= -1.0;
+	      TmpMatrix[0][1]*= -1.0;
+	    } 
+	  CA[ky][kx] = Conj(TmpMatrix[0][0]);
+	  if(GaugeBFlag)
+	    {
+	      CB[ky][kx] = Conj(TmpMatrix[0][1])*Phase((kxl+2.0*kyl)/3.0);
 	    }
+	  else
+	    {
+	      CB[ky][kx] = Conj(TmpMatrix[0][1]);
+	    }
+	  cout << "CA = " << CA[ky][kx] << endl;
+	  cout << "CB = " << CB[ky][kx] << endl;
+
 	}
     }
 
@@ -1515,6 +1579,20 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
   this->BerryConnectionX = new double* [this->NbrSiteY];
   this->BerryConnectionXCumSum = new double* [this->NbrSiteY];
   this->Theta = new double [this->NbrSiteY];
+  this->BerryConnectionY = new double [this->NbrSiteY];
+  this->BerryConnectionYCumSum = new double [this->NbrSiteY];
+  double TempThetaX = 0.0;
+
+  // New definition from Barkeshli and Qi
+  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+    {
+      double ArgTemp = Arg(CA[ky+1][0]*Conj(CA[ky][0])+CB[ky+1][0]*Conj(CB[ky][0]));
+      BerryConnectionY[ky]=ArgTemp;
+      BerryConnectionYCumSum[ky]= TempThetaX ;
+      TempThetaX += ArgTemp;
+      cout << "ky = " << ky << " : Ay = " << ArgTemp << endl;
+    }
+  cout << "Aysum = " <<  TempThetaX << endl;
 
   for (int ky = 0; ky < this->NbrSiteY; ++ky)
     {
@@ -1566,7 +1644,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 		{
 		  Temp = Phase(-this->BerryConnectionXCumSum[ky][kx] - kxl * ((double) x - this->Theta[ky] /(2.0*M_PI)));
 		}
-
+	      Temp *= Phase(-this->BerryConnectionYCumSum[ky] - kyl * ( - TempThetaX/(2.0*M_PI))); // Barkeshli-Qi phase definition
 	      Temp *= 1.0 / sqrt(this->NbrSiteX);
 	      this->WannierBasis[ky][x][kx] = Temp ;
 	    }
@@ -1599,3 +1677,82 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
       this->YHalfPhaseTable[this->YPhaseTableShift + i] = Phase(0.5 * this->KyFactor * ((double) i));
     }
 }
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+double  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+{
+  double Coefficient = 1.0;
+  int MaxMomentum =  this->NbrSiteY * this->NbrSiteX;
+  double PIOnM = M_PI / ((double) MaxMomentum);
+  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
+  double Sum = 0.0;
+  double N2 = (double) (m1 - m4);
+  double N1;
+  double Q2;
+  double Precision;
+  double Ratio = ((double) this->NbrSiteY) / ((double) this->NbrSiteX);
+  double InvRatio = 1.0/Ratio;
+
+ 
+  //  cout << "coef " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " : ";
+  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+    {
+      N1 = 1.0;
+      Q2 = Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient = exp(- PIOnM * Q2);
+	  Precision = Coefficient;
+	}
+      else
+	{
+	  Coefficient = 1.0;
+	  Precision = 1.0;
+	}
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = InvRatio * N1 * N1 + Ratio * N2 * N2;
+	  Precision = 2.0 * exp(- PIOnM * Q2);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 += MaxMomentum;
+    }
+  N2 = (double) (m1 - m4 - MaxMomentum);
+  Coefficient = Sum;	    
+  while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+    {
+      N1 = 1.0;
+      Q2 = Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient = exp(- PIOnM * Q2);
+	  Precision = Coefficient;
+	}
+      else
+	{
+	  Coefficient = 1.0;
+	  Precision = 1.0;
+	}
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = InvRatio * N1 * N1 + Ratio * N2 * N2;
+	  Precision = 2.0 *  exp(- PIOnM * Q2);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 -= MaxMomentum;
+    }
+  //  cout << Sum << endl;
+  return (Sum / (4.0 * M_PI * MaxMomentum));
+}
+

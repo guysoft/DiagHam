@@ -210,6 +210,72 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
 // nbrParticles = reference to the number of particles 
 // nbrSiteX = reference to the number sites along the x direction
 // nbrSiteY = reference to the number sites along the y direction
+// momentumX = reference to the momentum along the x direction (=-1 if undefined because there are off block diagonal elements. If we are in the block diagonal case of Wannier, then momentumX gives the good sector of the vector)
+// momentumY = reference to the momentum along the y direction
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnSquareLatticeWannierFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& momentumX, int& momentumY, bool& statistics)
+{
+  if (FQHEOnSquareLatticeFindSystemInfoFromFileName(filename, nbrParticles, nbrSiteX, nbrSiteY, statistics) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles;
+  StrNbrParticles = strstr(filename, "_kx_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  momentumX = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      momentumX = -1;
+    }
+  StrNbrParticles = strstr(filename, "_ky_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  momentumY = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '.';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      momentumY = 0;
+    }
+  return true;
+}
+
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
 // momentumX = reference to the momentum along the x direction
 // momentumX = reference to the momentum along the y direction
 // totalSz = reference to the Sz value

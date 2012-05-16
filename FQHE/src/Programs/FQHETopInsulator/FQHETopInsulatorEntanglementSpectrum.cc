@@ -39,6 +39,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky-periodic", "set the periodicity for for the ky momentum (0 if non-periodic )", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
+  (*SystemGroup) += new BooleanOption  ('\n', "Wannier", "use Wannier basis");
+  (*SystemGroup) += new BooleanOption  ('\n', "Wannier-block-diagonal", "use 'block diagonal' Wannier basis ");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -112,15 +114,15 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (DensityMatrix.GetNbrColumns() < 4)
+      if (DensityMatrix.GetNbrColumns() < 4 )
 	{
 	  cout << "wrong number of columns in " << Manager.GetString("density-matrix") << endl;
 	  return -1;
 	}
       
       int* NaValues = DensityMatrix.GetAsIntegerArray(0);
-      int* KxValues = DensityMatrix.GetAsIntegerArray(1);
-      int* KyValues = DensityMatrix.GetAsIntegerArray(2);
+      int*  KxValues = DensityMatrix.GetAsIntegerArray(1);
+      int*  KyValues = DensityMatrix.GetAsIntegerArray(2);
       int* KzValues = 0;
       if (Flag3d == true)
 	KzValues = DensityMatrix.GetAsIntegerArray(3);

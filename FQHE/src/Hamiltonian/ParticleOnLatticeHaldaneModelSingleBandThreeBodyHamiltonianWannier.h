@@ -51,6 +51,10 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
 {
 
  protected:
+
+  bool GaugeBFlag;
+  double A;
+  double B;
   
   // hoping amplitude between neareast neighbor sites
   double NNHoping;
@@ -89,6 +93,8 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   // Wannier states
   double** BerryConnectionX;
   double** BerryConnectionXCumSum;
+  double* BerryConnectionY;
+  double* BerryConnectionYCumSum;
   double* Theta;
   Complex*** WannierBasis;
   Complex** CA;
@@ -123,7 +129,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-							      double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+								     double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -244,6 +250,15 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   // return value = corresponding matrix element
   Complex ComputeThreeBodyMatrixElementOnSiteBBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4, int kx5, int ky5, int kx6, int ky6);
 
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+  double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
 
 };
 
