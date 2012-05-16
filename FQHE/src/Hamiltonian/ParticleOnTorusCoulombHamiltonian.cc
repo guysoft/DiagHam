@@ -40,6 +40,7 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
+#include "Polynomial/SpecialPolynomial.h"
 
 #include <iostream>
 #include <math.h>
@@ -60,9 +61,14 @@ using std::ostream;
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// landauLevel = landauLevel to be simulated
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
 
 ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum,
-								 double ratio, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+								     double ratio, int landauLevel, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -72,6 +78,11 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
+  this->LandauLevel = landauLevel;
+  if (this->LandauLevel>=0)
+    {
+      this->FormFactor=LaguerrePolynomial(this->LandauLevel);
+    }
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
   if (precalculationFileName == 0)
@@ -338,86 +349,166 @@ void ParticleOnTorusCoulombHamiltonian::EvaluateInteractionFactors()
 
 double ParticleOnTorusCoulombHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
-  double Sum = 0;
+  double Coefficient = 1.0;
+  double PIOnM = M_PI / ((double) this->MaxMomentum);
+  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
+  double Sum = 0.0;
+  double N2 = (double) (m1 - m4);
   double N1;
-  double N2 = (double)(m1 - m4);
-  double Q2, Qx, Qy;
-  double Lx = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->Ratio);
-  double Ly = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->InvRatio);
-  double Gx = 2.0 * M_PI / Lx;
-  double Gy = 2.0 * M_PI / Ly;
-  double Xj13 = Gy * (double)(m1 - m3);
-  double Coefficient = 1;
-  double Precision, PrecisionPos, PrecisionNeg;
-
+  double Q2;
+  double Precision;
+//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
-      Qx = 0.0;
-      Qy = Gy * N2;
-      Q2 = Qx * Qx + Qy * Qy;
-
-      if (Q2 != 0.0)
+      N1 = 1.0;
+      Q2 = this->Ratio * N2 * N2;
+      if (N2 != 0.0)
 	{
-	  Coefficient = exp(- 0.5 * Q2) * (2.0 * M_PI/sqrt(Q2));
+	  Coefficient = this->GetVofQ(PIOnM*Q2);
 	  Precision = Coefficient;
 	}
       else
 	{
-	  Coefficient = 0.0;
+	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
 	  Precision = 1.0;
 	}
-
-      N1 = 1.0;
-      while ((fabs(Coefficient) + fabs(Precision)) != fabs(Coefficient))
-       {
-         Qx = Gx * N1;
-         Qy = Gy * N2;
-         Q2 = Qx * Qx + Qy * Qy;
-
-         Precision = exp(-0.5 * Q2)* (2.0 * M_PI/sqrt(Q2)); 
-         Coefficient += 2.0 * Precision * cos(Qx * Xj13);
-
-         N1 += 1.0;
-       }
-     Sum += Coefficient;
-     N2 += (double)this->MaxMomentum;
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
+	{
+	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 += this->MaxMomentum;
     }
-
   N2 = (double) (m1 - m4 - this->MaxMomentum);
-  Coefficient = Sum;	    
+  Coefficient = 1.0;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
-      Qx = 0.0;
-      Qy = Gy * N2;
-      Q2 = Qx * Qx + Qy * Qy;
-
-      if (Q2 != 0.0)
+      N1 = 1.0;
+      Q2 = this->Ratio * N2 * N2;
+      if (N2 != 0.0)
 	{
-	  Coefficient = exp(-0.5 * Q2)* (2.0 * M_PI/sqrt(Q2));
+	  Coefficient =  this->GetVofQ(PIOnM*Q2);
 	  Precision = Coefficient;
 	}
       else
 	{
-	  Coefficient = 0.0;
+	  Coefficient = this->GetVofQ(PIOnM*Q2); // yields non-zero terms only for non-singular interactions
 	  Precision = 1.0;
 	}
-
-      N1 = 1.0;
-      while ((fabs(Coefficient) + fabs(Precision)) != fabs(Coefficient))
+      while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
-          Qx = Gx * N1;
-          Qy = Gy * N2;
-          Q2 = Qx * Qx + Qy * Qy;
-
-          Precision = exp(-0.5 * Q2) * (2.0 * M_PI/sqrt(Q2)); 		  
-
-          Coefficient += 2.0 * Precision * cos(Qx * Xj13);
-
-          N1 += 1.0;
+	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
+	  Precision = 2.0 * this->GetVofQ(PIOnM*Q2);
+	  Coefficient += Precision * cos (N1 * Factor);
+	  N1 += 1.0;
 	}
-     Sum += Coefficient;
-     N2 -= (double)this->MaxMomentum;
+      Sum += Coefficient;
+      N2 -= this->MaxMomentum;
     }
-
-  return (Sum / (4.0 * M_PI * (double)this->MaxMomentum));
+  return (Sum / (2.0 * this->MaxMomentum));
 }
+
+
+// get Fourier transform of interaction
+//
+// Q2_half = one half of q^2 value
+// return value = Fourier tranform
+
+double ParticleOnTorusCoulombHamiltonian::GetVofQ(double Q2_half)
+{
+  double Result;
+  double Q2=2.0*Q2_half;
+  if (Q2_half != 0.0)
+    {
+      Result = this->FormFactor(Q2_half);
+      Result *= Result;
+      Result /= sqrt(Q2);
+    }
+  return Result * exp(-Q2_half);
+}
+//   double Sum = 0;
+//   double N1;
+//   double N2 = (double)(m1 - m4);
+//   double Q2, Qx, Qy;
+//   double Lx = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->Ratio);
+//   double Ly = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->InvRatio);
+//   double Gx = 2.0 * M_PI / Lx;
+//   double Gy = 2.0 * M_PI / Ly;
+//   double Xj13 = Gy * (double)(m1 - m3);
+//   double Coefficient = 1;
+//   double Precision, PrecisionPos, PrecisionNeg;
+
+//   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+//     {
+//       Qx = 0.0;
+//       Qy = Gy * N2;
+//       Q2 = Qx * Qx + Qy * Qy;
+
+//       if (Q2 != 0.0)
+// 	{
+// 	  Coefficient = exp(- 0.5 * Q2) * (2.0 * M_PI/sqrt(Q2));
+// 	  Precision = Coefficient;
+// 	}
+//       else
+// 	{
+// 	  Coefficient = 0.0;
+// 	  Precision = 1.0;
+// 	}
+
+//       N1 = 1.0;
+//       while ((fabs(Coefficient) + fabs(Precision)) != fabs(Coefficient))
+//        {
+//          Qx = Gx * N1;
+//          Qy = Gy * N2;
+//          Q2 = Qx * Qx + Qy * Qy;
+
+//          Precision = exp(-0.5 * Q2)* (2.0 * M_PI/sqrt(Q2)); 
+//          Coefficient += 2.0 * Precision * cos(Qx * Xj13);
+
+//          N1 += 1.0;
+//        }
+//      Sum += Coefficient;
+//      N2 += (double)this->MaxMomentum;
+//     }
+
+//   N2 = (double) (m1 - m4 - this->MaxMomentum);
+//   Coefficient = Sum;	    
+//   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
+//     {
+//       Qx = 0.0;
+//       Qy = Gy * N2;
+//       Q2 = Qx * Qx + Qy * Qy;
+
+//       if (Q2 != 0.0)
+// 	{
+// 	  Coefficient = exp(-0.5 * Q2)* (2.0 * M_PI/sqrt(Q2));
+// 	  Precision = Coefficient;
+// 	}
+//       else
+// 	{
+// 	  Coefficient = 0.0;
+// 	  Precision = 1.0;
+// 	}
+
+//       N1 = 1.0;
+//       while ((fabs(Coefficient) + fabs(Precision)) != fabs(Coefficient))
+// 	{
+//           Qx = Gx * N1;
+//           Qy = Gy * N2;
+//           Q2 = Qx * Qx + Qy * Qy;
+
+//           Precision = exp(-0.5 * Q2) * (2.0 * M_PI/sqrt(Q2)); 		  
+
+//           Coefficient += 2.0 * Precision * cos(Qx * Xj13);
+
+//           N1 += 1.0;
+// 	}
+//      Sum += Coefficient;
+//      N2 -= (double)this->MaxMomentum;
+//     }
+
+//   return (Sum / (4.0 * M_PI * (double)this->MaxMomentum));
+// }

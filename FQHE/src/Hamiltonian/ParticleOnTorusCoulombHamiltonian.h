@@ -36,6 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorus.h"
 #include "Hamiltonian/AbstractQHEOnTorusHamiltonian.h"
+#include "Polynomial/Polynomial.h"
 
 #include <iostream>
 
@@ -49,6 +50,15 @@ class MathematicaOutput;
 class ParticleOnTorusCoulombHamiltonian : public AbstractQHEOnTorusHamiltonian
 {
 
+ protected:
+
+  // landau Level index
+  int LandauLevel;
+
+  // form factor of the interaction (a single Laguerre polynomial for the Landau levels of GaAs)
+  Polynomial FormFactor;
+
+
  public:
 
   // constructor from default datas
@@ -57,7 +67,11 @@ class ParticleOnTorusCoulombHamiltonian : public AbstractQHEOnTorusHamiltonian
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
-  ParticleOnTorusCoulombHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum, double ratio, 
+  // landauLevel = landauLevel to be simulated
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnTorusCoulombHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum, double ratio, int landauLevel, 
 				  AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
@@ -109,6 +123,12 @@ class ParticleOnTorusCoulombHamiltonian : public AbstractQHEOnTorusHamiltonian
   // m4 = fourth index
   // return value = numerical coefficient
   double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+
+  // get Fourier transform of interaction
+  //
+  // Q2_half = one half of q^2 value
+  // return value = Fourier tranform
+  double GetVofQ(double Q2_half);
 
 };
 

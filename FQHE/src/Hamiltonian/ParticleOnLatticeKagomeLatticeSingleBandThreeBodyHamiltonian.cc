@@ -657,10 +657,16 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
       Complex* TmpBBBOut = new Complex[TmpLargestSector];
       Complex* TmpCCCIn = new Complex[TmpLargestSector];
       Complex* TmpCCCOut = new Complex[TmpLargestSector];
+      Complex* TmpABCUpIn = new Complex[TmpLargestSector];
+      Complex* TmpABCUpOut = new Complex[TmpLargestSector];
+      Complex* TmpABCDownIn = new Complex[TmpLargestSector];
+      Complex* TmpABCDownOut = new Complex[TmpLargestSector];
+
 
       // double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
-      double ThreeBodyFactor = this->ThreeBodyPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
-      
+      double ThreeBodyFactor = 1.0 * this->ThreeBodyPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
+      double VThreeBodyFactor = 0.0 * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
+
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
@@ -684,6 +690,11 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 	      Complex TmpBBBOut2 = 0.0;
 	      Complex TmpCCCIn2 = 0.0;
 	      Complex TmpCCCOut2 = 0.0;
+    	      Complex TmpABCUpIn2 = 0.0;
+	      Complex TmpABCUpOut2 = 0.0;
+    	      Complex TmpABCDownIn2 = 0.0;
+	      Complex TmpABCDownOut2 = 0.0;
+
 
 	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		{
@@ -697,6 +708,12 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
  		  TmpBBBOut2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] * this->ComputeThreeBodyMatrixElementOnSiteBBBOut(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
  		  TmpCCCOut2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][2] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][2] * this->ComputeThreeBodyMatrixElementOnSiteCCCOut(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
 
+ 		  TmpABCUpIn2 += Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][2]) * this->ComputeThreeBodyMatrixElementABCUpIn(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+		  TmpABCDownIn2 += Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][2]) * this->ComputeThreeBodyMatrixElementABCDownIn(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+
+		  TmpABCUpOut2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][2] * this->ComputeThreeBodyMatrixElementABCUpOut(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+		  TmpABCDownOut2 += OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][2] * this->ComputeThreeBodyMatrixElementABCDownOut(KxIn[TmpPerm[0]], KyIn[TmpPerm[0]], KxIn[TmpPerm[1]], KyIn[TmpPerm[1]], KxIn[TmpPerm[2]], KyIn[TmpPerm[2]]);
+
 		  if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) && (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]))
 		    {
 		      TmpAAAIn2 /= 6.0;
@@ -705,10 +722,16 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		      TmpAAAOut2 /= 6.0;
 		      TmpBBBOut2 /= 6.0;
 		      TmpCCCOut2 /= 6.0;
+		      TmpABCUpIn2 /= 6.0;
+		      TmpABCDownIn2 /= 6.0;
+		      TmpABCUpOut2 /= 6.0;
+		      TmpABCDownOut2 /= 6.0;
 		    }
 		  else
 		    {
-		      if( (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]])  || (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])  || (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]) )
+		      if( (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]])  || 
+			  (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])  || 
+			  (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]) )
 			{
 			  TmpAAAIn2 *= 0.5;
 			  TmpBBBIn2 *= 0.5;
@@ -716,6 +739,10 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 			  TmpAAAOut2 *= 0.5;
 			  TmpBBBOut2 *= 0.5;
 			  TmpCCCOut2 *= 0.5;
+			  TmpABCUpIn2 *= 0.5;
+			  TmpABCDownIn2 *= 0.5;
+			  TmpABCUpOut2 *= 0.5;
+			  TmpABCDownOut2 *= 0.5;
 			}
 		    }
  		}
@@ -726,6 +753,10 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
  	      TmpBBBOut[j1] = TmpBBBOut2;
  	      TmpCCCIn[j1] =  TmpCCCIn2;
  	      TmpCCCOut[j1] = TmpCCCOut2;
+	      TmpABCUpIn[j1] = TmpABCUpIn2;
+	      TmpABCUpOut[j1] = TmpABCUpOut2;
+    	      TmpABCDownIn[j1] = TmpABCDownIn2;
+	      TmpABCDownOut[j1] = TmpABCDownOut2;
 
 	    }
 
@@ -736,6 +767,8 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
 		  this->NBodyInteractionFactors[i][Index] = 2.0 * ThreeBodyFactor * ((TmpAAAIn[j1] * TmpAAAOut[j2])
 										     + (TmpBBBIn[j1] * TmpBBBOut[j2])
 										     + (TmpCCCIn[j1] * TmpCCCOut[j2]));
+		  this->NBodyInteractionFactors[i][Index] += 2.0 * VThreeBodyFactor * ((TmpABCUpIn[j1] * TmpABCUpOut[j2])
+										       + (TmpABCDownIn[j1] * TmpABCDownOut[j2]));
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -754,6 +787,10 @@ void ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian::EvaluateInter
       delete[] TmpBBBOut;
       delete[] TmpCCCIn;
       delete[] TmpCCCOut;
+      delete[] TmpABCUpIn;
+      delete[] TmpABCUpOut;
+      delete[] TmpABCDownIn;
+      delete[] TmpABCDownOut;
     }
 
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
