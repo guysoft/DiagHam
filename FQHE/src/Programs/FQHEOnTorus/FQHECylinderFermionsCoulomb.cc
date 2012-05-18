@@ -122,7 +122,7 @@ int main(int argc, char** argv)
       cout << "Electric field is applied along the cylinder with magnitude a=eEl_B^2/hbar omega_c = " << ElectricFieldParameter << endl;
       cout << "The energies are given in units e^2/epsilon l_B, but there is a kinetic term " << endl;
       cout << "K= (hbar omega_c/2/e^2/epsilon l_B) [sqrt(1+a) Ne + sum_m a/(1+a) (2pi m/L)^2 l_B^2 c_m^+ c_m] " << endl;
-      cout << "The code sets (hbar omega_c/2/e^2/epsilon l_B) = 0.194 \sqrt{B[T]} " << endl;  
+      cout << "The code sets (hbar omega_c/2/e^2/epsilon l_B) = 0.194 sqrt{B[T]} " << endl;  
       cout << "and neglects the term sqrt(1+a)N_e (overall constant)." << endl;
    }
 
