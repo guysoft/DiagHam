@@ -697,9 +697,34 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian::Evaluat
                   Sum += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index5][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * this->ComputeThreeBodyMatrixElementOnSiteABB(kx3, ky3, kx1, ky1, kx2, ky2, kx6, ky6, kx5, ky5, kx4, ky4);
                   Sum += Conj(OneBodyBasis[Index3][0][0]) * OneBodyBasis[Index6][0][0] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index5][0][1] * this->ComputeThreeBodyMatrixElementOnSiteABB(kx3, ky3, kx1, ky1, kx2, ky2, kx6, ky6, kx4, ky4, kx5, ky5);
 
+
 		  //		  this->NBodyInteractionFactors[i][Index] += Sum;		  
 
-		  this->NBodyInteractionFactors[i][Index] *= 2.0 * FactorU;
+		  //		  this->NBodyInteractionFactors[i][Index] *= 2.0 * FactorU;
+
+		  if ((Index1 == Index2) && (Index1 == Index3))
+		    {
+		      this->NBodyInteractionFactors[i][Index] /= 6.0;
+		    }
+		  else
+		    {
+		      if ((Index1 == Index2) || (Index1 == Index3))
+			{
+			  this->NBodyInteractionFactors[i][Index] *= 0.5;
+			}
+		    }
+
+		  if ((Index4 == Index5) && (Index4 == Index6))
+		    {
+		      this->NBodyInteractionFactors[i][Index] /= 6.0;
+		    }
+		  else
+		    {
+		      if ((Index4 == Index5) || (Index4 == Index6))
+			{
+			  this->NBodyInteractionFactors[i][Index] *= 0.5;
+			    }
+		    }
 
 		  TotalNbrInteractionFactors++;
 		  ++Index;

@@ -336,6 +336,8 @@ int main(int argc, char** argv)
 		}
 	    }
 	  
+	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  
 	  if (Ky<0)

@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                class of tight binding model for the ruby lattice           //
+//        class of tight binding model for the pyrochlore slab lattice        //
 //                                                                            //
-//                        last modification : 01/05/2012                      //
+//                        last modification : 17/05/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/TightBindingModelRubyLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelPyrochloreSlabLattice.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -39,30 +39,34 @@
 //
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
-// tr = real part of the hopping amplitude between neareast neighbor sites with same parity
-// ti = imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-// t1r = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
-// t4 = hopping amplitude along square diagonal
+// nbrLayers= number of Kagome lattice layer
+// t1 = real part of the hopping amplitude between neareast neighbor sites in a given Kagome lattice layer
+// t2 = real part of the hopping amplitude between next neareast neighbor sites in a given Kagome lattice layer
+// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites in a given Kagome lattice layer
+// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites in a given Kagome lattice layer
+// tPerp = hopping term between a triangular lattice layer and a kagome lattice layer
 // mus = sublattice chemical potential on A1 sites
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
-TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbrSiteY, double tr, double ti, double t1r, double t1i, double t4, double mus, 
-							   double gammaX, double gammaY, bool storeOneBodyMatrices)
+TightBindingModelPyrochloreSlabLattice::TightBindingModelPyrochloreSlabLattice(int nbrSiteX, int nbrSiteY, int nbrLayers,
+									       double t1, double t2, double lambda1, double lambda2,
+									       double tPerp, double mus, 
+									       double gammaX, double gammaY, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
-  this->TrHopping = tr;
-  this->TiHopping = ti;
-  this->T1rHopping = t1r;
-  this->T1iHopping = t1i;
-  this->T4Hopping = t4;
+  this->NbrLayers = nbrLayers;
+  this->NNHopping = t1;
+  this->NextNNHopping = t2;
+  this->NNSpinOrbit = lambda1;
+  this->NextNNSpinOrbit = lambda2;
+  this->TPerp = tPerp;
   this->MuS = mus;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
-  this->NbrBands = 6;
+  this->NbrBands = 4 * this->NbrLayers - 1;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
 
   if (storeOneBodyMatrices == true)
@@ -84,7 +88,7 @@ TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbr
 // destructor
 //
 
-TightBindingModelRubyLattice::~TightBindingModelRubyLattice()
+TightBindingModelPyrochloreSlabLattice::~TightBindingModelPyrochloreSlabLattice()
 {
 }
 
@@ -93,13 +97,11 @@ TightBindingModelRubyLattice::~TightBindingModelRubyLattice()
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelRubyLattice::ComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelPyrochloreSlabLattice::ComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
   long MaxStateIndex = minStateIndex + nbrStates;
-  Complex CT (this->TrHopping, this->TiHopping);
-  Complex CT1 (this->T1rHopping, this->T1iHopping);
   double KX;
   double KY;
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
@@ -111,35 +113,49 @@ void TightBindingModelRubyLattice::ComputeBandStructure(long minStateIndex, long
 	    {
 	      KX = this->KxFactor * (((double) kx) + this->GammaX);
 	      KY = this->KyFactor * (((double) ky) + this->GammaY);
+	      Complex HAB (-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
+	      HAB *= (1.0 + Phase (KX));
+	      Complex HAC(-2.0 * this->NNHopping, 2.0 * this->NNSpinOrbit);
+	      HAC *= (1.0 + Phase (KY));
+	      Complex HBC(-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
+	      HBC *= (1.0 + Phase (-KX + KY));
 	      
-	      Complex PhaseX = Phase(KX);
-	      Complex PhaseXY = Phase(KX + KY);
+	      Complex HAB2 (-2.0 * this->NextNNHopping, 2.0 * this->NextNNSpinOrbit);
+	      HAB2 *= (Phase(KY) + Phase(KX - KY));
+	      Complex HAC2 (-2.0 * this->NextNNHopping, -2.0 * this->NextNNSpinOrbit);
+	      HAC2 *= (Phase(KX) + Phase(-KX + KY));
+	      Complex HBC2 (-2.0 * this->NextNNHopping, 2.0  *  this->NextNNSpinOrbit);
+	      HBC2 *= (Phase(-KX) + Phase(KY));
 	      
-	      HermitianMatrix TmpOneBodyHamiltonian(6, true);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, -this->MuS);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(CT));
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 4, CT);
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 4, Conj(CT));
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 3, Conj(CT));
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 5, CT);
-	      TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(CT));
+	      HAB += HAB2;
+	      HAC += HAC2;
+	      HBC += HBC2;
+
+	      Complex HPerpA = -this->TPerp * Phase(-KY);
+	      Complex HPerpB = -this->TPerp * Phase(KX - KY);
+
+	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
 	      
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, CT1);
-	      TmpOneBodyHamiltonian.SetMatrixElement(3, 4, CT1);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 5, Conj(CT1) * Conj(PhaseX));
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, CT1 * PhaseXY);
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, CT1 * Conj(PhaseX));	
-	      TmpOneBodyHamiltonian.SetMatrixElement(4, 5, CT1 * Conj(PhaseXY));
-	      
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 3, this->T4Hopping * (1.0 + Conj(PhaseX)));
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 4, this->T4Hopping * (1.0 + PhaseXY));
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 5, this->T4Hopping * (Conj(PhaseX) + Conj(PhaseXY)));
-	      
-	      TmpOneBodyHamiltonian *= -1.0;
-	      
+	      for (int i = 0; i < this->NbrLayers; ++i)
+		{
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i, 4 * i, this->MuS);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i, 4 * i + 1, HAB);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i, 4 * i + 2, HAC);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i + 1, 4 * i + 2, HBC);
+		}
+	      for (int i = 1; i < this->NbrLayers; ++i)
+		{
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i - 4, 4 * i - 1, 1.0);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i - 3, 4 * i - 1, 1.0);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i - 2, 4 * i - 1, 1.0);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i - 1, 4 * i, HPerpA);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i - 1, 4 * i + 1, HPerpB);
+		  TmpOneBodyHamiltonian.SetMatrixElement(4 * i - 1, 4 * i + 2, 1.0);
+		}
+
 	      if (this->OneBodyBasis != 0)
 		{
-		  ComplexMatrix TmpMatrix(6, 6, true);
+		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
 		  TmpMatrix.SetToIdentity();
 		  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
@@ -166,4 +182,3 @@ void TightBindingModelRubyLattice::ComputeBandStructure(long minStateIndex, long
 	}
     }
 }
-
