@@ -77,9 +77,9 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
 
 ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
 																       double uPotential, double vPotential, double wPotential, double sPotential,
-																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, AbstractArchitecture* architecture, long memory)
+																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool noWannier, AbstractArchitecture* architecture, long memory)
 {
-
+  this->NoWannier = noWannier;
   this->GaugeBFlag = gaugeBFlag;
   this->A=a;
   this->B=b;
@@ -117,27 +117,28 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex; 
   this->EvaluateInteractionFactors();
+
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
       if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
+  	cout  << "fast = " <<  TmpMemory << "b ";
       else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
+  	if (TmpMemory < (1 << 20))
+  	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+  	else
+  	  if (TmpMemory < (1 << 30))
+  	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+  	  else
+  	    {
+  	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+  	      TmpMemory -= ((TmpMemory >> 30) << 30);
+  	      TmpMemory *= 100l;
+  	      TmpMemory >>= 30;
+  	      if (TmpMemory < 10l)
+  		cout << "0";
+  	      cout  << TmpMemory << " Gb ";
+  	    }
       this->EnableFastMultiplication();
     }
 }
@@ -948,6 +949,49 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
   else
     {
       // Two-Body
+      if(this->NoWannier)
+	{
+      this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
+      this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
+      for (int i = 0; i < this->NbrSectorSums; ++i)
+      	this->NbrSectorIndicesPerSum[i] = 0;      
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+      	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+      	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+      	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+      	      {
+      		int Index1 = (kx1 * this->NbrSiteY) + ky1;
+      		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+      		if (Index1 <= Index2)
+      		  ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
+      	      }
+      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+      for (int i = 0; i < this->NbrSectorSums; ++i)
+      	{
+      	  if (this->NbrSectorIndicesPerSum[i]  > 0)
+      	    {
+      	      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+      	      this->NbrSectorIndicesPerSum[i] = 0;
+      	    }
+      	}
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+      	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+      	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+      	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+      	      {
+      		int Index1 = (kx1 * this->NbrSiteY) + ky1;
+      		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+      		if (Index1 <= Index2)
+      		  {
+      		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
+      		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+      		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+      		    ++this->NbrSectorIndicesPerSum[TmpSum];    
+      		  }
+      	      }
+	}
+      else
+	{
       if(this->A != 0)
 	{
 	  this->NbrSectorSums = this->NbrSiteY;
@@ -1031,6 +1075,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		  }
 
 	}
+	}
 
       double FactorU = this->UPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
 	  
@@ -1057,38 +1102,55 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		  int ky4 = Index4 % this->NbrSiteY;
 
 		  Complex sumU=0.0;
+		  if(this->NoWannier && (x1+x2-x3-x4) % this->NbrSiteX == 0)
+		    {
 
-		  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-		    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-		      for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
-			for (int kx4 = 0; kx4 < this->NbrSiteX; ++kx4) 
-			  {
-			    if( (kx1+kx2-kx3-kx4) %  this->NbrSiteX == 0)
+		      sumU = (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+      		      sumU += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+      		      sumU += (Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+      		      sumU += (Conj(OneBodyBasis[Index2][0][0]) * OneBodyBasis[Index4][0][0] * Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+
+      		      sumU += (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(x1, ky1, x2, ky2, x3, ky3, x4, ky4);
+      		      sumU += (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(x2, ky2, x1, ky1, x3, ky3, x4, ky4);
+      		      sumU += (Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(x1, ky1, x2, ky2, x4, ky4, x3, ky3);
+      		      sumU += (Conj(OneBodyBasis[Index2][0][1]) * OneBodyBasis[Index4][0][1] * Conj(OneBodyBasis[Index1][0][1]) * OneBodyBasis[Index3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(x2, ky2, x1, ky1, x4, ky4, x3, ky3);
+		    }
+		  else
+		    {
+
+
+		      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+			for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+			  for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
+			    for (int kx4 = 0; kx4 < this->NbrSiteX; ++kx4) 
 			      {
+				if( (kx1+kx2-kx3-kx4) %  this->NbrSiteX == 0)
+				  {
 
-				int IndexBis1 = kx1 * this->NbrSiteY + ky1;
-				int IndexBis2 = kx2 * this->NbrSiteY + ky2;
-				int IndexBis3 = kx3 * this->NbrSiteY + ky3;
-				int IndexBis4 = kx4 * this->NbrSiteY + ky4;
+				    int IndexBis1 = kx1 * this->NbrSiteY + ky1;
+				    int IndexBis2 = kx2 * this->NbrSiteY + ky2;
+				    int IndexBis3 = kx3 * this->NbrSiteY + ky3;
+				    int IndexBis4 = kx4 * this->NbrSiteY + ky4;
 
-				Complex tmpsumU;
+				    Complex tmpsumU;
 			      
-				tmpsumU = (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
-				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
-				tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
-				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				    tmpsumU = (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][0]) * OneBodyBasis[IndexBis4][0][0] * Conj(OneBodyBasis[IndexBis1][0][0]) * OneBodyBasis[IndexBis3][0][0]) * this->ComputeTwoBodyMatrixElementOnSiteAA();
 
-				tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
-				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
-				tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
-				tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+				    tmpsumU += (Conj(OneBodyBasis[IndexBis2][0][1]) * OneBodyBasis[IndexBis4][0][1] * Conj(OneBodyBasis[IndexBis1][0][1]) * OneBodyBasis[IndexBis3][0][1]) * this->ComputeTwoBodyMatrixElementOnSiteBB(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
 
-				tmpsumU *= Conj(Conj(WannierBasis[ky1][x1][kx1])*Conj(WannierBasis[ky2][x2][kx2])*WannierBasis[ky3][x3][kx3]*WannierBasis[ky4][x4][kx4]);
+				    tmpsumU *= Conj(Conj(WannierBasis[ky1][x1][kx1])*Conj(WannierBasis[ky2][x2][kx2])*WannierBasis[ky3][x3][kx3]*WannierBasis[ky4][x4][kx4]);
 
-				sumU += tmpsumU;
+				    sumU += tmpsumU;
 
+				  }
 			      }
-			  }
+		    }
 
 		  sumU *=  2.0 * FactorU ;
 
@@ -1101,43 +1163,51 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		      sumU *= 0.5;
 		    }
 
-		  if((Index1+Index2-Index3-Index4) %  (this->NbrSiteX*this->NbrSiteY) != 0) // Off Block Diagonal Term 
+		  if(this->NoWannier)
 		    {
-		      sumU *= this->A;
-		      this->InteractionFactors[i][Index] = sumU ;
-		      //cout << "Off Block Diagonal Term = " << sumU << endl;
+		      this->InteractionFactors[i][Index] = sumU;
 		    }
 		  else
 		    {
-		      // Calculation of H_FQHE
-		      double sumUFQHE = 0.0;
-		      if (Index2 > Index1)
-			{
-			  if (Index3 != Index4)
-			    {
-			      sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					  + this->EvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
-					  + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
-					  + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
-			    }
-			  else
-			    sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					+ this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
 
+		      if((Index1+Index2-Index3-Index4) %  (this->NbrSiteX*this->NbrSiteY) != 0) // Off Block Diagonal Term 
+			{
+			  sumU *= this->A;
+			  this->InteractionFactors[i][Index] = sumU ;
+			  //cout << "Off Block Diagonal Term = " << sumU << endl;
 			}
 		      else
-			if (Index1 == Index2)
-			  {
-			    if (Index3 != Index4)
-			      sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					  + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
-			    else
-			      sumUFQHE = this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
-			  }
-		      //cout << "Block diagonal term. FQHE = " << sumUFQHE << endl;
-		      //cout << "Block diagonal term. FCI = " << sumU << endl;
-		      this->InteractionFactors[i][Index] = this->B * sumU + (1.0 - this->B) * sumUFQHE ;
-		      //cout << "Block Diagonal Term = " <<  this->InteractionFactors[i][Index] << endl;
+			{
+			  // Calculation of H_FQHE
+			  double sumUFQHE = 0.0;
+			  if (Index2 > Index1)
+			    {
+			      if (Index3 != Index4)
+				{
+				  sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
+					      + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
+					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+				}
+			      else
+				sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					    + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+
+			    }
+			  else
+			    if (Index1 == Index2)
+			      {
+				if (Index3 != Index4)
+				  sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+					      + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
+				else
+				  sumUFQHE = this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
+			      }
+			  //cout << "Block diagonal term. FQHE = " << sumUFQHE << endl;
+			  //cout << "Block diagonal term. FCI = " << sumU << endl;
+			  this->InteractionFactors[i][Index] = this->B * sumU + (1.0 - this->B) * sumUFQHE ;
+			  //cout << "Block Diagonal Term = " <<  this->InteractionFactors[i][Index] << endl;
+			}
 		    }
 		  TotalNbrInteractionFactors++;
 		  ++Index;
@@ -1147,167 +1217,169 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
       	
 
 
-
-      // Three Body
-      this->NbrNBodySectorSums = this->NbrSiteX * this->NbrSiteY;
-      this->NbrNBodySectorIndicesPerSum = new int[this->NbrNBodySectorSums];
-      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	this->NbrNBodySectorIndicesPerSum[i] = 0;      
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-	  for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
-	    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-		for (int ky3 = 0; ky3 < this->NbrSiteY; ++ky3) 
-		  {
-		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		    int Index3 = (kx3 * this->NbrSiteY) + ky3;
-		    if ((Index1 <= Index2) && (Index2 <= Index3))
-		      ++this->NbrNBodySectorIndicesPerSum[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];    
-		  }
-      this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
-      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+      if(this->WPotential!=0)
 	{
-	  if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-	    {
-	      this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-	      this->NbrNBodySectorIndicesPerSum[i] = 0;
-	    }
-	}
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-	  for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
-	    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-		for (int ky3 = 0; ky3 < this->NbrSiteY; ++ky3) 
-		  {
-		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		    int Index3 = (kx3 * this->NbrSiteY) + ky3;
-		    if ((Index1 <= Index2) && (Index2 <= Index3))
+	  // Three Body
+	  this->NbrNBodySectorSums = this->NbrSiteX * this->NbrSiteY;
+	  this->NbrNBodySectorIndicesPerSum = new int[this->NbrNBodySectorSums];
+	  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	    this->NbrNBodySectorIndicesPerSum[i] = 0;      
+	  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	      for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
+		for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		  for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		    for (int ky3 = 0; ky3 < this->NbrSiteY; ++ky3) 
 		      {
-			int TmpSum = (((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY);
-			this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = Index1;
-			this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = Index2;
-			this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = Index3;
-			++this->NbrNBodySectorIndicesPerSum[TmpSum];    
+			int Index1 = (kx1 * this->NbrSiteY) + ky1;
+			int Index2 = (kx2 * this->NbrSiteY) + ky2;
+			int Index3 = (kx3 * this->NbrSiteY) + ky3;
+			if ((Index1 <= Index2) && (Index2 <= Index3))
+			  ++this->NbrNBodySectorIndicesPerSum[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];    
 		      }
-		  }
-
-
-      int KxIn[3];
-      int KyIn[3];
-      int IndexIn[3];
-
-      int** Permutations = 0; 
-      double* PermutationSign = 0; 
-      int NbrPermutations = this->ComputePermutations(Permutations, PermutationSign);
-
-      int TmpLargestSector = 0;
-      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	if (this->NbrNBodySectorIndicesPerSum[i] > TmpLargestSector)
-	  TmpLargestSector = this->NbrNBodySectorIndicesPerSum[i];
-
-      Complex* TmpAAAIn = new Complex[TmpLargestSector];
-      Complex* TmpAAAOut = new Complex[TmpLargestSector];
-      Complex* TmpBBBIn = new Complex[TmpLargestSector];
-      Complex* TmpBBBOut = new Complex[TmpLargestSector];
-
-      // double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
-      double ThreeBodyFactor = this->WPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
-      
-      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
-      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	{
-	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	  this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
+	  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	    {
-	      IndexIn[0] = this->NBodySectorIndicesPerSum[i][j1 * 3];
-	      IndexIn[1] = this->NBodySectorIndicesPerSum[i][(j1 * 3) + 1];
-	      IndexIn[2] = this->NBodySectorIndicesPerSum[i][(j1 * 3) + 2];
-	      KxIn[0] = IndexIn[0] / this->NbrSiteY;
-	      KyIn[0] = IndexIn[0] % this->NbrSiteY;
-	      KxIn[1] = IndexIn[1] / this->NbrSiteY;
-	      KyIn[1] = IndexIn[1] % this->NbrSiteY;
-	      KxIn[2] = IndexIn[2] / this->NbrSiteY;
-	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
-
-	      Complex TmpAAAIn2 = 0.0;
-	      Complex TmpAAAOut2 = 0.0;
-	      Complex TmpBBBIn2 = 0.0;
-	      Complex TmpBBBOut2 = 0.0;
-
-
-	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
+	      if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
 		{
-		  int* TmpPerm = Permutations[l1];
-		  Complex SumTmpAAAIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0]) ;
-		  Complex SumTmpBBBIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1]) ;
+		  this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
+		  this->NbrNBodySectorIndicesPerSum[i] = 0;
+		}
+	    }
+	  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	      for (int kx3 = 0; kx3 < this->NbrSiteX; ++kx3)
+		for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		  for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		    for (int ky3 = 0; ky3 < this->NbrSiteY; ++ky3) 
+		      {
+			int Index1 = (kx1 * this->NbrSiteY) + ky1;
+			int Index2 = (kx2 * this->NbrSiteY) + ky2;
+			int Index3 = (kx3 * this->NbrSiteY) + ky3;
+			if ((Index1 <= Index2) && (Index2 <= Index3))
+			  {
+			    int TmpSum = (((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY);
+			    this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = Index1;
+			    this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = Index2;
+			    this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = Index3;
+			    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
+			  }
+		      }
+
+
+	  int KxIn[3];
+	  int KyIn[3];
+	  int IndexIn[3];
+
+	  int** Permutations = 0; 
+	  double* PermutationSign = 0; 
+	  int NbrPermutations = this->ComputePermutations(Permutations, PermutationSign);
+
+	  int TmpLargestSector = 0;
+	  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	    if (this->NbrNBodySectorIndicesPerSum[i] > TmpLargestSector)
+	      TmpLargestSector = this->NbrNBodySectorIndicesPerSum[i];
+
+	  Complex* TmpAAAIn = new Complex[TmpLargestSector];
+	  Complex* TmpAAAOut = new Complex[TmpLargestSector];
+	  Complex* TmpBBBIn = new Complex[TmpLargestSector];
+	  Complex* TmpBBBOut = new Complex[TmpLargestSector];
+
+	  // double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
+	  double ThreeBodyFactor = this->WPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
+      
+	  this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+	  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	    {
+	      this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+	      int Index = 0;
+	      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+		{
+		  IndexIn[0] = this->NBodySectorIndicesPerSum[i][j1 * 3];
+		  IndexIn[1] = this->NBodySectorIndicesPerSum[i][(j1 * 3) + 1];
+		  IndexIn[2] = this->NBodySectorIndicesPerSum[i][(j1 * 3) + 2];
+		  KxIn[0] = IndexIn[0] / this->NbrSiteY;
+		  KyIn[0] = IndexIn[0] % this->NbrSiteY;
+		  KxIn[1] = IndexIn[1] / this->NbrSiteY;
+		  KyIn[1] = IndexIn[1] % this->NbrSiteY;
+		  KxIn[2] = IndexIn[2] / this->NbrSiteY;
+		  KyIn[2] = IndexIn[2] % this->NbrSiteY;
+
+		  Complex TmpAAAIn2 = 0.0;
+		  Complex TmpAAAOut2 = 0.0;
+		  Complex TmpBBBIn2 = 0.0;
+		  Complex TmpBBBOut2 = 0.0;
+
+
+		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
+		    {
+		      int* TmpPerm = Permutations[l1];
+		      Complex SumTmpAAAIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0]) ;
+		      Complex SumTmpBBBIn2 = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1]) ;
 		  
-		  Complex SumTmpAAAOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] ;
-		  Complex SumTmpBBBOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] ;
+		      Complex SumTmpAAAOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][0] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][0] ;
+		      Complex SumTmpBBBOut2 = OneBodyBasis[IndexIn[TmpPerm[0]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[1]]][0][1] * OneBodyBasis[IndexIn[TmpPerm[2]]][0][1] ;
 
 				  
-		  if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) && (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]))
-		    {
-		      SumTmpAAAIn2 *= 1.0/6.0;
-		      SumTmpBBBIn2 *= 1.0/6.0;
-		      SumTmpAAAOut2 *= 1.0/6.0;
-		      SumTmpBBBOut2 *= 1.0/6.0;
-		      
-		    }
-		  else
-		    {
-		      if( (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]])  || (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])  || (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]) )
+		      if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) && (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]))
 			{
-			  SumTmpAAAIn2 *= 0.5;
-			  SumTmpBBBIn2 *= 0.5;
-			  SumTmpAAAOut2 *= 0.5;
-			  SumTmpBBBOut2 *= 0.5;
+			  SumTmpAAAIn2 *= 1.0/6.0;
+			  SumTmpBBBIn2 *= 1.0/6.0;
+			  SumTmpAAAOut2 *= 1.0/6.0;
+			  SumTmpBBBOut2 *= 1.0/6.0;
+		      
 			}
+		      else
+			{
+			  if( (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]])  || (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])  || (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]) )
+			    {
+			      SumTmpAAAIn2 *= 0.5;
+			      SumTmpBBBIn2 *= 0.5;
+			      SumTmpAAAOut2 *= 0.5;
+			      SumTmpBBBOut2 *= 0.5;
+			    }
+			}
+		  
+		      TmpAAAIn2 += SumTmpAAAIn2 ;
+		      TmpBBBIn2 += SumTmpBBBIn2 ;
+		  
+		      TmpAAAOut2 += SumTmpAAAOut2 ;
+		      TmpBBBOut2 += SumTmpBBBOut2 ;
+
+
 		    }
-		  
-		  TmpAAAIn2 += SumTmpAAAIn2 ;
-		  TmpBBBIn2 += SumTmpBBBIn2 ;
-		  
-		  TmpAAAOut2 += SumTmpAAAOut2 ;
-		  TmpBBBOut2 += SumTmpBBBOut2 ;
+
+		  TmpAAAIn[j1] =  TmpAAAIn2;
+		  TmpAAAOut[j1] = TmpAAAOut2;
+		  TmpBBBIn[j1] =  TmpBBBIn2;
+		  TmpBBBOut[j1] = TmpBBBOut2;
 
 
 		}
 
-	      TmpAAAIn[j1] =  TmpAAAIn2;
-	      TmpAAAOut[j1] = TmpAAAOut2;
-	      TmpBBBIn[j1] =  TmpBBBIn2;
-	      TmpBBBOut[j1] = TmpBBBOut2;
-
-
-	    }
-
-	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
-	    {
-	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+	      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
 		{
-		  this->NBodyInteractionFactors[i][Index] = 2.0 * ThreeBodyFactor * (TmpAAAIn[j1] * TmpAAAOut[j2]  + TmpBBBIn[j1] * TmpBBBOut[j2]);							    
-		  TotalNbrInteractionFactors++;
-		  ++Index;
+		  for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+		    {
+		      this->NBodyInteractionFactors[i][Index] = 2.0 * ThreeBodyFactor * (TmpAAAIn[j1] * TmpAAAOut[j2]  + TmpBBBIn[j1] * TmpBBBOut[j2]);							    
+		      TotalNbrInteractionFactors++;
+		      ++Index;
+		    }
 		}
+
 	    }
+	  for (int i=0; i<NbrPermutations; ++i)
+	    delete [] Permutations[i];
+	  delete [] Permutations;
+	  delete [] PermutationSign;
+
+
+	  delete[] TmpAAAIn;
+	  delete[] TmpAAAOut;
+	  delete[] TmpBBBIn;
+	  delete[] TmpBBBOut;
 
 	}
-      for (int i=0; i<NbrPermutations; ++i)
-	delete [] Permutations[i];
-      delete [] Permutations;
-      delete [] PermutationSign;
-
-
-      delete[] TmpAAAIn;
-      delete[] TmpAAAOut;
-      delete[] TmpBBBIn;
-      delete[] TmpBBBOut;
-
     }
 }
 
@@ -1504,13 +1576,14 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 #else
 	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif   
-	  oneBodyBasis[Index] = TmpMatrix;
+
 	  if(Real(TmpMatrix[0][1])<0.0)
 	    {
 	      TmpMatrix[0][0]*= -1.0;
 	      TmpMatrix[0][1]*= -1.0;
-	    }	
-
+	    }
+	  
+	  oneBodyBasis[Index] = TmpMatrix;
 	  // if (this->FlatBand == false)
 	  //   {
 	  //     this->OneBodyInteractionFactors[Index] = 0.5*TmpDiag(0, 0);

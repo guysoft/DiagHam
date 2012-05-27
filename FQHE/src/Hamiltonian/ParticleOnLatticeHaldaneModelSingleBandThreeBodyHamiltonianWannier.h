@@ -51,7 +51,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
 {
 
  protected:
-
+  bool NoWannier;
   bool GaugeBFlag;
   double A;
   double B;
@@ -129,7 +129,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-								     double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, AbstractArchitecture* architecture, long memory = -1);
+								     double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool noWannier, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

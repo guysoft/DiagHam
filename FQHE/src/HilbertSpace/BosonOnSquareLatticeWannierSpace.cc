@@ -72,29 +72,21 @@ BosonOnSquareLatticeWannierSpace::BosonOnSquareLatticeWannierSpace ()
 // kyMomentum = momentum along the y direction
 // memory = amount of memory granted for precalculations
 
-BosonOnSquareLatticeWannierSpace::BosonOnSquareLatticeWannierSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int kyMomentum, int xConstraint, unsigned long memory)
+BosonOnSquareLatticeWannierSpace::BosonOnSquareLatticeWannierSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int kyMomentum, unsigned long memory)
 {  
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
-  this->TotalLz = kyMomentum + nbrSiteY * xConstraint;
+  this->TotalLz = 0;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->KyMomentum = kyMomentum;
-  this->XConstraint=xConstraint;
   this->LzMax = this->NbrSiteX * this->NbrSiteY;
   this->NbrLzValue = this->LzMax + 1;
   this->Minors = 0;
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
-  if(XConstraint==-1)
-    {
-      this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0);
-    }
-  else
-    {
-      this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0);
-    }
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0);
   cout << "dim = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -106,14 +98,8 @@ BosonOnSquareLatticeWannierSpace::BosonOnSquareLatticeWannierSpace (int nbrBoson
       this->TargetSpace = this;
       unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       long TmpLargeHilbertSpaceDimension;
-      if(XConstraint==-1)
-	{
-	  TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, this->LzMax + this->NbrBosons, 0l);
-	}
-      else
-	{
-	  TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosons, 0l);
-	}
+      TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, this->LzMax + this->NbrBosons, 0l);
+
       if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space : get " << TmpLargeHilbertSpaceDimension << " , should be " << this->LargeHilbertSpaceDimension << endl;
@@ -345,50 +331,6 @@ long BosonOnSquareLatticeWannierSpace::GenerateStates(unsigned long* stateDescri
     }
   return this->GenerateStates(stateDescription, nbrBosons, currentKx, currentKy - 1, currentTotalKy, currentFermionicPosition - 1, pos);
 };
-// generate all states corresponding to the constraints
-// 
-// stateDescription = array that gives each state description
-// nbrBosons = number of bosons
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentTotalKy = current total momentum along y (obsolete for this function)
-// currentTotalLz = current total Lz 
-// currentFermionicPosition = current fermionic position within the state description
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-  
-long BosonOnSquareLatticeWannierSpace::GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentKx, int currentKy, int currentTotalKy, int currentTotalLz, int currentFermionicPosition, long pos)
-{
-
-  if (nbrBosons < 0)
-    return pos;
-  if (currentKy < 0)
-    {
-      currentKy = this->NbrSiteY - 1;
-      currentKx--;
-    }
-  if (nbrBosons == 0)
-    {
-      if ((currentTotalLz % (this->NbrSiteY*this->NbrSiteX)) == this->TotalLz)
-	{
-	  stateDescription[pos] = 0x0ul;	  
-	  return (pos + 1l);
-	}
-      else	
-	return pos;
-    }
-  if (currentKx < 0)
-    return pos;
-
-  for (int k = nbrBosons; k > 0; --k)
-    {
-      long TmpPos = this->GenerateStates(stateDescription, nbrBosons - k, currentKx, currentKy - 1, currentTotalKy, currentTotalLz + (k * currentKy) + NbrSiteY * (k * currentKx), currentFermionicPosition - k - 1, pos);
-      unsigned long Mask = ((0x1ul << k) - 0x1ul) << (currentFermionicPosition - k - 1);
-      for (; pos < TmpPos; ++pos)
-	stateDescription[pos] |= Mask;
-    }
-  return this->GenerateStates(stateDescription, nbrBosons, currentKx, currentKy - 1, currentTotalKy, currentTotalLz, currentFermionicPosition - 1, pos);
-};
 
 
 // evaluate Hilbert space dimension
@@ -421,39 +363,6 @@ long BosonOnSquareLatticeWannierSpace::EvaluateHilbertSpaceDimension(int nbrBoso
   long Count = 0;
   for (int k = nbrBosons; k >= 0; --k)
     Count += this->EvaluateHilbertSpaceDimension(nbrBosons - k, currentKx, currentKy - 1, currentTotalKy + (k * currentKy));
-  return Count;
-}
-
-// evaluate Hilbert space dimension (with a total Lz constraint)
-//
-// nbrBosons = number of bosons
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentTotalKy = current total momentum along y (obsolete for this function)
-// currentTotalLz = current total Lz
-// return value = Hilbert space dimension
-
-long BosonOnSquareLatticeWannierSpace::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKy, int currentTotalLz)
-{
-  if (nbrBosons < 0)
-    return 0l;
-  if (currentKy < 0)
-    {
-      currentKy = this->NbrSiteY - 1;
-      currentKx--;
-    }
-  if (nbrBosons == 0)
-    {
-      if ((currentTotalLz % (this->NbrSiteY*this->NbrSiteX)) == this->TotalLz)
-	return 1l;
-      else	
-	return 0l;
-    }
-  if (currentKx < 0)
-    return 0l;
-  long Count = 0;
-  for (int k = nbrBosons; k >= 0; --k)
-    Count += this->EvaluateHilbertSpaceDimension(nbrBosons - k, currentKx, currentKy - 1, currentTotalKy, currentTotalLz + (k * currentKy) + NbrSiteY * (k * currentKx) );
   return Count;
 }
 
@@ -669,7 +578,7 @@ HermitianMatrix BosonOnSquareLatticeWannierSpace::EvaluatePartialDensityMatrixPa
     }
   if (nbrParticleSector == this->NbrBosons)
     {
-      if ( ( (kxSector>-1) && (kxSector == this->XConstraint) && (kySector == this->KyMomentum)) || ( (kxSector == -1) && (kySector == this->KyMomentum ) ) )
+      if (  (kxSector == -1) && (kySector == this->KyMomentum  ))
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 1.0;
@@ -683,24 +592,24 @@ HermitianMatrix BosonOnSquareLatticeWannierSpace::EvaluatePartialDensityMatrixPa
     }
   int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
   int ComplementaryKxMomentum;
-  if(kxSector == -1)
+  // if(kxSector == -1)
     ComplementaryKxMomentum = -1;
-  else
-    {
-      int ComplementaryLzMomentum =  (this->XConstraint * this->NbrSiteY + this->KyMomentum) - (kxSector * this->NbrSiteY + kySector);
-      if (ComplementaryLzMomentum < 0)
-	ComplementaryLzMomentum += this->NbrSiteY*this->NbrSiteX;
-      ComplementaryKxMomentum = ComplementaryLzMomentum / this->NbrSiteY;
-    }
+  // else
+  //   {
+  //     int ComplementaryLzMomentum =  (this->XConstraint * this->NbrSiteY + this->KyMomentum) - (kxSector * this->NbrSiteY + kySector);
+  //     if (ComplementaryLzMomentum < 0)
+  // 	ComplementaryLzMomentum += this->NbrSiteY*this->NbrSiteX;
+  //     ComplementaryKxMomentum = ComplementaryLzMomentum / this->NbrSiteY;
+  //   }
   int ComplementaryKyMomentum = (this->KyMomentum - kySector) % this->NbrSiteY;
   if (ComplementaryKyMomentum < 0)
     ComplementaryKyMomentum += this->NbrSiteY;
-  if(kxSector != -1)
-    cout << "kx = " << this->XConstraint << " " << kxSector << " " << ComplementaryKxMomentum << endl;
+  // if(kxSector != -1)
+    // cout << "kx = " << this->XConstraint << " " << kxSector << " " << ComplementaryKxMomentum << endl;
   cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
-  BosonOnSquareLatticeWannierSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, kySector, kxSector);
+  BosonOnSquareLatticeWannierSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, kySector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnSquareLatticeWannierSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKyMomentum, ComplementaryKxMomentum);
+  BosonOnSquareLatticeWannierSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKyMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
 
@@ -869,7 +778,7 @@ HermitianMatrix BosonOnSquareLatticeWannierSpace::EvaluatePartialDensityMatrixPa
     }
   if (nbrParticleSector == this->NbrBosons)
     {
-      if ( ( (kxSector>-1) && (kxSector == this->XConstraint) && (kySector == this->KyMomentum)) || ( (kxSector == -1) && (kySector == this->KyMomentum ) ) )
+      if ( ( (kxSector == -1) && (kySector == this->KyMomentum ) ) )
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 1.0;
@@ -883,24 +792,24 @@ HermitianMatrix BosonOnSquareLatticeWannierSpace::EvaluatePartialDensityMatrixPa
     }
   int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
   int ComplementaryKxMomentum;
-  if(kxSector == -1)
+  // if(kxSector == -1)
     ComplementaryKxMomentum = -1;
-  else
-    {
-      int ComplementaryLzMomentum =  (this->XConstraint * this->NbrSiteY + this->KyMomentum) - (kxSector * this->NbrSiteY + kySector);
-      if (ComplementaryLzMomentum < 0)
-	ComplementaryLzMomentum += this->NbrSiteY*this->NbrSiteX;
-      ComplementaryKxMomentum = ComplementaryLzMomentum / this->NbrSiteY;
-    }
+  // else
+  //   {
+  //     int ComplementaryLzMomentum =  (this->XConstraint * this->NbrSiteY + this->KyMomentum) - (kxSector * this->NbrSiteY + kySector);
+  //     if (ComplementaryLzMomentum < 0)
+  // 	ComplementaryLzMomentum += this->NbrSiteY*this->NbrSiteX;
+  //     ComplementaryKxMomentum = ComplementaryLzMomentum / this->NbrSiteY;
+  //   }
   int ComplementaryKyMomentum = (this->KyMomentum - kySector) % this->NbrSiteY;
   if (ComplementaryKyMomentum < 0)
     ComplementaryKyMomentum += this->NbrSiteY;
-  if(kxSector != -1)
-    cout << "kx = " << this->XConstraint << " " << kxSector << " " << ComplementaryKxMomentum << endl;
+  // if(kxSector != -1)
+  //   cout << "kx = " << this->XConstraint << " " << kxSector << " " << ComplementaryKxMomentum << endl;
   cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
-  BosonOnSquareLatticeWannierSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, kySector, kxSector);
+  BosonOnSquareLatticeWannierSpace SubsytemSpace (nbrParticleSector, this->NbrSiteX, this->NbrSiteY, kySector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnSquareLatticeWannierSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKyMomentum, ComplementaryKxMomentum);
+  BosonOnSquareLatticeWannierSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSiteX, this->NbrSiteY, ComplementaryKyMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, nbrGroundStates, groundStates, weights, TmpDensityMatrix);

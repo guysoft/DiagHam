@@ -87,8 +87,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new BooleanOption  ('\n', "gaugeB", "Takes into account the gauge on B sites");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "a", "parameter multiplying the off-block diagonal elements. a=0 corresponds to the exactly block diagonal limit",1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "b", "parameter doing the cross over between the block diagonal elements of FCI and those of FQHE. b=0 correspons to FQHE block diagonal elements", 1.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "NoWannier", "No Wannier");
+  (*SystemGroup) += new SingleDoubleOption  ('a', "aParam", "parameter multiplying the off-block diagonal elements. a=0 corresponds to the exactly block diagonal limit",1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('b', "bParam", "parameter doing the cross over between the block diagonal elements of FCI and those of FQHE. b=0 correspons to FQHE block diagonal elements", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -153,7 +154,7 @@ int main(int argc, char** argv)
       else
 	{
 	  if (Manager.GetBoolean("three-body") == true)
-	    lenFilePrefix += sprintf (FilePrefix, "%s_singleband_threebody_haldane_Wannier_a_%f_b_%f_n_%d_x_%d_y_%d",  StatisticPrefix, Manager.GetDouble("a"), Manager.GetDouble("b"), NbrParticles, NbrSiteX, NbrSiteY);
+	    lenFilePrefix += sprintf (FilePrefix, "%s_singleband_threebody_haldane_Wannier_a_%f_b_%f_n_%d_x_%d_y_%d",  StatisticPrefix, Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), NbrParticles, NbrSiteX, NbrSiteY);
           else
 	    lenFilePrefix += sprintf (FilePrefix, "%s_singleband_fourbody_haldane_n_%d_x_%d_y_%d",  StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
 	}
@@ -173,7 +174,7 @@ int main(int argc, char** argv)
 	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_flatband");
     }
   char* CommentLine = new char [256];
-  if(Manager.GetDouble("a")!=0)
+  if(Manager.GetDouble("aParam")!=0)
     {
       sprintf (CommentLine, "eigenvalues\n# ky ");
     }
@@ -217,7 +218,7 @@ int main(int argc, char** argv)
   bool FirstRunFlag = true;
 
   // If we keep off block diagonal terms
-  if(Manager.GetDouble("a")!=0)
+  if(Manager.GetDouble("aParam")!=0)
     {
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
@@ -266,7 +267,7 @@ int main(int argc, char** argv)
 													   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
 													   Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"), 
 													   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-													   Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("a"), Manager.GetDouble("b"), Architecture.GetArchitecture(), Memory);
+													   Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), Manager.GetBoolean("NoWannier"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {
@@ -297,101 +298,101 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  else // if we are in the exactly block diagonal limit
-    {
-      for(int i=MinKx; i<= MaxKx; ++i)
-	{
-	  for (int j = MinKy; j <= MaxKy; ++j)
-	    {
-	      cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
-	      if (Manager.GetBoolean("single-band") == false)
-		{
-		}
-	      else
-		{
-		  ParticleOnSphere* Space = 0;
-		  if (Manager.GetBoolean("boson") == false)
-		    {
-		      if ((NbrSiteX * NbrSiteY) <= 63)
-			{
-			  //Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
-			  return 0;
-			}
-		      else
-			{
-			  //Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSiteX, NbrSiteY, i, j);
-			  return 0;
-			}
-		    }
-		  else
-		    {
-		      Space = new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, j, i);
-		      //Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
-		      //Space = new BosonOnTorusShort(NbrParticles, NbrSiteX * NbrSiteY, i*NbrSiteY+j);	
-		    }
-		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-		  AbstractQHEHamiltonian* Hamiltonian = 0;
-		  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
-		    {
-		      return 0;
-		      // Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
-		      // 									   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-		      // 									   Manager.GetDouble("t1"), Manager.GetDouble("t2"), HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-		      // 									   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		    }
-		  else
-		    {
-		      if (Manager.GetBoolean("three-body") == true)
-			{
-			  Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(Space, NbrParticles, NbrSiteX, NbrSiteY, 
-													       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-													       Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"), 
-													       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-													       Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("a"), Manager.GetDouble("b"), Architecture.GetArchitecture(), Memory);
-			}
-		      else
-			{
-			  return 0;
-			  // Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
-			  // 									       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-			  // 									       Manager.GetDouble("t1"), Manager.GetDouble("t2"), HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-			  // 									       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-			}
-		    }
+  // else // if we are in the exactly block diagonal limit
+  //   {
+  //     for(int i=MinKx; i<= MaxKx; ++i)
+  // 	{
+  // 	  for (int j = MinKy; j <= MaxKy; ++j)
+  // 	    {
+  // 	      cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+  // 	      if (Manager.GetBoolean("single-band") == false)
+  // 		{
+  // 		}
+  // 	      else
+  // 		{
+  // 		  ParticleOnSphere* Space = 0;
+  // 		  if (Manager.GetBoolean("boson") == false)
+  // 		    {
+  // 		      if ((NbrSiteX * NbrSiteY) <= 63)
+  // 			{
+  // 			  //Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+  // 			  return 0;
+  // 			}
+  // 		      else
+  // 			{
+  // 			  //Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+  // 			  return 0;
+  // 			}
+  // 		    }
+  // 		  else
+  // 		    {
+  // 		      Space = new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, j, i);
+  // 		      //Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+  // 		      //Space = new BosonOnTorusShort(NbrParticles, NbrSiteX * NbrSiteY, i*NbrSiteY+j);	
+  // 		    }
+  // 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+  // 		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+  // 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+  // 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+  // 		  AbstractQHEHamiltonian* Hamiltonian = 0;
+  // 		  if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
+  // 		    {
+  // 		      return 0;
+  // 		      // Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+  // 		      // 									   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+  // 		      // 									   Manager.GetDouble("t1"), Manager.GetDouble("t2"), HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+  // 		      // 									   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+  // 		    }
+  // 		  else
+  // 		    {
+  // 		      if (Manager.GetBoolean("three-body") == true)
+  // 			{
+  // 			  Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+  // 													       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
+  // 													       Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"), 
+  // 													       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+  // 													       Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), Manager.GetBoolean("NoWannier"), Architecture.GetArchitecture(), Memory);
+  // 			}
+  // 		      else
+  // 			{
+  // 			  return 0;
+  // 			  // Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+  // 			  // 									       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
+  // 			  // 									       Manager.GetDouble("t1"), Manager.GetDouble("t2"), HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
+  // 			  // 									       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+  // 			}
+  // 		    }
 
-		  char* ContentPrefix = new char[256];
-		  sprintf (ContentPrefix, "%d %d", i, j);
-		  char* EigenstateOutputFile = new char [512];
-		  if (Manager.GetString("eigenstate-file")!=0)
-		    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
-		  else
-		    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", FilePrefix, i, j);
-		  // if(Manager.GetDouble("a")!=0)
-		  //   {
-		      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-		      FirstRunFlag = false;
-		      MainTaskOperation TaskOperation (&Task);
-		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-		  //   }
-		  // else
-		  //   {
-		  //     GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile, true);
-		  //     FirstRunFlag = false;
-		  //     MainTaskOperation TaskOperation (&Task);
-		  //     TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-		  //   }
-		  cout << "------------------------------------" << endl;
-		  delete Hamiltonian;
-		  delete Space;
-		  delete[] EigenstateOutputFile;
-		  delete[] ContentPrefix;
-		}
-	    }
-	}
-    }
+  // 		  char* ContentPrefix = new char[256];
+  // 		  sprintf (ContentPrefix, "%d %d", i, j);
+  // 		  char* EigenstateOutputFile = new char [512];
+  // 		  if (Manager.GetString("eigenstate-file")!=0)
+  // 		    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
+  // 		  else
+  // 		    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", FilePrefix, i, j);
+  // 		  // if(Manager.GetDouble("aParam")!=0)
+  // 		  //   {
+  // 		      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+  // 		      FirstRunFlag = false;
+  // 		      MainTaskOperation TaskOperation (&Task);
+  // 		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+  // 		  //   }
+  // 		  // else
+  // 		  //   {
+  // 		  //     GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile, true);
+  // 		  //     FirstRunFlag = false;
+  // 		  //     MainTaskOperation TaskOperation (&Task);
+  // 		  //     TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+  // 		  //   }
+  // 		  cout << "------------------------------------" << endl;
+  // 		  delete Hamiltonian;
+  // 		  delete Space;
+  // 		  delete[] EigenstateOutputFile;
+  // 		  delete[] ContentPrefix;
+  // 		}
+  // 	    }
+  // 	}
+  //   }
       return 0;    
     }
 

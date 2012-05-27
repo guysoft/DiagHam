@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   Manager += OutputGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption ('\n', "state", "input file in a Wannier basis representation");
+  (*SystemGroup) += new SingleStringOption ('\n', "second-state", "second input file in a Wannier basis representation if ones want to compute the overlap between two FCI states");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 0);
@@ -100,6 +101,29 @@ int main(int argc, char** argv)
 	  cout << "error while retrieving system parameters from file name " << Manager.GetString("state") << endl;
 	  return -1;
 	}
+    }
+
+  if (Manager.GetString("second-state") != 0)
+    {
+      cout << "Calculation of overlap between two FCI states"<<endl;
+      ComplexVector InputState;
+      if (InputState.ReadVector(Manager.GetString("state")) == false)
+	{
+	  cout << "error while reading " << Manager.GetString("state") << endl;
+	  return -1;
+	}
+      ComplexVector InputStateSecond;
+      if (InputStateSecond.ReadVector(Manager.GetString("second-state")) == false)
+	{
+	  cout << "error while reading " << Manager.GetString("second-state") << endl;
+	  return -1;
+	}
+      cout << "Norm(State1) = " << InputState.Norm()  << endl;
+      cout << "Norm(State2) = " << InputStateSecond.Norm()  << endl;
+      Complex Ovl = InputState * InputStateSecond;
+      cout << "Ovl = " << Ovl << endl;
+      cout << "Norm(Ovl) = " << Norm(Ovl) << endl;
+      return -1;
     }
  
   // if(Manager.GetBoolean("block-diagonal"))

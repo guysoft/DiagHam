@@ -50,8 +50,7 @@ class BosonOnSquareLatticeWannierSpace : public BosonOnSphereShort, public Parti
   int NbrSiteY;
   // momentum along the y direction
   int KyMomentum;
-  // x value imposed as constraint
-  int XConstraint;
+
 
  public:
 
@@ -67,7 +66,7 @@ class BosonOnSquareLatticeWannierSpace : public BosonOnSphereShort, public Parti
   // kxMomentum = momentum along the x direction
   // kyMomentum = momentum along the y direction
   // memory = amount of memory granted for precalculations
-  BosonOnSquareLatticeWannierSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int kyMomentum, int xConstraint=-1, unsigned long memory = 10000000);
+  BosonOnSquareLatticeWannierSpace (int nbrBosons, int nbrSiteX, int nbrSiteY, int kyMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -194,16 +193,6 @@ class BosonOnSquareLatticeWannierSpace : public BosonOnSphereShort, public Parti
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKy);
 
-  // evaluate Hilbert space dimension (with a total Lz constraint)
-  //
-  // nbrBosons = number of bosons
-  // currentKx = current momentum along x for a single particle
-  // currentKy = current momentum along y for a single particle
-  // currentTotalKy = current total momentum along y (obsolete for this function)
-  // currentTotalLz = current total Lz
-  // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKx, int currentKy, int currentTotalKy, int currentTotalLz);
-
   // generate all states corresponding to the constraints
   // 
   // stateDescription = array that gives each state description
@@ -217,20 +206,6 @@ class BosonOnSquareLatticeWannierSpace : public BosonOnSphereShort, public Parti
   // return value = position from which new states have to be stored
   virtual long GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentKx, int currentKy, int currentTotalKy, int currentFermionicPosition, long pos);
 
-
-  // generate all states corresponding to the constraints
-  // 
-  // stateDescription = array that gives each state description
-  // nbrBosons = number of bosons
-  // currentKx = current momentum along x for a single particle
-  // currentKy = current momentum along y for a single particle
-  // currentTotalKy = current total momentum along y (obsolete for this function)
-  // currentTotalLz = current total Lz 
-  // currentFermionicPosition = current fermionic position within the state description
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  
-  virtual long GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentKx, int currentKy, int currentTotalKy, int currentTotalLz, int currentFermionicPosition, long pos);
 
   // core part of the evaluation density matrix particle partition calculation
   // 

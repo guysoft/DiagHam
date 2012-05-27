@@ -3,6 +3,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWannierSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian.h"
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t3", "next to next nearest neighbor hoping amplitude", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "phi", "Haldane phase on nnn hopping (multiples of pi)", 1.0/3.0);
   (*SystemGroup) += new BooleanOption  ('\n', "phase-in-pi", "Haldane phase on nnn hopping given in multiples of pi");  
+  (*SystemGroup) += new BooleanOption  ('\n', "WannierHilbertSpace", "Wannier Hilbert Space");  
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -187,6 +189,11 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+  if(Manager.GetBoolean("WannierHilbertSpace"))
+    {
+      MinKx=0;
+      MaxKx=0;
+    }
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -212,7 +219,10 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		  if(!Manager.GetBoolean("WannierHilbertSpace"))
+		    Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, i, j);
+		  else
+		    Space =  new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, j);
 		}
  	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
