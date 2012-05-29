@@ -2956,7 +2956,7 @@ Vector* ComplexVector::BroadcastClone(MPI::Intracomm& communicator, int id)
       TmpArray[1] = this->VectorId;
       TmpArray[2] = 2;
       communicator.Bcast(TmpArray, 3, MPI::INT, id);      
-      cout << "this->Dimension " << this->Dimension << endl;
+      //cout << "this->Dimension " << this->Dimension << endl;
       communicator.Bcast(this->Components, 2l * this->Dimension, MPI::DOUBLE, id);      
     }
   else

@@ -951,90 +951,6 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
       // Two-Body
       if(this->NoWannier)
 	{
-      this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
-      this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
-      	this->NbrSectorIndicesPerSum[i] = 0;      
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-      	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-      	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-      	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-      	      {
-      		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-      		int Index2 = (kx2 * this->NbrSiteY) + ky2;
-      		if (Index1 <= Index2)
-      		  ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
-      	      }
-      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
-      	{
-      	  if (this->NbrSectorIndicesPerSum[i]  > 0)
-      	    {
-      	      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
-      	      this->NbrSectorIndicesPerSum[i] = 0;
-      	    }
-      	}
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-      	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-      	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-      	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-      	      {
-      		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-      		int Index2 = (kx2 * this->NbrSiteY) + ky2;
-      		if (Index1 <= Index2)
-      		  {
-      		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
-      		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
-      		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
-      		    ++this->NbrSectorIndicesPerSum[TmpSum];    
-      		  }
-      	      }
-	}
-      else
-	{
-      if(this->A != 0)
-	{
-	  this->NbrSectorSums = this->NbrSiteY;
-	  this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
-	  for (int i = 0; i < this->NbrSectorSums; ++i)
-	    this->NbrSectorIndicesPerSum[i] = 0;      
-	  for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
-	    for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
-	      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-		for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-		  {
-		    int Index1 = (x1 * this->NbrSiteY) + ky1;
-		    int Index2 = (x2 * this->NbrSiteY) + ky2;
-		    if (Index1 <= Index2)
-		      ++this->NbrSectorIndicesPerSum[((ky1 + ky2) % this->NbrSiteY)];    
-		  }
-	  this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
-	  for (int i = 0; i < this->NbrSectorSums; ++i)
-	    {
-	      if (this->NbrSectorIndicesPerSum[i]  > 0)
-		{
-		  this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
-		  this->NbrSectorIndicesPerSum[i] = 0;
-		}
-	    }
-	  for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
-	    for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
-	      for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-		for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-		  {
-		    int Index1 = (x1 * this->NbrSiteY) + ky1;
-		    int Index2 = (x2 * this->NbrSiteY) + ky2;
-		    if (Index1 <= Index2)
-		      {
-			int TmpSum =  ((ky1 + ky2) % this->NbrSiteY);
-			this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
-			this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
-			++this->NbrSectorIndicesPerSum[TmpSum];    
-		      }
-		  }
-	}
-      else
-	{
 	  this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
 	  this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
 	  for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -1047,7 +963,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		    int Index1 = (kx1 * this->NbrSiteY) + ky1;
 		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
 		    if (Index1 <= Index2)
-		      ++this->NbrSectorIndicesPerSum[( (kx1 + kx2) *  this->NbrSiteY + (ky1 + ky2)) % (this->NbrSiteX * this->NbrSiteY)];    
+		      ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
 		  }
 	  this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
 	  for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -1067,14 +983,98 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
 		    if (Index1 <= Index2)
 		      {
-			int TmpSum = ( (kx1 + kx2) *  this->NbrSiteY + (ky1 + ky2)) % (this->NbrSiteX * this->NbrSiteY);
+			int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
 			this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 			this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 			++this->NbrSectorIndicesPerSum[TmpSum];    
 		      }
 		  }
-
 	}
+      else
+	{
+	  if(this->A != 0)
+	    {
+	      this->NbrSectorSums = this->NbrSiteY;
+	      this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
+	      for (int i = 0; i < this->NbrSectorSums; ++i)
+		this->NbrSectorIndicesPerSum[i] = 0;      
+	      for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
+		for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
+		  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		      {
+			int Index1 = (x1 * this->NbrSiteY) + ky1;
+			int Index2 = (x2 * this->NbrSiteY) + ky2;
+			if (Index1 <= Index2)
+			  ++this->NbrSectorIndicesPerSum[((ky1 + ky2) % this->NbrSiteY)];    
+		      }
+	      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+	      for (int i = 0; i < this->NbrSectorSums; ++i)
+		{
+		  if (this->NbrSectorIndicesPerSum[i]  > 0)
+		    {
+		      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+		      this->NbrSectorIndicesPerSum[i] = 0;
+		    }
+		}
+	      for (int x1 = 0; x1 < this->NbrSiteX; ++x1)
+		for (int x2 = 0; x2 < this->NbrSiteX; ++x2)
+		  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		      {
+			int Index1 = (x1 * this->NbrSiteY) + ky1;
+			int Index2 = (x2 * this->NbrSiteY) + ky2;
+			if (Index1 <= Index2)
+			  {
+			    int TmpSum =  ((ky1 + ky2) % this->NbrSiteY);
+			    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+			    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+			    ++this->NbrSectorIndicesPerSum[TmpSum];    
+			  }
+		      }
+	    }
+	  else
+	    {
+	      this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
+	      this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
+	      for (int i = 0; i < this->NbrSectorSums; ++i)
+		this->NbrSectorIndicesPerSum[i] = 0;      
+	      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+		for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+		  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		      {
+			int Index1 = (kx1 * this->NbrSiteY) + ky1;
+			int Index2 = (kx2 * this->NbrSiteY) + ky2;
+			if (Index1 <= Index2)
+			  ++this->NbrSectorIndicesPerSum[( (kx1 + kx2) *  this->NbrSiteY + (ky1 + ky2)) % (this->NbrSiteX * this->NbrSiteY)];    
+		      }
+	      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+	      for (int i = 0; i < this->NbrSectorSums; ++i)
+		{
+		  if (this->NbrSectorIndicesPerSum[i]  > 0)
+		    {
+		      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+		      this->NbrSectorIndicesPerSum[i] = 0;
+		    }
+		}
+	      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+		for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+		  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+		    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		      {
+			int Index1 = (kx1 * this->NbrSiteY) + ky1;
+			int Index2 = (kx2 * this->NbrSiteY) + ky2;
+			if (Index1 <= Index2)
+			  {
+			    int TmpSum = ( (kx1 + kx2) *  this->NbrSiteY + (ky1 + ky2)) % (this->NbrSiteX * this->NbrSiteY);
+			    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+			    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+			    ++this->NbrSectorIndicesPerSum[TmpSum];    
+			  }
+		      }
+
+	    }
 	}
 
       double FactorU = this->UPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
@@ -1379,6 +1379,10 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 	  delete[] TmpBBBIn;
 	  delete[] TmpBBBOut;
 
+	}
+      else
+	{
+	  this->NbrNBodySectorSums = 0;
 	}
     }
 }
