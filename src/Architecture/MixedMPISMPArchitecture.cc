@@ -149,7 +149,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 			      DefaultMasterPerformance  = (double)DefaultMasterCPUs;
 			      if (TmpClusterPerformanceArray !=0)
 				DefaultMasterPerformance *= TmpClusterPerformanceArray[j];
-			      DefaultMasterMemory = (TmpClusterMemoryArray[j])) << 20;
+			      DefaultMasterMemory = (TmpClusterMemoryArray[j]) << 20;
 			  cout << "Master node configuration: "<<DefaultMasterCPUs<<" CPUs, Performance: "
 			       <<DefaultMasterPerformance<<", Memory: "<<DefaultMasterMemory<<endl;
 

@@ -400,7 +400,7 @@ int main(int argc, char** argv)
   
   for(int i=0; i<InitialSpace->GetHilbertSpaceDimension(); i++)
     {
-      if(InitialState[i] != 0)
+      if (fabs(InitialState[i]) < 1e-16)
 	{
 	  for(int lz=0; lz<=LzMaxIn; lz++)
 	    {
