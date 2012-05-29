@@ -130,9 +130,12 @@ ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::~ParticleOnLatticeChe
 	  delete[] this->NBodyInteractionFactors[i];
 	}
     }
-  delete[] this->NBodyInteractionFactors;
-  delete[] this->NbrNBodySectorIndicesPerSum;
-  delete[] this->NBodySectorIndicesPerSum;
+  if (this->NbrNBodySectorSums>0)
+    {
+      delete[] this->NBodyInteractionFactors;
+      delete[] this->NbrNBodySectorIndicesPerSum;
+      delete[] this->NBodySectorIndicesPerSum;
+    }
 }
   
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -153,12 +156,21 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       if (this->TwoBodyFlag == true)
 	{
-	  for (int i = firstComponent; i < LastComponent; ++i)
+	  if (this->NbrNBodySectorSums>0)
 	    {
-	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
-	      this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);	  
+		  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		}
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	    }
-          this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	  else
+	    {
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	    }
 	}
       else
 	{
@@ -231,12 +243,21 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
 	      {	
 		if (this->TwoBodyFlag == true)
 		  {
-		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		    if (this->NbrNBodySectorSums>0)
 		      {
-			this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			  {
+			    this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			    this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			  }
+			this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 		      }
-		    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+		    else
+		      {
+			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+		      }
 		  }
 		else
 		  {
@@ -275,12 +296,21 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       if (this->TwoBodyFlag == true)
 	{
-	  for (int i = firstComponent; i < LastComponent; ++i)
+	  if (this->NbrNBodySectorSums>0)
 	    {
-	      this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-	      this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		}
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
 	    }
-	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	  else
+	    {
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	    }
 	}
       else
 	{
@@ -397,12 +427,21 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::LowLev
       {	
 	if (this->TwoBodyFlag == true)
 	  {
-	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	    if (this->NbrNBodySectorSums>0)
 	      {
-		this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-		this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  {
+		    this->EvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		    this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		  }
+		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
 	      }
-	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	    else
+	      {
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  this->EvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	      }
 	  }
 	else
 	  {
@@ -437,12 +476,21 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       if (this->TwoBodyFlag == true)
 	{
-	  for (int i = firstComponent; i < LastComponent; ++i)
+	  if (this->NbrNBodySectorSums>0)
 	    {
-	      this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-	      this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+		}
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
 	    }
-	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	  else
+	    {
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSource, vDestination);
+	    }
 	}
       else
 	{
@@ -525,12 +573,21 @@ ComplexVector& ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
 	      {	
 		if (this->TwoBodyFlag == true)
 		  {
-		    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		    if (this->NbrNBodySectorSums>0)
 		      {
-			this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
-			this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			  {
+			    this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			    this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			  }
+			this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
 		      }
-                    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+		    else
+		      {
+			for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+			  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSource, vDestination);
+			this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSource, vDestination);
+		      }
 		  }
 		else
 		  {
@@ -568,12 +625,21 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
       ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
       if (this->TwoBodyFlag == true)
 	{
-	  for (int i = firstComponent; i < LastComponent; ++i)
+	  if (this->NbrNBodySectorSums>0)
 	    {
-	      this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-	      this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		{
+		  this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		}
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
 	    }
-	  this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	  else
+	    {
+	      for (int i = firstComponent; i < LastComponent; ++i)
+		this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+	      this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent, LastComponent, 1, vSources, vDestinations, nbrVectors);
+	    }
 	}
       else
 	{
@@ -709,12 +775,21 @@ ComplexVector* ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermit
       {	
 	if (this->TwoBodyFlag == true)
 	  {
-	    for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+	    if (this->NbrNBodySectorSums>0)
 	      {
-		this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
-		this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  {
+		    this->HermitianEvaluateMNNBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		    this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		  }
+		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
 	      }
-	    this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	    else
+	      {
+		for (int i = firstComponent + l; i < LastComponent; i += this->FastMultiplicationStep)
+		  this->HermitianEvaluateMNTwoBodyAddMultiplyComponent(TmpParticles, i, vSources, vDestinations, nbrVectors, Coefficient2);
+		this->EvaluateMNOneBodyAddMultiplyComponent(TmpParticles, firstComponent + l, LastComponent, this->FastMultiplicationStep, vSources, vDestinations, nbrVectors);
+	      }
 	  }
 	else
 	  {
@@ -969,7 +1044,8 @@ long ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::PartialFastMulti
   long Memory = 0;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
-  this->EvaluateMNNBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+  if (this->NbrNBodySectorSums>0)
+    this->EvaluateMNNBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   if (this->TwoBodyFlag == true)
     {
       this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
@@ -1045,8 +1121,9 @@ void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::PartialEnableFas
   for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
     {
       long TotalPos = 0;
-      this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
-							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      if (this->NbrNBodySectorSums>0)
+	this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
+							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       if (this->TwoBodyFlag == true)
 	this->EvaluateMNTwoBodyFastMultiplicationComponent(TmpParticles, i, this->InteractionPerComponentIndex[Pos], 
 							   this->InteractionPerComponentCoefficient[Pos], TotalPos);
