@@ -2882,3 +2882,241 @@ void FermionOnSphereTwoLandauLevels::MonomialsTimesSlaterProjectionReverse(unsig
   while (std::prev_permutation(monomial,monomial+this->NbrFermions));
   delete [] State;
 }
+
+
+
+// compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
+// lllFermionState = real vector where the lowest Landau level fermionic state is stored
+// fermionState = real vector where the two Landau level fermionic state is stored
+// outputVector = real vector where the result has to be stored
+// lllFermionSpace = pointer to the lowest Landau level Hilbert space
+// finalSpace = pointer to the final Hilbert space
+// firstComponent = first component to be computed
+// nbrComponent = number of components to be computed
+
+void FermionOnSphereTwoLandauLevels::FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphereTwoLandauLevels *  fermionSpace2 , BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent)
+{
+  map<unsigned long , double> SortingMap;
+  map<unsigned long , double>::iterator It;
+  
+  unsigned long* Slater1 = new unsigned long[this->NbrFermions];
+  unsigned long* Slater2 = new unsigned long[this->NbrFermions];
+
+  int NbrMax = firstComponent + nbrComponent;
+		
+  FactorialCoefficient Coefficient;
+  for (int j = 0; j < this->HilbertSpaceDimension; j++)
+    {
+      if(fermionState1[j] != 0)
+	{
+	  this->ConvertToMonomial(this->StateDescription[j], Slater1);
+	  for (int i = firstComponent; i < NbrMax; i++)
+	    {
+	      if(fermionState2[i] != 0)
+		{
+			fermionSpace2->ConvertToMonomial(fermionSpace2->StateDescription[j], Slater2);
+		  this->SecondLandauLevelSlaterTimesSlaterProjection(Slater1,Slater2, SortingMap, finalSpace);
+		  for ( It = SortingMap.begin(); It != SortingMap.end(); It++)
+		    {
+		      int FTmpLzMax = finalSpace->LzMax + this->NbrFermions - 1;
+		      while ((( ((*It).first) >> FTmpLzMax) & 0x1ul) == 0x0ul)
+			--FTmpLzMax;
+		      finalSpace->FermionToBoson((*It).first, FTmpLzMax, finalSpace->TemporaryState, finalSpace->TemporaryStateLzMax);
+		      Coefficient.SetToOne();
+		      for(int p = 0; p < finalSpace->TemporaryStateLzMax + 1; p++)
+			{
+			  Coefficient.FactorialMultiply(finalSpace->TemporaryState[p]);
+			}
+		      outputVector[finalSpace->FermionBasis->FindStateIndex((*It).first, FTmpLzMax)] += fermionState2[i] * fermionState1[j] * (*It).second * Coefficient.GetIntegerValue();
+		    }
+		    SortingMap.clear();
+		}
+	    }
+	}
+    }
+}
+
+// compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in three Landau levels
+//
+// slater = array where the slater determinant in the two landau levels is stored in its monomial representation
+// lllslater = array where the slater determinant in the LLL is stored in its monomial representation
+// variable = reference on the array where the indice of fermions in the second Landau level is stored
+// nbrVariable = number of fermions in the second Landau level
+// sortingMap = map in which the generated states and their coefficient will be stored
+// finalSpace = pointer to the final HilbertSpace
+
+void FermionOnSphereTwoLandauLevels::SecondLandauLevelSlaterTimesSlaterProjection(unsigned long* slater1, unsigned long* slater2, map <unsigned long, double> & sortingMap, BosonOnSphereShort* finalSpace)
+{
+  unsigned long * State = new unsigned long[this->NbrFermions];
+  unsigned long TmpState = 0ul;
+  
+  pair <map <unsigned long, double>::iterator, bool> InsertionResult;
+  int LzMax2 = finalSpace->LzMax + 4 - this->LzMax;
+  double Coef = 1.0;
+  long PowerIn1;
+	long PowerIn2;
+  long PowerOut;
+  long Numerator;
+  long AlphaIn = this->LzMax * (this->LzMax-1);
+  
+	long FinalDenominateur = (finalSpace->LzMax+4) * (finalSpace->LzMax+3);
+	long InitialDenominateur = LzMax2 * this->LzMax;
+	long BetaDenominateur = InitialDenominateur * (finalSpace->LzMax+4);
+	
+	
+	long TmpLzMaxUp = this->LzMaxUp;
+  long TmpFinalLzMaxUp = 2l + finalSpace->LzMax;
+  long InverseFactor = TmpFinalLzMaxUp * TmpLzMaxUp;
+	
+	
+  for (int i = 0; (i < this->NbrFermions) && (Coef != 0.0); i++)
+	{
+    State[i] = (slater1[i]>>1) + (slater2[i]>>1);
+
+		PowerIn1 = (slater1[i]>>1);
+		PowerIn2 = (slater2[i]>>1);
+		PowerOut = State[i];
+		if(slater1[i] & 0x01 != 0)
+		{
+			if(slater2[i] & 0x01 != 0)
+			{
+				long Beta = PowerIn1 * (LzMax2) * (finalSpace->LzMax + 0x4l) + PowerIn2 * (this->LzMax)  * (finalSpace->LzMax + 0x4l) - 0x2ul * PowerOut * (LzMax2) * (this->LzMax);
+				Numerator = PowerIn1 * PowerIn2 * FinalDenominateur * BetaDenominateur * (finalSpace->LzMax + 2) -  (PowerOut-0x1ul)* PowerOut * InitialDenominateur*BetaDenominateur * (finalSpace->LzMax + 2) + Beta * (PowerOut-0x1ul) * FinalDenominateur*InitialDenominateur;
+				if(Numerator == 0x0l)
+					Coef = 0.0;
+				else
+					Coef *= ((double)Numerator/((double) FinalDenominateur*InitialDenominateur*(finalSpace->LzMax + 2)*BetaDenominateur));
+				
+			}
+			else
+			{
+				
+			Numerator = -(PowerIn1 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * this->LzMaxUp);
+      if (Numerator == 0l)
+				Coef = 0.0;
+      else
+			{
+				Coef *= ((double) Numerator);
+				Coef /= ((double) (2l + finalSpace->LzMax)* this->LzMaxUp);
+			}
+			}
+		}
+		else
+		{
+			if(slater2[i] & 0x01 != 0)
+				{
+			Numerator = -(PowerIn2 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * LzMax2);
+      if (Numerator == 0l)
+				Coef = 0.0;
+      else
+			{
+				Coef *= ((double) Numerator);
+				Coef /= ((double) (2l + finalSpace->LzMax)* LzMax2);
+			}
+			}
+		}
+		
+		}
+	
+  unsigned long Mask=0ul;
+  unsigned long Sign = 0ul;
+  if(Coef != 0.0)
+    {
+			
+      for (int i = 0; (i < this->NbrFermions) ; i++)
+	{
+	  State[i] -= 2;
+	}
+	for (int i = 0; (i < this->NbrFermions) ; i++)
+		
+      InsertionResult = sortingMap.insert (pair<unsigned long,double> (finalSpace->ConvertFromMonomial(State), Coef));
+      if (InsertionResult.second == false)
+	{
+	  InsertionResult.first->second += Coef;
+	}
+    }
+  while (std::prev_permutation(slater2, slater2 + this->NbrFermions))
+    {
+      Coef = 1.0;
+    for (int i = 0; (i < this->NbrFermions) && (Coef != 0.0); i++)
+	{
+    State[i] = (slater1[i]>>1) + (slater2[i]>>1);
+		PowerIn1 = (slater1[i]>>1);
+		PowerIn2 = (slater2[i]>>1);
+		PowerOut = State[i];
+		
+		if(slater1[i] & 0x01 != 0)
+		{
+			if(slater2[i] & 0x01 != 0)
+			{
+				long Beta = PowerIn1 * (LzMax2) * (finalSpace->LzMax + 4) + PowerIn2 * (this->LzMax)  * (finalSpace->LzMax + 4) - 2 * PowerOut * (LzMax2) * (this->LzMax);
+					Numerator = PowerIn1 * PowerIn2 * FinalDenominateur * BetaDenominateur * (finalSpace->LzMax + 2) -  (PowerOut-0x1ul)* PowerOut * InitialDenominateur*BetaDenominateur * (finalSpace->LzMax + 2) + Beta * (PowerOut-0x1ul) * FinalDenominateur*InitialDenominateur;
+					if(Numerator == 0x0l)
+						Coef = 0.0;
+					else
+						Coef *= ((double)Numerator/((double) FinalDenominateur*InitialDenominateur*(finalSpace->LzMax + 2)*BetaDenominateur));
+				
+			}
+			else
+			{
+				
+			Numerator = -(PowerIn1 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * this->LzMaxUp);
+      if (Numerator == 0l)
+				Coef = 0.0;
+      else
+			{
+				Coef *= ((double) Numerator);
+				Coef /= ((double) (2l + finalSpace->LzMax)* this->LzMaxUp);
+			}
+			}
+		}
+		else
+		{
+			if(slater2[i] & 0x01 != 0)
+				{
+			Numerator = -(PowerIn2 * (2l + finalSpace->LzMax)) + ((PowerOut - 1) * LzMax2);
+      if (Numerator == 0l)
+				Coef = 0.0;
+      else
+			{
+				Coef *= ((double) Numerator);
+				Coef /= ((double) (2l + finalSpace->LzMax)* LzMax2);
+			}
+			}
+		}
+		
+		}
+		
+      if( Coef != 0.0 )
+	{
+	  TmpState = 0ul;
+	  Sign = 0ul;
+	  for (int i = 0; i < this->NbrFermions;i++)
+	    {
+	      State[i] -= 2;
+				
+	      Mask = (1ul << slater2[i]);
+	      unsigned long TmpState2 = TmpState & (Mask - 1ul);
+#ifdef  __64_BITS__
+	      TmpState2 ^= TmpState2 >> 32;
+#endif
+	      TmpState2 ^= TmpState2 >> 16;
+	      TmpState2 ^= TmpState2 >> 8;
+	      TmpState2 ^= TmpState2 >> 4;
+	      TmpState2 ^= TmpState2 >> 2;
+	      TmpState2 ^= TmpState2 >> 1;
+	      Sign ^= TmpState2;
+	      TmpState |= Mask;
+	    }
+	  SortArrayDownOrdering(State,this->NbrFermions);
+	  if((Sign & 0x1ul) != 0ul)
+	    Coef *= -1.0;
+	  InsertionResult = sortingMap.insert (pair<unsigned long,double> (finalSpace->ConvertFromMonomial(State), Coef));
+	  if (InsertionResult.second == false)
+	    {
+	      InsertionResult.first->second += Coef;
+	    }
+	}
+    }
+  delete [] State;
+}

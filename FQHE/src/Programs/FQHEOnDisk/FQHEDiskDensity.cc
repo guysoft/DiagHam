@@ -2,6 +2,7 @@
 #include "Matrix/ComplexMatrix.h"
 
 #include "HilbertSpace/BosonOnDisk.h"
+#include "HilbertSpace/BosonOnDiskShort.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "HilbertSpace/FermionOnDiskUnlimited.h"
 #include "HilbertSpace/ParticleOnSphere.h"
@@ -541,7 +542,8 @@ bool FQHEDiskDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& fo
 	}
       else
 	{
-	  space = new BosonOnDisk(nbrParticles, totalLz, forceMaxMomentum);
+	  cout << nbrParticles <<" " <<totalLz<<" " <<forceMaxMomentum<<endl;
+	  space = new BosonOnDiskShort(nbrParticles, totalLz, forceMaxMomentum);
 	}
     }
   else

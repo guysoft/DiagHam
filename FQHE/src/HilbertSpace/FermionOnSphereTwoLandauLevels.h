@@ -397,7 +397,19 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = reference to space of output vector space
   void  ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, FermionOnSphere * finalSpace);
 
- protected:
+	// compute the projection of the product of a fermionic state in the lowest Landau level and a fermionic state in the two lowest Landau levels
+	// lllFermionState = real vector where the lowest Landau level fermionic state is stored
+	// fermionState = real vector where the two Landau level fermionic state is stored
+	// outputVector = real vector where the result has to be stored
+	// lllFermionSpace = pointer to the lowest Landau level Hilbert space
+	// finalSpace = pointer to the final Hilbert space
+	// firstComponent = first component to be computed
+	// nbrComponent = number of components to be computed
+
+	virtual void FermionicStateTimeFermionicState(RealVector& fermionState1, RealVector& fermionState2, RealVector& outputVector, FermionOnSphereTwoLandauLevels *  fermionSpace2 , BosonOnSphereShort* finalSpace, int firstComponent,int nbrComponent);
+
+
+protected:
   
   // evaluate Hilbert space dimension
   //
@@ -550,6 +562,18 @@ class FermionOnSphereTwoLandauLevels :  public FermionOnSphereWithSpin
   // finalSpace = pointer to the final HilbertSpace
   virtual void MonomialsTimesSlaterProjectionReverse(unsigned long* slater, unsigned long* monomial, map <unsigned long, double> & sortingMap, BinomialCoefficients& binomialsCoefficient, FermionOnSphere* finalSpace);
 
+
+	// compute the product and the projection of a Slater determinant in the LLL and a Slater determinant in three Landau levels
+//
+// slater = array where the slater determinant in the two landau levels is stored in its monomial representation
+// lllslater = array where the slater determinant in the LLL is stored in its monomial representation
+// variable = reference on the array where the indice of fermions in the second Landau level is stored
+// nbrVariable = number of fermions in the second Landau level
+// sortingMap = map in which the generated states and their coefficient will be stored
+// finalSpace = pointer to the final HilbertSpace
+
+	virtual void SecondLandauLevelSlaterTimesSlaterProjection(unsigned long* slater1, unsigned long* slater2, map <unsigned long, double> & sortingMap, BosonOnSphereShort* finalSpace);
+	
 
 };
 
