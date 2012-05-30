@@ -288,7 +288,7 @@ void ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::EvaluateIntera
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
 		  Complex Tmp = 0.0;
-		  for (int Site = 0; Site < this->TightBindingModel->GetNbrStatePerBand(); ++ Site)
+		  for (int Site = 0; Site < this->TightBindingModel->GetNbrBands(); ++Site)
 		    {
 		      Tmp += (Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site] * Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site]);
 		      Tmp += (Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site] * Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site]);

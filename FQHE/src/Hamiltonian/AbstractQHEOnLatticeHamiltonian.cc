@@ -788,6 +788,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(C
 ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 									    int firstComponent, int nbrComponent)
 {
+  cout << "toto!" << endl;
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {

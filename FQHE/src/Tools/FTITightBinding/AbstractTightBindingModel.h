@@ -60,6 +60,11 @@ class AbstractTightBindingModel
   //
   virtual ~AbstractTightBindingModel();
 
+  // get the number of bands
+  //
+  // return value =  number of bands
+  virtual int GetNbrBands();
+
   // get the number of states per band
   //
   // return value =  number of states per band
@@ -124,6 +129,15 @@ class AbstractTightBindingModel
   virtual void ComputeBandStructure(long minStateIndex = 0l, long nbrStates = 0l) = 0;
 
 };
+
+// get the number of bands
+//
+// return value =  number of bands
+
+inline int AbstractTightBindingModel::GetNbrBands()
+{
+  return this->NbrBands;
+}
 
 // get the number of states per band
 //
