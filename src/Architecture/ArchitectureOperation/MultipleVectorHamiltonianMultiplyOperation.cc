@@ -215,7 +215,9 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
 
   Vector** TmpSourceVectors;
   Vector** TmpDestinationVectors;
-  
+
+
+  // TESTING:
   if (this->UseConjugateFlag == true)
     {
       TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);  
@@ -261,8 +263,17 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
     {
       this->RealSourceVectors = 0;
       this->RealDestinationVectors = 0;
-      this->ComplexSourceVectors = (ComplexVector*) TmpSourceVectors;
-      this->ComplexDestinationVectors = (ComplexVector*) TmpDestinationVectors;       
+      this->ComplexSourceVectors = new ComplexVector[this->NbrVectors];
+      this->ComplexDestinationVectors = new ComplexVector[this->NbrVectors];
+      for (int i = 0; i < this->NbrVectors; ++i)
+	{
+	  this->ComplexSourceVectors[i] = *((ComplexVector*) TmpSourceVectors[i]);
+	  this->ComplexDestinationVectors[i] = *((ComplexVector*) TmpDestinationVectors[i]);
+	  delete TmpSourceVectors[i];
+	  delete TmpDestinationVectors[i];
+	}
+      delete[] TmpSourceVectors;
+      delete[] TmpDestinationVectors;
     }
 }
   
@@ -383,7 +394,6 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
 	SegmentIndices[i]=this->FirstComponent+i*Step;
       SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
     }
-
 
   MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
   for (int i = 0; i < TmpNbrThreads; ++i)
@@ -525,7 +535,11 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   if (architecture->VerboseMode())
     gettimeofday (&TotalStartingTime, 0);
   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+    {
+      SMPArchitecture* TmpArch = (SMPArchitecture*) architecture->GetLocalArchitecture();
+      cout << "Architecture pointer "<< TmpArch <<endl;
+      this->ArchitectureDependentApplyOperation(TmpArch);
+    }
   else
     this->RawApplyOperation();
   if (architecture->VerboseMode())

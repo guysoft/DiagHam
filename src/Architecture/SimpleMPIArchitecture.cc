@@ -848,7 +848,7 @@ Vector** SimpleMPIArchitecture::ScatterVectorArray(int& nbrVectors, Vector* vect
       {
 	TmpIndices[0] = (int) this->MinimumIndex;
 	TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
-	MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1); 	      
+	MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1);
 	Vector** TmpVectorArray = new Vector*[nbrVectors];
 	for (int j = 0; j < nbrVectors; ++j)		 
 	  {	    

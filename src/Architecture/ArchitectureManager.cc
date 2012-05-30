@@ -96,15 +96,15 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
   if ((this->Options != 0) && (this->Architecture == 0))
     {
 #ifdef __SMP__
-      bool SMPFlag = ((BooleanOption*) (*(this->Options))["SMP"])->GetBoolean();
+      bool SMPFlag = this->Options->GetBoolean("SMP");
 #else 
       bool SMPFlag = false;
 #endif
 #ifdef __MPI__
-      bool MPIFlag = ((BooleanOption*) (*(this->Options))["mpi"])->GetBoolean();
-      char* MPILogFile = ((SingleStringOption*) (*(this->Options))["cluster-profil"])->GetString();
+      bool MPIFlag = this->Options->GetBoolean("mpi");
+      char* MPILogFile = this->Options->GetString("cluster-profil");
 #ifdef __SMP__
-      if (((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString() != 0)
+      if (this->Options->GetString("mpi-smp") != 0)
 	{
 	  SMPFlag = true;
 	  MPIFlag = true;
@@ -117,7 +117,7 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
       bool MPIFlag = false;
       char* MPILogFile = 0;
 #endif
-      int NbrProcessor = ((SingleIntegerOption*) (*(this->Options))["processors"])->GetInteger();
+      int NbrProcessor = (this->Options->GetInteger("processors"));
       if (SMPFlag == false)
 	if (MPIFlag == false)
 	  this->Architecture = new MonoProcessorArchitecture;
@@ -127,7 +127,7 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 	if (MPIFlag == false)
 	  this->Architecture = new SMPArchitecture(NbrProcessor, this->Options->GetString("smp-profil"));
 	else
-	  this->Architecture = new MixedMPISMPArchitecture(((SingleStringOption*) (*(this->Options))["mpi-smp"])->GetString(), MPILogFile);
+	  this->Architecture = new MixedMPISMPArchitecture(this->Options->GetString("mpi-smp"), MPILogFile);
 	  
     }
   return this->Architecture;
