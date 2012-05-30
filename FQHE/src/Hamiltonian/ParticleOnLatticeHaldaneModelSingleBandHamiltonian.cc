@@ -57,17 +57,14 @@ using std::ostream;
 // nbrSiteY = number of sites in the y direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive two body second neareast neighbor interaction
-// t1 = hoping amplitude between neareast neighbor sites
-// t2 = hoping amplitude between next neareast neighbor sites
-// phi =  Haldane phase on nnn hopping
-// mus = sublattice staggered chemical potential 
-// gammaX = boundary condition twisting angle along x
-// gammaY = boundary condition twisting angle along y
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ParticleOnLatticeHaldaneModelSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ParticleOnLatticeHaldaneModelSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+												       double uPotential, double vPotential, 
+												       Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -75,12 +72,7 @@ ParticleOnLatticeHaldaneModelSingleBandHamiltonian::ParticleOnLatticeHaldaneMode
   this->NbrSiteY = nbrSiteY;
   this->LzMax = nbrSiteX * nbrSiteY - 1;
   this->HamiltonianShift = 0.0;
-  this->NNHoping = t1;
-  this->NextNNHoping = t2;
-  this->HaldanePhase = phi;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
+  this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -131,40 +123,19 @@ ParticleOnLatticeHaldaneModelSingleBandHamiltonian::~ParticleOnLatticeHaldaneMod
 void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)
-    this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
     {
-      double x=2*M_PI*((double)kx + this->GammaX)/this->NbrSiteX;
+      this->OneBodyInteractionFactors = new double [this->TightBindingModel->GetNbrStatePerBand()];
+    }
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
-        double y=2*M_PI*((double)ky + this->GammaY)/this->NbrSiteY;
-	int Index = (kx * this->NbrSiteY) + ky;
-        Complex B1 = this->NNHoping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
-        double d0 = + 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x+y));
-        double d3 = + 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(x) + sin(y) - sin(x+y)) + this->MuS;
-	HermitianMatrix TmpOneBobyHamiltonian(2, true);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d0 + d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d0 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	OneBodyBasis[Index] = TmpMatrix;	
+	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
 	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0);
-	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
+	  this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }
-  }
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {

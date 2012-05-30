@@ -52,16 +52,6 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
 
  protected:
   
-  // hoping amplitude between neareast neighbor sites
-  double NNHopping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHopping;
-  // hoping amplitude between next to next neareast neighbor sites
-  double NextNextNNHopping;
-  // phase on nnn hopping
-  double HaldanePhase;
-  // four times the sublattice staggered chemical potential 
-  double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
   // second nearest neighbor density-density potential strength
@@ -70,10 +60,6 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   double WPotential;
   // next-to-nearest neighbor density-density-density potential strength
   double SPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
@@ -102,19 +88,13 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   // vPotential = strength of the repulsive two body second neareast neighbor interaction
   // wPotential = strength of the repulsive three body neareast neighbor interaction
   // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-  // t1 = hoping amplitude between neareast neighbor sites
-  // t2 = hoping amplitude between next neareast neighbor sites
-  // t3 = hoping amplitude between next to next neareast neighbor sites
-  // phi =  Haldane phase on nnn hopping
-  // mus = sublattice staggered chemical potential 
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-							      double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+							      Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -126,11 +106,6 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian : public Parti
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
   // compute all the phase precalculation arrays 
   //

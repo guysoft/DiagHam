@@ -141,7 +141,7 @@ double AbstractTightBindingModel::ComputeDirectBandGap(int band1, int band2)
   return Gap;
 }
 
-// write the full band structure information i a binary file
+// write the full band structure information in a binary file
 //
 // fileName = name of the output file 
 // return value = true if no error occured  
@@ -167,3 +167,37 @@ bool AbstractTightBindingModel::WriteBandStructure(char* fileName)
   return true;
 }
 
+// write the full band structure information in an ASCII file
+//
+// fileName = name of the output file 
+// return value = true if no error occured  
+
+bool AbstractTightBindingModel::WriteBandStructureASCII(char* fileName)
+{
+  ofstream File;
+  this->WriteASCIIHeader(File, '#');
+  File << "# index";
+  for (int i = 0; i < this->NbrBands; ++i)
+    File <<  "    E_" << i;
+  for (int i = 0; i < this->NbrBands; ++i)
+    for (int j = 0; j < this->NbrBands; ++j)
+      File <<  "    U_{" << i << ", " << j << "}";
+  File << endl;
+  Complex Tmp;
+  for (int LinearizedMomentumIndex = 0; LinearizedMomentumIndex < this->NbrStatePerBand; ++LinearizedMomentumIndex)
+    {
+      File << LinearizedMomentumIndex; 
+      for (int i = 0; i < this->NbrBands; ++i)
+	File << " " <<  this->GetEnergy(i, LinearizedMomentumIndex);
+      for (int i = 0; i < this->NbrBands; ++i)
+	for (int j = 0; j < this->NbrBands; ++j)
+	  {
+	    this->GetOneBodyMatrix(LinearizedMomentumIndex).GetMatrixElement(i, j, Tmp);
+	    File <<  "    " << Tmp;
+	  }
+      File << endl;
+    }
+
+  File.close();
+  return true;
+}

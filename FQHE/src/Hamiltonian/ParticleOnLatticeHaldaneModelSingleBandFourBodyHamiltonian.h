@@ -69,18 +69,13 @@ class ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian : public Partic
   // vPotential = strength of the repulsive two body second neareast neighbor interaction
   // wPotential = strength of the repulsive three body neareast neighbor interaction
   // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-  // t1 = hoping amplitude between neareast neighbor sites
-  // t2 = hoping amplitude between next neareast neighbor sites
-  // phi =  Haldane phase on nnn hopping
-  // mus = sublattice staggered chemical potential 
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
-          double uPotential, double vPotential, double wPotential, double sPotential,
-          double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+							     double uPotential, double vPotential, double wPotential, double sPotential,
+							     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

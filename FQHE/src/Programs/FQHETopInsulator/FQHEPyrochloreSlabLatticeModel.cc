@@ -76,6 +76,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
+  (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -145,12 +148,32 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
+      bool ExportOneBody = false;
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
+	ExportOneBody = true;
       TightBindingModelPyrochloreSlabLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-layers"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("mu-s"), 
-						     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+						     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
       cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
+      if (ExportOneBody == true)
+	{
+	  char* BandStructureOutputFile = new char [512];
+	  if (Manager.GetString("export-onebodyname") != 0)
+	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+	  else
+	    sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+	  if (Manager.GetBoolean("export-onebody") == true)
+	    {
+	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+	    }
+	  else
+	    {
+	      TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+	    }
+	  delete[] BandStructureOutputFile;
+	}	  
       return 0;
     }
 

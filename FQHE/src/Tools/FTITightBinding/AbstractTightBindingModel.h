@@ -94,11 +94,17 @@ class AbstractTightBindingModel
   // return value = true if no error occured
   virtual bool WriteAsciiSpectrum(char* fileName);
 
-  // write the full band structure information i a binary file
+  // write the full band structure information in a binary file
   //
   // fileName = name of the output file 
   // return value = true if no error occured  
   virtual bool WriteBandStructure(char* fileName);
+
+  // write the full band structure information in an ASCII file
+  //
+  // fileName = name of the output file 
+  // return value = true if no error occured  
+  virtual bool WriteBandStructureASCII(char* fileName);
 
   // compute the spread of a given band
   // 

@@ -66,19 +66,14 @@ ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian::ParticleOnLatticeHal
 // vPotential = strength of the repulsive two body second nearest neighbor interaction
 // wPotential = strength of the repulsive three body nearest neighbor interaction
 // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-// t1 = hoping amplitude between nearest neighbor sites
-// t2 = hoping amplitude between next nearest neighbor sites
-// phi =  Haldane phase on nnn hopping
-// mus = sublattice staggered chemical potential 
-// gammaX = boundary condition twisting angle along x
-// gammaY = boundary condition twisting angle along y
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian::ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
-        double uPotential, double vPotential, double wPotential, double sPotential,
-        double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+														       double uPotential, double vPotential, double wPotential, double sPotential,
+														       Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -92,12 +87,7 @@ ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian::ParticleOnLatticeHal
 
   this->HamiltonianShift = 0.0;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
-  this->NNHopping = t1;
-  this->NextNNHopping = t2;
-  this->HaldanePhase = phi;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
+  this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -151,10 +141,19 @@ ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian::~ParticleOnLatticeHa
 void ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)
-    this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
-  this->ComputeOneBodyMatrices(OneBodyBasis);
+    {
+      this->OneBodyInteractionFactors = new double [this->TightBindingModel->GetNbrStatePerBand()];
+    }
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      {
+	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	if (this->FlatBand == false)
+	  this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
+      }
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
   {

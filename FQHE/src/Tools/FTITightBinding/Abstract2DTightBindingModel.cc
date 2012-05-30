@@ -80,3 +80,43 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrum(char* fileName)
   File.close();
   return true;
 }
+
+// write the full band structure information in an ASCII file
+//
+// fileName = name of the output file 
+// return value = true if no error occured  
+
+bool Abstract2DTightBindingModel::WriteBandStructureASCII(char* fileName)
+{
+  ofstream File;
+  File.open(fileName);
+  this->WriteASCIIHeader(File, '#');
+  File << "# kx    ky";
+  for (int i = 0; i < this->NbrBands; ++i)
+    File <<  "    E_" << i;
+  for (int i = 0; i < this->NbrBands; ++i)
+    for (int j = 0; j < this->NbrBands; ++j)
+      File <<  "    U_{" << i << ", " << j << "}";
+  File << endl;
+  Complex Tmp;
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    {
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	{
+	  int LinearizedMomentumIndex = this->GetLinearizedMomentumIndex(kx, ky);
+	  File << kx << " " << ky; 
+	  for (int i = 0; i < this->NbrBands; ++i)
+	    File << " " << this->EnergyBandStructure[i][LinearizedMomentumIndex];
+	  for (int i = 0; i < this->NbrBands; ++i)
+	    for (int j = 0; j < this->NbrBands; ++j)
+	      {
+		this->GetOneBodyMatrix(LinearizedMomentumIndex).GetMatrixElement(i, j, Tmp);
+		File <<  "    " << Tmp;
+	      }
+	  File << endl;
+	}
+    }
+
+  File.close();
+  return true;
+}

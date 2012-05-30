@@ -52,14 +52,6 @@ class ParticleOnLatticeHaldaneModelSingleBandHamiltonian : public ParticleOnLatt
 
  protected:
   
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // phase on nnn hopping
-  double HaldanePhase;
-  // four times the sublattice staggered chemical potential 
-  double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
   // second nearest neighbor density-density potential strength
@@ -82,16 +74,12 @@ class ParticleOnLatticeHaldaneModelSingleBandHamiltonian : public ParticleOnLatt
   // nbrSiteY = number of sites in the y direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body second neareast neighbor interaction
-  // t1 = hoping amplitude between neareast neighbor sites
-  // t2 = hoping amplitude between next neareast neighbor sites
-  // phi =  Haldane phase on nnn hopping
-  // mus = sublattice staggered chemical potential 
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeHaldaneModelSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double t1, double t2, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeHaldaneModelSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, 
+						     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
