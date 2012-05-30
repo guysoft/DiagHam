@@ -393,8 +393,10 @@ int main(int argc, char** argv)
   // 	    }
   // 	}
   //   }
-      return 0;    
-    }
+  delete [] StatisticPrefix;
+  delete [] FilePrefix;
+  return 0;    
+}
 
   // compute the single particle spectrum 
   //

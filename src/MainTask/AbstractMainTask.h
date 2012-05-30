@@ -51,6 +51,7 @@ class AbstractMainTask
   // list of managers of architecture operations that can be used by the main task
   List<AbstractArchitectureOperationManager*> OperationManagers;
 
+
  public:
 
   // virtual destructor

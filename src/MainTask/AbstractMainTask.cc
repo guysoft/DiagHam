@@ -40,6 +40,15 @@
 
 AbstractMainTask::~AbstractMainTask()
 {
+  if (this->OperationManagers.GetNbrElement()>0)
+    {
+      ListIterator<AbstractArchitectureOperationManager*> Operations(this->OperationManagers);
+      AbstractArchitectureOperationManager** TmpOperation;
+      while ( (TmpOperation = Operations()) != NULL )
+	{
+	  delete *TmpOperation;
+	}
+    }
 }
 
 // set architecture binded to the task
@@ -68,7 +77,11 @@ bool AbstractMainTask::ExecuteOperation(int operationID)
 	  if (TmpOperation == 0)
 	    return false;
 	  else
-	    return TmpOperation->ApplyOperation(this->Architecture);
+	    {
+	      bool Rst = TmpOperation->ApplyOperation(this->Architecture);
+	      delete TmpOperation;
+	      return Rst;
+	    }
 	}
     }
   return false;

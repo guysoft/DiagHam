@@ -133,6 +133,8 @@ bool QHEParticlePrecalculationOperation::ArchitectureDependentApplyOperation(SMP
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     delete TmpOperations[i];
   delete[] TmpOperations;
+  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
+    delete [] SegmentIndices;
   return true;  
 }
 

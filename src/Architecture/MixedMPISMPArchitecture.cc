@@ -189,6 +189,11 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 		    }
 		  else
 		    ErrorFlag = true;
+		  // clean up temporary arrays
+		  if (ClusterFile.GetNbrColumns() > 2)
+		    delete [] TmpClusterPerformanceArray;
+		  if (ClusterFile.GetNbrColumns() > 3)
+		    delete [] TmpClusterMemoryArray;
 		}
 	    }
 	  if (ErrorFlag == true)

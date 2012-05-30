@@ -181,6 +181,15 @@ BandDiagonalHermitianMatrix::~BandDiagonalHermitianMatrix()
       delete[] this->RealUpperOffDiagonalElements;
       delete[] this->ImaginaryUpperOffDiagonalElements;
       delete[] this->DiagonalElements;
+
+      if (this->LapackWorkAreaDimension>0)
+	{
+	  delete[] this->LapackMatrix;
+	  if (this->LapackEVMatrix!=NULL)
+	    delete[] this->LapackEVMatrix;
+	  delete[] this->LapackWorkingArea;
+	  delete[] this->LapackRealWorkingArea;
+	}
     }
 }
 
@@ -1401,7 +1410,8 @@ RealDiagonalMatrix& BandDiagonalHermitianMatrix::LapackDiagonalize (RealDiagonal
 	  delete [] LapackMatrix;
 	  delete [] LapackWorkingArea;
 	  delete [] LapackRealWorkingArea;
-	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
+	  if (LapackEVMatrix!=NULL)
+	    delete [] LapackEVMatrix;	  
 	}
       this->LapackMatrix = new doublecomplex [this->NbrRow * (this->NbrRow+1)/2];
       this->LapackEVMatrix = NULL;

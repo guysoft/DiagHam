@@ -535,11 +535,7 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
   if (architecture->VerboseMode())
     gettimeofday (&TotalStartingTime, 0);
   if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-    {
-      SMPArchitecture* TmpArch = (SMPArchitecture*) architecture->GetLocalArchitecture();
-      cout << "Architecture pointer "<< TmpArch <<endl;
-      this->ArchitectureDependentApplyOperation(TmpArch);
-    }
+    this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
   else
     this->RawApplyOperation();
   if (architecture->VerboseMode())

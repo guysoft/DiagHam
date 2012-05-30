@@ -158,6 +158,7 @@ ComplexBasicBlockLanczosAlgorithm::~ComplexBasicBlockLanczosAlgorithm()
     {
       delete[] this->LanczosVectors;
       delete[] this->TemporaryCoefficients;
+      delete[] this->InitialStates;
     }
   delete[] this->PreviousWantedEigenvalues;
 }

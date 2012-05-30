@@ -47,6 +47,9 @@ using std::cout;
 using std::endl;
 using std::ostream;
 
+// flag for switching extra output 
+//#define VERBOSE_ONEBODY
+
 // default constructor
 //
 
@@ -152,6 +155,31 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::~ParticleOnL
   delete[] this->XHalfPhaseTable;
   delete[] this->YPhaseTable;
   delete[] this->YHalfPhaseTable;
+
+  for (int ky=0; ky<this->NbrSiteY; ++ky)
+    {
+      for (int i=0; i<this->NbrSiteX; ++i)
+	delete [] this->WannierBasis[ky][i];
+      delete [] this->WannierBasis[ky];
+    }
+  delete [] this->WannierBasis;
+  for (int i=0; i<this->NbrSiteY+1; ++i)
+    {
+      delete [] this->CA[i];
+      delete [] this->CB[i];
+    }
+  delete [] this->CA;
+  delete [] this->CB;
+  for (int i=0; i<this->NbrSiteY; ++i)
+    {
+      delete [] this->BerryConnectionX[i];
+      delete [] this->BerryConnectionXCumSum[i];
+    }
+  delete [] this->BerryConnectionX;
+  delete [] this->BerryConnectionXCumSum;
+  delete [] this->BerryConnectionY;
+  delete [] this->BerryConnectionYCumSum;
+  delete [] this->Theta;
 }
 
 // evaluate all interaction factors
@@ -1385,6 +1413,9 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 	  this->NbrNBodySectorSums = 0;
 	}
     }
+    // clean up
+  delete [] OneBodyBasis;
+
 }
 
 
@@ -1596,7 +1627,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
 	}
     }
-
+  
   // OneBodyBasis for BerryConnection
 
   this->CA = new Complex* [this->NbrSiteY+1];
@@ -1604,15 +1635,19 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 
   for (int ky = 0; ky < this->NbrSiteY+1; ++ky)
     {
+#ifdef VERBOSE_ONEBODY
       cout << "ky = " << ky << endl;
+#endif
       this->CA[ky] = new Complex[this->NbrSiteX+1];
       this->CB[ky] = new Complex[this->NbrSiteX+1];
       double kyl=((double)ky + this->GammaY) * this->KyFactor;
       for (int kx = 0; kx < this->NbrSiteX+1; ++kx)
 	{
+#ifdef VERBOSE_ONEBODY
 	  cout << "kx = " << kx << endl;
+#endif
 	  double kxl=((double)kx + this->GammaX) * this->KxFactor;
-	  int Index = (kx * this->NbrSiteY) + ky;
+	  //int Index = (kx * this->NbrSiteY) + ky;
 
 	  Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
 	  Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
@@ -1646,9 +1681,10 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 	    {
 	      CB[ky][kx] = Conj(TmpMatrix[0][1]);
 	    }
+#ifdef VERBOSE_ONEBODY
 	  cout << "CA = " << CA[ky][kx] << endl;
 	  cout << "CB = " << CB[ky][kx] << endl;
-
+#endif
 	}
     }
 
@@ -1659,7 +1695,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
   this->BerryConnectionY = new double [this->NbrSiteY];
   this->BerryConnectionYCumSum = new double [this->NbrSiteY];
   double TempThetaX = 0.0;
-
+  
   // New definition from Barkeshli and Qi
   for (int ky = 0; ky < this->NbrSiteY; ++ky)
     {
@@ -1667,36 +1703,52 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
       BerryConnectionY[ky]=ArgTemp;
       BerryConnectionYCumSum[ky]= TempThetaX ;
       TempThetaX += ArgTemp;
+#ifdef VERBOSE_ONEBODY
       cout << "ky = " << ky << " : Ay = " << ArgTemp << endl;
+#endif
     }
+#ifdef VERBOSE_ONEBODY
   cout << "Aysum = " <<  TempThetaX << endl;
-
+#endif
+  
   for (int ky = 0; ky < this->NbrSiteY; ++ky)
     {
+#ifdef VERBOSE_ONEBODY
       cout << "ky = " << ky << endl;
+#endif
       double TempTheta = 0;
       this->BerryConnectionX[ky] = new double[this->NbrSiteX];
       this->BerryConnectionXCumSum[ky] = new double[this->NbrSiteX];
       for (int kx = 0; kx < this->NbrSiteX; ++kx)
 	{
+#ifdef VERBOSE_ONEBODY
 	  cout << "kx = " << kx << endl;
+#endif
 	  double ArgTemp = Arg(CA[ky][kx+1]*Conj(CA[ky][kx])+CB[ky][kx+1]*Conj(CB[ky][kx]));
+#ifdef VERBOSE_ONEBODY
 	  cout << "ArgTemp = " << ArgTemp << endl;
+#endif
 	  this->BerryConnectionX[ky][kx]= ArgTemp ;
 	  this->BerryConnectionXCumSum[ky][kx]= TempTheta ;
 	  TempTheta += ArgTemp;
+#ifdef VERBOSE_ONEBODY
 	  cout << "TempTheta = " << TempTheta << endl;
+#endif
 	}
       if(ky!=0)
 	{
 	  while(TempTheta > this->Theta[ky-1])
 	    {
 	      TempTheta -= 2.0 * M_PI ;
+#ifdef VERBOSE_ONEBODY
 	      cout << "TempThetaBis = " << TempTheta << endl;
+#endif
 	    }
 	}
       this->Theta[ky]=TempTheta;
+#ifdef VERBOSE_ONEBODY
       cout << "Theta[ky] = " << Theta[ky] << endl;
+#endif
     }
 
   //WannierBasis
@@ -1727,9 +1779,6 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 	    }
 	}
     }
-
-
-
 
 }
 // compute all the phase precalculation arrays 

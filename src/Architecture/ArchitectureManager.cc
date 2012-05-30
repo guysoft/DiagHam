@@ -128,7 +128,6 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 	  this->Architecture = new SMPArchitecture(NbrProcessor, this->Options->GetString("smp-profil"));
 	else
 	  this->Architecture = new MixedMPISMPArchitecture(this->Options->GetString("mpi-smp"), MPILogFile);
-	  
     }
   return this->Architecture;
 }

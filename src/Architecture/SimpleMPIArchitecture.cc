@@ -143,6 +143,8 @@ SimpleMPIArchitecture::~SimpleMPIArchitecture()
 #ifdef __MPI__
   MPI::Finalize();
 #endif
+  delete [] this->MinimumIndices;
+  delete [] this->MaximumIndices;
   delete this->LocalArchitecture;
   if (this->ClusterPerformanceArray != 0)
     delete[] this->ClusterPerformanceArray;
@@ -906,6 +908,7 @@ bool SimpleMPIArchitecture::AddToLog(const char * message, bool masterFlag)
       char* TmpMessage = new char[TmpMessageLength + 256];
       sprintf (TmpMessage, "node 0: %s", message);
       File << TmpMessage << endl;
+      delete [] TmpMessage;
       if (masterFlag == false)
 	for (int i = 1; i < NbrMPINodes; ++i)
 	  {
@@ -916,6 +919,7 @@ bool SimpleMPIArchitecture::AddToLog(const char * message, bool masterFlag)
 	    TmpMessage[TmpInc + TmpMessageLength] = '\0';
 	    MPI::COMM_WORLD.Recv(TmpMessage + strlen(TmpMessage), TmpMessageLength, MPI::CHAR, i, 1);  
 	    File << TmpMessage << endl;
+	    delete [] TmpMessage;
 	  }
       File.close();
     }
