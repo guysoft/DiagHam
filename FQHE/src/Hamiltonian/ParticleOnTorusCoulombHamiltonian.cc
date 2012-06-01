@@ -42,6 +42,8 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Polynomial/SpecialPolynomial.h"
 
+#include "Architecture/AbstractArchitecture.h"
+
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
@@ -78,6 +80,10 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   this->LandauLevel = landauLevel;
   if (this->LandauLevel>=0)
     {

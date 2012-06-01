@@ -80,11 +80,11 @@ ParticleOnTorusGenericHamiltonian::ParticleOnTorusGenericHamiltonian(ParticleOnT
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
-  this->EnergyShift = 0.0;
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-//  this->PrecalculationShift = (int) MinIndex;  
+  this->PrecalculationShift = (int) MinIndex;  
+  this->EnergyShift = 0.0;
 
   this->NbrPseudopotentials = nbrPseudopotentials;
   this->Pseudopotentials = new double[this->NbrPseudopotentials];
@@ -135,8 +135,12 @@ ParticleOnTorusGenericHamiltonian::~ParticleOnTorusGenericHamiltonian()
   delete[] this->M4Value;
   if (this->FastMultiplicationFlag == true)
     {
-      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
 	++ReducedDim;
       for (int i = 0; i < ReducedDim; ++i)
 	{

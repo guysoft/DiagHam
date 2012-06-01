@@ -56,6 +56,9 @@ class AbstractQHEOnTorusHamiltonian : public AbstractQHEHamiltonian
   // Hilbert space associated to the system
   ParticleOnTorus* Particles;
 
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+  int PrecalculationShift;
+
   // number of particles
   int NbrParticles;
 

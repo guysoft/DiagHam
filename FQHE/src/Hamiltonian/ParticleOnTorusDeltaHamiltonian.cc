@@ -76,6 +76,10 @@ ParticleOnTorusDeltaHamiltonian::ParticleOnTorusDeltaHamiltonian(ParticleOnTorus
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
   if (precalculationFileName == 0)
