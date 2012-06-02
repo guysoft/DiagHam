@@ -319,7 +319,7 @@ Complex ParticleOnCylinderStructureFactor::EvaluateInteractionCoefficient(int m1
   double Xm4 = kappa * m4;
 
   Complex Phase;
-
+  
   Phase.Re = cos(-this->QxValue * (Xm1 - Xm3));
   Phase.Im = sin(-this->QxValue * (Xm1 - Xm3));
 

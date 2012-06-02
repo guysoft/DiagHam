@@ -79,14 +79,15 @@ ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(Parti
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
-  this->EnergyShift = 0.0;
   this->Confinement = confinement;
   this->ElectricField = electricFieldParameter;
   this->MagneticField = bFieldParameter;
+  this->EvaluateInteractionFactors();
+  this->EnergyShift = 0.0;
+
 
   this->OneBodyInteractionFactors = 0;
-  if ((this->ElectricField != 0) || (this->Confinement != 0))
+  if ((this->ElectricField != 0.0) || (this->Confinement != 0.0))
     {
       this->OneBodyInteractionFactors = new Complex [this->NbrLzValue];
       Complex Factor;
@@ -196,7 +197,7 @@ void ParticleOnCylinderCoulombHamiltonian::EvaluateInteractionFactors()
 {
   int Pos = 0;
   int m4;
-  Complex* TmpCoefficient = new Complex [(this->NbrLzValue * (this->NbrLzValue - 1)/2 ) * this->NbrLzValue];
+  Complex* TmpCoefficient = new Complex [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
   double MaxCoefficient = 0.0;
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
@@ -214,10 +215,10 @@ void ParticleOnCylinderCoulombHamiltonian::EvaluateInteractionFactors()
                                            - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
                                            - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
 
-		     cout << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << this->EvaluateInteractionCoefficient(m1, m2, m3, m4) << endl;
-		     cout << m1 << " " << m2 << " " << m4 << " " << m3 << " : " << this->EvaluateInteractionCoefficient(m1,m2,m4,m3) << endl;
+		     //cout << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << this->EvaluateInteractionCoefficient(m1, m2, m3, m4) << endl;
+		     //cout << m1 << " " << m2 << " " << m4 << " " << m3 << " : " << this->EvaluateInteractionCoefficient(m1,m2,m4,m3) << endl;
                      if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		        MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		    ++Pos;
 		  }
 	    }
@@ -343,7 +344,7 @@ Complex ParticleOnCylinderCoulombHamiltonian::EvaluateInteractionCoefficient(int
 
   Complex Coefficient(0,0);
 
-  if (this->ElectricField == 0)
+  if (this->ElectricField == 0.0)
    {
      Coefficient.Re = exp(-0.5*(Xm1-Xm4)*(Xm1-Xm4)) * this->CoulombMatrixElement(Xm1-Xm4,Xm1-Xm3,error);
      Coefficient.Im = 0.0;
@@ -376,12 +377,12 @@ struct f_params {
 double Integrand(double qx, void *p)
 {
   f_params &params= *reinterpret_cast<f_params *>(p);
-  if (params.ElectricField == 0)
+  if (params.ElectricField == 0.0)
    {
     if (params.Xj14 != 0.0)
       return (exp(-0.5*qx*qx)*(2.0*cos(qx*params.Xj13))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
     else
-      return (exp(-0.5*qx*qx)*(2.0*(cos(qx*params.Xj13)-1.0))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
+      return (exp(-0.5*qx*qx)*(2.0*(cos(qx*params.Xj13)-1.0))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));   
    }
   else
    {
@@ -411,8 +412,8 @@ double ParticleOnCylinderCoulombHamiltonian::CoulombMatrixElement(double xj14, d
     gsl_integration_workspace_alloc (1000000);
 
   double lower_limit = 0.0;
-  double abs_error = 1.0e-12;
-  double rel_error = 1.0e-12;
+  double abs_error = 1.0e-10;
+  double rel_error = 1.0e-10;
   double result;
 
   CoulombMatEl::f_params params;
@@ -427,7 +428,7 @@ double ParticleOnCylinderCoulombHamiltonian::CoulombMatrixElement(double xj14, d
   F.params = reinterpret_cast<void *>(&params);
 
   gsl_integration_qagiu (&F, lower_limit,
-			 abs_error, rel_error, 100000, work_ptr, &result,
+			 abs_error, rel_error, 10000, work_ptr, &result,
 			 &error);
 
   //cout<<"result "<<result<<endl;

@@ -79,11 +79,12 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
-  this->EvaluateInteractionFactors();
-  this->EnergyShift = 0.0;
   this->Confinement = confinement;
   this->ElectricField = electricFieldParameter;
   this->MagneticField = bFieldParameter;
+  this->EvaluateInteractionFactors();
+  this->EnergyShift = 0.0;
+
 
   this->OneBodyInteractionFactors = 0;
   if ((this->ElectricField != 0) || (this->Confinement != 0))
