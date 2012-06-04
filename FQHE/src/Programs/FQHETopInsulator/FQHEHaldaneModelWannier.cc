@@ -90,9 +90,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "NoWannier", "No Wannier");
   (*SystemGroup) += new SingleDoubleOption  ('a', "aParam", "parameter multiplying the off-block diagonal elements. a=0 corresponds to the exactly block diagonal limit",1.0);
   (*SystemGroup) += new SingleDoubleOption  ('b', "bParam", "parameter doing the cross over between the block diagonal elements of FCI and those of FQHE. b=0 correspons to FQHE block diagonal elements", 1.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "twisted", "Connect to rectangular torus (default: rectangular torus)");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  (*PrecalculationGroup) += new BooleanOption ('\n', "no-hermitian", "do not use hermitian symmetry of the hamiltonian");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -172,9 +174,11 @@ int main(int argc, char** argv)
 	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_mus_%f", Manager.GetDouble("mu-s"));
       if (Manager.GetBoolean("flat-band") == true)
 	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_flatband");
+      if (Manager.GetBoolean("twisted") == true)
+	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_twist");
     }
   char* CommentLine = new char [256];
-  if(Manager.GetDouble("aParam")!=0)
+  if(Manager.GetDouble("aParam")!=0.0)
     {
       sprintf (CommentLine, "eigenvalues\n# ky ");
     }
@@ -218,7 +222,7 @@ int main(int argc, char** argv)
   bool FirstRunFlag = true;
 
   // If we keep off block diagonal terms
-  if(Manager.GetDouble("aParam")!=0)
+  if ((Manager.GetDouble("aParam")!=0.0) || ((Manager.GetDouble("aParam")==0.0)&&(Manager.GetDouble("bParam")==0.0)))
     {
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
@@ -267,7 +271,7 @@ int main(int argc, char** argv)
 													   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
 													   Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"), 
 													   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-													   Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), Manager.GetBoolean("NoWannier"), Architecture.GetArchitecture(), Memory);
+													   Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), !Manager.GetBoolean("twisted"), Manager.GetBoolean("NoWannier"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {

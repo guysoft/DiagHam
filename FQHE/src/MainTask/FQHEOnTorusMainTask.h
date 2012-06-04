@@ -56,7 +56,8 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   int KyValue;
   // flag if only the Ky quantum number is fixed   
   bool KyOnlyFlag;
-
+  // flag indicating whether the calculation is real
+  bool RealFlag;
   // flag indicating whether multiplicity of state is known
   bool MultiplicityFlag;
   // value of multiplicity
@@ -100,6 +101,9 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   //
   // multiplicity = sector multiplicity
   void SetMultiplicity(int multiplicity);
+
+  // enforce a complex calculation
+  void ForceComplex(){ this->RealFlag=false;}
 
  protected:
   

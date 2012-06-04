@@ -471,6 +471,17 @@ int BosonOnTorusShort::AdAd (int m1, int m2, double& coefficient)
   this->TemporaryStateKyMax = this->KyMax;
   while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
     --this->TemporaryStateKyMax;
+
+#ifdef DEBUG_BosonOnTorusShort
+  cout << "AdAd("<<m1<<", "<<m2<<") result: ";
+  int i = 0;
+  for (; i <= this->TemporaryStateKyMax; ++i)
+    cout << this->TemporaryState[i] << " ";
+  for (; i < this->NbrKyValue; ++i)
+    cout << "0 ";
+  cout << "(KyMax="<< this->TemporaryStateKyMax<<endl;
+#endif
+  
   return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
 }
 
@@ -483,8 +494,20 @@ int BosonOnTorusShort::AdAd (int m1, int m2, double& coefficient)
 
 double BosonOnTorusShort::AA (int index, int n1, int n2)
 {
-  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index], this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
-  if ((n1 > this->ProdATemporaryStateKyMax) || (n2 > this->ProdATemporaryStateKyMax) || 
+#ifdef DEBUG_BosonOnTorusShort
+  cout << "AA("<<n1<<", "<<n2<<") on ";
+  this->PrintState(cout,index);
+#endif
+  int CurrentLzMax = this->StateKyMax[index];
+  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription[index], CurrentLzMax + this->NbrBosons - 1, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+#ifdef DEBUG_BosonOnTorusShort
+  cout << " (KyMax=" << this->ProdATemporaryStateKyMax<<" vs "<<CurrentLzMax<<")"<<endl;
+#endif
+  if ((n1 > CurrentLzMax) || (n2 > CurrentLzMax) || 
       (this->ProdATemporaryState[n1] == 0) || (this->ProdATemporaryState[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryState[n1] == 1)))
     {
       return 0.0;
@@ -495,6 +518,16 @@ double BosonOnTorusShort::AA (int index, int n1, int n2)
   --this->ProdATemporaryState[n1];
   for (int i = this->ProdATemporaryStateKyMax + 1; i < this->NbrKyValue; ++i)
     this->ProdATemporaryState[i] = 0ul;
+
+#ifdef DEBUG_BosonOnTorusShort  
+  int i = 0;
+  for (; i <= this->ProdATemporaryStateKyMax; ++i)
+    cout << this->ProdATemporaryState[i] << " ";
+  for (; i < this->NbrKyValue; ++i)
+    cout << "0 ";
+  cout << "(KyMax="<< this->ProdATemporaryStateKyMax<<")"<<endl;
+#endif
+  
   return sqrt(Coefficient);
 }
 

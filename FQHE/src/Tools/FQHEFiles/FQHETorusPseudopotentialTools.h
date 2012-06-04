@@ -43,6 +43,20 @@
 // return value = true if no error occured
 bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, double*& pseudoPotentials);
 
+
+// get pseudopototentials for particles on torus from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// haveCoulomb = flag indicating if Coulomb terms are present
+// landauLevel = index of Coulomb Landau-level
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// interactionName = naming convention read from definition, or generated from LL index
+// return value = true if no error occured
+
+bool FQHETorusGetPseudopotentials (char* fileName, bool haveCoulomb, int &landauLevel, int& nbrPseudoPotentials, double*& pseudoPotentials, char*& interactionName);
+
+
 // get pseudopototentials for particles on torus with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description

@@ -111,6 +111,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   this->KyValue = kyValue;
   this->KxValue = 0;
   this->KyOnlyFlag = true;
+  this->RealFlag = true;
   this->MultiplicityFlag = false;
   this->AlgorithmManager = lanczos;
   this->EnergyShift = shift;
@@ -254,9 +255,9 @@ FQHEOnTorusMainTask::~FQHEOnTorusMainTask()
 
 int FQHEOnTorusMainTask::ExecuteMainTask()
 {
+  ofstream File;
   if (KyOnlyFlag)
     {
-      ofstream File;
       if (this->FirstRun == true)
 	{
 	  File.open(this->OutputFileName, ios::binary | ios::out);
@@ -275,6 +276,31 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ky = " << this->KyValue << endl;
       cout << " Hilbert space dimension = " << this->Space->GetHilbertSpaceDimension() << endl;
+    }
+  else
+    {
+      if (this->FirstRun == true)
+	{
+	  File.open(this->OutputFileName, ios::binary | ios::out);
+	  this->FirstRun = false;
+	  File << "# Kx Ky E";
+	  if ((this->EvaluateEigenvectors == true) && (this->ComputeEnergyFlag == true))
+	    File << " <H>";
+	  File << endl;
+	}
+      else
+	{
+	  File.open(this->OutputFileName, ios::binary | ios::out | ios::app);
+	}
+      File.precision(14);
+      cout.precision(14);
+      cout << "----------------------------------------------------------------" << endl;
+      cout << " Kx = " << this->KxValue << " Ky = " << this->KyValue << endl;
+      cout << " Hilbert space dimension = " << this->Space->GetHilbertSpaceDimension() << endl;
+    }
+      
+  if (RealFlag)
+    {
       if (this->SavePrecalculationFileName != 0)
 	{
 	  this->Hamiltonian->SavePrecalculation(this->SavePrecalculationFileName);
@@ -602,25 +628,6 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
     }
   else // have both kx and ky momentum -> complex problem
     {
-      ofstream File;
-      if (this->FirstRun == true)
-	{
-	  File.open(this->OutputFileName, ios::binary | ios::out);
-	  this->FirstRun = false;
-	  File << "# Kx Ky E";
-	  if ((this->EvaluateEigenvectors == true) && (this->ComputeEnergyFlag == true))
-	    File << " <H>";
-	  File << endl;
-	}
-      else
-	{
-	  File.open(this->OutputFileName, ios::binary | ios::out | ios::app);
-	}
-      File.precision(14);
-      cout.precision(14);
-      cout << "----------------------------------------------------------------" << endl;
-      cout << " Kx = " << this->KxValue << " Ky = " << this->KyValue << endl;
-      cout << " Hilbert space dimension = " << this->Space->GetHilbertSpaceDimension() << endl;
       if (this->SavePrecalculationFileName != 0)
 	{
 	  this->Hamiltonian->SavePrecalculation(this->SavePrecalculationFileName);
@@ -1070,7 +1077,8 @@ void FQHEOnTorusMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 
 void FQHEOnTorusMainTask::SetKxValue(int kxValue)
 {
-  this->KyOnlyFlag = false; 
+  this->KyOnlyFlag = false;
+  this->RealFlag = false;
   this->KxValue = kxValue;
 }
 

@@ -129,6 +129,7 @@ ParticleOnTorusGenericHamiltonian.cc \
 AbstractQHEOnSphereWithSU4SpinCasimirHamiltonian.cc \
 AbstractQHEOnTwistedTorusWithMagneticTranslationsHamiltonian.cc \
 ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.cc \
+ParticleOnTwistedTorusGenericHamiltonian.cc \
 ParticleOnLatticeChern2TriangularLatticeSingleBandHamiltonianThreeBodyHamiltonian.cc \
 ParticleOnCylinderCoulombHamiltonian.cc \
 ParticleOnLatticeChern2DiceLatticeSingleBandThreeBodyHamiltonian.cc \

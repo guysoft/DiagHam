@@ -66,6 +66,61 @@ bool FQHETorusGetPseudopotentials (char* fileName, int& nbrPseudoPotentials, dou
 }
 
 
+// get pseudopototentials for particles on torus from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// landauLevel = index of Coulomb Landau-level
+// nbrPseudoPotentials = reference on the number of pseudopotentials
+// pseudoPotentials = reference on the array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+// interactionName = naming convention read from definition, or generated from LL index
+// return value = true if no error occured
+
+bool FQHETorusGetPseudopotentials (char* fileName, bool haveCoulomb, int &landauLevel, int& nbrPseudoPotentials, double*& pseudoPotentials, char*& interactionName)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+
+  if (InteractionDefinition["CoulombLandauLevel"] != NULL)
+    {
+      landauLevel = atoi(InteractionDefinition["CoulombLandauLevel"]);
+      haveCoulomb=true;
+    }
+  else
+    {
+      haveCoulomb=false;
+    }
+  if (InteractionDefinition["Name"] == NULL)
+    {
+      if ((InteractionDefinition["CoulombLandauLevel"] != NULL) && (InteractionDefinition["Pseudopotentials"] == NULL))
+	{
+	  interactionName = new char[18];
+	  if (landauLevel>=0)
+	    sprintf(interactionName,"coulomb_l_%d",landauLevel);
+	  else
+	    sprintf(interactionName,"graphene_l_%d",-landauLevel);
+	}
+      else
+	{
+	  cout << "Attention, using unnamed interaction! Please include a line 'Name = ...'" << endl;
+	  interactionName = new char[10];
+	  sprintf(interactionName,"unnamed");
+	}
+    }
+  else
+    {
+      interactionName = new char[strlen(InteractionDefinition["Name"])+1];
+      strcpy(interactionName, InteractionDefinition["Name"]);
+    }
+  InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', pseudoPotentials, nbrPseudoPotentials);
+  
+  return true;
+}
+
+
 // get pseudopototentials for particles on torus with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description

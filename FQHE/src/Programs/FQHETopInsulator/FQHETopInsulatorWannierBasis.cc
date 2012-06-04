@@ -201,9 +201,9 @@ int main(int argc, char** argv)
       ParticleOnTorus *TargetSpace = NULL;
 
       if (Manager.GetBoolean("boson"))
-	TargetSpace = new BosonOnTorusShort(NbrParticles,NbrSiteX*NbrSiteY,TargetKy);
+	TargetSpace = new BosonOnTorusShort(NbrParticles, NbrSiteX*NbrSiteY, TargetKy);
       else
-	TargetSpace = new FermionOnTorus(NbrParticles,NbrSiteX*NbrSiteY,TargetKy);
+	TargetSpace = new FermionOnTorus(NbrParticles, NbrSiteX*NbrSiteY, TargetKy);
 
       cout << "Dimension of Wannier space: "<<Space->GetHilbertSpaceDimension()<<endl;
       cout << "Dimension of torus space:   "<<TargetSpace->GetHilbertSpaceDimension()<<endl;
@@ -306,9 +306,6 @@ int main(int argc, char** argv)
 	    }
 	  TorusState.WriteVector(Output);
 	}
-  
-      
-
   
       //delete Output;
       delete Space;

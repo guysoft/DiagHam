@@ -47,6 +47,12 @@ using std::cout;
 using std::endl;
 using std::ostream;
 
+//#define M1_12 0.08333333333333333
+
+static double MySqrArg;
+#define GETSQR(a) ((MySqrArg=(a)) == 1.0 ? 1.0 : MySqrArg*MySqrArg)
+
+
 // flag for switching extra output 
 //#define VERBOSE_ONEBODY
 
@@ -80,7 +86,7 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
 
 ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
 																       double uPotential, double vPotential, double wPotential, double sPotential,
-																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool noWannier, AbstractArchitecture* architecture, long memory)
+																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool rectangular, bool noWannier, AbstractArchitecture* architecture, long memory)
 {
   this->NoWannier = noWannier;
   this->GaugeBFlag = gaugeBFlag;
@@ -93,6 +99,14 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
   this->LzMax = nbrSiteX * nbrSiteY - 1;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+
+  // hard-code obliquity of torus according to hexagonal lattice structure of Haldane-model:
+  // checked that rectangular torus corresponds to angle of M_PI/2.0, so hexagonal lattice has opening of M_PI/3
+  if (rectangular)
+    this->Angle = M_PI/2.0;
+  else
+    this->Angle = M_PI/3.0;
+    
   this->NBodyValue = 3;
   this->ComputePhaseArray();
 
@@ -1207,34 +1221,69 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 		      else
 			{
 			  // Calculation of H_FQHE
-			  double sumUFQHE = 0.0;
-			  if (Index2 > Index1)
+			  if (fabs(this->Angle-M_PI/2.0)<1e-14)
 			    {
-			      if (Index3 != Index4)
+			      double sumUFQHE = 0.0;
+			      if (Index2 > Index1)
 				{
-				  sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
-					      + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
-					      + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+				  if (Index3 != Index4)
+				    {
+				      sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+						  + this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
+						  + this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
+						  + this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+				    }
+				  else
+				    sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+						+ this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+
 				}
 			      else
-				sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					    + this->EvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
-
+				if (Index1 == Index2)
+				  {
+				    if (Index3 != Index4)
+				      sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+						  + this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
+				    else
+				      sumUFQHE = this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
+				  }
+			      //cout << "Block diagonal term. FQHE = " << sumUFQHE << endl;
+			      //cout << "Block diagonal term. FCI = " << sumU << endl;
+			      this->InteractionFactors[i][Index] = this->B * sumU + (1.0 - this->B) * sumUFQHE ;
+			      //cout << "Block Diagonal Term = " <<  this->InteractionFactors[i][Index] << endl;
 			    }
 			  else
-			    if (Index1 == Index2)
-			      {
-				if (Index3 != Index4)
-				  sumUFQHE = (this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
-					      + this->EvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
-				else
-				  sumUFQHE = this->EvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
-			      }
-			  //cout << "Block diagonal term. FQHE = " << sumUFQHE << endl;
-			  //cout << "Block diagonal term. FCI = " << sumU << endl;
-			  this->InteractionFactors[i][Index] = this->B * sumU + (1.0 - this->B) * sumUFQHE ;
-			  //cout << "Block Diagonal Term = " <<  this->InteractionFactors[i][Index] << endl;
+			    {
+			      Complex sumUFQHE = 0.0;
+			      if (Index2 > Index1)
+				{
+				  if (Index3 != Index4)
+				    {
+				      sumUFQHE = (this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+						  + this->TwistedEvaluateInteractionCoefficient(Index2, Index1, Index4, Index3)
+						  + this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3)
+						  + this->TwistedEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+				    }
+				  else
+				    sumUFQHE = (this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+						+ this->TwistedEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
+
+				}
+			      else
+				if (Index1 == Index2)
+				  {
+				    if (Index3 != Index4)
+				      sumUFQHE = (this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
+						  + this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index4, Index3));
+				    else
+				      sumUFQHE = this->TwistedEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4);
+				  }
+			      //cout << "Block diagonal term. FQHE = " << sumUFQHE << endl;
+			      //cout << "Block diagonal term. FCI = " << sumU << endl;
+			      this->InteractionFactors[i][Index] = this->B * sumU + (1.0 - this->B) * sumUFQHE ;
+			      //cout << "Block Diagonal Term = " <<  this->InteractionFactors[i][Index] << endl;
+
+			    }
 			}
 		    }
 		  TotalNbrInteractionFactors++;
@@ -1812,7 +1861,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 // m4 = fourth index
 // return value = numerical coefficient
 
-double  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+double  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::RectangularEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Coefficient = 1.0;
   int MaxMomentum =  this->NbrSiteY * this->NbrSiteX;
@@ -1882,3 +1931,119 @@ double  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Eval
   return (Sum / (4.0 * M_PI * MaxMomentum));
 }
 
+
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::TwistedEvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+{
+  Complex Coefficient;
+  int MaxMomentum =  this->NbrSiteY * this->NbrSiteX;
+  double PIOnM = M_PI / ((double) MaxMomentum);
+  double PIOnMS = PIOnM / sin(this->Angle);
+  double cosine = cos(this->Angle);
+  double Factor =  ((double) (m1-m3)) * PIOnM * 2.0;
+  Complex Sum = 0.0;
+  double N2;
+  double N1;
+  double Q2;
+  double Precision1;
+  double Precision2;
+  double Ratio = ((double) this->NbrSiteY) / ((double) this->NbrSiteX);
+  double InvRatio = 1.0/Ratio;
+
+
+  N2 = (double) (m1 - m4);
+  Coefficient = 1.0;
+  while ((Norm(Sum) + Norm(Coefficient)) != Norm(Sum))
+    {
+      Q2 = Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient = exp(- PIOnMS * Q2); // this->GetVofQ(PIOnMS*Q2);
+	  Precision1 = (Precision2 = Coefficient.Re);
+	}
+      else
+	{
+	  Coefficient = 1.0; // this->GetVofQ(PIOnMS*Q2); // yields non-zero terms only for non-singular interactions
+	  Precision1 = (Precision2 = 1.0);
+	}
+      N1 = 1.0;
+      while ((Norm(Coefficient) + (fabs(Precision1) + fabs(Precision2))) != Norm(Coefficient))
+	{
+	  Q2 = InvRatio * N1 * N1 - 2 * N1 * N2 * cosine + Ratio * N2 * N2;
+	  Precision1 = exp(- PIOnMS * Q2); // this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision1 * Phase(N1 * Factor);
+
+	  Q2 = InvRatio * N1 * N1 + 2 * N1 * N2 * cosine + Ratio * N2 * N2;
+	  Precision2 = exp(- PIOnMS * Q2); // this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision2 * Phase(- N1 * Factor);
+
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 += MaxMomentum;
+    }
+
+  N2 = (double) (m1 - m4 - MaxMomentum);
+  Coefficient = 1.0;
+  while ((Norm(Sum) + Norm(Coefficient)) != Norm(Sum))
+    {
+      Q2 = Ratio * N2 * N2;
+      if (N2 != 0.0)
+	{
+	  Coefficient = exp(- PIOnMS * Q2); // this->GetVofQ(PIOnMS*Q2);
+	  Precision1 = (Precision2 = Norm(Coefficient.Re));
+	}
+      else
+	{
+	  Coefficient = 1.0; // this->GetVofQ(PIOnMS*Q2); // yields non-zero terms only for non-singular interactions
+	  Precision1 = (Precision2 = 1.0);
+	}
+      N1 = 1.0;
+      while ((Norm(Coefficient) + fabs(Precision1) + fabs(Precision2)) != Norm(Coefficient))
+	{
+	  Q2 = InvRatio * N1 * N1 - 2 * N1 * N2 * cosine + Ratio * N2 * N2;
+	  Precision1 = exp(- PIOnMS * Q2); // this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision1 * Phase(N1 * Factor);
+
+	  Q2 = InvRatio * N1 * N1 + 2 * N1 * N2 * cosine + Ratio * N2 * N2;
+	  Precision2 = exp(- PIOnMS * Q2); // this->GetVofQ(PIOnMS*Q2);
+	  Coefficient += Precision2 * Phase(- N1 * Factor);
+
+	  N1 += 1.0;
+	}
+      Sum += Coefficient;
+      N2 -= MaxMomentum;
+    }
+  return (Sum / (4.0 * M_PI * MaxMomentum));
+}
+
+/*
+// get fourier transform of interaction
+// Q2_half = one half of q² value
+double ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::GetVofQ(double Q2_half)
+{
+  double Result;
+  double Q2=2.0*Q2_half;
+  if ((this->HaveCoulomb)&&(Q2_half!=0.0))
+    {
+      //cout << "branch 1 : Ln="<<this->FormFactor.GetValue(Q2_half)<<" Ln2="<<GETSQR(this->FormFactor(Q2_half))<<", exp="<<exp(-Q2_half)<<" 1/Q="<<1.0/sqrt(Q2)<<" ";
+      //this->FormFactor.PrintValue(cout, Q2_half)<<" ";
+      Result=GETSQR(this->FormFactor(Q2_half)) / sqrt(Q2);
+    }
+  else
+    Result=0.0;
+  for (int i=0; i<NbrPseudopotentials; ++i)
+    if (this->Pseudopotentials[i]!=0.0)
+      Result += 2.0*this->Pseudopotentials[i]*this->LaguerreM[i].PolynomialEvaluate(Q2);
+  //cout <<"V("<<2*Q2_half<<")="<<Result<<" LL="<<this->LandauLevel<<endl;
+  return Result * exp(-Q2_half);
+}
+*/
