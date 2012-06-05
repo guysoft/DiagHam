@@ -35,7 +35,8 @@
 
 #include <iostream>
 #include <string>
-
+#include <cstdlib>
+#include <cstdio>
 
 using std::cout;
 using std::endl;
