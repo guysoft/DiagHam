@@ -185,6 +185,8 @@ BosonOnTorusShort::~BosonOnTorusShort ()
     {
       delete[] this->StateDescription;
       delete[] this->StateKyMax;
+      for (int i=0;i<this->KyMax + this->NbrBosons; ++i)
+	delete [] this->LookUpTable[i];
       delete[] this->LookUpTable;
       delete[] this->LookUpTableShift;
     }
@@ -203,6 +205,10 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
     {
       delete[] this->StateDescription;
       delete[] this->StateKyMax;
+      for (int i=0;i<this->KyMax + this->NbrBosons; ++i)
+	delete [] this->LookUpTable[i];
+      delete[] this->LookUpTable;
+      delete[] this->LookUpTableShift;
     }
   delete[] this->TemporaryState;
   delete[] this->ProdATemporaryState;

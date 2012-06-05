@@ -263,33 +263,76 @@ int main(int argc, char** argv)
 
       if (Manager.GetString("torus")!=NULL)
 	{
-	  RealVector ReferenceState;
-	  if (ReferenceState.ReadVector(Manager.GetString("torus")) == false)
+	  if (IsFile(Manager.GetString("torus")) == false)
 	    {
-	      cout << "error while reading " << Manager.GetString("torus") << endl;
-	      return -1;
+	      cout << "Error: Torus vector not found"<<endl;
+	      exit(1);
 	    }
-	  if (TargetSpace->GetHilbertSpaceDimension() != ReferenceState.GetVectorDimension() && !(Manager.GetBoolean("block-diagonal")))
+	  RealVector RealReferenceState;
+	  if (RealReferenceState.ReadVectorTest(Manager.GetString("torus")) == false)
 	    {
-	      cout << "dimension mismatch between the state (" << ReferenceState.GetVectorDimension() << ") and the Hilbert space (" << TargetSpace->GetHilbertSpaceDimension() << ")" << endl;
-	      return -1;
+	      ComplexVector ReferenceState;
+	      if (ReferenceState.ReadVectorTest(Manager.GetString("torus")) == false)
+		{
+		  cout << "Could not open torus vector"<<endl;
+		  exit(1);
+		}
+	      if (ReferenceState.ReadVector(Manager.GetString("torus")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("torus") << endl;
+		  return -1;
+		}
+	      if (TargetSpace->GetHilbertSpaceDimension() != ReferenceState.GetVectorDimension() && !(Manager.GetBoolean("block-diagonal")))
+		{
+		  cout << "dimension mismatch between the state (" << ReferenceState.GetVectorDimension() << ") and the Hilbert space (" << TargetSpace->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      Complex Ovl=ReferenceState*TorusState;
+	      cout << "Overlap with torus eigenstate:         "<<Ovl<<endl;
+	      cout << "               square overlap:         "<<SqrNorm(Ovl)<<endl;
+	      
+	      // Write the overlap to a output file
+	      ofstream outdata; // outdata is like cin
+	      
+	      outdata.open("overlap.dat"); // opens the file
+	      // if( !outdata ) { // file couldn't be opened
+	      // 	cerr << "Error: file could not be opened" << endl;
+	      // 	exit(1);
+	      // }
+	      
+	      outdata << Norm(Ovl) << endl;
+	      outdata.close();
+
 	    }
-	  Complex Ovl=ReferenceState*TorusState;
-	  cout << "Overlap with torus eigenstate:         "<<Ovl<<endl;
-	  cout << "               square overlap:         "<<SqrNorm(Ovl)<<endl;
-
-	  // Write the overlap to a output file
-	  ofstream outdata; // outdata is like cin
-
-	  outdata.open("overlap.dat"); // opens the file
-	  // if( !outdata ) { // file couldn't be opened
-	  // 	cerr << "Error: file could not be opened" << endl;
-	  // 	exit(1);
-	  // }
-
-	  outdata << Norm(Ovl) << endl;
-	  outdata.close();
-
+	  else
+	    {
+	      RealVector ReferenceState;
+	      if (ReferenceState.ReadVector(Manager.GetString("torus")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("torus") << endl;
+		  return -1;
+		}
+	      if (TargetSpace->GetHilbertSpaceDimension() != ReferenceState.GetVectorDimension() && !(Manager.GetBoolean("block-diagonal")))
+		{
+		  cout << "dimension mismatch between the state (" << ReferenceState.GetVectorDimension() << ") and the Hilbert space (" << TargetSpace->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      Complex Ovl=ReferenceState*TorusState;
+	      cout << "Overlap with torus eigenstate:         "<<Ovl<<endl;
+	      cout << "               square overlap:         "<<SqrNorm(Ovl)<<endl;
+	      
+	      // Write the overlap to a output file
+	      ofstream outdata; // outdata is like cin
+	      
+	      outdata.open("overlap.dat"); // opens the file
+	      // if( !outdata ) { // file couldn't be opened
+	      // 	cerr << "Error: file could not be opened" << endl;
+	      // 	exit(1);
+	      // }
+	      
+	      outdata << Norm(Ovl) << endl;
+	      outdata.close();
+	    }
 
 	}
 

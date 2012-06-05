@@ -569,7 +569,6 @@ int GenericComplexMainTask::ExecuteMainTask()
       RealTriDiagonalSymmetricMatrix TmpMatrix;
       gettimeofday (&(TotalCurrentTime), 0); 
       int CurrentTimeSecond = TotalCurrentTime.tv_sec;
-      cout << "Test: Lanczos->TestConvergence()"<<Lanczos->TestConvergence()<<endl;
       while ((Lanczos->TestConvergence() == false) && (((this->DiskFlag == true) && (((this->MaximumAllowedTime == 0) && (CurrentNbrIterLanczos < this->NbrIterLanczos)) || 
 										     ((this->MaximumAllowedTime > 0) && (this->MaximumAllowedTime > (CurrentTimeSecond - StartTimeSecond))))) ||
 						       ((this->DiskFlag == false) && ((this->PartialLanczos == false) && (CurrentNbrIterLanczos < this->MaxNbrIterLanczos)) ||

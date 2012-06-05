@@ -114,7 +114,6 @@ int main(int argc, char** argv)
     {
       if (FQHETorusGetPseudopotentials(Manager.GetString("interaction-file"), HaveCoulomb, LandauLevel, NbrPseudoPotentials, PseudoPotentials, InteractionName) == false)
 	return -1;
-      cout << "Name="<<InteractionName;
     }
   char* OutputNameLz = new char [256];
   if (Manager.GetString("interaction-name")!=NULL)
@@ -185,7 +184,5 @@ int main(int argc, char** argv)
       delete Space;
     }
   File.close();
-  if (InteractionName!=NULL)
-    delete [] InteractionName;
   return 0;
 }
