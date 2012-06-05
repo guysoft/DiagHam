@@ -1236,7 +1236,6 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Evaluat
 				  else
 				    sumUFQHE = (this->RectangularEvaluateInteractionCoefficient(Index1, Index2, Index3, Index4)
 						+ this->RectangularEvaluateInteractionCoefficient(Index2, Index1, Index3, Index4));
-
 				}
 			      else
 				if (Index1 == Index2)

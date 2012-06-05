@@ -321,7 +321,11 @@ bool FullReorthogonalizedComplexLanczosAlgorithm::TestConvergence ()
 	      if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
 		  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
 		{
-		  return false;
+		  if (fabs(this->DiagonalizedMatrix.DiagonalElement(i))>3*MACHINE_PRECISION)
+		    return false;
+		  else
+		    if (fabs(this->PreviousWantedEigenvalues[i])>3*MACHINE_PRECISION)
+		      return false;
 		}
 	    }
 	  return true;
@@ -329,7 +333,9 @@ bool FullReorthogonalizedComplexLanczosAlgorithm::TestConvergence ()
       else
 	if (fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
 	    (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1))))
-	  return true;
+	  {
+	    return true;
+	  }
 	else
 	  return false;
     }

@@ -45,6 +45,9 @@ using std::endl;
 using std::hex;
 using std::dec;
 
+// print some test outputs
+//#define TEST_BOSONONTORUS_SHORT
+
 
 // default constructor
 // 
@@ -78,6 +81,10 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateKyMax = new int [this->HilbertSpaceDimension];
   cout << this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0) << endl;
+#ifdef TEST_BOSONONTORUS_SHORT
+  for (int i = 0; i<this->HilbertSpaceDimension; ++i)
+    this->PrintState(cout,i)<<endl;
+#endif
   this->GenerateLookUpTable(0);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
@@ -107,7 +114,7 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
   this->IncNbrBosons = this->NbrBosons + 1;
   this->KyMax = maxMomentum;
   this->NbrKyValue = this->KyMax + 1;
-  this->TotalKy = momentumConstraint;
+  this->TotalKy = momentumConstraint % maxMomentum;
   this->TotalKyFlag = true;
 
   this->MomentumModulo = FindGCD(this->NbrBosons, this->KyMax);
@@ -123,6 +130,10 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
   this->StateKyMax = new int [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0, 0);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+#ifdef TEST_BOSONONTORUS_SHORT
+  for (int i = 0; i<this->HilbertSpaceDimension; ++i)
+    this->PrintState(cout,i)<<endl;
+#endif
   this->GenerateLookUpTable(1000000);
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0;
@@ -157,7 +168,6 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
   this->StateKyMax = bosons.StateKyMax;
   this->StateShift = bosons.StateShift;
   this->LastMomentumMask = bosons.LastMomentumMask;
-  this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->Flag = bosons.Flag;
   this->TemporaryState = new unsigned long [this->KyMax + 1];
   this->ProdATemporaryState = new unsigned long [this->KyMax + 1];
@@ -175,6 +185,8 @@ BosonOnTorusShort::~BosonOnTorusShort ()
     {
       delete[] this->StateDescription;
       delete[] this->StateKyMax;
+      delete[] this->LookUpTable;
+      delete[] this->LookUpTableShift;
     }
   delete[] this->TemporaryState;
   delete[] this->ProdATemporaryState;
@@ -689,6 +701,7 @@ int BosonOnTorusShort::GenerateStates(int nbrBosons, int maxMomentum, int curren
     {
       TmpPos = this->GenerateStates(TmpNbrBosons, maxMomentum, ReducedCurrentKyMax, pos, currentMomentum + (nbrBosons - TmpNbrBosons) * currentKyMax);
       unsigned long Mask = ((0x1ul << (nbrBosons - TmpNbrBosons)) - 0x1ul) << (currentKyMax + TmpNbrBosons);
+
       for (; pos <TmpPos; ++pos)
 	this->StateDescription[pos] |= Mask;
       ++TmpNbrBosons;

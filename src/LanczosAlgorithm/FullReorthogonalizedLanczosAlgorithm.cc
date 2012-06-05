@@ -333,7 +333,11 @@ bool FullReorthogonalizedLanczosAlgorithm::TestConvergence ()
 	      if (fabs(this->DiagonalizedMatrix.DiagonalElement(i) - this->PreviousWantedEigenvalues[i]) > 
 		  (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(i))))
 		{
-		  return false;
+		  if (fabs(this->DiagonalizedMatrix.DiagonalElement(i))>3*MACHINE_PRECISION)
+		    return false;
+		  else
+		    if (fabs(this->PreviousWantedEigenvalues[i])>3*MACHINE_PRECISION)
+		      return false;
 		}
 	    }
 	  return true;
