@@ -61,6 +61,8 @@ using std::ostream;
 // nbrParticles = number of particles
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
+// fillingFactor = filling factor of the FQHE state
+// landauLevel = LL index
 // confinement = amplitude of the quadratic confinement potential
 // electricFieldParameter = amplitude of the electric field along the cylinder
 // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
@@ -69,7 +71,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, double confinement, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, double fillingFactor, int landauLevel, double confinement, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -78,6 +80,8 @@ ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(Parti
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
+  this->FillingFactor = fillingFactor;
+  this->LLIndex = landauLevel;
   this->Architecture = architecture;
   this->Confinement = confinement;
   this->ElectricField = electricFieldParameter;
@@ -86,10 +90,26 @@ ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(Parti
   this->EnergyShift = 0.0;
 
 
-  this->OneBodyInteractionFactors = 0;
+  //this->OneBodyInteractionFactors = 0;
+
+  //add the Hartree terms
+  this->OneBodyInteractionFactors = new Complex [this->NbrLzValue];
+  Complex Factor;
+  double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
+  for (int i = 0; i < this->NbrLzValue; ++i)
+   { 
+     Factor.Re = 0.0;
+     Factor.Im = 0.0;
+     for (int j = 0; j < this->NbrLzValue; ++j)
+      {
+        Factor += this->EvaluateInteractionCoefficient(i, j, j, i);
+      }
+     Factor *= (-this->FillingFactor);
+     this->OneBodyInteractionFactors[i] = Factor;
+   }
+
   if ((this->ElectricField != 0.0) || (this->Confinement != 0.0))
     {
-      this->OneBodyInteractionFactors = new Complex [this->NbrLzValue];
       Complex Factor;
       double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
       for (int i = 0; i < this->NbrLzValue; ++i)
@@ -99,7 +119,7 @@ ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(Parti
            //add the contribution from electric field
            Factor.Re += 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
            Factor.Im += 0.0;
-	   this->OneBodyInteractionFactors[i] = Factor;
+	   this->OneBodyInteractionFactors[i] += Factor;
         }
     }
 
@@ -372,30 +392,70 @@ struct f_params {
   double Xj14;
   double Xj13;
   double ElectricField;
+  int LLIndex;
 };
 
 double Integrand(double qx, void *p)
 {
   f_params &params= *reinterpret_cast<f_params *>(p);
+
   if (params.ElectricField == 0.0)
    {
-    if (params.Xj14 != 0.0)
-      return (exp(-0.5*qx*qx)*(2.0*cos(qx*params.Xj13))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
-    else
-      return (exp(-0.5*qx*qx)*(2.0*(cos(qx*params.Xj13)-1.0))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));   
-   }
-  else
-   {
-     if (params.Xj14 != 0.0)
-       {
-         double alpha = sqrt(1.0 + params.ElectricField);
-         return (exp(-0.5*qx*qx/alpha)*(2.0*cos(qx*params.Xj13/(alpha*alpha)))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
-       }
-     else
+    double CoulombFormFactor = 1.0/sqrt(qx*qx+params.Xj14*params.Xj14);
+    if (params.LLIndex == 1)
+      CoulombFormFactor *= pow(1.0-0.5*(qx*qx+params.Xj14*params.Xj14), 2.0);
+    else if (params.LLIndex >= 2)
       {
-         double alpha = sqrt(1.0 + params.ElectricField);
-         return (exp(-0.5*qx*qx/alpha)*(2.0*(cos(qx*params.Xj13/(alpha*alpha))-1.0))*(1.0/sqrt(qx*qx+params.Xj14*params.Xj14)));
+        cout << "Only considering up to LL=1" << endl;
+        exit(1);
       }
+    return (exp(-0.5*qx*qx) * 2.0 * cos(qx*params.Xj13) * CoulombFormFactor);   
+   }
+  else //applied electric field
+   {
+    double alpha = sqrt(1.0 + params.ElectricField);
+
+    double CoulombFormFactor = 1.0/sqrt(qx*qx+params.Xj14*params.Xj14);
+    if (params.LLIndex == 1)
+      CoulombFormFactor *= pow(1.0-0.5*(qx*qx/alpha+params.Xj14*params.Xj14/pow(alpha,3.0)), 2.0);
+    else if (params.LLIndex >= 2)
+      {
+        cout << "Only considering up to LL=1" << endl;
+        exit(1);
+      }
+    return (exp(-0.5*qx*qx/alpha) * 2.0 * cos(qx*params.Xj13/(alpha*alpha)) * CoulombFormFactor);
+   }
+}
+
+double SingularIntegrand(double qx, void *p)
+{
+  f_params &params= *reinterpret_cast<f_params *>(p);
+
+  if (params.ElectricField == 0.0)
+   {
+    double CoulombFormFactor = 1.0/qx;
+    if (params.LLIndex == 1)
+      CoulombFormFactor *= pow(1.0-0.5*(qx*qx), 2.0);
+    else if (params.LLIndex >= 2)
+      {
+        cout << "Only considering up to LL=1" << endl;
+        exit(1);
+      }
+    return (2.0 * (exp(-0.5*qx*qx) * cos(qx*params.Xj13)-1.0) * CoulombFormFactor);   
+   }
+  else //applied electric field
+   {
+    double alpha = sqrt(1.0 + params.ElectricField);
+
+    double CoulombFormFactor = 1.0/qx;
+    if (params.LLIndex == 1)
+      CoulombFormFactor *= pow(1.0-0.5*(qx*qx/alpha), 2.0);
+    else if (params.LLIndex >= 2)
+      {
+        cout << "Only considering up to LL=1" << endl;
+        exit(1);
+      }
+    return (2.0 * (exp(-0.5*qx*qx/alpha) * cos(qx*params.Xj13/(alpha*alpha)) - 1.0) * CoulombFormFactor);
    }
 }
 
@@ -414,22 +474,49 @@ double ParticleOnCylinderCoulombHamiltonian::CoulombMatrixElement(double xj14, d
   double lower_limit = 0.0;
   double abs_error = 1.0e-10;
   double rel_error = 1.0e-10;
-  double result;
+  double result, finalresult;
 
   CoulombMatEl::f_params params;
   params.Xj14=xj14;
   params.Xj13=xj13;
   params.ElectricField = this->ElectricField;
+  params.LLIndex = this->LLIndex;
   
   //cout<<"Xj14 "<<params.Xj14<<" Xj13 "<<params.Xj13<<" Efield "<<params.ElectricField<<endl;
 
   gsl_function F;
-  F.function = &CoulombMatEl::Integrand;
-  F.params = reinterpret_cast<void *>(&params);
 
-  gsl_integration_qagiu (&F, lower_limit,
+  if (params.Xj14 != 0.0)
+    {
+      F.function = &CoulombMatEl::Integrand;
+      F.params = reinterpret_cast<void *>(&params);
+    
+      gsl_integration_qagiu (&F, lower_limit,
 			 abs_error, rel_error, 10000, work_ptr, &result,
 			 &error);
+
+      finalresult = result;
+     }
+   else
+    {
+      lower_limit = 1.0;
+      F.function = &CoulombMatEl::Integrand;
+      F.params = reinterpret_cast<void *>(&params);
+    
+      gsl_integration_qagiu (&F, lower_limit,
+			 abs_error, rel_error, 10000, work_ptr, &result,
+			 &error);
+
+      finalresult = result;
+
+      F.function = &CoulombMatEl::SingularIntegrand;
+      F.params = reinterpret_cast<void *>(&params);
+
+      gsl_integration_qags (&F, 0.0, 1.0, 0, 1e-10, 10000,
+                             work_ptr, &result, &error); 
+ 
+      finalresult += result;
+    }
 
   //cout<<"result "<<result<<endl;
 
@@ -439,7 +526,7 @@ double ParticleOnCylinderCoulombHamiltonian::CoulombMatrixElement(double xj14, d
   //cout << "estimated error = " << error << endl;
   //cout << "intervals =  " << work_ptr->size << endl;
 
-  return result;
+  return finalresult;
 #endif
 }
 
