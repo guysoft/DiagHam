@@ -302,7 +302,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value =  multiplicative factor 
   virtual double ProdA (int index, int* n, int nbrIndices);
 
-  // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+  // apply a^+_m1 a^+_m2 operator to the state produced using AAA method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator

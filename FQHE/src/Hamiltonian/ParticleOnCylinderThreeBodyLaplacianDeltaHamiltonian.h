@@ -29,14 +29,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONCYLINDERCOULOMBHAMILTONIAN_H
-#define PARTICLEONCYLINDERCOULOMBHAMILTONIAN_H
+#ifndef PARTICLEONCYLINDERTHREEBODYLAPLACIANDELTAHAMILTONIAN_H
+#define PARTICLEONCYLINDERTHREEBODYLAPLACIANDELTAHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "Hamiltonian/AbstractQHEOnCylinderHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnCylinderThreeBodyHamiltonian.h"
 
 #include <iostream>
 
@@ -47,20 +47,8 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnCylinderCoulombHamiltonian : public AbstractQHEOnCylinderHamiltonian
+class ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian : public AbstractQHEOnCylinderThreeBodyHamiltonian
 {
-
- protected:
-
- //filling factor
- double FillingFactor;
-
- //LL index
- int LLIndex;
-
- //V1 tweak
- double DeltaV1;
-
 
  public:
 
@@ -70,21 +58,18 @@ class ParticleOnCylinderCoulombHamiltonian : public AbstractQHEOnCylinderHamilto
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
-  // fillingFactor = filling factor of the FQHE state
-  // landauLevel = LL index
   // confinement = amplitude of the quadratic confinement potential
   // electricFieldParameter = amplitude of the electric field along the cylinder
-  // bFielfParameter = amplitude of the magnetic field (to set the energy scale)
-  // deltaV1 = tweak of V1 pseudopotential
+  // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double fillingFactor, int landauLevel, double confinement, double electricFieldParameter, double bFieldParameter, double deltaV1,
+  ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, double electricFieldParameter, double bFieldParameter,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnCylinderCoulombHamiltonian();
+  ~ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -101,24 +86,22 @@ class ParticleOnCylinderCoulombHamiltonian : public AbstractQHEOnCylinderHamilto
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  double Integrand(double qx, void *p);
-
-  double CoulombMatrixElement(double xj14, double xj13, double &error);
-
  protected:
  
   // evaluate all interaction factors
   //   
   void EvaluateInteractionFactors();
 
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_m4 a_m5 a_m6 coupling term
   //
   // m1 = first index
   // m2 = second index
   // m3 = third index
   // m4 = fourth index
+  // m5 = fifth index
+  // m6 = sixth index
   // return value = numerical coefficient
-  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6);
 
 };
 

@@ -662,7 +662,7 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 			      this->Hamiltonian->LowLevelMultiply(Q[j], TmpEigenvector);
 			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
 			      Q[j].WriteVector(TmpVectorName);
-			      cout << ((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
+			      cout << (TmpDiag[j] - this->EnergyShift) << " " <<((TmpEigenvector * Q[j]) - this->EnergyShift) << " " << endl;		  
 			    }
 			  cout << endl;			  
 			  delete[] TmpVectorName;

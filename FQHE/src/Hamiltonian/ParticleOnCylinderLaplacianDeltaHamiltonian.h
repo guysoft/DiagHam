@@ -86,10 +86,6 @@ class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinder
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  double Integrand(double qx, void *p);
-
-  double CoulombMatrixElement(double xj14, double xj13, double &error);
-
  protected:
  
   // evaluate all interaction factors

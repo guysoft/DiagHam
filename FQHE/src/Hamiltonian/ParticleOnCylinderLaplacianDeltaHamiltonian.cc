@@ -94,7 +94,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
       double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
       for (int i = 0; i < this->NbrLzValue; ++i)
         { 
-           Factor.Re = this->Confinement * pow(kappa * i, 2.0);
+           Factor.Re = this->Confinement * pow(kappa * (i - 0.5 * this->MaxMomentum), 2.0);
            Factor.Im = 0.0;
            //add contribution from electric field
            Factor.Re += 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
