@@ -110,23 +110,20 @@ int main(int argc, char** argv)
       OutputTotalLz = 0;
       for (int i = 0; i <= PatternLzMax; ++i)
 	OutputTotalLz -= Pattern[i] * (2 * i);
-      //	OutputTotalLz -= Pattern[i] * (2 * (i + Manager.GetInteger("shift-pattern")));
       OutputTotalLz += InputTotalLz + (InputNbrParticles * InputLzMax);
-      //      cout << OutputTotalLz << endl;
       OutputTotalLz -= OutputNbrParticles * (2 * (PatternLzMax + 1));
-      //      cout << OutputTotalLz << endl;
-      //      OutputTotalLz -= OutputNbrParticles * OutputLzMax;
-      //      cout << OutputTotalLz << endl;
+      OutputTotalLz -= OutputNbrParticles * OutputLzMax;
     }
 
-  cout << OutputNbrParticles << " " << OutputLzMax << " " << OutputTotalLz << endl;
+//   cout << OutputNbrParticles << " " << OutputLzMax << " " << OutputTotalLz << endl;
 
-  int MaxOutputTotalLz = (OutputLzMax - OutputNbrParticles + 1) * OutputNbrParticles;
-  if ((OutputTotalLz > MaxOutputTotalLz) || (OutputTotalLz < -MaxOutputTotalLz))
-    {
-      cout << "ODLRO=0" << endl;
-      return 0;
-    }
+//   int MaxOutputTotalLz = (OutputLzMax - OutputNbrParticles + 1) * OutputNbrParticles;
+//   cout << "MaxOutputTotalLz = " << MaxOutputTotalLz << endl;
+//   if ((OutputTotalLz > MaxOutputTotalLz) || (OutputTotalLz < -MaxOutputTotalLz))
+//     {
+//       cout << "ODLRO=0" << endl;
+//       return 0;
+//     }
 
   RealVector InputState;
   if (InputState.ReadVector (Manager.GetString("input-state")) == false)

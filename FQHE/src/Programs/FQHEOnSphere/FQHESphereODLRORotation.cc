@@ -49,6 +49,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('l', "left-state", "file describing left state decomposition into L^2 eigenstates");
   (*SystemGroup) += new BooleanOption ('\n', "matrix-odlro", "compute matrix ODLRO");
   (*SystemGroup) += new SingleStringOption  ('m', "matrix-states", "file describing each state decompositions");
+  (*SystemGroup) += new BooleanOption ('\n', "matrix-overlap", "indicates that an additional scalar product has to be taken into account when computing matrix ODLRO");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "matrix-eigenstates", "compute the n first eigenstates of the ODLRO matrix", 0);
   (*OutputGroup) += new SingleIntegerOption ('z', "lz-value", "twice the Lz value of the left state", 0);
   (*OutputGroup) += new SingleIntegerOption ('n', "nbr-points", "number of points that has to be computed", 100);
@@ -164,6 +165,53 @@ int main(int argc, char** argv)
       char*** StateFileNames = new char**[NbrStates];
       int* NbrStateComponents = new int [NbrStates];      
       int LShift = 0;
+      RealSymmetricMatrix OverlapMatrix(NbrStates, true);
+      if (Manager.GetBoolean("matrix-overlap") == true)
+	{
+	  if (States.GetNbrColumns() < 2)
+	    {
+	      cout << Manager.GetString("matrix-states") << " does not contain a second column with the original ODLRO states" << endl;
+	      return -1;
+	    }
+	  RealVector TmpVector1;
+	  if (TmpVector1.ReadVector(States(1, 0)) == false)
+	    {
+	      cout << "can't open " << States(1, 0) << endl;
+	      return -1;
+	    }
+	  double Norm1 = TmpVector1.SqrNorm();
+	  for (int i = 0; i < NbrStates; ++i)
+	    {
+	      if (TmpVector1.ReadVector(States(1, i)) == false)
+		{
+		  cout << "can't open " << States(1, i) << endl;
+		  return -1;
+		}
+//	      double Norm1 = TmpVector1.Norm();
+//	      OverlapMatrix(i, i) = 1.0;	      
+	      OverlapMatrix(i, i) = TmpVector1.SqrNorm() / Norm1;	      
+	      for (int j = i + 1; j < NbrStates; ++j)
+		{
+		  RealVector TmpVector2;
+		  if (TmpVector2.ReadVector(States(1, j)) == false)
+		    {
+		      cout << "can't open " << States(1, j) << endl;
+		      return -1;
+		    }
+//		  double Norm2 = TmpVector2.Norm();
+		  OverlapMatrix(i, j) = (TmpVector1 * TmpVector2) / Norm1;	      
+//		  OverlapMatrix(i, j) = (TmpVector1 * TmpVector2) / (Norm1 * Norm2);	      
+		}
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < NbrStates; ++i)
+	    for (int j = i; j < NbrStates; ++j)
+	      OverlapMatrix(i, j) = 1.0;
+	}
+//      cout << "overlap matrix : " << endl << OverlapMatrix << endl;
+     
       for (int i = 0; i < NbrStates; ++i)
 	{
 	  MultiColumnASCIIFile TmpStateDecomposition;
@@ -247,13 +295,20 @@ int main(int argc, char** argv)
       RealSymmetricMatrix TmpMatrix(NbrStates, true);
       for (int i = 0; i <= NbrPoints; ++i)
 	{
-	  cout << Theta;
 	  TmpMatrix.ClearMatrix();
 	  for (int j = 0; j <= NbrMaxLValues; ++j)
 	    if (NbrStatesPerLValue[j] > 0)
 	      {
 		TmpMatrix.MultiplyAndAdd((*(WignerCoefficients[j]))(LzValue, LzValue, Theta), CoefficientPerLSector[j]);
 	      }
+//	  cout << TmpMatrix << endl;
+
+	  for (int j = 0; j < NbrStates; ++j)
+	    for (int k = j; k < NbrStates; ++k)
+	      TmpMatrix(j, k) *= OverlapMatrix(j, k);
+//	  cout << TmpMatrix << endl;
+
+	  cout << Theta;
 	  if (NbrEigenstate == 0)
 	    {
 #ifdef __LAPACK__
