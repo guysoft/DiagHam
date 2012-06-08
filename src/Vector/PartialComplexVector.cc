@@ -331,11 +331,12 @@ bool PartialComplexVector::WriteVector (char* fileName)
   WriteLittleEndian(File, this->Dimension);
   WriteLittleEndian(File, this->RealDimension);
   WriteLittleEndian(File, this->IndexShift);
-  for (int i = 0; i < this->Dimension; ++i)
-    {
-      WriteLittleEndian(File, this->Components[i].Re);
-      WriteLittleEndian(File, this->Components[i].Im);
-    }
+  WriteBlockLittleEndian(File, &(this->Components[0].Re), 2*this->Dimension);
+//   for (int i = 0; i < this->Dimension; ++i)
+//     {
+//       WriteLittleEndian(File, this->Components[i].Re);
+//       WriteLittleEndian(File, this->Components[i].Im);
+//     }
   File.close();
   this->Delocalize();
   return true;
@@ -360,11 +361,12 @@ bool PartialComplexVector::ReadVector (char* fileName)
   this->Resize(TmpDimension);
   ReadLittleEndian(File, this->RealDimension);
   ReadLittleEndian(File, this->IndexShift);
-  for (int i = 0; i < this->Dimension; ++i)
-    {
-      ReadLittleEndian(File, this->Components[i].Re);
-      ReadLittleEndian(File, this->Components[i].Im);
-    }
+  ReadBlockLittleEndian(File, &(this->Components[0].Re), 2*this->Dimension);
+//   for (int i = 0; i < this->Dimension; ++i)
+//     {
+//       ReadLittleEndian(File, this->Components[i].Re);
+//       ReadLittleEndian(File, this->Components[i].Im);
+//     }
   File.close();
   return true;
 }

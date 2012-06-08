@@ -708,7 +708,14 @@ class ComplexVector : public Vector
   //
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
+  bool ByteWriteVector (const char* fileName);
+
+  // write vector in a file 
+  //
+  // fileName = name of the file where the vector has to be stored
+  // return value = true if no error occurs
   bool WriteVector (const char* fileName);
+
 
   // write vector in a file in ascii mode
   //
@@ -720,7 +727,11 @@ class ComplexVector : public Vector
   //
   // fileName = name of the file where the vector has to be read
   // return value = true if no error occurs
+  bool ByteReadVector (const char* fileName);
+
+  // blocked version of read
   bool ReadVector (const char* fileName);
+    
 
   // read vector from a file, only within a given range of indices
   //

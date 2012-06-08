@@ -312,8 +312,9 @@ bool PartialRealVector::WriteVector (char* fileName)
   WriteLittleEndian(File, this->Dimension);
   WriteLittleEndian(File, this->RealDimension);
   WriteLittleEndian(File, this->IndexShift);
-  for (int i = 0; i < this->Dimension; ++i)
-    WriteLittleEndian(File, this->Components[i]);
+  WriteBlockLittleEndian(File, this->Components, this->Dimension);
+//   for (int i = 0; i < this->Dimension; ++i)
+//     WriteLittleEndian(File, this->Components[i]);
   File.close();
   this->Delocalize();
   return true;
@@ -338,8 +339,9 @@ bool PartialRealVector::ReadVector (char* fileName)
   this->Resize(TmpDimension);
   ReadLittleEndian(File, this->RealDimension);
   ReadLittleEndian(File, this->IndexShift);
-  for (int i = 0; i < this->Dimension; ++i)
-    ReadLittleEndian(File, this->Components[i]);
+  ReadBlockLittleEndian(File, this->Components, this->Dimension);
+//   for (int i = 0; i < this->Dimension; ++i)
+//     ReadLittleEndian(File, this->Components[i]);
   File.close();
   return true;
 }

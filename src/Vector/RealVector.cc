@@ -3567,6 +3567,29 @@ bool RealVector::WriteVector (const char* fileName)
   if (this->Dimension == -1)
     {
       WriteLittleEndian(File, this->LargeDimension);
+      WriteBlockLittleEndian(File, this->Components, this->LargeDimension);
+    }
+  else
+    WriteBlockLittleEndian(File, this->Components, this->Dimension);
+  File.close();
+  this->Delocalize();
+  return true;
+}
+
+// write vector in a file 
+//
+// fileName = name of the file where the vector has to be stored
+// return value = true if no error occurs
+
+bool RealVector::ByteWriteVector (const char* fileName)
+{
+  this->Localize();
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  WriteLittleEndian(File, this->Dimension);
+  if (this->Dimension == -1)
+    {
+      WriteLittleEndian(File, this->LargeDimension);
       for (long i = 0; i < this->LargeDimension; ++i)
 	WriteLittleEndian(File, this->Components[i]);
     }
@@ -3594,14 +3617,14 @@ bool RealVector::WriteAsciiVector (const char* fileName)
       long ReducedDimension = this->LargeDimension - 1;
       for (long i = 0; i < ReducedDimension; ++i)
 	File << this->Components[i] << " ";
-      File << this->Components[ReducedDimension] << endl;  
+      File << this->Components[ReducedDimension] << endl;
     }
   else
     {
       int ReducedDimension = this->LargeDimension - 1;
       for (int i = 0; i < ReducedDimension; ++i)
 	File << this->Components[i] << " ";
-      File << this->Components[ReducedDimension] << endl;  
+      File << this->Components[ReducedDimension] << endl;
     }
   File.close();
   this->Delocalize();
@@ -3613,7 +3636,7 @@ bool RealVector::WriteAsciiVector (const char* fileName)
 // fileName = name of the file where the vector has to be read
 // return value = true if no error occurs
 
-bool RealVector::ReadVector (const char* fileName)
+bool RealVector::ByteReadVector (const char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
@@ -3659,6 +3682,57 @@ bool RealVector::ReadVector (const char* fileName)
   return true;
 }
 
+// read vector from a file 
+//
+// fileName = name of the file where the vector has to be read
+// return value = true if no error occurs
+
+bool RealVector::ReadVector (const char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  
+  std::streampos ZeroPos, MaxPos;
+  File.seekg (0, ios::beg);
+  ZeroPos = File.tellg();
+  File.seekg (0, ios::end);
+  MaxPos = File.tellg ();
+
+  std::streampos Length = MaxPos-ZeroPos-sizeof(int);  
+  File.seekg (0, ios::beg);
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+
+  if (TmpDimension > 0)
+    {
+      if (Length/sizeof(double)>(unsigned)TmpDimension)
+	{      
+	  cout << "Error reading real vector "<<fileName<<": estimated length "<<Length/sizeof(double)<<" vs dimension "<<TmpDimension<<endl;
+	  if ((unsigned)TmpDimension*2==Length/sizeof(double))
+	    cout << "This could be a complex vector!"<<endl;
+	  exit(1);
+	}
+      this->Resize(TmpDimension);
+      ReadBlockLittleEndian(File, this->Components, this->Dimension);
+    }
+  else
+    {
+      long TmpLargeDimension;
+      ReadLittleEndian(File, TmpLargeDimension);
+      this->Resize(TmpLargeDimension);
+      ReadBlockLittleEndian(File, this->Components, this->LargeDimension);
+    }
+  File.close();
+  return true;
+}
+
+
+
 // read vector from a file, only within a given range of indices
 //
 // fileName = name of the file where the vector has to be read
@@ -3701,9 +3775,10 @@ bool RealVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
       if (minIndex < 0l)      
 	minIndex += TmpDimension;
       this->Resize(maxIndex - minIndex + 1l);
-      File.seekg (minIndex * sizeof(double), ios::cur);    
-      for (int i = 0; i < this->Dimension; ++i)
-	ReadLittleEndian(File, this->Components[i]);
+      File.seekg (minIndex * sizeof(double), ios::cur);
+      ReadBlockLittleEndian(File, this->Components, this->Dimension);
+      //      for (int i = 0; i < this->Dimension; ++i)
+      //  ReadLittleEndian(File, this->Components[i]);
     }
   else
     {
@@ -3714,9 +3789,10 @@ bool RealVector::ReadVector (const char* fileName, long minIndex, long maxIndex)
       if (minIndex < 0l)      
 	minIndex += TmpLargeDimension;
       this->Resize(maxIndex - minIndex + 1l);
-      File.seekg (minIndex * sizeof(double), ios::cur);    
-      for (long i = 0; i < this->LargeDimension; ++i)
-	ReadLittleEndian(File, this->Components[i]);
+      File.seekg (minIndex * sizeof(double), ios::cur);
+      ReadBlockLittleEndian(File, this->Components, this->LargeDimension);
+//       for (long i = 0; i < this->LargeDimension; ++i)
+// 	ReadLittleEndian(File, this->Components[i]);
     }
   File.close();
   return true;

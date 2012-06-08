@@ -899,6 +899,7 @@ class RealVector : public Vector
   // fileName = name of the file where the vector has to be stored
   // return value = true if no error occurs
   bool WriteVector (const char* fileName);
+  bool ByteWriteVector (const char* fileName);
 
   // write vector in a file in ascii mode
   //
@@ -911,6 +912,7 @@ class RealVector : public Vector
   // fileName = name of the file where the vector has to be read
   // return value = true if no error occurs
   bool ReadVector (const char* fileName);
+  bool ByteReadVector (const char* fileName);
 
   // read vector from a file, only within a given range of indices
   //
@@ -931,7 +933,7 @@ class RealVector : public Vector
   // fileName = name of the file where the vector has to be read
   // return value = true if the vector can be read
   bool ReadVectorTest (const char* fileName);
-
+  
   // Output Stream overload
   //
   // str = reference on output stream
