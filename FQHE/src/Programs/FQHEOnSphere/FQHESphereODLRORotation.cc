@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 		}
 //	      double Norm1 = TmpVector1.Norm();
 //	      OverlapMatrix(i, i) = 1.0;	      
-	      OverlapMatrix(i, i) = TmpVector1.SqrNorm() / Norm1;	      
+	      OverlapMatrix(i, i) = TmpVector1.SqrNorm();// / Norm1;	      
 	      for (int j = i + 1; j < NbrStates; ++j)
 		{
 		  RealVector TmpVector2;
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
 		      return -1;
 		    }
 //		  double Norm2 = TmpVector2.Norm();
-		  OverlapMatrix(i, j) = (TmpVector1 * TmpVector2) / Norm1;	      
+		  OverlapMatrix(i, j) = (TmpVector1 * TmpVector2);// / Norm1;	      
 //		  OverlapMatrix(i, j) = (TmpVector1 * TmpVector2) / (Norm1 * Norm2);	      
 		}
 	    }
@@ -293,6 +293,8 @@ int main(int argc, char** argv)
       double Theta = 0.0;
       double ThetaInc = M_PI / ((double) NbrPoints);
       RealSymmetricMatrix TmpMatrix(NbrStates, true);
+      double Normalization = 0.0;
+      bool NormalizationFlag = false;
       for (int i = 0; i <= NbrPoints; ++i)
 	{
 	  TmpMatrix.ClearMatrix();
@@ -307,7 +309,14 @@ int main(int argc, char** argv)
 	    for (int k = j; k < NbrStates; ++k)
 	      TmpMatrix(j, k) *= OverlapMatrix(j, k);
 //	  cout << TmpMatrix << endl;
-
+	  if (NormalizationFlag == false)
+	    {
+	      NormalizationFlag = true;
+	      for (int j = 0; j < NbrStates; ++j)
+		Normalization += TmpMatrix(j, j);
+	      Normalization = 1.0 / Normalization;
+	    }
+	  TmpMatrix *= Normalization;
 	  cout << Theta;
 	  if (NbrEigenstate == 0)
 	    {
