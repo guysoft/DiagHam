@@ -243,7 +243,7 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   // TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
 
   // continue with old code: create pointers to new vectors, according to vector type
-  if (TmpSourceVectors[0]->GetVectorType() == Vector::RealDatas)
+  if (TmpSourceVectors[0]->GetVectorType() & Vector::RealDatas)
     {
       this->RealSourceVectors = new RealVector[this->NbrVectors];
       this->RealDestinationVectors = new RealVector[this->NbrVectors];

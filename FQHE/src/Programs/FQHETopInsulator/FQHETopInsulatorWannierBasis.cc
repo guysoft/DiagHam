@@ -300,7 +300,8 @@ int main(int argc, char** argv)
 	      // 	exit(1);
 	      // }
 	      
-	      outdata << Norm(Ovl) << endl;
+	      outdata << SqrNorm(Ovl) << endl;
+	      outdata << TorusProjection << endl;
 	      outdata.close();
 
 	    }
@@ -330,7 +331,8 @@ int main(int argc, char** argv)
 	      // 	exit(1);
 	      // }
 	      
-	      outdata << Norm(Ovl) << endl;
+	      outdata << SqrNorm(Ovl) << endl;
+	      outdata << TorusProjection << endl;
 	      outdata.close();
 	    }
 

@@ -102,17 +102,45 @@ int main(int argc, char** argv)
       timeval TotalStartingTime2;
       timeval TotalEndingTime2;
       double Dt2, Dtb;
-      gettimeofday (&(TotalStartingTime2), 0);
+      cout << "------------------------------------------------------------------" << endl;
       cout << "start blocked" << endl;
+      gettimeofday (&(TotalStartingTime2), 0);
       for (int t=0; t<Trials; ++t)
 	{
 	  TestVector.ReadVector("test-vector.vec");
 	}
       gettimeofday (&(TotalEndingTime2), 0);
-      cout << "------------------------------------------------------------------" << endl << endl;
       Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
 	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
       cout << "time = " << Dt2 << endl;
+      cout << "------------------------------------------------------------------" << endl;
+
+
+      TestVector.ByteWriteVector("test-vector-b.vec");
+
+      cout << "start bit-sized" << endl;
+      gettimeofday (&(TotalStartingTime2), 0);
+      for (int t=0; t<Trials; ++t)
+	{
+	  TestVector.ByteReadVector("test-vector.vec");
+	}
+      gettimeofday (&(TotalEndingTime2), 0);
+      Dtb = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+      cout << "time = " << Dtb << endl;
+      cout << "------------------------------------------------------------------" << endl;
+
+      cout << "start blocked" << endl;
+      gettimeofday (&(TotalStartingTime2), 0);
+      for (int t=0; t<Trials; ++t)
+	{
+	  TestVector.ReadVector("test-vector.vec");
+	}
+      gettimeofday (&(TotalEndingTime2), 0);
+      Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
+	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
+      cout << "time = " << Dt2 << endl;
+      cout << "------------------------------------------------------------------" << endl;
 
 
       TestVector.ByteWriteVector("test-vector-b.vec");
@@ -124,37 +152,10 @@ int main(int argc, char** argv)
 	  TestVector.ByteReadVector("test-vector.vec");
 	}
       gettimeofday (&(TotalEndingTime2), 0);
-      cout << "------------------------------------------------------------------" << endl << endl;
       Dtb = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
 	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
       cout << "time = " << Dtb << endl;
-
-            gettimeofday (&(TotalStartingTime2), 0);
-      cout << "start blocked" << endl;
-      for (int t=0; t<Trials; ++t)
-	{
-	  TestVector.ReadVector("test-vector.vec");
-	}
-      gettimeofday (&(TotalEndingTime2), 0);
-      cout << "------------------------------------------------------------------" << endl << endl;
-      Dt2 = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-      cout << "time = " << Dt2 << endl;
-
-
-      TestVector.ByteWriteVector("test-vector-b.vec");
-
-      gettimeofday (&(TotalStartingTime2), 0);
-      cout << "start bit-sized" << endl;
-      for (int t=0; t<Trials; ++t)
-	{
-	  TestVector.ByteReadVector("test-vector.vec");
-	}
-      gettimeofday (&(TotalEndingTime2), 0);
-      cout << "------------------------------------------------------------------" << endl << endl;
-      Dtb = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
-	((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
-      cout << "time = " << Dtb << endl;
+      cout << "------------------------------------------------------------------" << endl;
 
       
     }
