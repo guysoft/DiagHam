@@ -22,9 +22,6 @@ using std::ofstream;
 
 
 
-
-
-
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -47,7 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('r',"first-real","Multiply each vector with a phase such that the first non-zero coefficient is real");
   (*SystemGroup) += new BooleanOption('P',"polar","Show coefficients in the polar (abs,phase) representation");
   (*SystemGroup) += new SingleIntegerOption('e',"real-element","Index of element to be made real with option 'first-real'",0);
-
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('k', "ky", "constraint of momentum in y-direction", 0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -119,13 +116,13 @@ int main(int argc, char** argv)
     }
   
   if (( NbrVectors == 0 )&&(Ky != 0))
-		KySymmetry = true;
+    KySymmetry = true;
   ParticleOnLattice *Space;
   if (KySymmetry)
     {
       cout << "N="<<NbrParticles<<", Lx="<<Lx<<", Ly="<<Ly<<", Q="<<NbrFluxQuanta<<", Ky="<<Ky<<endl;
       Space = new BosonOnLatticeKy(NbrParticles, Lx, Ly, Ky, NbrFluxQuanta, MemorySpace);      
-			cout <<"Hilbert Space dimension = "<< Space->GetHilbertSpaceDimension()<<endl;
+      cout <<"Hilbert Space dimension = "<< Space->GetHilbertSpaceDimension()<<endl;
     }
   else
     {
@@ -134,13 +131,13 @@ int main(int argc, char** argv)
 	Space =new HardCoreBosonOnLattice(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
       else Space = new BosonOnLattice(NbrParticles, Lx, Ly, NbrFluxQuanta, MemorySpace);
     }
-    if(NbrVectors  != 0 )
-			if (Space->GetHilbertSpaceDimension() != VectorDimension)
-			{
-				cout << "Dimension of vectors does not match the size of the Hilbert-Space!"<<endl;
-				exit(1);	
-			}
-
+  if(NbrVectors  != 0 )
+    if (Space->GetHilbertSpaceDimension() != VectorDimension)
+      {
+	cout << "Dimension of vectors does not match the size of the Hilbert-Space!"<<endl;
+	exit(1);	
+      }
+  
   if (Manager.GetBoolean("first-real"))
     {      
       for (int k=0; k<NbrVectors; ++k)
@@ -167,15 +164,25 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (NbrVectors>0)
-	    cout << " : " << "("<<Real(Vectors[0][i]*Phases[0])<<"+I*"<<Imag(Vectors[0][i]*Phases[0])<<")";
-	  for (int k=1; k<NbrVectors; ++k)
-	    cout << "  " << "("<<Real(Vectors[k][i]*Phases[k])<<"+I*"<<Imag(Vectors[k][i]*Phases[k])<<")";
-	  cout << endl;
+	  if (Manager.GetDouble("hide-component") > 0.0)
+	    {
+	      double Error = Manager.GetDouble("hide-component");
+	      if (Norm(Vectors[0][i]) > Error )
+		cout <<Vectors[0][i]<<endl;
+	    }
+	  else
+	    {
+	      if (NbrVectors>0)
+		cout << " : " << "("<<Real(Vectors[0][i]*Phases[0])<<"+I*"<<Imag(Vectors[0][i]*Phases[0])<<")";
+	      for (int k=1; k<NbrVectors; ++k)
+		cout << "  " << "("<<Real(Vectors[k][i]*Phases[k])<<"+I*"<<Imag(Vectors[k][i]*Phases[k])<<")";
+	      cout << endl;
+	    }
+	  
 	}
     }
-
-  
+      
+      
   delete Space;  
   return 0;
 }
