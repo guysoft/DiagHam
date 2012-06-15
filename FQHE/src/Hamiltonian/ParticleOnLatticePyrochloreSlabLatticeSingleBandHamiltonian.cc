@@ -71,7 +71,7 @@ ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ParticleOnLatticePy
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, 
-															 double uPotential, double vPotential,  
+															 double uPotential,  double vPotential,  
 															 Abstract2DTightBindingModel* tightBindingModel, int bandIndex, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -265,7 +265,7 @@ void ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::EvaluateIntera
       if ((this->FlatBand == false) || (this->VPotential != 0.0))
 	FactorU *= this->UPotential;
       double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-
+      
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -295,14 +295,46 @@ void ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::EvaluateIntera
 		      Tmp += (Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site] * Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site]);
 		      Tmp += (Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site] * Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site]);
 		    }
-		  this->InteractionFactors[i][Index] = FactorU * Tmp;
+		  Tmp *= FactorU;
+		  
+		  		  
+		  this->InteractionFactors[i][Index] =  Tmp;
+		  
+		  if(this->VPotential != 0.0)
+		  {
+		    Complex Tmp2 = 0.0;
+		    int NbrLayers = (this->TightBindingModel->GetNbrBands() + 1)/4;
+		    for (int Site = 0; Site < NbrLayers; ++Site)
+		    {
+		      int PosA = 4*Site;
+		      int PosB = 4*Site+1;
+		      int PosC = 4*Site+2;
+		      Tmp2 = (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
+		      Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
+		      Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
+		      Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
+
+ 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx4, ky4);
+ 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx4, ky4);
+ 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx3, ky3);
+ 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx3, ky3);
+
+ 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
+ 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
+ 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
+ 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+		    }
+		    Tmp2 *= FactorV;
+		    
+		  this->InteractionFactors[i][Index] += Tmp2;
+		  }
 		  
 		  if (Index3 == Index4)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  if (Index1 == Index2)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  this->InteractionFactors[i][Index] *= 2.0;
-
+		  
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -330,8 +362,7 @@ void ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::EvaluateIntera
 
 Complex ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
-  //Complex Tmp = Phase (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
+  Complex Tmp = 1 + Phase(this->KyFactor * ((double) (-k2a + k1a )));
   return Tmp;
 }
 
@@ -345,8 +376,7 @@ Complex ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ComputeTwoB
 
 Complex ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
+ Complex Tmp = 1 + Phase(this->KyFactor * ((double) (-k2b + k1b )));
   return Tmp;
 }
 
@@ -364,8 +394,7 @@ Complex ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ComputeTwoB
 
 Complex ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
-  //Complex Tmp = Phase(0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
+  Complex Tmp = 1 + Phase(this->KxFactor * ((double) (k4a - k2a )) - this->KyFactor * ((double) (k4b - k2b)));
   return Tmp;
 }
 

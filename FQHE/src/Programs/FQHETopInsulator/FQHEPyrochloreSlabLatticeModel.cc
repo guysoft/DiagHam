@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next to nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-layers", "", 1); 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "real part of the nearest neighbor hopping amplitude in a given Kagome lattice layer", 1.0);
@@ -137,12 +138,20 @@ int main(int argc, char** argv)
   else
     {
       if (Manager.GetBoolean("flat-band") == true)
-	{
-	  sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_tp_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	{ 
+	  if (Manager.GetDouble("v-potential") == 0.0)
+	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_tp_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  else
+	  {
+	      sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_l1_%g_l2_%g_tp_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential") , Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
 	}
       else
 	{
-	  sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_tp_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  if (Manager.GetDouble("v-potential") == 0.0)
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_tp_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  else
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_l1_%g_l2_%g_tp_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("tperp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	}
     }
 
@@ -226,8 +235,7 @@ int main(int argc, char** argv)
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if (Manager.GetBoolean("three-body") == false)
 	    { 
-	      Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  0.0,
-											    &TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("v-potential"),   &TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 

@@ -55,6 +55,7 @@ class ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian : public Parti
   
   // strength of the repulsive two body onsite interaction
   double UPotential;
+  
   // strength of the repulsive two body neareast neighbor interaction
   double VPotential;
 
