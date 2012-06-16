@@ -66,6 +66,8 @@ FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::FullReorthogonalized
   this->MaximumNumberIteration = maxIter;
   this->NbrEigenvalue = nbrEigenvalue;
   this->MaxNbrVectors = maxNbrVectors;
+  if (this->MaxNbrVectors<5)
+    this->MaxNbrVectors = 5;
   this->LanczosVectors = new ComplexVector [this->MaxNbrVectors];
   if (maxIter > 0)
     {
@@ -161,7 +163,9 @@ void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::InitializeLancz
 
 void FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::ResumeLanczosAlgorithm()
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  int Dimension = 0;
+  if (this->Hamiltonian!=0)
+    this->Hamiltonian->GetHilbertSpaceDimension();
   for (int i = 0; i < this->MaxNbrVectors; ++i)
     this->LanczosVectors[i] = ComplexVector (Dimension);
   this->ReadState();
@@ -225,7 +229,7 @@ Vector* FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage::GetEigenstat
           TmpCoefficents[j].Re = TmpEigenvector(j, i);
           TmpCoefficents[j].Im = 0.0;
         }
-      Eigenstates[i] = ComplexVector (this->Hamiltonian->GetHilbertSpaceDimension());
+      Eigenstates[i] = ComplexVector (this->LanczosVectors[0].GetVectorDimension());
       Eigenstates[i].Copy(this->LanczosVectors[0], TmpEigenvector(0, i));
       int ReducedMaxNbrVector =  this->MaxNbrVectors - 1;
       int MaxPos = (this->TridiagonalizedMatrix.GetNbrRow() - 1) / ReducedMaxNbrVector;
