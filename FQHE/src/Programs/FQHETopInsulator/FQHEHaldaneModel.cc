@@ -221,7 +221,7 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   TightBindingModelHaldaneHoneycombLattice TightBindingModel(NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-							     HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), false);
+							     HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 
 
   if(Manager.GetBoolean("WannierHilbertSpace"))
