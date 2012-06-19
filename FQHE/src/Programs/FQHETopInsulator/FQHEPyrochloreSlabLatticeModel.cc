@@ -8,8 +8,8 @@
 
 #include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandThreeBodyHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandFourBodyHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeChern2DiceLatticeSingleBandFiveBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
+//#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelPyrochloreSlabLattice.h"
 
@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next to nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
+  (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-layers", "", 1); 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "real part of the nearest neighbor hopping amplitude in a given Kagome lattice layer", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "real part of the next nearest neighbor hopping amplitude in a given Kagome lattice layer", -0.3);
@@ -123,7 +124,14 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("three-body") == false)
     { 
-      sprintf (FilePrefix, "%s_singleband_pyrochloreslablattice_nlayer_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-layers"), NbrParticles, NbrSitesX, NbrSitesY);
+      if (Manager.GetBoolean("four-body") == false)
+	{ 
+	  sprintf (FilePrefix, "%s_singleband_pyrochloreslablattice_nlayer_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-layers"), NbrParticles, NbrSitesX, NbrSitesY);
+	}
+      else
+	{
+	  sprintf (FilePrefix, "%s_singleband_fourbody_pyrochloreslablattice_nlayer_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-layers"), NbrParticles, NbrSitesX, NbrSitesY);
+	}
     }
   else
     {
@@ -235,7 +243,15 @@ int main(int argc, char** argv)
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if (Manager.GetBoolean("three-body") == false)
 	    { 
-	      Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("v-potential"),   &TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      if (Manager.GetBoolean("four-body") == false)
+		{ 
+		  Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("v-potential"),   &TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		}
+	      else
+		{
+		  Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,
+													&TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		}
 	    }
 	  else
 	    { 
