@@ -67,10 +67,19 @@ Complex ParticleOnCylinderFunctionBasis::GetFunctionValue(double x, double y, do
   Phase.Im = sin(kappa * index * y);
 
   double Normalization = 1.0/sqrt(L * sqrt(M_PI));
-  
- // if (this->LandauLevel > 0)
- //   for (int n = 1; n <= this->LandauLevel; n++)
- //     Normalization /= sqrt(2.0 * n);
+   
+  Complex Result = Phase * exp(-0.5 * pow(x + kappa * index,2.0));
 
-  return (Phase * exp(-0.5 * pow(x + kappa * index,2.0)) * Normalization);
+  if (this->LandauLevel == 1)
+    {
+      Result *= (2.0 * (x + kappa * index));    
+      Normalization /= sqrt(2.0);
+    }
+  else if (this->LandauLevel > 1)
+   {
+     cout << "LL >= 2 " << endl;
+     exit(1);
+   }
+ 
+  return (Result * Normalization);
 }
