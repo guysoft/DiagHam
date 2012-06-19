@@ -556,34 +556,16 @@ void ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian::Evalua
 	      if (IndexIn[0] == IndexIn[1])
 		{
 		  ++SymmetryIndex;
-		  if (IndexIn[1] == IndexIn[2])
-		    {
-		      ++SymmetryIndex;
-		      if (IndexIn[2] == IndexIn[3])
-			{
-			  ++SymmetryIndex;
-			}
-		    }
 		}
-	      else
+	      if (IndexIn[1] == IndexIn[2])
 		{
-		  if (IndexIn[1] == IndexIn[2])
-		    {
-		      ++SymmetryIndex;
-		      if (IndexIn[2] == IndexIn[3])
-			{
-			  ++SymmetryIndex;
-			}
-		    }
-		  else
-		    {
-		      if (IndexIn[2] == IndexIn[3])
-			{
-			  ++SymmetryIndex;
-			}
-		    }
+		  ++SymmetryIndex;
 		}
-	      for (int k = 1; k < SymmetryIndex; ++k)
+	      if (IndexIn[2] == IndexIn[3])
+		{
+		  ++SymmetryIndex;
+		}
+	      for (int k = 1; k <= SymmetryIndex; ++k)
 		SymmetryFactor *= (double) k;
 	      SymmetryFactor = 1.0 / SymmetryFactor;
 	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
