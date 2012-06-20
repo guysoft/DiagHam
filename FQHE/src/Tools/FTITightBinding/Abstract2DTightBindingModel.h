@@ -92,6 +92,12 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = true if no error occured  
   virtual bool WriteBandStructureASCII(char* fileName);
 
+  // compute the Chern number of a given band
+  //
+  // band = band index
+  // return value = Chern number
+  virtual double ComputeChernNumber(int band);
+
 };
 
 // get the linearized momentum index
