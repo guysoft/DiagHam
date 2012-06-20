@@ -132,7 +132,7 @@ BosonOnSphereWithSU3Spin::BosonOnSphereWithSU3Spin (int nbrBosons, int totalLz, 
 //     }
 #ifdef __DEBUG__
    int UsedMemory = 0;
-   UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+   UsedMemory += this->HilbertSpaceDimension * (3 * sizeof(unsigned long));
    cout << "memory requested for Hilbert space = ";
    if (UsedMemory >= 1024)
     if (UsedMemory >= 1048576)

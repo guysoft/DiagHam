@@ -54,38 +54,48 @@ using std::abs;
 // basic constructor
 // 
 // nbrBosons= number of bosons
-// totalSpin = twice the total spin value
+// totalTz = twice the total Tz value
+// totalY = three time the total Y value
 // maxMomentum = momentum maximum value for a boson
 // kxMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
 // kyMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
 
-BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagneticTranslations (int nbrBosons, int totalSpin, int maxMomentum, 
-											  int kxMomentum, int kyMomentum)
+BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagneticTranslations (int nbrBosons, int totalTz, int totalY, int maxMomentum, 
+												int kxMomentum, int kyMomentum)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
-  this->SzFlag = true;
-  this->TotalSpin = totalSpin;
-  this->NbrBosonsUp = (this->NbrBosons + this->TotalSpin) / 2;
-  this->NbrBosonsDown = (this->NbrBosons - this->TotalSpin) / 2;
-
+  this->TotalY = totalY;
+  this->TotalTz = totalTz;
+  this->NbrBosons1 = (2 * nbrBosons) + totalY + (3 * totalTz);
+  this->NbrBosons2 = (2 * nbrBosons) + totalY - (3 * totalTz);
+  this->NbrBosons3 = nbrBosons - totalY;
+  this->NbrBosons1 /= 6;
+  this->NbrBosons2 /= 6;
+  this->NbrBosons3 /= 3;
+  
+//  cout << this->NbrBosons1 << " " << this->NbrBosons2 << " " << this->NbrBosons3 << " : " << this->TotalTz << " " << this->TotalY << endl;
   this->MaxMomentum = maxMomentum;  
   this->KyMax = this->MaxMomentum - 1;
   this->MomentumModulo = FindGCD(this->NbrBosons, this->MaxMomentum);
   this->KxMomentum = kxMomentum % this->MomentumModulo;
   this->KyMomentum = kyMomentum % this->MaxMomentum;
 
-  this->TemporaryStateUp = new unsigned long[this->MaxMomentum];
-  this->TemporaryStateDown = new unsigned long[this->MaxMomentum];
-  this->ProdATemporaryStateUp = new unsigned long[this->MaxMomentum];
-  this->ProdATemporaryStateDown = new unsigned long[this->MaxMomentum];
-  this->NUpKyMax = this->KyMax + this->NbrBosons;
-  this->NDownKyMax = this->KyMax + this->NbrBosons;
-  this->FermionicKyMax = this->NUpKyMax;
+  this->TemporaryState1 = new unsigned long[this->MaxMomentum];
+  this->TemporaryState2 = new unsigned long[this->MaxMomentum];
+  this->TemporaryState3 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState1 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState2 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState3 = new unsigned long[this->MaxMomentum];
+  this->N1KyMax = this->KyMax + this->NbrBosons;
+  this->N2KyMax = this->KyMax + this->NbrBosons;
+  this->N3KyMax = this->KyMax + this->NbrBosons;
+  this->FermionicKyMax = this->N1KyMax;
 
   this->StateShift = (this->MaxMomentum / this->MomentumModulo);
-  this->LastMomentumMaskUp = 0x1ul << (this->MaxMomentum + this->NbrBosonsUp - 1);
-  this->LastMomentumMaskDown = 0x1ul << (this->MaxMomentum + this->NbrBosonsDown - 1);
+  this->LastMomentumMask1 = 0x1ul << (this->MaxMomentum + this->NbrBosons1 - 1);
+  this->LastMomentumMask2 = 0x1ul << (this->MaxMomentum + this->NbrBosons2 - 1);
+  this->LastMomentumMask3 = 0x1ul << (this->MaxMomentum + this->NbrBosons3 - 1);
 
   this->MomentumIncrement = (this->NbrBosons * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift = this->MaxMomentum - this->StateShift;
@@ -96,16 +106,17 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
       this->MomentumMask |= ((unsigned long) 1);
     }
 
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax, 0, this->NbrBosonsUp);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax, 0, this->NbrBosons1, this->NbrBosons2, this->NbrBosons3);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   if (this->LargeHilbertSpaceDimension > 0l)
     {
-      this->StateDescriptionUp = new unsigned long[this->LargeHilbertSpaceDimension];
-      this->StateDescriptionDown = new unsigned long[this->LargeHilbertSpaceDimension];
-      long TmpLargeHilbertSpaceDimension = this->RawGenerateStates(this->NbrBosons, this->KyMax, 0, this->KyMax + this->NbrBosonsUp + 1, this->KyMax + this->NbrBosonsDown + 1, this->NbrBosonsUp, 0l);     
+      this->StateDescription1 = new unsigned long[this->LargeHilbertSpaceDimension];
+      this->StateDescription2 = new unsigned long[this->LargeHilbertSpaceDimension];
+      this->StateDescription3 = new unsigned long[this->LargeHilbertSpaceDimension];
+      long TmpLargeHilbertSpaceDimension = this->RawGenerateStates(this->NbrBosons, this->KyMax, this->KyMax, this->KyMax, 0, this->NbrBosons1, this->NbrBosons2, this->NbrBosons3, 0l);     
       this->LargeHilbertSpaceDimension = this->GenerateStates();
       cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->LargeHilbertSpaceDimension > 0l)
@@ -118,8 +129,7 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
 	  this->Flag.Initialize();
 #ifdef __DEBUG__
 	  long UsedMemory = 0l;
-	  UsedMemory += this->LargeHilbertSpaceDimension * (2l * sizeof(unsigned long) + sizeof(int));
-	  UsedMemory += this->NbrUniqueStateDescriptionUp * (2l * sizeof(int) + sizeof(unsigned long));
+	  UsedMemory += this->LargeHilbertSpaceDimension * (3 * sizeof(unsigned long) + sizeof(int));
 	  cout << "memory requested for Hilbert space = ";
 	  if (UsedMemory >= 1024l)
 	    if (UsedMemory >= 1048576l)
@@ -145,35 +155,44 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
 
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
-  this->TotalSpin = bosons.TotalSpin;
-  this->SzFlag = bosons.SzFlag;
-  this->NbrBosonsUp = bosons.NbrBosonsUp;
-  this->NbrBosonsDown = bosons.NbrBosonsDown;
+  this->TotalTz = bosons.TotalTz;
+  this->TotalY = bosons.TotalY;
+  this->NbrBosons1 = bosons.NbrBosons1;
+  this->NbrBosons2 = bosons.NbrBosons2;
+  this->NbrBosons3 = bosons.NbrBosons3;
   this->MaxMomentum = bosons.MaxMomentum;  
   this->KyMax = bosons.KyMax;
-  this->NUpKyMax = bosons.NUpKyMax;
-  this->NDownKyMax = bosons.NDownKyMax;
+  this->N1KyMax = bosons.N1KyMax;
+  this->N2KyMax = bosons.N2KyMax;
+  this->N3KyMax = bosons.N3KyMax;
   this->FermionicKyMax = bosons.FermionicKyMax;
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
 
-  this->TemporaryStateUp = new unsigned long[this->MaxMomentum];
-  this->TemporaryStateDown = new unsigned long[this->MaxMomentum];
-  this->ProdATemporaryStateUp = new unsigned long[this->MaxMomentum];
-  this->ProdATemporaryStateDown = new unsigned long[this->MaxMomentum];
+  this->TemporaryState1 = new unsigned long[this->MaxMomentum];
+  this->TemporaryState2 = new unsigned long[this->MaxMomentum];
+  this->TemporaryState3 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState1 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState2 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState3 = new unsigned long[this->MaxMomentum];
 
-  this->StateDescriptionUp = bosons.StateDescriptionUp;
-  this->StateDescriptionDown = bosons.StateDescriptionDown;
-  this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
-  this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
-  this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
-  this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  this->StateDescription1 = bosons.StateDescription1;
+  this->StateDescription2 = bosons.StateDescription2;
+  this->StateDescription3 = bosons.StateDescription3;
+
+  this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
+  this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
+  this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;
+  this->UniqueStateDescription2 = bosons.UniqueStateDescription2;
+  this->UniqueStateDescriptionSubArraySize2 = bosons.UniqueStateDescriptionSubArraySize2;
+  this->FirstIndexUniqueStateDescription2 = bosons.FirstIndexUniqueStateDescription2;
 
   this->MomentumIncrement = bosons.MomentumIncrement;
   this->StateShift = bosons.StateShift;
-  this->LastMomentumMaskUp = bosons.LastMomentumMaskUp;
-  this->LastMomentumMaskDown = bosons.LastMomentumMaskDown;
+  this->LastMomentumMask1 = bosons.LastMomentumMask1;
+  this->LastMomentumMask2 = bosons.LastMomentumMask2;
+  this->LastMomentumMask3 = bosons.LastMomentumMask3;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->MomentumMask = bosons.MomentumMask;
   this->RescalingFactors = bosons.RescalingFactors;
@@ -189,15 +208,24 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::~BosonOnTorusWithSU3SpinAndMagne
 {
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->StateDescriptionUp;
-      delete[] this->StateDescriptionDown;
-      delete[] this->UniqueStateDescriptionUp;
-      delete[] this->UniqueStateDescriptionSubArraySizeUp;
-      delete[] this->FirstIndexUniqueStateDescriptionUp;
-      delete[] this->TemporaryStateUp;
-      delete[] this->TemporaryStateDown;
-      delete[] this->ProdATemporaryStateUp;
-      delete[] this->ProdATemporaryStateDown;
+      delete[] this->StateDescription1;
+      delete[] this->StateDescription2;
+      delete[] this->StateDescription3;
+      delete[] this->UniqueStateDescription1;
+      delete[] this->UniqueStateDescriptionSubArraySize1;
+      delete[] this->NbrUniqueStateDescription2;
+      for (long i = 0l; i < this->NbrUniqueStateDescription1; ++i)
+	{
+	  delete[] this->UniqueStateDescription2[i];
+	  delete[] this->UniqueStateDescriptionSubArraySize2[i];
+	  delete[] this->FirstIndexUniqueStateDescription2[i];
+	}
+      delete[] this->UniqueStateDescription2;
+      delete[] this->UniqueStateDescriptionSubArraySize2;
+      delete[] this->FirstIndexUniqueStateDescription2;
+      delete[] this->ProdATemporaryState1;
+      delete[] this->ProdATemporaryState2;
+      delete[] this->ProdATemporaryState3;
       for (int i = 1; i <= this->MaxMomentum ; ++i)
 	delete[] this->RescalingFactors[i];
       delete[] this->RescalingFactors;
@@ -214,15 +242,24 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations& BosonOnTorusWithSU3SpinAndMagnet
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->StateDescriptionUp;
-      delete[] this->StateDescriptionDown;
-      delete[] this->UniqueStateDescriptionUp;
-      delete[] this->UniqueStateDescriptionSubArraySizeUp;
-      delete[] this->FirstIndexUniqueStateDescriptionUp;
-      delete[] this->TemporaryStateUp;
-      delete[] this->TemporaryStateDown;
-      delete[] this->ProdATemporaryStateUp;
-      delete[] this->ProdATemporaryStateDown;
+      delete[] this->StateDescription1;
+      delete[] this->StateDescription2;
+      delete[] this->StateDescription3;
+      delete[] this->UniqueStateDescription1;
+      delete[] this->UniqueStateDescriptionSubArraySize1;
+      delete[] this->NbrUniqueStateDescription2;
+      for (long i = 0l; i < this->NbrUniqueStateDescription1; ++i)
+	{
+	  delete[] this->UniqueStateDescription2[i];
+	  delete[] this->UniqueStateDescriptionSubArraySize2[i];
+	  delete[] this->FirstIndexUniqueStateDescription2[i];
+	}
+      delete[] this->UniqueStateDescription2;
+      delete[] this->UniqueStateDescriptionSubArraySize2;
+      delete[] this->FirstIndexUniqueStateDescription2;
+      delete[] this->ProdATemporaryState1;
+      delete[] this->ProdATemporaryState2;
+      delete[] this->ProdATemporaryState3;
       for (int i = 1; i <= this->MaxMomentum ; ++i)
 	delete[] this->RescalingFactors[i];
       delete[] this->RescalingFactors;
@@ -235,35 +272,44 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations& BosonOnTorusWithSU3SpinAndMagnet
 
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
-  this->TotalSpin = bosons.TotalSpin;
-  this->SzFlag = bosons.SzFlag;
-  this->NbrBosonsUp = bosons.NbrBosonsUp;
-  this->NbrBosonsDown = bosons.NbrBosonsDown;
+  this->TotalTz = bosons.TotalTz;
+  this->TotalY = bosons.TotalY;
+  this->NbrBosons1 = bosons.NbrBosons1;
+  this->NbrBosons2 = bosons.NbrBosons2;
+  this->NbrBosons3 = bosons.NbrBosons3;
   this->MaxMomentum = bosons.MaxMomentum;  
   this->KyMax = bosons.KyMax;
-  this->NUpKyMax = bosons.NUpKyMax;
-  this->NDownKyMax = bosons.NDownKyMax;
+  this->N1KyMax = bosons.N1KyMax;
+  this->N2KyMax = bosons.N2KyMax;
+  this->N3KyMax = bosons.N3KyMax;
   this->FermionicKyMax = bosons.FermionicKyMax;
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
 
-  this->TemporaryStateUp = new unsigned long[this->MaxMomentum];
-  this->TemporaryStateDown = new unsigned long[this->MaxMomentum];
-  this->ProdATemporaryStateUp = new unsigned long[this->MaxMomentum];
-  this->ProdATemporaryStateDown = new unsigned long[this->MaxMomentum];
+  this->TemporaryState1 = new unsigned long[this->MaxMomentum];
+  this->TemporaryState2 = new unsigned long[this->MaxMomentum];
+  this->TemporaryState3 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState1 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState2 = new unsigned long[this->MaxMomentum];
+  this->ProdATemporaryState3 = new unsigned long[this->MaxMomentum];
 
-  this->StateDescriptionUp = bosons.StateDescriptionUp;
-  this->StateDescriptionDown = bosons.StateDescriptionDown;
-  this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
-  this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
-  this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
-  this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  this->StateDescription1 = bosons.StateDescription1;
+  this->StateDescription2 = bosons.StateDescription2;
+  this->StateDescription3 = bosons.StateDescription3;
+
+  this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
+  this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
+  this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;
+  this->UniqueStateDescription2 = bosons.UniqueStateDescription2;
+  this->UniqueStateDescriptionSubArraySize2 = bosons.UniqueStateDescriptionSubArraySize2;
+  this->FirstIndexUniqueStateDescription2 = bosons.FirstIndexUniqueStateDescription2;
 
   this->MomentumIncrement = bosons.MomentumIncrement;
   this->StateShift = bosons.StateShift;
-  this->LastMomentumMaskUp = bosons.LastMomentumMaskUp;
-  this->LastMomentumMaskDown = bosons.LastMomentumMaskDown;
+  this->LastMomentumMask1 = bosons.LastMomentumMask1;
+  this->LastMomentumMask2 = bosons.LastMomentumMask2;
+  this->LastMomentumMask3 = bosons.LastMomentumMask3;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
   this->MomentumMask = bosons.MomentumMask;
   this->RescalingFactors = bosons.RescalingFactors;
@@ -331,199 +377,407 @@ AbstractHilbertSpace* BosonOnTorusWithSU3SpinAndMagneticTranslations::ExtractSub
 }
 
 
-// apply a^+_(d,m1) a^+_(d,m2) a_(d,n1) a_(d,n2) operator to a given state (with m1+m2=n1+n2)
-//
-// index = index of the state on which the operator has to be applied
-// m1 = first index for creation operator
-// m2 = second index for creation operator
-// n1 = first index for annihilation operator
-// n2 = second index for annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation)
-{
-  cout << "warning : AddAdAdAd not implemented" << endl;
-  return -1;
-}
-
-// apply a^+_(u,m1) a^+_(u,m2) a_(u,n1) a_(u,n2) operator to a given state (with m1+m2=n1+n2)
-//
-// index = index of the state on which the operator has to be applied
-// m1 = first index for creation operator
-// m2 = second index for creation operator
-// n1 = first index for annihilation operator
-// n2 = second index for annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation)
-{
-  cout << "warning : AduAuAuAu not implemented" << endl;
-  return -1;
-}
-
-// apply a^+_(u,m1) a^+_(d,m2) a_(d,n1) a_(u,n2) operator to a given state (with m1+m2=n1+n2)
-//
-// index = index of the state on which the operator has to be applied
-// m1 = first index for creation operator
-// m2 = second index for creation operator
-// n1 = first index for annihilation operator
-// n2 = second index for annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslation = reference on the number of translations to be applied to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation)
-{
-  cout << "warning : AddAuAdAu not implemented" << endl;
-  return -1;
-}
-
-
-// apply a^+_m_d a_m_d operator to a given state (only spin down)
+// apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
 //
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_m a_m
-double BosonOnTorusWithSU3SpinAndMagneticTranslations::AddAd (int index, int m)
+// return value = coefficient obtained when applying a^+_m_1 a_m_1
+
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1A1 (int index, int m)
 {
-  cout << "warning : AddAd not implemented" << endl;
+  cout << "warning : Ad1A1 not implemented" << endl;
   return 0.0;
 }
-  
 
-// apply a^+_m_u a_m_u operator to a given state  (only spin up)
+// apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
 //
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
-// return value = coefficient obtained when applying a^+_m a_m
-double BosonOnTorusWithSU3SpinAndMagneticTranslations::AduAu (int index, int m)
+// return value = coefficient obtained when applying a^+_m_2 a_m_2
+
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad2A2 (int index, int m)
 {
-  cout << "warning : AduAu not implemented" << endl;
+  cout << "warning : Ad2A2 not implemented" << endl;
   return 0.0;
 }
 
-// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+// apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
 //
 // index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin up)
-// n2 = second index for annihilation operator (spin up)
-// return value =  multiplicative factor 
-double BosonOnTorusWithSU3SpinAndMagneticTranslations::AuAu (int index, int n1, int n2)
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m_3 a_m_3
+
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad3A3 (int index, int m)
 {
-  this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
-  if ((this->ProdATemporaryStateUp[n1] == 0) || (this->ProdATemporaryStateUp[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryStateUp[n1] == 1)))
-    {
-      return 0.0;
-    }
-  this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
-  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
-  double Coefficient = this->ProdATemporaryStateUp[n2];
-  --this->ProdATemporaryStateUp[n2];
-  Coefficient *= this->ProdATemporaryStateUp[n1];
-  --this->ProdATemporaryStateUp[n1];
-  return sqrt(Coefficient);
+  cout << "warning : Ad3A3 not implemented" << endl;
+  return 0.0;
 }
 
-// apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+// apply a^+_m_1 a_n_1 operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin down)
-// n2 = second index for annihilation operator (spin down)
-// return value =  multiplicative factor 
-double BosonOnTorusWithSU3SpinAndMagneticTranslations::AdAd (int index, int n1, int n2)
-{  
-  this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
-  if ((this->ProdATemporaryStateDown[n1] == 0) || (this->ProdATemporaryStateDown[n2] == 0)
-      || ((n1 == n2) && (this->ProdATemporaryStateDown[n1] == 1)))    
-    {
-      return 0.0;
-    }
-  this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
-  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
-  double Coefficient = this->ProdATemporaryStateDown[n2];
-  --this->ProdATemporaryStateDown[n2];
-  Coefficient *= this->ProdATemporaryStateDown[n1];
-  --this->ProdATemporaryStateDown[n1];
-  return sqrt(Coefficient);
-}
-
-// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
-//
-// index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin up)
-// n2 = second index for annihilation operator (spin down)
-// return value =  multiplicative factor 
-
-double BosonOnTorusWithSU3SpinAndMagneticTranslations::AuAd (int index, int n1, int n2)
-{
-  this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
-  this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
-  if ((this->ProdATemporaryStateUp[n1] == 0) || (this->ProdATemporaryStateDown[n2] == 0))
-    {
-      return 0.0;
-    }
-  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
-  double Coefficient = this->ProdATemporaryStateDown[n2];
-  --this->ProdATemporaryStateDown[n2];
-  Coefficient *= this->ProdATemporaryStateUp[n1];
-  --this->ProdATemporaryStateUp[n1];
-  return sqrt(Coefficient);
-}
-
-// apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
-//
-// m1 = first index for creation operator (spin up)
-// m2 = second index for creation operator (spin up)
+// m = index of the creation operator
+// n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::AduAdu (int m1, int m2, double& coefficient, int& nbrTranslation)
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1A1 (int index, int m, int n, double& coefficient)
 {
-  return this->AdiAdj(m1, m2, this->TemporaryStateUp, this->TemporaryStateUp, coefficient, nbrTranslation);
+  cout << "warning : Ad1A1 not implemented" << endl;
+  return 0.0;
 }
 
-// apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+// apply a^+_m_1 a_n_2 operator to a given state 
 //
-// m1 = first index for creation operator (spin down)
-// m2 = second index for creation operator (spin down)
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::AddAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1A2 (int index, int m, int n, double& coefficient)
 {
-  return this->AdiAdj(m1, m2, this->TemporaryStateDown, this->TemporaryStateDown, coefficient, nbrTranslation);
+  cout << "warning : Ad1A2 not implemented" << endl;
+  return 0.0;
 }
 
+// apply a^+_m_1 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1A3 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad1A2 not implemented" << endl;
+  return 0.0;
+}
+
+
+// apply a^+_m_2 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad2A1 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad2A1 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_2 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad2A2 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad2A2 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_2 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad2A3 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad2A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_3 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad3A1 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad3A1 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_3 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad3A2 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad3A2 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_3 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad3A3 (int index, int m, int n, double& coefficient)
+{
+  cout << "warning : Ad3A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::A1A1 (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription1[index], this->N1KyMax, this->ProdATemporaryState1);
+  if ((this->ProdATemporaryState1[n1] == 0) || (this->ProdATemporaryState1[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryState1[n1] == 1)))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription2[index], this->N2KyMax, this->ProdATemporaryState2);
+  this->FermionToBoson(this->StateDescription3[index], this->N3KyMax, this->ProdATemporaryState3);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  double Coefficient = this->ProdATemporaryState1[n2];
+  --this->ProdATemporaryState1[n2];
+  Coefficient *= this->ProdATemporaryState1[n1];
+  --this->ProdATemporaryState1[n1];
+  return sqrt(Coefficient);
+}
+
+// apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
   
-
-// apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-//
-// m1 = first index for creation operator (spin up)
-// m2 = second index for creation operator (spin down)
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::A1A2 (int index, int n1, int n2)
 {
-  return this->AdiAdj(m1, m2, this->TemporaryStateUp, this->TemporaryStateDown, coefficient, nbrTranslation);
+  this->FermionToBoson(this->StateDescription1[index], this->N1KyMax, this->ProdATemporaryState1);
+  this->FermionToBoson(this->StateDescription2[index], this->N2KyMax, this->ProdATemporaryState2);
+  if ((this->ProdATemporaryState1[n1] == 0) || (this->ProdATemporaryState2[n2] == 0))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription3[index], this->N3KyMax, this->ProdATemporaryState3);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  double Coefficient = this->ProdATemporaryState2[n2];
+  --this->ProdATemporaryState2[n2];
+  Coefficient *= this->ProdATemporaryState1[n1];
+  --this->ProdATemporaryState1[n1];
+  return sqrt(Coefficient);
 }
 
+// apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+  
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::A1A3 (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription1[index], this->N1KyMax, this->ProdATemporaryState1);
+  this->FermionToBoson(this->StateDescription3[index], this->N3KyMax, this->ProdATemporaryState3);
+  if ((this->ProdATemporaryState1[n1] == 0) || (this->ProdATemporaryState3[n2] == 0))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription2[index], this->N2KyMax, this->ProdATemporaryState2);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  double Coefficient = this->ProdATemporaryState3[n2];
+  --this->ProdATemporaryState3[n2];
+  Coefficient *= this->ProdATemporaryState1[n1];
+  --this->ProdATemporaryState1[n1];
+  return sqrt(Coefficient);
+}
+
+// apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::A2A2 (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription2[index], this->N2KyMax, this->ProdATemporaryState2);
+  if ((this->ProdATemporaryState2[n1] == 0) || (this->ProdATemporaryState2[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryState1[n2] == 1)))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription1[index], this->N1KyMax, this->ProdATemporaryState1);
+  this->FermionToBoson(this->StateDescription3[index], this->N3KyMax, this->ProdATemporaryState3);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  double Coefficient = this->ProdATemporaryState2[n2];
+  --this->ProdATemporaryState2[n2];
+  Coefficient *= this->ProdATemporaryState2[n1];
+  --this->ProdATemporaryState2[n1];
+  return sqrt(Coefficient);
+}
+
+// apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+  
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::A2A3 (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription2[index], this->N2KyMax, this->ProdATemporaryState2);
+  this->FermionToBoson(this->StateDescription3[index], this->N3KyMax, this->ProdATemporaryState3);
+  if ((this->ProdATemporaryState2[n1] == 0) || (this->ProdATemporaryState3[n2] == 0))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription1[index], this->N1KyMax, this->ProdATemporaryState1);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  double Coefficient = this->ProdATemporaryState3[n2];
+  --this->ProdATemporaryState3[n2];
+  Coefficient *= this->ProdATemporaryState2[n1];
+  --this->ProdATemporaryState2[n1];
+  return sqrt(Coefficient);
+}
+
+// apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnTorusWithSU3SpinAndMagneticTranslations::A3A3 (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription3[index], this->N3KyMax, this->ProdATemporaryState3);
+  if ((this->ProdATemporaryState3[n1] == 0) || (this->ProdATemporaryState3[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryState3[n1] == 1)))
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescription1[index], this->N1KyMax, this->ProdATemporaryState1);
+  this->FermionToBoson(this->StateDescription2[index], this->N2KyMax, this->ProdATemporaryState2);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  double Coefficient = this->ProdATemporaryState3[n2];
+  --this->ProdATemporaryState3[n2];
+  Coefficient *= this->ProdATemporaryState3[n1];
+  --this->ProdATemporaryState3[n1];
+  return sqrt(Coefficient);
+}
+
+// apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = number of translations needed to find the canonical state
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1Ad1 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->AdiAdj(m1, m2, this->TemporaryState1, this->TemporaryState1, coefficient, nbrTranslation);
+}
+
+// apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = number of translations needed to find the canonical state
+// return value = index of the destination state 
+
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->AdiAdj(m1, m2, this->TemporaryState1, this->TemporaryState2, coefficient, nbrTranslation);
+}
+
+// apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = number of translations needed to find the canonical state
+// return value = index of the destination state 
+  
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad1Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->AdiAdj(m1, m2, this->TemporaryState1, this->TemporaryState3, coefficient, nbrTranslation);
+}
+
+// apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = number of translations needed to find the canonical state
+// return value = index of the destination state 
+  
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad2Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->AdiAdj(m1, m2, this->TemporaryState2, this->TemporaryState2, coefficient, nbrTranslation);
+}
+
+// apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = number of translations needed to find the canonical state
+// return value = index of the destination state 
+ 
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad2Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->AdiAdj(m1, m2, this->TemporaryState2, this->TemporaryState3, coefficient, nbrTranslation);
+}
+
+// apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = number of translations needed to find the canonical state
+// return value = index of the destination state 
+  
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::Ad3Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->AdiAdj(m1, m2, this->TemporaryState3, this->TemporaryState3, coefficient, nbrTranslation);
+}
 
 // find state index
 //
-// stateDescriptionUp = unsigned integer describing the fermionic state for type up particles
-// stateDescriptionDown = unsigned integer describing the fermionic state for type down particles
+// stateDescription1 = unsigned integer describing the fermionic state for type 1 particles
+// stateDescription2 = unsigned integer describing the fermionic state for type 2 particles
+// stateDescription3 = unsigned integer describing the fermionic state for type 3 particles
 // return value = corresponding index
 
-int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown)
+int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3)
 {
   int PosMin = 0;
-  int PosMax = this->NbrUniqueStateDescriptionUp - 1;
+  int PosMax = this->NbrUniqueStateDescription1 - 1;
   int PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->UniqueStateDescriptionUp[PosMid];
-  while ((PosMax > PosMin) && (CurrentState != stateDescriptionUp))
+  unsigned long CurrentState = this->UniqueStateDescription1[PosMid];
+  while ((PosMax > PosMin) && (CurrentState != stateDescription1))
     {
-       if (CurrentState > stateDescriptionUp)
+       if (CurrentState > stateDescription1)
 	 {
 	   PosMin = PosMid + 1;
 	 }
@@ -532,18 +786,20 @@ int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long
  	  PosMax = PosMid - 1;
 	} 
        PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = this->UniqueStateDescriptionUp[PosMid];
+       CurrentState = this->UniqueStateDescription1[PosMid];
     }
-  if (CurrentState != stateDescriptionUp)
+  if (CurrentState != stateDescription1)
     PosMid = PosMax;
-
-  PosMin = this->FirstIndexUniqueStateDescriptionUp[PosMid];
-  PosMax = PosMin + this->UniqueStateDescriptionSubArraySizeUp[PosMid] - 1;
+  unsigned long* TmpStateDescriptionArray = this->UniqueStateDescription2[PosMid];
+  int* TmpFirstIndexUniqueStateDescription2 = this->FirstIndexUniqueStateDescription2[PosMid];
+  int* TmpUniqueStateDescriptionSubArraySize2 = this->UniqueStateDescriptionSubArraySize2[PosMid];
+  PosMin = 0;
+  PosMax = this->NbrUniqueStateDescription2[PosMid] - 1;
   PosMid = (PosMin + PosMax) >> 1;
-  CurrentState = this->StateDescriptionDown[PosMid];
-  while ((PosMax > PosMin) && (CurrentState != stateDescriptionDown))
+  CurrentState = TmpStateDescriptionArray[PosMid];
+  while ((PosMax > PosMin) && (CurrentState != stateDescription2))
     {
-       if (CurrentState > stateDescriptionDown)
+       if (CurrentState > stateDescription2)
 	 {
 	   PosMin = PosMid + 1;
 	 }
@@ -552,9 +808,29 @@ int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long
  	  PosMax = PosMid - 1;
 	} 
        PosMid = (PosMin + PosMax) >> 1;
-       CurrentState = this->StateDescriptionDown[PosMid];
+       CurrentState = TmpStateDescriptionArray[PosMid];
     }
-  if (CurrentState != stateDescriptionDown)
+  if (CurrentState != stateDescription2)
+    PosMid = PosMax;
+  PosMin = TmpFirstIndexUniqueStateDescription2[PosMid];
+  PosMax = PosMin + TmpUniqueStateDescriptionSubArraySize2[PosMid] - 1;
+//  cout << "pass2 : " << PosMin << " " << PosMax << endl;
+  PosMid = (PosMin + PosMax) >> 1;
+  CurrentState = this->StateDescription3[PosMid];
+  while ((PosMax > PosMin) && (CurrentState != stateDescription3))
+    {
+       if (CurrentState > stateDescription3)
+	 {
+	   PosMin = PosMid + 1;
+	 }
+       else
+ 	{
+ 	  PosMax = PosMid - 1;
+	} 
+       PosMid = (PosMin + PosMax) >> 1;
+       CurrentState = this->StateDescription3[PosMid];
+    }
+  if (CurrentState != stateDescription3)
     return PosMax;
   else
     return PosMid;
@@ -568,14 +844,14 @@ int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long
 
 ostream& BosonOnTorusWithSU3SpinAndMagneticTranslations::PrintState (ostream& Str, int state)
 {
-  this->FermionToBoson(this->StateDescriptionUp[state], this->StateDescriptionDown[state],
-		       this->TemporaryStateUp, this->TemporaryStateDown); 
+  this->FermionToBoson(this->StateDescription1[state], this->StateDescription2[state], this->StateDescription3[state],
+		       this->TemporaryState1, this->TemporaryState2, this->TemporaryState3); 
 
   unsigned long Tmp;
   Str << " | ";
   for (int i = 0; i <= this->KyMax; ++i)
     {
-      Str << "(" << this->TemporaryStateUp[i] << "," << this->TemporaryStateDown[i] << ") | ";
+      Str << "(" << this->TemporaryState1[i] << "," << this->TemporaryState2[i] << "," << this->TemporaryState3[i] << ") | ";
     }
   return Str;
 }
@@ -589,7 +865,7 @@ void BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateLookUpTable(unsigne
   long TmpUniquePartition = 1l;
   for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescriptionUp[i - 1] == this->StateDescriptionUp[i]))
+      while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescription1[i - 1] == this->StateDescription1[i]))
 	{
 	  ++i;
 	}
@@ -597,29 +873,87 @@ void BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateLookUpTable(unsigne
 	++TmpUniquePartition;
     }
 
-  this->NbrUniqueStateDescriptionUp = TmpUniquePartition;
-  this->UniqueStateDescriptionUp = new unsigned long [this->NbrUniqueStateDescriptionUp];
-  this->UniqueStateDescriptionSubArraySizeUp = new int [this->NbrUniqueStateDescriptionUp];
-  this->FirstIndexUniqueStateDescriptionUp = new int [this->NbrUniqueStateDescriptionUp];
+  this->NbrUniqueStateDescription1 = TmpUniquePartition;
+  this->UniqueStateDescription1 = new unsigned long [this->NbrUniqueStateDescription1];
+  this->UniqueStateDescriptionSubArraySize1 = new int [this->NbrUniqueStateDescription1];
   TmpUniquePartition = 0l;
-  this->UniqueStateDescriptionUp[0l] = this->StateDescriptionUp[0l];
-  this->UniqueStateDescriptionSubArraySizeUp[0] = 1;
-  this->FirstIndexUniqueStateDescriptionUp[0] = 0;
+  this->UniqueStateDescription1[0l] = this->StateDescription1[0l];
+  this->UniqueStateDescriptionSubArraySize1[0l] = 1;
   for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescriptionUp[i - 1] == this->StateDescriptionUp[i]))
+      while ((i < this->LargeHilbertSpaceDimension) && (this->StateDescription1[i - 1] == this->StateDescription1[i]))
 	{
-	  ++this->UniqueStateDescriptionSubArraySizeUp[TmpUniquePartition];
+	  ++this->UniqueStateDescriptionSubArraySize1[TmpUniquePartition];
 	  ++i;
 	}
       if (i < this->LargeHilbertSpaceDimension)
 	{
 	  ++TmpUniquePartition;
-	  this->UniqueStateDescriptionUp[TmpUniquePartition] = this->StateDescriptionUp[i];
-	  this->UniqueStateDescriptionSubArraySizeUp[TmpUniquePartition] = 1; 
-	  this->FirstIndexUniqueStateDescriptionUp[TmpUniquePartition] = i;
+	  this->UniqueStateDescription1[TmpUniquePartition] = this->StateDescription1[i];
+	  this->UniqueStateDescriptionSubArraySize1[TmpUniquePartition] = 1; 
 	}
     }
+
+  this->NbrUniqueStateDescription2 = new int [this->NbrUniqueStateDescription1];
+  TmpUniquePartition = 0;
+  long TmpIndex = 0l;
+  while (TmpIndex < this->LargeHilbertSpaceDimension)
+    {
+      long Lim = TmpIndex + this->UniqueStateDescriptionSubArraySize1[TmpUniquePartition];
+      this->NbrUniqueStateDescription2[TmpUniquePartition] = 1;
+      ++TmpIndex;
+      while (TmpIndex < Lim)
+	{
+	  while ((TmpIndex < Lim) && (this->StateDescription2[TmpIndex - 1] == this->StateDescription2[TmpIndex]))
+	    ++TmpIndex;
+	  if (TmpIndex < Lim)
+	    {
+	      ++this->NbrUniqueStateDescription2[TmpUniquePartition];
+	      ++TmpIndex;
+	    }
+	}
+      ++TmpUniquePartition;
+    }
+  this->UniqueStateDescription2 = new unsigned long* [this->NbrUniqueStateDescription1];
+  this->UniqueStateDescriptionSubArraySize2 = new int* [this->NbrUniqueStateDescription1];
+  this->FirstIndexUniqueStateDescription2 = new int* [this->NbrUniqueStateDescription1];
+  for (long i = 0l; i < this->NbrUniqueStateDescription1; ++i)
+    {
+      this->UniqueStateDescription2[i] = new unsigned long [this->NbrUniqueStateDescription2[i]];
+      this->UniqueStateDescriptionSubArraySize2[i] = new int [this->NbrUniqueStateDescription2[i]];
+      this->FirstIndexUniqueStateDescription2[i] = new int [this->NbrUniqueStateDescription2[i]];
+    }
+
+  TmpUniquePartition = 0;
+  TmpIndex = 0l;
+  while (TmpIndex < this->LargeHilbertSpaceDimension)
+    {
+      long Lim = TmpIndex + this->UniqueStateDescriptionSubArraySize1[TmpUniquePartition];
+      int TmpUniquePartition2 = 0;
+      this->UniqueStateDescription2[TmpUniquePartition][TmpUniquePartition2] = this->StateDescription2[TmpIndex];
+      this->UniqueStateDescriptionSubArraySize2[TmpUniquePartition][TmpUniquePartition2] = 1;
+      this->FirstIndexUniqueStateDescription2[TmpUniquePartition][TmpUniquePartition2] = TmpIndex;
+      ++TmpIndex;
+      while (TmpIndex < Lim)
+	{
+	  while ((TmpIndex < Lim) && (this->StateDescription2[TmpIndex - 1] == this->StateDescription2[TmpIndex]))
+	    {
+	      ++this->UniqueStateDescriptionSubArraySize2[TmpUniquePartition][TmpUniquePartition2];	      
+	      ++TmpIndex;
+	    }
+	  if (TmpIndex < Lim)
+	    {
+	      ++TmpUniquePartition2;
+	      this->UniqueStateDescription2[TmpUniquePartition][TmpUniquePartition2] = this->StateDescription2[TmpIndex];
+	      this->UniqueStateDescriptionSubArraySize2[TmpUniquePartition][TmpUniquePartition2] = 1;
+	      this->FirstIndexUniqueStateDescription2[TmpUniquePartition][TmpUniquePartition2] = TmpIndex;
+	      ++TmpIndex;
+	    }
+	}
+      ++TmpUniquePartition;
+    }
+
+
   this->RescalingFactors = new double* [2 * this->MaxMomentum];
   for (int i = 1; i <= this->MaxMomentum; ++i)
     {
@@ -637,44 +971,52 @@ void BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateLookUpTable(unsigne
 
 long BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateStates()
 {
-  unsigned long* TmpStateDescriptionUp = new unsigned long[this->LargeHilbertSpaceDimension];
-  unsigned long* TmpStateDescriptionDown = new unsigned long[this->LargeHilbertSpaceDimension];
+  unsigned long* TmpStateDescription1 = new unsigned long[this->LargeHilbertSpaceDimension];
+  unsigned long* TmpStateDescription2 = new unsigned long[this->LargeHilbertSpaceDimension];
+  unsigned long* TmpStateDescription3 = new unsigned long[this->LargeHilbertSpaceDimension];
   long TmpDimension = 0l;
   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     {
       int NbrTranslation = 0;
-      if ((this->FindCanonicalFormAndTestXMomentumConstraint(this->StateDescriptionUp[i], this->StateDescriptionDown[i], NbrTranslation) == true) && (NbrTranslation == 0))
+      if ((this->FindCanonicalFormAndTestXMomentumConstraint(this->StateDescription1[i], this->StateDescription2[i], this->StateDescription3[i], NbrTranslation) == true) && (NbrTranslation == 0))
 	{
-	  TmpStateDescriptionUp[TmpDimension] = this->StateDescriptionUp[i];
-	  TmpStateDescriptionDown[TmpDimension] = this->StateDescriptionDown[i];
+	  TmpStateDescription1[TmpDimension] = this->StateDescription1[i];
+	  TmpStateDescription2[TmpDimension] = this->StateDescription2[i];
+	  TmpStateDescription3[TmpDimension] = this->StateDescription3[i];
 	  ++TmpDimension;
 	}
     }
-  delete[] this->StateDescriptionUp;
-  delete[] this->StateDescriptionDown;
+  delete[] this->StateDescription1;
+  delete[] this->StateDescription2;
+  delete[] this->StateDescription3;
   this->LargeHilbertSpaceDimension = TmpDimension;
-  this->StateDescriptionUp = new unsigned long[this->LargeHilbertSpaceDimension];
-  this->StateDescriptionDown = new unsigned long[this->LargeHilbertSpaceDimension];
+  this->StateDescription1 = new unsigned long[this->LargeHilbertSpaceDimension];
+  this->StateDescription2 = new unsigned long[this->LargeHilbertSpaceDimension];
+  this->StateDescription3 = new unsigned long[this->LargeHilbertSpaceDimension];
   this->NbrStateInOrbit = new int[this->LargeHilbertSpaceDimension];
   for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
     {
-      this->StateDescriptionUp[i] = TmpStateDescriptionUp[i];
-      this->StateDescriptionDown[i] = TmpStateDescriptionDown[i];
-      unsigned long TmpStateUp = this->StateDescriptionUp[i];
-      unsigned long TmpStateDown = this->StateDescriptionDown[i];
-      unsigned long TmpReferenceStateUp = TmpStateUp;
-      unsigned long TmpReferenceStateDown = TmpStateDown;
+      this->StateDescription1[i] = TmpStateDescription1[i];
+      this->StateDescription2[i] = TmpStateDescription2[i];
+      this->StateDescription3[i] = TmpStateDescription3[i];
+      unsigned long TmpState1 = this->StateDescription1[i];
+      unsigned long TmpState2 = this->StateDescription2[i];
+      unsigned long TmpState3 = this->StateDescription3[i];
+      unsigned long TmpReferenceState1 = TmpState1;
+      unsigned long TmpReferenceState2 = TmpState2;
+      unsigned long TmpReferenceState3 = TmpState3;
       int TmpOrbitSize = 1;
-      this->ApplySingleTranslation(TmpStateUp, TmpStateDown);
-      while ((TmpStateUp != TmpReferenceStateUp) || (TmpStateDown != TmpReferenceStateDown))
+      this->ApplySingleTranslation(TmpState1, TmpState2, TmpState3);
+      while ((TmpState1 != TmpReferenceState1) || (TmpState2 != TmpReferenceState2) || (TmpState3 != TmpReferenceState3))
 	{
-	  this->ApplySingleTranslation(TmpStateUp, TmpStateDown);
+	  this->ApplySingleTranslation(TmpState1, TmpState2, TmpState3);
 	  ++TmpOrbitSize;
 	}
       this->NbrStateInOrbit[i] = TmpOrbitSize;
     } 
-  delete[] TmpStateDescriptionUp;
-  delete[] TmpStateDescriptionDown;
+  delete[] TmpStateDescription1;
+  delete[] TmpStateDescription2;
+  delete[] TmpStateDescription3;
   return TmpDimension;
 }
 
@@ -682,105 +1024,138 @@ long BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateStates()
 // generate all states corresponding to the constraints without the mangetic translations
 // 
 // nbrBosons = number of bosons
-// currentKy = current momentum along y for a single particle
+// currentKy1 = current momentum along y for a single type 1 particle
+// currentKy2 = current momentum along y for a single type 2 particle
+// currentKy3 = current momentum along y for a single type 3 particle
 // currentTotalKy = current total momentum along y
-// currentFermionicPositionUp = current fermionic position within the state description for the spin up
-// currentFermionicPositionDown = current fermionic position within the state description for the spin down
+// nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+// nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+// nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long BosonOnTorusWithSU3SpinAndMagneticTranslations::RawGenerateStates(int nbrBosons, int currentKy, int currentTotalKy, 
-								    int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
+long BosonOnTorusWithSU3SpinAndMagneticTranslations::RawGenerateStates(int nbrBosons, int currentKy1, int currentKy2, int currentKy3, int currentTotalKy, 
+								       int nbrN1, int nbrN2, int nbrN3, long pos)
 {
+//  cout << nbrBosons << " | " << currentKy1 << " " << currentKy2 << " " << currentKy3 << " | " << currentTotalKy << "  | " << nbrN1 << " " << nbrN2 << " " << nbrN3 << " | " << pos << endl;
+  if ((nbrBosons < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0))
+    return pos;
   if (nbrBosons == 0)
     {
       if ((currentTotalKy % this->MaxMomentum) == this->KyMomentum)
 	{
- 	  this->StateDescriptionUp[pos] = 0x0ul;
- 	  this->StateDescriptionDown[pos] = 0x0ul;
+//	  cout << "OK" << endl;
+	  this->StateDescription1[pos] = 0x0ul;
+	  this->StateDescription2[pos] = 0x0ul;
+	  this->StateDescription3[pos] = 0x0ul;
 	  return (pos + 1l);
 	}
-      else	
+      else
 	return pos;
     }
-  if (currentKy < 0)
+  if ((currentKy1 < 0) || (currentKy2 < 0) || (currentKy3 < 0))
     return pos;
-  for (int i = nbrBosons; i >= 0; --i)
+
+  long TmpPos;
+  for (int i = nbrN1; i >= 0; --i)    
     {
-      unsigned long MaskUp = ((0x1ul << i) - 0x1ul) << (currentFermionicPositionUp - i - 1);
-      for (int j = nbrBosons - i; j >= 0; --j)
+      unsigned long Mask1 = ((0x1ul << i) - 1ul) << (currentKy1 + nbrN1 - i);
+      for (int j = nbrN2; j >= 0; --j)
 	{
-	  long TmpPos = this->RawGenerateStates(nbrBosons - i - j, currentKy - 1, currentTotalKy + ((i + j) * currentKy), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, pos);
-	  unsigned long MaskDown = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionDown - j - 1);
-	  for (; pos < TmpPos; ++pos)
+    	  unsigned long Mask2 = ((0x1ul << j) - 1ul) << (currentKy2 + nbrN2 - j);	  
+	  for (int k = nbrN3; k >= 0; --k)
 	    {
-	      this->StateDescriptionUp[pos] |= MaskUp;
-	      this->StateDescriptionDown[pos] |= MaskDown;
+	      unsigned long Mask3 = ((0x1ul << k) - 1ul) << (currentKy3 + nbrN3 - k);	  
+	      TmpPos = this->RawGenerateStates(nbrBosons - i - j - k, currentKy1 - 1, currentKy2 - 1, currentKy3 - 1, currentTotalKy + (currentKy1 * i) + (currentKy2 * j) + (currentKy3 * k), 
+					       nbrN1 - i, nbrN2 - j, nbrN3 - k, pos); 
+	      for (; pos < TmpPos; ++pos)
+		{
+		  this->StateDescription1[pos] |= Mask1;
+		  this->StateDescription2[pos] |= Mask2;
+		  this->StateDescription3[pos] |= Mask3;
+		}
 	    }
 	}
     }
   return pos;
+
+
+
+
+
+//   long TmpPos;
+//   unsigned long Mask1;
+//   unsigned long Mask2;
+//   unsigned long Mask3;
+
+//   if (nbrN1 == 0)
+//     {
+//       if (nbrN2 == 0)
+// 	{
+// 	  for (int k = nbrN3; k > 0; --k)
+// 	    {
+// 	      TmpPos = this->RawGenerateStates(nbrBosons - k, 0, 0, currentKy3 - 1, currentTotalKy + (currentKy3 * k), 
+// 					       0, 0, nbrN3 - k, pos); 
+// 	      Mask3 = ((0x1ul << k) - 1ul) << (currentKy3 + nbrN3 - k);
+// 	      for (; pos < TmpPos; ++pos)
+// 		{
+// 		  this->StateDescription3[pos] |= Mask3;
+// 		}
+// 	    }
+// 	  pos = this->RawGenerateStates(nbrBosons, 0, 0, currentKy3 - 1, currentTotalKy, 0, 0, nbrN3, pos);
+// 	  return pos;
+// 	}
+//       TmpPos = this->RawGenerateStates(nbrBosons - nbrN2, 0, 0, currentKy3, currentTotalKy + (currentKy2 * nbrN2), 
+// 				    0, 0, nbrN3, pos); 
+//       Mask2 = ((0x1ul << nbrN2) - 1ul) << currentKy2;
+//       for (; pos < TmpPos; ++pos)
+// 	this->StateDescription2[pos] |= Mask2;
+//       for (int j = nbrN2 - 1; j > 0; --j)
+// 	{
+// 	  TmpPos = this->RawGenerateStates(nbrBosons - j, 0, currentKy2 - 1, currentKy3, currentTotalKy + (currentKy2 * j), 
+// 					   0, nbrN2 - j, nbrN3, pos); 
+// 	  Mask2 = ((0x1ul << j) - 1ul) << (currentKy2 + nbrN2 - j);
+// 	  for (; pos < TmpPos; ++pos)
+// 	    this->StateDescription2[pos] |= Mask2;
+// 	}
+//       pos = this->RawGenerateStates(nbrBosons, 0, currentKy2 - 1, currentKy3, currentTotalKy, 0, nbrN2, nbrN3, pos);
+//       return pos;
+//     }
+  
+//   TmpPos = this->RawGenerateStates(nbrBosons - nbrN1, 0, currentKy2, currentKy3, currentTotalKy + (currentKy1 * nbrN1), 
+// 				   0, nbrN2, nbrN3, pos); 
+//   Mask1 = ((0x1ul << nbrN1) - 1ul) << currentKy1;
+//   for (; pos < TmpPos; ++pos)
+//     this->StateDescription1[pos] |= Mask1;
+//   for (int i = nbrN1 - 1; i > 0; --i)
+//     {
+//       TmpPos = this->RawGenerateStates(nbrBosons - i, currentKy1 - 1, currentKy2, currentKy3, currentTotalKy + (currentKy1 * i), 
+// 				       nbrN1 - i, nbrN2, nbrN3, pos); 
+//       Mask1 = ((0x1ul << i) - 1ul) << (currentKy1 + nbrN1 - i);
+//       for (; pos < TmpPos; ++pos)
+// 	{
+// 	  this->StateDescription1[pos] |= Mask1;
+// 	}
+//     }
+//   pos = this->RawGenerateStates(nbrBosons, currentKy1 - 1, currentKy2, currentKy3, currentTotalKy, nbrN1, nbrN2, nbrN3, pos);
+//   return pos;
 };
 
-// generate all states corresponding to the constraints without the mangetic translations
-// 
-// nbrBosons = number of bosons
-// currentKy = current momentum along y for a single particle
-// currentTotalKy = current total momentum along y
-// currentFermionicPositionUp = current fermionic position within the state description for the spin up
-// currentFermionicPositionDown = current fermionic position within the state description for the spin down
-// nbrSpinUp = number of particles with spin up
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
 
-long BosonOnTorusWithSU3SpinAndMagneticTranslations::RawGenerateStates(int nbrBosons, int currentKy, int currentTotalKy, 
-								    int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos)
-{
-  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
-    return 0l;
-  if (nbrBosons == 0)
-    {
-      if ((currentTotalKy % this->MaxMomentum) == this->KyMomentum)
-	{
- 	  this->StateDescriptionUp[pos] = 0x0ul;
- 	  this->StateDescriptionDown[pos] = 0x0ul;
-	  return (pos + 1l);
-	}
-      else	
-	return pos;
-    }
-  if (currentKy < 0)
-    return pos;
-  for (int i = nbrSpinUp; i >= 0; --i)
-    {
-      unsigned long MaskUp = ((0x1ul << i) - 0x1ul) << (currentFermionicPositionUp - i - 1);
-      for (int j = nbrBosons - i; j >= 0; --j)
-	{
-	  long TmpPos = this->RawGenerateStates(nbrBosons - i - j, currentKy - 1, currentTotalKy + ((i + j) * currentKy), currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, nbrSpinUp - i, pos);
-	  unsigned long MaskDown = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionDown - j - 1);
-	  for (; pos < TmpPos; ++pos)
-	    {
-	      this->StateDescriptionUp[pos] |= MaskUp;
-	      this->StateDescriptionDown[pos] |= MaskDown;
-	    }
-	}
-    }
-  return pos;
-}
-  
 // evaluate Hilbert space dimension for a given total spin momentum
 //
 // nbrBosons = number of bosons
 // currentKy = current momentum along y for a single particle
 // currentTotalKy = current total momentum along y
-// nbrSpinUp = number of particles with spin up
+// nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+// nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+// nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
 // return value = Hilbert space dimension
 
-long BosonOnTorusWithSU3SpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrSpinUp)
+long BosonOnTorusWithSU3SpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrN1, int nbrN2, int nbrN3)
 {
-  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrBosons))
+  if ((nbrBosons < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0))
     return 0l;
-
   if (nbrBosons == 0)
     {
       if ((currentTotalKy % this->MaxMomentum) == this->KyMomentum)
@@ -790,20 +1165,22 @@ long BosonOnTorusWithSU3SpinAndMagneticTranslations::EvaluateHilbertSpaceDimensi
     }
   if (currentKy < 0)
     return 0l;
-  long Count = 0;
+  long Tmp = 0l;
   if (nbrBosons == 1)
     {
       for (int j = currentKy; j >= 0; --j)
 	{
 	  if (((j + currentTotalKy) % this->MaxMomentum) == this->KyMomentum)
-	    Count++;
+	    ++Tmp;
 	}
-      return Count;
+      return Tmp;
     }
-  for (int i = nbrBosons; i >= 0; --i)
-    for (int j = i; j >= 0; --j)
-      Count += this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKy - 1, currentTotalKy + (i * currentKy), nbrSpinUp -j);
-  return Count;
+  for (int i = nbrN1; i >= 0; --i)
+    for (int j = nbrN2; j >= 0; --j)
+      for (int k = nbrN3; k >= 0; --k)
+	Tmp += this->EvaluateHilbertSpaceDimension(nbrBosons - (i + j + k), currentKy - 1, currentTotalKy + (currentKy * (i + j + k)), 
+						   nbrN1 - i, nbrN2 - j, nbrN3 - k);
+  return  Tmp;
 }
 
 

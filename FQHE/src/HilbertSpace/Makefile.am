@@ -135,4 +135,5 @@ BosonOnLatticeLong.cc \
 BosonOnTorusWithSpin.cc \
 BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace.cc \
 BosonOnTorusWithSpinAndMagneticTranslations.cc \
-BosonOnTorusWithSU3SpinAndMagneticTranslations.cc
+BosonOnTorusWithSU3SpinAndMagneticTranslations.cc \
+ParticleOnTorusWithSU3SpinAndMagneticTranslations.cc

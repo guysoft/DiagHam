@@ -63,14 +63,16 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
   // number of Ky values in a state
   int NbrKyValue;
 
-  // number of bosons with spin up
-  int NbrBosonsUp;
-  // number of bosons with spin down
-  int NbrBosonsDown;
-  // total value of Spin
-  int TotalSpin;
-  // flag to indicate that the Hilbert space should preserve Sz
-  bool SzFlag;
+  // number of bosons of type 1
+  int NbrBosons1;
+  // number of bosons of type 2
+  int NbrBosons2;
+  // number of bosons of type 3
+  int NbrBosons3;
+  // twice the total Tz value
+  int TotalTz;
+  // three time the total Y value
+  int TotalY;
 
   // momentum value in the x direction (modulo GCD of nbrBosons and maxMomentum)
   int KxMomentum;
@@ -87,43 +89,59 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
   int StateShift;
   // complementary shift (with respect to MaxMomentum) to StateShift
   int ComplementaryStateShift;
-  // mask that corresponds to last bit that can be set to one for spin up
-  unsigned long LastMomentumMaskUp;
-   // mask that corresponds to last bit that can be set to one for spin down
-  unsigned long LastMomentumMaskDown;
+  // mask that corresponds to last bit that can be set to one for type 1 particles 
+  unsigned long LastMomentumMask1;
+   // mask that corresponds to last bit that can be set to one for type 2 particles 
+  unsigned long LastMomentumMask2;
+   // mask that corresponds to last bit that can be set to one for type 3 particles 
+  unsigned long LastMomentumMask3;
  // mask corresponding to StateShift
   unsigned long MomentumMask;
 
-  // lzmax value for the fermionic states associated to the type up particles
-  int NUpKyMax;
-  // lzmax value for the fermionic states associated to the type down particles
-  int NDownKyMax;
-  // largest lzmax value for the fermionic states among N1KyMax, N2KyMax and N3KyMax
+  // kymax value for the fermionic states associated to the type 1 particles
+  int N1KyMax;
+  // kymax value for the fermionic states associated to the type 2 particles
+  int N2KyMax;
+  // kymax value for the fermionic states associated to the type 3 particles
+  int N3KyMax;
+  // largest kymax value for the fermionic states among N1KyMax, N2KyMax and N3KyMax
   int FermionicKyMax;
 
-  // temporay array describing the type up particle occupation number of each state, only used during the Hilbert space generation
-  unsigned long* StateDescriptionUp;
-  // temporay array describing the type down particle occupation number of each state, only used during the Hilbert space generation
-  unsigned long* StateDescriptionDown;
+  // temporay array describing the type 1 particle occupation number of each state, only used during the Hilbert space generation
+  unsigned long* StateDescription1;
+  // temporay array describing the type 2 particle occupation number of each state, only used during the Hilbert space generation
+  unsigned long* StateDescription2;
+  // temporay array describing the type 3 particle occupation number of each state, only used during the Hilbert space generation
+  unsigned long* StateDescription3;
 
-  // sorted array that contains each unique configuration for the type up particles
-  unsigned long* UniqueStateDescriptionUp;
-  // number of time each unique configuration for the type up particles appears in StateDescriptionUp
-  int* UniqueStateDescriptionSubArraySizeUp;
-  // number of unique configurations for the type up-plus particles
-  long NbrUniqueStateDescriptionUp;
-  // first time a type up appears in the Hilbert space
-  int* FirstIndexUniqueStateDescriptionUp;
+  // sorted array that contains each unique configuration for the type 1 particles
+  unsigned long* UniqueStateDescription1;
+  // number of time each unique configuration for the type 1 particles appears in StateDescription1
+  int* UniqueStateDescriptionSubArraySize1;
+  // number of unique configurations for the type 1 particles
+  long NbrUniqueStateDescription1;
+  // number of unique configurations for the type 2 particles per unique type 1 particle configuration 
+  int* NbrUniqueStateDescription2;
+  // unique configurations for the type 2 particles per unique type 1 particle configuration 
+  unsigned long** UniqueStateDescription2;
+  // number of time each unique configuration for the type 2 particles appears in StateDescription2 having the same type 1 particle configucation
+  int** UniqueStateDescriptionSubArraySize2;
+  // first time a unique combination of type 1 and type 2 particle configurations appears in the Hilbert space
+  int** FirstIndexUniqueStateDescription2;
 
-  // temporary state used when applying operators for type up particles
-  unsigned long* TemporaryStateUp;
-  // temporary state used when applying operators for type down particles
-  unsigned long* TemporaryStateDown;
+  // temporary state used when applying operators for type 1 particles
+  unsigned long* TemporaryState1;
+  // temporary state used when applying operators for type 2 particles
+  unsigned long* TemporaryState2;
+  // temporary state used when applying operators for type 3 particles
+  unsigned long* TemporaryState3;
 
-  // temporary state used when applying ProdA operator for type up particles
-  unsigned long* ProdATemporaryStateUp;
-  // temporary state used when applying ProdA operator for type down particles
-  unsigned long* ProdATemporaryStateDown;
+  // temporary state used when applying ProdA operator for type 1 particles
+  unsigned long* ProdATemporaryState1;
+  // temporary state used when applying ProdA operator for type 2 particles
+  unsigned long* ProdATemporaryState2;
+  // temporary state used when applying ProdA operator for type 3 particles
+  unsigned long* ProdATemporaryState3;
   // temporay pointer to the rescaling factor of the state currently processed by ProdA
   double* ProdANbrStateInOrbit;
 
@@ -138,12 +156,12 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
   // basic constructor
   // 
   // nbrBosons= number of bosons
-  // totalSpin = twice the total spin value
+  // totalTz = twice the total Tz value
+  // totalY = three time the total Y value
   // maxMomentum = momentum maximum value for a boson
   // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // yMomentum = momentum in the y direction (modulo GCD of nbrBosons and maxMomentum)
-  
-  BosonOnTorusWithSU3SpinAndMagneticTranslations (int nbrBosons, int totalSpin, int maxMomentum, int xMomentum, int yMomentum);
+  BosonOnTorusWithSU3SpinAndMagneticTranslations (int nbrBosons, int totalTz, int totalY, int maxMomentum, int xMomentum, int yMomentum);
 
   // copy constructor (without duplicating datas)
   //
@@ -195,110 +213,216 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
   AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 					 SubspaceSpaceConverter& converter);
 
-  // apply a^+_(d,m1) a^+_(d,m2) a_(d,n1) a_(d,n2) operator to a given state (with m1+m2=n1+n2)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
-
-  // apply a^+_(u,m1) a^+_(u,m2) a_(u,n1) a_(u,n2) operator to a given state (with m1+m2=n1+n2)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
-
-  // apply a^+_(u,m1) a^+_(d,m2) a_(d,n1) a_(u,n2) operator to a given state (with m1+m2=n1+n2)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // n1 = first index for annihilation operator
-  // n2 = second index for annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslation = reference on the number of translations to be applied to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation);
-  
-  // apply a^+_m_d a_m_d operator to a given state (only spin down)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AddAd (int index, int m);
-
-  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation and annihilation operator
-  // return value = coefficient obtained when applying a^+_m a_m
-  virtual double AduAu (int index, int m);
-
-  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin up)
-  // return value =  multiplicative factor 
-  virtual double AuAu (int index, int n1, int n2);
-
-  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin down)
-  // n2 = second index for annihilation operator (spin down)
-  // return value =  multiplicative factor 
-  virtual double AdAd (int index, int n1, int n2);
-
-  // apply a_n1_u a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
-  //
-  // index = index of the state on which the operator has to be applied
-  // n1 = first index for annihilation operator (spin up)
-  // n2 = second index for annihilation operator (spin down)
-  // return value =  multiplicative factor 
-  virtual double AuAd (int index, int n1, int n2);
-
-  // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin up)
-  // m2 = second index for creation operator (spin up)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AduAdu (int m1, int m2, double& coefficient, int& nbrTranslation);
-
-  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin down)
-  // m2 = second index for creation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AddAdd (int m1, int m2, double& coefficient, int& nbrTranslation);
-
-  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin up)
-  // m2 = second index for creation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);  
-
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
+
+  // apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m_1 a_m_1
+  virtual double Ad1A1 (int index, int m);
+
+  // apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m_2 a_m_2
+  virtual double Ad2A2 (int index, int m);
+
+  // apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m_3 a_m_3
+  virtual double Ad3A3 (int index, int m);
+
+  // apply a^+_m_1 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_1 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_1 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad1A3 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_2 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad2A3 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A1 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A2 (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_3 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad3A3 (int index, int m, int n, double& coefficient);
+
+  // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A1A1 (int index, int n1, int n2);
+
+  // apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A1A2 (int index, int n1, int n2);
+
+  // apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A1A3 (int index, int n1, int n2);
+
+  // apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A2A2 (int index, int n1, int n2);
+
+  // apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A2A3 (int index, int n1, int n2);
+
+  // apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A3A3 (int index, int n1, int n2);
+
+  // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = number of translations needed to find the canonical state
+  // return value = index of the destination state 
+  virtual int Ad1Ad1 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = number of translations needed to find the canonical state
+  // return value = index of the destination state 
+  virtual int Ad1Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = number of translations needed to find the canonical state
+  // return value = index of the destination state 
+  virtual int Ad1Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = number of translations needed to find the canonical state
+  // return value = index of the destination state 
+  virtual int Ad2Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = number of translations needed to find the canonical state
+  // return value = index of the destination state 
+  virtual int Ad2Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = number of translations needed to find the canonical state
+  // return value = index of the destination state 
+  virtual int Ad3Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation);
 
  protected:
 
@@ -310,12 +434,14 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
 
   // convert a bosonic state into its fermionic counterpart
   //
-  // initialStateUp = reference on the array where initial bosonic state for the type up particles is stored
-  // initialStateDown = reference on the array where initial bosonic state for the type down particles is stored
-  // finalStateUp = reference on the corresponding fermionic state for the type up particles
-  // finalStateDown = reference on the corresponding fermionic state for the type down particles
-  virtual void BosonToFermion(unsigned long*& initialStateUp, unsigned long*& initialStateDown, 
-			      unsigned long& finalStateUp, unsigned long& finalStateDown);
+  // initialState1 = reference on the array where initial bosonic state for the type 1 particles is stored
+  // initialState2 = reference on the array where initial bosonic state for the type 2 particles is stored
+  // initialState3 = reference on the array where initial bosonic state for the type 3 particles is stored
+  // finalState1 = reference on the corresponding fermionic state for the type 1 particles
+  // finalState2 = reference on the corresponding fermionic state for the type 2 particles
+  // finalState3 = reference on the corresponding fermionic state for the type 3 particles  
+  virtual void BosonToFermion(unsigned long*& initialState1, unsigned long*& initialState2, unsigned long*& initialState3,
+			      unsigned long& finalState1, unsigned long& finalState2, unsigned long& finalState3);
 
   // convert a fermionic state into its bosonic  counterpart
   //
@@ -326,12 +452,14 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
 
   // convert a fermionic state into its bosonic  counterpart
   //
-  // initialStateUp = initial fermionic state for the type up particles
-  // initialStateDown = initial fermionic state for the type down particles
-  // finalStateUp = reference on the array where the bosonic state for the type up particles has to be stored
-  // finalStateDown = reference on the array where the bosonic state for the type down particles has to be stored
-  virtual void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, 
-			      unsigned long*& finalStateUp, unsigned long*& finalStateDown);
+  // initialState1 = initial fermionic state for the type 1 particles
+  // initialState2 = initial fermionic state for the type 2 particles
+  // initialState3 = initial fermionic state for the type 3 particles
+  // finalState1 = reference on the array where the bosonic state for the type 1 particles has to be stored
+  // finalState2 = reference on the array where the bosonic state for the type 2 particles has to be stored
+  // finalState3 = reference on the array where the bosonic state for the type 3 particles has to be stored  
+  virtual void FermionToBoson(unsigned long initialState1, unsigned long initialState2, unsigned long initialState3,
+			      unsigned long*& finalState1, unsigned long*& finalState2, unsigned long*& finalState3);
 
   // apply generic a^+_m1_i a^+_m2_j operator to the state produced using A*A* method (without destroying it)
   //
@@ -346,45 +474,53 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
 
   // find canonical form of a state description
   //
-  // stateDescriptionUp = reference on the unsigned integer describing the state for spin up
-  // stateDescriptionDown = reference on the unsigned integer describing the state for spin down
+  // stateDescription1 = reference on the unsigned integer describing the state related to type 1 particles
+  // stateDescription2 = reference on the unsigned integer describing the state related to type 2 particles
+  // stateDescription3 = reference on the unsigned integer describing the state related to type 3 particles
   // nbrTranslation = number of translation needed to obtain the canonical form
-  virtual void FindCanonicalForm(unsigned long& stateDescriptionUp, unsigned long& stateDescriptionDown, int& nbrTranslation);
+  // return value = canonical form of a state description (fermionic representation)
+  virtual void FindCanonicalForm(unsigned long& stateDescription1, unsigned long& stateDescription2, unsigned long& stateDescription3, int& nbrTranslation);
   
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
-  // stateDescriptionUp = reference on the unsigned integer describing the state for spin up
-  // stateDescriptionDown = reference on the unsigned integer describing the state for spin down
+  // stateDescription1 = reference on the unsigned integer describing the state related to type 1 particles
+  // stateDescription2 = reference on the unsigned integer describing the state related to type 2 particles
+  // stateDescription3 = reference on the unsigned integer describing the state related to type 3 particles
   // nbrTranslation = number of translation needed to obtain the canonical form
   // return value = true if the state does not fit the x momentum constraint
-  virtual bool FindCanonicalFormAndTestXMomentumConstraint(unsigned long& stateDescriptionUp, unsigned long& stateDescriptionDown, int& nbrTranslation);
+  virtual bool FindCanonicalFormAndTestXMomentumConstraint(unsigned long& stateDescription1, unsigned long& stateDescription2, 
+							   unsigned long& stateDescription3, int& nbrTranslation);
   
   // find how many translations on the x direction are needed to obtain the same state
   //
-  // stateDescriptionUp = unsigned integer describing the state for spin up
-  // stateDescriptionDown = unsigned integer describing the state for spin down
+  // stateDescription1 = unsigned integer describing the state for type 1 particles
+  // stateDescription2 = unsigned integer describing the state for type 2 particles
+  // stateDescription3 = unsigned integer describing the state for type 3 particles
   // return value = number of translation needed to obtain the same state
-  virtual int FindNumberXTranslation(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown);
+  virtual int FindNumberXTranslation(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3);
   
   // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
-  // stateDescriptionUp = unsigned integer describing the state for spin up
-  // stateDescriptionDown = unsigned integer describing the state for spin down
-  // return value = true if the state satisfy the x momentum constraint
-  virtual bool TestXMomentumConstraint(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown);
-				       
+  // stateDescription1 = unsigned integer describing the state related to type 1 particles
+  // stateDescription2 = unsigned integer describing the state related to type 2 particles
+  // stateDescription3 = unsigned integer describing the state related to type 3 particles
+  // return value = true if the state satisfy the x momentum constraint  
+  virtual bool TestXMomentumConstraint(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3);
+
   // apply a single translation to a bosonic state in its fermionic representation
   //
-  // stateDescriptionUp = reference on the unsigned integer describing the state for spin up
-  // stateDescriptionDown = reference on the unsigned integer describing the state for spin down
-  virtual void ApplySingleTranslation(unsigned long& stateDescriptionUp, unsigned long& stateDescriptionDown);
+  // stateDescription1 = reference on the unsigned integer describing the state related to type 1 particles
+  // stateDescription2 = reference on the unsigned integer describing the state related to type 2 particles
+  // stateDescription3 = reference on the unsigned integer describing the state related to type 3 particles
+  virtual void ApplySingleTranslation(unsigned long& stateDescription1, unsigned long& stateDescription2, unsigned long& stateDescription3);
 
   // find state index
   //
-  // stateDescriptionUp = unsigned integer describing the fermionic state for type up particles
-  // stateDescriptionDown = unsigned integer describing the fermionic state for type down particles
+  // stateDescription1 = unsigned integer describing the fermionic state for type 1 particles
+  // stateDescription2 = unsigned integer describing the fermionic state for type 2 particles
+  // stateDescription3 = unsigned integer describing the fermionic state for type 3 particles
   // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown);
+  virtual int FindStateIndex(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3);
 
   // generate look-up table associated to current Hilbert space
   // 
@@ -401,33 +537,25 @@ class BosonOnTorusWithSU3SpinAndMagneticTranslations :  public ParticleOnTorusWi
   // nbrBosons = number of bosons
   // currentKy = current momentum along y for a single particle
   // currentTotalKy = current total momentum along y
-  // nbrSpinUp = number of particles with spin up
+  // nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+  // nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+  // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // return value = Hilbert space dimension
-  long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrSpinUp);
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrN1, int nbrN2, int nbrN3);
 
   // generate all states corresponding to the constraints without the mangetic translations
   // 
   // nbrBosons = number of bosons
-  // currentKy = current momentum along y for a single particle
+  // currentKy1 = current momentum along y for a single type 1 particle
+  // currentKy2 = current momentum along y for a single type 2 particle
+  // currentKy3 = current momentum along y for a single type 3 particle
   // currentTotalKy = current total momentum along y
-  // currentFermionicPositionUp = current fermionic position within the state description for the spin up
-  // currentFermionicPositionDown = current fermionic position within the state description for the spin down
+  // nbrN1 = number of particles with quantum number Tz=+1/2 and Y=+1/3
+  // nbrN2 = number of particles with quantum number Tz=-1/2 and Y=+1/3
+  // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  long RawGenerateStates(int nbrBosons, int currentKy, int currentTotalKy, int currentFermionicPositionUp, int currentFermionicPositionDown, long pos);
-
-  // generate all states corresponding to the constraints without the mangetic translations
-  // 
-  // nbrBosons = number of bosons
-  // currentKy = current momentum along y for a single particle
-  // currentTotalKy = current total momentum along y
-  // currentFermionicPositionUp = current fermionic position within the state description for the spin up
-  // currentFermionicPositionDown = current fermionic position within the state description for the spin down
-  // nbrSpinUp = number of particles with spin up
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  long RawGenerateStates(int nbrBosons, int currentKy, int currentTotalKy, 
-			 int currentFermionicPositionUp, int currentFermionicPositionDown, int nbrSpinUp, long pos);
+  long RawGenerateStates(int nbrBosons, int currentKy1, int currentKy2, int currentKy3, int currentTotalKy, int nbrN1, int nbrN2, int nbrN3, long pos);
 
 };
 
@@ -442,19 +570,21 @@ inline int BosonOnTorusWithSU3SpinAndMagneticTranslations::GetParticleStatistic(
 
 // find how many translations on the x direction are needed to obtain the same state
 //
-// stateDescriptionUp = unsigned integer describing the state for spin up
-// stateDescriptionDown = unsigned integer describing the state for spin down
+// stateDescription1 = unsigned integer describing the state for type 1 particles
+// stateDescription2 = unsigned integer describing the state for type 2 particles
+// stateDescription3 = unsigned integer describing the state for type 3 particles
 // return value = number of translation needed to obtain the same state
 
-inline int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindNumberXTranslation(unsigned long stateDescriptionUp, unsigned long stateDescriptionDown)
+inline int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindNumberXTranslation(unsigned long stateDescription1, unsigned long stateDescription2, unsigned long stateDescription3)
 {
-  unsigned long TmpStateUp = stateDescriptionUp;
-  unsigned long TmpStateDown = stateDescriptionDown;
-  this->ApplySingleTranslation(TmpStateUp, TmpStateDown);
+  unsigned long TmpState1 = stateDescription1;
+  unsigned long TmpState2 = stateDescription2;
+  unsigned long TmpState3 = stateDescription3;
+  this->ApplySingleTranslation(TmpState1, TmpState2, TmpState3);
   int Index = 1;  
-  while ((TmpStateUp != stateDescriptionUp) || (TmpStateDown != stateDescriptionDown))
+  while ((TmpState1 != stateDescription1) || (TmpState2 != stateDescription2) || (TmpState3 != stateDescription3))
     {
-      this->ApplySingleTranslation(TmpStateUp, TmpStateDown);
+      this->ApplySingleTranslation(TmpState1, TmpState2, TmpState3);
       ++Index;  
     }
   return Index;
@@ -462,25 +592,28 @@ inline int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindNumberXTranslatio
 
 // find canonical form of a state description
 //
-// stateDescriptionUp = reference on the unsigned integer describing the state for spin up
-// stateDescriptionDown = reference on the unsigned integer describing the state for spin down
+// stateDescription1 = reference on the unsigned integer describing the state related to type 1 particles
+// stateDescription2 = reference on the unsigned integer describing the state related to type 2 particles
+// stateDescription3 = reference on the unsigned integer describing the state related to type 3 particles
 // nbrTranslation = number of translation needed to obtain the canonical form
 // return value = canonical form of a state description (fermionic representation)
 
-inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalForm(unsigned long& stateDescriptionUp, 
-										unsigned long& stateDescriptionDown, int& nbrTranslation)
+inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalForm(unsigned long& stateDescription1, unsigned long& stateDescription2, unsigned long& stateDescription3,
+									      int& nbrTranslation)
 {
   nbrTranslation = 0;
-  unsigned long CanonicalStateUp = stateDescriptionUp;
-  unsigned long CanonicalStateDown = stateDescriptionDown;
+  unsigned long CanonicalState1 = stateDescription1;
+  unsigned long CanonicalState2 = stateDescription2;
+  unsigned long CanonicalState3 = stateDescription3;
   for (int i = 0; i < this->MomentumModulo; ++i)
     {
-      this->ApplySingleTranslation(stateDescriptionUp, stateDescriptionDown);
-      if ((stateDescriptionUp < CanonicalStateUp) || 
-	  ((stateDescriptionUp == CanonicalStateUp) && (stateDescriptionDown < CanonicalStateDown)))
+      this->ApplySingleTranslation(stateDescription1, stateDescription2, stateDescription3);
+      if ((stateDescription1 < CanonicalState1) || 
+	  ((stateDescription1 == CanonicalState1) && ((stateDescription2 < CanonicalState2) || ((stateDescription2 == CanonicalState2) && (stateDescription3 == CanonicalState3)))))
 	{
-	  CanonicalStateUp = stateDescriptionUp;
-	  CanonicalStateDown = stateDescriptionDown;
+	  CanonicalState1 = stateDescription1;
+	  CanonicalState2 = stateDescription2;
+	  CanonicalState3 = stateDescription3;
 	  nbrTranslation = i;
 	}
     }
@@ -488,33 +621,37 @@ inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalForm(un
 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
 //
-// stateDescriptionUp = reference on the unsigned integer describing the state for spin up
-// stateDescriptionDown = reference on the unsigned integer describing the state for spin down
+// stateDescription1 = reference on the unsigned integer describing the state related to type 1 particles
+// stateDescription2 = reference on the unsigned integer describing the state related to type 2 particles
+// stateDescription3 = reference on the unsigned integer describing the state related to type 3 particles
 // nbrTranslation = number of translation needed to obtain the canonical form
 // return value = true if the state does not fit the x momentum constraint
 
-inline bool BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalFormAndTestXMomentumConstraint(unsigned long& stateDescriptionUp,
-												     unsigned long& stateDescriptionDown, int& nbrTranslation)
+inline bool BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalFormAndTestXMomentumConstraint(unsigned long& stateDescription1, unsigned long& stateDescription2, 
+													unsigned long& stateDescription3, int& nbrTranslation)
 {
   nbrTranslation = 0;
-  unsigned long CanonicalStateUp = stateDescriptionUp;
-  unsigned long InitialStateDescriptionUp = stateDescriptionUp;
-  unsigned long CanonicalStateDown = stateDescriptionDown;
-  unsigned long InitialStateDescriptionDown = stateDescriptionDown;
+  unsigned long CanonicalState1 = stateDescription1;
+  unsigned long InitialStateDescription1 = stateDescription1;
+  unsigned long CanonicalState2 = stateDescription2;
+  unsigned long InitialStateDescription2 = stateDescription2;
+  unsigned long CanonicalState3 = stateDescription3;
+  unsigned long InitialStateDescription3 = stateDescription3;
   int Index = 0;
   int OrbitSize = 0;
   while (Index < this->MomentumModulo)
     {
-      this->ApplySingleTranslation(stateDescriptionUp, stateDescriptionDown);
+      this->ApplySingleTranslation(stateDescription1, stateDescription2, stateDescription3);
       ++Index;
       ++OrbitSize;
-      if ((stateDescriptionUp != InitialStateDescriptionUp) || (stateDescriptionDown != InitialStateDescriptionDown))
+      if ((stateDescription1 != InitialStateDescription1) || (stateDescription2 != InitialStateDescription2) || (stateDescription3 != InitialStateDescription3))
 	{
-	  if ((stateDescriptionUp < CanonicalStateUp) ||
-	      ((stateDescriptionUp == CanonicalStateUp) && (stateDescriptionDown < CanonicalStateDown)))
+	  if ((stateDescription1 < CanonicalState1) || 
+	      ((stateDescription1 == CanonicalState1) && ((stateDescription2 < CanonicalState2) || ((stateDescription2 == CanonicalState2) && (stateDescription3 == CanonicalState3)))))
 	    {
-	      CanonicalStateUp = stateDescriptionUp;
-	      CanonicalStateDown = stateDescriptionDown;
+	      CanonicalState1 = stateDescription1;
+	      CanonicalState2 = stateDescription2;
+	      CanonicalState3 = stateDescription3;
 	      nbrTranslation = Index;
 	    }
 	}
@@ -528,53 +665,73 @@ inline bool BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalFormAnd
     {
       return false;
     }
-  stateDescriptionUp = CanonicalStateUp;
-  stateDescriptionDown = CanonicalStateDown;
+  stateDescription1 = CanonicalState1;
+  stateDescription2 = CanonicalState2;
+  stateDescription3 = CanonicalState3;
   return true;
 }
 
 
 // apply a single translation to a bosonic state in its fermionic representation
 //
-// stateDescriptionUp = reference on the unsigned integer describing the state for spin up
-// stateDescriptionDown = reference on the unsigned integer describing the state for spin down
+// stateDescription1 = reference on the unsigned integer describing the state related to type 1 particles
+// stateDescription2 = reference on the unsigned integer describing the state related to type 2 particles
+// stateDescription3 = reference on the unsigned integer describing the state related to type 3 particles
 
-inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::ApplySingleTranslation(unsigned long& stateDescriptionUp,
-										unsigned long& stateDescriptionDown)
+inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::ApplySingleTranslation(unsigned long& stateDescription1, unsigned long& stateDescription2,
+										   unsigned long& stateDescription3)
 {
   for (int i = 0; i < this->StateShift;)
     {
-      while ((i < this->StateShift) && ((stateDescriptionUp & 0x1ul) == 0x0ul))
+      while ((i < this->StateShift) && ((stateDescription1 & 0x1ul) == 0x0ul))
 	{
-	  stateDescriptionUp >>= 1;
+	  stateDescription1 >>= 1;
 	  ++i;
 	}
       if (i < this->StateShift)
 	{
-	  while ((stateDescriptionUp & 0x1ul) == 0x1ul)
+	  while ((stateDescription1 & 0x1ul) == 0x1ul)
 	    {
-	      stateDescriptionUp >>= 1;
-	      stateDescriptionUp |= this->LastMomentumMaskUp;
+	      stateDescription1 >>= 1;
+	      stateDescription1 |= this->LastMomentumMask1;
 	    }
-	  stateDescriptionUp >>= 1;	  
+	  stateDescription1 >>= 1;	  
 	  ++i;
 	}
     }
   for (int i = 0; i < this->StateShift;)
     {
-      while ((i < this->StateShift) && ((stateDescriptionDown & 0x1ul) == 0x0ul))
+      while ((i < this->StateShift) && ((stateDescription2 & 0x1ul) == 0x0ul))
 	{
-	  stateDescriptionDown >>= 1;
+	  stateDescription2 >>= 1;
 	  ++i;
 	}
       if (i < this->StateShift)
 	{
-	  while ((stateDescriptionDown & 0x1ul) == 0x1ul)
+	  while ((stateDescription2 & 0x1ul) == 0x1ul)
 	    {
-	      stateDescriptionDown >>= 1;
-	      stateDescriptionDown |= this->LastMomentumMaskDown;
+	      stateDescription2 >>= 1;
+	      stateDescription2 |= this->LastMomentumMask2;
 	    }
-	  stateDescriptionDown >>= 1;	  
+	  stateDescription2 >>= 1;	  
+	  ++i;
+	}
+    }
+  for (int i = 0; i < this->StateShift;)
+    {
+      while ((i < this->StateShift) && ((stateDescription3 & 0x1ul) == 0x0ul))
+	{
+	  stateDescription3>>= 1;
+	  ++i;
+	}
+      if (i < this->StateShift)
+	{
+	  while ((stateDescription3 & 0x1ul) == 0x1ul)
+	    {
+	      stateDescription3 >>= 1;
+	      stateDescription3 |= this->LastMomentumMask3;
+	    }
+	  stateDescription3 >>= 1;	  
 	  ++i;
 	}
     }
@@ -582,14 +739,15 @@ inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::ApplySingleTranslati
 
 // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
 //
-// stateDescriptionUp = unsigned integer describing the state for spin up
-// stateDescriptionDown = unsigned integer describing the state for spin down
+// stateDescription1 = unsigned integer describing the state related to type 1 particles
+// stateDescription2 = unsigned integer describing the state related to type 2 particles
+// stateDescription3 = unsigned integer describing the state related to type 3 particles
 // return value = true if the state satisfy the x momentum constraint
 
-inline bool BosonOnTorusWithSU3SpinAndMagneticTranslations::TestXMomentumConstraint(unsigned long stateDescriptionUp,
-										      unsigned long stateDescriptionDown)
+inline bool BosonOnTorusWithSU3SpinAndMagneticTranslations::TestXMomentumConstraint(unsigned long stateDescription1, unsigned long stateDescription2,
+										    unsigned long stateDescription3)
 {
-  if (((this->KxMomentum * this->FindNumberXTranslation(stateDescriptionUp, stateDescriptionDown)) % this->MomentumModulo) == 0)
+  if (((this->KxMomentum * this->FindNumberXTranslation(stateDescription1, stateDescription2, stateDescription3)) % this->MomentumModulo) == 0)
     return true;
   else
     return false;
@@ -609,23 +767,25 @@ inline int BosonOnTorusWithSU3SpinAndMagneticTranslations::AdiAdj (int m1, int m
 {
   for (int i = 0; i < this->MaxMomentum; ++i)
     {
-      this->TemporaryStateUp[i] = this->ProdATemporaryStateUp[i];
-      this->TemporaryStateDown[i] = this->ProdATemporaryStateDown[i];
+      this->TemporaryState1[i] = this->ProdATemporaryState1[i];
+      this->TemporaryState2[i] = this->ProdATemporaryState2[i];
+      this->TemporaryState3[i] = this->ProdATemporaryState3[i];
     }
   ++temporaryStatej[m2];
   coefficient = temporaryStatej[m2];
   ++temporaryStatei[m1];
   coefficient *= temporaryStatei[m1];
   coefficient = sqrt(coefficient);
-  unsigned long TmpStateUp;
-  unsigned long TmpStateDown;
-  this->BosonToFermion(this->TemporaryStateUp, this->TemporaryStateDown, TmpStateUp, TmpStateDown);
-  if (this->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, nbrTranslation) == false)
+  unsigned long TmpState1;
+  unsigned long TmpState2;
+  unsigned long TmpState3;
+  this->BosonToFermion(this->TemporaryState1, this->TemporaryState2, this->TemporaryState3, TmpState1, TmpState2, TmpState3);
+  if (this->FindCanonicalFormAndTestXMomentumConstraint(TmpState1, TmpState2, TmpState3, nbrTranslation) == false)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int TmpIndex = this->FindStateIndex(TmpStateUp, TmpStateDown);
+  int TmpIndex = this->FindStateIndex(TmpState1, TmpState2, TmpState3);
   coefficient *= this->ProdANbrStateInOrbit[this->NbrStateInOrbit[TmpIndex]];
   nbrTranslation *= this->StateShift;
   return TmpIndex;
@@ -651,28 +811,38 @@ inline unsigned long BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonToFerm
 
 // convert a bosonic state into its fermionic counterpart
 //
-// initialStateUp = reference on the array where initial bosonic state for the type up particles is stored
-// initialStateDown = reference on the array where initial bosonic state for the type down particles is stored
-// finalStateUp = reference on the corresponding fermionic state for the type up particles
-// finalStateDown = reference on the corresponding fermionic state for the type down particles
+// initialState1 = reference on the array where initial bosonic state for the type 1 particles is stored
+// initialState2 = reference on the array where initial bosonic state for the type 2 particles is stored
+// initialState3 = reference on the array where initial bosonic state for the type 3 particles is stored
+// finalState1 = reference on the corresponding fermionic state for the type 1 particles
+// finalState2 = reference on the corresponding fermionic state for the type 2 particles
+// finalState3 = reference on the corresponding fermionic state for the type 3 particles
 
-inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonToFermion(unsigned long*& initialStateUp, unsigned long*& initialStateDown,
-									unsigned long& finalStateUp, unsigned long& finalStateDown)
+inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonToFermion(unsigned long*& initialState1, unsigned long*& initialState2, unsigned long*& initialState3,
+									   unsigned long& finalState1, unsigned long& finalState2, unsigned long& finalState3)
 {
-  finalStateUp = 0x0ul;
+  finalState1 = 0x0ul;
   unsigned long Shift = 0;
   for (int i = 0; i <= this->KyMax; ++i)
     {
-      finalStateUp |= ((1ul << initialStateUp[i]) - 1ul) << Shift;
-      Shift += initialStateUp[i];
+      finalState1 |= ((1ul << initialState1[i]) - 1ul) << Shift;
+      Shift += initialState1[i];
       ++Shift;
     }
-  finalStateDown = 0x0ul;
+  finalState2 = 0x0ul;
   Shift = 0;
   for (int i = 0; i <= this->KyMax; ++i)
     {
-      finalStateDown |= ((1ul << initialStateDown[i]) - 1ul) << Shift;
-      Shift += initialStateDown[i];
+      finalState2 |= ((1ul << initialState2[i]) - 1ul) << Shift;
+      Shift += initialState2[i];
+      ++Shift;
+    }
+  finalState3 = 0x0ul;
+  Shift = 0;
+  for (int i = 0; i <= this->KyMax; ++i)
+    {
+      finalState3 |= ((1ul << initialState3[i]) - 1ul) << Shift;
+      Shift += initialState3[i];
       ++Shift;
     }
 }
@@ -719,21 +889,23 @@ inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FermionToBoson(unsig
 
 // convert a fermionic state into its bosonic  counterpart
 //
-// initialStateUp = initial fermionic state for the type up particles
-// initialStateDown = initial fermionic state for the type down particles
-// finalStateUp = reference on the array where the bosonic state for the type up particles has to be stored
-// finalStateDown = reference on the array where the bosonic state for the type down particles has to be stored
+// initialState1 = initial fermionic state for the type 1 particles
+// initialState2 = initial fermionic state for the type 2 particles
+// initialState3 = initial fermionic state for the type 3 particles
+// finalState1 = reference on the array where the bosonic state for the type 1 particles has to be stored
+// finalState2 = reference on the array where the bosonic state for the type 2 particles has to be stored
+// finalState3 = reference on the array where the bosonic state for the type 3 particles has to be stored
 
-inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown,
-									unsigned long*& finalStateUp, unsigned long*& finalStateDown)
+inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FermionToBoson(unsigned long initialState1, unsigned long initialState2, unsigned long initialState3,
+									   unsigned long*& finalState1, unsigned long*& finalState2, unsigned long*& finalState3)
 {
   int FinalStateKyMax = 0;
-  int InitialStateKyMax = this->NUpKyMax;
-  while ((InitialStateKyMax >= 0) && ((initialStateUp >> InitialStateKyMax) == 0x0ul))
+  int InitialStateKyMax = this->N1KyMax;
+  while ((InitialStateKyMax >= 0) && ((initialState1 >> InitialStateKyMax) == 0x0ul))
     --InitialStateKyMax;
   while (InitialStateKyMax >= 0)
     {
-      unsigned long TmpState = (~initialStateUp - 1ul) ^ (~initialStateUp);
+      unsigned long TmpState = (~initialState1 - 1ul) ^ (~initialState1);
       TmpState &= ~(TmpState >> 1);
 #ifdef  __64_BITS__
       unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
@@ -749,22 +921,22 @@ inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FermionToBoson(unsig
       TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
       TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
 #endif
-      finalStateUp[FinalStateKyMax] = (unsigned long) TmpPower;
+      finalState1[FinalStateKyMax] = (unsigned long) TmpPower;
       ++TmpPower;
-      initialStateUp >>= TmpPower;
+      initialState1 >>= TmpPower;
       ++FinalStateKyMax;
       InitialStateKyMax -= TmpPower;
     }
   for (; FinalStateKyMax <= this->KyMax; ++FinalStateKyMax)
-    finalStateUp[FinalStateKyMax] = 0x0ul;
+    finalState1[FinalStateKyMax] = 0x0ul;
 
   FinalStateKyMax = 0;
-  InitialStateKyMax = this->NDownKyMax;
-  while ((InitialStateKyMax >= 0) && ((initialStateDown >> InitialStateKyMax) == 0x0ul))
+  InitialStateKyMax = this->N2KyMax;
+  while ((InitialStateKyMax >= 0) && ((initialState2 >> InitialStateKyMax) == 0x0ul))
     --InitialStateKyMax;
   while (InitialStateKyMax >= 0)
     {
-      unsigned long TmpState = (~initialStateDown - 1ul) ^ (~initialStateDown);
+      unsigned long TmpState = (~initialState2 - 1ul) ^ (~initialState2);
       TmpState &= ~(TmpState >> 1);
 #ifdef  __64_BITS__
       unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
@@ -780,14 +952,45 @@ inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FermionToBoson(unsig
       TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
       TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
 #endif
-      finalStateDown[FinalStateKyMax] = (unsigned long) TmpPower;
+      finalState2[FinalStateKyMax] = (unsigned long) TmpPower;
       ++TmpPower;
-      initialStateDown >>= TmpPower;
+      initialState2 >>= TmpPower;
       ++FinalStateKyMax;
       InitialStateKyMax -= TmpPower;
     }
   for (; FinalStateKyMax <= this->KyMax; ++FinalStateKyMax)
-    finalStateDown[FinalStateKyMax] = 0x0ul;
+    finalState2[FinalStateKyMax] = 0x0ul;
+
+  FinalStateKyMax = 0;
+  InitialStateKyMax = this->N3KyMax;
+  while ((InitialStateKyMax >= 0) && ((initialState3 >> InitialStateKyMax) == 0x0ul))
+    --InitialStateKyMax;
+  while (InitialStateKyMax >= 0)
+    {
+      unsigned long TmpState = (~initialState3 - 1ul) ^ (~initialState3);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalState3[FinalStateKyMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialState3 >>= TmpPower;
+      ++FinalStateKyMax;
+      InitialStateKyMax -= TmpPower;
+    }
+  for (; FinalStateKyMax <= this->KyMax; ++FinalStateKyMax)
+    finalState3[FinalStateKyMax] = 0x0ul;
 }
 
 #endif

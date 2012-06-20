@@ -46,92 +46,120 @@ ParticleOnTorusWithSU3SpinAndMagneticTranslations::~ParticleOnTorusWithSU3SpinAn
 {
 }
 
-
-
-// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+// apply a^+_m_1 a_n_1 operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin up)
-// n2 = second index for annihilation operator (spin up)
-// return value =  multiplicative factor 
-
-double ParticleOnTorusWithSU3SpinAndMagneticTranslations::AuAu (int index, int n1, int n2)
-{
-  cout << "Warning: using dummy function ParticleOnTorusWithSU3SpinAndMagneticTranslations::AuAu"<<endl;
-  return 0.0;
-}
-
-// apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
-//
-// index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin down)
-// n2 = second index for annihilation operator (spin down)
-// return value =  multiplicative factor 
-
-double ParticleOnTorusWithSU3SpinAndMagneticTranslations:: AdAd (int index, int n1, int n2)
-{
-  cout << "Warning: using dummy function ParticleOnTorusWithSU3SpinAndMagneticTranslations::AdAd"<<endl;
-  return 0.0;
-}
-
-// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
-//
-// index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin up)
-// n2 = second index for annihilation operator (spin down)
-// return value =  multiplicative factor 
-
-double ParticleOnTorusWithSU3SpinAndMagneticTranslations::AuAd (int index, int n1, int n2)
-{
-  cout << "Warning: using dummy function ParticleOnTorusWithSU3SpinAndMagneticTranslations::AuAd"<<endl;
-  return 0.0;
-}
-
-// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
-//
-// index = index of the state on which the operator has to be applied
-// n1 = first index for annihilation operator (spin up)
-// n2 = second index for annihilation operator (spin down)
-// return value =  multiplicative factor 
-
-double ParticleOnTorusWithSU3SpinAndMagneticTranslations::AdAu (int index, int n1, int n2)
-{
-  cout << "Warning: using dummy function ParticleOnTorusWithSU3SpinAndMagneticTranslations::AdAu"<<endl;
-  return 0.0;
-}
-
-// apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
-//
-// m1 = first index for creation operator (spin up)
-// m2 = second index for creation operator (spin up)
+// m = index of the creation operator
+// n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int ParticleOnTorusWithSU3SpinAndMagneticTranslations::AduAdu (int m1, int m2, double& coefficient, int& nbrTranslation)
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad1A1 (int index, int m, int n, double& coefficient)
 {
   return this->HilbertSpaceDimension;
 }
 
-// apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+// apply a^+_m_1 a_n_2 operator to a given state 
 //
-// m1 = first index for creation operator (spin down)
-// m2 = second index for creation operator (spin down)
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int ParticleOnTorusWithSU3SpinAndMagneticTranslations::AddAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad1A2 (int index, int m, int n, double& coefficient)
 {
   return this->HilbertSpaceDimension;
 }
 
-// apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+// apply a^+_m_1 a_n_3 operator to a given state 
 //
-// m1 = first index for creation operator (spin up)
-// m2 = second index for creation operator (spin down)
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-int ParticleOnTorusWithSU3SpinAndMagneticTranslations::AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad1A3 (int index, int m, int n, double& coefficient)
 {
   return this->HilbertSpaceDimension;
 }
+
+// apply a^+_m_2 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad2A1 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad2A2 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad2A3 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad3A1 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad3A2 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSU3SpinAndMagneticTranslations::Ad3A3 (int index, int m, int n, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+
