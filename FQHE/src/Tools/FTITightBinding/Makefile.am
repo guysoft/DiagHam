@@ -13,4 +13,5 @@ TightBindingModelCheckerboardLattice.cc \
 TightBindingModelChern2DiceLattice.cc \
 TightBindingModelChern2TriangularLattice.cc \
 TightBindingModelPyrochloreSlabLattice.cc \
-TightBindingModelHaldaneHoneycombLattice.cc
+TightBindingModelHaldaneHoneycombLattice.cc \
+TightBindingModelChern3TwoOrbitalTriangularLattice.cc 
