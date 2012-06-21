@@ -36,6 +36,59 @@
 #include "MathTools/FactorialCoefficient.h"
 
 
+// less operator (A < B) for two elements made of two smaller elements
+//
+// elementA1 = first part of A
+// elementA2 = second part of A
+// elementB1 = first part of B
+// elementB2 = second part of B
+// return = true if A < B
+
+template <class ClassName>
+inline bool DoubleElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementB1, ClassName& elementB2)
+{
+  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && (elementA2 < elementB2)));
+}
+
+// less operator (A < B) for two elements made of three smaller elements
+//
+// elementA1 = first part of A
+// elementA2 = second part of A
+// elementA3 = third part of A
+// elementB1 = first part of B
+// elementB2 = second part of B
+// elementB3 = third part of B
+// return = true if A < B
+
+template <class ClassName>
+inline bool TripleElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementA3, 
+				   ClassName& elementB1, ClassName& elementB2, ClassName& elementB3)
+{
+  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
+				      ((elementA2 < elementB2) || ((elementA2 == elementB2) && (elementA3 < elementB3)))));
+}
+
+// less operator (A < B) for two elements made of four smaller elements
+//
+// elementA1 = first part of A
+// elementA2 = second part of A
+// elementA3 = third part of A
+// elementA4 = fourth part of A
+// elementB1 = first part of B
+// elementB2 = second part of B
+// elementB3 = third part of B
+// elementB4 = fourth part of B
+// return = true if A < B
+
+template <class ClassName>
+inline bool QuadElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementA3, ClassName& elementA4, 
+				 ClassName& elementB1, ClassName& elementB2, ClassName& elementB3, ClassName& elementB4)
+{
+  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
+				      ((elementA2 < elementB2) || ((elementA2 == elementB2) && ((elementA3 < elementB3) ||
+												((elementA3 == elementB3) && (elementA4 < elementB4)))))));
+}
+
 // up ordering array sort using quick sort
 //
 // array = pointer to the array
@@ -1974,59 +2027,6 @@ void SortQuadElementArrayDownOrdering(ClassName* array1, ClassName* array2, Clas
       }
     }
   return;
-}
-
-// less operator (A < B) for two elements made of two smaller elements
-//
-// elementA1 = first part of A
-// elementA2 = second part of A
-// elementB1 = first part of B
-// elementB2 = second part of B
-// return = true if A < B
-
-template <class ClassName>
-inline bool DoubleElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementB1, ClassName& elementB2)
-{
-  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && (elementA2 < elementB2)));
-}
-
-// less operator (A < B) for two elements made of three smaller elements
-//
-// elementA1 = first part of A
-// elementA2 = second part of A
-// elementA3 = third part of A
-// elementB1 = first part of B
-// elementB2 = second part of B
-// elementB3 = third part of B
-// return = true if A < B
-
-template <class ClassName>
-inline bool TripleElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementA3, 
-				   ClassName& elementB1, ClassName& elementB2, ClassName& elementB3)
-{
-  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
-				      ((elementA2 < elementB2) || ((elementA2 == elementB2) && (elementA3 < elementB3)))));
-}
-
-// less operator (A < B) for two elements made of four smaller elements
-//
-// elementA1 = first part of A
-// elementA2 = second part of A
-// elementA3 = third part of A
-// elementA4 = fourth part of A
-// elementB1 = first part of B
-// elementB2 = second part of B
-// elementB3 = third part of B
-// elementB4 = fourth part of B
-// return = true if A < B
-
-template <class ClassName>
-inline bool QuadElementLessThan (ClassName& elementA1, ClassName& elementA2, ClassName& elementA3, ClassName& elementA4, 
-				 ClassName& elementB1, ClassName& elementB2, ClassName& elementB3, ClassName& elementB4)
-{
-  return ((elementA1 < elementB1) || ((elementA1 == elementB1) && 
-				      ((elementA2 < elementB2) || ((elementA2 == elementB2) && ((elementA3 < elementB3) ||
-												((elementA3 == elementB3) && (elementA4 < elementB4)))))));
 }
 
 
