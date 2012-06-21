@@ -174,7 +174,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      
       {
 	cout << "Chern number = " << TightBindingModel.ComputeChernNumber(Manager.GetInteger("nbr-layers") - 1) << endl;
-  }
+      }
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
