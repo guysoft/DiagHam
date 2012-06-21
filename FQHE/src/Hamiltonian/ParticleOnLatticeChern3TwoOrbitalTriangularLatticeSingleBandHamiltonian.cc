@@ -274,7 +274,7 @@ void ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian::Ev
 		  }
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      double FactorUAB = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorUAB = 1.0 / ((double) (this->NbrSiteX * this->NbrSiteY));
       if (this->FlatBand == false)
       {
 	FactorU *= this->UPotential;
@@ -302,7 +302,7 @@ void ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian::Ev
 		  int ky3 = Index3 % this->NbrSiteY;
 		  int kx4 = Index4 / this->NbrSiteY;
 		  int ky4 = Index4 % this->NbrSiteY;
-Complex sumUAB = 0.;
+		  Complex sumUAB = 0.;
 		  Complex sumU = 0.;
 
                   sumUAB += Conj(OneBodyBasis[Index1][0][0]) * OneBodyBasis[Index3][0][0]
