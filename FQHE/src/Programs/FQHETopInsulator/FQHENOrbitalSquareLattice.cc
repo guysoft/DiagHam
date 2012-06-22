@@ -6,7 +6,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
-#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeNOrbitalSquareLatticeSingleBandHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandThreeBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
@@ -176,8 +176,7 @@ int main(int argc, char** argv)
       bool ExportOneBody = false;
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
 	ExportOneBody = true;
-      TightBindingModelNOrbitalSquareLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-layers"), Manager.GetDouble("t1"), T2,Phi, Manager.GetDouble("mu-s"), 
-						     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+      TightBindingModelNOrbitalSquareLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-layers"), Manager.GetDouble("t1"), T2,Phi, Manager.GetDouble("mu-s"),  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      
       {
 	cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
@@ -256,7 +255,7 @@ int main(int argc, char** argv)
 	    { 
 	      if (Manager.GetBoolean("four-body") == false)
 		{ 
-		  //Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("v-potential"),   &TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("v-potential"),  &TightBindingModel, Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{
