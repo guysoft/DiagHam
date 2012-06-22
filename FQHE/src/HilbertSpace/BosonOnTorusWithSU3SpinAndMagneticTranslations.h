@@ -609,7 +609,7 @@ inline void BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalForm(un
     {
       this->ApplySingleTranslation(stateDescription1, stateDescription2, stateDescription3);
       if ((stateDescription1 < CanonicalState1) || 
-	  ((stateDescription1 == CanonicalState1) && ((stateDescription2 < CanonicalState2) || ((stateDescription2 == CanonicalState2) && (stateDescription3 == CanonicalState3)))))
+	  ((stateDescription1 == CanonicalState1) && ((stateDescription2 < CanonicalState2) || ((stateDescription2 == CanonicalState2) && (stateDescription3 < CanonicalState3)))))
 	{
 	  CanonicalState1 = stateDescription1;
 	  CanonicalState2 = stateDescription2;
@@ -647,7 +647,7 @@ inline bool BosonOnTorusWithSU3SpinAndMagneticTranslations::FindCanonicalFormAnd
       if ((stateDescription1 != InitialStateDescription1) || (stateDescription2 != InitialStateDescription2) || (stateDescription3 != InitialStateDescription3))
 	{
 	  if ((stateDescription1 < CanonicalState1) || 
-	      ((stateDescription1 == CanonicalState1) && ((stateDescription2 < CanonicalState2) || ((stateDescription2 == CanonicalState2) && (stateDescription3 == CanonicalState3)))))
+	      ((stateDescription1 == CanonicalState1) && ((stateDescription2 < CanonicalState2) || ((stateDescription2 == CanonicalState2) && (stateDescription3 < CanonicalState3)))))
 	    {
 	      CanonicalState1 = stateDescription1;
 	      CanonicalState2 = stateDescription2;

@@ -160,69 +160,59 @@ double Abstract2DTightBindingModel::ComputeChernNumber(int band)
 	LinearizedMomentumIndexDecY = this->GetLinearizedMomentumIndex(Kx, (Ky - 1) % this->NbrSiteY);
       else
 	LinearizedMomentumIndexDecY = this->GetLinearizedMomentumIndex(Kx, this->NbrSiteY - 1);
-//      cout << LinearizedMomentumIndex << " " << LinearizedMomentumIndexIncX << " " << LinearizedMomentumIndexDecX
-//	   << " " << LinearizedMomentumIndexIncX << " " << LinearizedMomentumIndexDecX << endl;
+
       ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex];
       ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndexIncX];
       ComplexMatrix& LocalBasisDecX = this->OneBodyBasis[LinearizedMomentumIndexDecX];
       ComplexMatrix& LocalBasisIncY = this->OneBodyBasis[LinearizedMomentumIndexIncY];
-      ComplexMatrix& LocalBasisDecY = this->OneBodyBasis[LinearizedMomentumIndexDecY];     
+      ComplexMatrix& LocalBasisDecY = this->OneBodyBasis[LinearizedMomentumIndexDecY];  
+      Tmp1[0] = 0.0;
+      Tmp1[1] = 0.0;
+      Tmp1[2] = 0.0;
+      Tmp1[3] = 0.0;
+
+      Tmp2[0] = 0.0;
+      Tmp2[1] = 0.0;
+      Tmp2[2] = 0.0;
+      Tmp2[3] = 0.0;
+      Tmp2[4] = 0.0;
+      Tmp2[5] = 0.0;
+      Tmp2[6] = 0.0;
+      Tmp2[7] = 0.0;
+
       for (int i = 0; i < this->NbrBands; ++i)
 	{
-	  Tmp1[0] = LocalBasis[band][i] * Conj(LocalBasisIncX[band][i]);
-	  Tmp1[1] = LocalBasis[band][i] * Conj(LocalBasisDecX[band][i]);
-	  Tmp1[2] = LocalBasis[band][i] * Conj(LocalBasisIncY[band][i]);
-	  Tmp1[3] = LocalBasis[band][i] * Conj(LocalBasisDecY[band][i]);
-	  for (int j = 0; j < this->NbrBands; ++j)
-	    {
-	      for (int k = 0; k < this->NbrBands; ++k)
-		{
-// 		  TmpChernNumber += (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisIncX[band][j] * Conj(LocalBasisIncX[band][k]) 
-// 				     * LocalBasisIncY[band][k] * Conj(LocalBasisIncY[band][i]));
-// 		  TmpChernNumber -= (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisDecX[band][j] * Conj(LocalBasisDecX[band][k]) 
-// 				     * LocalBasisIncY[band][k] * Conj(LocalBasisIncY[band][i]));
-// 		  TmpChernNumber -= (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisIncX[band][j] * Conj(LocalBasisIncX[band][k]) 
-// 				     * LocalBasisDecY[band][k] * Conj(LocalBasisDecY[band][i]));
-// 		  TmpChernNumber += (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisDecX[band][j] * Conj(LocalBasisDecX[band][k]) 
-// 				     * LocalBasisDecY[band][k] * Conj(LocalBasisDecY[band][i]));
-		  
-// 		  TmpChernNumber -= (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisIncY[band][j] * Conj(LocalBasisIncY[band][k]) 
-// 				     * LocalBasisIncX[band][k] * Conj(LocalBasisIncX[band][i]));
-// 		  TmpChernNumber += (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisDecY[band][j] * Conj(LocalBasisDecY[band][k]) 
-// 				     * LocalBasisIncX[band][k] * Conj(LocalBasisIncX[band][i]));
-// 		  TmpChernNumber += (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisIncY[band][j] * Conj(LocalBasisIncY[band][k]) 
-// 				     * LocalBasisDecX[band][k] * Conj(LocalBasisDecX[band][i]));
-// 		  TmpChernNumber -= (LocalBasis[band][i] * Conj(LocalBasis[band][j]) * LocalBasisDecY[band][j] * Conj(LocalBasisDecY[band][k]) 
-// 				     * LocalBasisDecX[band][k] * Conj(LocalBasisDecX[band][i]));
+	  Tmp1[0] += LocalBasis[band][i] * Conj(LocalBasisIncX[band][i]);
+	  Tmp1[1] += LocalBasis[band][i] * Conj(LocalBasisDecX[band][i]);
+	  Tmp1[2] += LocalBasis[band][i] * Conj(LocalBasisIncY[band][i]);
+	  Tmp1[3] += LocalBasis[band][i] * Conj(LocalBasisDecY[band][i]);
 
+	  Tmp2[0] += Conj(LocalBasisIncX[band][i]) * LocalBasisIncY[band][i];
+	  Tmp2[1] += Conj(LocalBasisDecX[band][i]) * LocalBasisIncY[band][i];
+	  Tmp2[2] += Conj(LocalBasisIncX[band][i]) * LocalBasisDecY[band][i];
+	  Tmp2[3] += Conj(LocalBasisDecX[band][i]) * LocalBasisDecY[band][i];
+	  Tmp2[4] += Conj(LocalBasisIncY[band][i]) * LocalBasisIncX[band][i];
+	  Tmp2[5] += Conj(LocalBasisDecY[band][i]) * LocalBasisIncX[band][i];
+	  Tmp2[6] += Conj(LocalBasisIncY[band][i]) * LocalBasisDecX[band][i];
+	  Tmp2[7] += Conj(LocalBasisDecY[band][i]) * LocalBasisDecX[band][i];
+	}
 
-		  TmpChernNumber += (Tmp1[2] * Conj(LocalBasis[band][j]) * LocalBasisIncX[band][j] * Conj(LocalBasisIncX[band][k]) 
-				     * LocalBasisIncY[band][k]);
-		  TmpChernNumber -= (Tmp1[2] * Conj(LocalBasis[band][j]) * LocalBasisDecX[band][j] * Conj(LocalBasisDecX[band][k]) 
-				     * LocalBasisIncY[band][k]);
-		  TmpChernNumber -= (Tmp1[3] * Conj(LocalBasis[band][j]) * LocalBasisIncX[band][j] * Conj(LocalBasisIncX[band][k]) 
-				     * LocalBasisDecY[band][k]);
-		  TmpChernNumber += (Tmp1[3] * Conj(LocalBasis[band][j]) * LocalBasisDecX[band][j] * Conj(LocalBasisDecX[band][k]) 
-				     * LocalBasisDecY[band][k]);
-		  
-		  TmpChernNumber -= (Tmp1[0] * Conj(LocalBasis[band][j]) * LocalBasisIncY[band][j] * Conj(LocalBasisIncY[band][k]) 
-				     * LocalBasisIncX[band][k]);
-		  TmpChernNumber += (Tmp1[0] * Conj(LocalBasis[band][j]) * LocalBasisDecY[band][j] * Conj(LocalBasisDecY[band][k]) 
-				     * LocalBasisIncX[band][k]);
-		  TmpChernNumber += (Tmp1[1] * Conj(LocalBasis[band][j]) * LocalBasisIncY[band][j] * Conj(LocalBasisIncY[band][k]) 
-				     * LocalBasisDecX[band][k]);
-		  TmpChernNumber -= (Tmp1[1] * Conj(LocalBasis[band][j]) * LocalBasisDecY[band][j] * Conj(LocalBasisDecY[band][k]) 
-				     * LocalBasisDecX[band][k]);
-		}
-	    }
-	}  
+      TmpChernNumber += (Tmp1[2] * Conj(Tmp1[0]) * Tmp2[0]);
+      TmpChernNumber -= (Tmp1[2] * Conj(Tmp1[1]) * Tmp2[1]);
+      TmpChernNumber -= (Tmp1[3] * Conj(Tmp1[0]) * Tmp2[2]);
+      TmpChernNumber += (Tmp1[3] * Conj(Tmp1[1]) * Tmp2[3]);
+	  
+      TmpChernNumber -= (Tmp1[0] * Conj(Tmp1[2]) * Tmp2[4]);
+      TmpChernNumber += (Tmp1[0] * Conj(Tmp1[3]) * Tmp2[5]);
+      TmpChernNumber += (Tmp1[1] * Conj(Tmp1[2]) * Tmp2[6]);
+      TmpChernNumber -= (Tmp1[1] * Conj(Tmp1[3]) * Tmp2[7]);
+
     }
   TmpChernNumber /= 8.0 * M_PI;
   gettimeofday (&(TotalEndingTime), 0);
   double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
 			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
   cout << "Chern number computed in  " << Dt << "s" << endl;
-//  cout << TmpChernNumber << endl;
   return TmpChernNumber.Im;
 }
 

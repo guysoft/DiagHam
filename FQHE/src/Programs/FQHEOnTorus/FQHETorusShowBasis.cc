@@ -12,6 +12,7 @@
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 
 #include "HilbertSpace/BosonOnTorusWithSU3SpinAndMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithSU4SpinAndMagneticTranslations.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
 
@@ -54,14 +55,18 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
-  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles with 2 Landau levels");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
+  (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('e', "total-entanglement", "twice the projection of the total spin-isopsin entanglement of the system (only usefull in su(4) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n1", "number of type 1 particles (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n2", "number of type 2 particles (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n3", "number of type 3 particles (only useful in su(3) mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n4", "number of type 4 particles (only useful in su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not consider magnetic translation (only trivial translations along one axis)");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
@@ -110,6 +115,74 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      cout << "fermions with SU(3) spin and mangnetic translations is not implemented" << endl;
+	      return 0;
+	    }
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		Space->PrintState(cout, i) << endl;;
+	      cout << endl;
+	    }
+	  else
+	    {
+	      int NbrHiddenComponents = 0;
+	      double WeightHiddenComponents = 0.0;
+	      double Normalization = 0.0;
+	      ComplexVector State;
+	      if (State.ReadVector(Manager.GetString("state")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("state") << endl;
+		  return -1;
+		}
+	      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      if (Manager.GetDouble("hide-component") > 0.0)
+		{
+		  double Error = Manager.GetDouble("hide-component");
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (Norm(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		}
+	      else
+		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		  Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	    }
+	  delete Space;
+	  return 0;
+	}	  
+    }
+
+  if (Manager.GetBoolean("su4-spin") == true)
+    {
+      if (Manager.GetBoolean("no-translation") == true)
+	{
+	  cout << "SU(4) spin without mangnetic translations is not implemented" << endl;
+	  return 0;
+	}
+      else
+	{
+	  int Kx = Manager.GetInteger("kx-momentum") % MomentumModulo;
+	  int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+	  int TotalSz = Manager.GetInteger("total-sz");
+	  int TotalIz = Manager.GetInteger("total-isosz");
+	  int TotalPz = Manager.GetInteger("total-entanglement");
+	  if ((Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3") + Manager.GetInteger("nbr-n4")) == NbrParticles)
+	    {
+	      TotalSz = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2")) - (Manager.GetInteger("nbr-n3") + Manager.GetInteger("nbr-n4"));
+	      TotalIz = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n3")) - (Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n4"));
+	      TotalPz = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n4")) - (Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3"));
+	    }
+	  ParticleOnTorusWithSU4SpinAndMagneticTranslations* Space;
+	  if (Manager.GetBoolean("boson") == true)
+	    {
+	      Space = new BosonOnTorusWithSU4SpinAndMagneticTranslations(NbrParticles, TotalSz, TotalIz, TotalPz, NbrFluxQuanta, Kx, Ky);
+	    }
+	  else
+	    {
+	      cout << "fermions with SU(4) spin and mangnetic translations is not implemented" << endl;
 	      return 0;
 	    }
 	  if (Manager.GetString("state") == 0)

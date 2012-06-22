@@ -180,7 +180,7 @@ int main(int argc, char** argv)
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
       cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
-      if (ExportOneBody == true)
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
 	{
 	  char* BandStructureOutputFile = new char [512];
 	  if (Manager.GetString("export-onebodyname") != 0)

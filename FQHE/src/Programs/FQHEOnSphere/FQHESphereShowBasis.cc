@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   (*SystemGroup) += new BooleanOption  ('\n', "add-szvalue", "add Sz value to each Hilbert space vector (valid only for all-sz)");
-  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
