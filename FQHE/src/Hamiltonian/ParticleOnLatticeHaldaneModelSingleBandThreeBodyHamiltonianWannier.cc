@@ -81,12 +81,16 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // flatBandFlag = use flat band model
+// gaugeBFlag = flag indicating whether to use gauge transform on site B
+// a, b = interpolation parameters towards the torus state
+// rectangular = flag for rect / twisted torus
+// aspect = flag to swith aspect ratio to its inverse
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
 																       double uPotential, double vPotential, double wPotential, double sPotential,
-																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool rectangular, bool noWannier, AbstractArchitecture* architecture, long memory)
+																       double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool rectangular, bool fixAspect, bool noWannier, AbstractArchitecture* architecture, long memory)
 {
   this->NoWannier = noWannier;
   this->GaugeBFlag = gaugeBFlag;
@@ -120,6 +124,7 @@ ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::ParticleOnLa
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
+  this->FixAspect = fixAspect;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
   this->WPotential = wPotential;
@@ -1874,6 +1879,12 @@ double  ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Rect
   double Ratio = ((double) this->NbrSiteY) / ((double) this->NbrSiteX);
   double InvRatio = 1.0/Ratio;
 
+  if (this->FixAspect)
+    {
+      Ratio = ((double) this->NbrSiteX) / ((double) this->NbrSiteY);
+      InvRatio = 1.0/Ratio;
+    }
+
  
   //  cout << "coef " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " : ";
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
@@ -1957,6 +1968,11 @@ Complex ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Twis
   double Ratio = ((double) this->NbrSiteY) / ((double) this->NbrSiteX);
   double InvRatio = 1.0/Ratio;
 
+  if (this->FixAspect)
+    {
+      Ratio = ((double) this->NbrSiteX) / ((double) this->NbrSiteY);
+      InvRatio = 1.0/Ratio;
+    }
 
   N2 = (double) (m1 - m4);
   Coefficient = 1.0;

@@ -86,6 +86,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
+  (*SystemGroup) += new BooleanOption  ('\n', "old-aspect", "use aspect ratio Ly/Lx");
   (*SystemGroup) += new BooleanOption  ('\n', "gaugeB", "Takes into account the gauge on B sites");
   (*SystemGroup) += new BooleanOption  ('\n', "NoWannier", "No Wannier");
   (*SystemGroup) += new SingleDoubleOption  ('a', "aParam", "parameter multiplying the off-block diagonal elements. a=0 corresponds to the exactly block diagonal limit",1.0);
@@ -174,6 +175,8 @@ int main(int argc, char** argv)
 	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_mus_%f", Manager.GetDouble("mu-s"));
       if (Manager.GetBoolean("flat-band") == true)
 	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_flatband");
+      if (Manager.GetBoolean("old-aspect") == false)
+	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_aspect");
       if (Manager.GetBoolean("twisted") == true)
 	lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_twist");
     }
@@ -271,7 +274,7 @@ int main(int argc, char** argv)
 													   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
 													   Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), HaldanePhi, Manager.GetDouble("mu-s"), 
 													   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
-													   Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), !Manager.GetBoolean("twisted"), Manager.GetBoolean("NoWannier"), Architecture.GetArchitecture(), Memory);
+													   Manager.GetBoolean("flat-band"), Manager.GetBoolean("gaugeB"), Manager.GetDouble("aParam"), Manager.GetDouble("bParam"), !Manager.GetBoolean("twisted"), !Manager.GetBoolean("old-aspect"), Manager.GetBoolean("NoWannier"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {

@@ -81,6 +81,9 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   // angle to use for twisted torus pseudopotentials
   double Angle;
 
+  // flag for correction of aspect ratio
+  bool FixAspect;
+  
   // use flat band model
   bool FlatBand;
   
@@ -131,7 +134,7 @@ class ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier : publi
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-								     double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool noWannier, bool rectangular, AbstractArchitecture* architecture, long memory = -1);
+								     double t1, double t2, double t3, double phi, double mus, double gammaX, double gammaY, bool flatBandFlag, bool gaugeBFlag, double a, double b, bool rectangular, bool aspect, bool noWannier, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
