@@ -523,6 +523,7 @@ void ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandThreeBodyHamilt
   }
   else
   {
+    int BandIndex = 0;
     this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
       this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -576,10 +577,109 @@ void ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandThreeBodyHamilt
 		      }
 		  }
 
-      double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), this->NBodyValue - 1);
-      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
       
-      double SymmetryFactor1 = 1.0;
+      int KxIn[3];
+      int KyIn[3];
+      int IndexIn[3];
+
+      int** Permutations = 0; 
+      double* PermutationSign = 0; 
+      int NbrPermutations = this->ComputePermutations(Permutations, PermutationSign);
+
+      int TmpLargestSector = 0;
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	if (this->NbrNBodySectorIndicesPerSum[i] > TmpLargestSector)
+	  TmpLargestSector = this->NbrNBodySectorIndicesPerSum[i];
+
+      Complex** TmpIn  = new Complex*[this->TightBindingModel->GetNbrBands()];
+      Complex** TmpOut  = new Complex*[this->TightBindingModel->GetNbrBands()];
+      Complex* TmpIn2  = new Complex[this->TightBindingModel->GetNbrBands()];
+      Complex* TmpOut2  = new Complex[this->TightBindingModel->GetNbrBands()];
+      for (int i = 0; i < this->TightBindingModel->GetNbrBands(); ++i)
+	{
+	  TmpIn[i] = new Complex[TmpLargestSector];
+	  TmpOut[i] = new Complex[TmpLargestSector];
+	}
+
+      double FactorU = this->UPotential * 0.5 / pow(((double) (this->NbrSiteX * this->NbrSiteY)), 2);
+      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	{
+	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+	  int Index = 0;
+	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	    {
+	      IndexIn[0] = this->NBodySectorIndicesPerSum[i][j1 * 3];
+	      IndexIn[1] = this->NBodySectorIndicesPerSum[i][(j1 * 3) + 1];
+	      IndexIn[2] = this->NBodySectorIndicesPerSum[i][(j1 * 3) + 2];
+	      KxIn[0] = IndexIn[0] / this->NbrSiteY;
+	      KyIn[0] = IndexIn[0] % this->NbrSiteY;
+	      KxIn[1] = IndexIn[1] / this->NbrSiteY;
+	      KyIn[1] = IndexIn[1] % this->NbrSiteY;
+	      KxIn[2] = IndexIn[2] / this->NbrSiteY;
+	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
+	      
+	      for (int Site = 0; Site < this->TightBindingModel->GetNbrBands(); ++Site)
+		{
+		  TmpIn2[Site] = 0.0;
+		  TmpOut2[Site] = 0.0;
+		}
+	      double SymmetryFactor = 1.0;
+	      if ((IndexIn[0] == IndexIn[1]) && (IndexIn[1] == IndexIn[2]))
+		{
+		  SymmetryFactor = 1.0 / 6.0;
+		}
+	      else
+		{
+		  if ((IndexIn[0] == IndexIn[1]) || (IndexIn[1] == IndexIn[2]) || (IndexIn[0] == IndexIn[2]))
+		    {
+		      SymmetryFactor = 0.5;
+		    }
+		}
+	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
+		{
+		  int* TmpPerm = Permutations[l1];
+		  for (int Site = 0; Site < this->TightBindingModel->GetNbrBands(); ++Site)
+		    {
+		      TmpIn2[Site] +=  Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][BandIndex][Site] * OneBodyBasis[IndexIn[TmpPerm[1]]][BandIndex][Site] * OneBodyBasis[IndexIn[TmpPerm[2]]][BandIndex][Site]);
+		      TmpOut2[Site] +=  OneBodyBasis[IndexIn[TmpPerm[0]]][BandIndex][Site] * OneBodyBasis[IndexIn[TmpPerm[1]]][BandIndex][Site] * OneBodyBasis[IndexIn[TmpPerm[2]]][BandIndex][Site];
+		    }
+		}
+	      for (int Site = 0; Site < this->TightBindingModel->GetNbrBands(); ++Site)
+		{
+		  TmpIn[Site][j1] = TmpIn2[Site] * SymmetryFactor;			
+		  TmpOut[Site][j1] = TmpOut2[Site] * SymmetryFactor;			
+		}
+	    }
+	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	    {
+	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+		{
+		  Complex Tmp = 0.0;
+		  for (int Site1 = 0; Site1 < this->TightBindingModel->GetNbrBands(); ++Site1)
+		  {
+		    for (int Site2 = 0; Site2 < this->TightBindingModel->GetNbrBands(); ++Site2)
+		      Tmp += TmpIn[Site1][j1] * TmpOut[Site2][j2];
+		  }
+		  this->NBodyInteractionFactors[i][Index] = 2.0 * FactorU * Tmp;
+		  TotalNbrInteractionFactors++;
+		  ++Index;
+		}
+	    }
+	}
+      delete[] TmpIn2;
+      delete[] TmpOut2;
+      for (int i = 0; i < this->TightBindingModel->GetNbrBands(); ++i)
+	{
+	  delete[] TmpIn[i];
+	  delete[] TmpOut[i];
+	}
+      delete[] TmpIn;
+      delete[] TmpOut;
+    
+    
+      
+     /* double SymmetryFactor1 = 1.0;
       double SymmetryFactor2 = 1.0;
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
@@ -1054,7 +1154,7 @@ void ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandThreeBodyHamilt
 		  ++Index;
 		}
 	    }
-	}
+	}*/
       cout << "nbr 3-body interaction = " << TotalNbrInteractionFactors << endl;
       cout << "====================================" << endl;
   }
