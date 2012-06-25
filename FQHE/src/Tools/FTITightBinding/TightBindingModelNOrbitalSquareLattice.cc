@@ -112,21 +112,24 @@ void TightBindingModelNOrbitalSquareLattice::ComputeBandStructure(long minStateI
 	      KY = this->KyFactor * (((double) ky) + this->GammaY);
 	      
 	       HermitianMatrix TmpOneBodyHamiltonian(this->NbrLayers, true);
-	      for (int i = 0; i < this->NbrLayers - 2; ++i)
+	      
+	       for (int i = 0; i < this->NbrLayers - 2; ++i)
 		{
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*i-1)*this->Phi));
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,i+1,this->NNHopping*(Phase(-KX) + Phase((KY-2*i*this->Phi))));
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,i+2,this->NextNNHopping*(Phase( -(KX-KY+(2*i+1)*this->Phi))));
+		  int l=i+1;
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*l-1)*this->Phi));
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,i+1,this->NNHopping*(Phase(-KX) + Phase((KY-2*l*this->Phi))));
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,i+2,this->NextNNHopping*(Phase( -(KX-KY+(2*l+1)*this->Phi))));
 		}
-		int i = (this->NbrLayers-2)%this->NbrLayers;
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*i-1)*this->Phi));
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,(i+1)%this->NbrLayers,this->NNHopping*(Phase(-KX) + Phase((KY-2*i*this->Phi)) ));
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,0,this->NextNNHopping*Phase(-(KX-KY+(2*i+1)*this->Phi)));
+		int i = (this->NbrLayers-2);
+	      int l=i+1;
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*l-1)*this->Phi));
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,i+1,this->NNHopping*(Phase(-KX) + Phase((KY-2*l*this->Phi)) ));
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,0,this->NextNNHopping*Phase(-(KX-KY+(2*l+1)*this->Phi)));
 		i++;
-		i%=this->NbrLayers;
-	      TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*i-1)*this->Phi));
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,0,this->NNHopping*(Phase(-KX) + Phase((KY-2*i*this->Phi))));
-		  TmpOneBodyHamiltonian.SetMatrixElement(i,1,this->NextNNHopping*(Phase( -(KX-KY+(2*i+1)*this->Phi))));
+		 l = this->NbrLayers;
+	      TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*l-1)*this->Phi));
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,0,this->NNHopping*(Phase(-KX) + Phase((KY-2*l*this->Phi))));
+		  TmpOneBodyHamiltonian.SetMatrixElement(i,1,this->NextNNHopping*(Phase( -(KX-KY+(2*l+1)*this->Phi))));
 	      
 	      if (this->OneBodyBasis != 0)
 		{

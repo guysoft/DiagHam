@@ -7,7 +7,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeNOrbitalSquareLatticeSingleBandHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
@@ -264,7 +264,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    { 
-	     // Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,												     &TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	     Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	&TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 
 	  char* ContentPrefix = new char[256];
