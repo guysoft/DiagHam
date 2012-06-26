@@ -54,12 +54,12 @@ class BosonOnTorusWithSU3Spin :  public BosonOnSphereWithSU3Spin
   // constructor with a constraint on total spin momentum and total momentum
   // 
   // nbrBosons = number of bosons
-  // maxMomentum = momentum maximum value for a boson
   // totalTz = twice the total Tz value
   // totalY = three time the total Y value
+  // maxMomentum = momentum maximum value for a boson
   // kyMomentum = momentum along the y direction
   // memory = amount of memory granted for precalculations
-  BosonOnTorusWithSU3Spin (int nbrBosons, int maxMomentum, int totalTz, int totalY, int kyMomentum, unsigned long memory = 10000000);
+  BosonOnTorusWithSU3Spin (int nbrBosons, int totalTz, int totalY, int maxMomentum, int kyMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -115,6 +115,31 @@ class BosonOnTorusWithSU3Spin :  public BosonOnSphereWithSU3Spin
   // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // return value = Hilbert space dimension
   long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrN1, int nbrN2, int nbrN3);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // nbrN1Sector = number of type 1 particles  that belong to the subsytem 
+  // nbrN2Sector = number of type 1 particles  that belong to the subsytem 
+  // nbrN3Sector = number of type 1 particles  that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, 
+								     int nbrN1Sector, int nbrN2Sector, int nbrN3Sector, RealVector& groundState, AbstractArchitecture* architecture);
+
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+								  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
 
 };
 

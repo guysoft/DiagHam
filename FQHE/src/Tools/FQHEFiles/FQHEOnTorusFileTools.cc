@@ -191,7 +191,7 @@ bool FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nb
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
 	  StrNbrParticles[SizeString] = '\0';
-	  ky = atoi(StrNbrParticles);
+	  sz = atoi(StrNbrParticles);
 	  StrNbrParticles[SizeString] = '_';
 	  StrNbrParticles += SizeString;
 	}
@@ -206,3 +206,72 @@ bool FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nb
   return true;
 }
 
+// try to guess system information from file name for system suth an SU(3) degree of freedom
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// kyMax = reference to the maximum momentum for a single particle
+// ky = reference to the y projection of the angular momentum
+// totalTz = reference to twice the total Tz value
+// totalY = reference to three time the total Y value
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+
+bool FQHEOnTorusWithSU3SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, int& totalTz, int& totalY, bool& statistics)
+{
+  if (FQHEOnTorusFindSystemInfoFromVectorFileName(filename, nbrParticles, kyMax, ky, statistics) == false)
+    return false;
+  char* StrNbrParticles;
+
+  StrNbrParticles = strstr(filename, "_tz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  totalTz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess sz from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_y_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 3;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  totalY = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess y from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}

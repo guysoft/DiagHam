@@ -186,7 +186,7 @@ int main(int argc, char** argv)
 	      if(FlagWannier == false) 
 		{
 		  if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-								      NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Mass, Statistics) == false)
+									  NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Mass, Statistics) == false)
 		    {
 		      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 		      return -1;
@@ -195,7 +195,7 @@ int main(int argc, char** argv)
 	      else
 		{
 		  if (FQHEOnSquareLatticeWannierFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-								      NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Statistics) == false)
+										 NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i], Statistics) == false)
 		    {
 		      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 		      return -1;
