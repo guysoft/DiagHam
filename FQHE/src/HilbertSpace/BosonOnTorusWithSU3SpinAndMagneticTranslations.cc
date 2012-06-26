@@ -181,6 +181,7 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
 
+  this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
   this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;
@@ -298,6 +299,7 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations& BosonOnTorusWithSU3SpinAndMagnet
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
 
+  this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
   this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;

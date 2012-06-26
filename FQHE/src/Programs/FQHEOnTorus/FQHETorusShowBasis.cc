@@ -11,6 +11,7 @@
 #include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 
+#include "HilbertSpace/BosonOnTorusWithSU3Spin.h"
 #include "HilbertSpace/BosonOnTorusWithSU3SpinAndMagneticTranslations.h"
 #include "HilbertSpace/BosonOnTorusWithSU4SpinAndMagneticTranslations.h"
 
@@ -91,22 +92,65 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("su3-spin") == true)
     {
+      int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+      int TotalTz = Manager.GetInteger("total-tz");
+      int TotalY = Manager.GetInteger("total-y");
+      if ((Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3")) == NbrParticles)
+	{
+	  TotalTz = (Manager.GetInteger("nbr-n1") - Manager.GetInteger("nbr-n2"));
+	  TotalY = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") - (2 * Manager.GetInteger("nbr-n3")));
+	}
       if (Manager.GetBoolean("no-translation") == true)
 	{
-	  cout << "SU(3) spin without mangnetic translations is not implemented" << endl;
+	  ParticleOnSphereWithSU3Spin* Space;
+	  if (Manager.GetBoolean("boson") == true)
+	    {
+	      Space = new BosonOnTorusWithSU3Spin(NbrParticles, TotalTz, TotalY, NbrFluxQuanta, Ky);
+	    }
+	  else
+	    {
+	      cout << "fermions with SU(3) spin is not implemented" << endl;
+	      return 0;
+	    }
+	  if (Manager.GetString("state") == 0)
+	    {
+	      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+		Space->PrintState(cout, i) << endl;;
+	      cout << endl;
+	    }
+	  else
+	    {
+	      int NbrHiddenComponents = 0;
+	      double WeightHiddenComponents = 0.0;
+	      double Normalization = 0.0;
+	      RealVector State;
+	      if (State.ReadVector(Manager.GetString("state")) == false)
+		{
+		  cout << "error while reading " << Manager.GetString("state") << endl;
+		  return -1;
+		}
+	      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+		{
+		  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+		  return -1;
+		}
+	      if (Manager.GetDouble("hide-component") > 0.0)
+		{
+		  double Error = Manager.GetDouble("hide-component");
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    if (fabs(State[i]) > Error)
+		      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		}
+	      else
+		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		  Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	    }
+	  delete Space;
 	  return 0;
-	}
+	}	  
       else
 	{
 	  int Kx = Manager.GetInteger("kx-momentum") % MomentumModulo;
-	  int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
-	  int TotalTz = Manager.GetInteger("total-tz");
-	  int TotalY = Manager.GetInteger("total-y");
-	  if ((Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") + Manager.GetInteger("nbr-n3")) == NbrParticles)
-	    {
-	      TotalTz = (Manager.GetInteger("nbr-n1") - Manager.GetInteger("nbr-n2"));
-	      TotalY = (Manager.GetInteger("nbr-n1") + Manager.GetInteger("nbr-n2") - (2 * Manager.GetInteger("nbr-n3")));
-	    }
 	  ParticleOnTorusWithSU3SpinAndMagneticTranslations* Space;
 	  if (Manager.GetBoolean("boson") == true)
 	    {

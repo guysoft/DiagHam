@@ -172,7 +172,8 @@ BosonOnSphereWithSU3Spin::BosonOnSphereWithSU3Spin(const BosonOnSphereWithSU3Spi
   this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
   this->StateDescription1 = bosons.StateDescription1;
   this->StateDescription2 = bosons.StateDescription2;
-  this->StateDescription3 = bosons.StateDescription3;
+  this->StateDescription3 = bosons.StateDescription3; 
+  this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
   this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;
@@ -266,6 +267,7 @@ BosonOnSphereWithSU3Spin& BosonOnSphereWithSU3Spin::operator = (const BosonOnSph
   this->StateDescription1 = bosons.StateDescription1;
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
+  this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
   this->NbrUniqueStateDescription2 = bosons.NbrUniqueStateDescription2;
