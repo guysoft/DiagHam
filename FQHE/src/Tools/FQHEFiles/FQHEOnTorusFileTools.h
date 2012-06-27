@@ -76,4 +76,17 @@ bool FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nb
 // return value = true if no error occured
 bool FQHEOnTorusWithSU3SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, int& totalTz, int& totalY, bool& statistics);
 
+// try to guess system information from file name for system suth an SU(7) degree of freedom
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// kyMax = reference to the maximum momentum for a single particle
+// ky = reference to the y projection of the angular momentum
+// totalSz = reference to twice the total spin value
+// totalIz = reference to the total isospin value
+// totalPz = reference to the total entanglement value
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+bool FQHEOnTorusWithSU4SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, int& totalSz, int& totalIz, int& totalPz, bool& statistics);
+
 #endif

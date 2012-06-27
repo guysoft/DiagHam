@@ -275,3 +275,75 @@ bool FQHEOnTorusWithSU3SpinFindSystemInfoFromVectorFileName(char* filename, int&
     }
   return true;
 }
+
+// try to guess system information from file name for system suth an SU(7) degree of freedom
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// kyMax = reference to the maximum momentum for a single particle
+// ky = reference to the y projection of the angular momentum
+// totalSz = reference to twice the total spin value
+// totalIz = reference to the total isospin value
+// totalPz = reference to the total entanglement value
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+
+bool FQHEOnTorusWithSU4SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& ky, int& totalSz, int& totalIz, int& totalPz, bool& statistics)
+{
+  if (FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(filename, nbrParticles, kyMax, ky, totalSz, statistics) == false)
+    return false;
+  char* StrNbrParticles;
+
+  StrNbrParticles = strstr(filename, "_iz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  totalIz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess iz from file name " << filename << endl;
+      return false;            
+    }
+  StrNbrParticles = strstr(filename, "_pz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  totalPz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess pz from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+

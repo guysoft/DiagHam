@@ -326,3 +326,194 @@ bool FQHETorusSU3GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
       }
   return true;
 }
+
+// get pseudopototentials for particles on torus with SU(4) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as pplus-upplus, upplus-upminus, upplus-downplus, upplus-downminus, 
+//                                                                     upminus-upminus, upminus-downplus, upminus-downminus, downplus-downplus, downplus-downminus, downminus-downminus)
+// return value = true if no error occured
+
+bool FQHETorusSU4GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, double** pseudoPotentials)
+{
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  int TmpNbrPseudoPotentials;
+  double* TmpPseudoPotentials;
+  bool Flag = false;
+  if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      for (int i = 0; i < 10; ++i)
+	{
+	  nbrPseudoPotentials[i] = TmpNbrPseudoPotentials;
+	  pseudoPotentials[i] = new double[nbrPseudoPotentials[i]];
+	  for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	    pseudoPotentials[i][j] = TmpPseudoPotentials[j];
+	}
+    }
+  else
+    if (InteractionDefinition["Pseudopotentials"] != 0)
+      {
+	cout << "Pseudopotentials has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusUpPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[0] = TmpNbrPseudoPotentials;
+      pseudoPotentials[0] = new double[nbrPseudoPotentials[0]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[0][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpPlusUpPlus"] != 0)
+      {
+	cout << "PseudopotentialsUpPlusUpPlus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusUpMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[1] = TmpNbrPseudoPotentials;
+      pseudoPotentials[1] = new double[nbrPseudoPotentials[1]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[1][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpPlusUpMinus"] != 0)
+      {
+	cout << "PseudopotentialsUpPlusUpMinus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusDownPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[2] = TmpNbrPseudoPotentials;
+      pseudoPotentials[2] = new double[nbrPseudoPotentials[2]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[2][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpPlusDownPlus"] != 0)
+      {
+	cout << "PseudopotentialsUpPlusDownPlus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpPlusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[3] = TmpNbrPseudoPotentials;
+      pseudoPotentials[3] = new double[nbrPseudoPotentials[3]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[3][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpPlusDownMinus"] != 0)
+      {
+	cout << "PseudopotentialsUpPlusDownMinus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpMinusUpMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[4] = TmpNbrPseudoPotentials;
+      pseudoPotentials[4] = new double[nbrPseudoPotentials[4]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[4][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpMinusUpMinus"] != 0)
+      {
+	cout << "PseudopotentialsUpMinusUpMinus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpMinusDownPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[5] = TmpNbrPseudoPotentials;
+      pseudoPotentials[5] = new double[nbrPseudoPotentials[5]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[5][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpMinusDownPlus"] != 0)
+      {
+	cout << "PseudopotentialsUpMinusDownPlus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpMinusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[6] = TmpNbrPseudoPotentials;
+      pseudoPotentials[6] = new double[nbrPseudoPotentials[6]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[6][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsUpMinusDownMinus"] != 0)
+      {
+	cout << "PseudopotentialsUpMinusDownMinus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownPlusDownPlus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[7] = TmpNbrPseudoPotentials;
+      pseudoPotentials[7] = new double[nbrPseudoPotentials[7]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[7][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsDownPlusDownPlus"] != 0)
+      {
+	cout << "PseudopotentialsDownPlusDownPlus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownPlusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[8] = TmpNbrPseudoPotentials;
+      pseudoPotentials[8] = new double[nbrPseudoPotentials[8]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[8][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsDownPlusDownMinus"] != 0)
+      {
+	cout << "PseudopotentialsDownPlusDownMinus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownMinusDownMinus", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      nbrPseudoPotentials[9] = TmpNbrPseudoPotentials;
+      pseudoPotentials[9] = new double[nbrPseudoPotentials[9]];
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[9][j] = TmpPseudoPotentials[j];
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsDownMinusDownMinus"] != 0)
+      {
+	cout << "PseudopotentialsDownMinusDownMinus has a wrong value in " << fileName << endl;
+	return false;
+      }
+
+}
+
