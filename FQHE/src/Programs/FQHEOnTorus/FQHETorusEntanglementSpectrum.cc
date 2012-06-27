@@ -35,6 +35,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('l', "nbr-orbitals", "number of orbitals in the A part", 0l);
   (*SystemGroup) += new SingleIntegerOption ('s', "sz-value", "twice the Sz value of A part (SU(2) mode only)", 0l);
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin (override autodetection from the reduced density matrix file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin (override autodetection from the reduced density matrix file name)");
+  (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin (override autodetection from the reduced density matrix file name)");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "output name for the entanglement spectrum (default name replace density-matrix full.ent extension with la_x_na_y.entspec)");
   (*SystemGroup) += new SingleDoubleOption  ('e', "eigenvalue-error", "lowest acceptable reduced density matrix eignvalue", 1e-14);  
   (*SystemGroup) += new BooleanOption ('\n', "show-minmaxkya", "show minimum an maximum Ky value that can be reached");
@@ -79,6 +81,24 @@ int main(int argc, char** argv)
   else
     {
       SU2SpinFlag = Manager.GetBoolean("su2-spin");      
+    }
+  bool SU3SpinFlag = false;
+  if (strcasestr(Manager.GetString("density-matrix"), "_su3_") != 0)
+    {
+      SU3SpinFlag = true;
+    }
+  else
+    {
+      SU3SpinFlag = Manager.GetBoolean("su3-spin");      
+    }
+  bool SU4SpinFlag = false;
+  if (strcasestr(Manager.GetString("density-matrix"), "_su4_") != 0)
+    {
+      SU4SpinFlag = true;
+    }
+  else
+    {
+      SU4SpinFlag = Manager.GetBoolean("su4-spin");      
     }
 
   if (FQHEOnTorusFindSystemInfoFromVectorFileName(Manager.GetString("density-matrix"), NbrParticles, NbrFluxQuanta, TotalKy, Statistics) == false)
@@ -233,15 +253,12 @@ int main(int argc, char** argv)
 	}
       
       int* NaValues = DensityMatrix.GetAsIntegerArray(0);
-      int* KyValues = DensityMatrix.GetAsIntegerArray(1);
       long Index = 0l;
       long MaxIndex = DensityMatrix.GetNbrLines();
       while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
 	++Index;
-
       if (Index < MaxIndex)
 	{
-	  double* Coefficients = DensityMatrix.GetAsDoubleArray(2);
 	  char* OutputFileName = Manager.GetString("output");
 	  if (OutputFileName == 0)
 	    {
@@ -259,23 +276,91 @@ int main(int argc, char** argv)
 	  ofstream File;
 	  File.open(OutputFileName, ios::out);
 	  File.precision(14);
-	  File << "# na ky lambda -log(lambda)";
-	  File << endl;
+	  int* KyValues;
+	  double* Coefficients;
 	  int TmpIndex = Index;
-	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+	  if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false))
 	    {
-	      double Tmp = Coefficients[Index];
-	      if (Tmp > Error)
+	      KyValues = DensityMatrix.GetAsIntegerArray(1);
+	      Coefficients = DensityMatrix.GetAsDoubleArray(2);
+	      File << "# na ky lambda -log(lambda)";
+	      File << endl;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
 		{
-		  int TmpKya = KyValues[Index];
-		  File << NbrParticlesInPartition << " " << TmpKya << " " << Tmp << " " << (-log(Tmp));
-		  File << endl;
-		  if (TmpKya < MinKya)
-		    MinKya = TmpKya;
-		  if (TmpKya > MaxKya)
-		    MaxKya = TmpKya;
+		  double Tmp = Coefficients[Index];
+		  if (Tmp > Error)
+		    {
+		      int TmpKya = KyValues[Index];
+		      File << NbrParticlesInPartition << " " << TmpKya << " " << Tmp << " " << (-log(Tmp));
+		      File << endl;
+		      if (TmpKya < MinKya)
+			MinKya = TmpKya;
+		      if (TmpKya > MaxKya)
+			MaxKya = TmpKya;
+		    }
+		  ++Index;
 		}
-	      ++Index;
+	    }
+	  if (SU3SpinFlag == true)
+	    {
+	      KyValues = DensityMatrix.GetAsIntegerArray(6);
+	      Coefficients = DensityMatrix.GetAsDoubleArray(7);
+	      int* TzValues = DensityMatrix.GetAsIntegerArray(1);
+	      int* YValues = DensityMatrix.GetAsIntegerArray(2);
+	      int* N1Values = DensityMatrix.GetAsIntegerArray(3);
+	      int* N2Values = DensityMatrix.GetAsIntegerArray(4);
+	      int* N3Values = DensityMatrix.GetAsIntegerArray(5);
+	      File << "# na tz y N1 N2 N3 ky lambda -log(lambda)";
+	      File << endl;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  double Tmp = Coefficients[Index];
+		  if (Tmp > Error)
+		    {
+		      int TmpKya = KyValues[Index];
+		      File << NbrParticlesInPartition << " " << TzValues[Index] << " " << YValues[Index] 
+			   << " " << N1Values[Index] << " " << N2Values[Index] << " " << N3Values[Index] << " " << TmpKya << " " << Tmp << " " << (-log(Tmp));
+		      File << endl;
+		      if (TmpKya < MinKya)
+			MinKya = TmpKya;
+		      if (TmpKya > MaxKya)
+			MaxKya = TmpKya;
+		    }
+		  ++Index;
+		}
+	      
+	    }
+	  if (SU4SpinFlag == true)
+	    {
+	      KyValues = DensityMatrix.GetAsIntegerArray(8);
+	      Coefficients = DensityMatrix.GetAsDoubleArray(9);
+	      int* SzValues = DensityMatrix.GetAsIntegerArray(1);
+	      int* IzValues = DensityMatrix.GetAsIntegerArray(2);
+	      int* PzValues = DensityMatrix.GetAsIntegerArray(3);
+	      int* NupValues = DensityMatrix.GetAsIntegerArray(4);
+	      int* NumValues = DensityMatrix.GetAsIntegerArray(5);
+	      int* NdpValues = DensityMatrix.GetAsIntegerArray(6);
+	      int* NdmValues = DensityMatrix.GetAsIntegerArray(7);
+	      File << "# na sz iz pz Nup Num Ndp Ndm ky lambda -log(lambda)";
+	      File << endl;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  double Tmp = Coefficients[Index];
+		  if (Tmp > Error)
+		    {
+		      int TmpKya = KyValues[Index];
+		      File << NbrParticlesInPartition << " " << SzValues[Index] << " " << IzValues[Index] << " " << PzValues[Index] 
+			   << " " << NupValues[Index] << " " << NumValues[Index] << " " << NdpValues[Index] << " "<< NdmValues[Index] 
+			   << " "  << TmpKya << " " << Tmp << " " << (-log(Tmp));
+		      File << endl;
+		      if (TmpKya < MinKya)
+			MinKya = TmpKya;
+		      if (TmpKya > MaxKya)
+			MaxKya = TmpKya;
+		    }
+		  ++Index;
+		}
+	      
 	    }
 	  KyaValueArray = new int[(MaxKya - MinKya + 1)];
 	  for (int i = MinKya; i <= MaxKya; ++i)

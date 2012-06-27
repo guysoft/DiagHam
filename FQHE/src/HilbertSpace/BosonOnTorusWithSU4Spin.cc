@@ -348,8 +348,8 @@ long BosonOnTorusWithSU4Spin::GenerateStates(int nbrBosons, int currentKyUpPlus,
 		    {
 		      this->StateDescriptionUpPlus[pos] |= MaskUpPlus;
 		      this->StateDescriptionUpMinus[pos] |= MaskUpMinus;
-		  this->StateDescriptionDownPlus[pos] |= MaskDownPlus;
-		  this->StateDescriptionDownMinus[pos] |= MaskDownMinus;
+		      this->StateDescriptionDownPlus[pos] |= MaskDownPlus;
+		      this->StateDescriptionDownMinus[pos] |= MaskDownMinus;
 		    }
 		}
 	    }
