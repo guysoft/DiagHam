@@ -64,6 +64,8 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
   (*OutputGroup) += new SingleIntegerOption  ('\n', "kya-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Ky value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "tza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Tz value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "ya-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Y value", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
@@ -109,6 +111,8 @@ int main(int argc, char** argv)
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
   int FilterKya = Manager.GetInteger("kya-eigenstate");
+  int FilterTza = Manager.GetInteger("tza-eigenstate");
+  int FilterYa = Manager.GetInteger("ya-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalKy = 0;
   int TotalTz;
@@ -260,7 +264,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
 			if (LapackFlag == true)
 			  {
-			    if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+			    if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy) && (FilterTza == SubsystemTotalTz) && (FilterYa == SubsystemTotalY))
 			      {
 				RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
 							  PartialDensityMatrix.GetNbrRow(), true);
@@ -302,7 +306,7 @@ int main(int argc, char** argv)
 			  }
 			else
 			  {
-			    if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy))
+			    if ((EigenstateFlag == true) && (FilterKya == SubsystemTotalKy) && (FilterTza == SubsystemTotalTz) && (FilterYa == SubsystemTotalY))
 			      {
 				RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
 							  PartialDensityMatrix.GetNbrRow(), true);
