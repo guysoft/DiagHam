@@ -190,12 +190,17 @@ BosonOnSphereWithSU4Spin::BosonOnSphereWithSU4Spin(const BosonOnSphereWithSU4Spi
   this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
   this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
   this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
+  this->NbrUniqueStateDescriptionUpPlus = bosons.NbrUniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
   this->NbrUniqueStateDescriptionUpMinus = bosons.NbrUniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
   this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  this->NbrUniqueStateDescriptionDownPlus = bosons.NbrUniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
+  this->FirstIndexUniqueStateDescriptionDownPlus = bosons.FirstIndexUniqueStateDescriptionDownPlus;
 }
 
 // destructor
@@ -309,12 +314,17 @@ BosonOnSphereWithSU4Spin& BosonOnSphereWithSU4Spin::operator = (const BosonOnSph
   this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
   this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
   this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
+  this->NbrUniqueStateDescriptionUpPlus = bosons.NbrUniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
   this->NbrUniqueStateDescriptionUpMinus = bosons.NbrUniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
   this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  this->NbrUniqueStateDescriptionDownPlus = bosons.NbrUniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
+  this->FirstIndexUniqueStateDescriptionDownPlus = bosons.FirstIndexUniqueStateDescriptionDownPlus;
   return *this;
 }
 

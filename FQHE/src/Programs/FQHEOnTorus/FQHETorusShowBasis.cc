@@ -214,10 +214,10 @@ int main(int argc, char** argv)
       int Ky = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
       if (Manager.GetBoolean("no-translation") == true)
 	{
-	  ParticleOnSphereWithSU3Spin* Space;
+	  ParticleOnSphereWithSU4Spin* Space;
 	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      Space = new BosonOnTorusWithSU3Spin(NbrParticles, TotalSz, TotalIz, TotalPz, NbrFluxQuanta, Ky);
+	      Space = new BosonOnTorusWithSU4Spin(NbrParticles, TotalSz, TotalIz, TotalPz, NbrFluxQuanta, Ky);
 	    }
 	  else
 	    {

@@ -115,7 +115,10 @@ ParticleOnTorusWithSU4SpinGenericHamiltonian::ParticleOnTorusWithSU4SpinGenericH
   this->OneBodyInteractionFactorsumum = 0;
   this->OneBodyInteractionFactorsdpdp = 0;
   this->OneBodyInteractionFactorsdmdm = 0;
- 
+
+  this->L2Hamiltonian = 0;
+  this->S2Hamiltonian = 0;
+
   this->HamiltonianShift = 0.0;
   this->DiskStorageFlag = false;
   if (precalculationFileName == 0)

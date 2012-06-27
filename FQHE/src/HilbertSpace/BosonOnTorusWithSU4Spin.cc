@@ -175,6 +175,7 @@ BosonOnTorusWithSU4Spin::BosonOnTorusWithSU4Spin(const BosonOnTorusWithSU4Spin& 
   this->StateDescriptionUpPlus = bosons.StateDescriptionUpPlus;
   this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
   this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
+  this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
   this->NbrUniqueStateDescriptionUpPlus = bosons.NbrUniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
@@ -182,6 +183,10 @@ BosonOnTorusWithSU4Spin::BosonOnTorusWithSU4Spin(const BosonOnTorusWithSU4Spin& 
   this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
   this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  this->NbrUniqueStateDescriptionDownPlus = bosons.NbrUniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
+  this->FirstIndexUniqueStateDescriptionDownPlus = bosons.FirstIndexUniqueStateDescriptionDownPlus;
 }
 
 // destructor
@@ -253,6 +258,7 @@ BosonOnTorusWithSU4Spin& BosonOnTorusWithSU4Spin::operator = (const BosonOnTorus
   this->StateDescriptionUpPlus = bosons.StateDescriptionUpPlus;
   this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
   this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
+  this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
   this->NbrUniqueStateDescriptionUpPlus = bosons.NbrUniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
@@ -260,6 +266,9 @@ BosonOnTorusWithSU4Spin& BosonOnTorusWithSU4Spin::operator = (const BosonOnTorus
   this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
   this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  this->NbrUniqueStateDescriptionDownPlus = bosons.NbrUniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
   return *this;
 }
 
@@ -289,6 +298,7 @@ ostream& BosonOnTorusWithSU4Spin::PrintState (ostream& Str, int state)
     {
       Str << "(" << this->TemporaryStateUpPlus[i] << "," << this->TemporaryStateUpMinus[i] << "," << this->TemporaryStateDownPlus[i] << "," << this->TemporaryStateDownMinus[i] << ") | ";
     }
+  Str << " : " << this->FindStateIndex(this->StateDescriptionUpPlus[state], this->StateDescriptionUpMinus[state], this->StateDescriptionDownPlus[state], this->StateDescriptionDownMinus[state]) << " = " << state;
   return Str;
 }
 

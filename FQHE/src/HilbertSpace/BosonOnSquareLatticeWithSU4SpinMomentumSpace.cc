@@ -189,6 +189,7 @@ BosonOnSquareLatticeWithSU4SpinMomentumSpace::BosonOnSquareLatticeWithSU4SpinMom
   this->StateDescriptionUpPlus = bosons.StateDescriptionUpPlus;
   this->StateDescriptionUpMinus = bosons.StateDescriptionUpMinus;
   this->StateDescriptionDownPlus = bosons.StateDescriptionDownPlus;
+  this->StateDescriptionDownMinus = bosons.StateDescriptionDownMinus;
   this->NbrUniqueStateDescriptionUpPlus = bosons.NbrUniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionUpPlus = bosons.UniqueStateDescriptionUpPlus;
   this->UniqueStateDescriptionSubArraySizeUpPlus = bosons.UniqueStateDescriptionSubArraySizeUpPlus;
@@ -196,6 +197,10 @@ BosonOnSquareLatticeWithSU4SpinMomentumSpace::BosonOnSquareLatticeWithSU4SpinMom
   this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
   this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  this->NbrUniqueStateDescriptionDownPlus = bosons.NbrUniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
+  this->FirstIndexUniqueStateDescriptionDownPlus = bosons.FirstIndexUniqueStateDescriptionDownPlus;
 }
 
 // destructor
@@ -278,6 +283,10 @@ BosonOnSquareLatticeWithSU4SpinMomentumSpace& BosonOnSquareLatticeWithSU4SpinMom
   this->UniqueStateDescriptionUpMinus = bosons.UniqueStateDescriptionUpMinus;
   this->UniqueStateDescriptionSubArraySizeUpMinus = bosons.UniqueStateDescriptionSubArraySizeUpMinus;
   this->FirstIndexUniqueStateDescriptionUpMinus = bosons.FirstIndexUniqueStateDescriptionUpMinus;
+  this->NbrUniqueStateDescriptionDownPlus = bosons.NbrUniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionDownPlus = bosons.UniqueStateDescriptionDownPlus;
+  this->UniqueStateDescriptionSubArraySizeDownPlus = bosons.UniqueStateDescriptionSubArraySizeDownPlus;
+  this->FirstIndexUniqueStateDescriptionDownPlus = bosons.FirstIndexUniqueStateDescriptionDownPlus;
   return *this;
 }
 
