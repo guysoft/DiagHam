@@ -29,14 +29,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONCYLINDERLAPLACIANDELTAHAMILTONIAN_H
-#define PARTICLEONCYLINDERLAPLACIANDELTAHAMILTONIAN_H
+#ifndef PARTICLEONCYLINDERGAFFNIANHAMILTONIAN_H
+#define PARTICLEONCYLINDERGAFFNIANHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "Hamiltonian/AbstractQHEOnCylinderHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnCylinderThreeBodyHamiltonian.h"
 
 #include <iostream>
 
@@ -47,7 +47,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinderHamiltonian
+class ParticleOnCylinderGaffnianHamiltonian : public AbstractQHEOnCylinderThreeBodyHamiltonian
 {
 
  public:
@@ -64,12 +64,12 @@ class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinder
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, double electricFieldParameter, double bFieldParameter,
+  ParticleOnCylinderGaffnianHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, double electricFieldParameter, double bFieldParameter,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnCylinderLaplacianDeltaHamiltonian();
+  ~ParticleOnCylinderGaffnianHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -92,24 +92,32 @@ class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinder
   //   
   void EvaluateInteractionFactors();
 
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_m4 a_m5 a_m6 coupling term
   //
   // m1 = first index
   // m2 = second index
   // m3 = third index
   // m4 = fourth index
+  // m5 = fifth index
+  // m6 = sixth index
   // return value = numerical coefficient
-  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6);
 
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term (for bosons)
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term for bosons
   //
   // m1 = first index
   // m2 = second index
   // m3 = third index
   // m4 = fourth index
+  // m5 = fifth index
+  // m6 = sixth index
   // return value = numerical coefficient
 
-  Complex EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4);
+  Complex EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4, int m5, int m6);
+
+  // Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+
+  int NumberOfPermutations(int n1, int n2, int n3);
 
 };
 

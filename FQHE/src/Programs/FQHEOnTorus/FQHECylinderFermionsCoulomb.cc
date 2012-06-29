@@ -179,17 +179,17 @@ int main(int argc, char** argv)
       ParticleOnSphere* Space = 0;
 
 #ifdef __64_BITS__
-	  if (Momentum <= 62)
+	  if (MaxMomentum <= 62)
 #else
-	  if (Momentum <= 30)
+	  if (MaxMomentum <= 30)
 #endif
   	    Space = new FermionOnSphere(NbrParticles, Ky, MaxMomentum);
 
 	  else
 #ifdef __128_BIT_LONGLONG__
-	    if (Momentum <= 126)
+	    if (MaxMomentum <= 126)
 #else
-	      if (Momentum <= 62)
+	      if (MaxMomentum <= 62)
 #endif
  	        Space = new FermionOnSphereLong(NbrParticles, Ky, MaxMomentum);
 	      else

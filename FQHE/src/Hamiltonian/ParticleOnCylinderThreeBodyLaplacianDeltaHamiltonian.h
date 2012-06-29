@@ -103,6 +103,22 @@ class ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian : public AbstractQHEO
   // return value = numerical coefficient
   Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6);
 
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term for bosons
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // m5 = fifth index
+  // m6 = sixth index
+  // return value = numerical coefficient
+
+  Complex EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4, int m5, int m6);
+
+  // Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+
+  int NumberOfPermutations(int n1, int n2, int n3);
+
 };
 
 #endif

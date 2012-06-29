@@ -1,10 +1,10 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/FermionOnTorus.h"
-#include "HilbertSpace/FermionOnSphere.h"
-#include "HilbertSpace/FermionOnSphereUnlimited.h"
-#include "HilbertSpace/FermionOnSphereLong.h"
+#include "HilbertSpace/BosonOnTorus.h"
+#include "HilbertSpace/BosonOnSphere.h"
+#include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 
 
 #include "Hamiltonian/ParticleOnCylinderLaplacianDeltaHamiltonian.h"
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
 
 
-  OptionManager Manager ("FQHETorusFermionsLaplacianDelta" , "0.01");
+  OptionManager Manager ("FQHETorusBosonsDeltaInteraction" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -131,21 +131,17 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   
   char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "fermions_cylinder_ky_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputNameLz, "bosons_cylinder_ky_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
 
-  int Max = ((MaxMomentum - NbrParticles + 1) * NbrParticles);
-
+  int Max = (MaxMomentum * NbrParticles);
   int  Ky = Momentum;
-  if (Ky < -Max)
-    Ky = -Max;
-  else
-    if (Ky > Max)
-      Ky = Max;
-  if ((abs(Max) & 1) != (abs(Momentum) & 1))
+
+  if ((abs(Max) & 1) != (Ky & 1))
     Ky += 1;
+
   if (NbrKy > 0)
    {
      Max = Ky + (2 * (NbrKy - 1));
@@ -159,23 +155,18 @@ int main(int argc, char** argv)
 
       ParticleOnSphere* Space = 0;
 
-#ifdef __64_BITS__
-	  if (MaxMomentum <= 62)
+#ifdef  __64_BITS__
+	  if ((MaxMomentum + NbrParticles - 1) < 63)
 #else
-	  if (MaxMomentum <= 30)
+	    if ((MaxMomentum + NbrParticles - 1) < 31)	
 #endif
-  	    Space = new FermionOnSphere(NbrParticles, Ky, MaxMomentum);
-
-	  else
-#ifdef __128_BIT_LONGLONG__
-	    if (MaxMomentum <= 126)
-#else
-	      if (MaxMomentum <= 62)
-#endif
- 	        Space = new FermionOnSphereLong(NbrParticles, Ky, MaxMomentum);
-	      else
-		Space = new FermionOnSphereUnlimited(NbrParticles, Ky, MaxMomentum);
-
+	      {
+		  Space = new BosonOnSphereShort(NbrParticles, Ky, MaxMomentum);
+	      }
+	    else
+	      {
+		  Space = new BosonOnSphere (NbrParticles, Ky, MaxMomentum);
+	      }
 
       cout << " Hilbert space dimension = " << Space->GetHilbertSpaceDimension() << endl;
 
@@ -191,7 +182,7 @@ int main(int argc, char** argv)
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{
 	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "fermions_cylinder_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Ky);
+	  sprintf (EigenvectorName, "bosons_cylinder_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Ky);
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, Ky, Shift, OutputNameLz, FirstRun, EigenvectorName);
       Task.SetKxValue(-1);
