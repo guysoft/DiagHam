@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-na", "minimum size of the particles whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
+  (*SystemGroup) += new BooleanOption ('\n', "no-sz", "indicates that the input states are not Sz eigenstates");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
@@ -116,6 +117,8 @@ int main(int argc, char** argv)
   int FilterSza = Manager.GetInteger("sza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
+  bool NoSzFlag = Manager.GetBoolean("no-sz");
+
   int* TotalKy = 0;
   int* TotalSz = 0;
   bool Statistics = true;
@@ -155,14 +158,25 @@ int main(int argc, char** argv)
     {
       TotalKy[i] = 0;
       TotalSz[i] = 0;
-      if (FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-							      NbrParticles, KyMax, TotalKy[i], TotalSz[i], Statistics) == false)
+      if (NoSzFlag == false)
 	{
-	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-	  return -1;
+	  if (FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+								  NbrParticles, KyMax, TotalKy[i], TotalSz[i], Statistics) == false)
+	    {
+	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+	      return -1;
+	    }
 	}
-     }
-
+      else
+	{
+	  if (FQHEOnTorusFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+							  NbrParticles, KyMax, TotalKy[i], Statistics) == false)
+	    {
+	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
+	      return -1;
+	    }
+	}
+    }
 
   GroundStates = new RealVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
@@ -184,7 +198,14 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  Spaces[i] = new BosonOnTorusWithSpin (NbrParticles, TotalSz[i], KyMax, TotalKy[i]);
+	  if (NoSzFlag == false)
+	    {
+	      Spaces[i] = new BosonOnTorusWithSpin (NbrParticles, TotalSz[i], KyMax, TotalKy[i]);
+	    }
+	  else
+	    {
+	      Spaces[i] = new BosonOnTorusWithSpin (NbrParticles, KyMax, TotalKy[i]);
+	    }
 	}
       
       if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
@@ -209,12 +230,24 @@ int main(int argc, char** argv)
       if (NbrNDown[i] > MaxNbrNDown)
 	MaxNbrNDown = NbrNDown[i];
     }
+  if (NoSzFlag == true)
+    {
+      MaxNbrNUp = 0;
+      MaxNbrNDown = 0;
+   }
 
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
-      DensityMatrixFile << "#  N    Sz    Nup    Ndown    Ky    lambda";
+      if (NoSzFlag == false)
+	{
+	  DensityMatrixFile << "#  N    Sz    Nup    Ndown    Ky    lambda";
+	}
+      else
+	{
+	  DensityMatrixFile << "#  N    Ky    lambda";
+	}
       DensityMatrixFile << endl;
       DensityMatrixFile.close();
     }
@@ -248,7 +281,7 @@ int main(int argc, char** argv)
       for (int SubsystemNbrNUp = 0; SubsystemNbrNUp <= MaxNbrNUp; ++SubsystemNbrNUp)
 	{
 	  int SubsystemNbrNDown = SubsystemNbrParticles - SubsystemNbrNUp;
-	  if ((SubsystemNbrNDown >= 0) && (SubsystemNbrNDown <= MaxNbrNDown))
+	  if (((SubsystemNbrNDown >= 0) && (SubsystemNbrNDown <= MaxNbrNDown)) || (NoSzFlag == true))
 	    {
 	      int SubsystemTotalSz = SubsystemNbrNUp - SubsystemNbrNDown;
 	      
@@ -263,15 +296,31 @@ int main(int argc, char** argv)
 		    {
 		      gettimeofday (&(TotalStartingTime), 0);
 		    }
-		  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Nup=" << SubsystemNbrNUp 
-		       << " subsystem total Ndown=" << SubsystemNbrNDown << " subsystem total Ky=" << SubsystemTotalKy << endl;
+		  if (NoSzFlag == false)
+		    {
+		      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Nup=" << SubsystemNbrNUp 
+			   << " subsystem total Ndown=" << SubsystemNbrNDown << " subsystem total Ky=" << SubsystemTotalKy << endl;
+		    }
+		  else
+		    {
+		      cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Ky=" << SubsystemTotalKy << endl;
+		    }
 		  RealSymmetricMatrix PartialDensityMatrix;
 		  for (int i = 0; i < NbrSpaces; ++i)
 		    {
 		      if ((SubsystemNbrNUp <= NbrNUp[i]) && (SubsystemNbrNDown <= NbrNDown[i]))
 			{
-			  RealSymmetricMatrix TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, 
-														   SubsystemNbrNUp, SubsystemNbrNDown, GroundStates[i], Architecture.GetArchitecture());
+			  RealSymmetricMatrix TmpMatrix;
+			  if (NoSzFlag == false)
+			    {
+			      TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, 
+												   SubsystemNbrNUp, SubsystemNbrNDown, GroundStates[i], Architecture.GetArchitecture());
+			    }
+			  else
+			    {
+			      TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKy, 
+												   GroundStates[i], Architecture.GetArchitecture());
+			    }
 			  if (PartialDensityMatrix.GetNbrRow() > 0)
 			    PartialDensityMatrix += TmpMatrix;
 			  else
@@ -309,19 +358,39 @@ int main(int argc, char** argv)
 				{
 				  if (TmpDiag[i] > 1e-14)
 				    {
-				      if (Statistics == true)
+				      if (NoSzFlag == false)
 					{
-					  sprintf (TmpEigenstateName,
-						   "fermions_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_%d_kya_%d.%d.vec",
-						   NbrParticles, KyMax, TotalKy[0], 
-						   SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					  if (Statistics == true)
+					    {
+					      sprintf (TmpEigenstateName,
+						       "fermions_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					    }
+					  else
+					    {
+					      sprintf (TmpEigenstateName,
+						       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					    }
 					}
 				      else
 					{
-					  sprintf (TmpEigenstateName,
-						   "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_kya_%d.%d.vec",
-						   NbrParticles, KyMax, TotalKy[0], 
-						   SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					  if (Statistics == true)
+					    {
+					      sprintf (TmpEigenstateName,
+						       "fermions_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalKy, i);
+					    }
+					  else
+					    {
+					      sprintf (TmpEigenstateName,
+						       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalKy, i);
+					    }
 					}
 				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 				    }
@@ -351,19 +420,39 @@ int main(int argc, char** argv)
 				{
 				  if (TmpDiag[i] > 1e-14)
 				    {
-				      if (Statistics == true)
+				      if (NoSzFlag == false)
 					{
-					  sprintf (TmpEigenstateName,
-						   "fermions_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_%d_kya_%d.%d.vec",
-						   NbrParticles, KyMax, TotalKy[0], 
-						   SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					  if (Statistics == true)
+					    {
+					      sprintf (TmpEigenstateName,
+						       "fermions_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					    }
+					  else
+					    {
+					      sprintf (TmpEigenstateName,
+						       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					    }
 					}
 				      else
 					{
-					  sprintf (TmpEigenstateName,
-						   "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_sza_kya_%d.%d.vec",
-						   NbrParticles, KyMax, TotalKy[0], 
-						   SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKy, i);
+					  if (Statistics == true)
+					    {
+					      sprintf (TmpEigenstateName,
+						       "fermions_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalKy, i);
+					    }
+					  else
+					    {
+					      sprintf (TmpEigenstateName,
+						       "bosons_torus_kysym_density_n_%d_2s_%d_ky_%d_na_%d_kya_%d.%d.vec",
+						       NbrParticles, KyMax, TotalKy[0], 
+						       SubsystemNbrParticles, SubsystemTotalKy, i);
+					    }
 					}
 				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 				    }
@@ -384,9 +473,17 @@ int main(int argc, char** argv)
 			  ofstream DensityMatrixFile;
 			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			  DensityMatrixFile.precision(14);
-			  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
-					      <<  SubsystemNbrNDown << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			  if (NoSzFlag == false)
+			    {
+			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+						  <<  SubsystemNbrNDown << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			    }
+			  else
+			    {
+			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			    }
 			  DensityMatrixFile.close();
 			}
 		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
@@ -414,8 +511,15 @@ int main(int argc, char** argv)
 			    ofstream DensityMatrixFile;
 			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 			    DensityMatrixFile.precision(14);
-			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
-					      << SubsystemNbrNDown << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			    if (NoSzFlag == false)
+			      {
+				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+						  << SubsystemNbrNDown << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			      }
+			    else
+			      {
+				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKy << " " << TmpValue << endl;
+			      }
 			    DensityMatrixFile.close();
 			  }		  
 			if (TmpValue > 1e-14)

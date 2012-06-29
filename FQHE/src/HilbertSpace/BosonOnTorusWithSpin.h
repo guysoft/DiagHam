@@ -97,6 +97,47 @@ class BosonOnTorusWithSpin :  public BosonOnSphereWithSU2Spin
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
+  // project out any configurations that have particles on levels other than lll
+  //
+  // inputVector = vector to apply the projection to
+  // outputVector = projected vector
+  // finalSpace = reference to output vector space
+  void ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, BosonOnTorusShort *finalSpace);
+  void ProjectionInTheLowestLevel(ComplexVector &inputVector, ComplexVector & outputVector, BosonOnTorusShort *finalSpace);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, 
+								     RealVector& groundState, AbstractArchitecture* architecture);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // nbrNUpSector = number of spin up  that belong to the subsytem 
+  // nbrNDownSector = number of spin down  that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, int nbrNUpSector, int nbrNDownSector, RealVector& groundState, AbstractArchitecture* architecture);
+
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+							  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
+
  protected:
 
   // generate all states corresponding to the constraints
@@ -140,15 +181,7 @@ class BosonOnTorusWithSpin :  public BosonOnSphereWithSU2Spin
   // return value = Hilbert space dimension
   long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrSpinUp);
 
- public:
-  
-  // project out any configurations that have particles on levels other than lll
-  //
-  // inputVector = vector to apply the projection to
-  // outputVector = projected vector
-  // finalSpace = reference to output vector space
-  void ProjectionInTheLowestLevel(RealVector &inputVector, RealVector & outputVector, BosonOnTorusShort *finalSpace);
-  void ProjectionInTheLowestLevel(ComplexVector &inputVector, ComplexVector & outputVector, BosonOnTorusShort *finalSpace);
+
 };
 
 

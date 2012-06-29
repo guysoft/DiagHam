@@ -48,7 +48,10 @@ using std::ofstream;
 // initialSpace = pointer to the Hilbert space 
 // manager = reference to the option manager
 // nbrParticles = number of particles
-void FQHESphereJackTxtExportPolynomial(char* outputTxtFileName, Vector& outputState, ParticleOnSphere& initialSpace, OptionManager& manager, int nbrParticles);
+// alphaNumerator= numerator of the alpha factor
+// alphaDenominator= denominator of the alpha factor
+// statistics = particle statistics (true for fermions)
+void FQHESphereJackTxtExportPolynomial(char* outputTxtFileName, Vector& outputState, ParticleOnSphere& initialSpace, OptionManager& manager, int nbrParticles, long alphaNumerator, long alphaDenominator, bool statistics);
 
 
 int main(int argc, char** argv)
@@ -237,7 +240,7 @@ int main(int argc, char** argv)
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
 		{
-		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 		}
 	      if (OutputFileName != 0)
 		{
@@ -315,7 +318,7 @@ int main(int argc, char** argv)
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
 	      if (OutputTxtFileName != 0)
 		{
-		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 		}
 	      if (OutputFileName != 0)
 		{
@@ -361,7 +364,7 @@ int main(int argc, char** argv)
 		    }
 		  if (OutputTxtFileName != 0)
 		    {
-		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 		    }
 		  if (OutputFileName != 0)
 		    {
@@ -389,7 +392,7 @@ int main(int argc, char** argv)
 		    }
 		  if (OutputTxtFileName != 0)
 		    {
-		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 		    }
 		  if (OutputFileName != 0)
 		    {
@@ -444,7 +447,7 @@ int main(int argc, char** argv)
 	    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
 	  if (OutputTxtFileName != 0)
 	    {
-	      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+	      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 	    }
 	  if (OutputFileName != 0)
 	    {
@@ -494,7 +497,7 @@ int main(int argc, char** argv)
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
 		{
-		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 		}
 	      if (OutputFileName != 0)
 		{
@@ -577,7 +580,7 @@ int main(int argc, char** argv)
 		  InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 		if (OutputTxtFileName != 0)
 		  {
-		    FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		    FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 		  }
 		if (OutputFileName != 0)
 		  {
@@ -631,7 +634,7 @@ int main(int argc, char** argv)
 			}
 		      if (OutputTxtFileName != 0)
 			{
-			  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+			  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 			}
 		      if (OutputFileName != 0)
 			{
@@ -684,7 +687,7 @@ int main(int argc, char** argv)
 	      InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	    if (OutputTxtFileName != 0)
 	      {
-		FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
+		FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
 	      }
 	    if (OutputFileName != 0)
 	      {
@@ -702,23 +705,29 @@ int main(int argc, char** argv)
 // initialSpace = pointer to the Hilbert space 
 // manager = reference to the option manager
 // nbrParticles = number of particles
+// alphaNumerator= numerator of the alpha factor
+// alphaDenominator= denominator of the alpha factor
+// statistics = particle statistics (true for fermions)
 
-void FQHESphereJackTxtExportPolynomial(char* outputTxtFileName, Vector& outputState, ParticleOnSphere& initialSpace, OptionManager& manager, int nbrParticles)
+void FQHESphereJackTxtExportPolynomial(char* outputTxtFileName, Vector& outputState, ParticleOnSphere& initialSpace, OptionManager& manager, int nbrParticles, long alphaNumerator, long alphaDenominator, bool statistics)
 {
   ofstream File;
   File.open(outputTxtFileName, ios::binary | ios::out);
   File.precision(14);
   if (manager.GetBoolean("fortran-header"))
     {
-      File << initialSpace.GetLargeHilbertSpaceDimension() << endl;
-      File << nbrParticles << endl;
+      File << initialSpace.GetLargeHilbertSpaceDimension() << " " << alphaNumerator << " " << alphaDenominator;
+      if (statistics == true)
+	File << " 1" << endl;
+      else
+	File << " 0" << endl;
     }
    if (manager.GetBoolean("integer-occupation"))
      {			  
       for (long i = 0; i < initialSpace.GetLargeHilbertSpaceDimension(); ++i)
 	{
-	  outputState.PrintComponent(File, i) << " ";
-	  initialSpace.PrintCompactState(File, i) << endl;
+	  initialSpace.PrintCompactState(File, i) << " ";
+	  outputState.PrintComponent(File, i) << endl;
 	}
     }
   else
