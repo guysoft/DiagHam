@@ -340,7 +340,7 @@ class FermionOnSphereEfficient :  public ParticleOnSphere
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+  virtual ostream& PrintStateMonomial (ostream& Str, long state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //

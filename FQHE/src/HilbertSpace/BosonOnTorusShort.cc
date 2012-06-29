@@ -555,7 +555,7 @@ double BosonOnTorusShort::AA (int index, int n1, int n2)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnTorusShort::PrintStateMonomial (ostream& Str, int state)
+ostream& BosonOnTorusShort::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   cout << this->StateDescription[state] << endl;

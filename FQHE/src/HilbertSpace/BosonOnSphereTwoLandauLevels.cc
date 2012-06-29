@@ -459,7 +459,7 @@ ostream& BosonOnSphereTwoLandauLevels::PrintStateBinary (ostream& Str, unsigned 
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnSphereTwoLandauLevels::PrintStateMonomial (ostream& Str, int state)
+ostream& BosonOnSphereTwoLandauLevels::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long* MonomialRep;
   MonomialRep = new unsigned long[this->NbrBosons];

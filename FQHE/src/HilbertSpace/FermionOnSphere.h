@@ -392,7 +392,21 @@ class FermionOnSphere :  public ParticleOnSphere
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+  virtual ostream& PrintStateMonomial (ostream& Str, long state);
+
+  // print a given state using the most compact notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintCompactState (ostream& Str, long state);
+
+  // print a given State using the monomial notation, with one column per particle (using space as a seperator)
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintColumnFormattedStateMonomial (ostream& Str, long state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
@@ -784,6 +798,18 @@ inline unsigned long FermionOnSphere::ConvertFromMonomial(unsigned long* initial
     TmpState |= 0x1ul << initialState[j];
   return TmpState;
  }
+
+// print a given state using the most compact notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+inline ostream& FermionOnSphere::PrintCompactState (ostream& Str, long state)
+{
+  Str << this->StateDescription[state];
+  return Str;
+}
 
 #endif
 

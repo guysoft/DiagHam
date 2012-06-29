@@ -387,7 +387,21 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+  virtual ostream& PrintStateMonomial (ostream& Str, long state);
+
+  // print a given state using the most compact notation
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintCompactState (ostream& Str, long state);
+
+  // print a given State using the monomial notation, with one column per particle (using space as a seperator)
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  virtual ostream& PrintColumnFormattedStateMonomial (ostream& Str, long state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //
@@ -808,6 +822,18 @@ inline unsigned long FermionOnSphereHaldaneHugeBasis::ConvertFromMonomial(unsign
 inline  bool FermionOnSphereHaldaneHugeBasis::CheckDiskStorage()
 {
   return (this->StateDescription == 0);
+}
+
+// print a given state using the most compact notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+inline ostream& FermionOnSphereHaldaneHugeBasis::PrintCompactState (ostream& Str, long state)
+{
+  Str << this->GetStateFactorized(state);
+  return Str;
 }
 
 #endif

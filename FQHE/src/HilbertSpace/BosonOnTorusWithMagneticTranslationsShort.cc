@@ -319,7 +319,7 @@ Matrix& BosonOnTorusWithMagneticTranslationsShort::Ad (int i, Matrix& M)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnTorusWithMagneticTranslationsShort::PrintStateMonomial (ostream& Str, int state)
+ostream& BosonOnTorusWithMagneticTranslationsShort::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   cout << this->StateDescription[state] << endl;

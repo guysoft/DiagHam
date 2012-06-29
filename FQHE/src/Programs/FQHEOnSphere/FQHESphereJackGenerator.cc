@@ -40,6 +40,17 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
+
+// export the Jack polynomial in a text file
+//
+// outputTxtFileName = output file name
+// outputState = Jack polynomial decomposition
+// initialSpace = pointer to the Hilbert space 
+// manager = reference to the option manager
+// nbrParticles = number of particles
+void FQHESphereJackTxtExportPolynomial(char* outputTxtFileName, Vector& outputState, ParticleOnSphere& initialSpace, OptionManager& manager, int nbrParticles);
+
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHESphereJackGenerator" , "0.01");
@@ -87,6 +98,9 @@ int main(int argc, char** argv)
 #endif
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
+  (*OutputGroup) += new BooleanOption ('\n', "fortran-header", "add a header to the text file to make the file fortan compatible");
+  (*OutputGroup) += new BooleanOption ('\n', "column-partition", "use column formatted output for the partitions");
+  (*OutputGroup) += new BooleanOption ('\n', "integer-occupation", "display the occupation numbers as an integer");
   (*OutputGroup) += new BooleanOption ('n', "normalize", "express the Jack polynomial in the normalized basis");
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the Haldane basis)",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
@@ -223,15 +237,7 @@ int main(int argc, char** argv)
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
 		{
-		  ofstream File;
-		  File.open(OutputTxtFileName, ios::binary | ios::out);
-		  File.precision(14);
-		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		    {
-		      File << OutputState[i] << " ";
-		      InitialSpace->PrintStateMonomial(File, i) << endl;
-		    }
-		  File.close();
+		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 		}
 	      if (OutputFileName != 0)
 		{
@@ -309,15 +315,7 @@ int main(int argc, char** argv)
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
 	      if (OutputTxtFileName != 0)
 		{
-		  ofstream File;
-		  File.open(OutputTxtFileName, ios::binary | ios::out);
-		  File.precision(14);
-		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		    {
-		      File << OutputState[i] << " ";
-		      InitialSpace->PrintStateMonomial(File, i) << endl;
-		    }
-		  File.close();
+		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 		}
 	      if (OutputFileName != 0)
 		{
@@ -363,15 +361,7 @@ int main(int argc, char** argv)
 		    }
 		  if (OutputTxtFileName != 0)
 		    {
-		      ofstream File;
-		      File.open(OutputTxtFileName, ios::binary | ios::out);
-		      File.precision(14);
-		      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-			{
-			  File << OutputState[i] << " ";
-			  InitialSpace->PrintStateMonomial(File, i) << endl;
-			}
-		      File.close();
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 		    }
 		  if (OutputFileName != 0)
 		    {
@@ -399,15 +389,7 @@ int main(int argc, char** argv)
 		    }
 		  if (OutputTxtFileName != 0)
 		    {
-		      ofstream File;
-		      File.open(OutputTxtFileName, ios::binary | ios::out);
-		      File.precision(14);
-		      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-			{
-			  File << OutputState[i] << " ";
-			  InitialSpace->PrintStateMonomial(File, i) << endl;
-			}
-		      File.close();
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 		    }
 		  if (OutputFileName != 0)
 		    {
@@ -462,15 +444,7 @@ int main(int argc, char** argv)
 	    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);      
 	  if (OutputTxtFileName != 0)
 	    {
-	      ofstream File;
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);
-	      for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		{
-		  File << OutputState[i] << " ";
-		  InitialSpace->PrintStateMonomial(File, i) << endl;
-		}
-	      File.close();
+	      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 	    }
 	  if (OutputFileName != 0)
 	    {
@@ -520,15 +494,7 @@ int main(int argc, char** argv)
 		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	      if (OutputTxtFileName != 0)
 		{
-		  ofstream File;
-		  File.open(OutputTxtFileName, ios::binary | ios::out);
-		  File.precision(14);
-		  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		    {
-		      File << OutputState[i] << " ";
-		      InitialSpace->PrintStateMonomial(File, i) << endl;
-		    }
-		  File.close();
+		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 		}
 	      if (OutputFileName != 0)
 		{
@@ -611,15 +577,7 @@ int main(int argc, char** argv)
 		  InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 		if (OutputTxtFileName != 0)
 		  {
-		    ofstream File;
-		    File.open(OutputTxtFileName, ios::binary | ios::out);
-		    File.precision(14);
-		    for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		      {
-			File << OutputState[i] << " ";
-			InitialSpace->PrintStateMonomial(File, i) << endl;
-		      }
-		    File.close();
+		    FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 		  }
 		if (OutputFileName != 0)
 		  {
@@ -673,15 +631,7 @@ int main(int argc, char** argv)
 			}
 		      if (OutputTxtFileName != 0)
 			{
-			  ofstream File;
-			  File.open(OutputTxtFileName, ios::binary | ios::out);
-			  File.precision(14);
-			  for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-			    {
-			      File << OutputState[i] << " ";
-			      InitialSpace->PrintStateMonomial(File, i) << endl;
-			    }
-			  File.close();
+			  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 			}
 		      if (OutputFileName != 0)
 			{
@@ -734,15 +684,7 @@ int main(int argc, char** argv)
 	      InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
 	    if (OutputTxtFileName != 0)
 	      {
-		ofstream File;
-		File.open(OutputTxtFileName, ios::binary | ios::out);
-		File.precision(14);
-		for (long i = 0; i < InitialSpace->GetLargeHilbertSpaceDimension(); ++i)
-		  {
-		    File << OutputState[i] << " ";
-		    InitialSpace->PrintStateMonomial(File, i) << endl;
-		  }
-		File.close();
+		FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles);
 	      }
 	    if (OutputFileName != 0)
 	      {
@@ -753,3 +695,50 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// export the Jack polynomial in a text file
+//
+// outputTxtFileName = output file name
+// outputState = Jack polynomial decomposition
+// initialSpace = pointer to the Hilbert space 
+// manager = reference to the option manager
+// nbrParticles = number of particles
+
+void FQHESphereJackTxtExportPolynomial(char* outputTxtFileName, Vector& outputState, ParticleOnSphere& initialSpace, OptionManager& manager, int nbrParticles)
+{
+  ofstream File;
+  File.open(outputTxtFileName, ios::binary | ios::out);
+  File.precision(14);
+  if (manager.GetBoolean("fortran-header"))
+    {
+      File << initialSpace.GetLargeHilbertSpaceDimension() << endl;
+      File << nbrParticles << endl;
+    }
+   if (manager.GetBoolean("integer-occupation"))
+     {			  
+      for (long i = 0; i < initialSpace.GetLargeHilbertSpaceDimension(); ++i)
+	{
+	  outputState.PrintComponent(File, i) << " ";
+	  initialSpace.PrintCompactState(File, i) << endl;
+	}
+    }
+  else
+    {
+      if (manager.GetBoolean("column-partition"))
+	{
+	  for (long i = 0; i < initialSpace.GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      outputState.PrintComponent(File, i) << " ";
+	      initialSpace.PrintColumnFormattedStateMonomial(File, i) << endl;
+	    }	  
+	}
+      else
+	{			  
+	  for (long i = 0; i < initialSpace.GetLargeHilbertSpaceDimension(); ++i)
+	    {
+	      outputState.PrintComponent(File, i) << " ";
+	      initialSpace.PrintStateMonomial(File, i) << endl;
+	    }
+	}
+    }
+  File.close();
+}

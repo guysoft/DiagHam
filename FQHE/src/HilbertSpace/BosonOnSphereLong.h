@@ -243,7 +243,7 @@ class BosonOnSphereLong :  public ParticleOnSphere
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+  virtual ostream& PrintStateMonomial (ostream& Str, long state);
 
   // convert a fermionic state to its monomial representation
   //

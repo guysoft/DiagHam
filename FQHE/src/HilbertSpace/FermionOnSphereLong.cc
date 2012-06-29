@@ -782,7 +782,7 @@ ostream& FermionOnSphereLong::PrintState (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphereLong::PrintStateMonomial (ostream& Str, int state)
+ostream& FermionOnSphereLong::PrintStateMonomial (ostream& Str, long state)
 {
   ULONGLONG TmpState = this->StateDescription[state];
   Str << "[";

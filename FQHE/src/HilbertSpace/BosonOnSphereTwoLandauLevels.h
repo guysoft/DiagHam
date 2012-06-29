@@ -205,7 +205,7 @@ class BosonOnSphereTwoLandauLevels :  public ParticleOnSphereWithSpin
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+  virtual ostream& PrintStateMonomial (ostream& Str, long state);
   
   // create an SU(2) state from two U(1) state
   //

@@ -1387,7 +1387,7 @@ ostream& FermionOnSphereWithSpin::PrintState (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphereWithSpin::PrintStateMonomial (ostream& Str, int state)
+ostream& FermionOnSphereWithSpin::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long TmpState = this->StateDescription[state];
   Str << "[";
@@ -1430,7 +1430,7 @@ ostream& FermionOnSphereWithSpin::PrintStateMonomial (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphereWithSpin::PrintStateMonomialSeparatedSpin (ostream& Str, int state)
+ostream& FermionOnSphereWithSpin::PrintStateMonomialSeparatedSpin (ostream& Str, long state)
 {
   unsigned long TmpState = this->StateDescription[state];
   Str << "[";

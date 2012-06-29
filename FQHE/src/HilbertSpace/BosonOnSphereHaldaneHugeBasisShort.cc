@@ -571,7 +571,7 @@ int BosonOnSphereHaldaneHugeBasisShort::AdA (int index, int m, int n, double& co
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnSphereHaldaneHugeBasisShort::PrintStateMonomial (ostream& Str, int state)
+ostream& BosonOnSphereHaldaneHugeBasisShort::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long TmpState = this->FermionHugeBasis->StateDescription[state];
   int TmpLzMax = this->FermionHugeBasis->LzMax;
@@ -584,6 +584,26 @@ ostream& BosonOnSphereHaldaneHugeBasisShort::PrintStateMonomial (ostream& Str, i
   for (int i = 1; (i < this->NbrBosons) && (this->TemporaryMonomial[i] > 0); ++i)
     Str << "," << this->TemporaryMonomial[i];
   Str << "]";
+  return Str;
+}
+
+// print a given State using the monomial notation, with one column per particle (using space as a seperator)
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnSphereHaldaneHugeBasisShort::PrintColumnFormattedStateMonomial (ostream& Str, long state)
+{
+  unsigned long TmpState = this->FermionHugeBasis->GetStateFactorized(state);
+  int i = this->LzMax;
+  while (((TmpState >> i) & 0x1ul) == 0x0ul)
+    --i;
+  Str << i;
+  --i;
+  for (; i >=0; --i)
+    if (((TmpState >> i) & 0x1ul) != 0x0ul)
+      Str << " " << i;
   return Str;
 }
 

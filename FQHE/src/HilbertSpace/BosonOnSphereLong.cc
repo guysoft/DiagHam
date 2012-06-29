@@ -503,7 +503,7 @@ ostream& BosonOnSphereLong::PrintState (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnSphereLong::PrintStateMonomial (ostream& Str, int state)
+ostream& BosonOnSphereLong::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
   this->ConvertToMonomial(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], TmpMonomial);

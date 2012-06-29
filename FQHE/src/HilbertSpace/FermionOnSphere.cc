@@ -1139,7 +1139,7 @@ ostream& FermionOnSphere::PrintState (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphere::PrintStateMonomial (ostream& Str, int state)
+ostream& FermionOnSphere::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long TmpState = this->StateDescription[state];
   Str << "[";
@@ -1152,6 +1152,26 @@ ostream& FermionOnSphere::PrintStateMonomial (ostream& Str, int state)
     if (((TmpState >> i) & 0x1ul) != 0x0ul)
       Str << "," << i;
   Str << "]";
+  return Str;
+}
+
+// print a given State using the monomial notation, with one column per particle (using space as a seperator)
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& FermionOnSphere::PrintColumnFormattedStateMonomial (ostream& Str, long state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  int i = this->LzMax;
+  while (((TmpState >> i) & 0x1ul) == 0x0ul)
+    --i;
+  Str << i;
+  --i;
+  for (; i >=0; --i)
+    if (((TmpState >> i) & 0x1ul) != 0x0ul)
+      Str << " " << i;
   return Str;
 }
 

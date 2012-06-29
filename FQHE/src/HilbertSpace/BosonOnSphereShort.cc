@@ -520,11 +520,9 @@ ostream& BosonOnSphereShort::PrintState (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& BosonOnSphereShort::PrintStateMonomial (ostream& Str, int state)
+ostream& BosonOnSphereShort::PrintStateMonomial (ostream& Str, long state)
 {
-  //  this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
   unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
-  //  this->ConvertToMonomial(this->TemporaryState, this->TemporaryStateLzMax, TmpMonomial);
   this->ConvertToMonomial(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], TmpMonomial);
   Str << "[";
   if (TmpMonomial[0] != 0)
@@ -532,6 +530,24 @@ ostream& BosonOnSphereShort::PrintStateMonomial (ostream& Str, int state)
   for (int i = 1; (i < this->NbrBosons) && (TmpMonomial[i] > 0); ++i)
     Str << "," << TmpMonomial[i];
   Str << "]";
+  delete[] TmpMonomial;
+  return Str;
+}
+
+// print a given State using the monomial notation, with one column per particle (using space as a seperator)
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnSphereShort::PrintColumnFormattedStateMonomial (ostream& Str, long state)
+{
+  unsigned long* TmpMonomial = new unsigned long [this->NbrBosons];
+  this->ConvertToMonomial(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], TmpMonomial);
+  if (TmpMonomial[0] != 0)
+    Str << TmpMonomial[0];
+  for (int i = 1; (i < this->NbrBosons) && (TmpMonomial[i] > 0); ++i)
+    Str << " " << TmpMonomial[i];
   delete[] TmpMonomial;
   return Str;
 }

@@ -1750,7 +1750,7 @@ ostream& FermionOnSphereHaldaneHugeBasis::PrintState (ostream& Str, int state)
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& FermionOnSphereHaldaneHugeBasis::PrintStateMonomial (ostream& Str, int state)
+ostream& FermionOnSphereHaldaneHugeBasis::PrintStateMonomial (ostream& Str, long state)
 {
   unsigned long TmpState = this->StateDescription[state];
   Str << "[";
@@ -1763,6 +1763,26 @@ ostream& FermionOnSphereHaldaneHugeBasis::PrintStateMonomial (ostream& Str, int 
     if (((TmpState >> i) & 0x1ul) != 0x0ul)
       Str << "," << i;
   Str << "]";
+  return Str;
+}
+
+// print a given State using the monomial notation, with one column per particle (using space as a seperator)
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& FermionOnSphereHaldaneHugeBasis::PrintColumnFormattedStateMonomial (ostream& Str, long state)
+{
+  unsigned long TmpState = this->GetStateFactorized(state);
+  int i = this->LzMax;
+  while (((TmpState >> i) & 0x1ul) == 0x0ul)
+    --i;
+  Str << i;
+  --i;
+  for (; i >=0; --i)
+    if (((TmpState >> i) & 0x1ul) != 0x0ul)
+      Str << " " << i;
   return Str;
 }
 

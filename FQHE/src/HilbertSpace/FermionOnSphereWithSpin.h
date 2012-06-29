@@ -394,14 +394,14 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomial (ostream& Str, int state);
+  virtual ostream& PrintStateMonomial (ostream& Str, long state);
 
   // print a given State using the monomial notation, separating spin up from spin down
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  virtual ostream& PrintStateMonomialSeparatedSpin (ostream& Str, int state);
+  virtual ostream& PrintStateMonomialSeparatedSpin (ostream& Str, long state);
 
   // evaluate wave function in real space using a given basis and only for agiven range of components
   //

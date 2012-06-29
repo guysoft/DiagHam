@@ -812,7 +812,18 @@ RealVector& ParticleOnSphere::ConvertFromConformalLimit(RealVector& state, long 
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& ParticleOnSphere::PrintStateMonomial (ostream& Str, int state)
+ostream& ParticleOnSphere::PrintStateMonomial (ostream& Str, long state)
+{
+  return Str;
+}
+
+// print a given State using the monomial notation, with one column per particle (using space as a seperator)
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& ParticleOnSphere::PrintColumnFormattedStateMonomial (ostream& Str, long state)
 {
   return Str;
 }
@@ -1043,3 +1054,15 @@ void ParticleOnSphere::EvaluatePartialDensityMatrixMultipartiteParticlePartition
   cout <<"calling non defined function ParticleOnSphere::EvaluatePartialDensityMatrixMultipartiteParticlePartition"<<endl;
   return ;  
 }
+
+// print a given state using the most compact notation
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& ParticleOnSphere::PrintCompactState (ostream& Str, long state)
+{
+  return this->PrintState(Str, (int) state);
+}
+
