@@ -213,6 +213,13 @@ class Vector
   // return value = referenceint GetNumSites(){return this->NSites;} on output stream
   friend ostream& operator << (ostream& str, Vector& v);
 
+  // print a single component
+  //
+  // str = reference on output stream
+  // index = index of the component to print
+  // return value  = reference on output stream
+  virtual ostream& PrintComponent(ostream& str, long index);
+
   // localize the current vector to the current process
   // 
   virtual void Localize();

@@ -941,6 +941,13 @@ class RealVector : public Vector
   // return value = reference on output stream
   friend ostream& operator << (ostream& str, RealVector& v);
 
+  // print a single component
+  //
+  // str = reference on output stream
+  // index = index of the component to print
+  // return value  = reference on output stream
+  virtual ostream& PrintComponent(ostream& str, long index);
+
   // output file stream overload
   //
   // file = reference on output file stream
@@ -1048,6 +1055,18 @@ inline double& RealVector::operator [] (long i)
   return this->Components[i];
 }
  
+// print a single component
+//
+// str = reference on output stream
+// index = index of the component to print
+// return value  = reference on output stream
+
+inline ostream& RealVector::PrintComponent(ostream& str, long index)
+{
+  str << this->Components[index];
+  return str;
+}
+
 
 #endif
 

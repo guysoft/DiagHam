@@ -757,6 +757,13 @@ class ComplexVector : public Vector
   //
   friend ostream& operator << (ostream& Str, const ComplexVector& P);
 
+  // print a single component
+  //
+  // str = reference on output stream
+  // index = index of the component to print
+  // return value  = reference on output stream
+  virtual ostream& PrintComponent(ostream& str, long index);
+
 #ifdef USE_OUTPUT
   // Mathematica Output Stream overload
   //
@@ -868,6 +875,18 @@ inline double& ComplexVector::Im (int i)
   return (this->Components[i].Im);
 }
   
+// print a single component
+//
+// str = reference on output stream
+// index = index of the component to print
+// return value  = reference on output stream
+
+inline ostream& ComplexVector::PrintComponent(ostream& str, long index)
+{
+  str << this->Components[index];
+  return str;
+}
+
 
 #endif
 

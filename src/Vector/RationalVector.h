@@ -253,6 +253,13 @@ class RationalVector : public Vector
   // return value = reference on output stream
   friend ostream& operator << (ostream& str, RationalVector& v);
 
+  // print a single component
+  //
+  // str = reference on output stream
+  // index = index of the component to print
+  // return value  = reference on output stream
+  virtual ostream& PrintComponent(ostream& str, long index);
+
 };
  
 
@@ -312,6 +319,18 @@ inline long RationalVector::Den(int index)
 inline long RationalVector::Den(long index)
 {
   return this->Components[index].Den();
+}
+
+// print a single component
+//
+// str = reference on output stream
+// index = index of the component to print
+// return value  = reference on output stream
+
+inline ostream& RationalVector::PrintComponent(ostream& str, long index)
+{
+  str << this->Components[index];
+  return str;
 }
 
 #endif

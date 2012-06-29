@@ -29,6 +29,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/Endian.h"
+#include "Vector/PartialComplexVector.h"
 
 
 #include <fstream>
@@ -3041,7 +3042,6 @@ Vector* ComplexVector::BroadcastClone(MPI::Intracomm& communicator, int id)
       TmpArray[1] = this->VectorId;
       TmpArray[2] = 2;
       communicator.Bcast(TmpArray, 3, MPI::INT, id);      
-      //cout << "this->Dimension " << this->Dimension << endl;
       communicator.Bcast(this->Components, 2l * this->Dimension, MPI::DOUBLE, id);      
     }
   else

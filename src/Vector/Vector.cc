@@ -245,6 +245,17 @@ ostream& operator << (ostream& str, Vector& v)
   return str;
 }
 
+// print a single component
+//
+// str = reference on output stream
+// index = index of the component to print
+// return value  = reference on output stream
+
+ostream& Vector::PrintComponent(ostream& str, long index)
+{
+  return str;
+}
+
 #ifdef __MPI__
 
 // send a vector to a given MPI process
