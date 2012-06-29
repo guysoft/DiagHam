@@ -394,7 +394,7 @@ Complex ParticleOnCylinderGaffnianHamiltonian::EvaluateInteractionCoefficient(in
 
 Complex ParticleOnCylinderGaffnianHamiltonian::EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4, int m5, int m6)
 {
-  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
   double Xr = kappa * (2.0 * m1 - m2 - m3)/3.0;
   double Xs = kappa * (2.0 * m2 - m1 - m3)/3.0;

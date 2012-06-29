@@ -402,13 +402,10 @@ Complex ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian::EvaluateInteractio
 
   if (this->ElectricField == 0)
    {
-     GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs;
+     GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs + Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
      Coefficient.Re = exp(-GaussianExp);
      Coefficient.Im = 0.0;
 
-     GaussianExp = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
-     Coefficient.Re *= exp(-GaussianExp);
-     Coefficient.Im = 0.0;
      return (Coefficient * (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
    }
   else

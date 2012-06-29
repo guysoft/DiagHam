@@ -430,7 +430,6 @@ ComplexVector& AbstractQHEOnCylinderThreeBodyHamiltonian::LowLevelAddMultiply(Co
 	        vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
                 if (Index < i)
    	          vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
-
               }
            } 
 	 vDestination[i] += this->EnergyShift * vSource[i];

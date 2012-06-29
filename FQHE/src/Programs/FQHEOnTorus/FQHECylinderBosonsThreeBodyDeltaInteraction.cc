@@ -19,10 +19,12 @@
 #include "Architecture/SMPArchitecture.h"
 
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 
 #include "GeneralTools/ListIterator.h"
+#include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -89,7 +91,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
-
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -177,8 +179,37 @@ int main(int argc, char** argv)
 
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderThreeBodyLaplacianDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
 
+
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
+
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  ComplexVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  ComplexVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  Complex EnergyValue = State * TmpState;
+	  cout << "< Energy > = " << (EnergyValue.Re - Shift) << " " << EnergyValue.Im << endl;
+	  return 0;
+	}
+
       char* EigenvectorName = 0;
       if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
 	{

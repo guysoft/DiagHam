@@ -20,6 +20,8 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
+#include "Vector/Vector.h"
+#include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
 #include "Vector/LongRationalVector.h"
 
@@ -68,7 +70,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
-  (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers for the optional vector state");
+  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new BooleanOption  ('c', "complex-vector" , "vector state is complex instead of real");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
   (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
   (*SystemGroup) += new MultipleIntegerOption ('\n', "pauli", "print only states obeying a general Pauli exclusion principle",',');
@@ -102,6 +105,7 @@ int main(int argc, char** argv)
   bool TwoLLFlag = Manager.GetBoolean("2-ll");
   bool ThreeLLFlag = Manager.GetBoolean("3-ll");
   bool FourLLFlag = Manager.GetBoolean("4-ll");
+  bool ComplexFlag = Manager.GetBoolean("complex-vector");
   int TotalSz = Manager.GetInteger("total-sz");
   int TotalIz = Manager.GetInteger("total-isosz");
   int TotalPz = Manager.GetInteger("total-entanglement");
@@ -369,6 +373,7 @@ int main(int argc, char** argv)
 	}
     }
   else
+   if (ComplexFlag == false)
     {
       if (Manager.GetBoolean("rational") == false)
 	{
@@ -376,6 +381,7 @@ int main(int argc, char** argv)
 	  double WeightHiddenComponents = 0.0;
 	  double Normalization = 0.0;
 	  RealVector State;
+
 	  if (State.ReadVector(Manager.GetString("state")) == false)
 	    {
 	      cout << "error while reading " << Manager.GetString("state") << endl;
@@ -568,7 +574,120 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+  else //complex vector
+    {
+	  int NbrHiddenComponents = 0;
+	  double WeightHiddenComponents = 0.0;
+	  double Normalization = 0.0;
+	  ComplexVector State;
 
+	  if (State.ReadVector(Manager.GetString("state")) == false)
+	    {
+	      cout << "error while reading " << Manager.GetString("state") << endl;
+	      return -1;
+	    }
+	  if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+	    {
+	      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+	      return -1;
+	    }
+	  if (Manager.GetDouble("hide-component") > 0.0)
+	    {
+	      double Error = Manager.GetDouble("hide-component");
+	      if (Manager.GetBoolean("save-disk") == true)
+		{
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    {
+		      if ((Norm(State[i]) > Error)&&((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR))))
+			{
+			  if (AddIndex == true) 
+			    File << i << " ";	
+			  Space->PrintState(File, i) << " : " << State.Re(i)<<" "<<State.Im(i);
+			  if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
+			  else File<<endl;
+			}
+		      else		     
+			{
+			  WeightHiddenComponents += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
+			  ++NbrHiddenComponents; 
+			}
+		      Normalization += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
+		    }
+		}
+	      else
+		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		  {
+		    if ((Norm(State[i]) > Error)&&((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR))))
+		      {
+			if (AddIndex == true) 
+			  cout << i <<" ";
+			Space->PrintState(cout, i) << " : " << State.Re(i)<<" "<<State.Im(i);
+			if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
+			else cout<<endl;
+		      }
+		    else		     
+		      {
+			WeightHiddenComponents += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
+			++NbrHiddenComponents; 
+		      }
+		    Normalization += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
+		  }
+	      cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
+	    }
+	  else
+	    {             
+	      if (Manager.GetBoolean("variance"))
+		{
+		  if (Manager.GetBoolean("save-disk") == true)
+		    {
+		      if (PauliK==0)
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  Space->PrintState(File, i) << " : " << Space->StateVariance(i) << " " << State.Re(i) << " " << State.Im(i) << " " << i <<endl;
+		      else
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  if (Space->HasPauliExclusions(i,PauliK,PauliR))
+			    Space->PrintState(File, i) << " : " << Space->StateVariance(i) << " " << State.Re(i) << " " << State.Im(i) << " " << i <<endl;
+		    }
+		  else
+		    {
+		      if (PauliK==0)
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  Space->PrintState(cout, i) << " : " << Space->StateVariance(i) << " " << State.Re(i) << " " << State.Im(i) << " " << i <<endl;
+		      else
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  if (Space->HasPauliExclusions(i,PauliK,PauliR))
+			    Space->PrintState(cout, i) << " : " << Space->StateVariance(i) << " " << State.Re(i) << " " << State.Im(i) << " " << i <<endl;
+		    }
+		}
+	      else
+		{
+		  if (Manager.GetBoolean("save-disk") == true)
+		    {
+		      if (PauliK==0)
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  Space->PrintState(File, i) << " : " << State.Re(i) << " " << State.Im(i) << endl;
+		      else
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  if (Space->HasPauliExclusions(i,PauliK,PauliR))
+			    Space->PrintState(File, i) << " : " << State.Re(i) << " " << State.Im(i) << endl;
+		    }
+		  else
+		    {
+		      if (PauliK==0)
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  Space->PrintState(cout, i) << " : " << State.Re(i) << " " << State.Im(i) << endl;
+		      else
+			{
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (Space->HasPauliExclusions(i,PauliK,PauliR))
+			      Space->PrintState(cout, i) << " : " << State.Re(i) << " " << State.Im(i) << endl;	   
+			}
+		    }
+		}
+	    }
+    }
+
+ 
   if (OutputFileName != 0)
     {
       File.close();

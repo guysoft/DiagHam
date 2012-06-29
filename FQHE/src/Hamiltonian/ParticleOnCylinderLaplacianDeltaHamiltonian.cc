@@ -331,7 +331,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 
 Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
-  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
   double Xm1 = kappa * m1;
   double Xm2 = kappa * m2;
@@ -366,7 +366,7 @@ Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoeffici
 
 Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4)
 {
-  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
   double Xm1 = kappa * m1;
   double Xm2 = kappa * m2;
