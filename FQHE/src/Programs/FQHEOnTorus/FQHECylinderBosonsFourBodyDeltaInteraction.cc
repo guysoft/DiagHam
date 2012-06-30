@@ -7,7 +7,7 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 
 
-#include "Hamiltonian/ParticleOnCylinderGaffnianHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderFourBodyDeltaHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -20,7 +20,6 @@
 
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
-
 #include "QuantumNumber/AbstractQuantumNumber.h"
 
 #include "GeneralTools/ListIterator.h"
@@ -54,7 +53,7 @@ int main(int argc, char** argv)
 
 
 
-  OptionManager Manager ("FQHECylinderBosonsGaffnian" , "0.01");
+  OptionManager Manager ("FQHECylinderBosonsFourBodyDelta" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -75,11 +74,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum along y-axis (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ky", "number of Ky values to evaluate", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
-  (*SystemGroup) += new SingleDoubleOption ('\n', "3b-coupling", "amplitude of the 3-body interaction", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "confinement-potential", "amplitude of the quadratic confinement potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "electric-field", "parameter for the value of the electric field applied along the cylinder (a=eEl_B^2/hbar omega_c", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "b-field", "parameter for the value of the magnetic field [in T] when also the electric field is present (needed to set the scale for the kinetic term)", 0.0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "3b");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "4b");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
@@ -119,7 +117,6 @@ int main(int argc, char** argv)
       cout << "Assuming quadratic confining potential sum_m (a*X_m^2) c_m^+ c_m " << endl;
       cout << "where X_m=2pi m/L and a = " << Confinement << endl;
     }
-  double ThreeBodyCoupling = ((SingleDoubleOption*) Manager["3b-coupling"])->GetDouble();
 
   double ElectricFieldParameter = ((SingleDoubleOption*) Manager["electric-field"])->GetDouble();
   double BFieldParameter = ((SingleDoubleOption*) Manager["b-field"])->GetDouble();
@@ -180,12 +177,13 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderGaffnianHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, ThreeBodyCoupling, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderFourBodyDeltaHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
 
-      double Shift = 0.0;
+
+      double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
 
-     if (Manager.GetString("energy-expectation") != 0 )
+      if (Manager.GetString("energy-expectation") != 0 )
 	{
 	  char* StateFileName = Manager.GetString("energy-expectation");
 	  if (IsFile(StateFileName) == false)

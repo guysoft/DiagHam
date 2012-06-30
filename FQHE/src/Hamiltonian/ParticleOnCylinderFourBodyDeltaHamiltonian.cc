@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnCylinderLaplacianDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderFourBodyDeltaHamiltonian.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -68,7 +68,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
+ParticleOnCylinderFourBodyDeltaHamiltonian::ParticleOnCylinderFourBodyDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
 										   double ratio, double confinement, double electricFieldParameter, double bFieldParameter, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
@@ -131,13 +131,12 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::ParticleOnCylinderLaplacianDeltaHam
 // destructor
 //
 
-ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHamiltonian() 
+ParticleOnCylinderFourBodyDeltaHamiltonian::~ParticleOnCylinderFourBodyDeltaHamiltonian() 
 {
   delete[] this->InteractionFactors;
-  delete[] this->M1Value;
-  delete[] this->M2Value;
-  delete[] this->M3Value;
-  delete[] this->M4Value;
+  delete[] this->CreationIndices;
+  delete[] this->AnnihilationIndices;
+
 
   if (this->OneBodyInteractionFactors != 0)
     delete[] this->OneBodyInteractionFactors;
@@ -163,7 +162,7 @@ ParticleOnCylinderLaplacianDeltaHamiltonian::~ParticleOnCylinderLaplacianDeltaHa
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnCylinderFourBodyDeltaHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->InteractionFactors;
   if (this->FastMultiplicationFlag == true)
@@ -185,7 +184,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::SetHilbertSpace (AbstractHilbe
 //
 // shift = shift value
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnCylinderFourBodyDeltaHamiltonian::ShiftHamiltonian (double shift)
 {
   this->EnergyShift = shift;
 }
@@ -193,203 +192,185 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::ShiftHamiltonian (double shift
 // evaluate all interaction factors
 //   
 
-void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
+void ParticleOnCylinderFourBodyDeltaHamiltonian::EvaluateInteractionFactors()
 {
+  unsigned L8Mask = (1u<<8)-1;
+  unsigned L16Mask = ((1u<<16)-1) - ((1u<<8)-1);
+  unsigned L24Mask = ((1u<<24)-1) - ((1u<<16)-1);
+  unsigned L32Mask = (~((1u<<24)-1));
+  if (this->MaxMomentum >= 63) 
+    {
+       cout<<"Overflow"<<endl;
+       exit(1);
+    }
+  int Norb = this->MaxMomentum + 1;
   int Pos = 0;
-  int m4;
-  Complex* TmpCoefficient = new Complex [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-  double MaxCoefficient = 0.0;
+  int m8;
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-  	        if (m3 > m4)
-		  {
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-			  		 + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
-	    }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new Complex [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-              if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-	        if (m3 > m4)
-		  {
-		    if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
-		      {
-		        this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		        this->M1Value[this->NbrInteractionFactors] = m1;
-		        this->M2Value[this->NbrInteractionFactors] = m2;
-		        this->M3Value[this->NbrInteractionFactors] = m3;
-		        this->M4Value[this->NbrInteractionFactors] = m4;
-		        ++this->NbrInteractionFactors;
-		      }
-		    ++Pos;
-		  }
-	    }
+      cout<<"Fermions unsupported."<<endl;
+      exit(1);
     }
   else //bosons
     {
+  int NbrIndices = Norb * (Norb+1) * (Norb+2) * (Norb+3)/24;
+  NbrIndices *= (Norb * (Norb+1) * (Norb+2)/6);
+  cout<<"Total nbr of indices: "<<NbrIndices<<endl;
+ 
+  long TmpMemory = NbrIndices * 2 * (2 * sizeof(unsigned) + sizeof(Complex)); 
+  if (TmpMemory < 1024)
+    cout  << "Need to allocate temporarily for matrix elements = " <<  TmpMemory << "b ";
+  else
+    if (TmpMemory < (1 << 20))
+      cout  << "Need to allocate temporarily for matrix elements = " << (TmpMemory >> 10) << "kb ";
+    else
+      if (TmpMemory < (1 << 30))
+	cout  << "Need to allocate temporarily for matrix elements = " << (TmpMemory >> 20) << "Mb ";
+      else
+	cout  << "Need to allocate temporarily for matrix elements = " << (TmpMemory >> 30) << "Gb ";
+  cout << endl;
+  //if (TmpMemory >= memory)
+  //  {
+  //    cout << "Insufficient memory...exiting."<<endl;
+  //    exit(1);   
+  //  }
+
+  Complex* TmpCoefficient = new Complex [NbrIndices];
+  unsigned* TmpIndicesCreation = new unsigned [NbrIndices];
+  unsigned* TmpIndicesAnnihilation = new unsigned [NbrIndices];
+  double MaxCoefficient=0.0;
       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 <= m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
- 	       if (m3 > m4)
-		 {
-		  if (m1 != m2)
+	  for (int m3 = 0; m3 <= m2; ++m3)
+	    for (int m4 = 0; m4 <= m3; ++m4)
+	      for (int m5 = 0; m5 <= this->MaxMomentum; ++m5)
+	        for (int m6 = 0; m6 <= m5; ++m6)
+	          for (int m7 = 0; m7 <= m6; ++m7)
 		    {
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m4, m3)
-					     + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
-		    }
-		  else
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					   + this->EvaluateInteractionCoefficientBosons(m1, m2, m4, m3));
-		  if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		    MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		  ++Pos;
-		}
-	      else
-		if (m3 == m4)
-		  {
-		    if (m1 != m2)
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficientBosons(m2, m1, m3, m4));
-		    else
-		      TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4);
-		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
-	     }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new Complex [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 <= m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-	       if (m3 >= m4)
-		 {
-		  if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		      this->M1Value[this->NbrInteractionFactors] = m1;
-		      this->M2Value[this->NbrInteractionFactors] = m2;
-		      this->M3Value[this->NbrInteractionFactors] = m3;
-		      this->M4Value[this->NbrInteractionFactors] = m4;
-		      ++this->NbrInteractionFactors;
-		    }
-		  ++Pos;
-		}
-	     }
+		      m8 = m1 + m2 + m3 + m4 - m5 - m6 - m7;
+		      if ((m8 >= 0) && (m8 <= this->MaxMomentum))
+ 	                if (m8 <= m7)
+			  {
+			       TmpIndicesCreation[Pos] = (((m1&L8Mask) | ((m2&L8Mask)<<8)) | ((m3&L8Mask)<<16)) | ((m4&L8Mask)<<24);
+			       TmpIndicesAnnihilation[Pos] = (((m5&L8Mask)|((m6&L8Mask)<<8))|((m7&L8Mask)<<16))|((m8&L8Mask)<<24);
+  		               TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientBosons(m1, m2, m3, m4, m5, m6, m7, m8) * this->NumberOfPermutations(m1, m2, m3, m4) * this->NumberOfPermutations(m5, m6, m7, m8);
+		               if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		                 MaxCoefficient = Norm(TmpCoefficient[Pos]);
+   		  	       ++Pos;
+			  }
+	            }
+
+   cout << "Total Nbr of Indices: " << Pos << endl;
+
+
+   MaxCoefficient *= MACHINE_PRECISION;
+
+  this->CreationIndices = new unsigned [Pos];
+  this->AnnihilationIndices = new unsigned [Pos];
+  this->InteractionFactors = new Complex [Pos]; 
+
+  this->NbrInteractionFactors = 0;
+    for (int i = 0; i < Pos; ++i)
+     {
+       if  (Norm(TmpCoefficient[i]) > MaxCoefficient)
+	{
+	 this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[i];
+	 this->AnnihilationIndices[this->NbrInteractionFactors] = TmpIndicesAnnihilation[i];
+	 this->CreationIndices[this->NbrInteractionFactors] = TmpIndicesCreation[i];
+
+           //****** Decode m1,...,m8 *************
+           //int m1 = this->CreationIndices[this->NbrInteractionFactors] & L8Mask;
+           //int m2 = (this->CreationIndices[this->NbrInteractionFactors] & L16Mask)>>8;
+           //int m3 = (this->CreationIndices[this->NbrInteractionFactors] & L24Mask)>>16;
+           //int m4 = (this->CreationIndices[this->NbrInteractionFactors] & L32Mask)>>24;
+      
+           //int m5 = this->AnnihilationIndices[this->NbrInteractionFactors] & L8Mask;
+           //int m6 = (this->AnnihilationIndices[this->NbrInteractionFactors] & L16Mask)>>8;
+           //int m7 = (this->AnnihilationIndices[this->NbrInteractionFactors] & L24Mask)>>16;
+           //m8 = (this->AnnihilationIndices[this->NbrInteractionFactors] & L32Mask)>>24;
+           //***************************************
+           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<m5<<" "<<m6<<" "<<m7<<" "<<m8<<" "<<this->InteractionFactors[this->NbrInteractionFactors]<<endl;
+	 ++this->NbrInteractionFactors;
+	}
     }
+
   cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
   cout << "====================================" << endl;
   delete[] TmpCoefficient;
+  delete[] TmpIndicesCreation;
+  delete[] TmpIndicesAnnihilation;
+ }
 }
 
-// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a^+_m4 a_m5 a_m6 a_m7 a_m8 coupling term
 //
-// m1 = first index
-// m2 = second index
-// m3 = third index
-// m4 = fourth index
+// m1,..,m8 = indices from left to right
 // return value = numerical coefficient
 
-Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
+Complex ParticleOnCylinderFourBodyDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6, int m7, int m8)
 {
-  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
+  Complex Result(0,0);
+  return Result;
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a^+_m4 a_m5 a_m6 a_m7 a_m8 coupling term for bosons
+//
+// m1,..,m8 = indices from left to right
+// return value = numerical coefficient
+
+Complex ParticleOnCylinderFourBodyDeltaHamiltonian::EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4, int m5, int m6, int m7, int m8)
+{
+  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
   double kappa = 2.0 * M_PI/Length;
-  double Xm1 = kappa * m1;
-  double Xm2 = kappa * m2;
-  double Xm3 = kappa * m3;
-  double Xm4 = kappa * m4;	
+  double Xr = kappa * (3.0 * m1 - m2 - m3 - m4)/4.0;
+  double Xs = kappa * (3.0 * m2 - m1 - m3 - m4)/4.0;
+  double Xt = kappa * (3.0 * m3 - m1 - m2 - m4)/4.0;
+
+  double Xrp = kappa * (3.0 * m5 - m6 - m7 - m8)/4.0;
+  double Xsp = kappa * (3.0 * m6 - m5 - m7 - m8)/4.0;
+  double Xtp = kappa * (3.0 * m7 - m5 - m6 - m8)/4.0;
+
+  double GaussianExp;
 
   Complex Coefficient(0,0);
 
   if (this->ElectricField == 0)
    {
-
-     Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0)) * (pow(Xm1-Xm3,2.0)-pow(Xm1-Xm4,2.0)-1.0);
+     GaussianExp = Xr * Xr + Xs * Xs + Xt * Xt + Xr * Xs + Xr * Xt + Xs * Xt;
+     GaussianExp += Xrp * Xrp + Xsp * Xsp + Xtp * Xtp + Xrp * Xsp + Xrp * Xtp + Xsp * Xtp;
+     Coefficient.Re = exp(-GaussianExp);
      Coefficient.Im = 0.0;
-     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
+
+     return (Coefficient * (M_PI/3.0) * sqrt(4.0 * M_PI)/pow(Length, 3.0));
    }
   else
    {
+     /*
      double alpha = sqrt(1.0 + this->ElectricField);
      Coefficient.Re = exp(-pow(Xm1-Xm3,2.0)/(2.0*pow(alpha,3.0))-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * (pow(Xm1-Xm3,2.0)-alpha*alpha*pow(Xm1-Xm4,2.0)+alpha*alpha-alpha*alpha*alpha);
      Coefficient.Im = 0.0;
      return (Coefficient/sqrt(this->Ratio * this->NbrLzValue * alpha * alpha * alpha));
-   }
-}
-
-// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term (for bosons)
-//
-// m1 = first index
-// m2 = second index
-// m3 = third index
-// m4 = fourth index
-// return value = numerical coefficient
-
-Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4)
-{
-  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
-  double kappa = 2.0 * M_PI/Length;
-  double Xm1 = kappa * m1;
-  double Xm2 = kappa * m2;
-  double Xm3 = kappa * m3;
-  double Xm4 = kappa * m4;	
-
-  Complex Coefficient(0,0);
-
-  if (this->ElectricField == 0)
-   {
-     Coefficient.Re = exp(-0.5*pow(Xm1-Xm3,2.0)-0.5*pow(Xm1-Xm4,2.0));
-     Coefficient.Im = 0.0;
-     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
-   }
-  else
-   {
-     cout<<"Bosons with electric field not supported." << endl;
+     */
+     cout<<"Not implemented for electric fields!" << endl;
      exit(1);
-    /*
-     double alpha = sqrt(1.0 + this->ElectricField);
-     Coefficient.Re = exp(-pow(Xm1-Xm3,2.0)/(2.0*pow(alpha,3.0))-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * (pow(Xm1-Xm3,2.0)-alpha*alpha*pow(Xm1-Xm4,2.0)+alpha*alpha-alpha*alpha*alpha);
-     Coefficient.Im = 0.0;
-     return (Coefficient/sqrt(this->Ratio * this->NbrLzValue * alpha * alpha * alpha));
-    */
    }
+}
+
+// Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 c_n4 for bosons
+
+// Get the number of permutations
+
+int ParticleOnCylinderFourBodyDeltaHamiltonian:: NumberOfPermutations(int n1, int n2, int n3, int n4)
+{
+  if ( (n1!=n2) && (n1!=n3) && (n1!=n4) && (n2!=n3) && (n2!=n4) && (n3!=n4) )
+    return 24; //all different
+  else if ( ((n1==n2) && (n1!=n3) && (n1!=n4) && (n3!=n4)) || ((n1==n3) && (n1!=n2) && (n1!=n4) && (n2!=n4)) || ((n1==n4) && (n1!=n2) && (n1!=n3) && (n2!=n3)) || ((n2==n3) && (n2!=n1) && (n2!=n4) && (n1!=n4)) || ((n2==n4) && (n2!=n1) && (n2!=n3) && (n1!=n3)) || ((n3==n4) && (n3!=n1) && (n3!=n2) && (n1!=n2))) 
+    return 12; //only two are equal
+  else if ( ((n1==n2) && (n3==n4) && (n1!=n3)) || ((n1==n3) && (n2==n4) && (n1!=n2)) || ((n1==n4) && (n2==n3) && (n1!=n2)) )
+    return 6; //two groups of two
+  else if ( ((n1==n2) && (n1==n3) && (n1!=n4)) || ((n1==n2) && (n1==n4) && (n1!=n3)) || ((n1==n3) && (n3==n4) && (n1!=n2)) || ((n2==n3) && (n2==n4) && (n2!=n1)) )
+    return 4; //three are equal
+  else if ((n1==n2) && (n2==n3) && (n3==n4))
+    return 1; //all four are equal
 }

@@ -29,14 +29,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONCYLINDERGAFFNIANHAMILTONIAN_H
-#define PARTICLEONCYLINDERGAFFNIANHAMILTONIAN_H
+#ifndef PARTICLEONCYLINDERFOURBODYDELTAHAMILTONIAN_H
+#define PARTICLEONCYLINDERFOURBODYDELTAHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "Hamiltonian/AbstractQHEOnCylinderThreeBodyHamiltonian.h"
+#include "Hamiltonian/AbstractQHEOnCylinderFourBodyHamiltonian.h"
 
 #include <iostream>
 
@@ -47,11 +47,8 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnCylinderGaffnianHamiltonian : public AbstractQHEOnCylinderThreeBodyHamiltonian
+class ParticleOnCylinderFourBodyDeltaHamiltonian : public AbstractQHEOnCylinderFourBodyHamiltonian
 {
-
- //amplitude of 3-body coupling
- double ThreeBodyCoupling;
 
  public:
 
@@ -61,19 +58,18 @@ class ParticleOnCylinderGaffnianHamiltonian : public AbstractQHEOnCylinderThreeB
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
-  // threeBodyCoupling = amplitude of 3-body coupling
   // confinement = amplitude of the quadratic confinement potential
   // electricFieldParameter = amplitude of the electric field along the cylinder
   // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderGaffnianHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double threeBodyCoupling, double confinement, double electricFieldParameter, double bFieldParameter,
+  ParticleOnCylinderFourBodyDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, double electricFieldParameter, double bFieldParameter,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnCylinderGaffnianHamiltonian();
+  ~ParticleOnCylinderFourBodyDeltaHamiltonian();
 
   // clone hamiltonian without duplicating datas
   //
@@ -96,32 +92,23 @@ class ParticleOnCylinderGaffnianHamiltonian : public AbstractQHEOnCylinderThreeB
   //   
   void EvaluateInteractionFactors();
 
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_m4 a_m5 a_m6 coupling term
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a^+_m4 a_m5 a_m6 a_m7 a_m8 coupling term
   //
-  // m1 = first index
-  // m2 = second index
-  // m3 = third index
-  // m4 = fourth index
-  // m5 = fifth index
-  // m6 = sixth index
-  // return value = numerical coefficient
-  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6);
-
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term for bosons
-  //
-  // m1 = first index
-  // m2 = second index
-  // m3 = third index
-  // m4 = fourth index
-  // m5 = fifth index
-  // m6 = sixth index
+  // m1,..,m8 = indices from left to right
   // return value = numerical coefficient
 
-  Complex EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4, int m5, int m6);
+  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6, int m7, int m8);
 
-  // Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a^+_m4 a_m5 a_m6 a_m7 a_m8 coupling term for bosons
+  //
+  // m1,..,m8 = indices from left to right
+  // return value = numerical coefficient
 
-  int NumberOfPermutations(int n1, int n2, int n3);
+  Complex EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4, int m5, int m6, int m7, int m8);
+
+  // Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 c_n4 for bosons
+
+  int NumberOfPermutations(int n1, int n2, int n3, int n4);
 
 };
 
