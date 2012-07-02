@@ -403,16 +403,23 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
     }
   int ReducedNbrBosons = this->NbrBosons - 1;
 
-  RationalPolynomial* TmpNumerators = new RationalPolynomial[this->LargeHilbertSpaceDimension];
-  RationalPolynomial* TmpDenominators = new RationalPolynomial[this->LargeHilbertSpaceDimension];		  
-
+  RationalPolynomial* TmpNumerators = 0;
+  RationalPolynomial* TmpDenominators = 0;
+  if (symbolicDepth != 0)
+    {
+      TmpNumerators = new RationalPolynomial[this->LargeHilbertSpaceDimension];
+      TmpDenominators = new RationalPolynomial[this->LargeHilbertSpaceDimension];		  
+    }
   long CounterMask = 0xffffl;
   if (symbolicDepth > 1)
     {
       CounterMask = 0xffl;
     }
 
-  this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators);
+  if (symbolicDepth != 0)
+    {
+      this->GenerateSingleJackPolynomialCoefficient(jack, 0, TmpNumerators, TmpDenominators);
+    }
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
       if (symbolicDepth > 1)
@@ -510,6 +517,11 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 	}
     }
   delete[] TmpMonomial;
+  if (symbolicDepth != 0)
+    {
+      delete[] TmpNumerators;
+      delete[] TmpDenominators;		  
+    }
   cout << endl;
   return jack;
 }
@@ -561,12 +573,17 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
   LongRational RhoRootInvAlphaCoef(TmpRhoRootInvAlphaCoef);
   LongRational RhoRootConstCoef(TmpRhoRootConstCoef);
 
-  LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
-  LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
-  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
-
-  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
-						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+  LongRationalPolynomial* TmpNumerators = 0;
+  LongRationalPolynomial* TmpDenominators = 0;		  
+  int* EvaluatedCoeffcients = 0;
+  if (symbolicDepth != 0)
+    {
+      TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
+      TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+      EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+      this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+						    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+    }
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
   
@@ -742,6 +759,12 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(LongR
   delete[] ConnectedIndices2;
   delete[] ConnectedCoefficients2;
   cout << endl;
+  if (symbolicDepth != 0)
+    {
+      delete[] TmpNumerators;
+      delete[] TmpDenominators;		  
+      delete[] EvaluatedCoeffcients;
+    }
   return jack;
 }
 
@@ -791,12 +814,17 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
   LongRational RhoRootInvAlphaCoef(TmpRhoRootInvAlphaCoef);
   LongRational RhoRootConstCoef(TmpRhoRootConstCoef);
 
-  LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
-  LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
-  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
-
-  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+  LongRationalPolynomial* TmpNumerators = 0;
+  LongRationalPolynomial* TmpDenominators = 0;
+  int* EvaluatedCoeffcients = 0;
+  if (symbolicDepth != 0)
+    {
+      TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
+      TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+      EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+      this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+						    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+    }
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
 
@@ -991,6 +1019,12 @@ LongRationalVector& BosonOnSphereHaldaneBasisShort::GenerateSymmetrizedJackPolyn
   delete[] ConnectedCoefficients;
   delete[] ConnectedIndices2;
   delete[] ConnectedCoefficients2;
+  if (symbolicDepth != 0)
+    {
+      delete[] TmpNumerators;
+      delete[] TmpDenominators;		  
+      delete[] EvaluatedCoeffcients;
+    }
   cout << endl;
   return jack;
 }

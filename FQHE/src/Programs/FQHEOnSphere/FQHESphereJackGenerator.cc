@@ -216,35 +216,81 @@ int main(int argc, char** argv)
 	    }
 	  if (Manager.GetBoolean("disk-storage") == true)
 	    DiskStorageFlag = true;
-	  if ((DiskStorageFlag == false) && (Manager.GetBoolean("rational") == false))
+	  if (DiskStorageFlag == false)
 	    {
-	      RealVector OutputState;
-	      if (Manager.GetString("initial-state") == 0) 
+	      if  (Manager.GetBoolean("rational") == false)
 		{
-		  OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  RealVector OutputState;
+		  if (Manager.GetString("initial-state") == 0) 
+		    {
+		      OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		    }
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false) 
+		    {
+		      InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		    }
+		  else
+		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		  
+		  if (Manager.GetBoolean("normalize"))
+		    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+		  if (OutputTxtFileName != 0)
+		    {
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
 		}
 	      else
-		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-		  {
-		    cout << "can't open " << Manager.GetString("initial-state") << endl;
-		    return -1;
-		  }
-	      if (SymmetrizedBasis == false) 
 		{
-		  InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-		}
-	      else
-		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	      
-	      if (Manager.GetBoolean("normalize"))
-		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-	      if (OutputTxtFileName != 0)
-		{
-		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
-		}
-	      if (OutputFileName != 0)
-		{
-		  OutputState.WriteVector(OutputFileName);
+#ifdef __GMP__
+		  if (Manager.GetBoolean("use-gmp") == false)
+#else
+		    if (Manager.GetBoolean("use-longlong") == false)
+#endif
+		      {
+			cout << "only use-gmp/use-longlong rational mode are available for bosons in huge mode" << endl;
+			return 0;
+		      }
+		  LongRationalVector OutputState;
+		  if (Manager.GetString("initial-state") == 0) 
+		    {
+		      OutputState = LongRationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		    }
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false) 
+		    {
+		      InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, 
+							   MinIndex, MaxIndex, OutputFileName);
+		    }
+		  else
+		    {
+		      cout << "symmetrized basis in huge and rational modes is not available" << endl;
+		      return -1;
+		    }
+		  
+		  if (OutputTxtFileName != 0)
+		    {
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
+		  return 0;
 		}
 	    }
 	  else
@@ -253,7 +299,7 @@ int main(int argc, char** argv)
 		{
 		  cout << "a binary output file name has to be provided when using disk storage mode" << endl;
 		  return -1;
-		    }
+		}
 	      if (SymmetrizedBasis == false)    
 		{
 		  InitialSpace->GenerateJackPolynomialSparse(Alpha, Architecture.GetArchitecture(), OutputFileName, MinIndex, MaxIndex, Manager.GetInteger("huge-vector") << 20, Manager.GetInteger("huge-blocks") << 20, Manager.GetBoolean("resume"));
@@ -480,29 +526,70 @@ int main(int argc, char** argv)
 	    DiskStorageFlag = true;
 	  if (DiskStorageFlag == false)
 	    {
-	      RealVector OutputState;
-	      if (Manager.GetString("initial-state") == 0)
-		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
-	      else
-		if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
-		  {
-		    cout << "can't open " << Manager.GetString("initial-state") << endl;
-		    return -1;
-		  }
-	      if (SymmetrizedBasis == false)    
-		InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	      else
-		InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
-	      if (Manager.GetBoolean("normalize"))
-		InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
-	      if (OutputTxtFileName != 0)
+	      if  (Manager.GetBoolean("rational") == false)
 		{
-		  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
+		  RealVector OutputState;
+		  if (Manager.GetString("initial-state") == 0)
+		    OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false)    
+		    InitialSpace->GenerateJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		  else
+		    InitialSpace->GenerateSymmetrizedJackPolynomial(OutputState, Alpha, MinIndex, MaxIndex, OutputFileName);
+		  if (Manager.GetBoolean("normalize"))
+		    InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+		  if (OutputTxtFileName != 0)
+		    {
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
 		}
-	      if (OutputFileName != 0)
+	      else
 		{
-		  OutputState.WriteVector(OutputFileName);
-		}
+#ifdef __GMP__
+		  if (Manager.GetBoolean("use-gmp") == false)
+#else
+		    if (Manager.GetBoolean("use-longlong") == false)
+#endif
+		      {
+			cout << "only use-gmp/use-longlong rational mode are available for fermions" << endl;
+			return 0;
+		      }
+		  LongRationalVector OutputState;
+		  if (Manager.GetString("initial-state") == 0)
+		    OutputState = LongRationalVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		  else
+		    if (OutputState.ReadVector(Manager.GetString("initial-state")) == false)
+		      {
+			cout << "can't open " << Manager.GetString("initial-state") << endl;
+			return -1;
+		      }
+		  if (SymmetrizedBasis == false)    
+		    {
+		      InitialSpace->GenerateJackPolynomial(OutputState, AlphaNumerator, AlphaDenominator, MinIndex, MaxIndex, OutputFileName);
+		    }
+		  else
+		    {
+		      cout << "symmetrized basis in huge and rational modes is not available" << endl;
+		    }
+		  if (OutputTxtFileName != 0)
+		    {
+		      FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
+		    }
+		  if (OutputFileName != 0)
+		    {
+		      OutputState.WriteVector(OutputFileName);
+		    }
+		  return 0;
+		}	      
 	    }
 	  else
 	    {

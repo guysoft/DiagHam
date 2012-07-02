@@ -147,6 +147,7 @@ ParticleOnLatticeNOrbitalSquareLatticeSingleBandHamiltonian.cc \
 ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian.cc \
 AbstractQHEOnTorusWithSU4SpinHamiltonian.cc \
 ParticleOnTorusWithSU4SpinGenericHamiltonian.cc \
+ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian.cc \
 ParticleOnCylinderGaffnianHamiltonian.cc \
 ParticleOnCylinderFourBodyDeltaHamiltonian.cc \
 AbstractQHEOnCylinderFourBodyHamiltonian.cc

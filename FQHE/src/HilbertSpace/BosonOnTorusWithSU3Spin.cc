@@ -49,6 +49,92 @@ using std::cout;
 using std::endl;
 
 
+// constructor with a constraint on total momentum
+// 
+// nbrBosons = number of bosons
+// totalTz = twice the total Tz value
+// totalY = three time the total Y value
+// maxMomentum = momentum maximum value for a boson
+// kyMomentum = momentum along the y direction
+// memory = amount of memory granted for precalculations
+
+BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin (int nbrBosons, int maxMomentum, int kyMomentum, unsigned long memory)
+{
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->TotalLz = maxMomentum;
+  this->TotalY = 0;
+  this->TotalTz = 0;
+  this->KyMomentum = kyMomentum;
+  this->LzMax = maxMomentum - 1;
+  this->NbrLzValue = maxMomentum;
+  this->Flag.Initialize();
+  this->TemporaryState1 = new unsigned long[this->NbrLzValue];
+  this->TemporaryState2 = new unsigned long[this->NbrLzValue];
+  this->TemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryState1 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryState2 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
+
+  this->N1LzMax = this->LzMax + this->NbrBosons;
+  this->N2LzMax = this->LzMax + this->NbrBosons;
+  this->N3LzMax = this->LzMax + this->NbrBosons;
+  this->FermionicLzMax = this->N1LzMax;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, 0);
+
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if ( this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->StateDescription1 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescription2 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->Flag.Initialize();
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, 0, 
+								this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 
+								this->LzMax + this->NbrBosons, 0l);
+      cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
+      if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
+	{
+	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
+	}
+       for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
+	{
+	  unsigned long TmpState = this->StateDescription1[i];
+	  unsigned long Tmp = 0l;
+	  for (int j = 0; j <= this->FermionicLzMax; ++j)
+	    Tmp += (TmpState >> j) & 0x1ul;
+	  this->StateDescription1[i] >>= this->NbrBosons - Tmp; 
+	  TmpState = this->StateDescription2[i];
+	  Tmp = 0l;
+	  for (int j = 0; j <= this->FermionicLzMax; ++j)
+	    Tmp += (TmpState >> j) & 0x1ul;
+	  this->StateDescription2[i] >>= this->NbrBosons - Tmp; 
+	  TmpState = this->StateDescription3[i];
+	  Tmp = 0l;
+	  for (int j = 0; j <= this->FermionicLzMax; ++j)
+	    Tmp += (TmpState >> j) & 0x1ul;
+	  this->StateDescription3[i] >>= this->NbrBosons - Tmp; 
+	}
+     SortTripleElementArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, TmpLargeHilbertSpaceDimension);
+      this->GenerateLookUpTable(memory);
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (3 * sizeof(unsigned long));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
 // constructor with a constraint on total spin momentum and total momentum
 // 
 // nbrBosons = number of bosons
@@ -328,6 +414,62 @@ long BosonOnTorusWithSU3Spin::GenerateStates(int nbrBosons, int currentKy1, int 
   return pos;
 };
 
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons
+// currentKy = current momentum along y for a single particle 
+// currentTotalKy = current total momentum along y
+// currentFermionicPositionKy1 = current fermionic position within the state description for the type 1 particles
+// currentFermionicPositionKy2 = current fermionic position within the state description for the type 2 particles
+// currentFermionicPositionKy3 = current fermionic position within the state description for the type 3 particles
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long BosonOnTorusWithSU3Spin::GenerateStates(int nbrBosons, int currentKy, int currentTotalKy, int currentFermionicPositionKy1,
+					     int currentFermionicPositionKy2, int currentFermionicPositionKy3, long pos)
+{
+  if (nbrBosons < 0)
+    return pos;
+  if (nbrBosons == 0)
+    {
+      if ((currentTotalKy % this->NbrLzValue) == this->KyMomentum)
+	{
+	  this->StateDescription1[pos] = 0x0ul;
+	  this->StateDescription2[pos] = 0x0ul;
+	  this->StateDescription3[pos] = 0x0ul;
+	  return (pos + 1l);
+	}
+      else
+	return pos;
+    }
+  if (currentKy < 0)
+    return pos;
+
+  long TmpPos;
+  for (int i = nbrBosons; i >= 0; --i)    
+    {
+      unsigned long Mask1 = ((0x1ul << i) - 1ul) << (currentFermionicPositionKy1 - i - 1);
+      for (int j = nbrBosons - i; j >= 0; --j)
+	{
+    	  unsigned long Mask2 = ((0x1ul << j) - 1ul) << (currentFermionicPositionKy2 - j - 1);	  
+	  for (int k = nbrBosons - i - j; k >= 0; --k)
+	    {
+	      unsigned long Mask3 = ((0x1ul << k) - 1ul) << (currentFermionicPositionKy3 - k - 1);	  
+	      TmpPos = this->GenerateStates(nbrBosons - i - j - k, currentKy - 1, currentTotalKy + (currentKy * (i + j +k)), 
+					    currentFermionicPositionKy1 - i - 1, currentFermionicPositionKy2 -j -1,
+					    currentFermionicPositionKy3 - k - 1, pos); 
+	      for (; pos < TmpPos; ++pos)
+		{
+		  this->StateDescription1[pos] |= Mask1;
+		  this->StateDescription2[pos] |= Mask2;
+		  this->StateDescription3[pos] |= Mask3;
+		}
+	    }
+	}
+    }
+  return pos;
+};
+
 
 // evaluate Hilbert space dimension
 //
@@ -367,6 +509,41 @@ long BosonOnTorusWithSU3Spin::EvaluateHilbertSpaceDimension(int nbrBosons, int c
       for (int k = nbrN3; k >= 0; --k)
 	Tmp += this->EvaluateHilbertSpaceDimension(nbrBosons - (i + j + k), currentKy - 1, currentTotalKy + (currentKy * (i + j + k)), 
 						   nbrN1 - i, nbrN2 - j, nbrN3 - k);
+  return  Tmp;
+}
+
+// evaluate Hilbert space dimension
+//
+// nbrBosons = number of bosons
+// currentKy = current momentum along y for a single particle
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long BosonOnTorusWithSU3Spin::EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy)
+{
+  if (nbrBosons < 0)
+    return 0l;
+  if (nbrBosons == 0)
+    {
+      if ((currentTotalKy % this->NbrLzValue) == this->KyMomentum)
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKy < 0)
+    return 0l;
+  long Tmp = 0l;
+  if (nbrBosons == 1)
+    {
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if (((j + currentTotalKy) % this->NbrLzValue) == this->KyMomentum)
+	    Tmp += 3;
+	}
+      return Tmp;
+    }
+  for (int i = nbrBosons; i >= 0; --i)
+    Tmp += ((((long) i + 1l) * ((long) i + 2l)) / 2l) * this->EvaluateHilbertSpaceDimension(nbrBosons - i, currentKy - 1, currentTotalKy + (currentKy * i)); 
   return  Tmp;
 }
 

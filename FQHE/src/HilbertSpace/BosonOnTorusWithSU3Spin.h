@@ -51,6 +51,14 @@ class BosonOnTorusWithSU3Spin :  public BosonOnSphereWithSU3Spin
 
  public:
 
+  // constructor with a constraint ontotal momentum
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson
+  // kyMomentum = momentum along the y direction
+  // memory = amount of memory granted for precalculations
+  BosonOnTorusWithSU3Spin (int nbrBosons, int maxMomentum, int kyMomentum, unsigned long memory = 10000000);
+
   // constructor with a constraint on total spin momentum and total momentum
   // 
   // nbrBosons = number of bosons
@@ -105,6 +113,19 @@ class BosonOnTorusWithSU3Spin :  public BosonOnSphereWithSU3Spin
   long GenerateStates(int nbrBosons, int currentKy1, int currentKy2, int currentKy3, int currentTotalKy, 
 		      int nbrN1, int nbrN2, int nbrN3, long pos);
 
+  // generate all states corresponding to the constraints
+  // 
+  // nbrBosons = number of bosons
+  // currentKy = current momentum along y for a single particle 
+  // currentTotalKy = current total momentum along y
+  // currentFermionicPositionKy1 = current fermionic position within the state description for the type 1 particles
+  // currentFermionicPositionKy2 = current fermionic position within the state description for the type 2 particles
+  // currentFermionicPositionKy3 = current fermionic position within the state description for the type 3 particles
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  long GenerateStates(int nbrBosons, int currentKy, int currentTotalKy, int currentFermionicPositionKy1,
+		      int currentFermionicPositionKy2, int currentFermionicPositionKy3, long pos);
+
   // evaluate Hilbert space dimension
   //
   // nbrBosons = number of bosons
@@ -115,6 +136,14 @@ class BosonOnTorusWithSU3Spin :  public BosonOnSphereWithSU3Spin
   // nbrN3 = number of particles with quantum number Tz=0 and Y=-2/3
   // return value = Hilbert space dimension
   long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy, int nbrN1, int nbrN2, int nbrN3);
+
+  // evaluate Hilbert space dimension
+  //
+  // nbrBosons = number of bosons
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKy = current total momentum along y
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int currentKy, int currentTotalKy);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
   // 

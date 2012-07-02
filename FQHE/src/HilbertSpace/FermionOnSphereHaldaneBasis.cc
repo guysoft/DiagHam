@@ -1521,12 +1521,18 @@ LongRationalVector& FermionOnSphereHaldaneBasis::GenerateJackPolynomial(LongRati
   LongRational RhoRootInvAlphaCoef(TmpRhoRootInvAlphaCoef);
   LongRational RhoRootConstCoef(TmpRhoRootConstCoef);
 
-  LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
-  LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
-  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
-
-  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
-						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+  LongRationalPolynomial* TmpNumerators = 0;
+  LongRationalPolynomial* TmpDenominators = 0;
+  int* EvaluatedCoeffcients = 0;
+  if (symbolicDepth != 0)
+    {
+      TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
+      TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+      EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
+      
+      this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2,
+						    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+    }
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
   
@@ -1707,6 +1713,12 @@ LongRationalVector& FermionOnSphereHaldaneBasis::GenerateJackPolynomial(LongRati
   delete[] ConnectedIndices2;
   delete[] ConnectedCoefficients2;
   cout << endl;
+  if (symbolicDepth != 0)
+    {
+      delete[] TmpNumerators;
+      delete[] TmpDenominators;		  
+      delete[] EvaluatedCoeffcients;
+    }
   return jack;
 }
 
@@ -1755,13 +1767,19 @@ LongRationalVector& FermionOnSphereHaldaneBasis::GenerateSymmetrizedJackPolynomi
     }
   LongRational RhoRootInvAlphaCoef(TmpRhoRootInvAlphaCoef);
   LongRational RhoRootConstCoef(TmpRhoRootConstCoef);
+  
+  LongRationalPolynomial* TmpNumerators = 0;
+  LongRationalPolynomial* TmpDenominators = 0;
+  int* EvaluatedCoeffcients = 0 ;
+  if (symbolicDepth != 0)
+    {
+      TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
+      TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
+      EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
 
-  LongRationalPolynomial* TmpNumerators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];
-  LongRationalPolynomial* TmpDenominators = new LongRationalPolynomial[this->LargeHilbertSpaceDimension];		  
-  int* EvaluatedCoeffcients = new int[this->LargeHilbertSpaceDimension];
-
-  this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
-						RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+      this->GenerateSingleJackPolynomialCoefficient(0, TmpNumerators, TmpDenominators, ConnectedIndices, ConnectedCoefficients, TmpMonomial, TmpMonomial2, 
+						    RhoRootInvAlphaCoef, RhoRootConstCoef, MaxRoot, architecture);
+    }
   LongRational Coefficient = 0l;
   LongRational Coefficient2 = 0l;
   long SymSign = 1l;
@@ -1969,6 +1987,12 @@ LongRationalVector& FermionOnSphereHaldaneBasis::GenerateSymmetrizedJackPolynomi
   delete[] ConnectedCoefficients;
   delete[] ConnectedIndices2;
   delete[] ConnectedCoefficients2;
+  if (symbolicDepth != 0)
+    {
+      delete[] TmpNumerators;
+      delete[] TmpDenominators;		  
+      delete[] EvaluatedCoeffcients;
+    }
   cout << endl;
   return jack;
 }
