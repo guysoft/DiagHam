@@ -20,7 +20,8 @@ JacobiPolynomials.cc \
 MonopoleHarmonics.cc \
 NSphereParameters.cc \
 Rational.cc \
-LongRational.cc
+LongRational.cc \
+JacobiThetaDerivativeFunction.cc
 
 
 # LaguerreFunction.cc

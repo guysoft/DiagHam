@@ -529,6 +529,8 @@ RealSymmetricMatrix ParticleOnSphereWithSpin::EvaluatePartialDensityMatrixPartic
   return TmpMatrix;
 }
 
+
+
 // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 
@@ -544,6 +546,22 @@ RealMatrix ParticleOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePa
   return TmpMatrix;
 }
   
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// nbrNUpSector = number of spin up  that belong to the subsytem 
+// nbrNDownSector = number of spin down  that belong to the subsytem 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix ParticleOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector,   ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  HermitianMatrix TmpMatrix;
+  return TmpMatrix;
+}
 
 // flip all spins of a given state
 // 

@@ -130,7 +130,7 @@ void TightBindingModelNOrbitalSquareLattice::ComputeBandStructure(long minStateI
 	      TmpOneBodyHamiltonian.SetMatrixElement(i,i,2*this->NextNNHopping*cos(KX+KY -(2*l-1)*this->Phi));
 		  TmpOneBodyHamiltonian.SetMatrixElement(i,0,this->NNHopping*(Phase(-KX) + Phase((KY-2*l*this->Phi))));
 		  TmpOneBodyHamiltonian.SetMatrixElement(i,1,this->NextNNHopping*(Phase( -(KX-KY+(2*l+1)*this->Phi))));
-	      
+	      TmpOneBodyHamiltonian.AddToMatrixElement(0,0,-this->MuS);
 	      if (this->OneBodyBasis != 0)
 		{
 		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);

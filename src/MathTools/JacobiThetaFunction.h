@@ -45,7 +45,7 @@ using std::ostream;
 class JacobiThetaFunction
 {
 
- private:
+ protected:
   
   double ParameterA;
   
