@@ -179,7 +179,7 @@ void ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::ShiftHamiltonian (dou
 // return value = reference on vector where result has been stored
 
 ComplexVector& ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-										       int firstComponent, int nbrComponent)
+											 int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -209,7 +209,9 @@ ComplexVector& ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::LowLevelAdd
 	      TmpCoefficientArray = this->InteractionPerComponentCoefficient[i];
 	      Coefficient = vSource[k];
 	      for (j = 0; j < TmpNbrInteraction; ++j)
-		vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		{
+		  vDestination[TmpIndexArray[j]] +=  TmpCoefficientArray[j] * Coefficient;
+		}
 	      vDestination[k++] += this->HamiltonianShift * Coefficient;
 	    }
 	}
@@ -678,7 +680,9 @@ long ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::FastMultiplicationMem
 
   long Memory = 0;
   for (int i = 0; i < EffectiveHilbertSpaceDimension; ++i)
-    Memory += this->NbrInteractionPerComponent[i];
+    {
+      Memory += this->NbrInteractionPerComponent[i];
+    }
 
   cout << "nbr interaction = " << Memory << endl;
   long TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(Complex*)) * EffectiveHilbertSpaceDimension;

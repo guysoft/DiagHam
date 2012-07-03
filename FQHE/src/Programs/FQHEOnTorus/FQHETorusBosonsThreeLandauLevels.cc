@@ -160,9 +160,9 @@ int main(int argc, char** argv)
 	}
 
       char* CommentLine = new char [256];
-      sprintf (CommentLine, "# kx (dummy) ky E");
+      sprintf (CommentLine, "# ky E");
       char* ContentPrefix = new char[256];
-      sprintf (ContentPrefix, "%d %d", -1, Momentum);
+      sprintf (ContentPrefix, "%d", Momentum);
       GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, Shift,  OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());

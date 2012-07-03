@@ -1555,45 +1555,51 @@ inline void ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::EvaluateMNOneB
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  ++memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-	  for (int i1 = 0; i1 <= this->LzMax; ++i1)
+	  if (this->OneBodyInteractionFactors11 != 0) 
 	    {
-	      Index = particles->Ad1A2(i, i1, i1, Coefficient);
-	      if (Index < Dim)
+	      ++memory;
+	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	    }
+	  if (this->OneBodyInteractionFactors12 != 0) 
+	    {
+	      for (int i1 = 0; i1 <= this->LzMax; ++i1)
 		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad1A3(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad2A1(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad2A3(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad3A1(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad3A2(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  Index = particles->Ad1A2(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad1A3(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad2A1(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad2A3(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad3A1(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad3A2(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
 		}
 	    }
 	}
@@ -1602,45 +1608,51 @@ inline void ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian::EvaluateMNOneB
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
-	  ++memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-	  for (int i1 = 0; i1 <= this->LzMax; ++i1)
+	  if (this->OneBodyInteractionFactors11 != 0) 
 	    {
-	      Index = particles->Ad1A2(i, i1, i1, Coefficient);
-	      if (Index < Dim)
+	      ++memory;
+	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	    }
+	  if (this->OneBodyInteractionFactors12 != 0) 
+	    {
+	      for (int i1 = 0; i1 <= this->LzMax; ++i1)
 		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad1A3(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad2A1(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad2A3(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad3A1(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->Ad3A2(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  Index = particles->Ad1A2(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad1A3(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad2A1(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad2A3(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad3A1(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->Ad3A2(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
 		}
 	    }
 	}

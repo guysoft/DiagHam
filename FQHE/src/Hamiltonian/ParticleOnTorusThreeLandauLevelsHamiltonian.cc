@@ -97,6 +97,8 @@ ParticleOnTorusThreeLandauLevelsHamiltonian::ParticleOnTorusThreeLandauLevelsHam
   cout << "Cyclotron energy: "<<this->CyclotronEnergy << endl;
 
   this->OneBodyInteractionFactors11 = 0;
+  this->OneBodyInteractionFactors22 = 0;
+  this->OneBodyInteractionFactors33 = 0;
   if (this->CyclotronEnergy != 0)
     {
       this->OneBodyInteractionFactors22 = new double [this->NbrLzValue];
