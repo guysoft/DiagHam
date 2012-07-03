@@ -198,8 +198,7 @@ class ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian : public Particle
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-  									int firstComponent, int nbrComponent);
+  //virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 
   // multiply a et of vectors by the current hamiltonian for a given range of indices 
   // and add result to another et of vectors, low level function (no architecture optimization)
@@ -211,8 +210,7 @@ class ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian : public Particle
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-										 int firstComponent, int nbrComponent);
+  //virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
 
 };
 

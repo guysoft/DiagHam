@@ -150,4 +150,5 @@ ParticleOnTorusWithSU4SpinGenericHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian.cc \
 ParticleOnCylinderGaffnianHamiltonian.cc \
 ParticleOnCylinderFourBodyDeltaHamiltonian.cc \
-AbstractQHEOnCylinderFourBodyHamiltonian.cc
+AbstractQHEOnCylinderFourBodyHamiltonian.cc \
+ParticleOnTorusThreeLandauLevelsHamiltonian.cc
