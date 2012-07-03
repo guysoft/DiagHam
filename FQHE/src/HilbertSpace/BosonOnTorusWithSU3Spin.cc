@@ -93,8 +93,8 @@ BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin (int nbrBosons, int maxMomentum
       this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->Flag.Initialize();
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, 0, 
-								this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 
-								this->LzMax + this->NbrBosons, 0l);
+								this->LzMax + this->NbrBosons + 1, this->LzMax + this->NbrBosons + 1, 
+								this->LzMax + this->NbrBosons + 1, 0l);
       cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
@@ -344,7 +344,6 @@ AbstractHilbertSpace* BosonOnTorusWithSU3Spin::Clone()
 
 ostream& BosonOnTorusWithSU3Spin::PrintState (ostream& Str, int state)
 {
-  cout << this->StateDescription1[state]<<" "<<this->StateDescription2[state]<<" "<<this->StateDescription3[state]<<endl;
   this->FermionToBoson(this->StateDescription1[state], this->StateDescription2[state], this->StateDescription3[state],
 		       this->TemporaryState1, this->TemporaryState2, this->TemporaryState3); 
 
@@ -450,17 +449,14 @@ long BosonOnTorusWithSU3Spin::GenerateStates(int nbrBosons, int currentKy, int c
   for (int i = nbrBosons; i >= 0; --i)    
     {
       unsigned long Mask1 = ((0x1ul << i) - 0x1ul) << (currentFermionicPositionKy1 - i - 1);
-      cout <<"i = "<<i<<" Mask1 = " << Mask1 <<" "<<currentFermionicPositionKy1 - i - 1<<endl;
       for (int j = nbrBosons - i; j >= 0; --j)
 	{
     	  unsigned long Mask2 = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionKy2 - j - 1);	  
-	  cout <<"j = "<<j<<" Mask2 = " << Mask2 <<" "<<currentFermionicPositionKy2 - j - 1<<endl;
 	  for (int k = nbrBosons - i - j; k >= 0; --k)
 	    {
 	      unsigned long Mask3 = ((0x1ul << k) - 0x1ul) << (currentFermionicPositionKy3 - k - 1);	  
-	      cout <<"k = "<<k<<" Mask3 = " << Mask3 <<" "<<currentFermionicPositionKy3 - k - 1<<endl;
-	      	      TmpPos = this->GenerateStates(nbrBosons - i - j - k, currentKy - 1, currentTotalKy + (currentKy * (i + j +k)), 
-					    currentFermionicPositionKy1 - i - 1, currentFermionicPositionKy2 -j -1,
+	      TmpPos = this->GenerateStates(nbrBosons - i - j - k, currentKy - 1, currentTotalKy + (currentKy * (i + j +k)), 
+					    currentFermionicPositionKy1 - i - 1, currentFermionicPositionKy2 - j -1,
 					    currentFermionicPositionKy3 - k - 1, pos); 
 	      for (; pos < TmpPos; ++pos)
 		{
