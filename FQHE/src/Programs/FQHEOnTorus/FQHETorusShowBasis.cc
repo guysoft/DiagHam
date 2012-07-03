@@ -8,6 +8,7 @@
 #include "HilbertSpace/FermionOnTorusWithSpinNew.h"
 #include "HilbertSpace/FermionOnTorusWithSpin.h"
 #include "HilbertSpace/BosonOnTorusWithSpin.h"
+#include "HilbertSpace/BosonOnTorusWithSU3Spin.h"
 #include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 
@@ -58,6 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles with 2 Landau levels");
+  (*SystemGroup) += new BooleanOption  ('\n', "3-ll", "consider particles with 3 Landau levels");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-tz", "twice the quantum number of the system associated to the Tz generator (only useful in su(3) mode)", 0);
@@ -633,6 +635,79 @@ int main(int argc, char** argv)
 	      delete Space;
 	    }
 	}
+    }
+    
+    if(Manager.GetBoolean("3-ll") == true)
+    {
+	  if (Manager.GetBoolean("no-translation") == false)
+	    {
+	      cout << "particles on torus with with 3 Landau levels are not implemented" << endl;
+	      return -1;
+	      // 	      for (int x = 0; x < MomentumModulo; ++x)
+	      // 		for (int y = 0; y < MomentumModulo; ++y)
+	      // 		  {
+	      // 		  }
+	    }
+	  else
+	    {
+	      int MinKy = 0;
+	      int MaxKy = NbrFluxQuanta;
+	      if (Manager.GetInteger("ky-momentum") >= 0)
+		{
+		  MinKy = Manager.GetInteger("ky-momentum") % NbrFluxQuanta;
+		  MaxKy = MinKy + 1;
+		}
+	      for (int y = MinKy; y < MaxKy; ++y)
+		{
+		  ParticleOnSphereWithSU3Spin* Space;
+		  if (Manager.GetBoolean("boson") == true)
+		    {
+		      Space = new BosonOnTorusWithSU3Spin  (NbrParticles, NbrFluxQuanta, y);
+		    }
+		  else
+		    {
+		      //Space = new FermionOnTorusWithSpin  (NbrParticles, NbrFluxQuanta,  y);
+		      
+		      cout <<"fermions on torus with 3 Landau levels are not implemented"<<endl;
+		    }
+		  cout << " (k_y = " << y << ") : " << endl;
+		  if (Manager.GetString("state") == 0)
+		    {
+		      for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
+			Space->PrintState(cout, i) << endl;
+		      cout << endl;
+		    }
+		  else
+		    {
+		      int NbrHiddenComponents = 0;
+		      double WeightHiddenComponents = 0.0;
+		      double Normalization = 0.0;
+		      RealVector State;
+		      if (State.ReadVector(Manager.GetString("state")) == false)
+			{
+			  cout << "error while reading " << Manager.GetString("state") << endl;
+			  return -1;
+			}
+		      if (Space->GetHilbertSpaceDimension() != State.GetVectorDimension())
+			{
+			  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space->GetHilbertSpaceDimension() << ")" << endl;
+			  return -1;
+			}
+		      if (Manager.GetDouble("hide-component") > 0.0)
+			{
+			  double Error = Manager.GetDouble("hide-component");
+			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			    if (Norm(State[i]) > Error)
+			      Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+			}
+		      else
+			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+			  Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+		    }
+		  delete Space;
+		  
+		}
+	    }
     }
 }
 
