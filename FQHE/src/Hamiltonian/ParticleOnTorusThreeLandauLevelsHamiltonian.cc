@@ -69,7 +69,7 @@ ParticleOnTorusThreeLandauLevelsHamiltonian::ParticleOnTorusThreeLandauLevelsHam
 												   double ratio, bool haveDelta, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   cout<<"Torus with spin constructor"<<endl;
-
+  
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
   this->LzMax = maxMomentum - 1;
@@ -86,37 +86,40 @@ ParticleOnTorusThreeLandauLevelsHamiltonian::ParticleOnTorusThreeLandauLevelsHam
   cout << "-------------------------------------------------"<<endl;
 
   this->CyclotronEnergy=cyclotronenergy;
-
+  
   this->HaveDelta = haveDelta;
-
+  
   if (this->HaveDelta)
     this->FiniteQZeroComponent = 1.0;
   else
     this->FiniteQZeroComponent = 0.0;
-
+  
   cout << "Cyclotron energy: "<<this->CyclotronEnergy << endl;
-
+  
   this->OneBodyInteractionFactors11 = 0;
   this->OneBodyInteractionFactors22 = 0;
   this->OneBodyInteractionFactors33 = 0;
   if (this->CyclotronEnergy != 0)
     {
+      this->OneBodyInteractionFactors11 = new double [this->NbrLzValue];
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	this->OneBodyInteractionFactors11[i] = 0.0;
+      
       this->OneBodyInteractionFactors22 = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
 	this->OneBodyInteractionFactors22[i] = this->CyclotronEnergy;
-    
-
+      
       this->OneBodyInteractionFactors33 = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
-	this->OneBodyInteractionFactors33[i] = 2*this->CyclotronEnergy;
+	this->OneBodyInteractionFactors33[i] = 2.0*this->CyclotronEnergy;
     }
-
+  
   this->OneBodyInteractionFactors12 = 0;
   this->OneBodyInteractionFactors23 = 0;
   this->OneBodyInteractionFactors13 = 0;
-
+  
   this->HermitianSymmetryFlag = false;
-
+  
   this->HamiltonianShift = 0.0;
   this->Architecture = architecture;
   this->Memory = memory;
@@ -126,7 +129,7 @@ ParticleOnTorusThreeLandauLevelsHamiltonian::ParticleOnTorusThreeLandauLevelsHam
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->EvaluateInteractionFactors();
-
+  
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
@@ -178,7 +181,7 @@ ParticleOnTorusThreeLandauLevelsHamiltonian::~ParticleOnTorusThreeLandauLevelsHa
 void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-
+  
   this->NbrInterSectorSums = this->NbrLzValue;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -200,15 +203,15 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 	this->InterSectorIndicesPerSum[TmpIndex][1 + (this->NbrInterSectorIndicesPerSum[TmpIndex] << 1)] = m2;
 	++this->NbrInterSectorIndicesPerSum[TmpIndex];
       }
-
- if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+  
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       cout<<"Currently only implemented for bosons"<<endl;
       exit(1);
-/*
-      this->NbrIntraSectorSums = this->NbrLzValue;
-      this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+      /*
+	this->NbrIntraSectorSums = this->NbrLzValue;
+	this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
+	for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 < this->LzMax; ++m1)
 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
@@ -250,7 +253,7 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 		}
 	    }
 	}
-*/
+      */
     }
   else //Bosons
     {
@@ -275,7 +278,7 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 	    this->IntraSectorIndicesPerSum[TmpIndex][1 + (this->NbrIntraSectorIndicesPerSum[TmpIndex] << 1)] = m2;
 	    ++this->NbrIntraSectorIndicesPerSum[TmpIndex];
 	  }
-
+      
 //*************************************************************************************************
 //*************************************************************************************************
 //~~~~~~~~~~~~~~~~~~~~~~START FILLING IN THE INTERACTION TERMS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,8 +286,9 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 //*************************************************************************************************
 
 //------------------------------------- INTRA TERMS --------------------------------------
-
-      //****************** 1 1 1 1 *************************
+    
+    //****************** 1 1 1 1 *************************
+	
       this->InteractionFactors1111 = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
@@ -320,12 +324,10 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 			{
 			  this->InteractionFactors1111[i][Index] = (this->EvaluateInteractionCoefficient(m3, m4, m1, m2, 0, 0, 0, 0)
 								    + this->EvaluateInteractionCoefficient(m4, m3, m1, m2, 0, 0, 0, 0));
- 		          
 			}
 		      else
 			{
 			  this->InteractionFactors1111[i][Index] = this->EvaluateInteractionCoefficient(m3, m4, m1, m2, 0, 0, 0, 0);
-		          
 			}
 		    }	  
 		  TotalNbrInteractionFactors += 1;
@@ -334,7 +336,7 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 	    }
 	}
 
-
+      
       //****************** 2 2 2 2 *************************
       this->InteractionFactors2222 = new Complex* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -1158,7 +1160,7 @@ void ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionFactors()
 								    + this->EvaluateInteractionCoefficient(m4, m3, m1, m2, 2, 2, 0, 1)
 								    + this->EvaluateInteractionCoefficient(m4, m3, m2, m1, 2, 2, 1, 0));
 		    }
-		  else
+		  else  
 		   {
 		      this->InteractionFactors3312[i][Index] = (this->EvaluateInteractionCoefficient(m3, m4, m1, m2, 2, 2, 0, 1)
 								    + this->EvaluateInteractionCoefficient(m3, m4, m2, m1, 2, 2, 1, 0));
@@ -1590,7 +1592,7 @@ Complex ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionCoeffici
 
        PrecisionPos = exp(-0.5 * Q2)*  this->Potential(Q2, Qx, Qy, ll1, ll2, ll3, ll4);          	
        Phase.Re = cos(Qx * Xj13);
-       Phase.Im =  -sin(Qx * Xj13);
+       Phase.Im =  sin(Qx * Xj13);
        Coefficient += (PrecisionPos * Phase);
 
        //Sum over negative N1
@@ -1600,7 +1602,7 @@ Complex ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionCoeffici
 	
        PrecisionNeg = exp(-0.5 * Q2)*  this->Potential(Q2, Qx, Qy,  ll1, ll2, ll3, ll4);	  
        Phase.Re = cos(Qx * Xj13);
-       Phase.Im = -sin(Qx * Xj13);
+       Phase.Im = sin(Qx * Xj13);
        Coefficient += (PrecisionNeg * Phase);
 
       //Increment N1
@@ -1645,7 +1647,7 @@ Complex ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionCoeffici
 
        PrecisionPos = exp(-0.5 * Q2) *  this->Potential(Q2, Qx, Qy, ll1, ll2, ll3, ll4);	  
        Phase.Re = cos(Qx * Xj13);
-       Phase.Im = -sin(Qx * Xj13);
+       Phase.Im = sin(Qx * Xj13);
        Coefficient += (PrecisionPos * Phase);
 
        //Sum over negative N1
@@ -1655,7 +1657,7 @@ Complex ParticleOnTorusThreeLandauLevelsHamiltonian::EvaluateInteractionCoeffici
 
        PrecisionNeg = exp(-0.5 * Q2) *  this->Potential(Q2, Qx, Qy,  ll1, ll2, ll3, ll4);	  
        Phase.Re = cos(Qx * Xj13);
-       Phase.Im = -sin(Qx * Xj13);
+       Phase.Im = sin(Qx * Xj13);
        Coefficient += (PrecisionNeg * Phase);
        //Increment N1
        N1 += 1.0;
@@ -1695,35 +1697,79 @@ Complex ParticleOnTorusThreeLandauLevelsHamiltonian::Potential(double Q2, double
     Potential *= (FormFactor(Q2, Qx, Qy, ll1, ll4) * FormFactor(Q2, -Qx, -Qy, ll2, ll3)) ;
    
     return Potential;
-
 }
 
 // Returns the formfactor
 // Input : momentum + LL index
 Complex ParticleOnTorusThreeLandauLevelsHamiltonian::FormFactor(double Q2, double Qx, double Qy, int ll1, int ll2)
 {
-
   Complex ff(1.0, 0.0);
- /*
-  if ((ll1 == 1) && (ll2 == 1))
+  
+  if (ll1 == 0)
     {
-      ff.Re = 1.0 - 0.5 * Q2;
-      ff.Im = 0.0;
-    } 
+      if(ll2 == 1)
+	{
+	  ff.Re = Qy * OneOverSqrt2;
+	  ff.Im = Qx * OneOverSqrt2;
+	}
+      else
+	{
+	  if(ll2 == 2)
+	    {
+	      ff.Re =  0.5* OneOverSqrt2 * ( Qy*Qy- Qx*Qx) ;
+	      ff.Im = Qx*Qy*OneOverSqrt2;
+	    }  
+	}
+    }
   else
-   {
-     if ((ll1 == 1) && (ll2 == 0))
-      {
-       ff.Re = Qy * OneOverSqrt2;
-       ff.Im = Qx * OneOverSqrt2; 
-      } 
-     else 
-      if ((ll1 == 0) && (ll2 == 1)) 
-       {
-        ff.Re = -Qy * OneOverSqrt2;
-        ff.Im = Qx * OneOverSqrt2; 
-       }
-   }
-*/
+    {
+      if (ll1 == 1)
+	{
+	  if(ll2 == 0)
+	    {
+	      ff.Re = -Qy * OneOverSqrt2;
+	      ff.Im = Qx * OneOverSqrt2; 
+	    }
+	  else
+	    {
+	      if(ll2 == 1)
+		{
+		  ff.Re = 1.0 - 0.5 * Q2;
+		  ff.Im = 0.0;
+		}
+	      else
+		{
+		  ff.Re =  Qy*0.5*(2.0 - 0.5 * Q2) ;
+		  ff.Im = Qx*0.5*(2.0 - 0.5 * Q2);
+		}
+	    }
+	}
+      else
+	{
+	  if (ll2 == 0)
+	    {
+	      ff.Re =  0.5* OneOverSqrt2 * ( Qy*Qy- Qx*Qx) ;
+	      ff.Im = -Qx*Qy*OneOverSqrt2;
+	    }
+	  else
+	    {
+	      if(ll2 == 1)
+		{
+		  ff.Re =  -Qy*0.5*(2.0 - 0.5 * Q2) ;
+		  ff.Im = Qx*0.5*(2.0 - 0.5 * Q2);
+		}
+	      else
+		{
+		  ff.Re = 1.0 -  Q2 + 0.125*Q2*Q2;
+		  ff.Im = 0.0;
+		}
+	    }
+	}
+    }
+    
+    if ((ll1+ll2) & 0x1 != 0)
+      ff *= -1.0;
+  
+    
  return ff;   
 }

@@ -2876,6 +2876,8 @@ inline void ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian::EvaluateMN
     }
 }
 
+// CONTINUE HERE
+
 
 // core part of the PartialFastMultiplicationMemory method involving two-body term
 // 

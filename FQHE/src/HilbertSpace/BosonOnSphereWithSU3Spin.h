@@ -739,10 +739,10 @@ inline int BosonOnSphereWithSU3Spin::AdiAdj (int m1, int m2, unsigned long*& tem
       this->TemporaryState2[i] = this->ProdATemporaryState2[i];
       this->TemporaryState3[i] = this->ProdATemporaryState3[i];
     }
-  ++temporaryStatei[m2];
-  coefficient = temporaryStatei[m2];
-  ++temporaryStatej[m1];
-  coefficient *= temporaryStatej[m1];
+  ++temporaryStatej[m2];
+  coefficient = temporaryStatej[m2];
+  ++temporaryStatei[m1];
+  coefficient *= temporaryStatei[m1];
   coefficient = sqrt(coefficient);
   return this->FindStateIndex(this->TemporaryState1, this->TemporaryState2, this->TemporaryState3);
 }
