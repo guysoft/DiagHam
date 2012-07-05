@@ -332,7 +332,17 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, int nbrN1Sector, int nbrN2Sector, int nbrN3Sector, RealVector& groundState, AbstractArchitecture* architecture);
 
-
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // nbrN1Sector = number of type 1 particles  that belong to the subsytem 
+  // nbrN2Sector = number of type 1 particles  that belong to the subsytem 
+  // nbrN3Sector = number of type 1 particles  that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, ComplexVector& groundState, AbstractArchitecture* architecture);
 };
 
 #endif
