@@ -416,7 +416,7 @@ Complex ParticleOnCylinderHaffnianHamiltonian::EvaluateInteractionCoefficientBos
      //int rptimes3= 2.0*m4-m5-m6;
      //int sptimes3= 2.0*m5-m4-m6;
      //if ((rtimes3*rtimes3+stimes3*stimes3+rtimes3*stimes3+rptimes3*rptimes3+sptimes3*sptimes3+rptimes3*sptimes3) <= 24)
-        Coefficient.Re = (3.0 + 2.0 * (1.0 - 2.0 * GaussianExp1 - 2.0 * GaussianExp2 + 4.0 * GaussianExp1 * GaussianExp2) + 18.0 * Xr * Xs * (Xr+ Xs) * Xrp * Xsp * (Xrp + Xsp)) * exp(- GaussianExp1 - GaussianExp2);
+        Coefficient.Re = (1.0 + 2.0 * (1.0 - 2.0 * GaussianExp1 - 2.0 * GaussianExp2 + 4.0 * GaussianExp1 * GaussianExp2) + 54.0 * Xr * Xs * (Xr+ Xs) * Xrp * Xsp * (Xrp + Xsp)) * exp(- GaussianExp1 - GaussianExp2);
      //else
      //   Coefficient.Re = 0.0;
      Coefficient.Im = 0.0;
