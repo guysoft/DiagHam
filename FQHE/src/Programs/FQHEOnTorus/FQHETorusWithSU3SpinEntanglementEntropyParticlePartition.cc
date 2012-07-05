@@ -326,7 +326,7 @@ else
 	for (int SubsystemNbrN2 = 0; SubsystemNbrN2 <= MaxNbrN2; ++SubsystemNbrN2)
 	  {
 	    int SubsystemNbrN3 = SubsystemNbrParticles - SubsystemNbrN1 - SubsystemNbrN2;
-	    if ((SubsystemNbrN3 >= 0) && (SubsystemNbrN3 <= MaxNbrN3))
+	    if (((SubsystemNbrN3 >= 0) && (SubsystemNbrN3 <= MaxNbrN3)) || (NoSzFlag == true))
 	      {
 		int SubsystemTotalTz = SubsystemNbrN1 - SubsystemNbrN2;
 		int SubsystemTotalY = SubsystemNbrN1 + SubsystemNbrN2 - (2 * SubsystemNbrN3);
