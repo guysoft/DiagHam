@@ -224,7 +224,14 @@ else
 	}
       else
 	{
+	  if (NoSzFlag == false)
+	    {
 	  Spaces[i] = new BosonOnTorusWithSU3Spin (NbrParticles, TotalTz[i], TotalY[i], KyMax, TotalKy[i]);
+	    }
+	    else
+	    {
+	      Spaces[i] = new BosonOnTorusWithSU3Spin (NbrParticles, KyMax, TotalKy[i]);
+	    }
 	}
       
       if(ComplexFlag == false)
