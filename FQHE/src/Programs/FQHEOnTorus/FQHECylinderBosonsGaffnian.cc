@@ -8,6 +8,8 @@
 
 
 #include "Hamiltonian/ParticleOnCylinderGaffnianHamiltonian.h"
+#include "Hamiltonian/ParticleOnCylinderHaffnianHamiltonian.h"
+
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -76,6 +78,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ky", "number of Ky values to evaluate", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "3b-coupling", "amplitude of the 3-body interaction", 1.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "haffnian", "diagonalize Haffnian Hamiltonian instead of Gaffnian");
   (*SystemGroup) += new SingleDoubleOption ('\n', "confinement-potential", "amplitude of the quadratic confinement potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "electric-field", "parameter for the value of the electric field applied along the cylinder (a=eEl_B^2/hbar omega_c", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "b-field", "parameter for the value of the magnetic field [in T] when also the electric field is present (needed to set the scale for the kinetic term)", 0.0);
@@ -180,7 +183,12 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderGaffnianHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, ThreeBodyCoupling, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian;
+      if (((BooleanOption*) Manager["haffnian"])->GetBoolean() == true)
+          Hamiltonian = new ParticleOnCylinderHaffnianHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, ThreeBodyCoupling, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
+      else
+          Hamiltonian = new ParticleOnCylinderGaffnianHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, ThreeBodyCoupling, Confinement, ElectricFieldParameter, BFieldParameter, Architecture.GetArchitecture(), Memory);
+
 
       double Shift = 0.0;
       Hamiltonian->ShiftHamiltonian(Shift);

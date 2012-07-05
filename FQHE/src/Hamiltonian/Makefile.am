@@ -151,4 +151,5 @@ ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian.cc \
 ParticleOnCylinderGaffnianHamiltonian.cc \
 ParticleOnCylinderFourBodyDeltaHamiltonian.cc \
 AbstractQHEOnCylinderFourBodyHamiltonian.cc \
-ParticleOnTorusThreeLandauLevelsHamiltonian.cc
+ParticleOnTorusThreeLandauLevelsHamiltonian.cc \
+ParticleOnCylinderHaffnianHamiltonian.cc
