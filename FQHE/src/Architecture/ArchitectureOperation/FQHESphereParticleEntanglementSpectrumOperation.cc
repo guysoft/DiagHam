@@ -286,7 +286,7 @@ bool FQHESphereParticleEntanglementSpectrumOperation::ArchitectureDependentApply
 	this->LocalOperations[i] = (FQHESphereParticleEntanglementSpectrumOperation*) this->Clone();
     }
   int ReducedNbrThreads = this->NbrLocalOperations - 1;
-  if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
+  if ((this->ComplexGroundState.GetLargeVectorDimension() == 0l) && (this->ComplexGroundStates == 0))
     {
       for (int i = 0; i < ReducedNbrThreads; ++i)
 	{
@@ -309,7 +309,7 @@ bool FQHESphereParticleEntanglementSpectrumOperation::ArchitectureDependentApply
   this->LocalOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
   architecture->SetThreadOperation(this->LocalOperations[ReducedNbrThreads], ReducedNbrThreads);
   architecture->SendJobs();
-  if (this->ComplexGroundState.GetLargeVectorDimension() == 0l)
+  if ((this->ComplexGroundState.GetLargeVectorDimension() == 0l) && (this->ComplexGroundStates == 0))
     {
       for (int i = 0; i < ReducedNbrThreads; ++i)
 	{
