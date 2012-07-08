@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
@@ -3512,6 +3511,197 @@ double FermionOnSphereHaldaneHugeBasis::JackSqrNormalization (RealVector& output
 		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
 	    }	      
 	  SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  cout << endl;
+  return SqrNorm;
+}
+
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state = reference on the unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+LongRational FermionOnSphereHaldaneHugeBasis::JackSqrNormalization (LongRationalVector& outputVector, long minIndex, long nbrComponents)
+{
+  LongRational SqrNorm = 0l;
+  FactorialCoefficient Factorial;
+  unsigned long HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  if (this->NbrRootSuffix == 0)
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
+	{
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->StateDescription[i], this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetLongRationalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  else
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
+	{
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->GetStateFactorized(i), this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(outputVector[i] * outputVector[i]) * Factorial.GetLongRationalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  cout << endl;
+  return SqrNorm;
+}
+
+// compute part of the Jack polynomial scalar product in a given range of indices
+//
+// state1 = reference on the first unnormalized Jack polynomial
+// state2 = reference on the second unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+double FermionOnSphereHaldaneHugeBasis::JackScalarProduct (RealVector& state1, RealVector& state2, long minIndex, long nbrComponents)
+{
+  double SqrNorm = 0.0;
+  FactorialCoefficient Factorial;
+  unsigned long HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  if (this->NbrRootSuffix == 0)
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
+	{
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->StateDescription[i], this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(state1[i] * state2[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  else
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
+	{
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->GetStateFactorized(i), this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(state1[i] * state2[i]) * Factorial.GetNumericalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  cout << endl;
+  return SqrNorm;
+}
+
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state1 = reference on the first unnormalized Jack polynomial
+// state2 = reference on the second unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+LongRational FermionOnSphereHaldaneHugeBasis::JackScalarProduct (LongRationalVector& state1, LongRationalVector& state2, long minIndex, long nbrComponents)
+{
+  LongRational SqrNorm = 0l;
+  FactorialCoefficient Factorial;
+  unsigned long HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  if (this->NbrRootSuffix == 0)
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
+	{
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->StateDescription[i], this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(state1[i] * state2[i]) * Factorial.GetLongRationalValue();
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
+  else
+    {
+      for (long i = minIndex; i < MaxIndex; ++i)
+	{
+	  Factorial.SetToOne();
+	  this->ConvertToMonomial(this->GetStateFactorized(i), this->TemporaryMonomial);
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      if (HalfLzMax < this->TemporaryMonomial[k])
+		Factorial.PartialFactorialMultiply(HalfLzMax + 1, this->TemporaryMonomial[k]);
+	      else
+		if (HalfLzMax > this->TemporaryMonomial[k])
+		  Factorial.PartialFactorialDivide(this->TemporaryMonomial[k] + 1, HalfLzMax);
+	    }	      
+	  SqrNorm +=(state1[i] * state2[i]) * Factorial.GetLongRationalValue();
 	  if ((i & 0x3fffl) == 0l)
 	    {
 	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";

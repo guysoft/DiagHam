@@ -627,6 +627,24 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = quare normalization 
   virtual double JackSqrNormalization (RealVector& outputVector, long minIndex = 0l, long nbrComponents = 0l);
 
+  // compute part of the Jack polynomial scalar product in a given range of indices
+  //
+  // state1 = reference on the first unnormalized Jack polynomial
+  // state2 = reference on the second unnormalized Jack polynomial
+  // minIndex = first index to compute 
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+  // return value = quare normalization 
+  virtual double JackScalarProduct (RealVector& state1, RealVector& state2, long minIndex = 0l, long nbrComponents = 0l);
+
+  // compute part of the Jack polynomial square normalization in a given range of indices
+  //
+  // state1 = reference on the first unnormalized Jack polynomial
+  // state2 = reference on the second unnormalized Jack polynomial
+  // minIndex = first index to compute 
+  // nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+  // return value = quare normalization 
+  virtual LongRational JackScalarProduct (LongRationalVector& state1, LongRationalVector& state2, long minIndex = 0l, long nbrComponents = 0l);
+  
   // remove part of each Fock state, discarding component if the Fock state does not a given pattern
   //
   // inputVector = state to truncate

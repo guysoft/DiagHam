@@ -4052,6 +4052,88 @@ LongRational FermionOnSphere::JackSqrNormalization (LongRationalVector& outputVe
   return SqrNorm;
 }
 
+// compute part of the Jack polynomial scalar product in a given range of indices
+//
+// state1 = reference on the first unnormalized Jack polynomial
+// state2 = reference on the second unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+double FermionOnSphere::JackScalarProduct (RealVector& state1, RealVector& state2, long minIndex, long nbrComponents)
+{
+  double SqrNorm = 0.0;
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
+  FactorialCoefficient Factorial;
+  unsigned long HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  for (long i = minIndex; i < MaxIndex; ++i)
+    {
+      Factorial.SetToOne();
+      this->ConvertToMonomial(this->StateDescription[i], TmpMonomial);
+      for (int k = 0; k < this->NbrFermions; ++k)
+	{
+	  if (HalfLzMax < TmpMonomial[k])
+	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomial[k]);
+	  else
+	    if (HalfLzMax > TmpMonomial[k])
+	      Factorial.PartialFactorialDivide(TmpMonomial[k] + 1, HalfLzMax);
+	}	      
+      SqrNorm +=(state1[i] * state2[i]) * Factorial.GetNumericalValue();
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  cout << endl;
+  delete[] TmpMonomial;
+  return SqrNorm;
+}
+
+// compute part of the Jack polynomial square normalization in a given range of indices
+//
+// state1 = reference on the first unnormalized Jack polynomial
+// state2 = reference on the second unnormalized Jack polynomial
+// minIndex = first index to compute 
+// nbrComponents = number of indices to compute (0 if they all have to be computed from minIndex)
+// return value = quare normalization 
+
+LongRational FermionOnSphere::JackScalarProduct (LongRationalVector& state1, LongRationalVector& state2, long minIndex, long nbrComponents)
+{
+  LongRational SqrNorm = 0l;
+  unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
+  FactorialCoefficient Factorial;
+  unsigned long HalfLzMax = this->LzMax >> 1;
+  long MaxIndex = minIndex + nbrComponents;
+  if (MaxIndex == minIndex)
+    MaxIndex = this->LargeHilbertSpaceDimension;
+  for (long i = minIndex; i < MaxIndex; ++i)
+    {
+      Factorial.SetToOne();
+      this->ConvertToMonomial(this->StateDescription[i], TmpMonomial);
+      for (int k = 0; k < this->NbrFermions; ++k)
+	{
+	  if (HalfLzMax < TmpMonomial[k])
+	    Factorial.PartialFactorialMultiply(HalfLzMax + 1, TmpMonomial[k]);
+	  else
+	    if (HalfLzMax > TmpMonomial[k])
+	      Factorial.PartialFactorialDivide(TmpMonomial[k] + 1, HalfLzMax);
+	}	      
+      SqrNorm += (state1[i] * state2[i]) * Factorial.GetLongRationalValue();
+      if ((i & 0x3fffl) == 0l)
+	{
+	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100l) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	  cout.flush();
+	}
+    }
+  cout << endl;
+  delete[] TmpMonomial;
+  return SqrNorm;
+}
+  
 // remove part of each Fock state, discarding component if the Fock state does not a given pattern
 //
 // inputVector = state to truncate
