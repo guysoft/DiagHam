@@ -337,22 +337,22 @@ Complex ParticleOnCylinderFourBodyDeltaHamiltonian::EvaluateInteractionCoefficie
 
   if (this->ElectricField == 0)
    {
-     //int rtimes4 = (3.0 * m1 - m2 - m3 - m4);
-     //int stimes4 = (3.0 * m2 - m1 - m3 - m4);
-     //int ttimes4 = (3.0 * m3 - m1 - m2 - m4);
+     int rtimes4 = (3.0 * m1 - m2 - m3 - m4);
+     int stimes4 = (3.0 * m2 - m1 - m3 - m4);
+     int ttimes4 = (3.0 * m3 - m1 - m2 - m4);
 
-     //int rptimes4 = (3.0 * m5 - m6 - m7 - m8);
-     //int sptimes4 = (3.0 * m6 - m5 - m7 - m8);
-     //int tptimes4 = (3.0 * m7 - m5 - m6 - m8);
+     int rptimes4 = (3.0 * m5 - m6 - m7 - m8);
+     int sptimes4 = (3.0 * m6 - m5 - m7 - m8);
+     int tptimes4 = (3.0 * m7 - m5 - m6 - m8);
 
-     //if ((rtimes4*rtimes4+stimes4*stimes4+ttimes4*ttimes4+rtimes4*stimes4+rtimes4*ttimes4+stimes4*ttimes4+rptimes4*rptimes4+sptimes4*sptimes4+tptimes4*tptimes4+rptimes4*sptimes4+rptimes4*tptimes4+sptimes4*tptimes4) <= 160000)
-     //   { 
+     if ((rtimes4*rtimes4+stimes4*stimes4+ttimes4*ttimes4+rtimes4*stimes4+rtimes4*ttimes4+stimes4*ttimes4+rptimes4*rptimes4+sptimes4*sptimes4+tptimes4*tptimes4+rptimes4*sptimes4+rptimes4*tptimes4+sptimes4*tptimes4) <= 16)
+        { 
           GaussianExp = Xr * Xr + Xs * Xs + Xt * Xt + Xr * Xs + Xr * Xt + Xs * Xt;
           GaussianExp += Xrp * Xrp + Xsp * Xsp + Xtp * Xtp + Xrp * Xsp + Xrp * Xtp + Xsp * Xtp;
           Coefficient.Re = exp(-GaussianExp);
-     //   }
-     //else 
-     //     Coefficient.Re = 0.0;
+        }
+     else 
+          Coefficient.Re = 0.0;
 
      Coefficient.Im = 0.0;
 

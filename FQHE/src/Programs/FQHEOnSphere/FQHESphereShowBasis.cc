@@ -1,6 +1,7 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereFull.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
@@ -51,6 +52,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "all-lz", "consider particles with all Lz components");
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
@@ -96,6 +98,7 @@ int main(int argc, char** argv)
   int TotalLz = Manager.GetInteger("lz-value");
   int TotalTz = Manager.GetInteger("total-tz");
   int TotalY = Manager.GetInteger("total-y");
+  bool AllLzFlag = Manager.GetBoolean("all-lz");
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
   bool AllSzFlag = Manager.GetBoolean("all-sz");
   bool AddIndex = Manager.GetBoolean("add-index");
@@ -127,11 +130,12 @@ int main(int argc, char** argv)
       }
   }
     
-  if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
-    {
-      cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
-      return -1;
-    }
+  if (AllLzFlag == false)
+    if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
+      {
+        cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
+        return -1;
+      }
 
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
@@ -180,17 +184,22 @@ int main(int argc, char** argv)
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
+              if (AllLzFlag == false) 
+                {
 #ifdef __64_BITS__
-	      if (NbrFluxQuanta <= 63)
-		Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
-	      else
-		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
+	            if (NbrFluxQuanta <= 63)
+		      Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	            else
+		      Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #else
-	      if (NbrFluxQuanta <= 31)
-		Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
-	      else
-		Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
+  	            if (NbrFluxQuanta <= 31)
+		      Space = new FermionOnSphere(NbrParticles, TotalLz, NbrFluxQuanta);
+	            else
+		      Space = new FermionOnSphereUnlimited(NbrParticles, TotalLz, NbrFluxQuanta);
 #endif
+                }
+              else //Consider all Lz values 
+                Space = new FermionOnSphereFull(NbrParticles, NbrFluxQuanta);
 	    }
  	  else
  	    {

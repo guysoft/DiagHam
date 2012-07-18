@@ -110,6 +110,24 @@ FermionOnSphereFull::FermionOnSphereFull (int nbrFermions, int lzMax, unsigned l
 
   this->GenerateLookUpTable(memory);
 
+/*
+  double coeff;
+  ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Clone();
+  for (int k=0; k<this->HilbertSpaceDimension; ++k)
+  {
+     cout<<"k= "<<k<<" "; this->PrintState(cout, k); cout<<endl;
+     for (int i=0; i<=this->LzMax; ++i)
+       for (int j=0; j<=this->LzMax; ++j)
+         {
+           int Index = TmpParticles->AdA(k,i,j,coeff);
+           if (Index < this->HilbertSpaceDimension)
+             cout<<"i= "<<i<<" j="<<j<<" "<<Index<<endl;
+         }
+  }
+  delete TmpParticles;
+  exit(1);
+*/
+
 #ifdef __DEBUG__
   unsigned long UsedMemory = 0l;
   UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
@@ -229,6 +247,119 @@ double FermionOnSphereFull::AdA (int index, int m)
   return 0.0;
 }
 
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereFull::AdA (int index, int m, int n, double& coefficient)
+{
+  int StateLzMax = this->StateLzMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(((unsigned long) (0x1)) << n);
+  if ((TmpState != 0x0ul))
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;
+  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (((unsigned long) (0x1)) << m);
+  int NewIndex = this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+  //cout<<"AdA "; this->PrintState(cout,index);cout<<" m= "<<m<<" n="<<n<<" NewLzMax="<<NewLzMax<<" NewIndex= "<<NewIndex<<endl;
+  return NewIndex;
+}
+
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int FermionOnSphereFull::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+//      for (int i=0; i<HilbertSpaceDimension; ++i)
+//	if (this->StateDescription[i] == stateDescription)
+//          return i;
+//      return this->HilbertSpaceDimension;
+
+   int PosMax = this->HilbertSpaceDimension - 1;
+   int PosMin = 0;
+
+   while (PosMin <= PosMax) 
+     {
+       int PosMid = (PosMin + PosMax) >> 1;  // compute mid point.
+       unsigned long CurrentState = this->StateDescription[PosMid];
+       if (CurrentState > stateDescription) 
+           PosMin = PosMid + 1;  // repeat search in top half.
+       else if (CurrentState < stateDescription) 
+           PosMax = PosMid - 1; // repeat search in bottom half.
+       else
+           return PosMid;     // found it. return position /////
+   }
+   return this->HilbertSpaceDimension;    // failed to find key
+
+/*
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    return PosMin;
+
+*/
+
+}
+
 // generate all states (i.e. all possible skew symmetric polynomials with fixed Lz)
 // 
 // nbrFermions = number of fermions
@@ -243,7 +374,8 @@ long FermionOnSphereFull::GenerateStates(int nbrFermions, int lzMax, int current
     return pos;
   if (nbrFermions == 1)
     {
-      for (; currentLzMax >= 0; --currentLzMax)
+      int currentLzMaxOld = currentLzMax;
+      for ( ; currentLzMax >= 0; --currentLzMax)
 	{
 	  this->StateDescription[pos] = 0x1ul << currentLzMax;
 	  this->StateLzMax[pos] = lzMax;
@@ -262,6 +394,7 @@ long FermionOnSphereFull::GenerateStates(int nbrFermions, int lzMax, int current
     return this->GenerateStates(nbrFermions, lzMax, ReducedCurrentLzMax, TmpPos);
 }
 
+
 // evaluate Hilbert space dimension
 //
 // nbrFermions = number of fermions
@@ -274,3 +407,28 @@ long FermionOnSphereFull::EvaluateHilbertSpaceDimension(int nbrFermions, int lzM
   return TmpCoefficients(lzMax + 1, nbrFermions);
 }
 
+
+// convert the vector with a given Lz to the full space (all Lz components)
+// inputState = input vector
+// inputSpace = input Hilbert space with given Lz
+// return value = vector in the full Hilbert space
+
+void FermionOnSphereFull::ConvertToAllLz (ComplexVector& inputState, ParticleOnSphere* inputSpace, ComplexVector& outputState)
+{
+  FermionOnSphere* InputSpace = (FermionOnSphere*) inputSpace;
+
+  int Index;
+  for (int i = 0; i < InputSpace->GetHilbertSpaceDimension(); i++)
+   {
+     Index = this->FindStateIndex(InputSpace->StateDescription[i], InputSpace->StateLzMax[i]);
+     if (Index < this->HilbertSpaceDimension)
+      {
+        outputState[Index] = inputState[i];
+      }
+     else
+      {
+       cout<<"Component not found!"<<endl;
+       exit(-1);
+      }
+   }
+}

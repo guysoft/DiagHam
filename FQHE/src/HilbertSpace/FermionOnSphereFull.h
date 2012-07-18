@@ -96,6 +96,24 @@ class FermionOnSphereFull :  public FermionOnSphere
   // return value = coefficient obtained when applying a^+_m a_m
   double AdA (int index, int m);
 
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+
+  int AdA (int index, int m, int n, double& coefficient);
+
+  // convert the vector with a given Lz to the full space (all Lz components)
+  // inputState = input vector
+  // inputSpace = input Hilbert space with given Lz
+  // return value = vector in the full Hilbert space
+
+  void ConvertToAllLz (ComplexVector& inputState, ParticleOnSphere* inputSpace, ComplexVector& outputState);
+
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -113,6 +131,13 @@ class FermionOnSphereFull :  public FermionOnSphere
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int lzMax, int currentLzMax, long pos);
+
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  virtual int FindStateIndex(unsigned long stateDescription, int lzMax);
 
 };
 

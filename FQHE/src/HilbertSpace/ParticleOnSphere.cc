@@ -1066,3 +1066,11 @@ ostream& ParticleOnSphere::PrintCompactState (ostream& Str, long state)
   return this->PrintState(Str, (int) state);
 }
 
+// convert the vector with a given Lz to the full space (all Lz components)
+// inputState = input vector
+// inputSpace = input Hilbert space with given Lz
+// return value = vector in the full Hilbert space
+
+void ParticleOnSphere::ConvertToAllLz (ComplexVector& inputState, ParticleOnSphere* inputSpace, ComplexVector& outputState)
+{
+}

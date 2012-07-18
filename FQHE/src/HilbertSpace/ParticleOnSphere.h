@@ -694,8 +694,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   virtual void LandauLevelOccupationNumber(int state, int* lLOccupationConfiguration);
 
   virtual void EvaluatePartialDensityMatrixMultipartiteParticlePartition(ParticleOnSphere * spaceA, ParticleOnSphere * spaceB, ParticleOnSphere * spaceC,  RealVector groundstate, RealSymmetricMatrix* densityMatrix, AbstractArchitecture* architecture = 0);
+
+  // convert the vector with a given Lz to the full space (all Lz components)
+  // inputState = input vector
+  // inputSpace = input Hilbert space with given Lz
+  // return value = vector in the full Hilbert space
+
+  void ConvertToAllLz (ComplexVector& inputState, ParticleOnSphere* inputSpace, ComplexVector& outputState);
+
+
 };
 
 #endif
-
-
