@@ -697,7 +697,6 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(
 
 ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent)
 {
-  double TmpInteractionRe,TmpInteractionIm;
   int LastComponent = firstComponent + nbrComponent;
   int* TmpIndexArray;
   unsigned short* TmpCoefficientIndexArray;
@@ -788,7 +787,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyDiskStorage(C
 ComplexVector* AbstractQHEOnLatticeHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 									    int firstComponent, int nbrComponent)
 {
-  cout << "toto!" << endl;
+  cout << "todo!" << endl;
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
     {
@@ -984,11 +983,8 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFast
 ComplexVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 												int firstComponent, int nbrComponent)
 {
-  int Index;
   Complex TmpInteraction;
   int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
   Complex TmpSum=0.0;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
@@ -1297,10 +1293,7 @@ ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFast
 ComplexVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartialFastMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 												int firstComponent, int nbrComponent)
 {
-  int Index;
   int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
   unsigned short* TmpCoefficientIndexArray;
@@ -1405,7 +1398,7 @@ ComplexVector* AbstractQHEOnLatticeHamiltonian::HermitianLowLevelMultipleAddMult
     {
       if (this->FastMultiplicationStep == 1)
 	{
-	  this->HermitianLowLevelMultipleAddMultiplyPartialFastMultiply( vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
+	  this->HermitianLowLevelMultipleAddMultiplyFastMultiply( vSources, vDestinations, nbrVectors, firstComponent, LastComponent);
 	}
       else
 	{
@@ -1619,11 +1612,8 @@ RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyFastMultiply(Rea
 RealVector& AbstractQHEOnLatticeHamiltonian::LowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 										   int firstComponent, int nbrComponent)
 {
-  int Index;
   double TmpInteraction;
   int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
   unsigned short* TmpCoefficientIndexArray;
@@ -1895,11 +1885,8 @@ RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyFastMul
 RealVector& AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 											     int firstComponent, int nbrComponent)
 {
-  int Index;
   double TmpInteraction;
   int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
   double TmpSum=0.0;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
@@ -1980,7 +1967,6 @@ RealVector* AbstractQHEOnLatticeHamiltonian::ConjugateLowLevelMultipleAddMultipl
   if (this->FastMultiplicationFlag == false)
     {
       double * TmpCoefficients = new double [nbrVectors];
-      int Index;
       ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
       this->EvaluateMNOneBodyConjugateAddMultiplyComponent(TmpParticles, firstComponent,LastComponent,1, vSources, vDestinations , nbrVectors);
       for (int i =   firstComponent; i <LastComponent; i++)
@@ -2186,14 +2172,11 @@ RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyFastMul
 RealVector& AbstractQHEOnLatticeHamiltonian::HermitianLowLevelAddMultiplyPartialFastMultiply(RealVector& vSource, RealVector& vDestination, 
 											     int firstComponent, int nbrComponent)
 {
-  int Index;
   int LastComponent = firstComponent + nbrComponent;
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
   ParticleOnLattice* TmpParticles = (ParticleOnLattice*) this->Particles->Clone();
   int* TmpIndexArray;
   unsigned short* TmpCoefficientIndexArray;
-  double TmpInteraction, TmpC;
+  double TmpC;
   double TmpSum;
   int TmpNbrRealInteraction;
   int TmpNbrComplexInteraction;
