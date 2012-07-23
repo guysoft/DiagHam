@@ -388,6 +388,34 @@ double BosonOnSphereShort::ProdA (int index, int* n, int nbrIndices)
   return sqrt((double) TmpCoefficient);
 }
 
+
+// apply Prod_i a_mi operator to the state produced using ProdA method (without destroying it)
+// use double when calculating normalization factors to avoid overflow
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double BosonOnSphereShort::ProdAL (int index, int* n, int nbrIndices)
+{
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->ProdATemporaryState, this->ProdATemporaryStateLzMax);
+  double TmpCoefficient = 1.0;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      if (n[i] > this->ProdATemporaryStateLzMax)
+	return 0.0;
+      unsigned long& Tmp = this->ProdATemporaryState[n[i]];
+      if (Tmp == 0)
+	return 0.0;
+      TmpCoefficient *= Tmp;
+      --Tmp;
+    }
+  for (int i = this->ProdATemporaryStateLzMax + 1; i < this->NbrLzValue; ++i)
+    this->ProdATemporaryState[i] = 0;
+  return sqrt(TmpCoefficient);
+}
+
 // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
 //
 // m1 = first index for creation operator
@@ -425,6 +453,28 @@ int BosonOnSphereShort::ProdAd (int* m, int nbrIndices, double& coefficient)
   for (int i = 0; i < nbrIndices; ++i)
     TmpCoefficient *= ++this->TemporaryState[m[i]];
   coefficient = sqrt((double) TmpCoefficient);
+  this->TemporaryStateLzMax = this->LzMax;
+  while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
+    --this->TemporaryStateLzMax;
+  return this->TargetSpace->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+// use double when calculating normalization factors to avoid overflow
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnSphereShort::ProdAdL (int* m, int nbrIndices, double& coefficient)
+{
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  double TmpCoefficient = 1.0;
+  for (int i = 0; i < nbrIndices; ++i)
+    TmpCoefficient *= ++this->TemporaryState[m[i]];
+  coefficient = sqrt(TmpCoefficient);
   this->TemporaryStateLzMax = this->LzMax;
   while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
     --this->TemporaryStateLzMax;

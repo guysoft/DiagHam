@@ -164,12 +164,13 @@ int main(int argc, char** argv)
   double Length = sqrt(2.0 * M_PI * XRatio * (KyMax + 1));
   double Height = sqrt(2.0 * M_PI * (KyMax + 1) / XRatio);
   cout<<"Length = "<<Length<<" Circumference= "<<Height<<endl;
-  if ((fabs(X0) >= 0.5 * Length) || (Y0 >= 0.5 * Height))
+  if ((fabs(X0) >= 0.5 * Length) || (Y0 >= Height))
    {
      cout<<"Point is at the boundary or beyond! " <<endl;
      exit(-1);
    }
-  double Step = X0/NbrPoints;
+  double StepX = X0/NbrPoints;
+  double StepY = Y0/NbrPoints;
 
   //*************************************************************************
   //********* Act with n_0(0)(1-n_1(0))(1-n_2(0)) ***************************
@@ -206,8 +207,8 @@ int main(int argc, char** argv)
 
   for (int i = 0; i <= NbrPoints; i++)
    {
-     double X = i * Step;
-     double Y = Y0;
+     double X = i * StepX;
+     double Y = Y0; //i * StepY;
      cout<<"---------------Step "<<i<<" out of "<<NbrPoints<<" X= " << X<<" ---------"<<endl;    
   
     //*************************************************************************

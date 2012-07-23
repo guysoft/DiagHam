@@ -125,9 +125,12 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::~ParticleOnLatticeChernIns
 	  delete[] this->InteractionFactors[i];
 	}
     }
-  delete[] this->InteractionFactors;
-  delete[] this->NbrSectorIndicesPerSum;
-  delete[] this->SectorIndicesPerSum;
+  if (this->NbrSectorSums != 0)
+   {
+     delete[] this->InteractionFactors;
+     delete[] this->NbrSectorIndicesPerSum;
+     delete[] this->SectorIndicesPerSum;
+   }
   if (this->OneBodyInteractionFactors != 0)
     delete[] this->OneBodyInteractionFactors;
   if (this->FastMultiplicationFlag == true)

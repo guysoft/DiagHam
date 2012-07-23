@@ -310,6 +310,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		      this->M2Value[this->NbrInteractionFactors] = m2;
 		      this->M3Value[this->NbrInteractionFactors] = m3;
 		      this->M4Value[this->NbrInteractionFactors] = m4;
+                      cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
 		      ++this->NbrInteractionFactors;
 		    }
 		  ++Pos;

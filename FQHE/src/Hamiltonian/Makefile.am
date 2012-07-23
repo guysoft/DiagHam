@@ -153,4 +153,5 @@ ParticleOnCylinderFourBodyDeltaHamiltonian.cc \
 AbstractQHEOnCylinderFourBodyHamiltonian.cc \
 ParticleOnTorusThreeLandauLevelsHamiltonian.cc \
 ParticleOnCylinderHaffnianHamiltonian.cc \
-ParticleOnCylinderOrbitalProjection.cc
+ParticleOnCylinderOrbitalProjection.cc \
+ParticleOnCylinderNBodyHamiltonian.cc
