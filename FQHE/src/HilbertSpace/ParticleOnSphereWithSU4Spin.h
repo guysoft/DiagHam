@@ -247,6 +247,16 @@ class ParticleOnSphereWithSU4Spin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AddmAdm (int index, int m, int n, double& coefficient) = 0;
 
+  // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up, 1 for um, 2 for dp and 3 for dm 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // sigma1 = SU(4) index for the first annihilation operator
+  // sigma2 = SU(4) index for the second annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2) = 0;
+
   // apply a_n1_up a_n2_up operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
@@ -326,6 +336,16 @@ class ParticleOnSphereWithSU4Spin :  public ParticleOnSphere
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
   virtual double AdmAdm (int index, int n1, int n2) = 0;
+
+  // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0 for up, 1 for um, 2 for dp and 3 for dm 
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // sigma1 = SU(4) index for the first creation operator
+  // sigma2 = SU(4) index for the second creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient) = 0;
 
   // apply a^+_m1_up a^+_m2_up operator to the state produced using A*A* method (without destroying it)
   //

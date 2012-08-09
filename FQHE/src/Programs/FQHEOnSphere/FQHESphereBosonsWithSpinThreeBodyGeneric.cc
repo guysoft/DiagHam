@@ -13,6 +13,8 @@
 
 #include "MainTask/QHEOnSphereMainTask.h"
 
+#include "Tools/FQHEFiles/FQHESpherePseudopotentialTools.h"
+
 #include "Options/Options.h"
 
 #include "GeneralTools/ConfigurationParser.h"
@@ -31,7 +33,6 @@ using std::cout;
 using std::endl;
 using std::ofstream;
 
-void TestPadding(bool padding, const char* fieldName, int tmpNbrPP, double* &tmpPP, int lzMax);
 
 int main(int argc, char** argv)
 {
@@ -298,101 +299,20 @@ int main(int argc, char** argv)
       --NbrThreeBodyPseudoPotentials[2];
       --NbrThreeBodyPseudoPotentials[3];
 
-      int TmpNbrPseudoPotentials;
-      double* TmpPseudoPotentials;
-      bool Flag = false;
-      if (InteractionDefinition.GetAsDoubleArray("Pseudopotentials", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+
+      if ((InteractionDefinition["Pseudopotentials"] != 0) || (InteractionDefinition["PseudopotentialsUpUp"] != 0)
+	  || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0))
 	{
-	  TestPadding(Padding, "Pseudopotentials", TmpNbrPseudoPotentials, TmpPseudoPotentials, LzMax);
-	  PseudoPotentials = new double*[3];
+	  PseudoPotentials  = new double*[3];
 	  for (int i = 0; i < 3; ++i)
-	    {  
+	    {
 	      PseudoPotentials[i] = new double[LzMax + 1];
 	      for (int j = 0; j <= LzMax; ++j)
-		PseudoPotentials[i][j] = TmpPseudoPotentials[j];
-	    }
-	}
-      else
-	if (InteractionDefinition["Pseudopotentials"] != 0)
-	  {
-	    cout << "Pseudopotentials has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
+		PseudoPotentials[i][j] = 0.0;
+	    };
+	  if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
+					       OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
 	    return -1;
-	  }
-      if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpUp", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
-	{
-	  Flag = true;
-	  TestPadding(Padding, "PseudopotentialsUpUp", TmpNbrPseudoPotentials, TmpPseudoPotentials, LzMax);
-	  if (PseudoPotentials == 0)
-	    {
-	      PseudoPotentials = new double*[3];
-	      for (int i = 0; i < 3; ++i)
-		PseudoPotentials[i] = new double[LzMax + 1];
-	      for (int j = 0; j <= LzMax; ++j)
-		PseudoPotentials[0][j] = TmpPseudoPotentials[j];
-	    }
-	  else
-	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	      PseudoPotentials[0][j] = TmpPseudoPotentials[j];
-	}
-      else
-	if (InteractionDefinition["PseudopotentialsUpUp"] != 0)
-	  {
-	    cout << "PseudopotentialsUpUp has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
-	    return -1;
-	  }
-      if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsDownDown", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
-	{
-	  Flag = true;
-	  TestPadding(Padding, "PseudopotentialsDownDown", TmpNbrPseudoPotentials, TmpPseudoPotentials, LzMax);
-	  if (PseudoPotentials == 0)
-	    {
-	      cout << "Pseudopotentials and PseudopotentialsUpUp are not defined" << endl;
-	      return -1;	  	      
-	    }
-	  else
-	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	      PseudoPotentials[1][j] = TmpPseudoPotentials[j];
-	}
-      else
-	if (InteractionDefinition["PseudopotentialsDownDown"] != 0)
-	  {
-	    cout << "PseudopotentialsDownDown has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
-	    return -1;
-	  }
-      if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsUpDown", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
-	{
-	  Flag = true;
-	  TestPadding(Padding, "PseudopotentialsUpDown", TmpNbrPseudoPotentials, TmpPseudoPotentials, LzMax);
-	  if (PseudoPotentials == 0)
-	    {
-	      cout << "Pseudopotentials,PseudopotentialsUpUp and PseudopotentialsDownDown are not defined" << endl;
-	      return -1;	  	      
-	    }
-	  else
-	    for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
-	      PseudoPotentials[2][j] = TmpPseudoPotentials[j];
-	}
-      else
-	if (InteractionDefinition["PseudopotentialsUpDown"] != 0)
-	  {
-	    cout << "PseudopotentialsUpDown has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
-	    return -1;
-	  }
-      if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', OneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
-	{
-	  if (TmpNbrPseudoPotentials != (LzMax + 1))
-	    {
-	      cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
-	      return -1;
-	    }
-	}
-      if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialDownDown", ' ', OneBodyPotentialDownDown, TmpNbrPseudoPotentials) == true)
-	{
-	  if (TmpNbrPseudoPotentials != (LzMax + 1))
-	    {
-	      cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << ((SingleStringOption*) Manager["interaction-file"])->GetString() << endl;
-	      return -1;
-	    }
 	}
     }
 
@@ -425,16 +345,20 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       if (PseudoPotentials == 0)
-	Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials,
-									      Architecture.GetArchitecture(), 
-									      Memory, DiskCacheFlag,
-									      LoadPrecalculationFileName);
+	{
+	  Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials,
+										Architecture.GetArchitecture(), 
+										Memory, DiskCacheFlag,
+										LoadPrecalculationFileName);
+	}
       else
-	Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials,
-									      PseudoPotentials, 0, 0,
-									      Architecture.GetArchitecture(), 
-									      Memory, DiskCacheFlag,
-									      LoadPrecalculationFileName);
+	{
+	  Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials,
+										PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
+										Architecture.GetArchitecture(), 
+										Memory, DiskCacheFlag,
+										LoadPrecalculationFileName);
+	}
       if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
 	Hamiltonian->AddL2(L, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20); 
       if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
@@ -464,25 +388,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-
-void TestPadding(bool padding, const char* fieldName, int tmpNbrPP, double* &tmpPP, int lzMax)
-{
-  if (tmpNbrPP != (lzMax +1))
-    {
-      if (padding)
-	{
-	  double *NewPP = new double[lzMax+1];
-	  for (int i=0; i<tmpNbrPP; ++i)
-	    NewPP[i] = tmpPP[i];
-	  for (int i=tmpNbrPP; i<=lzMax; ++i)
-	    NewPP[i] = 0.0;
-	  delete [] tmpPP;
-	  tmpPP=NewPP;
-	}
-      else
-	{
-	  cout << "Invalid number of pseudo-potentials in "<< fieldName << endl;
-	  exit(-1);
-	}
-    }
-}

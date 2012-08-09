@@ -1660,6 +1660,253 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateSymmetrizedJackPolynomialSparse
   cout << endl;
 }
 
+// create the Jack polynomial decomposition corresponding to the root partition and using sparse storage
+//
+// alpha = value of the Jack polynomial alpha coefficient
+// architecture = architecture to use for precalculation
+// partialSave = save partial results in a given vector file
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// memory = amount of memory (in bytes) allowed for temporary vector storage (0 if the whole vector has to be stored in memory)
+// memoryBlock = amount of memory (in bytes) allowed for precomputing state indices
+// resumeFlag = true if the calculation has to be resumed from a previous one (assuming partialSave contains already computed components)
+
+void  BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomialSparse(long alphaNumerator, long alphaDenominator, AbstractArchitecture* architecture, char* partialSave, long minIndex, long maxIndex, long memory, long memoryBlock, bool resumeFlag)
+{
+//   if ((maxIndex <= 0) || (maxIndex >= this->LargeHilbertSpaceDimension))
+//     maxIndex = this->LargeHilbertSpaceDimension - 1l;
+//   double TmpComponent = 1.0;
+//   long FileShift = 4l;
+//   if (this->HilbertSpaceDimension <= 0)
+//     FileShift = 12l;
+//   if ((minIndex <= 0) && (resumeFlag == false))
+//     {
+//       ofstream File;
+//       File.open(partialSave, ios::binary | ios::out);
+//       WriteLittleEndian(File, this->HilbertSpaceDimension);  
+//       if (this->HilbertSpaceDimension <= 0)
+// 	{
+// 	  WriteLittleEndian(File, this->LargeHilbertSpaceDimension);  
+// 	}
+//       WriteLittleEndian(File, TmpComponent);  
+//       File.close();
+//     }
+//   TmpComponent = 0.0;
+  
+//   memory >>= 3;
+//   if ((memory > this->LargeHilbertSpaceDimension) || (memory <= 0))
+//     {
+//       cout << "vector does not require temporary disk storage" << endl;
+//       memory = this->LargeHilbertSpaceDimension;
+//     }
+//   LongRational* TmpVectorBuffer = new LongRational [memory];
+//   long BufferGlobalIndex = 0l;
+
+
+//   LongRational InvAlpha =  2.0 / alpha;
+
+//   LongRational RhoRoot = 0.0;
+//   unsigned long MaxRoot = 0x0ul;
+//   MaxRoot = this->FermionHugeBasis->GetStateFactorized(0l);
+//   int TmpLzMax = this->FermionHugeBasis->LzMax;
+//   while (((MaxRoot >> TmpLzMax) & 0x1ul) == 0ul)
+//     --TmpLzMax;
+//   this->ConvertToMonomial(MaxRoot, TmpLzMax, this->TemporaryMonomial);
+//   for (int j = 0; j < this->NbrBosons; ++j)
+//     RhoRoot += this->TemporaryMonomial[j] * (this->TemporaryMonomial[j] - 1l - InvAlpha * ((long) j));
+//   if (minIndex <= 0)
+//     minIndex = 1;
+//   TmpVectorBuffer[0l] = 1l;
+//   int MaxArraySize = ((this->NbrBosons * (this->NbrBosons - 1)) / 2) * (this->LzMax + 1);
+//   long NbrBlocks =  memoryBlock / (((2l* sizeof (long)) + (sizeof(double))) * MaxArraySize);
+//   if (NbrBlocks == 0)
+//     {
+//       NbrBlocks = 100000;
+//     }
+//   if (NbrBlocks > this->LargeHilbertSpaceDimension)
+//     {
+//       NbrBlocks = (this->LargeHilbertSpaceDimension >> 1) + 1;
+//     }
+//   cout << "number of precalculation blocks = " << NbrBlocks << endl;
+//   long DisplayStep = (this->LargeHilbertSpaceDimension / (1000 * NbrBlocks)) * NbrBlocks;
+//   long** TmpIndexArray = new long* [NbrBlocks];
+//   double** TmpComponentArray = new LongRational* [NbrBlocks];
+//   unsigned long** TmpStateArray = new unsigned long* [NbrBlocks]; 
+//   double* TmpRhoArray = new LongRational [NbrBlocks];
+//   int* TmpNbrComputedComponentArray = new int [NbrBlocks];
+//   for (int j = 0; j < NbrBlocks; ++j)
+//     {
+//       TmpIndexArray[j] = new long [MaxArraySize];
+//       TmpComponentArray[j] = new LongRational [MaxArraySize];
+//       TmpStateArray[j] = new unsigned long [MaxArraySize];
+//     }
+//   FQHESphereJackGeneratorOperation Operation(this, InvAlpha, MaxRoot, TmpIndexArray, TmpStateArray, TmpComponentArray, TmpRhoArray, TmpNbrComputedComponentArray, false, false);
+
+//   if (resumeFlag == true)
+//     {
+// //       ifstream File;
+// //       File.open(partialSave, ios::binary | ios::in);
+// //       File.seekg (0, ios::end);
+// //       long TmpResumePos = File.tellg();
+// //       File.close();
+// //       TmpResumePos -= FileShift;
+// //       TmpResumePos /= sizeof(double); 	      
+// //       long TmpResumeMinPos = TmpResumePos - NbrBlocks;
+// //       long LimNbrBlocks = NbrBlocks;
+// //       if (TmpResumeMinPos < 0l)
+// // 	{
+// // 	  TmpResumeMinPos = 0l;
+// // 	  LimNbrBlocks = TmpResumePos - TmpResumeMinPos + 1;
+// // 	}
+// //       long TmpMaxIndex = TmpResumeMinPos + NbrBlocks - 1l;
+// //       if (TmpMaxIndex > maxIndex)
+// // 	{
+// // 	  LimNbrBlocks = NbrBlocks - (TmpMaxIndex - maxIndex);
+// // 	  TmpMaxIndex = maxIndex;
+// // 	}
+// //       if (LimNbrBlocks > 0)
+// // 	{
+// // 	  cout << "consistency check, " << TmpResumePos << " components have already been computed, checking the last " << LimNbrBlocks << " ones" << endl;      
+// // 	  Operation.SetIndicesRange(TmpResumeMinPos, LimNbrBlocks);
+// // 	  Operation.ApplyOperation(architecture);
+// // 	  ifstream OutputFile;
+// // 	  OutputFile.open(partialSave, ios::binary | ios::in);
+// // 	  double RefCoefficient = 0.0;
+
+// // 	  for (long k = 0l; k < LimNbrBlocks; ++k)
+// // 	    {
+// // 	      OutputFile.seekg (FileShift + (TmpResumeMinPos * sizeof(double)), ios::beg);
+// // 	      ReadLittleEndian(OutputFile, RefCoefficient);
+// // 	      double Coefficient = 0.0;
+// // 	      if (TmpNbrComputedComponentArray[k] >= 0)
+// // 		{
+// // 		  for (int j = 0; j < TmpNbrComputedComponentArray[k]; ++j)
+// // 		    {
+// // 		      long TmpIndex = TmpIndexArray[k][j];
+// // 		      if (TmpIndex < this->LargeHilbertSpaceDimension)
+// // 			{		  
+// // 			  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+// // 			  ReadLittleEndian (OutputFile, TmpComponent);
+// // 			  Coefficient += TmpComponentArray[k][j] * TmpComponent;
+// // 			}	      	    
+// // 		    }		  
+// // 		  Coefficient *= InvAlpha;
+// // 		  Coefficient /= (RhoRoot - TmpRhoArray[k]);
+// // 		}
+// // 	      else
+// // 		{
+// // 		  long TmpIndex = TmpIndexArray[k][0];
+// // 		  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+// // 		  ReadLittleEndian (OutputFile, Coefficient);
+// // 		}
+// // 	      if (Coefficient != RefCoefficient)
+// // 		{
+// // 		  cout << "error, invalid Jack : component " << TmpResumeMinPos << " is " << RefCoefficient << ", should be " << Coefficient << endl;
+// // 		  OutputFile.close();
+// // 		  return;
+// // 		}
+// // 	      ++TmpResumeMinPos;
+// // 	    }
+// // 	  TmpResumeMinPos = TmpResumePos - memory;
+// // 	  if (TmpResumeMinPos < 0l)
+// // 	    TmpResumeMinPos = 0l;
+// // 	  BufferGlobalIndex = TmpResumeMinPos;
+// // 	  OutputFile.seekg ((TmpResumeMinPos * sizeof(double)) + FileShift, ios::beg);
+// // 	  double TmpComponent;
+// // 	  for (; TmpResumeMinPos < TmpResumePos; ++TmpResumeMinPos)
+// // 	    {	      
+// // 	      ReadLittleEndian (OutputFile, TmpComponent);
+// // 	      TmpVectorBuffer[TmpResumeMinPos % memory] = TmpComponent;	      
+// // 	    }
+// // 	  OutputFile.close();
+// // 	}
+// //       cout << "consistency check done, resuming calculation now" << endl;
+// //       minIndex = TmpResumePos;
+//     }
+
+//   fstream OutputFile;
+//   OutputFile.open(partialSave, ios::in | ios::binary | ios::out);
+
+//   timeval TotalStartingTime;
+//   timeval TotalEndingTime;
+//   gettimeofday (&(TotalStartingTime), 0);
+
+//   for (long i = minIndex; i <= maxIndex;)
+//     {
+//       long TmpMaxIndex = i + NbrBlocks - 1l;
+//       long LimNbrBlocks = NbrBlocks;
+//       if (TmpMaxIndex > maxIndex)
+// 	{
+// 	  LimNbrBlocks = NbrBlocks - (TmpMaxIndex - maxIndex);
+// 	  TmpMaxIndex = maxIndex;
+// 	}
+//       Operation.SetIndicesRange(i, LimNbrBlocks);
+//       Operation.ApplyOperation(architecture);
+//       for (long k = 0l; k < LimNbrBlocks; ++k)
+// 	{
+// 	  if (TmpNbrComputedComponentArray[k] >= 0)
+// 	    {
+// 	      double Coefficient = 0.0;
+// 	      for (int j = 0; j < TmpNbrComputedComponentArray[k]; ++j)
+// 		{
+// 		  long TmpIndex = TmpIndexArray[k][j];
+// // 		  if (TmpIndex < this->LargeHilbertSpaceDimension)
+// // 		    {		  
+// // 		      if (TmpIndex < BufferGlobalIndex)
+// // 			{
+// // 			  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+// // 			  ReadLittleEndian (OutputFile, TmpComponent);
+// // 			}
+// // 		      else
+// // 			{
+// 			  TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+// 			  //			}
+// 		      Coefficient += TmpComponentArray[k][j] * TmpComponent;
+// 		    }	      	    
+// 		}
+ 
+// 	      Coefficient *= InvAlpha;
+// 	      Coefficient /= (RhoRoot - TmpRhoArray[k]);
+// 	      OutputFile.seekg (0, ios::end);
+// 	      WriteLittleEndian(OutputFile, Coefficient);
+// 	      if (i >= memory)
+// 		++BufferGlobalIndex;
+// 	      TmpVectorBuffer[i % memory] = Coefficient;
+// 	      ++i;
+// 	    }
+// 	  else
+// 	    {
+// 	      long TmpIndex = TmpIndexArray[k][0];
+// 	      if (TmpIndex < BufferGlobalIndex)
+// 		{
+// 		  OutputFile.seekg ((TmpIndex * sizeof(double)) + FileShift, ios::beg);
+// 		  ReadLittleEndian (OutputFile, TmpComponent);
+// 		}
+// 	      else
+// 		{
+// 		  TmpComponent = TmpVectorBuffer[TmpIndex % memory];
+// 		}
+// 	      OutputFile.seekg (0, ios::end);
+// 	      WriteLittleEndian(OutputFile, TmpComponent); 	  
+// 	      if (i >= memory)
+// 		++BufferGlobalIndex;
+// 	      TmpVectorBuffer[i % memory] = TmpComponent;
+// 	      ++i;
+// 	    }
+// 	}
+//       if ((i & DisplayStep) == 0l)
+//       	{
+//      	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+//       	  cout.flush();
+//       	}
+//     }
+//   OutputFile.close();
+//   delete[] TmpStateArray;
+//   delete[] TmpIndexArray;
+//   delete[] TmpComponentArray;
+//   cout << endl;
+}
+
 // core part of the Jack generator using the Lz<->-Lz symmetry and the factorized algorithm
 //
 // invAlpha = inverse of the Jack polynomial alpha coefficient
@@ -1783,6 +2030,84 @@ void BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomialFactorizedCore(do
 	for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
 	  {
 	    double Diff = (double) (this->TemporaryMonomial[j1] - this->TemporaryMonomial[j2]);
+	    unsigned int Max = this->TemporaryMonomial[j2];
+	    unsigned long TmpState = 0x0ul;
+	    int Tmpj1 = j1;
+	    int Tmpj2 = j2;
+	    for (int l = 0; l < this->NbrBosons; ++l)
+	      this->TemporaryMonomial2[l] = this->TemporaryMonomial[l];	    
+	    for (unsigned int k = 1; (k <= Max) && (TmpState < maxRoot); ++k)
+	      {
+		++this->TemporaryMonomial2[Tmpj1];
+		--this->TemporaryMonomial2[Tmpj2];
+		Diff += 2.0;
+		while ((Tmpj1 > 0) && (this->TemporaryMonomial2[Tmpj1] > this->TemporaryMonomial2[Tmpj1 - 1]))
+		  {
+		    unsigned long Tmp = this->TemporaryMonomial2[Tmpj1 - 1];
+		    this->TemporaryMonomial2[Tmpj1 - 1] = this->TemporaryMonomial2[Tmpj1];
+		    this->TemporaryMonomial2[Tmpj1] = Tmp;
+		    --Tmpj1;
+		  }
+		while ((Tmpj2 < ReducedNbrBosons) && (this->TemporaryMonomial2[Tmpj2] < this->TemporaryMonomial2[Tmpj2 + 1]))
+		  {
+		    unsigned long Tmp = this->TemporaryMonomial2[Tmpj2 + 1];
+		    this->TemporaryMonomial2[Tmpj2 + 1] = this->TemporaryMonomial2[Tmpj2];
+		    this->TemporaryMonomial2[Tmpj2] = Tmp;
+		    ++Tmpj2;
+		  }
+		TmpState = this->ConvertFromMonomial(this->TemporaryMonomial2);
+		if ((TmpState <= maxRoot) && (TmpState > CurrentPartition))
+		  {
+		    TmpComponentArray[NbrComputedComponents] = Diff;
+		    TmpStateArray[NbrComputedComponents] = TmpState;
+		    ++NbrComputedComponents;
+		  }
+	      }
+	  }
+      nbrComputedComponents[i - minIndex] = NbrComputedComponents;
+      for (int j = 0; j < NbrComputedComponents; ++j)
+	{
+	  TmpIndexArray[j] = this->FermionHugeBasis->FindStateIndexFactorized(TmpStateArray[j]);
+	}
+    }
+}
+
+// core part of the Jack generator using the factorized algorithm
+//
+// invAlpha = inverse of the Jack polynomial alpha coefficient
+// maxRoot = root partition (in fermionic binary representation)
+// partialSave = save partial results in a given vector file
+// minIndex = start computing the Jack polynomial from the minIndex-th component
+// maxIndex = stop  computing the Jack polynomial up to the maxIndex-th component (0 if it has to be computed up to the end)
+// indexArray = array where state indices are stored
+// stateArray = array use to store computed state description
+// componentArray = array where computed component numerical factors are stored
+// nbrComputedComponentArray = number of connected components associated to each state through the Jack generator
+// rhoArray = rho factor associated to each state
+
+void BosonOnSphereHaldaneHugeBasisShort::GenerateJackPolynomialFactorizedCore(LongRational invAlpha, unsigned long maxRoot, long minIndex, long maxIndex, unsigned long** stateArray, LongRational** componentArray, long** indexArray, int* nbrComputedComponents, LongRational* rhoArray)
+{
+  int TmpLzMax = this->FermionHugeBasis->LzMax;
+  int ReducedNbrBosons = this->NbrBosons - 1;
+  for (long i = minIndex; i <= maxIndex; ++i)
+    {
+      unsigned long* TmpStateArray = stateArray[i - minIndex];
+      LongRational* TmpComponentArray = componentArray[i - minIndex];
+      long* TmpIndexArray = indexArray[i - minIndex];
+      LongRational Rho = 0l;
+      unsigned long CurrentPartition = 0x0ul;
+      CurrentPartition = this->FermionHugeBasis->GetStateFactorized(i);
+      while (((CurrentPartition >> TmpLzMax) & 0x1ul) == 0ul)
+	--TmpLzMax;
+      this->ConvertToMonomial(CurrentPartition, TmpLzMax, this->TemporaryMonomial);
+      for (int j = 0; j < this->NbrBosons; ++j)
+	Rho += this->TemporaryMonomial[j] * (this->TemporaryMonomial[j] - 1l - invAlpha * ((long) j));
+      rhoArray[i - minIndex] = Rho;
+      int NbrComputedComponents = 0;
+      for (int j1 = 0; j1 < ReducedNbrBosons; ++j1)
+	for (int j2 = j1 + 1; j2 < this->NbrBosons; ++j2)
+	  {
+	    long Diff = (long) (this->TemporaryMonomial[j1] - this->TemporaryMonomial[j2]);
 	    unsigned int Max = this->TemporaryMonomial[j2];
 	    unsigned long TmpState = 0x0ul;
 	    int Tmpj1 = j1;
