@@ -97,6 +97,17 @@ class ParticleOnCylinderNBodyHamiltonian : public ParticleOnLatticeChernInsulato
 
   long GetAllSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, int**& sortedIndicesPerSum, int**& sortedIndicesPerSumSymmetryFactor);
 
+  // get all indices needed to characterize a completly skew symmetric tensor, sorted by the sum of the indices
+  //
+  // nbrValues = number of different values an index can have
+  // nbrIndices = number of indices 
+  // nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+  // sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+  // return value = total number of index groups
+
+  long  GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
+										  int**& sortedIndicesPerSum);
+
   // evaluate the numerical coefficient  in front of the Prod a_m^+ Prod a_m coupling term for bosons
   // Indices1,Indices2 = arrays containing indices
   // return value = numerical coefficient
@@ -179,30 +190,60 @@ inline void ParticleOnCylinderNBodyHamiltonian::EvaluateMNNBodyAddMultiplyCompon
   Complex* TmpInteractionFactor;
   int Index;
  
-  for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-    {
-      int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-      TmpIndices = this->NBodySectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	{
-	  Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
-	  if (Coefficient3 != 0.0)
-	    {
-	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
-	      Coefficient4 = vSource[index];
-	      Coefficient4 *= Coefficient3;
-	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		{
-		  Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		  if (Index < Dim)
-		    {
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
-		    }
-		  ++TmpInteractionFactor;
-		}
-	    }
-	}
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdA(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        Coefficient4 = vSource[index];
+	        Coefficient4 *= Coefficient3;
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index < Dim)
+		      {
+		        vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		      }
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
     }
+  else //Bosons... use ProdAL etc.
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        Coefficient4 = vSource[index];
+	        Coefficient4 *= Coefficient3;
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index < Dim)
+		      {
+		        vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		      }
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+   }
 }
 
 
@@ -225,29 +266,59 @@ inline void ParticleOnCylinderNBodyHamiltonian::EvaluateMNNBodyAddMultiplyCompon
   
   int* TmpIndices;
   Complex* TmpInteractionFactor;
-  for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-    {
-      int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-      TmpIndices = this->NBodySectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	{
-	  Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
-	  if (Coefficient3 != 0.0)
-	    {
-	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
-	      for (int p = 0; p < nbrVectors; ++p)
-		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		{
-		  Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		  if (Index < Dim)
-		    for (int p = 0; p < nbrVectors; ++p)
-		      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-		  ++TmpInteractionFactor;
-		}
-	    }
-	}
-    }
+
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdA(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        for (int p = 0; p < nbrVectors; ++p)
+		  tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index < Dim)
+		      for (int p = 0; p < nbrVectors; ++p)
+		        vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+   }
+  else //Bosons...use ProdAL etc.
+  {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        for (int p = 0; p < nbrVectors; ++p)
+		  tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index < Dim)
+		      for (int p = 0; p < nbrVectors; ++p)
+		        vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+  }
 }
 
 // core part of the AddMultiply method involving the n-body interaction
@@ -267,33 +338,67 @@ inline void ParticleOnCylinderNBodyHamiltonian::HermitianEvaluateMNNBodyAddMulti
   Complex* TmpInteractionFactor;
   int Index;
   Complex TmpSum = 0.0;
-  for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-    {
-      int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-      TmpIndices = this->NBodySectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	{
-	  Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
-	  if (Coefficient3 != 0.0)
-	    {
-	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
-	      Coefficient4 = vSource[index];
-	      Coefficient4 *= Coefficient3;
-	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		{
-		  Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		  if (Index <= index)
-		    {
-		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
-		    }
-		  ++TmpInteractionFactor;
-		}
-	    }
-	}
-    }
-  vDestination[index] += TmpSum;
+
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdA(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        Coefficient4 = vSource[index];
+	        Coefficient4 *= Coefficient3;
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index <= index)
+		      {
+		        if (Index < index)
+			  TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+		        vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		      }
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+    vDestination[index] += TmpSum;
+   }
+  else //Bosons...use ProdAL etc.
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        Coefficient4 = vSource[index];
+	        Coefficient4 *= Coefficient3;
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index <= index)
+		      {
+		        if (Index < index)
+			  TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
+		        vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+		      }
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+    vDestination[index] += TmpSum;
+  }
 }
 
 
@@ -317,46 +422,93 @@ inline void ParticleOnCylinderNBodyHamiltonian::HermitianEvaluateMNNBodyAddMulti
   int* TmpIndices;
   Complex* TmpInteractionFactor;
   Complex* TmpSum = new Complex[nbrVectors];
-  for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-    {
-      int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-      TmpIndices = this->NBodySectorIndicesPerSum[j];
-      for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	{
-	  Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
-	  if (Coefficient3 != 0.0)
-	    {
-	      TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
-	      for (int p = 0; p < nbrVectors; ++p)
-		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		{
-		  Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		  if (Index <= index)
-		    {
-		      if (Index < index)
-			{
-			  for (int p = 0; p < nbrVectors; ++p)
-			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
-			    }
-			}
-		      else
-			{
-			  for (int p = 0; p < nbrVectors; ++p)
-			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			    }
-			}
-		    }
-		  ++TmpInteractionFactor;
-		}
-	    }
-	}
-    }
-  for (int l = 0; l < nbrVectors; ++l)
-    vDestinations[l][index] += TmpSum[l];
+
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdA(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        for (int p = 0; p < nbrVectors; ++p)
+		  tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index <= index)
+		      {
+		        if (Index < index)
+			  {
+			    for (int p = 0; p < nbrVectors; ++p)
+			      {
+			        vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			        TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      }
+			  }
+		        else
+			  {
+			    for (int p = 0; p < nbrVectors; ++p)
+			      {
+			        vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      }
+			  }
+		      }
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+    for (int l = 0; l < nbrVectors; ++l)
+      vDestinations[l][index] += TmpSum[l];
+   }
+  else //Bosons...use ProdAL etc.
+   {
+    for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      {
+        int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+        TmpIndices = this->NBodySectorIndicesPerSum[j];
+        for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	  {
+	    Coefficient3 = particles->ProdAL(index, TmpIndices + i1, this->NBodyValue);
+	    if (Coefficient3 != 0.0)
+	      {
+	        TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+	        for (int p = 0; p < nbrVectors; ++p)
+		  tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	        for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		  {
+		    Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		    if (Index <= index)
+		      {
+		        if (Index < index)
+			  {
+			    for (int p = 0; p < nbrVectors; ++p)
+			      {
+			        vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			        TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      }
+			  }
+		        else
+			  {
+			    for (int p = 0; p < nbrVectors; ++p)
+			      {
+			        vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      }
+			  }
+		      }
+		    ++TmpInteractionFactor;
+		  }
+	      }
+	  }
+      }
+    for (int l = 0; l < nbrVectors; ++l)
+      vDestinations[l][index] += TmpSum[l];
+   }
   delete[] TmpSum;
 }
 
@@ -378,71 +530,143 @@ inline void ParticleOnCylinderNBodyHamiltonian::EvaluateMNNBodyFastMultiplicatio
   Complex* TmpInteractionFactor;
   int Dim = particles->GetHilbertSpaceDimension();
 
-  if (this->HermitianSymmetryFlag == false)
-    {
-      for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-	{
-	  int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-	  TmpIndices = this->NBodySectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	    {
-	      int AbsoluteIndex = index + this->PrecalculationShift;
-	      Coefficient2 = particles->ProdAL(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
-	      if (Coefficient2 != 0.0)
-		{
-		  TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
-		  for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		    {
-		      Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		      if (Index < Dim)
-			{
-			  indexArray[position] = Index;
-			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-			  ++position;
-			}
-		      ++TmpInteractionFactor;
-		    }
-		}
-	    }
-	}
-    }
-  else
-    {
-      for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-	{
-	  int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-	  TmpIndices = this->NBodySectorIndicesPerSum[j];
-	  for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	    {
-	      int AbsoluteIndex = index + this->PrecalculationShift;
-	      Coefficient2 = particles->ProdAL(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
-	      if (Coefficient2 != 0.0)
-		{
-		  TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
-		  for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		    {
-		      Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		      if (Index <= AbsoluteIndex)
-			{
-			  if (Index == AbsoluteIndex)
-			    {
-			      indexArray[position] = Index;
-			      coefficientArray[position] = Coefficient * Coefficient2 * 0.5 * (*TmpInteractionFactor);
-			      ++position;
-			    }
-			  else
-			    {
-			      indexArray[position] = Index;
-			      coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
-			      ++position;
-			    }
-			}
-		      ++TmpInteractionFactor;
-		    }
-		}
-	    }
-	}
-    }
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+   {
+    if (this->HermitianSymmetryFlag == false)
+      {
+        for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	  {
+	    int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	    TmpIndices = this->NBodySectorIndicesPerSum[j];
+	    for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	      {
+	        int AbsoluteIndex = index + this->PrecalculationShift;
+	        Coefficient2 = particles->ProdA(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
+	        if (Coefficient2 != 0.0)
+		  {
+		    TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+		    for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		      {
+		        Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		        if (Index < Dim)
+			  {
+			    indexArray[position] = Index;
+			    coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			    ++position;
+			  }
+		        ++TmpInteractionFactor;
+		      }
+		  }
+	      }
+	  }
+      }
+    else
+      {
+        for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	  {
+	    int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	    TmpIndices = this->NBodySectorIndicesPerSum[j];
+	    for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	      {
+	        int AbsoluteIndex = index + this->PrecalculationShift;
+	        Coefficient2 = particles->ProdA(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
+	        if (Coefficient2 != 0.0)
+		  {
+		    TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+		    for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		      {
+		        Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		        if (Index <= AbsoluteIndex)
+			  {
+			    if (Index == AbsoluteIndex)
+			      {
+			        indexArray[position] = Index;
+			        coefficientArray[position] = Coefficient * Coefficient2 * 0.5 * (*TmpInteractionFactor);
+			        ++position;
+			      }
+			    else
+			      {
+			        indexArray[position] = Index;
+			        coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			        ++position;
+			      }
+			  }
+		        ++TmpInteractionFactor;
+		      }
+		  }
+	      }
+	  }
+      }
+   }
+  else //Bosons...use ProdAL etc.
+   {
+    if (this->HermitianSymmetryFlag == false)
+      {
+        for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	  {
+	    int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	    TmpIndices = this->NBodySectorIndicesPerSum[j];
+	    for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	      {
+	        int AbsoluteIndex = index + this->PrecalculationShift;
+	        Coefficient2 = particles->ProdAL(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
+	        if (Coefficient2 != 0.0)
+		  {
+		    TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+		    for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		      {
+		        Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		        if (Index < Dim)
+			  {
+			    indexArray[position] = Index;
+			    coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			    ++position;
+			  }
+		        ++TmpInteractionFactor;
+		      }
+		  }
+	      }
+	  }
+      }
+    else
+      {
+        for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	  {
+	    int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	    TmpIndices = this->NBodySectorIndicesPerSum[j];
+	    for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	      {
+	        int AbsoluteIndex = index + this->PrecalculationShift;
+	        Coefficient2 = particles->ProdAL(AbsoluteIndex, TmpIndices + i1, this->NBodyValue);
+	        if (Coefficient2 != 0.0)
+		  {
+		    TmpInteractionFactor = &(this->NBodyInteractionFactors[j][(i1 * Lim) / this->SqrNBodyValue]);
+		    for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		      {
+		        Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		        if (Index <= AbsoluteIndex)
+			  {
+			    if (Index == AbsoluteIndex)
+			      {
+			        indexArray[position] = Index;
+			        coefficientArray[position] = Coefficient * Coefficient2 * 0.5 * (*TmpInteractionFactor);
+			        ++position;
+			      }
+			    else
+			      {
+			        indexArray[position] = Index;
+			        coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+			        ++position;
+			      }
+			  }
+		        ++TmpInteractionFactor;
+		      }
+		  }
+	      }
+	  }
+      }
+
+  }
 }
 
 
@@ -461,59 +685,119 @@ inline void ParticleOnCylinderNBodyHamiltonian::EvaluateMNNBodyFastMultiplicatio
   int* TmpIndices;
   int Dim = particles->GetHilbertSpaceDimension();
 
-  if (this->HermitianSymmetryFlag == true)
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
    {
+    if (this->HermitianSymmetryFlag == true)
+     {
+       for (int i = firstComponent; i < lastComponent; ++i)
+         {
+           for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	     {
+	       int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	       TmpIndices = this->NBodySectorIndicesPerSum[j];
+	       for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	         {
+	           Coefficient2 = particles->ProdA(i, TmpIndices + i1, this->NBodyValue);
+	           if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		        {
+		          Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		          if (Index <= i)
+			    {
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      ++memory;
+			    }
+		        }
+		    }
+	         }
+	     }
+         }
+     }
+    else
+    {
      for (int i = firstComponent; i < lastComponent; ++i)
-       {
-         for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-	   {
-	     int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-	     TmpIndices = this->NBodySectorIndicesPerSum[j];
-	     for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	       {
-	         Coefficient2 = particles->ProdAL(i, TmpIndices + i1, this->NBodyValue);
-	         if (Coefficient2 != 0.0)
-		  {
-		    for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		      {
-		        Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		        if (Index <= i)
-			  {
-			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			    ++memory;
-			  }
-		      }
-		  }
-	       }
-	   }
-       }
+         {
+           for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	     {
+	       int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	       TmpIndices = this->NBodySectorIndicesPerSum[j];
+	       for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	         {
+	           Coefficient2 = particles->ProdA(i, TmpIndices + i1, this->NBodyValue);
+	           if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		        {
+		          Index = particles->ProdAd(TmpIndices + i2, this->NBodyValue, Coefficient);
+		          if (Index < Dim)
+			    {
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      ++memory;
+			    }
+		        }
+		    }
+	         }
+	     }
+         }
+    }
    }
-  else
-  {
-   for (int i = firstComponent; i < lastComponent; ++i)
-       {
-         for (int j = 0; j < this->NbrNBodySectorSums; ++j)
-	   {
-	     int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
-	     TmpIndices = this->NBodySectorIndicesPerSum[j];
-	     for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
-	       {
-	         Coefficient2 = particles->ProdAL(i, TmpIndices + i1, this->NBodyValue);
-	         if (Coefficient2 != 0.0)
-		  {
-		    for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
-		      {
-		        Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
-		        if (Index < Dim)
-			  {
-			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-			    ++memory;
-			  }
-		      }
-		  }
-	       }
-	   }
-       }
+  else //Bosons...use ProdAL etc.
+   {
+    if (this->HermitianSymmetryFlag == true)
+     {
+       for (int i = firstComponent; i < lastComponent; ++i)
+         {
+           for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	     {
+	       int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	       TmpIndices = this->NBodySectorIndicesPerSum[j];
+	       for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	         {
+	           Coefficient2 = particles->ProdAL(i, TmpIndices + i1, this->NBodyValue);
+	           if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		        {
+		          Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		          if (Index <= i)
+			    {
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      ++memory;
+			    }
+		        }
+		    }
+	         }
+	     }
+         }
+     }
+    else
+    {
+     for (int i = firstComponent; i < lastComponent; ++i)
+         {
+           for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+	     {
+	       int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+	       TmpIndices = this->NBodySectorIndicesPerSum[j];
+	       for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	         {
+	           Coefficient2 = particles->ProdAL(i, TmpIndices + i1, this->NBodyValue);
+	           if (Coefficient2 != 0.0)
+		    {
+		      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		        {
+		          Index = particles->ProdAdL(TmpIndices + i2, this->NBodyValue, Coefficient);
+		          if (Index < Dim)
+			    {
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			      ++memory;
+			    }
+		        }
+		    }
+	         }
+	     }
+         }
+    }
   }
 }
 

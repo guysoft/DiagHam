@@ -151,7 +151,132 @@ void ParticleOnCylinderNBodyHamiltonian::EvaluateInteractionFactors()
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      cout<<"Fermions not supported."<<endl;
+            cout<<"Evaluating interaction elements"<<endl;
+
+/*
+	    this->MinSumIndices = 0;
+	    this->MaxSumIndices = this->NBodyValue * this->LzMax;
+            this->NbrNBodySectorSums = this->NBodyValue * this->LzMax + 1; 
+
+
+	    double** SortedIndicesPerSumSymmetryFactor;
+	    GetAllSymmetricIndices(this->LzMax + 1, this->NBodyValue, this->NbrNBodySectorIndicesPerSum, this->NBodySectorIndicesPerSum,
+				   SortedIndicesPerSumSymmetryFactor);
+	    this->InteractionFactors = new Complex* [this->NbrNBodySectorSums];
+ 	    int Lim;
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices; ++MinSum)
+	      {
+		Lim = this->NbrNBodySectorIndicesPerSum[MinSum];
+		double* TmpSymmetryFactors = SortedIndicesPerSumSymmetryFactor[MinSum];
+		this->InteractionFactors[MinSum] = new Complex [Lim];
+		Complex* TmpNBodyInteractionFactors = this->InteractionFactors[MinSum];		  
+		int* TmpMIndices = this->NBodySectorIndicesPerSum[MinSum];
+		for (int i = 0; i < Lim; ++i)
+		  {
+		    double Coefficient = TmpSymmetryFactors[i];
+		    TmpNBodyInteractionFactors[i] = Coefficient * this->EvaluateInteractionCoefficient(TmpMIndices[i]);
+		    TmpMIndices += this->NBodyValue;
+		  }
+	      }
+	    for (int MinSum = 0; MinSum <= this->MaxSumIndices; ++MinSum)
+	      {
+		delete[] SortedIndicesPerSumSymmetryFactor[MinSum];
+	      }
+	    delete[] SortedIndicesPerSumSymmetryFactor;
+
+*/
+
+      this->NbrNBodySectorSums = this->NBodyValue * this->LzMax + 1;
+      //this->NbrNBodySectorIndicesPerSum = new int[this->NbrNBodySectorSums];
+      
+      //for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	//this->NbrNBodySectorIndicesPerSum[i] = 0;
+      
+      int** TmpSortedIndicesPerSumSymmetryFactor;
+      
+      GetAllSkewSymmetricIndices (this->LzMax + 1, this->NBodyValue, this->NbrNBodySectorIndicesPerSum, this->NBodySectorIndicesPerSum);
+      //for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+      //  cout<<"Sum= "<<j<<" "<<this->NbrNBodySectorIndicesPerSum[j]<<endl;
+
+/*
+  for (int j = 0; j < this->NbrNBodySectorSums; ++j)
+   {
+      cout<<"Sum= "<<j<<endl;
+      int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[j];
+      int* TmpIndices = this->NBodySectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	{
+	  int* Tmp1 = (TmpIndices + i1);
+          for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+	       {
+		 int* Tmp2 = (TmpIndices + i2);
+
+		  for (int n1=0; n1<this->NBodyValue; n1++)
+                     cout<<Tmp1[n1]<<" ";
+		  for (int n1=0; n1<this->NBodyValue; n1++)
+                     cout<<Tmp2[n1]<<" ";
+                  cout<<endl;
+
+		}
+	    
+	}
+    }
+
+ exit(1);
+*/
+ 
+     
+      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+       
+      int TotalNbrInteractionFactors=0;
+      int* TmpIndices;
+      double MaxMatEl = 0.0;
+      double MinMatEl = (double)1e8;
+
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	{
+	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+          int Index = 0;
+          int* TmpIndices = this->NBodySectorIndicesPerSum[i];
+          int Lim = this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i];
+
+          for (int i1 = 0; i1 < Lim; i1 += this->NBodyValue)
+	    { 
+              
+	      for (int i2 = 0; i2 < Lim; i2 += this->NBodyValue)
+		{
+                  this->NBodyInteractionFactors[i][Index] =  this->EvaluateInteractionCoefficient(TmpIndices + i1, TmpIndices + i2);
+                  
+                  if (Norm(this->NBodyInteractionFactors[i][Index])>MaxMatEl)
+                     MaxMatEl = Norm(this->NBodyInteractionFactors[i][Index]);
+                  else if (Norm(this->NBodyInteractionFactors[i][Index])<MinMatEl)
+                     MinMatEl = Norm(this->NBodyInteractionFactors[i][Index]);
+
+                  if (Norm(this->NBodyInteractionFactors[i][Index])>1e-14)
+                  {
+                  int* Tmp1=TmpIndices+i1;
+                  for (int n=0; n<this->NBodyValue; ++n)
+                     cout<<Tmp1[n]<<" ";
+
+                  int* Tmp2=TmpIndices+i2;
+                  for (int n=0; n<this->NBodyValue; ++n)
+                     cout<<Tmp2[n]<<" ";
+                  cout<<this->EvaluateInteractionCoefficient(TmpIndices + i1, TmpIndices + i2) <<endl;
+                  }
+
+ 
+		  TotalNbrInteractionFactors++;
+		  ++Index;
+		}
+	    }
+
+          //cout<<"Totalnbr = "<<TotalNbrInteractionFactors<<endl;
+	}
+      
+      cout<<"Max matrix el = "<<MaxMatEl<<" min= "<<MinMatEl<<endl;
+
+      cout<<"Done evaluating interaction "<<TotalNbrInteractionFactors<<endl;
+
     }
   else
     {
@@ -419,47 +544,200 @@ long ParticleOnCylinderNBodyHamiltonian::GetAllSymmetricIndices (int nbrValues, 
   return NbrElements;
 }
 
+// get all indices needed to characterize a completly skew symmetric tensor, sorted by the sum of the indices
+//
+// nbrValues = number of different values an index can have
+// nbrIndices = number of indices 
+// nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+// sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+// return value = total number of index groups
+
+long  ParticleOnCylinderNBodyHamiltonian::GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
+										  int**& sortedIndicesPerSum)
+{
+  long** BinomialCoefficients = GetBinomialCoefficients(nbrValues);
+  long NbrElements = BinomialCoefficients[nbrValues][nbrIndices];
+  int** Indices = new int* [NbrElements];
+  int* Sum = new int [NbrElements];
+  int Min = nbrIndices - 1;
+  int Max;
+  int Step;
+  int Pos = 0;
+  for (int i = nbrValues - 1; i >= Min; --i)
+    {
+      Step = BinomialCoefficients[i][nbrIndices - 1];
+      for (int j = 0; j < Step; ++j)
+	{
+	  Indices[Pos] = new int [nbrIndices];
+	  Indices[Pos][0] = i;
+	  Sum[Pos] = i;
+	  ++Pos;
+	}
+    }
+  for (int i = 1; i < nbrIndices; ++i)
+    {
+      int Pos = 0;
+      Min = nbrIndices - i - 1;
+      while (Pos < NbrElements)
+	{
+	  Max = Indices[Pos][i - 1] - 1;
+	  for (; Max >= Min; --Max)
+	    {
+	      Step = BinomialCoefficients[Max][Min];
+	      for (int j = 0; j < Step; ++j)
+		{
+		  Indices[Pos][i] = Max;
+		  Sum[Pos] += Max;
+		  ++Pos;
+		}
+	    }
+	}
+    }
+
+  int MaxSum = (((nbrValues - 1) * nbrValues) - ((nbrIndices - 1) * (nbrIndices - 2)))/ 2;
+  int MinSum = (nbrIndices * (nbrIndices - 1)) / 2;
+  nbrSortedIndicesPerSum = new int [MaxSum + 1];
+  sortedIndicesPerSum = new int* [MaxSum + 1];
+  for (int i = 0; i <= MaxSum; ++i)
+    nbrSortedIndicesPerSum[i] = 0;
+  for (int i = 0; i < NbrElements; ++i)
+    ++nbrSortedIndicesPerSum[Sum[i]];
+  long* TmpPos = new long [MaxSum + 1];
+  for (int i = MinSum; i <= MaxSum; ++i)
+    {
+      sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * nbrIndices];
+      nbrSortedIndicesPerSum[i] = 0;
+      TmpPos[i] = 0l;      
+    }
+  for (int i = 0; i < NbrElements; ++i)
+    {   
+      Pos = Sum[i];
+      Max = nbrSortedIndicesPerSum[Pos];
+      for (int j = 0; j < nbrIndices; ++j)
+	{
+	  sortedIndicesPerSum[Pos][TmpPos[Pos]] = Indices[i][j];
+	  ++TmpPos[Pos];
+	}
+      ++nbrSortedIndicesPerSum[Pos];
+      delete[] Indices[i];
+    }
+  delete[] TmpPos;
+  delete[] Sum;
+  delete[]Indices;
+  for (int i = 0; i <= nbrValues; ++i)
+    delete[] BinomialCoefficients[i];
+  delete[] BinomialCoefficients;
+  return NbrElements;
+}
+
 // evaluate the numerical coefficient  in front of the Prod a_m^+ Prod a_m coupling term for bosons
 // Indices1,Indices2 = array containing indices
 // return value = numerical coefficient
 
 Complex ParticleOnCylinderNBodyHamiltonian::EvaluateInteractionCoefficient(int* Indices1, int* Indices2)
 {
-  double Length = sqrt(2.0 * M_PI * this->Ratio * (this->LzMax + 1));
-  double kappa = 2.0 * M_PI/Length;
+  long double Length = sqrt(2.0L * M_PIl * (long double)this->Ratio * (long double)(this->LzMax + 1));
+  long double kappa = 2.0L * M_PIl/Length;
+  long double Normalization = 1.0L;
+  Complex Coefficient;
+  long double MatrixElement;
 
-  Complex Coefficient(0.0,0.0);
-
-  double Sum = 0.0;
-  double SumSq = 0.0;
-  for (int i = 0; i < this->NBodyValue; ++i)
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      Sum += (double)(Indices1[i] + Indices2[i]);
-      SumSq += (double)(Indices1[i] * Indices1[i] + Indices2[i] * Indices2[i]);
+      long double Sum = 0.0L;
+      long double SumSq = 0.0L;
+      for (int i = 0; i < this->NBodyValue; ++i)
+       {
+         Sum += (long double)(Indices1[i] + Indices2[i]);
+         SumSq += (long double)(Indices1[i] * Indices1[i] + Indices2[i] * Indices2[i]);
+       }
+
+
+      long double Pairwise = 1.0L;
+      for (int i1 = 0; i1 < this->NBodyValue; ++i1)
+        for (int i2 = i1 + 1; i2 < this->NBodyValue; ++i2)
+          {
+            Pairwise *= (long double)(Indices1[i1] - Indices1[i2]);
+            Pairwise *= (long double)(Indices2[i1] - Indices2[i2]);
+          }
+
+     // for (int i1 = this->NBodyValue - 1; i1 >= 0; --i1)
+     //   for (int i2 = i1 - 1; i2 >= 0; --i2)
+     //     {
+     //       Pairwise *= (double)(Indices2[i1] - Indices2[i2]);
+     //     }
+
+      Pairwise *= powl(-1.0L, this->NBodyValue * (this->NBodyValue + 1)/2) * powl(kappa, this->NBodyValue * (this->NBodyValue - 1)/2) * powl(kappa, this->NBodyValue * (this->NBodyValue - 1)/2);
+
+     //if ((0.5 * (SumSq - Sum * Sum/(2.0 * this->NBodyValue) )) <= 100000000.0)
+     //  {
+          MatrixElement = Pairwise * expl(- 0.5L * kappa * kappa * (SumSq - Sum * Sum/(2.0L * this->NBodyValue) ) );   
+     //  }
+
+     //cout<<"Mat el ";
+     //for (int i=0; i<this->NBodyValue; ++i)
+     //  cout<<Indices1[i]<<" ";
+
+     //for (int i=0; i<this->NBodyValue; ++i)
+     //  cout<<Indices2[i]<<" ";
+
+     //cout<<"    "<<Coefficient/sqrt(this->Ratio * (this->LzMax+1))<<endl;
+
+     //fermions 1/3
+     //Normalization = 4.0L * sqrtl(2.0L * M_PIl)/Length;
+     //fermions 1/2
+     //Normalization = 24.0L * (1.0L/sqrtl(3.0L)) * powl(2.0L * M_PIl, 1.0L)/powl(Length, 2.0L);
+     //fermions 3/5
+     //Normalization = 128.0L * 1.0L/(3.0L * sqrtl(2.0l)) * powl(2.0l * M_PIl, 1.5l)/powl(Length, 3.0l);
+     //fermions 2/3  
+     Normalization = (1280.0l/3.0l)* 1.0l/(6.0l * sqrtl(5.0l)) * powl(2.0l * M_PIl, 2.0l)/pow(Length, 4.0l);
+     //fermions 5/7
+     //Normalization = (2048.0l/3.0l) * 1.0l/(30.0l * sqrtl(3.0l)) * powl(2.0l * M_PIl, 2.5l)/powl(Length, 5.0l);
+     //fermions 3/4
+     //Normalization =  (425.0l) * 1.0l/(90.0l * sqrtl(7.0l)) * powl(2.0l * M_PIl, 3.0l)/powl(Length, 6.0l);
+     //fermions 7/9 -- not sure if correct
+     //Normalization =  (86.5l) * 1.0l/(180.0l * 7.0l) * powl(2.0l * M_PIl, 3.5l)/powl(Length, 7.0l);
+
+     MatrixElement *= Normalization;
+
     }
+  else //Bosons
+    {
+      long double Sum = 0.0l;
+      long double SumSq = 0.0l;
+      for (int i = 0; i < this->NBodyValue; ++i)
+       {
+         Sum += (long double)(Indices1[i] + Indices2[i]);
+         SumSq += (long double)(Indices1[i] * Indices1[i] + Indices2[i] * Indices2[i]);
+       }
 
-  //if ((0.5 * (SumSq - Sum * Sum/(2.0 * this->NBodyValue) )) <= 100000000.0)
-  //  {
-      Coefficient.Re = exp(- 0.5 * kappa * kappa * (SumSq - Sum * Sum/(2.0 * this->NBodyValue) ) );   
-      Coefficient.Im = 0.0;
-  //  }
+     //if ((0.5 * (SumSq - Sum * Sum/(2.0 * this->NBodyValue) )) <= 100000000.0)
+     //  {
+          MatrixElement = expl(- 0.5l * kappa * kappa * (SumSq - Sum * Sum/(2.0l * this->NBodyValue) ) );   
+     //  }
 
-  //cout<<"Mat el ";
-  //for (int i=0; i<this->NBodyValue; ++i)
-  //  cout<<Indices1[i]<<" ";
+     //cout<<"Mat el ";
+     //for (int i=0; i<this->NBodyValue; ++i)
+     //  cout<<Indices1[i]<<" ";
 
-  //for (int i=0; i<this->NBodyValue; ++i)
-  //  cout<<Indices2[i]<<" ";
+     //for (int i=0; i<this->NBodyValue; ++i)
+     //  cout<<Indices2[i]<<" ";
 
-  //cout<<"    "<<Coefficient/sqrt(this->Ratio * (this->LzMax+1))<<endl;
+     //cout<<"    "<<Coefficient/sqrt(this->Ratio * (this->LzMax+1))<<endl;
 
-  //double Normalization = (1.0/1260.0) * pow(2.0 * M_PI, 3.5)/pow(Length, 7.0);
-  // double Normalization = (1.0/sqrt(3.0)) * pow(2.0 * M_PI, 1.0)/pow(Length, 2.0);
-  // double Normalization = (1.0/(30.0*sqrt(3.0))) * pow(2.0 * M_PI, 2.5)/pow(Length, 5.0);
-  // double Normalization = (1.0/(90.0*sqrt(7.0))) * pow(2.0 * M_PI, 3.0)/pow(Length, 6.0);
-   double Normalization = (1.0/(180.0*7.0)) * pow(2.0 * M_PI, 3.5)/pow(Length, 7.0);
+     //Normalization = (1.0l/1260.0l) * powl(2.0l * M_PIl, 3.5l)/powl(Length, 7.0l);
+     //Normalization = (1.0l/sqrtl(3.0l)) * powl(2.0l * M_PIl, 1.0l)/powl(Length, 2.0l);
+     //Normalization = (1.0l/(30.0l*sqrtl(3.0l))) * powl(2.0l * M_PIl, 2.5l)/powl(Length, 5.0l);
+     //Normalization = (1.0l/(90.0l*sqrtl(7.0l))) * powl(2.0l * M_PIl, 3.0l)/powl(Length, 6.0l);
+     //Normalization = (1.0l/(180.0l*7.0l)) * powl(2.0l * M_PIl, 3.5l)/powl(Length, 7.0l);
+     Normalization = (1.0l/(180.0l*42.0l)) * powl(2.0l * M_PIl, 4.0l)/powl(Length, 8.0l);
 
-  //(2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * (this->LzMax+1));
+     MatrixElement *= Normalization;
 
-  return (Coefficient * Normalization);
+   }
+
+  Coefficient.Re = MatrixElement;
+  Coefficient.Im = 0.0;
+
+  return Coefficient;
 }

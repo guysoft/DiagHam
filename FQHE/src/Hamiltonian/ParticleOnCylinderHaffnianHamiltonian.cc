@@ -411,14 +411,14 @@ Complex ParticleOnCylinderHaffnianHamiltonian::EvaluateInteractionCoefficientBos
      GaussianExp1 = Xr * Xr + Xs * Xs + Xr * Xs;
      GaussianExp2 = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
 
-     //int rtimes3= 2.0*m1-m2-m3;
-     //int stimes3= 2.0*m2-m1-m3;
-     //int rptimes3= 2.0*m4-m5-m6;
-     //int sptimes3= 2.0*m5-m4-m6;
-     //if ((rtimes3*rtimes3+stimes3*stimes3+rtimes3*stimes3+rptimes3*rptimes3+sptimes3*sptimes3+rptimes3*sptimes3) <= 24)
-        Coefficient.Re = (3.0 + 2.0 * (1.0 - 2.0 * GaussianExp1 - 2.0 * GaussianExp2 + 4.0 * GaussianExp1 * GaussianExp2) + 18.0 * Xr * Xs * (Xr+ Xs) * Xrp * Xsp * (Xrp + Xsp)) * exp(- GaussianExp1 - GaussianExp2);
-     //else
-     //   Coefficient.Re = 0.0;
+     int rtimes3= 2.0*m1-m2-m3;
+     int stimes3= 2.0*m2-m1-m3;
+     int rptimes3= 2.0*m4-m5-m6;
+     int sptimes3= 2.0*m5-m4-m6;
+     if ((rtimes3*rtimes3+stimes3*stimes3+rtimes3*stimes3+rptimes3*rptimes3+sptimes3*sptimes3+rptimes3*sptimes3) <= 5400000)
+        Coefficient.Re = (3.0 + 2.0 * (1.0 - 2.0 * GaussianExp1 - 2.0 * GaussianExp2 + 4.0 * GaussianExp1 * GaussianExp2) + 18.0 * Xr * Xs * (Xr+ Xs) * Xrp * Xsp * (Xrp + Xsp)) * exp(- GaussianExp1 - GaussianExp2);    
+     else
+        Coefficient.Re = 0.0;
      Coefficient.Im = 0.0;
      return (Coefficient * this->ThreeBodyCoupling * (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
    }

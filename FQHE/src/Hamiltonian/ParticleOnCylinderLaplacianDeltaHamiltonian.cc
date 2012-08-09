@@ -39,7 +39,7 @@
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
-
+#include "MathTools/BinomialCoefficients.h"
 #include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
@@ -243,6 +243,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		        this->M2Value[this->NbrInteractionFactors] = m2;
 		        this->M3Value[this->NbrInteractionFactors] = m3;
 		        this->M4Value[this->NbrInteractionFactors] = m4;
+                        //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
 		        ++this->NbrInteractionFactors;
 		      }
 		    ++Pos;
@@ -310,7 +311,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 		      this->M2Value[this->NbrInteractionFactors] = m2;
 		      this->M3Value[this->NbrInteractionFactors] = m3;
 		      this->M4Value[this->NbrInteractionFactors] = m4;
-                      cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
+                      //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
 		      ++this->NbrInteractionFactors;
 		    }
 		  ++Pos;
@@ -332,6 +333,7 @@ void ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionFactors()
 
 Complex ParticleOnCylinderLaplacianDeltaHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
+
   double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
   double Xm1 = kappa * m1;
