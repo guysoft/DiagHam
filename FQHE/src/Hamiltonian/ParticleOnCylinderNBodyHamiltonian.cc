@@ -44,6 +44,7 @@
 #include <iostream>
 #include <sys/time.h>
 
+#define Pi_L 3.14159265358979323846264338328L
 
 using std::cout;
 using std::endl;
@@ -252,7 +253,7 @@ void ParticleOnCylinderNBodyHamiltonian::EvaluateInteractionFactors()
                   else if (Norm(this->NBodyInteractionFactors[i][Index])<MinMatEl)
                      MinMatEl = Norm(this->NBodyInteractionFactors[i][Index]);
 
-                  if (Norm(this->NBodyInteractionFactors[i][Index])>1e-2)
+                  if (Norm(this->NBodyInteractionFactors[i][Index])>1e-14)
                   {
                   int* Tmp1=TmpIndices+i1;
                   for (int n=0; n<this->NBodyValue; ++n)
@@ -636,8 +637,8 @@ long  ParticleOnCylinderNBodyHamiltonian::GetAllSkewSymmetricIndices (int nbrVal
 
 Complex ParticleOnCylinderNBodyHamiltonian::EvaluateInteractionCoefficient(int* Indices1, int* Indices2)
 {
-  long double Length = sqrt(2.0L * M_PIl * (long double)this->Ratio * (long double)(this->LzMax + 1));
-  long double kappa = 2.0L * M_PIl/Length;
+  long double Length = sqrt(2.0L * Pi_L * (long double)this->Ratio * (long double)(this->LzMax + 1));
+  long double kappa = 2.0L * Pi_L/Length;
   long double Normalization = 1.0L;
   Complex Coefficient;
   long double MatrixElement;
@@ -685,25 +686,25 @@ Complex ParticleOnCylinderNBodyHamiltonian::EvaluateInteractionCoefficient(int* 
 
      if (this->NBodyValue == 2)
        //fermions 1/3
-       Normalization = 4.0L * sqrtl(2.0L * M_PIl)/Length;
+       Normalization = 4.0L * sqrtl(2.0L * Pi_L)/Length;
      else if (this->NBodyValue == 3)
      //fermions 1/2
-      Normalization = 24.0L * (1.0L/sqrtl(3.0L)) * powl(2.0L * M_PIl, 1.0L)/powl(Length, 2.0L);
+      Normalization = 24.0L * (1.0L/sqrtl(3.0L)) * powl(2.0L * Pi_L, 1.0L)/powl(Length, 2.0L);
      else if (this->NBodyValue == 4) 
      //fermions 3/5
-       Normalization = 128.0L * 1.0L/(3.0L * sqrtl(2.0l)) * powl(2.0l * M_PIl, 1.5l)/powl(Length, 3.0l);
+       Normalization = 128.0L * 1.0L/(3.0L * sqrtl(2.0l)) * powl(2.0l * Pi_L, 1.5l)/powl(Length, 3.0l);
      else if (this->NBodyValue == 5)
      //fermions 2/3  
-       Normalization = (1280.0l/3.0l)* 1.0l/(6.0l * sqrtl(5.0l)) * powl(2.0l * M_PIl, 2.0l)/pow(Length, 4.0l);
+       Normalization = (1280.0l/3.0l)* 1.0l/(6.0l * sqrtl(5.0l)) * powl(2.0l * Pi_L, 2.0l)/pow(Length, 4.0l);
      else if (this->NBodyValue == 6)
      //fermions 5/7
-       Normalization = (2048.0l/3.0l) * 1.0l/(30.0l * sqrtl(3.0l)) * powl(2.0l * M_PIl, 2.5l)/powl(Length, 5.0l);
+       Normalization = (2048.0l/3.0l) * 1.0l/(30.0l * sqrtl(3.0l)) * powl(2.0l * Pi_L, 2.5l)/powl(Length, 5.0l);
      else if (this->NBodyValue == 7)
      //fermions 3/4
-       Normalization =  (425.0l) * 1.0l/(90.0l * sqrtl(7.0l)) * powl(2.0l * M_PIl, 3.0l)/powl(Length, 6.0l);
+       Normalization =  (425.0l) * 1.0l/(90.0l * sqrtl(7.0l)) * powl(2.0l * Pi_L, 3.0l)/powl(Length, 6.0l);
      else if (this->NBodyValue == 8)
      //fermions 7/9 -- not sure if correct
-       Normalization =  (86.5l) * 1.0l/(180.0l * 7.0l) * powl(2.0l * M_PIl, 3.5l)/powl(Length, 7.0l);
+       Normalization =  (86.5l) * 1.0l/(180.0l * 7.0l) * powl(2.0l * Pi_L, 3.5l)/powl(Length, 7.0l);
 
      MatrixElement *= Normalization;
 
@@ -734,21 +735,21 @@ Complex ParticleOnCylinderNBodyHamiltonian::EvaluateInteractionCoefficient(int* 
 
 
      if (this->NBodyValue == 2)
-       Normalization = sqrtl(2.0L * M_PIl)/Length;
+       Normalization = sqrtl(2.0L * Pi_L)/Length;
      else if (this->NBodyValue == 3)
-      Normalization = (1.0L/sqrtl(3.0L)) * powl(2.0L * M_PIl, 1.0L)/powl(Length, 2.0L);
+      Normalization = (1.0L/sqrtl(3.0L)) * powl(2.0L * Pi_L, 1.0L)/powl(Length, 2.0L);
      else if (this->NBodyValue == 4) 
-       Normalization = 1.0L/(3.0L * sqrtl(2.0l)) * powl(2.0l * M_PIl, 1.5l)/powl(Length, 3.0l);
+       Normalization = 1.0L/(3.0L * sqrtl(2.0l)) * powl(2.0l * Pi_L, 1.5l)/powl(Length, 3.0l);
      else if (this->NBodyValue == 5)
-       Normalization = 1.0l/(6.0l * sqrtl(5.0l)) * powl(2.0l * M_PIl, 2.0l)/pow(Length, 4.0l);
+       Normalization = 1.0l/(6.0l * sqrtl(5.0l)) * powl(2.0l * Pi_L, 2.0l)/pow(Length, 4.0l);
      else if (this->NBodyValue == 6)
-       Normalization = 1.0l/(30.0l * sqrtl(3.0l)) * powl(2.0l * M_PIl, 2.5l)/powl(Length, 5.0l);
+       Normalization = 1.0l/(30.0l * sqrtl(3.0l)) * powl(2.0l * Pi_L, 2.5l)/powl(Length, 5.0l);
      else if (this->NBodyValue == 7)
-       Normalization =  1.0l/(90.0l * sqrtl(7.0l)) * powl(2.0l * M_PIl, 3.0l)/powl(Length, 6.0l);
+       Normalization =  1.0l/(90.0l * sqrtl(7.0l)) * powl(2.0l * Pi_L, 3.0l)/powl(Length, 6.0l);
      else if (this->NBodyValue == 8)
-       Normalization =  1.0l/(180.0l * 7.0l) * powl(2.0l * M_PIl, 3.5l)/powl(Length, 7.0l);
+       Normalization =  1.0l/(180.0l * 7.0l) * powl(2.0l * Pi_L, 3.5l)/powl(Length, 7.0l);
      else if (this->NBodyValue == 9)
-       Normalization = (1.0l/(180.0l*42.0l)) * powl(2.0l * M_PIl, 4.0l)/powl(Length, 8.0l);
+       Normalization = (1.0l/(180.0l*42.0l)) * powl(2.0l * Pi_L, 4.0l)/powl(Length, 8.0l);
 
      MatrixElement *= Normalization;
 
