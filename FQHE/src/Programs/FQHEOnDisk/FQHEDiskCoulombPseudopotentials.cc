@@ -149,6 +149,7 @@ int main(int argc, char** argv)
       cout << endl;
     }
 
+  delete[] Pseudopotentials;
   return 0;
 }
 
@@ -159,7 +160,7 @@ int main(int argc, char** argv)
 
 double* FQHEDiskCoulombPseudopotentialLLL (int lzMax)
 {
-  double* TmpPseudopotentials = new double [lzMax];
+  double* TmpPseudopotentials = new double [lzMax+1];
   double Gamma1 = sqrt(M_PI);
   double Gamma2 = 1.0;
   TmpPseudopotentials[0] = Gamma1 / Gamma2;
@@ -167,7 +168,7 @@ double* FQHEDiskCoulombPseudopotentialLLL (int lzMax)
     {
       TmpPseudopotentials[i] = TmpPseudopotentials[i - 1] * ((((double) i) - 0.5) / ((double) i));      
     }
-  for (int i = 1; i <= lzMax; ++i)
+  for (int i = 0; i <= lzMax; ++i)
     {
       TmpPseudopotentials[i] *= 0.5;      
     }
@@ -181,7 +182,7 @@ double* FQHEDiskCoulombPseudopotentialLLL (int lzMax)
 
 double* FQHEDiskCoulombPseudopotential2LL (int lzMax)
 {
-  double* TmpPseudopotentials = new double [lzMax];
+  double* TmpPseudopotentials = new double [lzMax+3];
   TmpPseudopotentials[0] = 11.0 * sqrt(M_PI) / 32.0;
   TmpPseudopotentials[1] = 15.0 * sqrt(M_PI) / 64.0;
   TmpPseudopotentials[2] = sqrt(M_PI) / 2.0;
