@@ -3,13 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2007 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
-//                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                 class of quantum spin Hall restricted to four bands        //
+//         class of tight binding model for the 3D pyrochlore lattice         //
 //                                                                            //
-//                        last modification : 26/08/2011                      //
+//                        last modification : 10/08/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,62 +28,54 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef TIGHTBINDINGMODELPYROCHLORELATTICE_H
+#define TIGHTBINDINGMODELPYROCHLORELATTICE_H
+
+
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian.h"
-#include "Matrix/ComplexMatrix.h"
-#include "Matrix/HermitianMatrix.h"
-#include "Matrix/RealDiagonalMatrix.h"
-
-#include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
-
-#include <iostream>
-#include <sys/time.h>
+#include "Tools/FTITightBinding/Abstract3DTightBindingModel.h"
 
 
-using std::cout;
-using std::endl;
-using std::ostream;
-
-
-// default constructor
-//
-
-ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian()
+class TightBindingModelPyrochloreLattice : public Abstract3DTightBindingModel
 {
-}
 
-// destructor
-//
+ protected:
 
-ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::~ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian()
-{
-  if (this->InteractionFactorsSigma != 0)
-    {
-       for (int sigma1 = 0; sigma1 < 4; ++sigma1)
-	{
-	  for (int sigma2 = sigma1; sigma2 < 4; ++sigma2)
-	    {
-	      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
-		{
-		  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-		    {
-		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3][i];
-		    }
-		  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3] ;
-		  for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
-		    {			  
-		      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-			{
-			  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4][i];
-			}
-		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4] ;
-		    }
-		}
-	    }
-	}
-    }
-}
+  // spin orbit coupling to neareast neighbor sites
+  double NNSpinOrbit;
+  // spin orbit coupling to next neareast neighbor sites
+  double NextNNSpinOrbit;
+
+ public:
+
+  // default constructor
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // nbrSiteZ = number of sites in the z direction
+  // lambdaNN = spin orbit coupling to neareast neighbor sites
+  // lambdaNNN = spin orbit coupling to next neareast neighbor sites
+  // gammaX = boundary condition twisting angle along x
+  // gammaY = boundary condition twisting angle along y
+  // gammaZ = boundary condition twisting angle along y
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelPyrochloreLattice(int nbrSiteX, int nbrSiteY, int nbrSiteZ,
+				     double lambdaNN, double lambdaNNN,
+				     double gammaX, double gammaY, double gammaZ, bool storeOneBodyMatrices = true);
+
+  // destructor
+  //
+  ~TightBindingModelPyrochloreLattice();
+
+ protected :
+
+  // compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void ComputeBandStructure(long minStateIndex = 0l, long nbrStates = 0l);
+
+};
 
 
-
+#endif

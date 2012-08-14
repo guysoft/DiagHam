@@ -15,4 +15,5 @@ TightBindingModelChern2TriangularLattice.cc \
 TightBindingModelPyrochloreSlabLattice.cc \
 TightBindingModelHaldaneHoneycombLattice.cc \
 TightBindingModelChern3TwoOrbitalTriangularLattice.cc \
-TightBindingModelNOrbitalSquareLattice.cc
+TightBindingModelNOrbitalSquareLattice.cc \
+TightBindingModelPyrochloreLattice.cc 

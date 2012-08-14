@@ -7,9 +7,10 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                 class of quantum spin Hall restricted to four bands        //
+//            class of 3d topological insulator based on the pryochlore       //
+//                       model and restricted to four bands                   //
 //                                                                            //
-//                        last modification : 26/08/2011                      //
+//                        last modification : 13/08/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,62 +30,80 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef PARTICLEONCUBICLATTICEFOURBANDPYROCHLOREHAMILTONIAN_H
+#define PARTICLEONCUBICLATTICEFOURBANDPYROCHLOREHAMILTONIAN_H
+
+
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract3DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
-#include "Matrix/HermitianMatrix.h"
-#include "Matrix/RealDiagonalMatrix.h"
-
-#include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
 #include <iostream>
-#include <sys/time.h>
 
 
+using std::ostream;
 using std::cout;
 using std::endl;
-using std::ostream;
 
 
-// default constructor
-//
-
-ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian()
+class ParticleOnCubicLatticeFourBandPyrochloreHamiltonian : public ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian
 {
-}
 
-// destructor
-//
+ protected:
+ 
+  // number of sites in the z direction
+  int NbrSiteZ;
+  // number of sites in the direction perpendicular to X
+  int NbrSiteYZ;
 
-ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::~ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian()
-{
-  if (this->InteractionFactorsSigma != 0)
-    {
-       for (int sigma1 = 0; sigma1 < 4; ++sigma1)
-	{
-	  for (int sigma2 = sigma1; sigma2 < 4; ++sigma2)
-	    {
-	      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
-		{
-		  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-		    {
-		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3][i];
-		    }
-		  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma3] ;
-		  for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
-		    {			  
-		      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-			{
-			  delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4][i];
-			}
-		      delete[] this->InteractionFactorsSigma[sigma1][sigma2][sigma3][sigma4] ;
-		    }
-		}
-	    }
-	}
-    }
-}
+  // repulsive on-site potential strength between identical spins
+  double UPotential;
+  // repulsive on-site potential strength between opposite spins
+  double VPotential;
+
+  // pointer to the tight binding model
+  Abstract3DTightBindingModel* TightBindingModel;
+
+  // use flat band model
+  bool FlatBand;
 
 
+ public:
 
+  // default constructor
+  //
+  ParticleOnCubicLatticeFourBandPyrochloreHamiltonian();
+
+  // constructor
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // nbrSiteZ = number of sites in the z direction
+  // uPotential = repulsive on-site potential strength between identical spins
+  // vPotential = repulsive on-site potential strength between opposite spins
+  // tightBindingModel = pointer to the tight binding model
+  // flatBandFlag = use flat band model
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnCubicLatticeFourBandPyrochloreHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential,  Abstract3DTightBindingModel* tightBindingModel, 
+						      bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+
+  // destructor
+  //
+  ~ParticleOnCubicLatticeFourBandPyrochloreHamiltonian();
+  
+
+ protected:
+ 
+  // evaluate all interaction factors
+  //   
+  virtual void EvaluateInteractionFactors();
+  
+
+
+};
+
+#endif

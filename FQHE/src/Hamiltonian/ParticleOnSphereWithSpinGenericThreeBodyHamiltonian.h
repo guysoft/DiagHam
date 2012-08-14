@@ -64,6 +64,10 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
 
+
+  double Coef1;
+  double Coef2;
+
  public:
 
   // default constructor
@@ -85,6 +89,25 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
 						      double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum, 
+						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+						      char* precalculationFileName = 0);
+
+  // constructor from default datas
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // lzmax = maximum Lz value reached by a particle in the state
+  // threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
+  //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
+  //                            first index is the spin sector (0 up-up-up, 1 down-down-down, 2 up-up-down, 3 up-down-down)
+  // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential  for each spin sector
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
+						      double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum, 
+						      double coef1, double coef2,
 						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 						      char* precalculationFileName = 0);
 
@@ -132,6 +155,16 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // maxJValue = twice the maximum total angular momentum two particles can have
   // spinIndex = indicate for which of three body operators coeeficients are computed (0 for up-up-up, 1 for up-up-down, 2 for up-down-up, 3 for down-up-up) 
   double* ComputeProjectorCoefficients(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets, int maxJValue, int spinIndex);
+
+  // compute all projector coefficient associated to a given relative angular momentum between 3 particles in the spin 1/2 sector along z_1^u + z_2^u - 2 z_3^d
+  //
+  // relativeMomentum = value of twice the relative angular momentum between the 3 particles
+  // degeneracyIndex = optional degeneracy index for relative angular momentum greater than 5 for bosons (8 for fermions)
+  // indices = array that contains all possible sets of indices (size of the array is 3 * nbrIndexSets)
+  // nbrIndexSets = number of sets
+  // maxJValue = twice the maximum total angular momentum two particles can have
+  // spinIndex = indicate for which of three body operators coeeficients are computed (0 for up-up-up, 1 for up-up-down, 2 for up-down-up, 3 for down-up-up) 
+  double* ComputeProjectorCoefficientsSpin12E112(int relativeMomentum, int degeneracyIndex, int* indices, int nbrIndexSets, int maxJValue, int spinIndex);
 
   // evaluate all interaction factors
   //   

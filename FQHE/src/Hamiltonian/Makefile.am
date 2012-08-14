@@ -155,4 +155,5 @@ ParticleOnTorusThreeLandauLevelsHamiltonian.cc \
 ParticleOnCylinderHaffnianHamiltonian.cc \
 ParticleOnCylinderOrbitalProjection.cc \
 ParticleOnCylinderNBodyHamiltonian.cc \
-ParticleOnCylinderPermanentState.cc
+ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian.cc \
+ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.cc
