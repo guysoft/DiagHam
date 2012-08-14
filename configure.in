@@ -424,6 +424,10 @@ AC_ARG_ENABLE(fqhe, [AC_HELP_STRING([--enable-fqhe],[enable the fractional quant
 INCLUDES="${INCLUDES} -I\$(top_srcdir)/FQHE/src"
 ], [HAVE_FQHE=no])
 
+AC_ARG_ENABLE(fqhe, [AC_HELP_STRING([--enable-fti],[enable the fractional topological insulator package])], [HAVE_FTI=yes
+INCLUDES="${INCLUDES} -I\$(top_srcdir)/FTI/src"
+], [HAVE_FTI=no])
+
 AC_ARG_ENABLE(spin, [AC_HELP_STRING([--enable-spin],[enable the spin system package])], [HAVE_SPIN=yes
 INCLUDES="${INCLUDES} -I\$(top_srcdir)/Spin/src"
 ], [HAVE_SPIN=no])
@@ -441,6 +445,9 @@ AC_MSG_RESULT([${HAVE_SPIN}])
 AC_MSG_CHECKING(whether we are compiling the fractional quantum Hall effect package)
 AC_MSG_RESULT([${HAVE_FQHE}])
 
+AC_MSG_CHECKING(whether we are compiling the fractional ropological insulator package)
+AC_MSG_RESULT([${HAVE_FTI}])
+
 if test "$HAVE_QUANTUMDOTS" = yes; then
        MAYBE_QUANTUMDOTS="QuantumDots"
      else
@@ -457,6 +464,12 @@ if test "$HAVE_FQHE" = yes; then
        MAYBE_FQHE="FQHE"
      else
        MAYBE_FQHE=""
+fi
+
+if test "$HAVE_FTI" = yes; then
+       MAYBE_FTI="FTI"
+     else
+       MAYBE_FTI=""
 fi
 
 if test "$HAVE_ANYONS" = yes; then
@@ -500,6 +513,7 @@ AC_SUBST(GMP_LIBS)
 AC_SUBST(MAYBE_QUANTUMDOTS)
 AC_SUBST(MAYBE_SPIN)
 AC_SUBST(MAYBE_FQHE)
+AC_SUBST(MAYBE_FTI)
 #AC_SUBST(MAYBE_ANYONS)
 
 AC_OUTPUT(Makefile src/Makefile src/Programs/Makefile src/Architecture/Makefile src/Architecture/ArchitectureOperation/Makefile src/FunctionBasis/Makefile src/Tensor/Makefile src/QuantumNumber/Makefile src/Interaction/Makefile src/Interaction/InternalInteraction/Makefile src/HilbertSpace/Makefile src/HilbertSpace/DMRGHilbertSpace/Makefile src/HilbertSpace/ManyBodyHilbertSpace/Makefile src/Output/Makefile src/GeneralTools/Makefile src/Vector/Makefile src/Polynomial/Makefile src/Matrix/Makefile src/MCObservables/Makefile src/LanczosAlgorithm/Makefile src/Hamiltonian/Makefile src/Hamiltonian/DMRGHamiltonian/Makefile src/TensorProduct/Makefile src/DMRGAlgorithm/Makefile src/Operator/Makefile src/MathTools/Makefile src/MathTools/NumericalAnalysis/Makefile src/MathTools/RandomNumber/Makefile src/Options/Makefile src/Tools/Makefile src/MainTask/Makefile src/Architecture/ClusterArchitecture/Makefile Base/Makefile Base/src/Makefile Base/src/BitmapTools/Makefile Base/src/BitmapTools/Color/Makefile Base/src/BitmapTools/BitmapPicture/Makefile QuantumDots/Makefile QuantumDots/src/Makefile QuantumDots/src/Tools/Makefile QuantumDots/src/HilbertSpace/Makefile QuantumDots/src/Hamiltonian/Makefile QuantumDots/src/Tools/Spectra/Makefile QuantumDots/src/Tools/Potential/Makefile QuantumDots/src/Tools/Analysis/Makefile QuantumDots/src/Programs/Makefile FQHE/Makefile FQHE/src/Makefile FQHE/src/Architecture/Makefile FQHE/src/Tools/Makefile FQHE/src/Programs/Makefile FQHE/src/Programs/FQHEOnSphere/Makefile FQHE/src/Programs/FQHEOnDisk/Makefile FQHE/src/Programs/FQHEOnTorus/Makefile FQHE/src/Programs/FQHEOnLattice/Makefile FQHE/src/Architecture/ArchitectureOperation/Makefile FQHE/src/FunctionBasis/Makefile FQHE/src/QuantumNumber/Makefile FQHE/src/HilbertSpace/Makefile FQHE/src/Hamiltonian/Makefile FQHE/src/MainTask/Makefile FQHE/src/Tools/FQHEWaveFunction/Makefile FQHE/src/Tools/FQHEMonteCarlo/Makefile FQHE/src/Tools/FQHESpectrum/Makefile FQHE/src/Tools/FQHEFiles/Makefile FQHE/src/Operator/Makefile Spin/Makefile Spin/src/Makefile Spin/src/Architecture/Makefile Spin/src/Programs/Makefile Spin/src/Architecture/ArchitectureOperation/Makefile Spin/src/HilbertSpace/Makefile Spin/src/Hamiltonian/Makefile Spin/src/Operator/Makefile Spin/src/Tools/Makefile Spin/src/Tools/SpinFiles/Makefile FQHE/src/Programs/FQHETopInsulator/Makefile FQHE/src/Tools/FTITightBinding/Makefile)
