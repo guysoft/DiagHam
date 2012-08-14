@@ -1,0 +1,4 @@
+SUBDIRS=FCI FTI
+
+bin_PROGRAMS=
+
