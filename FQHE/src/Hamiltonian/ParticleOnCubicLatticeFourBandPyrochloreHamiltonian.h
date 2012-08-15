@@ -102,8 +102,53 @@ class ParticleOnCubicLatticeFourBandPyrochloreHamiltonian : public ParticleOnLat
   //   
   virtual void EvaluateInteractionFactors();
   
-
+  // compute the transformation basis contribution to the interaction matrix element
+  // 
+  // oneBodyBasis = array of transformation basis matrices
+  // momentumIndex1 = compact momentum index of the first creation operator
+  // momentumIndex2 = compact momentum index of the second creation operator
+  // momentumIndex3 = compact momentum index of the first annihilation operator
+  // momentumIndex4 = compact momentum index of the second annihiliation operator
+  // energyIndex1 = energy index of the first creation operator
+  // energyIndex2 = energy index of the second creation operator
+  // energyIndex3 = energy index of the first annihilation operator
+  // energyIndex4 = energy index of the second annihiliation operator
+  // siteIndex1 = site index of the first creation operator (0,...,3 = up, 4,...,7 = down)
+  // siteIndex2 = site index of the second creation operator (0,...,3 = up, 4,...,7 = down)
+  // siteIndex3 = site index of the first annihilation operator (0,...,3 = up, 4,...,7 = down)
+  // siteIndex4 = site index of the second annihiliation operator (0,...,3 = up, 4,...,7 = down)
+  inline Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+						       int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+						       int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+						       int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
+    
 
 };
+
+
+// compute the transformation basis contribution to the interaction matrix element
+// 
+// oneBodyBasis = array of transformation basis matrices
+// momentumIndex1 = compact momentum index of the first creation operator
+// momentumIndex2 = compact momentum index of the second creation operator
+// momentumIndex3 = compact momentum index of the first annihilation operator
+// momentumIndex4 = compact momentum index of the second annihiliation operator
+// energyIndex1 = energy index of the first creation operator
+// energyIndex2 = energy index of the second creation operator
+// energyIndex3 = energy index of the first annihilation operator
+// energyIndex4 = energy index of the second annihiliation operator
+// siteIndex1 = site index of the first creation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex2 = site index of the second creation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex3 = site index of the first annihilation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex4 = site index of the second annihiliation operator (0,...,3 = up, 4,...,7 = down)
+
+inline Complex ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+													 int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+													 int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+													 int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
+{
+  return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
+}
+
 
 #endif

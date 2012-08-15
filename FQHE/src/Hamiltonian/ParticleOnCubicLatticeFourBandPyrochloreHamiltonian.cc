@@ -149,6 +149,21 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
   long TotalNbrInteractionFactors = 0;
   int NbrSites = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
 
+  int NbrInternalIndices = 4;
+  this->InteractionFactorsSigma = new Complex***** [NbrInternalIndices];
+  for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
+    {
+      this->InteractionFactorsSigma[sigma1] = new Complex****  [NbrInternalIndices - sigma1];
+      for (int sigma2 = sigma1; sigma2 < NbrInternalIndices; ++sigma2)
+	{
+	  this->InteractionFactorsSigma[sigma1][sigma2] = new Complex***[NbrInternalIndices];
+	  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+	    {
+	      this->InteractionFactorsSigma[sigma1][sigma2][sigma3] = new Complex**[NbrInternalIndices - sigma3];
+	    }
+	}
+    }
+
   this->InteractionFactorsupup = 0;
   this->InteractionFactorsdowndown = 0;
   this->InteractionFactorsupdown = 0;
@@ -232,8 +247,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
 	      {
 		int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
-		this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
+		this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
+		this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		++this->NbrInterSectorIndicesPerSum[TmpSum];    
 	      }
  
@@ -246,8 +261,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
 		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
 		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
+		    int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
+		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 < Index2)
 		      ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
 		  }
@@ -267,8 +282,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
 		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
 		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
+		    int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
+		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 < Index2)
 		      {
 			int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
@@ -289,8 +304,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
 		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
 		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
+		    int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
+		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 <= Index2)
 		      ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
 		  }
@@ -310,8 +325,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	      for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
 		for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
 		  {
-		    int Index1 = ((kx1 * this->NbrSiteY) + ky1) * this->NbrSiteZ + kz1;
-		    int Index2 = ((kx2 * this->NbrSiteY) + ky2) * this->NbrSiteZ + kz2;
+		    int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
+		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 <= Index2)
 		      {
 			int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
@@ -322,6 +337,105 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
+      Complex* TmpInteractionFactor;
+      int* TmpIndices;
+      int* TmpIndices2;
+      for (int sigma1 = 0; sigma1 < 4; ++sigma1)
+	{
+	  for (int sigma3 = 0; sigma3 < 4; ++sigma3)
+	    {
+	      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3] = new Complex*[this->NbrIntraSectorSums];
+	      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		{
+		  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
+		  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		  TmpIndices = this->IntraSectorIndicesPerSum[j];
+		  for (int i1 = 0; i1 < Lim; i1 += 2)
+		    {
+		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Complex Tmp = 0.0;
+			  //			  Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, sigma1, sigma1, sigma3, sigma3, 0, 2, 0, 2);
+			  (*TmpInteractionFactor) = Tmp;
+			  ++TmpInteractionFactor;
+			}
+		    }
+		}
+	    }
+	  for (int sigma3 = 0; sigma3 < 4; ++sigma3)
+	    {
+	      for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
+		{
+		  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma4] = new Complex*[this->NbrIntraSectorSums];
+		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		    {
+		      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
+		      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		      TmpIndices = this->IntraSectorIndicesPerSum[j];
+		      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+		      TmpIndices2 = this->InterSectorIndicesPerSum[j];
+		      for (int i1 = 0; i1 < Lim; i1 += 2)
+			{
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim) >> 2]);
+			  for (int i2 = 0; i2 < Lim2; i2 += 2)
+			    {
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
+	    }			  
+	}
+      for (int sigma1 = 0; sigma1 < 4; ++sigma1)
+	{
+	  for (int sigma2 = sigma1 + 1; sigma2 < 4; ++sigma2)
+	    {
+	      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
+		{
+		  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3] = new Complex*[this->NbrIntraSectorSums];
+		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		    {
+		      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+		      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		      TmpIndices = this->IntraSectorIndicesPerSum[j];
+		      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+		      TmpIndices2 = this->InterSectorIndicesPerSum[j];
+		      for (int i1 = 0; i1 < Lim2; i1 += 2)
+			{
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim2) >> 2]);
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			    {
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
+	      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
+		{
+		  for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
+		    {
+		      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma4] = new Complex*[this->NbrIntraSectorSums];
+		      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+			{
+			  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+			  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+			  TmpIndices = this->IntraSectorIndicesPerSum[j];
+			  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+			  TmpIndices2 = this->InterSectorIndicesPerSum[j];
+			  for (int i1 = 0; i1 < Lim2; i1 += 2)
+			    {
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim2) >> 2]);
+			      for (int i2 = 0; i2 < Lim2; i2 += 2)
+				{
+				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		    }
+		}			  
+	    }
+	}
     }
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;

@@ -52,11 +52,13 @@ class ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian : public ParticleO
 
  protected:
   
-  // 
+  // interaction factors : the table first entry , 
   // first entry is the sigma index for the first creation operator
   // second entry is the sigma index for the second creation operator
   // third entry is the sigma index for the first annihilation operator
   // fourth entry is the sigma index for the second annihilation operator
+  // fifth entry is a the sum of annihilation/creation indices
+  // sixth entry is the linearized index (annihilation_index * nbr_creation_index + creation_index)
   Complex****** InteractionFactorsSigma;
 
  public:
@@ -320,7 +322,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 		      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
 			{
 			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-			  for (int i2 = 0; i2 < Lim2; i2 += 2)
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 			      if (Index < Dim)
@@ -581,7 +583,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::HermitianEv
 		      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
 			{
 			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
-			  for (int i2 = 0; i2 < Lim2; i2 += 2)
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      Index = particles->AdsigmaAdsigma(TmpIndices[i2], TmpIndices[i2 + 1], sigma3, sigma3, Coefficient);
 			      if (Index <= index)
