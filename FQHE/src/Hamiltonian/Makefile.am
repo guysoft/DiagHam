@@ -156,4 +156,6 @@ ParticleOnCylinderHaffnianHamiltonian.cc \
 ParticleOnCylinderOrbitalProjection.cc \
 ParticleOnCylinderNBodyHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian.cc \
-ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.cc
+ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.cc \
+ParticleOnCylinderPermanentState.cc \
+ParticleOnCylinderHaldaneRezayi.cc

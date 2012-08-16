@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "Hamiltonian/ParticleOnCylinderPermanentState.h"
+#include "Hamiltonian/ParticleOnCylinderHaldaneRezayi.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -65,7 +65,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnCylinderPermanentState::ParticleOnCylinderPermanentState(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum,
+ParticleOnCylinderHaldaneRezayi::ParticleOnCylinderHaldaneRezayi(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum,
 										   double ratio,AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
@@ -107,15 +107,19 @@ ParticleOnCylinderPermanentState::ParticleOnCylinderPermanentState(ParticleOnSph
 // destructor
 //
 
-ParticleOnCylinderPermanentState::~ParticleOnCylinderPermanentState() 
+ParticleOnCylinderHaldaneRezayi::~ParticleOnCylinderHaldaneRezayi() 
 {
-  delete[] this->InteractionFactors;
-  delete[] this->M1Value;
-  delete[] this->M2Value;
-  delete[] this->M3Value;
-  delete[] this->M4Value;
-  delete[] this->M5Value;
-  delete[] this->M6Value;
+  delete[] this->InteractionFactorsIntra;
+  delete[] this->M1ValueIntra;
+  delete[] this->M2ValueIntra;
+  delete[] this->M3ValueIntra;
+  delete[] this->M4ValueIntra;
+
+  delete[] this->InteractionFactorsInter;
+  delete[] this->M1ValueInter;
+  delete[] this->M2ValueInter;
+  delete[] this->M3ValueInter;
+  delete[] this->M4ValueInter;
 
 
   if (this->FastMultiplicationFlag == true)
@@ -139,9 +143,11 @@ ParticleOnCylinderPermanentState::~ParticleOnCylinderPermanentState()
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnCylinderPermanentState::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnCylinderHaldaneRezayi::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
-  delete[] this->InteractionFactors;
+  delete[] this->InteractionFactorsIntra;
+  delete[] this->InteractionFactorsInter;
+
   if (this->FastMultiplicationFlag == true)
     {
       for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
@@ -161,7 +167,7 @@ void ParticleOnCylinderPermanentState::SetHilbertSpace (AbstractHilbertSpace* hi
 //
 // shift = shift value
 
-void ParticleOnCylinderPermanentState::ShiftHamiltonian (double shift)
+void ParticleOnCylinderHaldaneRezayi::ShiftHamiltonian (double shift)
 {
   this->EnergyShift = shift;
 }
@@ -169,71 +175,126 @@ void ParticleOnCylinderPermanentState::ShiftHamiltonian (double shift)
 // evaluate all interaction factors
 //   
 
-void ParticleOnCylinderPermanentState::EvaluateInteractionFactors()
+void ParticleOnCylinderHaldaneRezayi::EvaluateInteractionFactors()
 {
   int Pos = 0;
-  int m4;
+  int m3;
   double MaxCoefficient = 0.0;
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      Complex* TmpCoefficient = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
+      Complex* TmpCoefficient = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
+
+
+      //********************** INTRA ************************************
 
       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-            for (int m6 = 0; m6 <= this->MaxMomentum; ++m6)
-	      for (int m5 = 0; m5 < m6; ++m5)
+	  for (int m4 = 0; m4 <= this->MaxMomentum; ++m4)
  	       {
-	         m4 = m1 + m2 + m3 - m6 - m5;
-	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+	         m3 = m1 + m2 - m4;
+	         if ((m3 >= 0) && (m3 <= this->MaxMomentum))
+                   if (m3 > m4)
   	             {
- 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, m5, m6);
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientIntra(m1, m2, m3, m4);
+                                             //-this->EvaluateInteractionCoefficientIntra(m2, m1, m3, m4)
+                                             //-this->EvaluateInteractionCoefficientIntra(m1, m2, m4, m3)
+                                             //+this->EvaluateInteractionCoefficientIntra(m2, m1, m4, m3);
+
 		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
 		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		       ++Pos;
 		     }
 	        }
 
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->M5Value = new int [Pos];
-      this->M6Value = new int [Pos];
+      this->NbrInteractionFactorsIntra = 0;
+      this->M1ValueIntra = new int [Pos];
+      this->M2ValueIntra = new int [Pos];
+      this->M3ValueIntra = new int [Pos];
+      this->M4ValueIntra = new int [Pos];
 
-      this->InteractionFactors = new Complex [Pos];
-      cout << "nbr interaction = " << Pos << endl;
+      this->InteractionFactorsIntra = new Complex [Pos];
+      cout << "nbr interaction intra = " << Pos << endl;
       Pos = 0;
       MaxCoefficient *= MACHINE_PRECISION;
 
-      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
 	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-            for (int m6 = 0; m6 <= this->MaxMomentum; ++m6)
-	      for (int m5 = 0; m5 < m6; ++m5)
+	  for (int m4 = 0; m4 <= this->MaxMomentum; ++m4)
  	       {
-	         m4 = m1 + m2 + m3 - m6 - m5;
-	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-		     {
+	         m3 = m1 + m2 - m4;
+	         if ((m3 >= 0) && (m3 <= this->MaxMomentum))
+                  if (m3 > m4)
+  	             {
 		       if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
 		         {
-		           this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		           this->M1Value[this->NbrInteractionFactors] = m1;
-		           this->M2Value[this->NbrInteractionFactors] = m2;
-		           this->M3Value[this->NbrInteractionFactors] = m3;
-		           this->M4Value[this->NbrInteractionFactors] = m4;
-		           this->M5Value[this->NbrInteractionFactors] = m5;
-		           this->M6Value[this->NbrInteractionFactors] = m6;
-                           cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<m5<<" "<<m6<<" "<<TmpCoefficient[Pos]<<endl;
-		           ++this->NbrInteractionFactors;
+		           this->InteractionFactorsIntra[this->NbrInteractionFactorsIntra] = TmpCoefficient[Pos];
+		           this->M1ValueIntra[this->NbrInteractionFactorsIntra] = m1;
+		           this->M2ValueIntra[this->NbrInteractionFactorsIntra] = m2;
+		           this->M3ValueIntra[this->NbrInteractionFactorsIntra] = m3;
+		           this->M4ValueIntra[this->NbrInteractionFactorsIntra] = m4;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactorsIntra;
 		         }
 		       ++Pos;
 		    }
 	       }
 
-     cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
+     cout << "nbr interaction intra = " << this->NbrInteractionFactorsIntra << endl;
+
+      //********************** INTER ************************************
+
+      Pos = 0;
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
+	  for (int m4 = 0; m4 <= this->MaxMomentum; ++m4)
+ 	       {
+	         m3 = m1 + m2 - m4;
+	         if ((m3 >= 0) && (m3 <= this->MaxMomentum))
+  	             {
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientInter(m1, m2, m3, m4);
+                                             //+this->EvaluateInteractionCoefficientInter(m2, m1, m4, m3);
+
+		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactorsInter = 0;
+      this->M1ValueInter = new int [Pos];
+      this->M2ValueInter = new int [Pos];
+      this->M3ValueInter = new int [Pos];
+      this->M4ValueInter = new int [Pos];
+
+      this->InteractionFactorsInter = new Complex [Pos];
+      cout << "nbr interaction inter = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+       for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
+	  for (int m4 = 0; m4 <= this->MaxMomentum; ++m4)
+ 	       {
+	         m3 = m1 + m2 - m4;
+	         if ((m3 >= 0) && (m3 <= this->MaxMomentum))
+  	             {
+		       if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactorsInter[this->NbrInteractionFactorsInter] = TmpCoefficient[Pos];
+		           this->M1ValueInter[this->NbrInteractionFactorsInter] = m1;
+		           this->M2ValueInter[this->NbrInteractionFactorsInter] = m2;
+		           this->M3ValueInter[this->NbrInteractionFactorsInter] = m3;
+		           this->M4ValueInter[this->NbrInteractionFactorsInter] = m4;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<m5<<" "<<m6<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactorsInter;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction inter = " << this->NbrInteractionFactorsInter << endl;
+
      cout << "====================================" << endl;
      delete[] TmpCoefficient;
     }
@@ -248,32 +309,52 @@ void ParticleOnCylinderPermanentState::EvaluateInteractionFactors()
 // m2 = second index
 // m3 = third index
 // m4 = fourth index
-// m5 = fifth index
-// m6 = sixth index
 // return value = numerical coefficient
 
-Complex ParticleOnCylinderPermanentState::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6)
+Complex ParticleOnCylinderHaldaneRezayi::EvaluateInteractionCoefficientIntra(int m1, int m2, int m3, int m4)
 {
-  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
-  double Xr = kappa * (2.0 * m1 - m2 - m3)/3.0;
-  double Xs = kappa * (2.0 * m2 - m1 - m3)/3.0;
-  double Xrp = kappa * (2.0 * m6 - m4 - m5)/3.0;
-  double Xsp = kappa * (2.0 * m5 - m4 - m6)/3.0;
-  double GaussianExp;
+  double Xm1 = kappa * m1;
+  double Xm2 = kappa * m2;
+  double Xm3 = kappa * m3;
+  double Xm4 = kappa * m4;	
+  double Xr = 0.5 * (Xm1 - Xm2);
+  double Xs = 0.5 * (Xm4 - Xm3);
 
   Complex Coefficient(0,0);
 
-     GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs;
-     Coefficient.Re = exp(-GaussianExp) * (Xr - Xs);
-     Coefficient.Im = 0.0;
-
-     GaussianExp = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
-     Coefficient.Re *= (exp(-GaussianExp) * (Xrp - Xsp));
-     Coefficient.Im = 0.0;
-     return (-Coefficient * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
- 
+  Coefficient.Re = exp(-Xr*Xr - Xs*Xs) * 4.0 * Xr * Xs;
+  Coefficient.Im = 0.0;
+  return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
 }
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+Complex ParticleOnCylinderHaldaneRezayi::EvaluateInteractionCoefficientInter(int m1, int m2, int m3, int m4)
+{
+  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
+  double kappa = 2.0 * M_PI/Length;
+  double Xm1 = kappa * m1;
+  double Xm2 = kappa * m2;
+  double Xm3 = kappa * m3;
+  double Xm4 = kappa * m4;	
+  double Xr = 0.5 * (Xm1 - Xm2);
+  double Xs = 0.5 * (Xm4 - Xm3);
+
+  Complex Coefficient(0,0);
+
+  Coefficient.Re = exp(-Xr*Xr - Xs*Xs) * 8.0 * Xr * Xs;
+  Coefficient.Im = 0.0;
+  return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
+}
+
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
@@ -284,7 +365,7 @@ Complex ParticleOnCylinderPermanentState::EvaluateInteractionCoefficient(int m1,
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+ComplexVector& ParticleOnCylinderHaldaneRezayi::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
@@ -301,42 +382,36 @@ ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVect
       int m2;
       int m3;
       int m4;
-      int m5;
-      int m6;
-      int TmpA[3];
-      int TmpC[3];
-      int TmpSpinA[3];
-      int TmpSpinC[3];
+      int TmpA[2];
+      int TmpC[2];
+      int TmpSpinA[2];
+      int TmpSpinC[2];
 
       Complex TmpInteraction;
       ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
 
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+      for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
 	{
 
-          //UPUPDOWN 
+          //Intra
 
-	  TmpC[0] = this->M1Value[j];
-	  TmpC[1] = this->M2Value[j];
-	  TmpC[2] = this->M3Value[j];
-	  TmpA[0] = this->M4Value[j];
-	  TmpA[1] = this->M5Value[j];
-	  TmpA[2] = this->M6Value[j];
+	  TmpC[0] = this->M1ValueIntra[j];
+	  TmpC[1] = this->M2ValueIntra[j];
+	  TmpA[0] = this->M3ValueIntra[j];
+	  TmpA[1] = this->M4ValueIntra[j];
 
 	  TmpSpinC[0] = 0;
 	  TmpSpinC[1] = 0;
-	  TmpSpinC[2] = 1;
-	  TmpSpinA[0] = 1;
+	  TmpSpinA[0] = 0;
 	  TmpSpinA[1] = 0;
-	  TmpSpinA[2] = 0;
           
-	  TmpInteraction = this->InteractionFactors[j];
+	  TmpInteraction = this->InteractionFactorsIntra[j];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
               if (Coefficient2 != 0.0)
                 {
-                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
   	           if (Index <= i)
                     {
 		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
@@ -345,45 +420,76 @@ ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVect
                       if (Index < i)
                         vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
                     }
-                } 
+                }
 	    }
 
 
-          //DOWNDOWNUP 
-
-	  TmpC[0] = this->M1Value[j];
-	  TmpC[1] = this->M2Value[j];
-	  TmpC[2] = this->M3Value[j];
-	  TmpA[0] = this->M4Value[j];
-	  TmpA[1] = this->M5Value[j];
-	  TmpA[2] = this->M6Value[j];
+	  TmpC[0] = this->M1ValueIntra[j];
+	  TmpC[1] = this->M2ValueIntra[j];
+	  TmpA[0] = this->M3ValueIntra[j];
+	  TmpA[1] = this->M4ValueIntra[j];
 
 	  TmpSpinC[0] = 1;
 	  TmpSpinC[1] = 1;
-	  TmpSpinC[2] = 0;
-	  TmpSpinA[0] = 0;
+	  TmpSpinA[0] = 1;
 	  TmpSpinA[1] = 1;
-	  TmpSpinA[2] = 1;
           
-	  TmpInteraction = this->InteractionFactors[j];
+	  TmpInteraction = this->InteractionFactorsIntra[j];
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
               if (Coefficient2 != 0.0)
                 {
-                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
   	           if (Index <= i)
                     {
 		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
                       //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
-                      //cout<<"DDU "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<" "<<TmpA[0]<<" "<<TmpA[1]<<endl;
                       if (Index < i)
                         vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
                     }
-                } 
+                }
 	    }
 
 	} //j
+
+
+      for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	{
+
+          //Inter
+
+	  TmpC[0] = this->M1ValueInter[j];
+	  TmpC[1] = this->M2ValueInter[j];
+	  TmpA[0] = this->M3ValueInter[j];
+	  TmpA[1] = this->M4ValueInter[j];
+
+	  TmpSpinC[0] = 1;
+	  TmpSpinC[1] = 0;
+	  TmpSpinA[0] = 0;
+	  TmpSpinA[1] = 1;
+          
+	  TmpInteraction = this->InteractionFactorsInter[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
+  	           if (Index <= i)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<" "<<TmpA[0]<<" "<<TmpA[1]<<endl;
+                      if (Index < i)
+                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+                    }
+                }
+	    }
+
+	} //j
+
 
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
@@ -451,43 +557,37 @@ ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVect
 	  int m2;
 	  int m3;
 	  int m4;
-          int m5;
-          int m6;
-          int TmpA[3];
-          int TmpC[3];
-          int TmpSpinA[3];
-          int TmpSpinC[3];
+          int TmpA[2];
+          int TmpC[2];
+          int TmpSpinA[2];
+          int TmpSpinC[2];
 
 	  Complex TmpInteraction;
 
 	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
 	    if (PosMod != k)
 	      {		
-		for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+		for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
 		  {
-                    //UPUPDOWN 
+                    //Intra
 
-	            TmpC[0] = this->M1Value[j];
-	            TmpC[1] = this->M2Value[j];
-	            TmpC[2] = this->M3Value[j];
-	            TmpA[0] = this->M4Value[j];
-	            TmpA[1] = this->M5Value[j];
-	            TmpA[2] = this->M6Value[j];
+	            TmpC[0] = this->M1ValueIntra[j];
+	            TmpC[1] = this->M2ValueIntra[j];
+	            TmpC[2] = this->M3ValueIntra[j];
+	            TmpA[0] = this->M4ValueIntra[j];
 
 	            TmpSpinC[0] = 0;
 	            TmpSpinC[1] = 0;
-	            TmpSpinC[2] = 1;
-	            TmpSpinA[0] = 1;
+	            TmpSpinA[0] = 0;
 	            TmpSpinA[1] = 0;
-             	    TmpSpinA[2] = 0;
 
-		    TmpInteraction = this->InteractionFactors[j];
+		    TmpInteraction = this->InteractionFactorsIntra[j];
 		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		      {
-	                Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	                Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
                         if (Coefficient2 != 0.0)
                          {
-                           Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+                           Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
   	                   if (Index <= i)
                              {
 		                vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
@@ -498,29 +598,24 @@ ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVect
                          } 
 		      }
 
-                    //UPUPDOWN 
 
-	            TmpC[0] = this->M1Value[j];
-	            TmpC[1] = this->M2Value[j];
-	            TmpC[2] = this->M3Value[j];
-	            TmpA[0] = this->M4Value[j];
-	            TmpA[1] = this->M5Value[j];
-	            TmpA[2] = this->M6Value[j];
+	            TmpC[0] = this->M1ValueIntra[j];
+	            TmpC[1] = this->M2ValueIntra[j];
+	            TmpC[2] = this->M3ValueIntra[j];
+	            TmpA[0] = this->M4ValueIntra[j];
 
 	            TmpSpinC[0] = 1;
 	            TmpSpinC[1] = 1;
-	            TmpSpinC[2] = 0;
-	            TmpSpinA[0] = 0;
+	            TmpSpinA[0] = 1;
 	            TmpSpinA[1] = 1;
-             	    TmpSpinA[2] = 1;
 
-		    TmpInteraction = this->InteractionFactors[j];
+		    TmpInteraction = this->InteractionFactorsIntra[j];
 		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		      {
-	                Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+	                Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
                         if (Coefficient2 != 0.0)
                          {
-                           Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+                           Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
   	                   if (Index <= i)
                              {
 		                vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
@@ -532,7 +627,41 @@ ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVect
 		      }
 
 
-		  }
+		  } //j
+
+
+		for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+		  {
+                    //Inter
+
+	            TmpC[0] = this->M1ValueInter[j];
+	            TmpC[1] = this->M2ValueInter[j];
+	            TmpC[2] = this->M3ValueInter[j];
+	            TmpA[0] = this->M4ValueInter[j];
+
+	            TmpSpinC[0] = 1;
+	            TmpSpinC[1] = 0;
+	            TmpSpinA[0] = 0;
+	            TmpSpinA[1] = 1;
+
+		    TmpInteraction = this->InteractionFactorsInter[j];
+		    for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
+		      {
+	                Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
+                        if (Coefficient2 != 0.0)
+                         {
+                           Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
+  	                   if (Index <= i)
+                             {
+		                vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                                if (Index < i)
+  		                  vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+
+                             }
+                         } 
+		      }
+
+		  } //j
 
 		for (int i = firstComponent + k; i < LastComponent; i += this->FastMultiplicationStep)
 		  {
@@ -554,7 +683,7 @@ ComplexVector& ParticleOnCylinderPermanentState::LowLevelAddMultiply(ComplexVect
 // lastComponent  = index of the last component that has to be precalcualted
 // return value = number of non-zero matrix element
 
-long ParticleOnCylinderPermanentState::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
+long ParticleOnCylinderHaldaneRezayi::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
   int Index;
   double Coefficient, Coefficient2;
@@ -563,42 +692,36 @@ long ParticleOnCylinderPermanentState::PartialFastMultiplicationMemory(int first
   int m2;
   int m3;
   int m4;
-  int m5;
-  int m6;
-  int TmpA[3];
-  int TmpC[3];
-  int TmpSpinA[3];
-  int TmpSpinC[3];
+  int TmpA[2];
+  int TmpC[2];
+  int TmpSpinA[2];
+  int TmpSpinC[2];
 
   int LastComponent = lastComponent + firstComponent;
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
   int Dim = TmpParticles->GetHilbertSpaceDimension();
 
-  cout<<"Partial fast memory permanent "<<endl;
+  cout<<"Partial fast memory HR "<<endl;
 
   for (int i = firstComponent; i < LastComponent; ++i)
     {
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+      for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
 	{
 
-	  TmpC[0] = this->M1Value[j];
-	  TmpC[1] = this->M2Value[j];
-	  TmpC[2] = this->M3Value[j];
-	  TmpA[0] = this->M4Value[j];
-	  TmpA[1] = this->M5Value[j];
-	  TmpA[2] = this->M6Value[j];
+	  TmpC[0] = this->M1ValueIntra[j];
+	  TmpC[1] = this->M2ValueIntra[j];
+	  TmpA[0] = this->M3ValueIntra[j];
+	  TmpA[1] = this->M4ValueIntra[j];
 
 	  TmpSpinC[0] = 0;
 	  TmpSpinC[1] = 0;
-	  TmpSpinC[2] = 1;
-	  TmpSpinA[0] = 1;
+	  TmpSpinA[0] = 0;
 	  TmpSpinA[1] = 0;
-          TmpSpinA[2] = 0;
           
-          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
           if (Coefficient2 != 0.0)
            {
-            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
   	    if (Index <= i)
              {
                ++Memory;
@@ -606,24 +729,20 @@ long ParticleOnCylinderPermanentState::PartialFastMultiplicationMemory(int first
              }
            } 
 
-	  TmpC[0] = this->M1Value[j];
-	  TmpC[1] = this->M2Value[j];
-	  TmpC[2] = this->M3Value[j];
-	  TmpA[0] = this->M4Value[j];
-	  TmpA[1] = this->M5Value[j];
-	  TmpA[2] = this->M6Value[j];
+	  TmpC[0] = this->M1ValueIntra[j];
+	  TmpC[1] = this->M2ValueIntra[j];
+	  TmpA[0] = this->M3ValueIntra[j];
+	  TmpA[1] = this->M4ValueIntra[j];
 
 	  TmpSpinC[0] = 1;
 	  TmpSpinC[1] = 1;
-	  TmpSpinC[2] = 0;
-	  TmpSpinA[0] = 0;
+	  TmpSpinA[0] = 1;
 	  TmpSpinA[1] = 1;
-          TmpSpinA[2] = 1;
           
-          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
           if (Coefficient2 != 0.0)
            {
-            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
   	    if (Index <= i)
              {
                ++Memory;
@@ -631,7 +750,34 @@ long ParticleOnCylinderPermanentState::PartialFastMultiplicationMemory(int first
              }
            } 
 
-	}    
+	} //j    
+
+      for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	{
+
+	  TmpC[0] = this->M1ValueInter[j];
+	  TmpC[1] = this->M2ValueInter[j];
+	  TmpA[0] = this->M3ValueInter[j];
+	  TmpA[1] = this->M4ValueInter[j];
+
+	  TmpSpinC[0] = 1;
+	  TmpSpinC[1] = 0;
+	  TmpSpinA[0] = 0;
+	  TmpSpinA[1] = 1;
+          
+          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
+          if (Coefficient2 != 0.0)
+           {
+            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
+  	    if (Index <= i)
+             {
+               ++Memory;
+	       ++this->NbrInteractionPerComponent[i];
+             }
+           } 
+
+	} //j    
+
     }
   Memory = ((sizeof (int*) + sizeof (int) + 2 * sizeof(double*)) * TmpParticles->GetHilbertSpaceDimension() + 
 	    Memory *  (sizeof (int) + sizeof(Complex)));
@@ -644,7 +790,7 @@ long ParticleOnCylinderPermanentState::PartialFastMultiplicationMemory(int first
 // firstComponent = index of the first component that has to be precalcualted
 // lastComponent  = index of the last component that has to be precalcualted
 
-void ParticleOnCylinderPermanentState::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
+void ParticleOnCylinderHaldaneRezayi::PartialEnableFastMultiplication(int firstComponent, int lastComponent)
 {
   int Index;
   double Coefficient, Coefficient2;
@@ -655,11 +801,11 @@ void ParticleOnCylinderPermanentState::PartialEnableFastMultiplication(int first
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
   int Dim = TmpParticles->GetHilbertSpaceDimension();  
   int LastComponent = firstComponent + lastComponent;
-  int m1, m2, m3, m4, m5, m6;
-  int TmpC[3];
-  int TmpA[3]; 
-  int TmpSpinC[3];
-  int TmpSpinA[3]; 
+  int m1, m2, m3, m4;
+  int TmpC[2];
+  int TmpA[2]; 
+  int TmpSpinC[2];
+  int TmpSpinA[2]; 
   int SumIndices;
   int Pos;
   int ReducedNbrInteractionFactors;
@@ -682,63 +828,83 @@ void ParticleOnCylinderPermanentState::PartialEnableFastMultiplication(int first
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[PosIndex];
       Pos = 0;
 
-      for (int j = 0; j < this->NbrInteractionFactors; ++j) 
+      for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
 	{
-	  TmpC[0] = this->M1Value[j];
-	  TmpC[1] = this->M2Value[j];
-	  TmpC[2] = this->M3Value[j];
-	  TmpA[0] = this->M4Value[j];
-	  TmpA[1] = this->M5Value[j];
-	  TmpA[2] = this->M6Value[j];
+	  TmpC[0] = this->M1ValueIntra[j];
+	  TmpC[1] = this->M2ValueIntra[j];
+	  TmpA[0] = this->M3ValueIntra[j];
+	  TmpA[1] = this->M4ValueIntra[j];
 
 	  TmpSpinC[0] = 0;
 	  TmpSpinC[1] = 0;
-	  TmpSpinC[2] = 1;
-	  TmpSpinA[0] = 1;
+	  TmpSpinA[0] = 0;
 	  TmpSpinA[1] = 0;
-          TmpSpinA[2] = 0;
 
-          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
           if (Coefficient2 != 0.0)
            {
-            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
             if (Index <= i)
               {
 	       TmpIndexArray[Pos] = Index;
-	       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactors[j];
+	       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactorsIntra[j];
 	       ++Pos;
               }
            }
 
 
-	  TmpC[0] = this->M1Value[j];
-	  TmpC[1] = this->M2Value[j];
-	  TmpC[2] = this->M3Value[j];
-	  TmpA[0] = this->M4Value[j];
-	  TmpA[1] = this->M5Value[j];
-	  TmpA[2] = this->M6Value[j];
+	  TmpC[0] = this->M1ValueIntra[j];
+	  TmpC[1] = this->M2ValueIntra[j];
+	  TmpA[0] = this->M3ValueIntra[j];
+	  TmpA[1] = this->M4ValueIntra[j];
 
 	  TmpSpinC[0] = 1;
 	  TmpSpinC[1] = 1;
-	  TmpSpinC[2] = 0;
-	  TmpSpinA[0] = 0;
+	  TmpSpinA[0] = 1;
 	  TmpSpinA[1] = 1;
-          TmpSpinA[2] = 1;
 
-          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 3);
+          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
           if (Coefficient2 != 0.0)
            {
-            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 3, Coefficient);
+            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
             if (Index <= i)
               {
 	       TmpIndexArray[Pos] = Index;
-	       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactors[j];
+	       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactorsIntra[j];
 	       ++Pos;
               }
            }
 
  
-	}
+	}  //j
+
+
+      for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	{
+	  TmpC[0] = this->M1ValueInter[j];
+	  TmpC[1] = this->M2ValueInter[j];
+	  TmpA[0] = this->M3ValueInter[j];
+	  TmpA[1] = this->M4ValueInter[j];
+
+	  TmpSpinC[0] = 1;
+	  TmpSpinC[1] = 0;
+	  TmpSpinA[0] = 0;
+	  TmpSpinA[1] = 1;
+
+          Coefficient2 = TmpParticles->ProdA(i, TmpA, TmpSpinA, 2);
+          if (Coefficient2 != 0.0)
+           {
+            Index = TmpParticles->ProdAd(TmpC, TmpSpinC, 2, Coefficient);
+            if (Index <= i)
+              {
+	       TmpIndexArray[Pos] = Index;
+	       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactorsInter[j];
+	       ++Pos;
+              }
+           }
+ 
+	}  //j
+
      ++PosIndex;
    }
 
