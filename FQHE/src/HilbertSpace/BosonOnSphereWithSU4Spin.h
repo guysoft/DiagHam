@@ -38,6 +38,10 @@
 #include <iostream>
 
 
+using std::cout;
+using std::endl;
+
+
 class BosonOnSphereShort;
 class ParticleOnSphereWithSpin;
 

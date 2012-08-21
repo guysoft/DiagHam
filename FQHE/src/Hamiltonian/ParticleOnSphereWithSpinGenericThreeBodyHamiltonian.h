@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREGENERICTHREEBODYHAMILTONIAN_H
-#define PARTICLEONSPHEREGENERICTHREEBODYHAMILTONIAN_H
+#ifndef PARTICLEONSPHEREWITHSPINGENERICTHREEBODYHAMILTONIAN_H
+#define PARTICLEONSPHEREWITHSPINGENERICTHREEBODYHAMILTONIAN_H
 
 
 #include "config.h"
@@ -51,22 +51,24 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
 
  protected:
 
-  // array with the three-body pseudo-potentials, sorted with respect to the relative angular momentu (second index) 
-  // taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-  // first index stands for the spin sector (0 up-up-up, 1 down-down-down, 2 up-up-down, 3 up-down-down)
-  double** ThreeBodyPseudoPotentials;
-  // number of elements in the ThreeBodyPseudoPotential array for each spin sector
-  int* NbrThreeBodyPseudoPotentials;
-  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential
-  int* MaxRelativeAngularMomentum;
+  // array with the three-body pseudo-potentials in the S=3/2 sector
+  double* ThreeBodyPseudoPotentials32;
+  // number of elements in the ThreeBodyPseudoPotential array in the S=3/2 sector
+  int NbrThreeBodyPseudoPotentials32;
+  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential32
+  int MaxRelativeAngularMomentum32;
+
+  // array with the three-body pseudo-potentials in the S=1/2 sector
+  double* ThreeBodyPseudoPotentials12;
+  // number of elements in the ThreeBodyPseudoPotential array in the S=3/2 sector
+  int NbrThreeBodyPseudoPotentials12;
+  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential32
+  int MaxRelativeAngularMomentum12;
 
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
 
-
-  double Coef1;
-  double Coef2;
 
  public:
 
@@ -79,47 +81,30 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
-  // threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
-  //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-  //                            first index is the spin sector (0 up-up-up, 1 down-down-down, 2 up-up-down, 3 up-down-down)
-  // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential  for each spin sector
+  // threeBodyPseudoPotential32 = array with the three-body pseudo-potentials in the S=3/2 sector
+  // maxRelativeAngularMomentum32 =  maximum relative angular momentum that is used in ThreeBodyPseudoPotential in the S=3/2 sector
+  // threeBodyPseudoPotential12 = array with the three-body pseudo-potentials in the S=1/2 sector
+  // maxRelativeAngularMomentum12 =  maximum relative angular momentum that is used in ThreeBodyPseudoPotential in the S=1/2 sector
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-						      double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum, 
+						      double* threeBodyPseudoPotential32, int maxRelativeAngularMomentum32,
+						      double* threeBodyPseudoPotential12, int maxRelativeAngularMomentum12,
 						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 						      char* precalculationFileName = 0);
 
-  // constructor from default datas
-  //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // lzmax = maximum Lz value reached by a particle in the state
-  // threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
-  //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-  //                            first index is the spin sector (0 up-up-up, 1 down-down-down, 2 up-up-down, 3 up-down-down)
-  // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential  for each spin sector
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
-  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-						      double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum, 
-						      double coef1, double coef2,
-						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-						      char* precalculationFileName = 0);
 
   // constructor from datas with a fully-defined two body interaction
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
-  // threeBodyPseudoPotential = array with the three-body pseudo-potentials sorted with respect to the relative angular momentum, 
-  //                            taking into account of additional degeneracy for relative momentum greater than 5 for bosons (8 for fermions)
-  //                            first index is the spin sector (0 up-up-up, 1 down-down-down, 2 up-up-down, 3 up-down-down)
-  // maxRelativeAngularMomentum =  maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential  for each spin sector
+  // threeBodyPseudoPotential32 = array with the three-body pseudo-potentials in the S=3/2 sector
+  // maxRelativeAngularMomentum32 =  maximum relative angular momentum that is used in ThreeBodyPseudoPotential in the S=3/2 sector
+  // threeBodyPseudoPotential12 = array with the three-body pseudo-potentials in the S=1/2 sector
+  // maxRelativeAngularMomentum12 =  maximum relative angular momentum that is used in ThreeBodyPseudoPotential in the S=1/2 sector
   // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
   //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
   // onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
@@ -129,7 +114,8 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
-						      double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum,
+						      double* threeBodyPseudoPotential32, int maxRelativeAngularMomentum32,
+						      double* threeBodyPseudoPotential12, int maxRelativeAngularMomentum12,
 						      double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
 						      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 						      char* precalculationFileName = 0);

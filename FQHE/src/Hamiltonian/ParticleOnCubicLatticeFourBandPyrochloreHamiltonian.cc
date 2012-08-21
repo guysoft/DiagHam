@@ -151,15 +151,15 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 
   int NbrInternalIndices = 4;
   this->InteractionFactorsSigma = new Complex***** [NbrInternalIndices];
-  for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
+  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
     {
-      this->InteractionFactorsSigma[sigma1] = new Complex****  [NbrInternalIndices - sigma1];
-      for (int sigma2 = sigma1; sigma2 < NbrInternalIndices; ++sigma2)
+      this->InteractionFactorsSigma[sigma3] = new Complex****  [NbrInternalIndices];
+      for (int sigma4 = sigma3; sigma4 < NbrInternalIndices; ++sigma4)
 	{
-	  this->InteractionFactorsSigma[sigma1][sigma2] = new Complex***[NbrInternalIndices];
-	  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+	  this->InteractionFactorsSigma[sigma3][sigma4] = new Complex***[NbrInternalIndices];
+	  for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
 	    {
-	      this->InteractionFactorsSigma[sigma1][sigma2][sigma3] = new Complex**[NbrInternalIndices - sigma3];
+	      this->InteractionFactorsSigma[sigma3][sigma4][sigma1] = new Complex**[NbrInternalIndices];
 	    }
 	}
     }
@@ -336,7 +336,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		      }
 		  }
       
-      double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ));
+      double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * this->UPotential;
+      double FactorV = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * 2.0 * this->VPotential;
       Complex* TmpInteractionFactor;
       int* TmpIndices;
       int* TmpIndices2;
@@ -344,20 +345,41 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	{
 	  for (int sigma3 = 0; sigma3 < 4; ++sigma3)
 	    {
-	      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3] = new Complex*[this->NbrIntraSectorSums];
+	      this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] = new Complex*[this->NbrIntraSectorSums];
 	      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 		{
-		  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
+		  this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
 		  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 		  TmpIndices = this->IntraSectorIndicesPerSum[j];
 		  for (int i1 = 0; i1 < Lim; i1 += 2)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+		      int Index1 = TmpIndices[i1];
+		      int Index2 = TmpIndices[i1 + 1];
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Complex Tmp = 0.0;
-			  //			  Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, sigma1, sigma1, sigma3, sigma3, 0, 2, 0, 2);
+			  int Index3 = TmpIndices[i2];
+			  int Index4 = TmpIndices[i2 + 1];
+			  for (int i = 0; i < 8; ++i)
+			    {
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma3, sigma1, sigma1, i, i, i, i);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma3, sigma3, sigma1, sigma1, i, i, i, i);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i, i, i);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i, i, i);
+			    }
+			  Tmp *= FactorU;
 			  (*TmpInteractionFactor) = Tmp;
+			  Tmp = 0.0;
+			  for (int i = 0; i < 4; ++i)
+			    {
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma3, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
+			    }
+			  Tmp *= FactorV;
+			  (*TmpInteractionFactor) += Tmp;
 			  ++TmpInteractionFactor;
 			}
 		    }
@@ -367,19 +389,43 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	    {
 	      for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
 		{
-		  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma4] = new Complex*[this->NbrIntraSectorSums];
+		  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] = new Complex*[this->NbrIntraSectorSums];
 		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 		    {
-		      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
+		      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
 		      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 		      TmpIndices = this->IntraSectorIndicesPerSum[j];
 		      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
 		      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 		      for (int i1 = 0; i1 < Lim; i1 += 2)
 			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim) >> 2]);
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
+			  int Index1 = TmpIndices[i1];
+			  int Index2 = TmpIndices[i1 + 1];
 			  for (int i2 = 0; i2 < Lim2; i2 += 2)
 			    {
+			      Complex Tmp = 0.0;
+			      int Index3 = TmpIndices2[i2];
+			      int Index4 = TmpIndices2[i2 + 1];
+			      for (int i = 0; i < 8; ++i)
+				{
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma4, sigma1, sigma1, i, i, i, i);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma4, sigma3, sigma1, sigma1, i, i, i, i);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma1, sigma1, i, i, i, i);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma1, sigma1, i, i, i, i);
+				}
+			      Tmp *= FactorU;
+			      (*TmpInteractionFactor) = Tmp;
+			      Tmp = 0.0;
+			      for (int i = 0; i < 4; ++i)
+				{
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma4, sigma1, sigma1, i, i + 4, i, i + 4);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma4, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma1, sigma1, i, i + 4, i, i + 4);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
+				}
+			      Tmp *= FactorV;
+			      (*TmpInteractionFactor) += Tmp;
 			      ++TmpInteractionFactor;
 			    }
 			}
@@ -393,19 +439,43 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	    {
 	      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
 		{
-		  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3] = new Complex*[this->NbrIntraSectorSums];
+		  this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
 		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 		    {
-		      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+		      this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
 		      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 		      TmpIndices = this->IntraSectorIndicesPerSum[j];
 		      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
 		      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 		      for (int i1 = 0; i1 < Lim2; i1 += 2)
 			{
-			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim2) >> 2]);
+			  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			  int Index1 = TmpIndices2[i1];
+			  int Index2 = TmpIndices2[i1 + 1];
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
+			      Complex Tmp = 0.0;
+			      int Index3 = TmpIndices[i2];
+			      int Index4 = TmpIndices[i2 + 1];
+			      for (int i = 0; i < 8; ++i)
+				{
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma3, sigma1, sigma2, i, i, i, i);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma3, sigma3, sigma1, sigma2, i, i, i, i);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i, i, i);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i, i, i);
+				}
+			      Tmp *= FactorU;
+			      (*TmpInteractionFactor) = Tmp;
+			      Tmp = 0.0;
+			      for (int i = 0; i < 4; ++i)
+				{
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma3, sigma1, sigma2, i, i + 4, i, i + 4);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma3, sigma3, sigma1, sigma2, i, i + 4, i, i + 4);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i + 4, i, i + 4);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i + 4, i, i + 4);
+				}
+			      Tmp *= FactorV;
+			      (*TmpInteractionFactor) += Tmp;
 			      ++TmpInteractionFactor;
 			    }
 			}
@@ -415,19 +485,43 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		{
 		  for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
 		    {
-		      this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma4] = new Complex*[this->NbrIntraSectorSums];
+		      this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
 		      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 			{
-			  this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+			  this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
 			  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 			  TmpIndices = this->IntraSectorIndicesPerSum[j];
 			  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
 			  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 			  for (int i1 = 0; i1 < Lim2; i1 += 2)
 			    {
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma1][sigma1][sigma3][sigma3][j][(i1 * Lim2) >> 2]);
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			      int Index1 = TmpIndices2[i1];
+			      int Index2 = TmpIndices2[i1 + 1];
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
+				  Complex Tmp = 0.0;
+				  int Index3 = TmpIndices2[i2];
+				  int Index4 = TmpIndices2[i2 + 1];
+				  for (int i = 0; i < 8; ++i)
+				    {
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma4, sigma1, sigma2, i, i, i, i);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma4, sigma3, sigma1, sigma2, i, i, i, i);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma2, sigma1, i, i, i, i);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma2, sigma1, i, i, i, i);
+				    }
+				  Tmp *= FactorU;
+				  (*TmpInteractionFactor) = Tmp;
+				  Tmp = 0.0;
+				  for (int i = 0; i < 4; ++i)
+				    {
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma4, sigma1, sigma2, i, i + 4, i, i + 4);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma4, sigma3, sigma1, sigma2, i, i + 4, i, i + 4);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma2, sigma1, i, i + 4, i, i + 4);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma2, sigma1, i, i + 4, i, i + 4);
+				    }
+				  Tmp *= FactorV;
+				  (*TmpInteractionFactor) += Tmp;
 				  ++TmpInteractionFactor;
 				}
 			    }

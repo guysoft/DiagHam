@@ -1035,6 +1035,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 		{
 		  for (int sigma1 = 0; sigma1 < 4; ++sigma1)
 		    {
+
 		      Coefficient3 = particles->AsigmaAsigma(i, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		      if (Coefficient3 != 0.0)
 			{
