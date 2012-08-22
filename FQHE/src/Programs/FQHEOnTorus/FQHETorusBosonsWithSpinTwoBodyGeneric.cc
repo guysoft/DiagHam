@@ -114,6 +114,8 @@ int main(int argc, char** argv)
 
   double** PseudoPotentials  = new double*[3];
   int* NbrPseudoPotentials  = new int[3];
+  double * OneBodyPotentialUpUp = 0;
+  double * OneBodyPotentialDownDown = 0;
   if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -122,6 +124,8 @@ int main(int argc, char** argv)
   else
     {
       if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
+	return -1;
+      if(FQHETorusSU2GetOneBodyPseudopotentials (Manager.GetString("interaction-file"), MaxMomentum, OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
 	return -1;
     }
 
@@ -154,7 +158,7 @@ int main(int argc, char** argv)
 											  NbrPseudoPotentials[0], PseudoPotentials[0],
 											  NbrPseudoPotentials[1], PseudoPotentials[1],
 											  NbrPseudoPotentials[2], PseudoPotentials[2],
-											  Architecture.GetArchitecture(), Memory);
+											  Architecture.GetArchitecture(), Memory, 0,OneBodyPotentialUpUp,OneBodyPotentialDownDown);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;

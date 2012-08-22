@@ -203,6 +203,41 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
   return true;
 }
 
+// get pseudopototentials for particles on torus with SU(2) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// return value = true if no error occured
+
+bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double* oneBodyPotentialUpUp, double* oneBodyPotentialDownDown)
+{
+  int TmpNbrPseudoPotentials;
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', oneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != lzMax )
+	{
+	  cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialDownDown", ' ', oneBodyPotentialDownDown, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != lzMax)
+	{
+	  cout << "OneBodyPotentialDownDown has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  return true;
+}
 
 // get pseudopototentials for particles on torus with SU(3) spin from file
 // 

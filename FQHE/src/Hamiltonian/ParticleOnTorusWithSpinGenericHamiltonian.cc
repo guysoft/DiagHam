@@ -77,7 +77,7 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
 										     int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
 										     int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
 										     int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
-										     AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										     AbstractArchitecture* architecture, long memory, char* precalculationFileName, double * oneBodyPotentielUpUp, double * oneBodyPotentielDownDown)
 {
   this->Particles = particles;
   this->LzMax = maxMomentum - 1;
@@ -114,10 +114,10 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
 
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->EvaluateInteractionFactors();
-  this->OneBodyInteractionFactorsupup = 0;
-  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupup = oneBodyPotentielUpUp;
+  this->OneBodyInteractionFactorsdowndown = oneBodyPotentielDownDown;
   this->OneBodyInteractionFactorsupdown = 0;
+  this->EvaluateInteractionFactors();
   this->S2Hamiltonian = 0;
   this->L2Hamiltonian = 0;
   this->HamiltonianShift = 0.0;
