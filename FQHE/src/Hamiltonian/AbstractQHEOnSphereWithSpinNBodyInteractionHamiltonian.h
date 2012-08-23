@@ -443,6 +443,7 @@ inline void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::EvaluateMNNB
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
+  index += this->PrecalculationShift;
   for (int i = 0; i <= (nbodyIndex >> 1); ++i)
     {
       long TmpNbrNIndices = this->NbrNIndices[nbodyIndex][i];
