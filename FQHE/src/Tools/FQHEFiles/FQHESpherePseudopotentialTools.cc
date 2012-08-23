@@ -53,7 +53,7 @@ using std::string;
 // return value = true if no error occured
 
 bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
-				       double* oneBodyPotentialUpUp, double* oneBodyPotentialDownDown)
+				       double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown)
 {
   ConfigurationParser InteractionDefinition;
   if (InteractionDefinition.Parse(fileName) == false)

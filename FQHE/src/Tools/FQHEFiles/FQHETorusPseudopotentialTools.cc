@@ -211,7 +211,7 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // return value = true if no error occured
 
-bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double* oneBodyPotentialUpUp, double* oneBodyPotentialDownDown)
+bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown)
 {
   int TmpNbrPseudoPotentials;
   ConfigurationParser InteractionDefinition;

@@ -45,7 +45,7 @@
 // onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
 // return value = true if no error occured
 bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
-				       double* oneBodyPseudopotentialUpUp, double* oneBodyPseudopotentialDownDown);
+				       double*& oneBodyPseudopotentialUpUp, double*& oneBodyPseudopotentialDownDown);
 
 // get pseudopototentials for particles on sphere with SU(2) spin from file including all possible interaction terms
 // 
