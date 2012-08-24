@@ -286,7 +286,7 @@ void ParticleOnCylinderHaldaneRezayi::EvaluateInteractionFactors()
 		           this->M2ValueInter[this->NbrInteractionFactorsInter] = m2;
 		           this->M3ValueInter[this->NbrInteractionFactorsInter] = m3;
 		           this->M4ValueInter[this->NbrInteractionFactorsInter] = m4;
-                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<m5<<" "<<m6<<" "<<TmpCoefficient[Pos]<<endl;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
 		           ++this->NbrInteractionFactorsInter;
 		         }
 		       ++Pos;
@@ -324,8 +324,13 @@ Complex ParticleOnCylinderHaldaneRezayi::EvaluateInteractionCoefficientIntra(int
 
   Complex Coefficient(0,0);
 
-  Coefficient.Re = exp(-Xr*Xr - Xs*Xs) * 4.0 * Xr * Xs;
-  Coefficient.Im = 0.0;
+  //int rtimes2 = m1 - m2;
+  //int rptimes2 = m4 -m3;
+  //if ((rtimes2 * rtimes2 + rptimes2 * rptimes2) <= 18)
+  //  {
+      Coefficient.Re = exp(-Xr*Xr - Xs*Xs) * 4.0 * Xr * Xs;
+      Coefficient.Im = 0.0;
+  //  }
   return (Coefficient/sqrt(this->Ratio * this->NbrLzValue));
 }
 

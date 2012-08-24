@@ -104,7 +104,7 @@ ParticleOnCylinderOrbitalProjection::ParticleOnCylinderOrbitalProjection(Particl
         this->OneBodyM2Values[this->NbrOneBodyInteractionFactors] = j;
         this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors] = this->EvaluateInteractionCoefficient(i, j);
         //if (Norm(this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors])>1e-8)
-        cout<<"i= "<<i<<" j= "<<j<<" "<<this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors]<<endl;
+        //cout<<"i= "<<i<<" j= "<<j<<" "<<this->OneBodyInteractionFactors[this->NbrOneBodyInteractionFactors]<<endl;
         this->NbrOneBodyInteractionFactors++;
       }
   cout<<"Done calculating one body terms, total nbr = " << this->NbrOneBodyInteractionFactors << endl;
@@ -266,19 +266,19 @@ ComplexVector& ParticleOnCylinderOrbitalProjection::LowLevelAddMultiply(ComplexV
            if (Index < Dim)
             {
               vDestination[Index] += Coefficient * this->OneBodyInteractionFactors[j] * vSource[i];
-              if ((Coefficient * this->OneBodyInteractionFactors[j] * vSource[i]) != 0)
-              {
-              cout<<"Attempt "; TmpParticles->PrintState(cout,i); cout<<" i= "<<this->OneBodyM1Values[j]<<" j= "<<this->OneBodyM2Values[j]<<" Index= "<<Index<< " Coeff= "<<Coefficient<<" ";
-              TmpParticles->PrintState(cout,Index);
-              cout<<endl;
-              }
+              //if ((Coefficient * this->OneBodyInteractionFactors[j] * vSource[i]) != 0)
+              //{
+              //cout<<"Attempt "; TmpParticles->PrintState(cout,i); cout<<" i= "<<this->OneBodyM1Values[j]<<" j= "<<this->OneBodyM2Values[j]<<" Index= "<<Index<< " Coeff= "<<Coefficient<<" ";
+              //TmpParticles->PrintState(cout,Index);
+              //cout<<endl;
+              //}
             }
         }           
 
   delete TmpParticles;
 
-  cout<<vDestination;
-  exit(1);
+  //cout<<vDestination;
+  //exit(1);
   return vDestination;
 }
 
