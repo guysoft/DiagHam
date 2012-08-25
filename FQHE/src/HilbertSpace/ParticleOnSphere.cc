@@ -1100,3 +1100,14 @@ ostream& ParticleOnSphere::PrintCompactState (ostream& Str, long state)
 void ParticleOnSphere::ConvertToAllLz (ComplexVector& inputState, ParticleOnSphere* inputSpace, ComplexVector& outputState)
 {
 }
+
+// normalize Jack with respect to cylinder basis
+//
+// state = reference to the Jack state to normalize
+// aspect = aspect ratio of cylinder
+// return value = normalized state
+
+RealVector& ParticleOnSphere::NormalizeJackToCylinder(RealVector& state, double aspect)
+{
+  return state;
+}

@@ -722,6 +722,14 @@ class ParticleOnSphere :  public AbstractQHEParticle
 
   void ConvertToAllLz (ComplexVector& inputState, ParticleOnSphere* inputSpace, ComplexVector& outputState);
 
+  // normalize Jack with respect to cylinder basis
+  //
+  // state = reference to the Jack state to normalize
+  // aspect = aspect ratio of cylinder
+  // return value = normalized state
+
+   virtual RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
+
 
 };
 
