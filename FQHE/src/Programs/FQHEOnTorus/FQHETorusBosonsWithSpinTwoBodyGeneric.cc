@@ -71,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-sz", "use the hilbert space with non conserved sz");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
@@ -105,7 +106,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-
+  bool NoSzFlag = Manager.GetBoolean("no-sz");
   if ((TotalSpin & 1) != (NbrBosons & 1))
     {
       TotalSpin &= ~1;
@@ -116,6 +117,7 @@ int main(int argc, char** argv)
   int* NbrPseudoPotentials  = new int[3];
   double * OneBodyPotentialUpUp = 0;
   double * OneBodyPotentialDownDown = 0;
+  double * OneBodyPotentialUpDown = 0;
   if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -125,9 +127,13 @@ int main(int argc, char** argv)
     {
       if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
 	return -1;
-      if(FQHETorusSU2GetOneBodyPseudopotentials (Manager.GetString("interaction-file"), MaxMomentum, OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
+      if(FQHETorusSU2GetOneBodyPseudopotentials (Manager.GetString("interaction-file"), MaxMomentum, OneBodyPotentialUpUp, OneBodyPotentialDownDown,OneBodyPotentialUpDown ) == false)
 	return -1;
     }
+    
+  for (int i =0; i< MaxMomentum; i++)
+    cout << OneBodyPotentialUpDown[i]<<" ";
+  cout <<endl;
 
   char* OutputFileName = new char [512];
   sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
@@ -151,14 +157,19 @@ int main(int argc, char** argv)
     {
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
-      BosonOnTorusWithSpin Space (NbrBosons, MaxMomentum, TotalSpin, YMomentum2);	
+      BosonOnTorusWithSpin * Space = 0;
+      if(NoSzFlag == false)
+	Space = new BosonOnTorusWithSpin (NbrBosons, MaxMomentum, TotalSpin, YMomentum2);
+      else
+	Space = new BosonOnTorusWithSpin (NbrBosons, MaxMomentum, YMomentum2);
+	
 
-      Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(&Space, NbrBosons, MaxMomentum, XRatio,
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(Space, NbrBosons, MaxMomentum, XRatio,
 											  NbrPseudoPotentials[0], PseudoPotentials[0],
 											  NbrPseudoPotentials[1], PseudoPotentials[1],
 											  NbrPseudoPotentials[2], PseudoPotentials[2],
-											  Architecture.GetArchitecture(), Memory, 0,OneBodyPotentialUpUp,OneBodyPotentialDownDown);
+											  Architecture.GetArchitecture(), Memory, 0,OneBodyPotentialUpUp,OneBodyPotentialDownDown,OneBodyPotentialUpDown);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
@@ -169,7 +180,7 @@ int main(int argc, char** argv)
 		   TotalSpin, XRatio,YMomentum2);
 	}
       
-      FQHEOnTorusMainTask Task (&Manager, &Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputFileName, FirstRun, EigenvectorName);
+      FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputFileName, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       if (EigenvectorName != 0)
@@ -181,6 +192,7 @@ int main(int argc, char** argv)
 	FirstRun = false;
       
       delete Hamiltonian;
+      delete Space;
     }
   File.close();
   delete[] OutputFileName;

@@ -211,7 +211,7 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // return value = true if no error occured
 
-bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown)
+bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown, double*& oneBodyPotentialUpDown)
 {
   int TmpNbrPseudoPotentials;
   ConfigurationParser InteractionDefinition;
@@ -233,6 +233,14 @@ bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*&
       if (TmpNbrPseudoPotentials != lzMax)
 	{
 	  cout << "OneBodyPotentialDownDown has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpDown", ' ', oneBodyPotentialUpDown, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != lzMax)
+	{
+	  cout << "OneBodyPotentialUpDown has a wrong number of components or has a wrong value in " << fileName << endl;
 	  return false;
 	}
     }

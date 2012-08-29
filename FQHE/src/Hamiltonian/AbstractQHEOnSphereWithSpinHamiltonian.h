@@ -999,12 +999,18 @@ inline void AbstractQHEOnSphereWithSpinHamiltonian::EvaluateMNOneBodyFastMultipl
 	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j];
 	      ++position;
 	    }
+	  else
+	    {
+	    }
 	  Index = particles->AduAd(index + this->PrecalculationShift, j, j, Coefficient);
 	  if (Index < Dim)
 	    {
 	      indexArray[position] = Index;
 	      coefficientArray[position] = Coefficient * OneBodyInteractionFactorsupdown[j];
 	      ++position;
+	    }
+	  else
+	    {
 	    }
 	}
     }       

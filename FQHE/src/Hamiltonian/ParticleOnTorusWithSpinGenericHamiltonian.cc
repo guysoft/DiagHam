@@ -77,7 +77,7 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
 										     int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
 										     int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
 										     int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
-										     AbstractArchitecture* architecture, long memory, char* precalculationFileName, double * oneBodyPotentielUpUp, double * oneBodyPotentielDownDown)
+										     AbstractArchitecture* architecture, long memory, char* precalculationFileName, double * oneBodyPotentielUpUp, double * oneBodyPotentielDownDown, double * oneBodyPotentielUpDown )
 {
   this->Particles = particles;
   this->LzMax = maxMomentum - 1;
@@ -114,9 +114,33 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
 
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->OneBodyInteractionFactorsupup = oneBodyPotentielUpUp;
-  this->OneBodyInteractionFactorsdowndown = oneBodyPotentielDownDown;
+  this->OneBodyInteractionFactorsupup = 0;
+  if(oneBodyPotentielUpUp != 0)
+    {
+      this->OneBodyInteractionFactorsupup = new double[this->NbrLzValue];
+      for(int i = 0; i < this->NbrLzValue; i++)
+	this->OneBodyInteractionFactorsupup[i] = oneBodyPotentielUpUp[i];
+    }
+  this->OneBodyInteractionFactorsdowndown = 0;
+  if(oneBodyPotentielDownDown != 0)
+    {
+      this->OneBodyInteractionFactorsdowndown = new double[this->NbrLzValue];
+      for(int i = 0; i < this->NbrLzValue; i++)
+	this->OneBodyInteractionFactorsdowndown[i] = oneBodyPotentielDownDown[i];
+    } 
   this->OneBodyInteractionFactorsupdown = 0;
+  if(oneBodyPotentielUpDown != 0)
+    {
+      this->OneBodyInteractionFactorsupdown = new double[this->NbrLzValue];
+      for(int i = 0; i < this->NbrLzValue; i++)
+	{
+	  this->OneBodyInteractionFactorsupdown[i] = oneBodyPotentielUpDown[i];
+	  cout << this->OneBodyInteractionFactorsupdown[i]<<" ";
+	}
+      cout <<endl;
+    } 
+
+ 
   this->EvaluateInteractionFactors();
   this->S2Hamiltonian = 0;
   this->L2Hamiltonian = 0;

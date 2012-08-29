@@ -556,17 +556,48 @@ int BosonOnSphereWithSU2Spin::AduAd (int index, int m, int n, double& coefficien
 {
   this->FermionToBoson(this->StateDescriptionUp[index], this->NUpLzMax, this->TemporaryStateUp);
   this->FermionToBoson(this->StateDescriptionDown[index], this->NDownLzMax, this->TemporaryStateDown);
+  
   if (this->TemporaryStateDown[n] == 0)
     { 
       coefficient = 0.0;
       return this->HilbertSpaceDimension;      
     }
+  /*cout<<"Index = "<<index<<" m = "<<m << " n " <<n<<endl;
+  cout<<" Up = ";
+  for (int i = 0; i <=  this->LzMax; i++ )
+    {
+      cout <<this->TemporaryStateUp[i]<<" ";
+    }
+  cout <<endl;
+  cout <<"Down = ";
+  for (int i = 0; i <=  this->LzMax; i++ )
+    {
+      cout <<this->TemporaryStateDown[i]<<" ";
+    }
+  cout <<endl;*/
   coefficient = (double) this->TemporaryStateDown[n];
   --this->TemporaryStateDown[n];
   ++this->TemporaryStateUp[m];
   coefficient *= (double) this->TemporaryStateUp[m];
-  coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUp), this->BosonToFermion(this->TemporaryStateDown));  
+  coefficient = sqrt(coefficient); 
+  return this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUp), this->BosonToFermion(this->TemporaryStateDown));
+  /*unsigned long Tmp = this->FindStateIndex(this->BosonToFermion(this->TemporaryStateUp), this->BosonToFermion(this->TemporaryStateDown));
+  cout <<"Tmp = "<<Tmp<<endl;
+  cout<<" Up = ";
+  for (int i = 0; i <=  this->LzMax; i++ )
+    {
+      cout <<this->TemporaryStateUp[i]<<" ";
+    }
+  cout <<endl;
+  cout <<"Down = ";
+  for (int i = 0; i <=  this->LzMax; i++ )
+    {
+      cout <<this->TemporaryStateDown[i]<<" ";
+    } 
+  cout <<endl;
+  cout <<"end"<<endl;
+  
+  return Tmp;  */
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
