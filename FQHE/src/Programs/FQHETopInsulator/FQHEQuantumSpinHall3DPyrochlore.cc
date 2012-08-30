@@ -10,6 +10,7 @@
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelPyrochloreLattice.h"
+#include "Tools/FTITightBinding/TightBindingModel3DAtomicLimitLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -183,7 +184,18 @@ int main(int argc, char** argv)
     }
   TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
 						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
-
+  
+//    double* TmpChem = new double[8];
+//    TmpChem[0] = -1.0;
+//    TmpChem[1] = -1.0;
+//    TmpChem[2] = 1.0;
+//    TmpChem[3] = 1.0;
+//    TmpChem[4] = -1.0;
+//    TmpChem[5] = -1.0;
+//    TmpChem[6] = 1.0;
+//    TmpChem[7] = 1.0;
+//    TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
+//  							  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
 
    bool FirstRunFlag = true;
    for (int i = MinKx; i <= MaxKx; ++i)

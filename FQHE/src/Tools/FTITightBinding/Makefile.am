@@ -16,4 +16,5 @@ TightBindingModelPyrochloreSlabLattice.cc \
 TightBindingModelHaldaneHoneycombLattice.cc \
 TightBindingModelChern3TwoOrbitalTriangularLattice.cc \
 TightBindingModelNOrbitalSquareLattice.cc \
-TightBindingModelPyrochloreLattice.cc 
+TightBindingModelPyrochloreLattice.cc \
+TightBindingModel3DAtomicLimitLattice.cc

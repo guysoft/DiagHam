@@ -54,6 +54,8 @@ bool FQHEOnDiskFindSystemInfoFromFileName(char* filename, int& nbrParticles, int
   if (nbrParticles == 0)
     {
       StrNbrParticles = strstr(filename, "_n_");
+      if (StrNbrParticles == 0)
+	StrNbrParticles = strstr(filename, "_p_");
       if (StrNbrParticles != 0)
 	{
 	  StrNbrParticles += 3;

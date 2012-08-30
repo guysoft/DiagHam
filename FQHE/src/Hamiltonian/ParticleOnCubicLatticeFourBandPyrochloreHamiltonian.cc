@@ -369,6 +369,10 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i, i, i);
 			    }
 			  Tmp *= FactorU;
+			  if (Index1 == Index2)
+			    Tmp *= 0.5;
+			  if (Index3 == Index4)
+			    Tmp *= 0.5;
 			  (*TmpInteractionFactor) = Tmp;
 			  Tmp = 0.0;
 			  for (int i = 0; i < 4; ++i)
@@ -378,6 +382,10 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
 			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
 			    }
+			  if (Index1 == Index2)
+			    Tmp *= 0.5;
+			  if (Index3 == Index4)
+			    Tmp *= 0.5;
 			  Tmp *= FactorV;
 			  (*TmpInteractionFactor) += Tmp;
 			  ++TmpInteractionFactor;
@@ -414,6 +422,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma1, sigma1, i, i, i, i);
 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma1, sigma1, i, i, i, i);
 				}
+			      if (Index1 == Index2)
+				Tmp *= 0.5;
 			      Tmp *= FactorU;
 			      (*TmpInteractionFactor) = Tmp;
 			      Tmp = 0.0;
@@ -424,6 +434,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma1, sigma1, i, i + 4, i, i + 4);
 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma1, sigma1, i, i + 4, i, i + 4);
 				}
+			      if (Index1 == Index2)
+				Tmp *= 0.5;
 			      Tmp *= FactorV;
 			      (*TmpInteractionFactor) += Tmp;
 			      ++TmpInteractionFactor;
@@ -464,6 +476,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
  				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i, i, i);
  				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i, i, i);
 				}
+			      if (Index3 == Index4)
+				Tmp *= 0.5;
 			      Tmp *= FactorU;
 			      (*TmpInteractionFactor) = Tmp;
 			      Tmp = 0.0;
@@ -474,6 +488,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
  				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i + 4, i, i + 4);
  				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma2, sigma1, i, i + 4, i, i + 4);
 				}
+			      if (Index3 == Index4)
+				Tmp *= 0.5;
 			      Tmp *= FactorV;
 			      (*TmpInteractionFactor) += Tmp;
 			      ++TmpInteractionFactor;

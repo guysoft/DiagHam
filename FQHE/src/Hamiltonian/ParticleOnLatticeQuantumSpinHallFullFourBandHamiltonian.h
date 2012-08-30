@@ -666,6 +666,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
+  int AbsoluteIndex = index + this->PrecalculationShift;
 
   if (this->HermitianSymmetryFlag == false)
     {
@@ -679,7 +680,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 	    {
 	      for (int sigma1 = 0; sigma1 < 4; ++sigma1)
 		{
-		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
+		  Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		  if (Coefficient3 != 0.0)
 		    {
 		      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
@@ -724,7 +725,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 		{
 		  for (int sigma2 = sigma1 + 1; sigma2 < 4; ++sigma2)
 		    {
-		      Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+		      Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
 		      if (Coefficient3 != 0.0)
 			{
 			  for (int sigma3 = 0; sigma3 < 4; ++sigma3)
@@ -768,18 +769,18 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
     }
   else
     {
-      int AbsoluteIndex = index + this->PrecalculationShift;
       for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	{
 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	  TmpIndices = this->IntraSectorIndicesPerSum[j];
 	  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
 	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
+	  int Count = 0;
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
 	      for (int sigma1 = 0; sigma1 < 4; ++sigma1)
 		{
-		  Coefficient3 = particles->AsigmaAsigma(index, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
+		  Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1], sigma1, sigma1);
 		  if (Coefficient3 != 0.0)
 		    {
 		      for (int sigma3 = 0; sigma3 < 4; ++sigma3)
@@ -795,12 +796,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 				      indexArray[position] = Index;
 				      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
 				      ++position;
+				      ++Count;
 				    }
 				  else
 				    {
 				      indexArray[position] = Index;
 				      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
 				      ++position;
+				      ++Count;
 				    }
 				}
 			      ++TmpInteractionFactor;
@@ -810,7 +813,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 			{
 			  for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
 			    {			  
-			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+			      TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
 				  Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);
@@ -821,12 +824,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 					  indexArray[position] = Index;
 					  coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
 					  ++position;
+					  ++Count;
 					}
 				      else
 					{
 					  indexArray[position] = Index;
 					  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
 					  ++position;
+					  ++Count;
 					}
 				    }
 				  ++TmpInteractionFactor;
@@ -842,7 +847,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 		{
 		  for (int sigma2 = sigma1 + 1; sigma2 < 4; ++sigma2)
 		    {
-		      Coefficient3 = particles->AsigmaAsigma(index, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
+		      Coefficient3 = particles->AsigmaAsigma(AbsoluteIndex, TmpIndices2[i1], TmpIndices2[i1 + 1], sigma1, sigma2);
 		      if (Coefficient3 != 0.0)
 			{
 			  for (int sigma3 = 0; sigma3 < 4; ++sigma3)
@@ -858,12 +863,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 					  indexArray[position] = Index;
 					  coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
 					  ++position;
+					  ++Count;
 					}
 				      else
 					{
 					  indexArray[position] = Index;
 					  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
 					  ++position;
+					  ++Count;
 					}
 				    }
 				  ++TmpInteractionFactor;
@@ -884,12 +891,14 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 					      indexArray[position] = Index;
 					      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
 					      ++position;
+					      ++Count;
 					    }
 					  else
 					    {
 					      indexArray[position] = Index;
 					      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
 					      ++position;
+					      ++Count;
 					    }
 					}
 				      ++TmpInteractionFactor;
@@ -957,7 +966,7 @@ inline void ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian::EvaluateMNT
 			    {
 			      for (int sigma4 = sigma3 + 1; sigma4 < 4; ++sigma4)
 				{			  
-				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+				  TmpInteractionFactor = &(this->InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
 				  for (int i2 = 0; i2 < Lim2; i2 += 2)
 				    {
 				      Index = particles->AdsigmaAdsigma(TmpIndices2[i2], TmpIndices2[i2 + 1], sigma3, sigma4, Coefficient);

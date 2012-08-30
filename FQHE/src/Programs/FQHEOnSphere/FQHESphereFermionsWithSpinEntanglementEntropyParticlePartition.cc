@@ -4,6 +4,7 @@
 #include "Matrix/RealMatrix.h"
 
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 

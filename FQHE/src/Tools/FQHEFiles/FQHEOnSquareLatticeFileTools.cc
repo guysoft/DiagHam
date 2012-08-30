@@ -53,6 +53,8 @@ bool FQHEOnSquareLatticeFindSystemInfoFromFileName(char* filename, int& nbrParti
 {
   char* StrNbrParticles;
   StrNbrParticles = strstr(filename, "_n_");
+  if (StrNbrParticles == 0)
+    StrNbrParticles = strstr(filename, "_p_");
   if (StrNbrParticles != 0)
     {
       StrNbrParticles += 3;

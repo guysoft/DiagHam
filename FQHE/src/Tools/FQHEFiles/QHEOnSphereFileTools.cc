@@ -76,6 +76,8 @@ bool FQHEOnSphereFindSystemInfoFromFileName(char* filename, int& nbrParticles, i
   if (nbrParticles == 0)
     {
       StrNbrParticles = strstr(filename, "_n_");
+      if (StrNbrParticles == 0)
+	StrNbrParticles = strstr(filename, "_p_");
       if (StrNbrParticles != 0)
 	{
 	  StrNbrParticles += 3;

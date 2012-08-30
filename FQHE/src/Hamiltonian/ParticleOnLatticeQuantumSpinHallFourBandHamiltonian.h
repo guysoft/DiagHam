@@ -2162,166 +2162,184 @@ inline void ParticleOnLatticeQuantumSpinHallFourBandHamiltonian::EvaluateMNOneBo
 
   if (this->HermitianSymmetryFlag == false)
     {
-      for (int i = firstComponent; i < lastComponent; ++i)
+      if (this->OneBodyInteractionFactorsupup != 0)
 	{
-	  ++memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-	  for (int i1 = 0; i1 <= this->LzMax; ++i1)
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
-	      Index = particles->AdupAum(i, i1, i1, Coefficient);
-	      if (Index < Dim)
+	      ++memory;
+	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	    }
+	}
+      if (this->OneBodyInteractionFactorsupum != 0)
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
+	    {
+	      for (int i1 = 0; i1 <= this->LzMax; ++i1)
 		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdupAdp(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdupAdm(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdumAup(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdumAdp(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdumAdm(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddpAup(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddpAum(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddpAdm(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddmAup(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddmAum(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddmAdp(i, i1, i1, Coefficient);
-	      if (Index < Dim)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  Index = particles->AdupAum(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdupAdp(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdupAdm(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdumAup(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdumAdp(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdumAdm(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddpAup(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddpAum(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddpAdm(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddmAup(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddmAum(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddmAdp(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
 		}
 	    }
 	}
     }
   else
     {
-      for (int i = firstComponent; i < lastComponent; ++i)
+      if (this->OneBodyInteractionFactorsupup != 0)
 	{
-	  ++memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-	  for (int i1 = 0; i1 <= this->LzMax; ++i1)
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
-	      Index = particles->AdupAum(i, i1, i1, Coefficient);
-	      if (Index < Dim)
+	      ++memory;
+	      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+	    }
+	}
+      if (this->OneBodyInteractionFactorsupum != 0)
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
+	    {
+	      for (int i1 = 0; i1 <= this->LzMax; ++i1)
 		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdupAdp(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdupAdm(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdumAup(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdumAdp(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AdumAdm(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddpAup(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddpAum(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddpAdm(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddmAup(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddmAum(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
-		}
-	      Index = particles->AddmAdp(i, i1, i1, Coefficient);
-	      if (Index <= i)
-		{
-		  ++memory;
-		  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		  Index = particles->AdupAum(i, i1, i1, Coefficient);
+		  if (Index < Dim)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdupAdp(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdupAdm(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdumAup(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdumAdp(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AdumAdm(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddpAup(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddpAum(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddpAdm(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddmAup(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddmAum(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
+		  Index = particles->AddmAdp(i, i1, i1, Coefficient);
+		  if (Index <= i)
+		    {
+		      ++memory;
+		      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+		    }
 		}
 	    }
 	}
