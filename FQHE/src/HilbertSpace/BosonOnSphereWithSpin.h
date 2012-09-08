@@ -101,6 +101,10 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
 
   // temporary state used when applying operators
   unsigned* TemporaryState;  
+  // temporary state used when applying operators for type up particles
+  unsigned long* TemporaryStateUp;
+  // temporary state used when applying operators for type down particles
+  unsigned long* TemporaryStateDown;
   // temporary state used when applying ProdA operator
   unsigned* ProdATemporaryState;
   // number of up spins in temporary state
@@ -388,6 +392,30 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // nbrNUpSector = number of spin up  that belong to the subsytem 
+  // nbrNDownSector = number of spin down  that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, 
+								     int nbrNUpSector, int nbrNDownSector, RealVector& groundState, AbstractArchitecture* architecture);
+
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+								  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
+  
   // create an SU(2) state from two U(1) state
   //
   // upState = vector describing the up spin part of the output state
@@ -648,8 +676,25 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // initialStateLzMax = initial fermionic state maximum Lz value
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
-  
   void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, unsigned initialInfo, unsigned*& finalState, int &finalStateLzMaxUp, int &finalStateLzMaxDown);
+
+  // convert a bosonic state into its fermionic counterpart
+  //
+  // initialStateUp = reference on the array where initial bosonic state for the type up particles is stored
+  // initialStateDown = reference on the array where initial bosonic state for the type down particles is stored
+  // finalStateUp = reference on the corresponding fermionic state for the type up particles
+  // finalStateDown = reference on the corresponding fermionic state for the type down particles
+  virtual void BosonToFermion(unsigned long*& initialStateUp, unsigned long*& initialStateDown, 
+			      unsigned long& finalStateUp, unsigned long& finalStateDown);
+
+  // convert a fermionic state into its bosonic  counterpart
+  //
+  // initialStateUp = initial fermionic state for the type up particles
+  // initialStateDown = initial fermionic state for the type down particles
+  // finalStateUp = reference on the array where the bosonic state for the type up particles has to be stored
+  // finalStateDown = reference on the array where the bosonic state for the type down particles has to be stored
+  virtual void FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown, 
+			      unsigned long*& finalStateUp, unsigned long*& finalStateDown);
 
   // convert a bosonic state to its monomial representation
   //
@@ -908,6 +953,107 @@ inline void BosonOnSphereWithSpin::FermionToBoson(unsigned long initialStateUp, 
   // this->PrintState(cout, finalState)<<endl;
 }
 
+
+// convert a bosonic state into its fermionic counterpart
+//
+// initialStateUp = reference on the array where initial bosonic state for the type up particles is stored
+// initialStateDown = reference on the array where initial bosonic state for the type down particles is stored
+// finalStateUp = reference on the corresponding fermionic state for the type up particles
+// finalStateDown = reference on the corresponding fermionic state for the type down particles
+
+inline void BosonOnSphereWithSpin::BosonToFermion(unsigned long*& initialStateUp, unsigned long*& initialStateDown,
+						  unsigned long& finalStateUp, unsigned long& finalStateDown)
+{
+  finalStateUp = 0x0ul;
+  unsigned long Shift = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalStateUp |= ((1ul << initialStateUp[i]) - 1ul) << Shift;
+      Shift += initialStateUp[i];
+      ++Shift;
+    }
+  finalStateDown = 0x0ul;
+  Shift = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      finalStateDown |= ((1ul << initialStateDown[i]) - 1ul) << Shift;
+      Shift += initialStateDown[i];
+      ++Shift;
+    }
+}
+
+// convert a fermionic state into its bosonic  counterpart
+//
+// initialStateUp = initial fermionic state for the type up particles
+// initialStateDown = initial fermionic state for the type down particles
+// finalStateUp = reference on the array where the bosonic state for the type up particles has to be stored
+// finalStateDown = reference on the array where the bosonic state for the type down particles has to be stored
+
+inline void BosonOnSphereWithSpin::FermionToBoson(unsigned long initialStateUp, unsigned long initialStateDown,
+						  unsigned long*& finalStateUp, unsigned long*& finalStateDown)
+{
+  int FinalStateLzMax = 0;
+  int InitialStateLzMax = this->LzMax + NbrBosonsUp - 1;
+  while ((InitialStateLzMax >= 0) && ((initialStateUp >> InitialStateLzMax) == 0x0ul))
+    --InitialStateLzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialStateUp - 1ul) ^ (~initialStateUp);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalStateUp[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialStateUp >>= TmpPower;
+      ++FinalStateLzMax;
+      InitialStateLzMax -= TmpPower;
+    }
+  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+    finalStateUp[FinalStateLzMax] = 0x0ul;
+
+  FinalStateLzMax = 0;
+  InitialStateLzMax = this->LzMax + NbrBosonsDown - 1;
+  while ((InitialStateLzMax >= 0) && ((initialStateDown >> InitialStateLzMax) == 0x0ul))
+    --InitialStateLzMax;
+  while (InitialStateLzMax >= 0)
+    {
+      unsigned long TmpState = (~initialStateDown - 1ul) ^ (~initialStateDown);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      finalStateDown[FinalStateLzMax] = (unsigned long) TmpPower;
+      ++TmpPower;
+      initialStateDown >>= TmpPower;
+      ++FinalStateLzMax;
+      InitialStateLzMax -= TmpPower;
+    }
+  for (; FinalStateLzMax <= this->LzMax; ++FinalStateLzMax)
+    finalStateDown[FinalStateLzMax] = 0x0ul;
+}
 
 // convert a fermionic state to its monomial representation
 //

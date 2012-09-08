@@ -107,7 +107,7 @@ int main(int argc, char** argv)
     }
 
 
-  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int NbrParticles = 0; 
   int LzMax = 0; 
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
