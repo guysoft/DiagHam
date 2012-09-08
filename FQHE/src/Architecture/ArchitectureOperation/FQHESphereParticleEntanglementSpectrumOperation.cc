@@ -50,6 +50,7 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
   this->GroundState = groundState;
+  this->ComplexGroundStates = 0;
   this->DensityMatrix = densityMatrix;
   this->IncompleteBetaThetaTop = 0; 
   this->IncompleteBetaThetaBottom = 0; 
@@ -79,6 +80,7 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
   this->ComplexGroundState = groundState;
+  this->ComplexGroundStates = 0;
   this->ComplexDensityMatrix = densityMatrix;
   this->NbrGroundStates = 0;
   this->IncompleteBetaThetaTop = 0; 
@@ -148,6 +150,7 @@ FQHESphereParticleEntanglementSpectrumOperation::FQHESphereParticleEntanglementS
   this->DestinationHilbertSpace = (ParticleOnSphere*) destinationSpace->Clone();
   this->ComplementaryHilbertSpace = (ParticleOnSphere*) complementarySpace->Clone();
   this->GroundState = groundState;
+  this->ComplexGroundStates = 0;
   this->DensityMatrix = densityMatrix;
   this->IncompleteBetaThetaTop = incompleteBetaThetaTop; 
   this->IncompleteBetaThetaBottom = incompleteBetaThetaBottom; 
