@@ -299,83 +299,177 @@ int main(int argc, char** argv)
 	}
       
       int* NaValues = DensityMatrix.GetAsIntegerArray(0);
-      int* LzValues = DensityMatrix.GetAsIntegerArray(1);
-      double* LValues = 0;
-      double* L2Values = 0;
-      if (DensityMatrix.GetNbrColumns() > 3)
-	{
-	   L2Values = DensityMatrix.GetAsDoubleArray(3);
-	   LValues = DensityMatrix.GetAsDoubleArray(4);
-	}
-      long Index = 0l;
-      long MaxIndex = DensityMatrix.GetNbrLines();
-      while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
-	++Index;
 
-      if (Index < MaxIndex)
+      if (SU2SpinFlag == false)
 	{
-	  double* Coefficients = DensityMatrix.GetAsDoubleArray(2);
-	  char* OutputFileName = Manager.GetString("output");
-	  if (OutputFileName == 0)
+	  int* LzValues = DensityMatrix.GetAsIntegerArray(1);
+	  double* LValues = 0;
+	  double* L2Values = 0;
+	  if (DensityMatrix.GetNbrColumns() > 3)
 	    {
-	      char* TmpExtension = new char[256];
-	      sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
-	      if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
-		{
-		  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
-		}
-	      else
-		{
-		  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
-		}
+	      L2Values = DensityMatrix.GetAsDoubleArray(3);
+	      LValues = DensityMatrix.GetAsDoubleArray(4);
 	    }
-	  ofstream File;
-	  File.open(OutputFileName, ios::out);
-	  File.precision(14);
-	  File << "# na lz lambda -log(lambda)";
-	  if (LValues != 0)
+	  long Index = 0l;
+	  long MaxIndex = DensityMatrix.GetNbrLines();
+	  while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
+	    ++Index;
+	  
+	  if (Index < MaxIndex)
 	    {
-	      File << " L^2 L";
-	    }
-	  File << endl;
-	  int TmpIndex = Index;
-	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
-	    {
-	      double Tmp = Coefficients[Index];
-	      if (Tmp > Error)
+	      double* Coefficients = DensityMatrix.GetAsDoubleArray(2);
+	      char* OutputFileName = Manager.GetString("output");
+	      if (OutputFileName == 0)
 		{
-		  int TmpLza = LzValues[Index];
-		  File << NbrParticlesInPartition << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
-		  if (LValues != 0)
+		  char* TmpExtension = new char[256];
+		  sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
+		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
 		    {
-		      File << " " << L2Values[Index] << " " << LValues[Index];
+		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
 		    }
-		  File << endl;
-		  if (TmpLza < MinLza)
-		    MinLza = TmpLza;
-		  if (TmpLza > MaxLza)
-		    MaxLza = TmpLza;
+		  else
+		    {
+		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
+		    }
 		}
-	      ++Index;
-	    }
-	  LzaValueArray = new int[((MaxLza - MinLza ) >> 1) + 1];
-	  for (int i = MinLza; i <= MaxLza; i += 2)
-	    LzaValueArray[(i - MinLza) >> 1] = 0; 
-	  Index = TmpIndex;
-	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
-	    {
-	      if (Coefficients[Index] > Error)
+	      ofstream File;
+	      File.open(OutputFileName, ios::out);
+	      File.precision(14);
+	      File << "# na lz lambda -log(lambda)";
+	      if (LValues != 0)
 		{
-		  LzaValueArray[(LzValues[Index] - MinLza) >> 1]++; 
+		  File << " L^2 L";
 		}
-	      ++Index;
+	      File << endl;
+	      int TmpIndex = Index;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  double Tmp = Coefficients[Index];
+		  if (Tmp > Error)
+		    {
+		      int TmpLza = LzValues[Index];
+		      File << NbrParticlesInPartition << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
+		      if (LValues != 0)
+			{
+			  File << " " << L2Values[Index] << " " << LValues[Index];
+			}
+		      File << endl;
+		      if (TmpLza < MinLza)
+			MinLza = TmpLza;
+		      if (TmpLza > MaxLza)
+			MaxLza = TmpLza;
+		    }
+		  ++Index;
+		}
+	      LzaValueArray = new int[((MaxLza - MinLza ) >> 1) + 1];
+	      for (int i = MinLza; i <= MaxLza; i += 2)
+		LzaValueArray[(i - MinLza) >> 1] = 0; 
+	      Index = TmpIndex;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  if (Coefficients[Index] > Error)
+		    {
+		      LzaValueArray[(LzValues[Index] - MinLza) >> 1]++; 
+		    }
+		  ++Index;
+		}
+	      File.close();	      
 	    }
-	  File.close();	      
+	  else
+	    {
+	      cout << "error, no entanglement spectrum can be computed from current data (invalid number of particles)" << endl;	      
+	      return -1;
+	    }
 	}
       else
 	{
-	  cout << "error, no entanglement spectrum can be computed from current data (invalid number of particles)" << endl;	      
-	  return -1;
+	  int* LzValues = DensityMatrix.GetAsIntegerArray(4);
+	  int* SzValues = DensityMatrix.GetAsIntegerArray(1);
+	  long Index = 0l;
+	  long MaxIndex = DensityMatrix.GetNbrLines();
+	  while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
+	    ++Index;
+	  
+	  if (Index < MaxIndex)
+	    {
+	      double* Coefficients = DensityMatrix.GetAsDoubleArray(5);
+	      char* OutputFileName = Manager.GetString("output");
+	      if (OutputFileName == 0)
+		{
+		  char* TmpExtension = new char[256];
+		  sprintf(TmpExtension, "na_%d.parentspec", NbrParticlesInPartition);
+		  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
+		    {
+		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent", TmpExtension);
+		    }
+		  else
+		    {
+		      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.parent.bz2", TmpExtension);
+		    }
+		}
+	      ofstream File;
+	      File.open(OutputFileName, ios::out);
+	      File.precision(14);
+	      File << "# na sz lz lambda -log(lambda)";
+	      File << endl;
+	      int TmpIndex = Index;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  double Tmp = Coefficients[Index];
+		  if (Tmp > Error)
+		    {
+		      int TmpLza = LzValues[Index];
+		      File << NbrParticlesInPartition << " " << (0.5 * SzValues[Index]) << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
+		      File << endl;
+		      if (TmpLza < MinLza)
+			MinLza = TmpLza;
+		      if (TmpLza > MaxLza)
+			MaxLza = TmpLza;
+		    }
+		  ++Index;
+		}
+	      int** SzaLzaValueArray = new int* [NbrParticlesInPartition + 1];
+	      for (int TmpSza = 0; TmpSza <= NbrParticlesInPartition; ++TmpSza)
+		{
+		  SzaLzaValueArray[TmpSza] = new int[((MaxLza - MinLza ) >> 1) + 1];
+		  for (int i = MinLza; i <= MaxLza; i += 2)
+		    SzaLzaValueArray[TmpSza][(i - MinLza) >> 1] = 0; 
+		}
+	      Index = TmpIndex;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  if (Coefficients[Index] > Error)
+		    {
+		      SzaLzaValueArray[(SzValues[Index] + NbrParticlesInPartition) >> 1][(LzValues[Index] - MinLza) >> 1]++; 
+		    }
+		  ++Index;
+		}
+	      File.close();	      
+
+	      if (Manager.GetBoolean("show-minmaxlza"))
+		{
+		  cout << "min Lza = " << MinLza << endl;
+		  cout << "max Lza = " << MaxLza << endl;
+		}
+	      
+	      if ((Manager.GetBoolean("show-counting")) && (SzaLzaValueArray != 0))
+		{
+		  cout << "degeneracy counting (SzA Lza NbrStates) : " << endl;
+		  for (int j = 0; j <= NbrParticlesInPartition; ++j)
+		    {
+		      for (int i = MinLza; i <= MaxLza; i += 2)
+			{
+			  cout << (j - (NbrParticlesInPartition * 0.5)) << " " << (0.5 * i) << " " << SzaLzaValueArray[j][(i - MinLza) >> 1] << endl; 
+			}
+		    }
+		}	      
+	      return 0;	      
+	    }
+	  else
+	    {
+	      cout << "error, no entanglement spectrum can be computed from current data (invalid number of particles)" << endl;	      
+	      return -1;
+	    }
 	}
     }
 
