@@ -183,19 +183,39 @@ int main(int argc, char** argv)
       MaxKz = MinKz;
     }
   TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+  						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
   
-//    double* TmpChem = new double[8];
-//    TmpChem[0] = -1.0;
-//    TmpChem[1] = -1.0;
-//    TmpChem[2] = 1.0;
-//    TmpChem[3] = 1.0;
-//    TmpChem[4] = -1.0;
-//    TmpChem[5] = -1.0;
-//    TmpChem[6] = 1.0;
-//    TmpChem[7] = 1.0;
-//    TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
-//  							  Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+  TightBindingModelPyrochloreLattice TightBindingModel2(NbrSitesY, NbrSitesX, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
+  						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+  
+  
+  ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
+  ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
+
+  for (int i = 0; i < 8; ++i)
+    {
+      double Sum = 0.0;
+      for (int j = 0; j < 8; ++j)
+	{
+	  Complex Tmp = 0.0;
+	  for (int k = 0; k < 8; ++k)
+	    Tmp += Conj(OneBodyBasis2[i][k]) * OneBodyBasis1[j][k];
+	  cout << i << " " << j << " : " << SqrNorm(Tmp) << endl;
+	  Sum += SqrNorm(Tmp);
+	}
+      cout << "sum = " << Sum << endl;
+    }
+//     double* TmpChem = new double[8];
+//     TmpChem[0] = -1.0;
+//     TmpChem[1] = -1.0;
+//     TmpChem[2] = 1.0;
+//     TmpChem[3] = 1.0;
+//     TmpChem[4] = -1.0;
+//     TmpChem[5] = -1.0;
+//     TmpChem[6] = 1.0;
+//     TmpChem[7] = 1.0;
+//     TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
+// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
 
    bool FirstRunFlag = true;
    for (int i = MinKx; i <= MaxKx; ++i)

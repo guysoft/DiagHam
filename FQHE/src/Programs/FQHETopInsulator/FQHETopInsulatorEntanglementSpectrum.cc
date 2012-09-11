@@ -39,6 +39,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky-periodic", "set the periodicity for for the ky momentum (0 if non-periodic )", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
+  (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume that the FTI states are made of two decoupled FCI copies");
   (*SystemGroup) += new BooleanOption  ('\n', "Wannier", "use Wannier basis");
   (*SystemGroup) += new BooleanOption  ('\n', "Wannier-block-diagonal", "use 'block diagonal' Wannier basis ");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -69,6 +70,7 @@ int main(int argc, char** argv)
   bool Statistics = true;
   int Modulo = Manager.GetInteger("ky-periodic");
   bool Flag3d = Manager.GetBoolean("3d");
+  bool FlagDecoupled = Manager.GetBoolean("decoupled");
   
   if (Manager.GetString("density-matrix") == 0)
     {
@@ -126,6 +128,9 @@ int main(int argc, char** argv)
       int* KzValues = 0;
       if (Flag3d == true)
 	KzValues = DensityMatrix.GetAsIntegerArray(3);
+      int* SzValues = 0;
+      if (FlagDecoupled == true)
+	SzValues = DensityMatrix.GetAsIntegerArray(3);
       long Index = 0l;
       long MaxIndex = DensityMatrix.GetNbrLines();
       while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
@@ -134,7 +139,7 @@ int main(int argc, char** argv)
       if (Index < MaxIndex)
 	{
 	  double* Coefficients = 0;
-	  if (Flag3d == true)
+	  if ((Flag3d == true) || (FlagDecoupled == true))
 	    Coefficients = DensityMatrix.GetAsDoubleArray(4);
 	  else
 	    Coefficients = DensityMatrix.GetAsDoubleArray(3);
@@ -163,7 +168,16 @@ int main(int argc, char** argv)
 	  if (Flag3d == true)
 	    File << "# na kx ky kz linearized_k lambda -log(lambda)";
 	  else
-	    File << "# na kx ky linearized_k lambda -log(lambda)";
+	    {
+	      if (FlagDecoupled == true)
+		{
+		  File << "# na kx ky linearized_k lambda -log(lambda)";
+		}
+	      else
+		{
+		  File << "# na kx ky linearized_k sz lambda -log(lambda)";
+		}
+	    }
 	  File << endl;
 	  int TmpIndex = Index;
 	  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
@@ -183,7 +197,14 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      TmpLinearizedK = (TmpKxa + (TmpKya * NbrSiteX));
-		      File << NbrParticlesInPartition << " " << TmpKxa << " " << TmpKya << " " << TmpLinearizedK << " " << Tmp << " " << (-log(Tmp));
+		      if (FlagDecoupled == false)
+			{
+			  File << NbrParticlesInPartition << " " << TmpKxa << " " << TmpKya << " " << TmpLinearizedK << " " << Tmp << " " << (-log(Tmp));
+			}
+		      else
+			{
+			  File << NbrParticlesInPartition << " " << TmpKxa << " " << TmpKya << " " << TmpLinearizedK << " " << SzValues[Index] << " " << Tmp << " " << (-log(Tmp));
+			}
 		    }
 		  File << endl;
  		  if (TmpLinearizedK < MinKa)

@@ -63,7 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
-  (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume that the FCI states are made of two decoupled FCI copies");
+  (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume that the FTI states are made of two decoupled FCI copies");
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
   (*SystemGroup) += new BooleanOption  ('\n', "Wannier", "Wannier basis");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
@@ -269,7 +269,6 @@ int main(int argc, char** argv)
 	}
       NbrGroundStatePerMomentumSector[i] = 0;
     }
-  cout << "c" << endl;
   for (int i = 0; i < NbrSpaces; ++i)
     {
       int TmpIndex;
@@ -354,9 +353,9 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      if (Statistics == true)
-			Spaces[TmpIndex] = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, TotalSpin, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+			Spaces[TmpIndex] = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, (TotalSpin + NbrParticles) >> 1, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
 		      else
-			Spaces[TmpIndex] = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, TotalSpin, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+			Spaces[TmpIndex] = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, (TotalSpin + NbrParticles) >> 1, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
 		    }
 		}
 	    }
@@ -504,6 +503,7 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
+				      cout << "bad" << endl;
 				      if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
 					{
 					  PartialDensityMatrix = ((BosonOnSquareLatticeWithSU2SpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());

@@ -229,7 +229,12 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)      
 	  for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
 	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
-	      ++this->NbrInterSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
+	      {
+		int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+										 (ky1 + ky2) % this->NbrSiteY,
+										 (kz1 + kz2) % this->NbrSiteZ);
+		++this->NbrInterSectorIndicesPerSum[TmpSum];    
+	      }
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
@@ -246,7 +251,9 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 	  for (int kz1 = 0; kz1 < this->NbrSiteZ; ++kz1)
 	    for (int kz2 = 0; kz2 < this->NbrSiteZ; ++kz2)      
 	      {
-		int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
+		int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+										 (ky1 + ky2) % this->NbrSiteY,
+										 (kz1 + kz2) % this->NbrSiteZ);
 		this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
 		this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		++this->NbrInterSectorIndicesPerSum[TmpSum];    
@@ -264,7 +271,12 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		    int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
 		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 < Index2)
-		      ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
+		      {
+			int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+											 (ky1 + ky2) % this->NbrSiteY,
+											 (kz1 + kz2) % this->NbrSiteZ);
+			++this->NbrIntraSectorIndicesPerSum[TmpSum];    
+		      }
 		  }
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -286,7 +298,9 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 < Index2)
 		      {
-			int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
+			int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+											 (ky1 + ky2) % this->NbrSiteY,
+											 (kz1 + kz2) % this->NbrSiteZ);
 			this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
 			this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 			++this->NbrIntraSectorIndicesPerSum[TmpSum];    
@@ -307,7 +321,12 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		    int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1, kz1);
 		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 <= Index2)
-		      ++this->NbrIntraSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ)];    
+		      {
+			int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+											 (ky1 + ky2) % this->NbrSiteY,
+											 (kz1 + kz2) % this->NbrSiteZ);
+			++this->NbrIntraSectorIndicesPerSum[TmpSum];    
+		      }
 		  }
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -329,7 +348,9 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		    int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2, kz2);
 		    if (Index1 <= Index2)
 		      {
-			int TmpSum = ((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)) * this->NbrSiteZ + ((kz1 + kz2) % this->NbrSiteZ);
+			int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+											 (ky1 + ky2) % this->NbrSiteY,
+											 (kz1 + kz2) % this->NbrSiteZ);
 			this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
 			this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 			++this->NbrIntraSectorIndicesPerSum[TmpSum];    

@@ -189,11 +189,12 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
+      char TmpChar = StrNbrParticles[SizeString];
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumY = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '.';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -254,11 +255,12 @@ bool FQHEOnSquareLatticeWannierFindSystemInfoFromVectorFileName(char* filename, 
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
+      char TmpChar = StrNbrParticles[SizeString];
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumY = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '.';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -297,11 +299,12 @@ bool FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName(char* filename,
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
+      char TmpChar = StrNbrParticles[SizeString];
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
 	  StrNbrParticles[SizeString] = '\0';
 	  totalSz = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '.';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else

@@ -147,8 +147,7 @@ inline Complex ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::ComputeTrans
 													 int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 													 int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
 {
-  /*   return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]); */
-  return ((oneBodyBasis[momentumIndex1][siteIndex1][energyIndex1]) * (oneBodyBasis[momentumIndex2][siteIndex2][energyIndex2]) * Conj(oneBodyBasis[momentumIndex3][siteIndex3][energyIndex3]) * Conj(oneBodyBasis[momentumIndex4][siteIndex4][energyIndex4])); 
+  return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
 }
 
 

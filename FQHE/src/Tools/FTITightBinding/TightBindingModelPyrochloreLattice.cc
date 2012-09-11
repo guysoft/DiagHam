@@ -34,6 +34,12 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // default constructor
 //
@@ -206,6 +212,8 @@ void TightBindingModelPyrochloreLattice::ComputeBandStructure(long minStateIndex
 		      this->OneBodyBasis[Index] = TmpMatrix;
 		      for (int i = 0; i < this->NbrBands; ++i)
 			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		      cout << "kx=" << kx << " ky=" << ky << " kz=" << kz << endl;
+		      cout << this->OneBodyBasis[Index] << endl;
 		    }
 		  else
 		    {

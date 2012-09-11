@@ -732,13 +732,13 @@ HermitianMatrix BosonOnSquareLatticeWithSU2SpinMomentumSpace::EvaluatePartialDen
   cout << "kx = " << this->KxMomentum << " " << kxSector << " " << ComplementaryKxMomentum << endl;
   cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
   cout << "sz = " << this->TotalSpin << " " << szSector << " " << ComplementarySz << endl;
-  BosonOnSquareLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, szSector, this->NbrSiteX, this->NbrSiteY, kxSector, kySector);
+  BosonOnSquareLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, (szSector + nbrParticleSector) >> 1, this->NbrSiteX, this->NbrSiteY, kxSector, kySector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnSquareLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySz, this->NbrSiteX, this->NbrSiteY, 
+  BosonOnSquareLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, (ComplementarySz + ComplementaryNbrParticles) >> 1, this->NbrSiteX, this->NbrSiteY, 
 								   ComplementaryKxMomentum, ComplementaryKyMomentum);
+  
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
-
-
+  
   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
   Operation.ApplyOperation(architecture);
   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
@@ -808,10 +808,10 @@ HermitianMatrix BosonOnSquareLatticeWithSU2SpinMomentumSpace::EvaluatePartialDen
   cout << "kx = " << this->KxMomentum << " " << kxSector << " " << ComplementaryKxMomentum << endl;
   cout << "ky = " << this->KyMomentum << " " << kySector << " " << ComplementaryKyMomentum << endl;
   cout << "sz = " << this->TotalSpin << " " << szSector << " " << ComplementarySz << endl;
-  BosonOnSquareLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, szSector, this->NbrSiteX, this->NbrSiteY, 
+  BosonOnSquareLatticeWithSU2SpinMomentumSpace SubsytemSpace (nbrParticleSector, (szSector + nbrParticleSector) >> 1, this->NbrSiteX, this->NbrSiteY, 
 							      kxSector, kySector);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnSquareLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySz, this->NbrSiteX, this->NbrSiteY,
+  BosonOnSquareLatticeWithSU2SpinMomentumSpace ComplementarySpace (ComplementaryNbrParticles, (ComplementarySz + ComplementaryNbrParticles) >> 1, this->NbrSiteX, this->NbrSiteY,
 								   ComplementaryKxMomentum, ComplementaryKyMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
