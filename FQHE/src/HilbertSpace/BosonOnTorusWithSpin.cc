@@ -680,9 +680,9 @@ RealSymmetricMatrix BosonOnTorusWithSpin::EvaluatePartialDensityMatrixParticlePa
   cout << "ky = " << this->KyMomentum << " " << lzSector << " " << ComplementaryKyMomentum << endl;
   cout << "nup = " << this->NbrBosonsUp << " " << nbrNUpSector << " " << ComplementaryNUp << endl;
   cout << "ndown = " << this->NbrBosonsDown << " " << nbrNDownSector << " " << ComplementaryNDown << endl;
-  BosonOnTorusWithSpin SubsytemSpace (nbrParticleSector, SubsytemTotalSz, this->NbrLzValue, lzSector);
+  BosonOnTorusWithSpin SubsytemSpace (nbrParticleSector, this->NbrLzValue, SubsytemTotalSz, lzSector);
   RealSymmetricMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  BosonOnTorusWithSpin ComplementarySpace (ComplementaryNbrParticles, ComplementaryTotalSz,  this->NbrLzValue, ComplementaryKyMomentum);
+  BosonOnTorusWithSpin ComplementarySpace (ComplementaryNbrParticles,  this->NbrLzValue, ComplementaryTotalSz, ComplementaryKyMomentum);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
 

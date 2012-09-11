@@ -217,7 +217,8 @@ else
 	{
 	  if (NoSzFlag == false)
 	    {
-	      Spaces[i] = new BosonOnTorusWithSpin (NbrParticles, TotalSz[i], KyMax, TotalKy[i]);
+	      cout << NbrParticles << " " <<TotalSz[i] << " " <<KyMax << " " <<TotalKy[i] << endl;
+	      Spaces[i] = new BosonOnTorusWithSpin (NbrParticles, KyMax, TotalSz[i], TotalKy[i]);
 	    }
 	  else
 	    {
