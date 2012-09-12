@@ -260,7 +260,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      if (((NbrSitesX * NbrSitesY) - ((NbrParticles * (NbrParticles - 1)) >> 1)) <= 63)
+	      if (((NbrSitesX * NbrSitesY) + ((NbrParticles * (NbrParticles - 1)) >> 1)) <= 63)
 		{
 		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		}
