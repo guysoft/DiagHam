@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Antoine Sterdyniak                //
 //                                                                            //
 //                                                                            //
-//                   class of U1U1 states symmetrization Operation	          //
+//                   class of U1U1 states symmetrization Operation            //
 //                                                                            //
 //                        last modification : 03/03/2010                      //
 //                                                                            //
@@ -32,7 +32,6 @@
 #include "Vector/ComplexVector.h"
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
-#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 
 
@@ -58,6 +57,9 @@ FQHESquareLatticeSymmetrizeU1U1StateOperation::FQHESquareLatticeSymmetrizeU1U1St
   this->FinalSpace = finalSpace;
   this->LeftSpace = leftSpace;
   this->RightSpace = rightSpace;
+  this->FinalSpaceLong = 0;
+  this->LeftSpaceLong = 0;
+  this->RightSpaceLong = 0;
   this->LeftVector = leftVector;
   this->RightVector = rightVector;
   this->DestinationVector = destinationVector;
@@ -65,6 +67,29 @@ FQHESquareLatticeSymmetrizeU1U1StateOperation::FQHESquareLatticeSymmetrizeU1U1St
   this->OperationType = AbstractArchitectureOperation::FQHESquareLatticeSymmetrizeU1U1StateOperation;
 }
 
+// constructor using long Hilbert spaces
+//
+// space = pointer to the HilbertSpace to use
+// sourceVector = array of vectors describing the fermionic states
+// destinationVector = array of vectors where the resulting bosonic states have to be stored
+// nbrStates = number of states to handle
+
+FQHESquareLatticeSymmetrizeU1U1StateOperation::FQHESquareLatticeSymmetrizeU1U1StateOperation(BosonOnSquareLatticeMomentumSpaceLong* finalSpace,  BosonOnSquareLatticeMomentumSpaceLong* leftSpace, BosonOnSquareLatticeMomentumSpaceLong* rightSpace, ComplexVector * destinationVector , ComplexVector * leftVector, ComplexVector * rightVector ,bool unnormalizedBasisFlag)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = leftSpace->GetHilbertSpaceDimension();
+  this->FinalSpaceLong = finalSpace;
+  this->LeftSpaceLong = leftSpace;
+  this->RightSpaceLong = rightSpace;
+  this->FinalSpaceLong = 0;
+  this->LeftSpaceLong = 0;
+  this->RightSpaceLong = 0;
+  this->LeftVector = leftVector;
+  this->RightVector = rightVector;
+  this->DestinationVector = destinationVector;
+  this->UnnormalizedBasisFlag = unnormalizedBasisFlag;
+  this->OperationType = AbstractArchitectureOperation::FQHESquareLatticeSymmetrizeU1U1StateOperation;
+}
 
 // copy constructor 
 //
@@ -75,9 +100,24 @@ FQHESquareLatticeSymmetrizeU1U1StateOperation::FQHESquareLatticeSymmetrizeU1U1St
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
 
-  this->FinalSpace = (BosonOnSquareLatticeMomentumSpace*) operation.FinalSpace->Clone();
-  this->LeftSpace =  (BosonOnSquareLatticeMomentumSpace*) operation.LeftSpace->Clone();
-  this->RightSpace = (BosonOnSquareLatticeMomentumSpace*) operation.RightSpace->Clone();
+  if (this->FinalSpace != 0)
+    {
+      this->FinalSpace = (BosonOnSquareLatticeMomentumSpace*) operation.FinalSpace->Clone();
+      this->LeftSpace =  (BosonOnSquareLatticeMomentumSpace*) operation.LeftSpace->Clone();
+      this->RightSpace = (BosonOnSquareLatticeMomentumSpace*) operation.RightSpace->Clone();
+      this->FinalSpaceLong = 0;
+      this->LeftSpaceLong = 0;
+      this->RightSpaceLong = 0;
+    }
+  else
+    {
+      this->FinalSpaceLong = (BosonOnSquareLatticeMomentumSpaceLong*) operation.FinalSpaceLong->Clone();
+      this->LeftSpaceLong =  (BosonOnSquareLatticeMomentumSpaceLong*) operation.LeftSpaceLong->Clone();
+      this->RightSpaceLong = (BosonOnSquareLatticeMomentumSpaceLong*) operation.RightSpaceLong->Clone();
+      this->FinalSpace = 0;
+      this->LeftSpace = 0;
+      this->RightSpace = 0;
+    }
   this->LeftVector = operation.LeftVector;
   this->RightVector = operation.RightVector;
   this->DestinationVector = operation.DestinationVector;
@@ -133,12 +173,17 @@ bool FQHESquareLatticeSymmetrizeU1U1StateOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-  
-  this->FinalSpace->SymmetrizeU1U1StateCore ( *this->DestinationVector ,(*this->LeftVector) , (*this->RightVector) ,  LeftSpace,  RightSpace , this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
-  
-  
-  
-  
+
+  if (this->FinalSpace != 0)
+    {
+      this->FinalSpace->SymmetrizeU1U1StateCore ( *this->DestinationVector ,(*this->LeftVector) , (*this->RightVector) ,  LeftSpace,  RightSpace , this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
+    }
+  else
+    {
+      this->FinalSpaceLong->SymmetrizeU1U1StateCore ( *this->DestinationVector ,(*this->LeftVector) , (*this->RightVector) ,  LeftSpaceLong,  RightSpaceLong, this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
+    }
+
+   
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +

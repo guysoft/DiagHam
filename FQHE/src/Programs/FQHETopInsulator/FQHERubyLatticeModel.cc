@@ -5,6 +5,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpaceLong.h"
 
 #include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian.h"
@@ -259,7 +260,14 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      if (((NbrSitesX * NbrSitesY) - ((NbrParticles * (NbrParticles - 1)) >> 1)) <= 63)
+		{
+		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new BosonOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
 	    }
 	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

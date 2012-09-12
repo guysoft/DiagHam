@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Antoine Sterdyniak                //
 //                                                                            //
 //                                                                            //
-//                   class of U1U1 states symmetrization Operation	          //
+//                   class of U1U1 states symmetrization Operation	      //
 //                                                                            //
 //                        last modification : 03/03/2010                      //
 //                                                                            //
@@ -36,6 +36,7 @@
 #include "Vector/ComplexVector.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpaceLong.h"
 
 
 
@@ -47,12 +48,15 @@ class FQHESquareLatticeSymmetrizeU1U1StateOperation: public AbstractArchitecture
 
  protected:
   
-  // pointer to the HilbertSpace
-  BosonOnSquareLatticeMomentumSpace * FinalSpace;
-	
-  BosonOnSquareLatticeMomentumSpace * LeftSpace;
+  // pointer to the Hilbert spaces
+  BosonOnSquareLatticeMomentumSpace* FinalSpace;
+  BosonOnSquareLatticeMomentumSpace* LeftSpace;
+  BosonOnSquareLatticeMomentumSpace* RightSpace;
   
-  BosonOnSquareLatticeMomentumSpace * RightSpace;
+  // pointer to the Hilbert spaces (long version)
+  BosonOnSquareLatticeMomentumSpaceLong* FinalSpaceLong;
+  BosonOnSquareLatticeMomentumSpaceLong* LeftSpaceLong;
+  BosonOnSquareLatticeMomentumSpaceLong* RightSpaceLong;
   
   // vector where the component are stored
   ComplexVector* LeftVector;
@@ -78,6 +82,14 @@ class FQHESquareLatticeSymmetrizeU1U1StateOperation: public AbstractArchitecture
   // sourceVector = vector where the component are stored
   // destinationVector = vector where the result has to be stored
   FQHESquareLatticeSymmetrizeU1U1StateOperation( BosonOnSquareLatticeMomentumSpace * finalSpace, BosonOnSquareLatticeMomentumSpace * leftSpace , BosonOnSquareLatticeMomentumSpace * rightSpace , ComplexVector* destinationVector, ComplexVector* leftVector, ComplexVector* rightVector,  bool unnormalizedBasisFlag);
+  
+  
+  // constructor using long Hilbert spaces
+  //
+  // Space = pointer to the HilbertSpace to use
+  // sourceVector = vector where the component are stored
+  // destinationVector = vector where the result has to be stored
+  FQHESquareLatticeSymmetrizeU1U1StateOperation( BosonOnSquareLatticeMomentumSpaceLong* finalSpace, BosonOnSquareLatticeMomentumSpaceLong* leftSpace , BosonOnSquareLatticeMomentumSpaceLong* rightSpace , ComplexVector* destinationVector, ComplexVector* leftVector, ComplexVector* rightVector,  bool unnormalizedBasisFlag);
   
   
   // copy constructor 

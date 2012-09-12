@@ -88,6 +88,7 @@ class FermionOnSphereLong :  public ParticleOnSphere
   friend class BosonOnSphereLong;
   friend class BosonOnSphereHaldaneBasisLong;
 
+  friend class BosonOnSquareLatticeMomentumSpaceLong;
 
  protected:
 
@@ -150,6 +151,16 @@ class FermionOnSphereLong :  public ParticleOnSphere
   // lzMax = maximum Lz value reached by a fermion
   // memory = amount of memory granted for precalculations
   FermionOnSphereLong (int nbrFermions, int totalLz, int lzMax, unsigned long memory = 10000000);
+
+  // constructor using an external array for state description
+  // 
+  // nbrFermions = number of fermions
+  // totalLz = momentum total value
+  // lzMax = maximum Lz value reached by a fermion
+  // stateDescription = array that gives each state description (data are not duplicated)
+  // hilbertSpaceDimension = Hilbert space dimension
+  // memory = amount of memory granted for precalculations
+  FermionOnSphereLong (int nbrFermions, int totalLz, int lzMax, ULONGLONG* stateDescription, long hilbertSpaceDimension, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
