@@ -1191,7 +1191,7 @@ ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVec
   cout << "ComplexVector* AbstractHamiltonian::ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, " << endl
        << "								      int firstComponent, int nbrComponent)" << endl;
 #endif
-  for (int i=0; i<nbrVectors; ++i)
+  for (int i = 0; i < nbrVectors; ++i)
     vDestinations[i].ClearVectorSegment((long)firstComponent, (long)nbrComponent);
   return this->ConjugateLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }

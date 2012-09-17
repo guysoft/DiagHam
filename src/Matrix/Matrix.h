@@ -42,6 +42,10 @@ using std::ostream;
 using std::ofstream;
 using std::ifstream;
 
+#ifdef __MPI__
+#include <mpi.h>
+#endif
+
 
 class Complex;
 class RealMatrix;
@@ -271,6 +275,87 @@ class Matrix
   // fileName = name of the file where the matrix has to be read
   // return value = true if no error occurs
   virtual bool ReadMatrix (char* fileName);
+
+#ifdef __MPI__
+
+  // send a matrix to a given MPI process
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // return value = reference on the current matrix
+  virtual Matrix& SendMatrix(MPI::Intracomm& communicator, int id);
+
+  // broadcast a matrix to all MPI processes associated to the same communicator
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the matrix
+  // return value = reference on the current matrix
+  virtual Matrix& BroadcastMatrix(MPI::Intracomm& communicator,  int id);
+
+  // broadcast part of matrix to all MPI processes associated to the same communicator
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the matrix
+  // firstComponent = index of the column (or row) component (useless if the method is not called by the MPI process which broadcasts the matrix)
+  // nbrComponent = number of column (or row) (useless if the method is not called by the MPI process which broadcasts the matrix)
+  // return value = reference on the current matrix
+  virtual Matrix& BroadcastPartialMatrix(MPI::Intracomm& communicator, int id, int firstComponent = 0, int nbrComponent = 0);
+
+  // receive a matrix from a MPI process
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the source MPI process
+  // return value = reference on the current matrix
+  virtual Matrix& ReceiveMatrix(MPI::Intracomm& communicator, int id);
+
+  // add current matrix to the current matrix of a given MPI process
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the destination MPI process
+  // return value = reference on the current matrix
+  virtual Matrix& SumMatrix(MPI::Intracomm& communicator, int id);
+
+  // reassemble matrix from a scattered one
+  // 
+  // communicator = reference on the communicator to use 
+  // id = id of the destination MPI process
+  // return value = reference on the current matrix
+  virtual Matrix& ReassembleMatrix(MPI::Intracomm& communicator, int id);
+
+  // create a new matrix on each MPI node which is an exact clone of the broadcasted one
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the matrix
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new matrix 
+  virtual Matrix* BroadcastClone(MPI::Intracomm& communicator, int id);
+
+  // create a new matrix on given MPI node which is an exact clone of the sent one but with only part of the data
+  // 
+  // communicator = reference on the communicator to use
+  // id = id of the destination MPI process
+  // firstComponent = index of the first column (or row)
+  // nbrComponent = number of column (or row) to send
+  // return value = reference on the current matrix
+  virtual Matrix& SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent);
+
+  // create a new matrix on given MPI node which is an exact clone of the sent one but with only part of the data
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the matrix
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new matrix 
+  virtual Matrix* ReceivePartialClone(MPI::Intracomm& communicator, int id);
+
+  // create a new matrix on each MPI node with same size and same type but non-initialized components
+  //
+  // communicator = reference on the communicator to use 
+  // id = id of the MPI process which broadcasts the matrix
+  // zeroFlag = true if all coordinates have to be set to zero
+  // return value = pointer to new matrix 
+  virtual Matrix* BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag = false);
+
+#endif
 
 };
 

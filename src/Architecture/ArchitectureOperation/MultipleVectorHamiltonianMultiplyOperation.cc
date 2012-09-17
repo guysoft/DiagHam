@@ -34,6 +34,8 @@
 #include "Vector/Vector.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Vector/PartialRealVector.h"
+#include "Vector/PartialComplexVector.h"
 #include "Architecture/SMPArchitecture.h"
 
 
@@ -61,6 +63,10 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->RealDestinationVectors = destinationVectors;
   this->ComplexSourceVectors = 0;
   this->ComplexDestinationVectors = 0; 
+  this->RealSourcePartialVectors = 0;
+  this->RealDestinationPartialVectors = 0;
+  this->ComplexSourcePartialVectors = 0;
+  this->ComplexDestinationPartialVectors = 0; 
   this->NbrVectors = nbrVectors;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
   this->ExecutionTime=0.0;
@@ -116,6 +122,7 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
 MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOperation (AbstractHamiltonian* hamiltonian, ComplexVector* sourceVectors, 
 											ComplexVector* destinationVectors, int nbrVectors, bool forceNormalMultiplication, bool forceConjugateMultiplication, bool forceHermitianeMultiplication)
 {
+
   this->FirstComponent = 0;
   this->NbrComponent = sourceVectors[0].GetVectorDimension();
   this->Hamiltonian = hamiltonian;
@@ -123,9 +130,14 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->RealDestinationVectors = 0;
   this->ComplexSourceVectors = sourceVectors;
   this->ComplexDestinationVectors = destinationVectors; 
+  this->RealSourcePartialVectors = 0;
+  this->RealDestinationPartialVectors = 0;
+  this->ComplexSourcePartialVectors = 0;
+  this->ComplexDestinationPartialVectors = 0; 
   this->NbrVectors = nbrVectors;
   this->OperationType = AbstractArchitectureOperation::MultipleVectorHamiltonianMultiply;
   this->ExecutionTime=0.0;
+  PartialComplexVector* DummyComplexDestinationPartialVectors = new PartialComplexVector[this->NbrVectors];
   if ((forceNormalMultiplication == false) && (forceConjugateMultiplication == false) && (forceHermitianeMultiplication == false))
     {
       this->UseConjugateFlag = false;
@@ -178,6 +190,10 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   this->RealDestinationVectors = operation.RealDestinationVectors;  
   this->ComplexSourceVectors = operation.ComplexSourceVectors;
   this->ComplexDestinationVectors = operation.ComplexDestinationVectors;  
+  this->RealSourcePartialVectors = operation.RealSourcePartialVectors;
+  this->RealDestinationPartialVectors = operation.RealDestinationPartialVectors;
+  this->ComplexSourcePartialVectors = operation.ComplexSourcePartialVectors;
+  this->ComplexDestinationPartialVectors = operation.ComplexDestinationPartialVectors; 
   this->NbrVectors = operation.NbrVectors;
   this->UseConjugateFlag = operation.UseConjugateFlag;
   this->UseHermitianFlag = operation.UseHermitianFlag;
@@ -217,7 +233,6 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
   Vector** TmpDestinationVectors;
 
 
-  // TESTING:
   if (this->UseConjugateFlag == true)
     {
       TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);  
@@ -233,47 +248,109 @@ MultipleVectorHamiltonianMultiplyOperation::MultipleVectorHamiltonianMultiplyOpe
       else
 	{
 	  // think one needs to scatter source vectors, rather than broadcast, here
+	  // TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);
 	  TmpSourceVectors = architecture->ScatterVectorArray(this->NbrVectors);  
 	  TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
 	}
     }
 
-  // OLD OPERATIONS AT THIS POINT (NORMAL MODE)
-  // TmpSourceVectors = architecture->BroadcastVectorArray(this->NbrVectors);
-  // TmpDestinationVectors = architecture->BroadcastVectorTypeArray(this->NbrVectors);
-
-  // continue with old code: create pointers to new vectors, according to vector type
   if (TmpSourceVectors[0]->GetVectorType() & Vector::RealDatas)
     {
-      this->RealSourceVectors = new RealVector[this->NbrVectors];
-      this->RealDestinationVectors = new RealVector[this->NbrVectors];
-      for (int i = 0; i < this->NbrVectors; ++i)
+      this->ComplexSourceVectors = 0;
+      this->ComplexDestinationVectors = 0;       
+      this->ComplexSourcePartialVectors = 0;
+      this->ComplexDestinationPartialVectors = 0; 
+      if ((TmpSourceVectors[0]->GetVectorType() & Vector::PartialData) != 0)
 	{
-	  this->RealSourceVectors[i] = *((RealVector*) TmpSourceVectors[i]);
-	  this->RealDestinationVectors[i] = *((RealVector*) TmpDestinationVectors[i]);
-	  delete TmpSourceVectors[i];
-	  delete TmpDestinationVectors[i];
+	  this->RealSourceVectors = 0;
+	  this->RealSourcePartialVectors = new PartialRealVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->RealSourcePartialVectors[i] = *((PartialRealVector*) TmpSourceVectors[i]);
+	      delete TmpSourceVectors[i];
+	    }
+	}
+      else
+	{
+	  this->RealSourcePartialVectors = 0;
+	  this->RealSourceVectors = new RealVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->RealSourceVectors[i] = *((RealVector*) TmpSourceVectors[i]);
+	      delete TmpSourceVectors[i];
+	    }
+	}
+      if ((TmpDestinationVectors[0]->GetVectorType() & Vector::PartialData) != 0)
+	{
+	  this->RealDestinationVectors = 0;
+	  this->RealDestinationPartialVectors = new PartialRealVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->RealDestinationPartialVectors[i] = *((PartialRealVector*) TmpDestinationVectors[i]);
+	      delete TmpDestinationVectors[i];
+	    }
+	}
+      else
+	{
+	  this->RealDestinationPartialVectors = 0;
+	  this->RealDestinationVectors = new RealVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->RealDestinationVectors[i] = *((RealVector*) TmpDestinationVectors[i]);
+	      delete TmpDestinationVectors[i];
+	    }
 	}
       delete[] TmpSourceVectors;
       delete[] TmpDestinationVectors;
-      this->ComplexSourceVectors = 0;
-      this->ComplexDestinationVectors = 0;       
     }
   else
     {
       this->RealSourceVectors = 0;
       this->RealDestinationVectors = 0;
-      this->ComplexSourceVectors = new ComplexVector[this->NbrVectors];
-      this->ComplexDestinationVectors = new ComplexVector[this->NbrVectors];
-      for (int i = 0; i < this->NbrVectors; ++i)
+      this->RealSourcePartialVectors = 0;
+      this->RealDestinationPartialVectors = 0;
+      if ((TmpSourceVectors[0]->GetVectorType() & Vector::PartialData) != 0)
 	{
-	  this->ComplexSourceVectors[i] = *((ComplexVector*) TmpSourceVectors[i]);
-	  this->ComplexDestinationVectors[i] = *((ComplexVector*) TmpDestinationVectors[i]);
-	  delete TmpSourceVectors[i];
-	  delete TmpDestinationVectors[i];
+	  this->ComplexSourceVectors = 0;
+	  this->ComplexSourcePartialVectors = new PartialComplexVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->ComplexSourcePartialVectors[i] = *((PartialComplexVector*) TmpSourceVectors[i]);
+	      delete TmpSourceVectors[i];
+	    }
 	}
-      delete[] TmpSourceVectors;
-      delete[] TmpDestinationVectors;
+      else
+	{
+	  this->ComplexSourcePartialVectors = 0;
+	  this->ComplexSourceVectors = new ComplexVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->ComplexSourceVectors[i] = *((ComplexVector*) TmpSourceVectors[i]);
+	      delete TmpSourceVectors[i];
+	    }
+	}
+      if ((TmpDestinationVectors[0]->GetVectorType() & Vector::PartialData) != 0)
+	{
+	  this->ComplexDestinationVectors = 0;
+	  this->ComplexDestinationPartialVectors = new PartialComplexVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->ComplexDestinationPartialVectors[i] = *((PartialComplexVector*) (TmpDestinationVectors[i]));
+	      delete TmpDestinationVectors[i];
+	    }
+	}
+      else
+	{
+	  this->ComplexDestinationPartialVectors = 0;
+	  this->ComplexDestinationVectors = new ComplexVector[this->NbrVectors];
+	  for (int i = 0; i < this->NbrVectors; ++i)
+	    {
+	      this->ComplexDestinationVectors[i] = *((ComplexVector*) TmpDestinationVectors[i]);
+	      delete TmpDestinationVectors[i];
+	    }
+	}
+       delete[] TmpSourceVectors;
+       delete[] TmpDestinationVectors;
     }
 }
   
@@ -301,7 +378,16 @@ void MultipleVectorHamiltonianMultiplyOperation::SetIndicesRange (const int& fir
 
 void MultipleVectorHamiltonianMultiplyOperation::SetDestinationVectors (RealVector* destinationVectors)
 {
-  this->RealDestinationVectors = (RealVector*) destinationVectors;
+  if ((destinationVectors[0].GetVectorType() & Vector::PartialData) != 0)
+    {
+      this->RealDestinationVectors = 0;
+      this->RealDestinationPartialVectors = (PartialRealVector*) destinationVectors;
+    }
+  else
+    {
+      this->RealDestinationPartialVectors = 0;
+      this->RealDestinationVectors = (RealVector*) destinationVectors;
+    }
   this->ComplexDestinationVectors = 0;
 }
 
@@ -311,7 +397,16 @@ void MultipleVectorHamiltonianMultiplyOperation::SetDestinationVectors (RealVect
 
 void MultipleVectorHamiltonianMultiplyOperation::SetDestinationVectors (ComplexVector* destinationVectors)
 {
-  this->ComplexDestinationVectors = (ComplexVector*) destinationVectors;
+  if ((destinationVectors[0].GetVectorType() & Vector::PartialData) != 0)
+    {
+      this->ComplexDestinationVectors = 0;
+      this->ComplexDestinationPartialVectors = (PartialComplexVector*) destinationVectors;
+    }
+  else
+    {
+      this->ComplexDestinationPartialVectors = 0;
+      this->ComplexDestinationVectors = (ComplexVector*) destinationVectors;
+    }
   this->RealDestinationVectors = 0;
 }
 
@@ -346,23 +441,104 @@ bool MultipleVectorHamiltonianMultiplyOperation::RawApplyOperation()
 	  this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors,
 							       this->NbrVectors, this->FirstComponent, this->NbrComponent);
 	}
-      else this->Hamiltonian->LowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors, this->NbrVectors,
-						       this->FirstComponent, this->NbrComponent);
+      else 
+	{
+	  this->Hamiltonian->LowLevelMultipleMultiply(this->RealSourceVectors, this->RealDestinationVectors, this->NbrVectors,
+						      this->FirstComponent, this->NbrComponent);
+	}
     }
   else
     {
       if (this->UseConjugateFlag == true)
 	{
-	  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors,
-							       this->FirstComponent, this->NbrComponent);
+	  if (this->ComplexSourceVectors != 0)
+	    {
+	      if (this->ComplexDestinationVectors != 0)
+		{
+		  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors,
+								       this->FirstComponent, this->NbrComponent);
+		}
+	      else
+		{
+		  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationPartialVectors, this->NbrVectors,
+								       this->FirstComponent, this->NbrComponent);
+		}
+	    }
+	  else
+	    {
+	      if (this->ComplexDestinationVectors != 0)
+		{
+		  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->ComplexSourcePartialVectors, this->ComplexDestinationVectors, this->NbrVectors,
+								       this->FirstComponent, this->NbrComponent);
+		}
+	      else
+		{
+		  this->Hamiltonian->ConjugateLowLevelMultipleMultiply(this->ComplexSourcePartialVectors, this->ComplexDestinationPartialVectors, this->NbrVectors,
+								       this->FirstComponent, this->NbrComponent);
+		}
+	    }
 	}
-      else if (this->UseHermitianFlag == true)
+      else 
 	{
-	  this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors,
-							       this->NbrVectors, this->FirstComponent, this->NbrComponent);
+	  if (this->UseHermitianFlag == true)
+	    {
+	      if (this->ComplexSourceVectors != 0)
+		{
+		  if (this->ComplexDestinationVectors != 0)
+		    {
+		      this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors,
+									   this->NbrVectors, this->FirstComponent, this->NbrComponent);
+		    }
+		  else
+		    {
+		      this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationPartialVectors,
+									   this->NbrVectors, this->FirstComponent, this->NbrComponent);
+		    }
+		}
+	      else
+		{
+		  if (this->ComplexDestinationVectors != 0)
+		    {
+		      this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->ComplexSourcePartialVectors, this->ComplexDestinationVectors,
+									   this->NbrVectors, this->FirstComponent, this->NbrComponent);
+		    }
+		  else
+		    {
+		      this->Hamiltonian->HermitianLowLevelMultipleMultiply(this->ComplexSourcePartialVectors, this->ComplexDestinationPartialVectors,
+									   this->NbrVectors, this->FirstComponent, this->NbrComponent);
+		    }
+		}
+	    }
+	  else 
+	    {
+	      if (this->ComplexSourceVectors != 0)
+		{
+		  if (this->ComplexDestinationVectors != 0)
+		    {
+		      this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors, this->FirstComponent, 
+								  this->NbrComponent);
+		    }
+		  else
+		    {
+		      this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationPartialVectors, this->NbrVectors, this->FirstComponent, 
+								  this->NbrComponent);
+		    }
+		}
+	      else
+		{
+		  if (this->ComplexDestinationVectors != 0)
+		    {
+		      this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourcePartialVectors, this->ComplexDestinationVectors, this->NbrVectors, this->FirstComponent, 
+								  this->NbrComponent);
+		    }
+		  else
+		    {
+		      this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourcePartialVectors, this->ComplexDestinationPartialVectors, this->NbrVectors, this->FirstComponent, 
+								  this->NbrComponent);
+		    }
+		}
+	    }
 	}
-      else this->Hamiltonian->LowLevelMultipleMultiply(this->ComplexSourceVectors, this->ComplexDestinationVectors, this->NbrVectors, this->FirstComponent, 
-						       this->NbrComponent);
     }
 
   gettimeofday (&(TotalEndingTime2), 0);
@@ -389,10 +565,10 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
       SegmentIndices = new long[TmpNbrThreads+1];
       CleanUp=true;
       int Step = this->NbrComponent / TmpNbrThreads;
-      SegmentIndices[0]=this->FirstComponent;
-      for (int i=0; i<TmpNbrThreads; ++i)
-	SegmentIndices[i]=this->FirstComponent+i*Step;
-      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
+      SegmentIndices[0] = this->FirstComponent;
+      for (int i = 0; i < TmpNbrThreads; ++i)
+	SegmentIndices[i] = this->FirstComponent+i*Step;
+      SegmentIndices[TmpNbrThreads] = this->FirstComponent + this->NbrComponent;
     }
 
   MultipleVectorHamiltonianMultiplyOperation** TmpOperations = new MultipleVectorHamiltonianMultiplyOperation* [architecture->GetNbrThreads()];
@@ -478,11 +654,22 @@ bool MultipleVectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOpera
 	   for (int i = 0; i < this->NbrVectors; ++i)
 	     this->RealDestinationVectors[i].ClearVector();
 	 }
-       else
+       if (this->ComplexDestinationVectors != 0)
 	 {
 	   for (int i = 0; i < this->NbrVectors; ++i)
 	     this->ComplexDestinationVectors[i].ClearVector();
 	 }
+       if (this->RealDestinationPartialVectors != 0)
+	 {
+	   for (int i = 0; i < this->NbrVectors; ++i)
+	     this->RealDestinationPartialVectors[i].ClearVector();
+	 }
+       if (this->ComplexDestinationPartialVectors != 0)
+	 {
+	   for (int i = 0; i < this->NbrVectors; ++i)
+	     this->ComplexDestinationPartialVectors[i].ClearVector();
+	 }
+
        if (this->UseConjugateFlag == true)
 	 {
 	   if (this->RealDestinationVectors != 0)

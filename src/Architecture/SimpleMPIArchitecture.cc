@@ -35,6 +35,8 @@
 #include "Vector/Vector.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/StringTools.h"
 
 #include <sys/time.h>
@@ -761,6 +763,11 @@ Vector** SimpleMPIArchitecture::BroadcastVectorArray(int& nbrVectors, Vector* ve
 	  for (int i = 0; i < nbrVectors; ++i)
 	    ((ComplexVector*) vector)[i].BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
 	  break;
+	default :
+	  {
+	    cout << "warning : SimpleMPIArchitecture::BroadcastVectorArray can't guess vector type" << endl;	    
+	  }
+	  break;
 	}
       return 0;
     }
@@ -842,23 +849,136 @@ Vector** SimpleMPIArchitecture::ScatterVectorArray(int& nbrVectors, Vector* vect
 	      }
 	  }
 	  break;
+	default :
+	  {
+	    cout << "warning : ScatterVectorArray can't guess vector type" << endl;	    
+	  }
+	  break;
 	}
       return 0;
     }
   else
+    {
+      if (this->MasterNodeFlag == false)
+	{
+	  TmpIndices[0] = (int) this->MinimumIndex;
+	  TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
+	  MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1); 	      
+	  Vector** TmpVectorArray = new Vector*[nbrVectors];
+	  for (int j = 0; j < nbrVectors; ++j)		 
+	    {	    
+	      Vector TmpVector;
+	      TmpVectorArray[j] = TmpVector.ReceivePartialClone(MPI::COMM_WORLD, 0);
+	    }
+	  return TmpVectorArray;
+	}
+      else
+	{
+	  cout << "warning : master node uses SimpleMPIArchitecture::ScatterVectorArray with an empty array" << endl;
+	}
+    }
+#endif  
+  return 0;
+}
+
+// broadcast a matrix on each slave node
+//
+// matrix = pointer to the matrix tobroadcast  (only usefull for the master node)
+// return value = pointer to the broadcasted matrix or null pointer if an error occured
+
+Matrix* SimpleMPIArchitecture::BroadcastMatrix(Matrix* matrix)
+{
+#ifdef __MPI__
+  if ((this->MasterNodeFlag) && (matrix != 0))
+    {
+      matrix->BroadcastClone(MPI::COMM_WORLD, this->MPIRank);
+      return matrix;
+    }
+  else
     if (this->MasterNodeFlag == false)
       {
-	TmpIndices[0] = (int) this->MinimumIndex;
-	TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
-	MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1);
-	Vector** TmpVectorArray = new Vector*[nbrVectors];
-	for (int j = 0; j < nbrVectors; ++j)		 
-	  {	    
-	    Vector TmpVector;
-	    TmpVectorArray[j] = TmpVector.ReceivePartialClone(MPI::COMM_WORLD, 0);
-	  }
-	return TmpVectorArray;
+	Matrix TmpMatrix;
+	return TmpMatrix.BroadcastClone(MPI::COMM_WORLD, 0);
       }
+#endif  
+  return 0;
+}
+
+// broadcast a matrix from a node to the others 
+//
+// nodeID = id of the mode that broadcasts its matrix
+// matrix = matrix to broadcast or to the matrix where the content will be stored
+
+void SimpleMPIArchitecture::BroadcastMatrix(int nodeID, Matrix& matrix)
+{
+#ifdef __MPI__
+  matrix.BroadcastMatrix(MPI::COMM_WORLD, nodeID);
+#endif  
+}
+
+// broadcast an array of matrix on each slave node
+//
+// nbrMatrices = reference on the number of matrices to broadcast or get
+// matrix = pointer to the matrix to broadcast  (only usefull for the master node)
+// return value =  pointer to the array of broadcasted matrices or null pointer if an error occured null pointer if an error occured
+
+Matrix** SimpleMPIArchitecture::BroadcastMatrixArray(int& nbrMatrices, Matrix* matrix)
+{
+#ifdef __MPI__
+  int TmpIndices[2];
+  MPI::COMM_WORLD.Bcast(&nbrMatrices, 1, MPI::INT, 0); 
+  if ((this->MasterNodeFlag) && (matrix != 0))
+    {
+      switch (matrix->GetMatrixType())
+	{
+	case Matrix::RealElements:
+	  {
+	    for (int i = 1; i < this->NbrMPINodes; ++i)
+	      {
+		MPI::COMM_WORLD.Recv(TmpIndices, 2, MPI::INT, i, 1); 	      
+		for (int j = 0; j < nbrMatrices; ++j)		 
+		  ((RealMatrix*) matrix)[j].SendPartialClone(MPI::COMM_WORLD, i, TmpIndices[0], TmpIndices[1]);
+	      }
+	  }
+	  break;
+	case Matrix::ComplexElements:
+	  {
+	    for (int i = 1; i < this->NbrMPINodes; ++i)
+	      {
+		MPI::COMM_WORLD.Recv(TmpIndices, 2, MPI::INT, i, 1); 	      
+		for (int j = 0; j < nbrMatrices; ++j)		 
+		  ((ComplexMatrix*) matrix)[j].SendPartialClone(MPI::COMM_WORLD, i, TmpIndices[0], TmpIndices[1]);
+	      }
+	  }
+	  break;
+	default :
+	  {
+	    cout << "warning : ScatterMatrixArray can't guess matrix type" << endl;	    
+	  }
+	  break;
+	}
+      return 0;
+    }
+  else
+    {
+      if (this->MasterNodeFlag == false)
+	{
+	  TmpIndices[0] = (int) this->MinimumIndex;
+	  TmpIndices[1] = ((int) this->MaximumIndex) - TmpIndices[0] + 1;
+	  MPI::COMM_WORLD.Send(TmpIndices, 2, MPI::INT, 0, 1); 	      
+	  Matrix** TmpMatrixArray = new Matrix*[nbrMatrices];
+	  for (int j = 0; j < nbrMatrices; ++j)		 
+	    {	    
+	      Matrix TmpMatrix;
+	      TmpMatrixArray[j] = TmpMatrix.ReceivePartialClone(MPI::COMM_WORLD, 0);
+	    }
+	  return TmpMatrixArray;
+	}
+      else
+	{
+	  cout << "warning : master node uses SimpleMPIArchitecture::ScatterMatrixArray with an empty array" << endl;
+	}
+    }
 #endif  
   return 0;
 }

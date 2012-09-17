@@ -40,6 +40,8 @@ class AbstractHamiltonian;
 class Vector;
 class RealVector;
 class ComplexVector;
+class PartialRealVector;
+class PartialComplexVector;
 
 
 class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOperation
@@ -63,6 +65,16 @@ class MultipleVectorHamiltonianMultiplyOperation: public AbstractArchitectureOpe
   ComplexVector* ComplexSourceVectors;
   // array of complex vectors where the result has to be stored
   ComplexVector* ComplexDestinationVectors;  
+
+  // array of real partial vectors to be multiplied by the hamiltonian
+  PartialRealVector* RealSourcePartialVectors;
+  // array of real partial vectors where the result has to be stored
+  PartialRealVector* RealDestinationPartialVectors;  
+  // array of complex partial vectors to be multiplied by the hamiltonian
+  PartialComplexVector* ComplexSourcePartialVectors;
+  // array of complex partial vectors where the result has to be stored
+  PartialComplexVector* ComplexDestinationPartialVectors;  
+
   // number of vectors that have to be evaluated together
   int NbrVectors;
 

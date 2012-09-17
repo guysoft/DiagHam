@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Vector/Vector.h"
+#include "Matrix/Matrix.h"
 #include <math.h>
 
 #ifdef __MPI__
@@ -367,6 +368,25 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // vector = reference on the vector to add (or the destination vector of the master node)
   // return value = reference on the vector
   virtual Vector& ReassembleVector(Vector& vector);
+
+  // broadcast a matrix on each slave node
+  //
+  // matrix = pointer to the matrix tobroadcast  (only usefull for the master node)
+  // return value = pointer to the broadcasted matrix or null pointer if an error occured
+  virtual Matrix* BroadcastMatrix(Matrix* matrix = 0);
+
+  // broadcast a matrix from a node to the others 
+  //
+  // nodeID = id of the mode that broadcasts its matrix
+  // matrix = matrix to broadcast or to the matrix where the content will be stored
+  void BroadcastMatrix(int nodeID, Matrix& matrix);
+
+  // broadcast an array of matrix on each slave node
+  //
+  // nbrMatrices = reference on the number of matrices to broadcast or get
+  // matrix = pointer to the matrix to broadcast  (only usefull for the master node)
+  // return value =  pointer to the array of broadcasted matrices or null pointer if an error occured null pointer if an error occured
+  virtual Matrix** BroadcastMatrixArray(int& nbrMatrices, Matrix* matrix = 0);
 
   // get a temporary file name
   //

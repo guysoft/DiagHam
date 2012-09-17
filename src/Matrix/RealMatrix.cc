@@ -135,6 +135,44 @@ RealMatrix::RealMatrix(RealVector* columns, int nbrColumn)
   this->MatrixType = Matrix::RealElements;
 }
 
+#ifdef __MPI__
+
+// constructor from informations sent using MPI
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts or sends the vector
+// broadcast = true if the vector is broadcasted
+
+RealMatrix::RealMatrix(MPI::Intracomm& communicator, int id, bool broadcast)
+{
+  this->MatrixType = Matrix::RealElements;
+  int TmpArray[4];
+  if (broadcast == true)
+    communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+  else
+    communicator.Recv(TmpArray, 3, MPI::INT, id, 1);   
+  this->NbrRow = TmpArray[0];
+  this->NbrColumn = TmpArray[1];
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Columns = new RealVector [this->NbrColumn];
+  if (TmpArray[2] == 1)
+    {
+      for (int i = 0; i < this->NbrColumn; i++)
+	this->Columns[i] = RealVector (this->NbrRow, true);
+    }
+  else
+    if (TmpArray[2] == 2)
+      {
+	for (int i = 0; i < this->NbrColumn; i++)
+	  this->Columns[i] = RealVector (communicator, id, broadcast);
+      }
+  this->ColumnGarbageFlag = new int;
+  *(this->ColumnGarbageFlag) = 1;
+}
+
+#endif
+
 // copy constructor (without duplicating datas)
 //
 // M = matrix to copy
@@ -1142,3 +1180,250 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealMatrix& P)
 }
 
 #endif
+
+#ifdef __MPI__
+
+// send a matrix to a given MPI process
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& RealMatrix::SendMatrix(MPI::Intracomm& communicator, int id)
+{
+  communicator.Send(&this->MatrixType, 1, MPI::INT, id, 1);
+  communicator.Send(&this->NbrRow, 1, MPI::INT, id, 1); 
+  communicator.Send(&this->NbrColumn, 1, MPI::INT, id, 1); 
+  int Acknowledge = 0;
+  communicator.Recv(&Acknowledge, 1, MPI::INT, id, 1);
+  if (Acknowledge != 0)
+    return *this;
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].SendVector(communicator, id);
+  return *this;
+}
+
+// broadcast a matrix to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// return value = reference on the current matrix
+
+Matrix& RealMatrix::BroadcastMatrix(MPI::Intracomm& communicator,  int id)
+{
+  int TmpMatrixType = this->MatrixType;
+  int TmpNbrRow = this->NbrRow;
+  int TmpNbrColumn = this->NbrColumn;
+  int Acknowledge = 0;
+  communicator.Bcast(&TmpMatrixType, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrRow, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrColumn, 1, MPI::INT, id);
+  if (this->MatrixType != TmpMatrixType)
+    {
+      Acknowledge = 1;
+    }
+  if (id != communicator.Get_rank())
+    communicator.Send(&Acknowledge, 1, MPI::INT, id, 1);      
+  else
+    {
+      int NbrMPINodes = communicator.Get_size();
+      bool Flag = false;
+      for (int i = 0; i < NbrMPINodes; ++i)
+	if (id != i)
+	  {
+	    communicator.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
+	    if (Acknowledge == 1)
+	      Flag = true;
+	  }
+      if (Flag == true)
+	Acknowledge = 1;
+    }
+  communicator.Bcast(&Acknowledge, 1, MPI::INT, id);
+  if (Acknowledge != 0)
+    return *this;
+  if ((TmpNbrRow != this->NbrRow) || (TmpNbrColumn != this->NbrColumn))
+    {
+      this->Resize(TmpNbrRow, TmpNbrColumn);      
+    }
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].BroadcastVector(communicator, id);
+  return *this;
+}
+
+// receive a matrix from a MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the source MPI process
+// return value = reference on the current matrix
+
+Matrix& RealMatrix::ReceiveMatrix(MPI::Intracomm& communicator, int id)
+{
+  int TmpMatrixType = 0;
+  int TmpNbrRow = 0;
+  int TmpNbrColumn = 0;
+  communicator.Recv(&TmpMatrixType, 1, MPI::INT, id, 1);
+  communicator.Recv(&TmpNbrRow, 1, MPI::INT, id, 1); 
+  communicator.Recv(&TmpNbrColumn, 1, MPI::INT, id, 1); 
+  if (TmpMatrixType != this->MatrixType)
+    {
+      TmpNbrRow = 1;
+      communicator.Send(&TmpNbrRow, 1, MPI::INT, id, 1);
+      return *this;
+    }
+  else
+    {
+      if ((TmpNbrRow != this->NbrRow) || (TmpNbrColumn != this->NbrColumn))
+	{
+	  this->Resize(TmpNbrRow, TmpNbrColumn);      
+	}
+      TmpNbrRow = 0;
+      communicator.Send(&TmpNbrRow, 1, MPI::INT, id, 1);
+    }
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].ReceiveVector(communicator, id);
+  return *this;
+}
+
+// add current matrix to the current matrix of a given MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& RealMatrix::SumMatrix(MPI::Intracomm& communicator, int id)
+{
+  int TmpMatrixType = this->MatrixType;
+  int TmpNbrRow = this->NbrRow;
+  int TmpNbrColumn = this->NbrColumn;
+  int Acknowledge = 0;
+  communicator.Bcast(&TmpMatrixType, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrRow, 1, MPI::INT, id);
+  communicator.Bcast(&TmpNbrColumn, 1, MPI::INT, id);
+  if ((this->MatrixType != TmpMatrixType) || (TmpNbrRow != this->NbrRow) || (TmpNbrColumn != this->NbrColumn))
+    {
+      Acknowledge = 1;
+    }
+  if (id != communicator.Get_rank())
+    communicator.Send(&Acknowledge, 1, MPI::INT, id, 1);      
+  else
+    {
+      int NbrMPINodes = communicator.Get_size();
+      bool Flag = false;
+      for (int i = 0; i < NbrMPINodes; ++i)
+	if (id != i)
+	  {
+	    communicator.Recv(&Acknowledge, 1, MPI::INT, i, 1);      
+	    if (Acknowledge == 1)
+	      Flag = true;
+	  }
+      if (Flag == true)
+	Acknowledge = 1;
+    }
+  communicator.Bcast(&Acknowledge, 1, MPI::INT, id);
+  if (Acknowledge != 0)
+    {
+      return *this;
+    }
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i].SumVector(communicator, id);
+  return *this;
+}
+
+// reassemble matrix from a scattered one
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& RealMatrix::ReassembleMatrix(MPI::Intracomm& communicator, int id)
+{
+  if (id == communicator.Get_rank())
+    {
+      int NbrMPINodes = communicator.Get_size();
+      int TmpArray[2];
+      for (int i = 0; i < NbrMPINodes; ++i)
+	if (id != i)
+	  {
+	    TmpArray[0] = 0;
+	    TmpArray[1] = 0;
+	    communicator.Recv(TmpArray, 2, MPI::INT, i, 1); 
+	    int Lim = TmpArray[0] + TmpArray[1];
+	    for (int i = TmpArray[0]; i < Lim; i++)
+	      this->Columns[i].ReceiveVector(communicator, id);
+	  }      
+    }
+  else
+    {
+      int TmpArray[2];
+      TmpArray[0] = 0;
+      TmpArray[1] = this->NbrColumn;
+      communicator.Send(TmpArray, 2, MPI::INT, id, 1);
+      int Lim = TmpArray[0] + TmpArray[1];
+      for (int i = TmpArray[0]; i < Lim; i++)
+	this->Columns[i].SendVector(communicator, id);
+    }
+  return *this;
+}
+
+// create a new matrix on each MPI node which is an exact clone of the broadcasted one
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* RealMatrix::BroadcastClone(MPI::Intracomm& communicator, int id)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->MatrixType, 1, MPI::INT, id);
+      int TmpArray[3];
+      TmpArray[0] = this->NbrRow;
+      TmpArray[1] = this->NbrColumn;
+      TmpArray[2] = 2;
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+      for (int i = 0; i < this->NbrColumn; i++)
+	this->Columns[i].BroadcastClone(communicator, id);
+    }
+  else
+    {
+      int Type = 0;
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      return new RealMatrix(communicator, id);
+    }
+  return 0;
+}
+
+// create a new matrix on each MPI node with same size and same type but non-initialized components
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* RealMatrix::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag)
+{
+  if (id == communicator.Get_rank())
+    {
+      communicator.Bcast(&this->MatrixType, 1, MPI::INT, id);
+      int TmpArray[3];
+      TmpArray[0] = this->NbrRow;
+      TmpArray[1] = this->NbrColumn;
+      TmpArray[2] = 0;
+      if (zeroFlag == true)
+	{
+	  TmpArray[2] = 1;
+	}
+      communicator.Bcast(TmpArray, 3, MPI::INT, id);      
+    }
+  else
+    {
+      int Type = 0;
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      return new RealMatrix(communicator, id);
+    }
+  return 0;
+}
+
+#endif
+

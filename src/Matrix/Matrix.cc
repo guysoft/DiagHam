@@ -537,3 +537,157 @@ bool Matrix::SparseWriteAsciiMatrix (char* fileName, double error, bool zeroBase
   return true;
 }
 
+#ifdef __MPI__
+
+// send a matrix to a given MPI process
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& Matrix::SendMatrix(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
+// broadcast a matrix to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// return value = reference on the current matrix
+
+Matrix& Matrix::BroadcastMatrix(MPI::Intracomm& communicator,  int id)
+{
+  return *this;
+}
+
+// broadcast part of matrix to all MPI processes associated to the same communicator
+// 
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// firstComponent = index of the column (or row) component (useless if the method is not called by the MPI process which broadcasts the matrix)
+// nbrComponent = number of column (or row) (useless if the method is not called by the MPI process which broadcasts the matrix)
+// return value = reference on the current matrix
+Matrix& Matrix::BroadcastPartialMatrix(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
+{
+  return *this;
+}
+
+// receive a matrix from a MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the source MPI process
+// return value = reference on the current matrix
+
+Matrix& Matrix::ReceiveMatrix(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
+// add current matrix to the current matrix of a given MPI process
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& Matrix::SumMatrix(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+ 
+// reassemble matrix from a scattered one
+// 
+// communicator = reference on the communicator to use 
+// id = id of the destination MPI process
+// return value = reference on the current matrix
+
+Matrix& Matrix::ReassembleMatrix(MPI::Intracomm& communicator, int id)
+{
+  return *this;
+}
+
+// create a new matrix on each MPI node which is an exact clone of the broadcasted one
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* Matrix::BroadcastClone(MPI::Intracomm& communicator, int id)
+{
+  int Type = this->MatrixType;
+  if (id != communicator.Get_rank())
+    {
+      communicator.Bcast(&Type, 1, MPI::INT, id);  
+      switch (Type)
+	{
+	case (Matrix::RealElements):
+	  return new RealMatrix(communicator, id);
+	  break;
+	case (Matrix::ComplexElements):
+	  return new ComplexMatrix(communicator, id);
+	  break;
+	default:
+	  cout << "Matrix::BroadcastClone, matrix type not supported" << endl;
+	  return 0;
+	}
+    }
+  return 0;
+}
+
+// create a new matrix on given MPI node which is an exact clone of the sent one but with only part of the data
+// 
+// communicator = reference on the communicator to use
+// id = id of the destination MPI process
+// firstComponent = index of the first column (or row)
+// nbrComponent = number of column (or row) to send
+// return value = reference on the current matrix
+
+Matrix& Matrix::SendPartialClone(MPI::Intracomm& communicator, int id, int firstComponent, int nbrComponent)
+{
+  cout << "Matrix::SendPartialClone is not supported" << endl;
+  return *this;
+}
+
+// create a new matrix on given MPI node which is an exact clone of the sent one but with only part of the data
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* Matrix::ReceivePartialClone(MPI::Intracomm& communicator, int id)
+{
+  cout << "Matrix::ReceivePartialClone is not supported" << endl;
+  return 0;
+}
+
+// create a new matrix on each MPI node with same size and same type but non-initialized components
+//
+// communicator = reference on the communicator to use 
+// id = id of the MPI process which broadcasts the matrix
+// zeroFlag = true if all coordinates have to be set to zero
+// return value = pointer to new matrix 
+
+Matrix* Matrix::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bool zeroFlag)
+{
+  int Type = this->MatrixType;
+  communicator.Bcast(&Type, 1, MPI::INT, id);  
+  if (id != communicator.Get_rank())
+    {
+      switch (Type)
+	{
+	case (Matrix::RealElements):
+	  return new RealMatrix(communicator, id);
+	  break;
+	case (Matrix::ComplexElements):
+	  return new ComplexMatrix(communicator, id);
+	  break;
+	default:
+	  return 0;
+	}
+    }
+  return 0;
+}
+
+#endif
