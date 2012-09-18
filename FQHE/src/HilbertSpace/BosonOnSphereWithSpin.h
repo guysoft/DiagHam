@@ -392,6 +392,28 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector, RealVector& groundState);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int lzSector,  int szSector, RealVector& groundState);
+
+  // core part of the evaluation density matrix calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  long EvaluatePartialDensityMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+					 RealVector& groundState, RealSymmetricMatrix* densityMatrix);
+
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
   // 
   // nbrParticleSector = number of particles that belong to the subsytem 

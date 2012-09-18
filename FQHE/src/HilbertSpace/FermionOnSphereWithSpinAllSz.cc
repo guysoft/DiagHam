@@ -83,6 +83,7 @@ FermionOnSphereWithSpinAllSz::FermionOnSphereWithSpinAllSz (int nbrFermions, int
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
+  this->TargetSpace = this;
 
 #ifdef  __64_BITS__
   if (this->NbrLzValue>32)
@@ -199,6 +200,7 @@ FermionOnSphereWithSpinAllSz::FermionOnSphereWithSpinAllSz(const FermionOnSphere
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  this->TargetSpace = this;
 }
 
 // destructor
@@ -246,6 +248,7 @@ FermionOnSphereWithSpinAllSz& FermionOnSphereWithSpinAllSz::operator = (const Fe
   this->LookUpTableShift = fermions.LookUpTableShift;
   this->LookUpTable = fermions.LookUpTable;  
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  this->TargetSpace = this;
   return *this;
 }
 

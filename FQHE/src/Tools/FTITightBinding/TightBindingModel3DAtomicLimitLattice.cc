@@ -54,6 +54,7 @@ TightBindingModel3DAtomicLimitLattice::TightBindingModel3DAtomicLimitLattice(int
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->NbrSiteZ = nbrSiteZ;
+  this->NbrSiteYZ = this->NbrSiteY * this->NbrSiteZ;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);

@@ -17,4 +17,5 @@ TightBindingModelHaldaneHoneycombLattice.cc \
 TightBindingModelChern3TwoOrbitalTriangularLattice.cc \
 TightBindingModelNOrbitalSquareLattice.cc \
 TightBindingModelPyrochloreLattice.cc \
-TightBindingModel3DAtomicLimitLattice.cc
+TightBindingModel3DAtomicLimitLattice.cc \
+TightBindingModelEffectiveBilayerHaldaneLattice.cc

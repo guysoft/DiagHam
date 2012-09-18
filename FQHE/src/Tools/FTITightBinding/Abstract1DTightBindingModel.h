@@ -95,6 +95,8 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // return value = true if no error occured
   virtual bool WriteAsciiSpectrum(char* fileName);
 
+ protected:
+
 };
 
 // get the energy at a given momentum of the band structure

@@ -36,6 +36,10 @@
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 
+using std::cout;
+using std::endl;
+
+
 class Abstract3DTightBindingModel : public Abstract2DTightBindingModel
 {
 

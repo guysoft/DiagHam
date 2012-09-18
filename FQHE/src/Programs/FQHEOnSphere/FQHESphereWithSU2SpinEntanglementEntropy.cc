@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneLargeBasis.h"
+#include "HilbertSpace/BosonOnSphereWithSpin.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -41,7 +42,7 @@ using std::ifstream;
 int main(int argc, char** argv)
 {
 
-  OptionManager Manager ("FQHESphereFermionsWithSpinEntanglementEntropy" , "0.01");
+  OptionManager Manager ("FQHESphereWithSU2SpinEntanglementEntropy" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereFermionsWithSpinEntanglementEntropy -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereWithSU2SpinEntanglementEntropy -h" << endl;
       return -1;
     }
   if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
@@ -116,49 +117,73 @@ int main(int argc, char** argv)
   int NbrParticlesUp = (NbrParticles + TotalSz) >> 1;
   int NbrParticlesDown = (NbrParticles - TotalSz) >> 1;
   ParticleOnSphereWithSpin* Space = 0;
-  
-  if (Manager.GetBoolean("haldane") == false)
+  char* StatisticPrefix = new char[16];
+  if (Statistics == true)
     {
-#ifdef __64_BITS__
-      if (LzMax <= 31)
-#else
-	if (LzMax <= 15)
-#endif
-	  {
-	    Space = new FermionOnSphereWithSpin  (NbrParticles, TotalLz, LzMax, TotalSz);
-	  }
-	else
-	  {
-#ifdef __128_BIT_LONGLONG__
-	    if (LzMax <= 63)
-#else
-	      if (LzMax <= 31)
-#endif
-		{
-		  Space = new FermionOnSphereWithSpinLong (NbrParticles, TotalLz, LzMax, TotalSz);
-		}
-	      else
-		{
-		  cout << "States of this Hilbert space cannot be represented in a single word." << endl;
-		  return 0;
-		}	
-	  }
+      sprintf (StatisticPrefix, "fermions");
     }
   else
     {
-      int** ReferenceStates = 0;
-      int NbrReferenceStates;
-      if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+      sprintf (StatisticPrefix, "bosons");
+    }
+
+  if (Statistics == true)
+    {  
+      if (Manager.GetBoolean("haldane") == false)
 	{
-	  cout << "error, a reference file is needed" << endl;
+#ifdef __64_BITS__
+	  if (LzMax <= 31)
+#else
+	    if (LzMax <= 15)
+#endif
+	      {
+		Space = new FermionOnSphereWithSpin  (NbrParticles, TotalLz, LzMax, TotalSz);
+	      }
+	    else
+	      {
+#ifdef __128_BIT_LONGLONG__
+		if (LzMax <= 63)
+#else
+		  if (LzMax <= 31)
+#endif
+		    {
+		      Space = new FermionOnSphereWithSpinLong (NbrParticles, TotalLz, LzMax, TotalSz);
+		    }
+		  else
+		    {
+		      cout << "States of this Hilbert space cannot be represented in a single word." << endl;
+		      return 0;
+		    }	
+	      }
+	}
+      else
+	{
+	  int** ReferenceStates = 0;
+	  int NbrReferenceStates;
+	  if (((SingleStringOption*) Manager["reference-file"])->GetString() == 0)
+	    {
+	      cout << "error, a reference file is needed" << endl;
+	      return 0;
+	    }
+	  if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates) == false)
+	    {
+	      cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
+	      return 0;
+	    }
+	  Space = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates); 
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("haldane") == false)
+	{
+	  Space = new BosonOnSphereWithSpin (NbrParticles, TotalLz, LzMax, TotalSz);
+	}
+      else
+	{
+	  cout << "squeezed Hilbert space is not available for bosons" << endl;
 	  return 0;
 	}
-      if (FQHEGetRootPartitionSU2(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceStates, NbrReferenceStates) == false)
-	{
-	  cout << "error while parsing " << Manager.GetString("reference-file") << endl;	      
-	  return 0;
-	}
-      Space = new FermionOnSphereWithSpinHaldaneBasis(NbrParticles, TotalLz, LzMax, TotalSz, ReferenceStates, NbrReferenceStates); 
     }
   
   RealVector GroundState;
@@ -177,6 +202,11 @@ int main(int argc, char** argv)
 
   if (BipartiteFlag == false)
     {
+      if (Statistics == true)
+	{ 
+	  cout << "spin Up - spin down separation entropy is not supported for bosons " << endl;
+	  return 0;
+	} 
       int NbrParticlesUp= (NbrParticles+TotalSz)>>1;
       if (DensityMatrixFileName != 0)
 	{
@@ -282,11 +312,15 @@ int main(int argc, char** argv)
 	  double EntanglementEntropy = 0.0;
 	  double DensitySum = 0.0;
 	  int MaxSubsystemNbrParticles = NbrParticles;
-	  if (MaxSubsystemNbrParticles > (2 * SubsystemSize))
-	    MaxSubsystemNbrParticles = 2 * SubsystemSize;
-	  int SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
-	  if (SubsystemNbrParticles < 0)
-	    SubsystemNbrParticles = 0;
+	  int SubsystemNbrParticles = 0;
+	  if (Statistics == true)
+	    { 
+	      if (MaxSubsystemNbrParticles > (2 * SubsystemSize))
+		MaxSubsystemNbrParticles = 2 * SubsystemSize;
+	      SubsystemNbrParticles = NbrParticles - (LzMax + 1 - SubsystemSize);
+	      if (SubsystemNbrParticles < 0)
+		SubsystemNbrParticles = 0;
+	    }
 	  for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
 	    {
 	      int SubsystemTotalSz = 0;
@@ -301,11 +335,11 @@ int main(int argc, char** argv)
 		  int SubsystemNbrParticlesDown = (SubsystemNbrParticles - SubsystemTotalSz) >> 1;
 		  int ComplementarySubsystemNbrParticlesUp = NbrParticlesUp - SubsystemNbrParticlesUp;
 		  int ComplementarySubsystemNbrParticlesDown = NbrParticlesDown - SubsystemNbrParticlesDown;
-		  if ((SubsystemNbrParticlesUp <= SubsystemSize) && (SubsystemNbrParticlesDown <= SubsystemSize) &&
+		  if ((Statistics == false) || (((SubsystemNbrParticlesUp <= SubsystemSize) && (SubsystemNbrParticlesDown <= SubsystemSize) &&
 		      (SubsystemNbrParticlesUp >= 0) && (SubsystemNbrParticlesDown >= 0) &&
 		      (ComplementarySubsystemNbrParticlesUp <= ComplementarySubsystemSize) && 
 		      (ComplementarySubsystemNbrParticlesDown <= ComplementarySubsystemSize) &&
-		      (ComplementarySubsystemNbrParticlesUp >= 0) && (ComplementarySubsystemNbrParticlesDown >= 0))
+						 (ComplementarySubsystemNbrParticlesUp >= 0) && (ComplementarySubsystemNbrParticlesDown >= 0))))
 		    {
 		      int SubsystemMaxTotalLz = (((SubsystemNbrParticlesUp * ((SubsystemLzMax << 1) - SubsystemNbrParticlesUp + 1))
 						  + (SubsystemNbrParticlesDown * ((SubsystemLzMax << 1) - SubsystemNbrParticlesDown + 1)))) >> 1;
@@ -350,8 +384,8 @@ int main(int argc, char** argv)
 					      if (TmpDiag[i] > 1e-14)
 						{
 						  sprintf (TmpEigenstateName,
-							   "fermions_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d_sza_%d_.%d.vec",
-							   NbrParticles, LzMax, TotalLz, SubsystemSize,
+							   "%s_sphere_su2_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d_sza_%d_.%d.vec",
+							   StatisticPrefix, NbrParticles, LzMax, TotalLz, SubsystemSize,
 							   SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, i);
 						  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 					      }
@@ -384,8 +418,8 @@ int main(int argc, char** argv)
 					      if (TmpDiag[i] > 1e-14)
 						{
 						  sprintf (TmpEigenstateName,
-							   "fermions_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d_sza_%d.%d.vec",
-							   NbrParticles, LzMax, TotalLz, SubsystemSize,
+							   "%s_sphere_su2_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d_sza_%d.%d.vec",
+							   StatisticPrefix, NbrParticles, LzMax, TotalLz, SubsystemSize,
 							   SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, i);
 						  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 						}
@@ -424,8 +458,8 @@ int main(int argc, char** argv)
 					      if (TmpDiag[i] > 1e-14)
 						{
 						  sprintf (TmpEigenstateName,
-							   "fermions_sphere_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d_sza_%d.%d.vec",
-							   NbrParticles, LzMax, TotalLz, SubsystemSize,
+							   "%s_sphere_su2_density_n_%d_2s_%d_lz_%d_la_%d_na_%d_lza_%d_sza_%d.%d.vec",
+							   StatisticPrefix, NbrParticles, LzMax, TotalLz, SubsystemSize,
 							   SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, i);
 						  TmpEigenstates[i].WriteVector(TmpEigenstateName);
 						}
