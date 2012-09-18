@@ -7,8 +7,8 @@
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpaceLong.h"
 
-#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeEffectiveBilayerHaldaneLatticeSingleBandHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelEffectiveBilayerHaldaneLattice.h"
 
@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
 	  if (Manager.GetBoolean("three-body") == false)
 	    { 
-	      Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+	      Hamiltonian = new ParticleOnLatticeEffectiveBilayerHaldaneLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 											    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
 											    &TightBindingModel, 0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }

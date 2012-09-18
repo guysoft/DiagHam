@@ -158,4 +158,5 @@ ParticleOnCylinderNBodyHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian.cc \
 ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.cc \
 ParticleOnCylinderPermanentState.cc \
-ParticleOnCylinderHaldaneRezayi.cc
+ParticleOnCylinderHaldaneRezayi.cc \
+ParticleOnLatticeEffectiveBilayerHaldaneLatticeSingleBandHamiltonian.cc
