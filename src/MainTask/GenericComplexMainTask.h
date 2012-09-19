@@ -127,6 +127,8 @@ class GenericComplexMainTask: public AbstractMainTask
   bool ResumeFastDiskFlag;
   // flag that indicates if it the first time the main task is used
   bool FirstRun;
+  // flag that indicate if eigenstates have to be computed and saved at a given frequency
+  int PartialEigenstateFlag;
 
  public:
 
