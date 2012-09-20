@@ -326,7 +326,6 @@ int main(int argc, char** argv)
 	      int SubsystemTotalSz = 0;
 	      int SubsystemMaxTotalSz = SubsystemNbrParticles;
 	      SubsystemTotalSz = -SubsystemNbrParticles; 
-
 	      for (; SubsystemTotalSz <= SubsystemMaxTotalSz; SubsystemTotalSz += 2)
 		{
 		  int SubsystemTotalLz = 0;
@@ -341,15 +340,31 @@ int main(int argc, char** argv)
 		      (ComplementarySubsystemNbrParticlesDown <= ComplementarySubsystemSize) &&
 						 (ComplementarySubsystemNbrParticlesUp >= 0) && (ComplementarySubsystemNbrParticlesDown >= 0))))
 		    {
-		      int SubsystemMaxTotalLz = (((SubsystemNbrParticlesUp * ((SubsystemLzMax << 1) - SubsystemNbrParticlesUp + 1))
-						  + (SubsystemNbrParticlesDown * ((SubsystemLzMax << 1) - SubsystemNbrParticlesDown + 1)))) >> 1;
-		      int ComplementarySubsystemMinTotalLz = ((ComplementarySubsystemNbrParticlesUp * (ComplementarySubsystemNbrParticlesUp - 1))
-							      + (ComplementarySubsystemNbrParticlesDown * (ComplementarySubsystemNbrParticlesDown - 1))) >> 1;
-		      int ComplementarySubsystemMaxTotalLz = ((ComplementarySubsystemSize - 1) * (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown)) - ComplementarySubsystemMinTotalLz;
-		      ComplementarySubsystemMinTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
-		      ComplementarySubsystemMaxTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
-		      SubsystemTotalLz = ((SubsystemNbrParticlesUp * (SubsystemNbrParticlesUp - 1))
-					   + (SubsystemNbrParticlesDown * (SubsystemNbrParticlesDown - 1))) >> 1; 
+		      int SubsystemMaxTotalLz = 0;
+		      int ComplementarySubsystemMinTotalLz = 0;
+		      int ComplementarySubsystemMaxTotalLz = 0;
+		      if (Statistics == false)
+			{
+			  SubsystemMaxTotalLz = SubsystemNbrParticles * SubsystemLzMax;
+			  ComplementarySubsystemMinTotalLz = 0;
+			  ComplementarySubsystemMaxTotalLz = (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * (ComplementarySubsystemSize - 1);
+			  ComplementarySubsystemMinTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
+			  ComplementarySubsystemMaxTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
+			  SubsystemTotalLz = 0;
+			}
+		      else
+			{
+			  SubsystemMaxTotalLz = (((SubsystemNbrParticlesUp * ((SubsystemLzMax << 1) - SubsystemNbrParticlesUp + 1))
+						      + (SubsystemNbrParticlesDown * ((SubsystemLzMax << 1) - SubsystemNbrParticlesDown + 1)))) >> 1;
+			  ComplementarySubsystemMinTotalLz = ((ComplementarySubsystemNbrParticlesUp * (ComplementarySubsystemNbrParticlesUp - 1))
+								  + (ComplementarySubsystemNbrParticlesDown * (ComplementarySubsystemNbrParticlesDown - 1))) >> 1;
+			  ComplementarySubsystemMaxTotalLz = ((ComplementarySubsystemSize - 1) * (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown)) - ComplementarySubsystemMinTotalLz;
+			  
+			  ComplementarySubsystemMinTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
+			  ComplementarySubsystemMaxTotalLz += (ComplementarySubsystemNbrParticlesUp + ComplementarySubsystemNbrParticlesDown) * SubsystemSize;
+			  SubsystemTotalLz = ((SubsystemNbrParticlesUp * (SubsystemNbrParticlesUp - 1))
+					      + (SubsystemNbrParticlesDown * (SubsystemNbrParticlesDown - 1))) >> 1; 
+			}
 		      int ShiftedTotalLz = (TotalLz + (NbrParticles * LzMax)) >> 1;
 		      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz++)
 			{
@@ -359,6 +374,7 @@ int main(int argc, char** argv)
 			      ((EigenstateFlag == false) || ((FilterNa == SubsystemNbrParticles) && (FilterLza == SubsystemTrueTotalLz) && (FilterSza == SubsystemTotalSz))))
 			    {
 			      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTrueTotalLz << " subsystem total Sz=" << SubsystemTotalSz << endl;
+			      cout << "test " << ShiftedTotalLz << " " << SubsystemTotalLz << " "  << ComplementarySubsystemMinTotalLz << " " << ComplementarySubsystemMaxTotalLz << endl;
 			      RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, GroundState);
 			      if (PartialDensityMatrix.GetNbrRow() > 1)
 				{

@@ -1875,13 +1875,54 @@ RealSymmetricMatrix BosonOnSphereWithSpin::EvaluatePartialDensityMatrix (int sub
   int ComplementaryTotalSpin = this->TotalSpin - szSector;
   int ComplementaryTotalLz = ((this->TotalLz + (this->NbrBosons * this->LzMax)) 
 			      - (lzSector + (nbrParticleSector * (subsytemSize - 1))));
-  ComplementaryTotalLz -= subsytemSize * ComplementaryNbrParticles;
+  ComplementaryTotalLz -= (subsytemSize * ComplementaryNbrParticles) << 1;
   ComplementaryTotalLz -= ComplementaryNbrParticles * (ComplementarySystemSize - 1);
   cout << "Lz = " << this->TotalLz << " " << lzSector << " " << ComplementaryTotalLz << endl;
   cout << "Sz = " << this->TotalSpin << " " << szSector << " " << ComplementaryTotalSpin << endl;
+  if ((nbrParticleSector == 0) && (lzSector == 0))
+    {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	{
+	  unsigned long Count = 0ul;
+	  this->FermionToBoson(this->StateDescriptionUp[i], this->StateDescriptionDown[i],
+			       this->TemporaryStateUp, this->TemporaryStateDown);
+	  for (int j = 0; j < subsytemSize; ++j)
+	    {
+	      Count += this->TemporaryStateUp[j];
+	      Count += this->TemporaryStateDown[j];
+	    }
+	  if (Count == 0ul)
+	    {
+	      Tmp += groundState[i] * groundState[i];
+	    }
+	}
+      if (Tmp == 0.0)
+	{
+	  RealSymmetricMatrix TmpDensityMatrixZero;
+	  return TmpDensityMatrixZero;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix.AddToMatrixElement(0, 0, Tmp);
+	  return TmpDensityMatrix;
+	}
+    }
+
   BosonOnSphereWithSpin SubsytemSpace (nbrParticleSector, lzSector, subsytemSize - 1, szSector);
-  RealSymmetricMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  if (SubsytemSpace.GetHilbertSpaceDimension() == 0)
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
   BosonOnSphereWithSpin ComplementarySpace (ComplementaryNbrParticles, ComplementaryTotalLz, ComplementarySystemSize - 1, ComplementaryTotalSpin);
+  if (ComplementarySpace.GetHilbertSpaceDimension() == 0)
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+  RealSymmetricMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
 
@@ -1958,8 +1999,18 @@ RealSymmetricMatrix BosonOnSphereWithSpin::EvaluatePartialDensityMatrixParticleP
   cout << "nup = " << this->NbrBosonsUp << " " << nbrNUpSector << " " << ComplementaryNUp << endl;
   cout << "ndown = " << this->NbrBosonsDown << " " << nbrNDownSector << " " << ComplementaryNDown << endl;
   BosonOnSphereWithSpin SubsytemSpace (nbrParticleSector, lzSector, this->LzMax, SubsytemTotalSz);
-  RealSymmetricMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  if (SubsytemSpace.GetHilbertSpaceDimension() == 0)
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
   BosonOnSphereWithSpin ComplementarySpace (ComplementaryNbrParticles, ComplementaryTotalLz, this->LzMax, ComplementaryTotalSz);
+  if (ComplementarySpace.GetHilbertSpaceDimension() == 0)
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+  RealSymmetricMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
 
@@ -2017,11 +2068,6 @@ long BosonOnSphereWithSpin::EvaluatePartialDensityMatrixCore (int minIndex, int 
 	     {
 	       this->TemporaryStateUp[k] = TmpDestinationHilbertSpace->TemporaryStateUp[k];
 	       this->TemporaryStateDown[k] = TmpDestinationHilbertSpace->TemporaryStateDown[k];
-	     }
-	   for (int k = 0; k <=  TmpHilbertSpace->LzMax; ++k)
-	     {
-	       this->TemporaryStateUp[k + OrbitalShift] = TmpHilbertSpace->TemporaryStateUp[k];
-	       this->TemporaryStateDown[k + OrbitalShift] = TmpHilbertSpace->TemporaryStateDown[k];
 	     }
 	   int TmpPos = this->FindStateIndex(this->TemporaryStateUp, this->TemporaryStateDown);
 	   if (TmpPos != this->HilbertSpaceDimension)

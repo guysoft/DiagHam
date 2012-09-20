@@ -180,27 +180,27 @@ int main(int argc, char** argv)
 	}
     }
 
-if(ComplexFlag == false)
-{
-  GroundStates = new RealVector [NbrSpaces];  
-  for (int i = 0; i < NbrSpaces; ++i)
-    if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
-      {
-	cout << "can't open vector file " << GroundStateFiles[i] << endl;
-	return -1;      
-      }
-}
-else
-{
-  ComplexGroundStates = new ComplexVector [NbrSpaces];  
-  for (int i = 0; i < NbrSpaces; ++i)
-    if (ComplexGroundStates[i].ReadVector (GroundStateFiles[i]) == false)
-      {
-	cout << "can't open vector file " << GroundStateFiles[i] << endl;
-	return -1;      
-      }
-}
-
+  if (ComplexFlag == false)
+    {
+      GroundStates = new RealVector [NbrSpaces];  
+      for (int i = 0; i < NbrSpaces; ++i)
+	if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	  {
+	    cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	    return -1;      
+	  }
+    }
+  else
+    {
+      ComplexGroundStates = new ComplexVector [NbrSpaces];  
+      for (int i = 0; i < NbrSpaces; ++i)
+	if (ComplexGroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	  {
+	    cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	    return -1;      
+	  }
+    }
+  
   Spaces = new ParticleOnSphereWithSpin* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
