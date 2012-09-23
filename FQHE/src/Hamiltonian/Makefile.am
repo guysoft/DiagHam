@@ -103,4 +103,11 @@ ParticleOnCylinderHaffnianHamiltonian.cc \
 ParticleOnCylinderOrbitalProjection.cc \
 ParticleOnCylinderNBodyHamiltonian.cc \
 ParticleOnCylinderPermanentState.cc \
-ParticleOnCylinderHaldaneRezayi.cc
+ParticleOnCylinderHaldaneRezayi.cc \
+ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc \
+ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.cc \
+ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc \
+ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian.cc \
+ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.cc \
+ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian.cc \
+ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian.cc
