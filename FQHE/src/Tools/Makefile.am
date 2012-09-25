@@ -1,2 +1,2 @@
-SUBDIRS=FQHEFiles FQHESpectrum FQHEWaveFunction FQHEMonteCarlo FTITightBinding
+SUBDIRS=FQHEFiles FQHESpectrum FQHEWaveFunction FQHEMonteCarlo
 

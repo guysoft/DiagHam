@@ -40,7 +40,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHERubyLatticeModel" , "0.01");
+  OptionManager Manager ("FCIRubyLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHERubyLatticeModel -h" << endl;
+      cout << "see man page for option syntax or type FCIRubyLatticeModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)

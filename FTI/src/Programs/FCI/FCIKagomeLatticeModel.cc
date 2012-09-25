@@ -58,7 +58,7 @@ ComplexMatrix* ComputeSingleParticleTransformationMatrices(int nbrSitesX, int nb
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHEKagomeLatticeModel" , "0.01");
+  OptionManager Manager ("FCIKagomeLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEKagomeLatticeModel -h" << endl;
+      cout << "see man page for option syntax or type FCIKagomeLatticeModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)

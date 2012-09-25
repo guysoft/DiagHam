@@ -59,21 +59,21 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // i = operator position
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  virtual Matrix& Sxi (int i, Matrix& M) = 0;
+  virtual Matrix& Sxi (int i, Matrix& M);
 
   // return matrix representation of i * Sy
   //
   // i = operator position
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  virtual Matrix& Syi (int i, Matrix& M) = 0;
+  virtual Matrix& Syi (int i, Matrix& M);
 
   // return matrix representation of Sz
   //
   // i = operator position
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  virtual Matrix& Szi (int i, Matrix& M) = 0;
+  virtual Matrix& Szi (int i, Matrix& M);
 
   // return index of resulting state from application of S+_i operator on a given state
   //

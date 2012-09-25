@@ -132,7 +132,7 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
       this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax,
 							   this->Particles->GetLzValue() , this->Architecture, l2Factor,
 							   /*memory*/ -1, /* fixedLz */ true, /* onDiskCacheFlag */ false,
-							   /*precalculationFileName */ false, hermitianFlag);
+							   /*precalculationFileName */ 0, hermitianFlag);
     }
   else
     {
@@ -224,7 +224,7 @@ ParticleOnSphereGenericHamiltonian::ParticleOnSphereGenericHamiltonian(ParticleO
       this->L2Operator = new ParticleOnSphereL2Hamiltonian(this->Particles, this->NbrParticles, this->LzMax,
 							   this->Particles->GetLzValue() , this->Architecture, l2Factor,
 							   /*memory*/ -1, /* fixedLz */ true, /* onDiskCacheFlag */ false,
-							   /*precalculationFileName */ false, hermitianFlag);
+							   /*precalculationFileName */ 0, hermitianFlag);
     }
   else
     {

@@ -27,4 +27,5 @@ AbstractSUNSpinOnLatticeHamiltonian.cc \
 SUNSpinOnLatticeQuadraticHamiltonian.cc \
 DoubleTrianglePeriodicSpinChainHamiltonian.cc \
 DoubleTrianglePeriodicSpinChainWithTranslationHamiltonian.cc \
-HaldaneShastryHamiltonianWithTranslations.cc
+HaldaneShastryHamiltonianWithTranslations.cc \
+Potts3ChainHamiltonian.cc

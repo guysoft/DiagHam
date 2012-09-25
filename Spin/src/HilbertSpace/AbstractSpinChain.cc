@@ -41,3 +41,36 @@ AbstractSpinChain::~AbstractSpinChain ()
 }
 
 
+// return matrix representation of Sx
+//
+// i = operator position
+// M = matrix where representation has to be stored
+// return value = corresponding matrix
+
+Matrix& AbstractSpinChain::Sxi (int i, Matrix& M)
+{
+  return M;
+}
+
+// return matrix representation of i * Sy
+//
+// i = operator position
+// M = matrix where representation has to be stored
+// return value = corresponding matrix
+
+Matrix& AbstractSpinChain::Syi (int i, Matrix& M)
+{
+  return M;
+}
+
+// return matrix representation of Sz
+//
+// i = operator position
+// M = matrix where representation has to be stored
+// return value = corresponding matrix
+
+Matrix& AbstractSpinChain::Szi (int i, Matrix& M)
+{
+  return M;
+}
+
