@@ -1,1 +1,1 @@
-SUBDIRS=Hamiltonian Programs
+SUBDIRS=Hamiltonian Tools Programs
