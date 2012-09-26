@@ -37,7 +37,6 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Hamiltonian/AbstractQHEHamiltonian.h"
-#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -49,6 +48,7 @@ using std::endl;
 
 
 class AbstractArchitecture;
+class Abstract2DTightBindingModel;
 
 
 class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public AbstractQHEHamiltonian
