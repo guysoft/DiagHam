@@ -201,3 +201,12 @@ bool AbstractTightBindingModel::WriteBandStructureASCII(char* fileName)
   File.close();
   return true;
 }
+
+// compute the band structure
+//
+
+void AbstractTightBindingModel::ComputeBandStructure()
+{
+  this->CoreComputeBandStructure(0l, 0l);
+}
+

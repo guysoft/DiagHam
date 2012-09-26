@@ -60,10 +60,12 @@ class TightBindingModel3DAtomicLimitLattice : public Abstract3DTightBindingModel
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // gammaZ = boundary condition twisting angle along y
+  // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModel3DAtomicLimitLattice(int nbrSiteX, int nbrSiteY, int nbrSiteZ,
 					int nbrSitesUnitCell, double* chemicalPotentials,
-					double gammaX, double gammaY, double gammaZ, bool storeOneBodyMatrices = true);
+					double gammaX, double gammaY, double gammaZ, 
+					AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
   // constructor
   //
@@ -75,10 +77,12 @@ class TightBindingModel3DAtomicLimitLattice : public Abstract3DTightBindingModel
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // gammaZ = boundary condition twisting angle along y
+  // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModel3DAtomicLimitLattice(int nbrSiteX, int nbrSiteY, int nbrSiteZ,
 					int nbrSitesUnitCell, int nbrLowChemicalPotentials,
-					double gammaX, double gammaY, double gammaZ, bool storeOneBodyMatrices = true);
+					double gammaX, double gammaY, double gammaZ, 
+					AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
   // destructor
   //
@@ -86,11 +90,11 @@ class TightBindingModel3DAtomicLimitLattice : public Abstract3DTightBindingModel
 
  protected :
 
-  // compute the band structure
+  // core part that compute the band structure
   //
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
-  virtual void ComputeBandStructure(long minStateIndex = 0l, long nbrStates = 0l);
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
 };
 

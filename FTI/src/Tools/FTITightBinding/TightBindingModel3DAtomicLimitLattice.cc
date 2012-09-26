@@ -45,11 +45,13 @@
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // gammaZ = boundary condition twisting angle along y
+// architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModel3DAtomicLimitLattice::TightBindingModel3DAtomicLimitLattice(int nbrSiteX, int nbrSiteY, int nbrSiteZ,
 									     int nbrSitesUnitCell, double* chemicalPotentials,
-									     double gammaX, double gammaY, double gammaZ, bool storeOneBodyMatrices)
+									     double gammaX, double gammaY, double gammaZ, 
+									     AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -67,6 +69,7 @@ TightBindingModel3DAtomicLimitLattice::TightBindingModel3DAtomicLimitLattice(int
   this->GammaZ = gammaZ;
   this->NbrBands = this->NbrSitesUnitCell;
   this->NbrStatePerBand =  this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)
     {
@@ -94,11 +97,13 @@ TightBindingModel3DAtomicLimitLattice::TightBindingModel3DAtomicLimitLattice(int
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // gammaZ = boundary condition twisting angle along y
+// architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModel3DAtomicLimitLattice::TightBindingModel3DAtomicLimitLattice(int nbrSiteX, int nbrSiteY, int nbrSiteZ,
 									     int nbrSitesUnitCell, int nbrLowChemicalPotentials,
-									     double gammaX, double gammaY, double gammaZ, bool storeOneBodyMatrices)
+									     double gammaX, double gammaY, double gammaZ, 
+									     AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -141,12 +146,12 @@ TightBindingModel3DAtomicLimitLattice::~TightBindingModel3DAtomicLimitLattice()
 {
 }
 
-// compute the band structure
+// core part that compute the band structure
 //
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModel3DAtomicLimitLattice::ComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModel3DAtomicLimitLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;

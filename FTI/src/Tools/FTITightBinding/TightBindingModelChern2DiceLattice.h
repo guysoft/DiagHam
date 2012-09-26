@@ -69,9 +69,11 @@ class TightBindingModelChern2DiceLattice : public Abstract2DTightBindingModel
   // mus = sublattice chemical potential on A1 sites
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
+  // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelChern2DiceLattice(int nbrSiteX, int nbrSiteY, double t, double espilon, double lambda, double bfield1, double bfield3, double mus, 
-				     double gammaX, double gammaY, bool storeOneBodyMatrices = true);
+				     double gammaX, double gammaY, 
+				     AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
   // destructor
   //
@@ -79,11 +81,11 @@ class TightBindingModelChern2DiceLattice : public Abstract2DTightBindingModel
 
  protected :
 
-  // compute the band structure
+  // core part that compute the band structure
   //
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
-  virtual void ComputeBandStructure(long minStateIndex = 0l, long nbrStates = 0l);
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
 };
 

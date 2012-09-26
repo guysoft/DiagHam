@@ -45,10 +45,11 @@
 // t1i = real part of the hopping amplitude next neareast neighbor sites with different parity
 // t4 = hopping amplitude along square diagonal
 // mus = sublattice chemical potential on A1 sites
+// architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbrSiteY, double tr, double ti, double t1r, double t1i, double t4, double mus, 
-							   double gammaX, double gammaY, bool storeOneBodyMatrices)
+							   double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -64,6 +65,7 @@ TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbr
   this->GammaY = gammaY;
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)
     {
@@ -88,12 +90,12 @@ TightBindingModelRubyLattice::~TightBindingModelRubyLattice()
 {
 }
 
-// compute the band structure
+// core part that compute the band structure
 //
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelRubyLattice::ComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelRubyLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;

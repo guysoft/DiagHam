@@ -51,11 +51,13 @@ using std::endl;
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // gammaZ = boundary condition twisting angle along y
+// architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModelPyrochloreLattice::TightBindingModelPyrochloreLattice(int nbrSiteX, int nbrSiteY, int nbrSiteZ,
 								       double lambdaNN, double lambdaNNN,
-								       double gammaX, double gammaY, double gammaZ, bool storeOneBodyMatrices)
+								       double gammaX, double gammaY, double gammaZ, 
+								       AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -71,6 +73,7 @@ TightBindingModelPyrochloreLattice::TightBindingModelPyrochloreLattice(int nbrSi
   this->GammaZ = gammaZ;
   this->NbrBands = 8;
   this->NbrStatePerBand = 2 * this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)
     {
@@ -95,12 +98,12 @@ TightBindingModelPyrochloreLattice::~TightBindingModelPyrochloreLattice()
 {
 }
 
-// compute the band structure
+// core part that compute the band structure
 //
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelPyrochloreLattice::ComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelPyrochloreLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;

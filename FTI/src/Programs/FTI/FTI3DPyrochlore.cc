@@ -136,7 +136,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
 	ExportOneBody = true;
       TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), ExportOneBody);
+							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture(), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
@@ -183,10 +183,10 @@ int main(int argc, char** argv)
       MaxKz = MinKz;
     }
   TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-  						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+  						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
   
   TightBindingModelPyrochloreLattice TightBindingModel2(NbrSitesY, NbrSitesX, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-  						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+							Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
   
   
   ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 //     TmpChem[6] = 1.0;
 //     TmpChem[7] = 1.0;
 //     TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
-// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
 
    bool FirstRunFlag = true;
    for (int i = MinKx; i <= MaxKx; ++i)

@@ -48,7 +48,7 @@ void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSi
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHEHaldaneModel" , "0.01");
+  OptionManager Manager ("FCIHaldaneModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEHaldaneModel -h" << endl;
+      cout << "see man page for option syntax or type FCIHaldaneModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -181,7 +181,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
 	ExportOneBody = true;
       TightBindingModelHaldaneHoneycombLattice TightBindingModel(NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-								 HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+								 HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
@@ -221,7 +221,7 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   TightBindingModelHaldaneHoneycombLattice TightBindingModel(NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-							     HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+							     HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
 
 
   if(Manager.GetBoolean("WannierHilbertSpace"))

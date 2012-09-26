@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
 
@@ -44,7 +45,7 @@ using std::ostream;
 class AbstractTightBindingModel
 {
 
-  friend class FTITightBindingModelBandStructureOperation;
+  friend class FTIComputeBandStructureOperation;
 
  protected:
 
@@ -53,6 +54,9 @@ class AbstractTightBindingModel
 
   // number of states per band
   long NbrStatePerBand;
+
+  // pointer to the architecture
+  AbstractArchitecture* Architecture;
 
  public:
 
@@ -130,9 +134,13 @@ class AbstractTightBindingModel
 
   // compute the band structure
   //
+  virtual void ComputeBandStructure();
+
+  // core part that compute the band structure
+  //
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
-  virtual void ComputeBandStructure(long minStateIndex = 0l, long nbrStates = 0l) = 0;
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates) = 0;
 
 };
 

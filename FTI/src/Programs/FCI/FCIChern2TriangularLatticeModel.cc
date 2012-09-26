@@ -39,7 +39,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHEChern2TriangularLatticeModel" , "0.01");
+  OptionManager Manager ("FCIChern2TriangularLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEChern2TriangularLatticeModel -h" << endl;
+      cout << "see man page for option syntax or type FCIChern2TriangularLatticeModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -169,7 +169,8 @@ int main(int argc, char** argv)
 	ExportOneBody = true;
       TightBindingModelChern2TriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, 
 								 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),
-								 Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+								 Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
+								 Architecture.GetArchitecture(), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
@@ -211,7 +212,8 @@ int main(int argc, char** argv)
 
   TightBindingModelChern2TriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, 
 							     Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("phi"),
-							     Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+							     Manager.GetDouble("mus"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
+							     Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {

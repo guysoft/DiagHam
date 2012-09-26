@@ -42,7 +42,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHEChern2DiceLatticeModel" , "0.01");
+  OptionManager Manager ("FCIChern2DiceLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEChern2DiceLatticeModel -h" << endl;
+      cout << "see man page for option syntax or type FCIChern2DiceLatticeModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 	ExportOneBody = true;
       TightBindingModelChern2DiceLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), 
 							   Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("mu-s"), 
-							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)
 	{
 	  cout << "Chern number = " << TightBindingModel.ComputeChernNumber(2) << endl;
@@ -217,7 +217,7 @@ int main(int argc, char** argv)
 
   TightBindingModelChern2DiceLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t"), Manager.GetDouble("epsilon"), Manager.GetDouble("lambda"), 
 						 Manager.GetDouble("B1"), Manager.GetDouble("B3"), Manager.GetDouble("mu-s"), 
-						 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+						 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
 
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)

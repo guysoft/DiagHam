@@ -167,7 +167,8 @@ int main(int argc, char** argv)
 	ExportOneBody = true;
       TightBindingModelEffectiveBilayerHaldaneLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), 
 									Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi") * M_PI,
-									Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+									Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
+									Architecture.GetArchitecture(), ExportOneBody);
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)
 	{
 	  cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
@@ -213,7 +214,8 @@ int main(int argc, char** argv)
     }
   TightBindingModelEffectiveBilayerHaldaneLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), 
 								    Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi") * M_PI,
-								    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+								    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
+								    Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {

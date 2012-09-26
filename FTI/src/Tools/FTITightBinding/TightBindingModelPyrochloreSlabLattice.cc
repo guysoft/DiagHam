@@ -46,12 +46,13 @@
 // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites in a given Kagome lattice layer
 // tPerp = hopping term between a triangular lattice layer and a kagome lattice layer
 // mus = sublattice chemical potential on A1 sites
+// architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
 TightBindingModelPyrochloreSlabLattice::TightBindingModelPyrochloreSlabLattice(int nbrSiteX, int nbrSiteY, int nbrLayers,
 									       double t1, double t2, double lambda1, double lambda2,
 									       double tPerp, double mus, 
-									       double gammaX, double gammaY, bool storeOneBodyMatrices)
+									       double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -68,6 +69,7 @@ TightBindingModelPyrochloreSlabLattice::TightBindingModelPyrochloreSlabLattice(i
   this->GammaY = gammaY;
   this->NbrBands = 4 * this->NbrLayers - 1;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)
     {
@@ -92,12 +94,12 @@ TightBindingModelPyrochloreSlabLattice::~TightBindingModelPyrochloreSlabLattice(
 {
 }
 
-// compute the band structure
+// core part that compute the band structure
 //
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelPyrochloreSlabLattice::ComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelPyrochloreSlabLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;

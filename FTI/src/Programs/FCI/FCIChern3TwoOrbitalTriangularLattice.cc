@@ -42,7 +42,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHEChern3TwoOrbitalTriangularLattice" , "0.01");
+  OptionManager Manager ("FCIChern3TwoOrbitalTriangularLattice" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEChern3TwoOrbitalTriangularLattice -h" << endl;
+      cout << "see man page for option syntax or type FCIChern3TwoOrbitalTriangularLattice -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
 	ExportOneBody = true;
       TightBindingModelChern3TwoOrbitalTriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), 
-						     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+									   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      
       {
 	cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
     }
 
       TightBindingModelChern3TwoOrbitalTriangularLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), 
-						     Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+									   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
 
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)

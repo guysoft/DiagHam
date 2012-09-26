@@ -197,7 +197,7 @@ int main(int argc, char** argv)
 	ExportOneBody = true;
       TightBindingModelRubyLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
 						     Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-						     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), ExportOneBody);
+						     Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
     }
   TightBindingModelRubyLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
 						 Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-						 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+						 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
