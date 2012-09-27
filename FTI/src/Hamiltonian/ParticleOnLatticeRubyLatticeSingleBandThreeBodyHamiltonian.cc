@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"

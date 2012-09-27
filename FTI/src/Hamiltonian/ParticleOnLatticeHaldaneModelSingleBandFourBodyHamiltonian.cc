@@ -1,4 +1,4 @@
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
