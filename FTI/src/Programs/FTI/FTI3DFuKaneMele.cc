@@ -10,6 +10,8 @@
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandFuKaneMeleHamiltonian.h"
 #include "Hamiltonian/ExplicitHamiltonian.h"
 
+#include "Tools/FTITightBinding/TightBindingModelFuKaneMeleLattice.h"
+
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -34,16 +36,6 @@ using std::ios;
 using std::ofstream;
 
 
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the y direction
-// nbrSitesZ = number of sites in the z direction
-// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
-// spinOrbit = amplitude of the spin orbit coupling
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit);
-
 // compute the single particle tranformation matrices 
 //
 // nbrSitesX = number of sites in the x direction
@@ -58,7 +50,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHEQuantumSpinHall3DFuKaneMele" , "0.01");
+  OptionManager Manager ("FTI3DFuKaneMele" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -92,9 +84,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-z", "boundary condition twisting angle along z (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
+  (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "four-bands", "perform the calculations within the full four band model");
   (*SystemGroup) += new BooleanOption ('\n', "project-fourbands", "project the hamiltonian from the four band model to the two band model");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -111,7 +108,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEQuantumSpinHall3DFuKaneMele -h" << endl;
+      cout << "see man page for option syntax or type FTI3DFuKaneMele -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -138,24 +135,60 @@ int main(int argc, char** argv)
     }
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky kz ");
-  char* EigenvalueOutputFile = new char [512];
+
+  char* FilePrefix = new char [512];
   if (Manager.GetBoolean("four-bands") == true)
     {
       if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	sprintf (FilePrefix, "%s_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
       else
-	sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	sprintf (FilePrefix, "%s_quantumspinhall3d_fukanemele_fourbands_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
     }
   else
     {
       if (Manager.GetDouble("mu-s") == 0.0)
-	sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+	sprintf (FilePrefix, "%s_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
       else
-	sprintf (EigenvalueOutputFile, "%s_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
+	sprintf (FilePrefix, "%s_quantumspinhall3d_fukanemele_n_%d_x_%d_y_%d_z_%d_u_%f_v_%f_w_%f_dt111_%f_so_%f_gx_%f_gy_%f_gz_%f_mus_%f", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Manager.GetDouble("mu-s"));
     }
-  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+
+  char* EigenvalueOutputFile = new char [512];
+  if (Manager.GetString("eigenvalue-file")!=0)
+    strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
+  else
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"));
+      sprintf (EigenvalueOutputFile, "%s.dat", FilePrefix);
+    }
+
+  if (Manager.GetBoolean("singleparticle-spectrum") == true)
+    {      
+      bool ExportOneBody = false;
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
+	ExportOneBody = true;
+      TightBindingModelFuKaneMeleLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 
+							   Architecture.GetArchitecture(), ExportOneBody);
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+      double BandSpread = TightBindingModel.ComputeBandSpread(0);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
+      if (ExportOneBody == true)
+	{
+	  char* BandStructureOutputFile = new char [512];
+	  if (Manager.GetString("export-onebodyname") != 0)
+	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+	  else
+	    sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+	  if (Manager.GetBoolean("export-onebody") == true)
+	    {
+	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+	    }
+	  else
+	    {
+	      TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+	    }
+	  delete[] BandStructureOutputFile;
+	}	  
       return 0;
     }
 
@@ -180,6 +213,11 @@ int main(int argc, char** argv)
       MinKz = Manager.GetInteger("only-kz");
       MaxKz = MinKz;
     }
+
+  TightBindingModelFuKaneMeleLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
+						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 
+						       Architecture.GetArchitecture());
+						       
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -203,15 +241,22 @@ int main(int argc, char** argv)
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 		  AbstractQHEHamiltonian* Hamiltonian = 0;
 		  Hamiltonian = new ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-										       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("deltat-111"), Manager.GetDouble("lambda-so"),
-										       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 		     
+										       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+										       &TightBindingModel, 		     
 										       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, k);
 		  char* EigenstateOutputFile = new char [512];
 		  char* TmpExtention = new char [512];
 		  sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
-		  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+		  if (Manager.GetString("eigenstate-file")!=0)
+		    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d_kz_%d", Manager.GetString("eigenstate-file"), i, j, k);
+		  else
+		    {
+		      char* TmpExtention = new char [512];
+		      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+		      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+		    }
 
 		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 		  FirstRunFlag = false;
@@ -319,105 +364,6 @@ int main(int argc, char** argv)
 	}
     }
   return 0;
-}
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the y direction
-// nbrSitesZ = number of sites in the z direction
-// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
-// spinOrbit = amplitude of the spin orbit coupling
-
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, int nbrSitesZ, double nnHopingDistortion111, double spinOrbit)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     kz     E_{-,1}    E_{-,2}    E_{+,1}    E_{+,2}" << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  double KxFactor = 2.0 * M_PI / ((double) nbrSitesX);
-  double KyFactor = 2.0 * M_PI / ((double) nbrSitesY);
-  double KzFactor = 2.0 * M_PI / ((double) nbrSitesZ);
-  for (int kx = 0; kx < nbrSitesX; ++kx)
-    {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
-	{
-	  for (int kz = 0; kz < nbrSitesZ; ++kz)
-	    {
-	      double TmpKx = ((double) kx) * KxFactor;
-	      double TmpKy = ((double) ky) * KyFactor;
-	      double TmpKz = ((double) kz) * KzFactor;
-
-	      HermitianMatrix TmpOneBodyHamiltonian(4, true);
-// 	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))   + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))  + Phase(0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor)) ;
-// 	      double d3 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) ky) * KyFactor))
-// 				       - sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) ky) * KyFactor))
-// 				       + sin (0.5 * (((double) kx) * KxFactor) - 0.5 * (((double) kz) * KzFactor)));
-// 	      double d4 = spinOrbit * (sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kz) * KzFactor))
-// 				       + sin (0.5 * (((double) ky) * KyFactor) - 0.5 * (((double) kx) * KxFactor)));
-// 	      double d5 = spinOrbit * (sin (0.5 * (((double) ky) * KyFactor) + 0.5 * (((double) kx) * KxFactor))
-// 				       - sin (0.5 * (((double) kx) * KxFactor) + 0.5 * (((double) kz) * KzFactor))
-// 				       - sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) kx) * KxFactor))
-// 				       + sin (0.5 * (((double) kz) * KzFactor) - 0.5 * (((double) ky) * KyFactor)));
-
-	      Complex B1 = 1.0 + nnHopingDistortion111 + Phase(1.0 * TmpKx)   + Phase(1.0 * TmpKy)  + Phase(1.0 * TmpKz) ;
-	      double d3 = spinOrbit * (sin (1.0 * TmpKy)
-				       - sin (1.0 * TmpKz)
-				       - sin (1.0 * (TmpKy - TmpKx))
-				       + sin (1.0 * (TmpKz - TmpKx)));
-	      double d4 = spinOrbit * (sin (1.0 * TmpKz)
-				       - sin (1.0 * TmpKx)
-				       - sin (1.0 * (TmpKz - TmpKy))
-				       + sin (1.0 * (TmpKx - TmpKy)));
-	      double d5 = spinOrbit * (sin (1.0 * TmpKx)
-				       - sin (1.0 * TmpKy)
-				       - sin (1.0 * (TmpKx - TmpKz))
-				       + sin (1.0 * (TmpKy - TmpKz)));
-
-	      Complex B2 = d3 + I() * d4;
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
-	      TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B1);
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 3, B1);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B2);
-	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -B2);
-	      RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
-#else
-	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-#endif   
-	      if (MaxEMinus < TmpDiag(0, 0))
-		{
-		  MaxEMinus = TmpDiag(0, 0);
-		}
-	      if (MinEMinus > TmpDiag(0, 0))
-		{
-		  MinEMinus = TmpDiag(0, 0);
-		}
-	      if (MaxEPlus < TmpDiag(2, 2))
-		{
-		  MaxEPlus = TmpDiag(2, 2);
-		}
-	      if (MinEPlus > TmpDiag(2, 2))
-		{
-		  MinEPlus = TmpDiag(2, 2);
-		}
-	      File << (KxFactor * ((double) kx)) << " " << (KyFactor * ((double) ky)) << " " << (KzFactor * ((double) kz)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
-	    }
-	  File << endl;
-	}
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }
 
 // compute the single particle tranformation matrices 

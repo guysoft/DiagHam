@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract3DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -63,15 +64,6 @@ class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLattic
   // numerical factor for momentum along z
   double KzFactor;
   
-  // mass term of the simple TI model
-  double Mass;
-
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-  // boundary condition twisting angle along z
-  double GammaZ;
 
   // nearest neighbor density-density potential strength
   double UPotential;
@@ -116,15 +108,12 @@ class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLattic
   // nbrSiteZ = number of sites in the z direction
   // uPotential = repulsive on-site potential strength between different orbitals
   // vPotential = repulsive on-site potential strength between opposite spins
-  // mass = mass term of the simple TI model
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
-  // gammaZ = boundary condition twisting angle along z
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double mass, 
-						   double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, 
+						   Abstract3DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -328,10 +317,6 @@ class ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian : public ParticleOnLattic
 						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
 
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

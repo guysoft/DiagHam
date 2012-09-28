@@ -18,4 +18,6 @@ TightBindingModelChern3TwoOrbitalTriangularLattice.cc \
 TightBindingModelNOrbitalSquareLattice.cc \
 TightBindingModelPyrochloreLattice.cc \
 TightBindingModel3DAtomicLimitLattice.cc \
-TightBindingModelEffectiveBilayerHaldaneLattice.cc
+TightBindingModelEffectiveBilayerHaldaneLattice.cc \
+TightBindingModelFuKaneMeleLattice.cc \
+TightBindingModel3DSimpleTILattice.cc

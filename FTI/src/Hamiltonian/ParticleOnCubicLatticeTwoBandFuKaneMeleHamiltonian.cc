@@ -64,17 +64,15 @@ ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeTwoBan
 // nbrSiteZ = number of sites in the z direction
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive two body on site interaction
-// nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
-// spinOrbitCoupling = amplitude of the spin orbit coupling
-// gammaX = boundary condition twisting angle along x
-// gammaY = boundary condition twisting angle along y
-// gammaZ = boundary condition twisting angle along z
+// tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-												       int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+												       int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, 
+												       Abstract3DTightBindingModel* tightBindingModel, 
+												       bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -87,11 +85,7 @@ ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ParticleOnCubicLatticeTwoBan
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);
   this->HamiltonianShift = 0.0;
-  this->NNHopingDistortion111 = nnHopingDistortion111;
-  this->SpinOrbitCoupling = spinOrbitCoupling;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
-  this->GammaZ = gammaZ;
+  this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
 
   this->UPotential = uPotential;
@@ -389,60 +383,4 @@ Complex ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeTwoBodyMatrix
 				(((double) (ky4 + ky3 - ky1 - ky2)) * this->KyFactor) + 
 				(((double) (kz4 + kz3 - kz1 - kz2)) * this->KzFactor)));
   return Tmp;
-}
-
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      for (int kz = 0; kz < this->NbrSiteZ; ++kz)
-	{
-	  HermitianMatrix TmpOneBodyHamiltonian(4, true);
-	  int Index = ((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz;
-	  Complex B1 = 1.0 + this->NNHopingDistortion111 + Phase(((double) kx) * this->KxFactor) + Phase(((double) ky) * this->KyFactor) + Phase(((double) kz) * this->KzFactor);
-	  Complex TmpPhase = Phase (-0.25 * ((((double) kx) * this->KxFactor) +(((double) ky) * this->KyFactor) + (((double) kz) * this->KzFactor)));
-	  B1 *= TmpPhase;
-	  double d3 = this->SpinOrbitCoupling * (sin ((((double) ky) * this->KyFactor))
-						 - sin ((((double) kz) * this->KzFactor))
-						 - sin ((((double) ky) * this->KyFactor) - (((double) kx) * this->KxFactor))
-						 + sin ((((double) kz) * this->KzFactor) - (((double) kx) * this->KxFactor)));
-	  double d4 = this->SpinOrbitCoupling * (sin ((((double) kz) * this->KzFactor))
-						 - sin ((((double) kx) * this->KxFactor))
-						 - sin ((((double) kz) * this->KzFactor) - (((double) ky) * this->KyFactor))
-						 + sin ((((double) kx) * this->KxFactor) - (((double) ky) * this->KyFactor)));
-	  double d5 = this->SpinOrbitCoupling * (sin ((((double) kx) * this->KxFactor))
- 						 - sin ((((double) ky) * this->KyFactor))
-						 - sin ((((double) kx) * this->KxFactor) - (((double) kz) * this->KzFactor))
-						 + sin ((((double) ky) * this->KyFactor) - (((double) kz) * this->KzFactor)));
-	  Complex B2 = d3 - I() * d4;
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, -d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 2, -d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 3, d5);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, B2);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -B2);
-
-	  ComplexMatrix TmpMatrix(4, 4, true);
-	  TmpMatrix.SetToIdentity();
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	  oneBodyBasis[Index] = TmpMatrix;	
-	  if (this->FlatBand == false)
-	    {
-	      this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
-	      this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(1, 1);
-	    }
-	  cout << "index=" << Index << " kx=" << kx << " ky=" << ky << " kz=" << kz <<  " : ";
-	  cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << endl;
-	}
 }

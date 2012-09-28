@@ -36,6 +36,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract3DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
@@ -51,16 +52,6 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnCubi
 
  protected:
  
-  // distortion of nearest neighbor hoping amplitude in the (111) direction
-  double NNHopingDistortion111;
-  // amplitude of the spin orbit coupling
-  double SpinOrbitCoupling;
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
 
  public:
 
@@ -77,15 +68,12 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnCubi
   // nbrSiteZ = number of sites in the z direction
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body on site interaction
-  // nnHopingDistortion111 = distortion of nearest neighbor hoping amplitude in the (111) direction
-  // spinOrbitCoupling = amplitude of the spin orbit coupling
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
-  // gammaZ = boundary condition twisting angle along z
+  // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double nnHopingDistortion111, double spinOrbitCoupling, double gammaX, double gammaY, double gammaZ, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential,
+						     Abstract3DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -290,11 +278,6 @@ class ParticleOnCubicLatticeTwoBandFuKaneMeleHamiltonian : public ParticleOnCubi
 							int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 							int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
   
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
-
 };
 
 // compute the transformation basis contribution to the interaction matrix element

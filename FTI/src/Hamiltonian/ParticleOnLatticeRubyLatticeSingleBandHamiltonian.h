@@ -52,28 +52,11 @@ class ParticleOnLatticeRubyLatticeSingleBandHamiltonian : public ParticleOnLatti
 
  protected:
   
-  // real part of the hopping amplitude between neareast neighbor sites with same parity
-  double TrHopping;
-  // imaginary part of the hopping amplitude between neareast neighbor sites with same parity
-  double TiHopping;
-  // real part of the hopping amplitude next neareast neighbor sites with different parity
-  double T1rHopping;
-  // real part of the hopping amplitude next neareast neighbor sites with different parity
-  double T1iHopping;
-  // t4 = hopping amplitude along square diagonal
-  double T4Hopping;
-
-  // four times the sublattice staggered chemical potential 
-  double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
 
   // next nearest neighbor density-density potential strength
   double VPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
