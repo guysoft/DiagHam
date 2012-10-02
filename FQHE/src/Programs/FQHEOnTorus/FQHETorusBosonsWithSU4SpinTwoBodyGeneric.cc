@@ -75,6 +75,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-n4", "number of down-minus particles", 0);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin1-flux", "inserted flux for particles with spin 1 (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin2-flux", "inserted flux for particles with spin 2 (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin3-flux", "inserted flux for particles with spin 3 (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spin4-flux", "inserted flux for particles with spin 4 (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
@@ -180,6 +184,8 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSU4SpinGenericHamiltonian(&Space, NbrBosons, MaxMomentum, XRatio,
 											     NbrPseudoPotentials, PseudoPotentials,
+											     Manager.GetDouble("spin1-flux"), Manager.GetDouble("spin2-flux"),
+											     Manager.GetDouble("spin3-flux"), Manager.GetDouble("spin4-flux"),
 											     Architecture.GetArchitecture(), Memory);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);

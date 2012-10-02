@@ -70,6 +70,11 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
   // Laguerre polynomial for the pseudopotentials
   Polynomial* LaguerrePolynomials;
 
+  // additional inserted flux for spin up
+  double SpinFluxUp;
+  // additional inserted flux for spin down
+  double SpinFluxDown;
+
  public:
 
   // constructor from default datas
@@ -84,6 +89,8 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
   // pseudopotentialsDownDown = pseudopotential coefficients for down-down interaction
   // nbrPseudopotentialsUpDown = number of pseudopotentials for up-down interaction
   // pseudopotentialsUpDown = pseudopotential coefficients for up-down interaction
+  // spinFluxUp = additional inserted flux for spin up
+  // spinFluxDown = additional inserted flux for spin down
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
@@ -91,6 +98,7 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
 					    int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
 					    int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
 					    int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
+					    double spinFluxUp, double spinFluxDown, 
 					    AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0, double * oneBodyPotentielUpUp = 0, double * oneBodyPotentielDownDown = 0, double * oneBodyPotentielUpDown = 0);
 
   // destructor
@@ -122,9 +130,14 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
   // m4 = fourth index
   // nbrPseudopotentials = number of pseudopotentials
   // pseudopotentials = pseudopotential coefficients
+  // spinFluxM1 = additional inserted flux for m1
+  // spinFluxM2 = additional inserted flux for m2
+  // spinFluxM3 = additional inserted flux for m3
+  // spinFluxM4 = additional inserted flux for m4
   // return value = numerical coefficient
   double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4,
-					int nbrPseudopotentials, double* pseudopotentials);
+					int nbrPseudopotentials, double* pseudopotentials,
+					double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4);
 
 
 };

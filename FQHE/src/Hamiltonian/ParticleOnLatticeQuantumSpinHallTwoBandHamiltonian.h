@@ -44,11 +44,17 @@ using std::cout;
 using std::endl;
 
 
+class Abstract2DTightBindingModel;
+
+
 class ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian : public ParticleOnLatticeWithSpinChernInsulatorHamiltonian
 {
 
  protected:
   
+  // pointer to the tight binding model
+  Abstract2DTightBindingModel* TightBindingModel;
+
   // szSymmetryBreaking = amplitude of the Sz symmetry breaking term
   double SzSymmetryBreaking;
 

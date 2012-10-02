@@ -66,12 +66,17 @@ using std::ostream;
 // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as upplus-upplus, upplus-upminus, upplus-downplus, upplus-downminus, 
 //                                                                     upminus-upminus, upminus-downplus, upminus-downminus, downplus-downplus, downplus-downminus, downminus-downminus)
+// spinFlux1 = additional inserted flux for spin 1
+// spinFlux2 = additional inserted flux for spin 2
+// spinFlux3 = additional inserted flux for spin 3
+// spinFlux4 = additional inserted flux for spin 4
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusWithSU4SpinGenericHamiltonian::ParticleOnTorusWithSU4SpinGenericHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int maxMomentum, double ratio, 
 											   int* nbrPseudopotentials, double** pseudoPotentials,
+											   double spinFlux1, double spinFlux2, double spinFlux3, double spinFlux4,
 											   AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
@@ -84,6 +89,10 @@ ParticleOnTorusWithSU4SpinGenericHamiltonian::ParticleOnTorusWithSU4SpinGenericH
   this->Architecture = architecture;
   long MinIndex;
   long MaxIndex;
+  this->SpinFlux1 = spinFlux1;
+  this->SpinFlux2 = spinFlux2;
+  this->SpinFlux3 = spinFlux3;
+  this->SpinFlux4 = spinFlux4;
 
   this->NbrPseudopotentials  = new int [10];
   this->Pseudopotentials = new double*[10];
@@ -254,22 +263,38 @@ void ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-							    + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-							    - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-							    - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0]));
-		  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4]));
-		  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7]));
-		  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9]));
+		  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+												 this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+							    + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+												   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+							    - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+												   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+							    - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+												   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1));
+		  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+												 this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+												       this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+												       this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+												       this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2));
+		  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+												 this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+												       this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+												       this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+												       this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3));
+		  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+												       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+								+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+												       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+								- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+												       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+								- this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+												       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4));
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
@@ -299,18 +324,30 @@ void ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 		{
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  this->InteractionFactorsupum[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[1], this->Pseudopotentials[1])
-							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[1], this->Pseudopotentials[1]));
-		  this->InteractionFactorsupdp[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[2], this->Pseudopotentials[2])
-							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[2], this->Pseudopotentials[2]));
-		  this->InteractionFactorsupdm[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[3], this->Pseudopotentials[3])
-							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[3], this->Pseudopotentials[3]));
-		  this->InteractionFactorsumdp[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[5], this->Pseudopotentials[5])
-							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[5], this->Pseudopotentials[5]));
-		  this->InteractionFactorsumdm[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[6], this->Pseudopotentials[6])
-							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[6], this->Pseudopotentials[6]));
-		  this->InteractionFactorsdpdm[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[8], this->Pseudopotentials[8])
-							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[8], this->Pseudopotentials[8]));
+		  this->InteractionFactorsupum[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[1], this->Pseudopotentials[1],
+												       this->SpinFlux1, this->SpinFlux2, this->SpinFlux1, this->SpinFlux2)
+							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[1], this->Pseudopotentials[1],
+												this->SpinFlux1, this->SpinFlux2, this->SpinFlux1, this->SpinFlux2));
+		  this->InteractionFactorsupdp[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[2], this->Pseudopotentials[2],
+												  this->SpinFlux1, this->SpinFlux3, this->SpinFlux1, this->SpinFlux3)
+							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[2], this->Pseudopotentials[2],
+												this->SpinFlux1, this->SpinFlux3, this->SpinFlux1, this->SpinFlux3));
+		  this->InteractionFactorsupdm[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[3], this->Pseudopotentials[3],
+												  this->SpinFlux1, this->SpinFlux4, this->SpinFlux1, this->SpinFlux4)
+							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[3], this->Pseudopotentials[3],
+												this->SpinFlux1, this->SpinFlux4, this->SpinFlux1, this->SpinFlux4));
+		  this->InteractionFactorsumdp[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[5], this->Pseudopotentials[5],
+												  this->SpinFlux2, this->SpinFlux3, this->SpinFlux2, this->SpinFlux3)
+							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[5], this->Pseudopotentials[5],
+												this->SpinFlux2, this->SpinFlux3, this->SpinFlux2, this->SpinFlux3));
+		  this->InteractionFactorsumdm[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[6], this->Pseudopotentials[6],
+												  this->SpinFlux2, this->SpinFlux4, this->SpinFlux2, this->SpinFlux4)
+							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[6], this->Pseudopotentials[6],
+												this->SpinFlux2, this->SpinFlux3, this->SpinFlux4, this->SpinFlux4));
+		  this->InteractionFactorsdpdm[i][Index] = (-this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[8], this->Pseudopotentials[8],
+												  this->SpinFlux3, this->SpinFlux4, this->SpinFlux3, this->SpinFlux4)
+							  -this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[8], this->Pseudopotentials[8],
+												this->SpinFlux3, this->SpinFlux4, this->SpinFlux3, this->SpinFlux4));
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -369,54 +406,90 @@ void ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 		    {
 		      if (m3 != m4)
 			{
-			  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-								    + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0]));
-			  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4]));
-			  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7]));
-			  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9]));
+			  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													 this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+								    + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1));
+			  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													 this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+									+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													       this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													       this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													       this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2));
+			  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													 this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+									+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													       this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													       this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													       this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3));
+			  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													 this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+									+ this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													       this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4));
 			}
 		      else
 			{
-			  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0]));
-			  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4]));
-			  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7]));
-			  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-									+ this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9]));
+			  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													 this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1));
+			  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													 this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													   this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2));
+			  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													 this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													   this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3));
+			  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													 this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+								    + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													   this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4));
 			}
 		    }
 		  else
 		    {
 		      if (m3 != m4)
 			{
-			  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0])
-								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0]));
-			  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4])
-									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4]));
-			  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7])
-									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7]));
-			  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9])
-									+ this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9]));
+			  this->InteractionFactorsupup[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													 this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1)
+								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													   this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1));
+			  this->InteractionFactorsumum[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													 this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2)
+								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													   this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2));
+			  this->InteractionFactorsdpdp[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													 this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3)
+								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													   this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3));
+			  this->InteractionFactorsdmdm[i][Index] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													 this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4)
+								    + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													   this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4));
 			}
 		      else
 			{
-			  this->InteractionFactorsupup[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0]);
-			  this->InteractionFactorsumum[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4]);
-			  this->InteractionFactorsdpdp[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7]);
-			  this->InteractionFactorsdmdm[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9]);
+			  this->InteractionFactorsupup[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[0], this->Pseudopotentials[0],
+													this->SpinFlux1, this->SpinFlux1, this->SpinFlux1, this->SpinFlux1);
+			  this->InteractionFactorsumum[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[4], this->Pseudopotentials[4],
+													this->SpinFlux2, this->SpinFlux2, this->SpinFlux2, this->SpinFlux2);
+			  this->InteractionFactorsdpdp[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[7], this->Pseudopotentials[7],
+													this->SpinFlux3, this->SpinFlux3, this->SpinFlux3, this->SpinFlux3);
+			  this->InteractionFactorsdmdm[i][Index] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[9], this->Pseudopotentials[9],
+													this->SpinFlux4, this->SpinFlux4, this->SpinFlux4, this->SpinFlux4);
 			}
 		    }
 		  TotalNbrInteractionFactors += 2;
@@ -450,27 +523,18 @@ void ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-// 		  ParticleOnSphereWithSU4Spin* TmpHilbertTruc = (ParticleOnSphereWithSU4Spin*) this->Particles;
-		    
-// 		  cout << m1 << " " << m2 << " " << m3 << " " << m4 << " : " << endl;;
-// 		  for (int truc = 0; truc < TmpHilbertTruc->GetHilbertSpaceDimension(); ++truc)
-// 		    {
-// 		      double TrucCoefficient = TmpHilbertTruc->A2A3(truc, m3, m4);
-// 		      cout << truc << " : " << TrucCoefficient;
-// 		      if (TrucCoefficient != 0.0)
-// 			{
-// 			  int TrucIndex = TmpHilbertTruc->Ad2Ad3(m1, m2, TrucCoefficient);
-// 			  cout << " : " << TrucIndex << " " << TrucCoefficient;
-// 			}
-// 		      cout << endl;
-// 		    }
-
-		  this->InteractionFactorsupum[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[1], this->Pseudopotentials[1]);
-		  this->InteractionFactorsupdp[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[2], this->Pseudopotentials[2]);
-		  this->InteractionFactorsupdm[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[3], this->Pseudopotentials[3]);
-		  this->InteractionFactorsumdp[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[5], this->Pseudopotentials[5]);
-		  this->InteractionFactorsumdm[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[6], this->Pseudopotentials[6]);
-		  this->InteractionFactorsdpdm[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[8], this->Pseudopotentials[8]);
+		  this->InteractionFactorsupum[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[1], this->Pseudopotentials[1],
+													 this->SpinFlux1, this->SpinFlux2, this->SpinFlux1, this->SpinFlux2);
+		  this->InteractionFactorsupdp[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[2], this->Pseudopotentials[2],
+													 this->SpinFlux1, this->SpinFlux3, this->SpinFlux1, this->SpinFlux3);
+		  this->InteractionFactorsupdm[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[3], this->Pseudopotentials[3],
+													 this->SpinFlux1, this->SpinFlux4, this->SpinFlux1, this->SpinFlux4);
+		  this->InteractionFactorsumdp[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[5], this->Pseudopotentials[5],
+													 this->SpinFlux2, this->SpinFlux3, this->SpinFlux2, this->SpinFlux3);
+		  this->InteractionFactorsumdm[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[6], this->Pseudopotentials[6],
+													 this->SpinFlux2, this->SpinFlux4, this->SpinFlux2, this->SpinFlux4);
+		  this->InteractionFactorsdpdm[i][Index] = Factor * this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentials[8], this->Pseudopotentials[8],
+													 this->SpinFlux3, this->SpinFlux4, this->SpinFlux3, this->SpinFlux4);
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -490,15 +554,20 @@ void ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionFactors()
 // m4 = fourth index
 // nbrPseudopotentials = number of pseudopotentials
 // pseudopotentials = pseudopotential coefficients
+// spinFluxM1 = additional inserted flux for m1
+// spinFluxM2 = additional inserted flux for m2
+// spinFluxM3 = additional inserted flux for m3
+// spinFluxM4 = additional inserted flux for m4
 // return value = numerical coefficient
 
-double ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials)
+double ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+										    double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);
-  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
+  double Factor =  - (((double) (m1-m3)) + spinFluxM1 - spinFluxM3) * PIOnM * 2.0;
   double Sum = 0.0;
-  double N2 = (double) (m1 - m4);
+  double N2 = ((double) (m1 - m4)) + spinFluxM1 - spinFluxM4;
   double N1;
   double Q2;
   double Precision;
@@ -542,7 +611,7 @@ double ParticleOnTorusWithSU4SpinGenericHamiltonian::EvaluateInteractionCoeffici
       Sum += Coefficient;
       N2 += this->NbrLzValue;
     }
-  N2 = (double) (m1 - m4 - this->NbrLzValue);
+  N2 = ((double) (m1 - m4 - this->NbrLzValue)) + spinFluxM1 - spinFluxM4;
   Coefficient = Sum;	    
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {

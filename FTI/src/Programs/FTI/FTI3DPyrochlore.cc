@@ -8,9 +8,11 @@
 
 
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.h"
+#include "Hamiltonian/ParticleOnCubicLatticeFullFourBandSimpleTIHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelPyrochloreLattice.h"
 #include "Tools/FTITightBinding/TightBindingModel3DAtomicLimitLattice.h"
+#include "Tools/FTITightBinding/TightBindingModel3DSimpleTILattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -41,7 +43,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHEQuantumSpinHall3DPyrochlore" , "0.01");
+  OptionManager Manager ("FTI3DPyrochlore" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -96,7 +98,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEQuantumSpinHall3DPyrochlore -h" << endl;
+      cout << "see man page for option syntax or type FTI3DPyrochlore -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -115,6 +117,8 @@ int main(int argc, char** argv)
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
     {
+      cout << "fermions are not yet implemented" << endl;
+      return 0;
       sprintf (StatisticPrefix, "fermions");
     }
   else
@@ -182,29 +186,33 @@ int main(int argc, char** argv)
       MinKz = Manager.GetInteger("only-kz");
       MaxKz = MinKz;
     }
-  TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-  						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+   TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
+   						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
   
   TightBindingModelPyrochloreLattice TightBindingModel2(NbrSitesY, NbrSitesX, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
 							Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
   
-  
-  ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
-  ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
+//   TightBindingModel3DSimpleTILattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 0.5,
+// 						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 
+// 						       Architecture.GetArchitecture());
 
-  for (int i = 0; i < 8; ++i)
-    {
-      double Sum = 0.0;
-      for (int j = 0; j < 8; ++j)
-	{
-	  Complex Tmp = 0.0;
-	  for (int k = 0; k < 8; ++k)
-	    Tmp += Conj(OneBodyBasis2[i][k]) * OneBodyBasis1[j][k];
-	  cout << i << " " << j << " : " << SqrNorm(Tmp) << endl;
-	  Sum += SqrNorm(Tmp);
-	}
-      cout << "sum = " << Sum << endl;
-    }
+  
+//   ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
+//   ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
+
+//   for (int i = 0; i < 8; ++i)
+//     {
+//       double Sum = 0.0;
+//       for (int j = 0; j < 8; ++j)
+// 	{
+// 	  Complex Tmp = 0.0;
+// 	  for (int k = 0; k < 8; ++k)
+// 	    Tmp += Conj(OneBodyBasis2[i][k]) * OneBodyBasis1[j][k];
+// 	  cout << i << " " << j << " : " << SqrNorm(Tmp) << endl;
+// 	  Sum += SqrNorm(Tmp);
+// 	}
+//       cout << "sum = " << Sum << endl;
+//     }
 //     double* TmpChem = new double[8];
 //     TmpChem[0] = -1.0;
 //     TmpChem[1] = -1.0;
@@ -251,6 +259,9 @@ int main(int argc, char** argv)
 	      Hamiltonian = new ParticleOnCubicLatticeFourBandPyrochloreHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
 										    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel,
 										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+// 	      Hamiltonian = new ParticleOnCubicLatticeFullFourBandSimpleTIHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
+// 										      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel,
+// 										      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d %d", i, j, k);

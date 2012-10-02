@@ -156,8 +156,6 @@ void TightBindingModelFuKaneMeleLattice::CoreComputeBandStructure(long minStateI
 		      this->OneBodyBasis[Index] = TmpMatrix;
 		      for (int i = 0; i < this->NbrBands; ++i)
 			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		      cout << "kx=" << kx << " ky=" << ky << " kz=" << kz << endl;
-		      cout << this->OneBodyBasis[Index] << endl;
 		    }
 		  else
 		    {

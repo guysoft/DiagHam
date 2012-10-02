@@ -67,6 +67,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-spin", "total spin of the system", 0);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
@@ -154,6 +156,7 @@ int main(int argc, char** argv)
 											  NbrPseudoPotentials[0], PseudoPotentials[0],
 											  NbrPseudoPotentials[1], PseudoPotentials[1],
 											  NbrPseudoPotentials[2], PseudoPotentials[2],
+											  Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 											  Architecture.GetArchitecture(), Memory);
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);

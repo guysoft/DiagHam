@@ -72,7 +72,7 @@ TightBindingModelPyrochloreLattice::TightBindingModelPyrochloreLattice(int nbrSi
   this->GammaY = gammaY;
   this->GammaZ = gammaZ;
   this->NbrBands = 8;
-  this->NbrStatePerBand = 2 * this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
+  this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ;
   this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)
@@ -128,8 +128,8 @@ void TightBindingModelPyrochloreLattice::CoreComputeBandStructure(long minStateI
 		  Complex HHopping13 = 1.0 + Phase(KX);
 		  Complex HHopping14 = 1.0 + Phase(KX-KY);
 		  Complex HHopping23 = 1.0 + Phase(KZ);
-		  Complex HHopping24 = 1.0 + Phase(KZ-KY);
-		  Complex HHopping34 = 1.0 + Phase(-KY);
+ 		  Complex HHopping24 = 1.0 + Phase(KZ-KY);
+ 		  Complex HHopping34 = 1.0 + Phase(-KY);
 
 		  
 		  Complex HSONN12 = this->NNSpinOrbit * I() * (1.0+Phase(KX-KZ));
@@ -216,8 +216,6 @@ void TightBindingModelPyrochloreLattice::CoreComputeBandStructure(long minStateI
 		      this->OneBodyBasis[Index] = TmpMatrix;
 		      for (int i = 0; i < this->NbrBands; ++i)
 			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		      cout << "kx=" << kx << " ky=" << ky << " kz=" << kz << endl;
-		      cout << this->OneBodyBasis[Index] << endl;
 		    }
 		  else
 		    {
