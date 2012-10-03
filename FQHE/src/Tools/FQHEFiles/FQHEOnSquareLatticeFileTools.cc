@@ -64,9 +64,10 @@ bool FQHEOnSquareLatticeFindSystemInfoFromFileName(char* filename, int& nbrParti
 	++SizeString;
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  nbrParticles = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -87,9 +88,10 @@ bool FQHEOnSquareLatticeFindSystemInfoFromFileName(char* filename, int& nbrParti
 	++SizeString;
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  nbrSiteX = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -109,9 +111,10 @@ bool FQHEOnSquareLatticeFindSystemInfoFromFileName(char* filename, int& nbrParti
 	++SizeString;
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  nbrSiteY = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -169,9 +172,10 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
 	++SizeString;
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumX = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -192,6 +196,7 @@ bool FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(char* filename, int& nb
       char TmpChar = StrNbrParticles[SizeString];
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumY = atoi(StrNbrParticles);
 	  StrNbrParticles[SizeString] = TmpChar;
@@ -235,9 +240,10 @@ bool FQHEOnSquareLatticeWannierFindSystemInfoFromVectorFileName(char* filename, 
 	++SizeString;
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumX = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -258,6 +264,7 @@ bool FQHEOnSquareLatticeWannierFindSystemInfoFromVectorFileName(char* filename, 
       char TmpChar = StrNbrParticles[SizeString];
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumY = atoi(StrNbrParticles);
 	  StrNbrParticles[SizeString] = TmpChar;
@@ -302,6 +309,7 @@ bool FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName(char* filename,
       char TmpChar = StrNbrParticles[SizeString];
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
+          char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  totalSz = atoi(StrNbrParticles);
 	  StrNbrParticles[SizeString] = TmpChar;
@@ -388,9 +396,10 @@ bool FQHEOnCubicLatticeFindSystemInfoFromFileName(char* filename, int& nbrPartic
 	++SizeString;
       if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
 	{
+	  char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  nbrSiteZ = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -431,11 +440,12 @@ bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbr
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
-      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+      if ((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+	  char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumY = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -453,11 +463,12 @@ bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbr
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
 	++SizeString;
-      if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+      if ((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+	  char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  momentumZ = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '.';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
@@ -477,9 +488,10 @@ bool FQHEOnCubicLatticeFindSystemInfoFromVectorFileName(char* filename, int& nbr
 	++SizeString;
       if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
 	{
+	  char TmpChar = StrNbrParticles[SizeString];
 	  StrNbrParticles[SizeString] = '\0';
 	  nbrSiteZ = atoi(StrNbrParticles);
-	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles[SizeString] = TmpChar;
 	  StrNbrParticles += SizeString;
 	}
       else
