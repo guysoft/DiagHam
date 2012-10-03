@@ -36,7 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 #include "Polynomial/Polynomial.h"
 
@@ -49,7 +49,7 @@ using std::cout;
 using std::endl;
 
 
-class ParticleOnTwistedTorusGenericHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandHamiltonian
+class ParticleOnTwistedTorusGenericHamiltonian : public ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian
 {
 
  protected:

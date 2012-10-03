@@ -104,8 +104,8 @@ ParticleOnCylinderOrbitalProjection.cc \
 ParticleOnCylinderNBodyHamiltonian.cc \
 ParticleOnCylinderPermanentState.cc \
 ParticleOnCylinderHaldaneRezayi.cc \
-ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc \
-ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.cc \
+ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian.cc \
+ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian.cc \
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc \
 ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.cc \
