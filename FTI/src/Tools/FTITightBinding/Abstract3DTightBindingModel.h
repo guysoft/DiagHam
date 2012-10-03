@@ -83,6 +83,23 @@ class Abstract3DTightBindingModel : public Abstract2DTightBindingModel
   // return value = inearized momentum index
   void GetLinearizedMomentumIndex(int index, int& kx, int& ky, int& kz);
 
+  // get the linearized momentum index, without assuming k to be in the first BZ
+  //
+  // kx = momentum along the x direction
+  // ky = momentum along the y direction
+  // ky = momentum along the z direction
+  // return value = inearized momentum index
+  virtual int GetLinearizedMomentumIndexSafe(int kx, int ky, int kz);
+
+  // get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+  //
+  // index = linearized momentum index
+  // kx = reference on the momentum along the x direction
+  // ky = reference on the momentum along the y direction
+  // kz = reference on the momentum along the z direction
+  // return value = inearized momentum index
+  void GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky, int& kz);
+
   // get the number of sites in the z direction
   //
   // return value = number of sites in the z direction
@@ -118,6 +135,47 @@ inline int Abstract3DTightBindingModel::GetLinearizedMomentumIndex(int kx, int k
 
 inline void Abstract3DTightBindingModel::GetLinearizedMomentumIndex(int index, int& kx, int& ky, int& kz)
 {
+  kx = index / this->NbrSiteYZ;
+  ky = index % this->NbrSiteYZ;
+  kz = ky % this->NbrSiteZ;
+  ky /= this->NbrSiteZ;
+}
+
+// get the linearized momentum index, without assuming k to be in the first BZ
+//
+// kx = momentum along the x direction
+// ky = momentum along the y direction
+// kz = momentum along the z direction
+// return value = linearized momentum index
+
+inline int Abstract3DTightBindingModel::GetLinearizedMomentumIndexSafe(int kx, int ky, int kz)
+{
+  while (kx < 0)
+      kx += this->NbrSiteX;
+  kx %= this->NbrSiteX;
+  while (ky < 0)
+      ky += this->NbrSiteY;
+  ky %= this->NbrSiteY;
+  while (kz < 0)
+      kz += this->NbrSiteZ;
+  kz %= this->NbrSiteZ;
+  return (((kx * this->NbrSiteY) + ky) * this->NbrSiteZ + kz);
+}
+
+// get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+//
+// index = linearized momentum index
+// kx = reference on the momentum along the x direction
+// ky = reference on the momentum along the y direction
+// kz = reference on the momentum along the z direction
+// return value = inearized momentum index
+
+inline void Abstract3DTightBindingModel::GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky, int& kz)
+{
+  int n = this->NbrSiteX * this->NbrSiteYZ;
+  while (index < 0)
+      index += n;
+  index %= n;
   kx = index / this->NbrSiteYZ;
   ky = index % this->NbrSiteYZ;
   kz = ky % this->NbrSiteZ;

@@ -336,5 +336,39 @@ long FermionOnSpherePTruncated::ShiftedEvaluateHilbertSpaceDimension(int nbrFerm
   return TmpPos + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz, level);
 }
 
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// memory = amount of memory that can be use to precompute matrix multiplications  
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void FermionOnSpherePTruncated::CreateStateFromMPSDescription (ComplexMatrix* bMatrices, ComplexVector& state, int traceFlag, long memory, long initialIndex, long nbrComponents)
+{
+  ComplexMatrix TmpMatrix (bMatrices[0].GetNbrRow(), bMatrices[0].GetNbrColumn());
+  long MaxIndex = initialIndex + nbrComponents;
+  if ((nbrComponents == 0l) || (MaxIndex > this->LargeHilbertSpaceDimension))
+    {
+      MaxIndex = this->LargeHilbertSpaceDimension;
+    }
+  for (long i = initialIndex; i < MaxIndex; ++i)
+    {
+      unsigned long TmpStateDescription = this->StateDescription[i];
+      TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
+      TmpStateDescription >>= 1;
+      for (int j = 1; j <= this->LzMax; ++j)
+	{
+	  TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul]);
+	  TmpStateDescription >>= 1;
+	} 
+      if (traceFlag < 0)
+	state[i] = TmpMatrix.ComplexTr();
+      else
+	TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+    }  
+}
+  
 
 

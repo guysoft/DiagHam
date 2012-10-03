@@ -289,6 +289,19 @@ Matrix* ComplexMatrix::Clone ()
   return ((Matrix*) new ComplexMatrix (*this));
 }
 
+// copy a matrix into another (duplicating data)
+//
+// matrix = matrix to copy
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::Copy (ComplexMatrix& matrix)
+{
+  this->Resize(matrix.NbrRow, matrix.NbrColumn);
+  for (int j = 0; j < this->NbrColumn; ++j)
+    this->Columns[j].Copy(matrix.Columns[j]);
+  return *this;
+}
+
 // set a matrix element
 //
 // i = line position
@@ -1125,6 +1138,36 @@ ComplexMatrix ComplexMatrix::GetAdjoint()
     for (int i=0; i<this->NbrRow; ++i)
       rst.SetMatrixElement(j,i,Conj(this->Columns[j][i]));
   return rst;
+}
+
+// evaluate the real part of the matrix trace
+//
+// return value = real part of the matrix trace 
+
+double ComplexMatrix::Tr ()
+{
+  double Trace = 0.0;
+  int Max = this->NbrRow;
+  if (this->NbrColumn < Max)
+    Max = this->NbrColumn;
+  for (int i = 0; i < Max; ++i)
+    Trace += this->Columns[i][i].Re;
+  return Trace;
+}
+
+// evaluate the matrix trace
+//
+// return value = matrix trace 
+
+Complex ComplexMatrix::ComplexTr ()
+{
+  Complex Trace = 0.0;
+  int Max = this->NbrRow;
+  if (this->NbrColumn < Max)
+    Max = this->NbrColumn;
+  for (int i = 0; i < Max; ++i)
+    Trace += this->Columns[i][i].Re;
+  return Trace;
 }
 
 // evaluate matrix determinant (screwing up matrix elements)

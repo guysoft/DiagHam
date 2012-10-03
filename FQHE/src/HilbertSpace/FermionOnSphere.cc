@@ -1389,6 +1389,35 @@ long FermionOnSphere::ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int 
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalLz));
 }
 
+// convert a given state from one bigger n-body basis to the current (and smaller) n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphere::ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  return TmpVector;
+}
+
+// convert a given state from one smaller n-body basis to the current (and bigger) n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector
+
+RealVector FermionOnSphere::ConvertFromNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis)
+{
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[nbodyBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])];
+  TmpVector /= TmpVector.Norm();
+  return TmpVector;
+}
+
 // evaluate wave function in real space using a given basis and only for agiven range of components
 //
 // state = vector corresponding to the state in the Fock basis

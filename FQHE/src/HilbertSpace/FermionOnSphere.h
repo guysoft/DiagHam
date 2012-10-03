@@ -581,6 +581,20 @@ class FermionOnSphere :  public ParticleOnSphere
   // finalState = reference on the array where the monomial representation has to be stored
   virtual void GetMonomial(long index, unsigned long*& finalState);
 
+  // convert a given state from one bigger n-body basis to the current (and smaller) n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertToNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
+
+  // convert a given state from one smaller n-body basis to the current (and bigger) n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector
+  RealVector ConvertFromNbodyBasis(RealVector& state, FermionOnSphere& nbodyBasis);
+
   // convert a state such that its components are now expressed in the unnormalized basis
   //
   // state = reference to the state to convert

@@ -75,6 +75,21 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = inearized momentum index
   virtual void GetLinearizedMomentumIndex(int index, int& kx, int& ky);
 
+  // get the linearized momentum index, without assuming k to be in the first BZ
+  //
+  // kx = momentum along the x direction
+  // ky = momentum along the y direction
+  // return value = inearized momentum index
+  virtual int GetLinearizedMomentumIndexSafe(int kx, int ky);
+
+  // get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+  //
+  // index = linearized momentum index
+  // kx = reference on the momentum along the x direction
+  // ky = reference on the momentum along the y direction
+  // return value = inearized momentum index
+  virtual void GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky);
+
   // get the number of sites in the y direction
   //
   // return value = number of sites in the y direction
@@ -120,6 +135,40 @@ inline int Abstract2DTightBindingModel::GetLinearizedMomentumIndex(int kx, int k
 
 inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndex(int index, int& kx, int& ky)
 {
+  kx = index / this->NbrSiteY;
+  ky = index % this->NbrSiteY;
+}
+
+// get the linearized momentum index, without assuming k to be in the first BZ
+//
+// kx = momentum along the x direction
+// ky = momentum along the y direction
+// return value = linearized momentum index
+
+inline int Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int kx, int ky)
+{
+  while (kx < 0)
+      kx += this->NbrSiteX;
+  kx %= this->NbrSiteX;
+  while (ky < 0)
+      ky += this->NbrSiteY;
+  ky %= this->NbrSiteY;
+  return ((kx * this->NbrSiteY) + ky);
+}
+
+// get momentum value from a linearized momentum index, without assuming k to be in the first BZ
+//
+// index = linearized momentum index
+// kx = reference on the momentum along the x direction
+// ky = reference on the momentum along the y direction
+// return value = inearized momentum index
+
+inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky)
+{
+  int n = this->NbrSiteX * this->NbrSiteY;
+  while (index < 0)
+      index += n;
+  index %= n;
   kx = index / this->NbrSiteY;
   ky = index % this->NbrSiteY;
 }

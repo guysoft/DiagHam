@@ -120,6 +120,12 @@ class ComplexMatrix : public Matrix
   // retrun value = pointer on new matrix 
   Matrix* Clone ();  
 
+  // copy a matrix into another (duplicating data)
+  //
+  // matrix = matrix to copy
+  // return value = reference on current matrix
+  ComplexMatrix& Copy (ComplexMatrix& matrix);
+
   // set matrix to identity 
   //
   void SetToIndentity();
@@ -380,6 +386,16 @@ class ComplexMatrix : public Matrix
   //
   // return value = reference on modified matrix
   ComplexMatrix GetAdjoint();
+
+  // evaluate the real part of the matrix trace
+  //
+  // return value = real part of the matrix trace 
+  double Tr ();
+
+  // evaluate the matrix trace
+  //
+  // return value = matrix trace 
+  Complex ComplexTr ();
 
   // evaluate matrix determinant (skrewing up matrix elements)
   //

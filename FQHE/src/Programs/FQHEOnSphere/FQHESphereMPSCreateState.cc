@@ -60,7 +60,8 @@ int main(int argc, char** argv)
   if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
     return -1;
 
-  ParticleOnSphere* Space = 0;
+//  ParticleOnSphere* Space = 0;
+  FermionOnSpherePTruncated* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
       cout << "bosons are not yet implemented" << endl;
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
 		if (NbrFluxQuanta <= 62)
 #endif
 		  {
-		    Space = new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+		    Space = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
 		  }
 		else
 		  {

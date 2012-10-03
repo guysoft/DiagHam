@@ -85,7 +85,16 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (ComplexMatrix* bMatrices, ComplexVector& state, int traceFlag, long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
+  
  protected:
 
   // evaluate Hilbert space dimension
