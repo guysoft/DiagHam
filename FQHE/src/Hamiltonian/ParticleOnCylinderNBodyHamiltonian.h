@@ -37,7 +37,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -51,7 +51,7 @@ using std::endl;
 class AbstractArchitecture;
 
 
-class ParticleOnCylinderNBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian
+class ParticleOnCylinderNBodyHamiltonian : public ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian
 {
 
   // ratio between the width in the x direction and the width in the y direction

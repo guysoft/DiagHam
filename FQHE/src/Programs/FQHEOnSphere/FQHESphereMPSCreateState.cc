@@ -1,5 +1,6 @@
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
+#include "HilbertSpace/BosonOnDiskShort.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -21,6 +22,9 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
+
+
+void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel);
 
 
 int main(int argc, char** argv)
@@ -101,6 +105,7 @@ int main(int argc, char** argv)
    }
 
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
+
   if (Manager.GetBoolean("show-basis") == true)
     {
       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
@@ -109,6 +114,47 @@ int main(int argc, char** argv)
 	  Space->PrintState(cout, i);
 	  cout << endl;
 	}
+      return 0;
     }
+  
+  ComplexMatrix* BMatrices = new ComplexMatrix[2];
+  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [Manager.GetInteger("p-truncation") + 1];
+  for (int i = 0; i <= Manager.GetInteger("p-truncation"); ++i)
+    {
+      U1BosonBasis[i] = new BosonOnDiskShort(i, i, i + 1);
+//       for (int j = 0; j < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
+// 	{
+// 	  cout << j << " : ";
+// 	  U1BosonBasis[i]->PrintState(cout, j);
+// 	  cout << endl;
+// 	}
+    }
+  CreateLaughlinBMatrices (3, BMatrices, U1BosonBasis, Manager.GetInteger("p-truncation"));
+  ComplexVector State (Space->GetHilbertSpaceDimension(), true);
+  Space->CreateStateFromMPSDescription(BMatrices, State, 0);
+
+  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+    {
+      cout << i << " : ";
+      Space->PrintState(cout, i) << " = " << State[i] << endl;
+    }
+
+  return 0;
+}
+
+void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel)
+{
+  int* StartingIndexPerPLevel = new int [pLevel + 1];
+  int* NbrIndicesPerPLevel = new int [pLevel + 1];
+  StartingIndexPerPLevel[0] = 0;
+  NbrIndicesPerPLevel[0] = u1BosonBasis[0]->GetHilbertSpaceDimension();
+  for (int i = 1; i <= pLevel; ++i)
+    {
+      StartingIndexPerPLevel[i] = StartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
+      NbrIndicesPerPLevel[i] = u1BosonBasis[i]->GetHilbertSpaceDimension();
+    }
+  int MatrixSize = NbrIndicesPerPLevel[pLevel] + StartingIndexPerPLevel[pLevel];
+  bMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  bMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
 }
 

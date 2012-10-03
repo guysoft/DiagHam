@@ -2,7 +2,9 @@ SUBDIRS=
 
 noinst_LIBRARIES=libFTIHamiltonian.a
 
-libFTIHamiltonian_a_SOURCES=ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.cc \
+libFTIHamiltonian_a_SOURCES=ParticleOnLatticeChernInsulatorSingleBandHamiltonian.cc \
+ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.cc \
+ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.cc \
 ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian.cc \

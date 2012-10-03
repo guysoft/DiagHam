@@ -7,8 +7,8 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                   class of hamiltonian with particles on                   //
-//               Chern insulator in the single band approximation             //
+//                class of hamiltonian with particles on lattice              //
+//       with time reversal breaking in the single band approximation         //
 //                                                                            //
 //                        last modification : 23/02/2011                      //
 //                                                                            //
@@ -803,13 +803,5 @@ void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::PartialEnableFa
       ++Pos;
     }
   delete TmpParticles;
-}
-
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
 }
 

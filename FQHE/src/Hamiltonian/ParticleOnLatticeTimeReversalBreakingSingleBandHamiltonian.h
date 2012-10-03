@@ -7,8 +7,8 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                   class of hamiltonian with particles on                   //
-//               Chern insulator in the single band approximation             //
+//                class of hamiltonian with particles on lattice              //
+//       with time reversal breaking in the single band approximation         //
 //                                                                            //
 //                        last modification : 23/02/2011                      //
 //                                                                            //
@@ -30,8 +30,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICECHERNINSULATORSINGLEBANDHAMILTONIAN_H
-#define PARTICLEONLATTICECHERNINSULATORSINGLEBANDHAMILTONIAN_H
+#ifndef PARTICLEONLATTICETIMEREVERSALBREAKINGSINGLEBANDHAMILTONIAN_H
+#define PARTICLEONLATTICETIMEREVERSALBREAKINGSINGLEBANDHAMILTONIAN_H
 
 
 #include "config.h"
@@ -48,7 +48,6 @@ using std::endl;
 
 
 class AbstractArchitecture;
-class Abstract2DTightBindingModel;
 
 
 class ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian : public AbstractQHEHamiltonian
@@ -191,11 +190,6 @@ class ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian : public Abstra
 
  protected:
  
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
-
   // core part of the AddMultiply method involving the two-body interaction
   // 
   // particles = pointer to the Hilbert space

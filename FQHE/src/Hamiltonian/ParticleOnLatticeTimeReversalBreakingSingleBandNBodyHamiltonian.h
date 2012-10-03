@@ -7,8 +7,8 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                   class of hamiltonian with particles on                   //
-//               Chern insulator in the single band approximation             //
+//                class of hamiltonian with particles on lattice              //
+//       with time reversal breaking in the single band approximation         //
 //                           and n-body interaction                           //
 //                                                                            //
 //                        last modification : 03/08/2011                      //
@@ -31,13 +31,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICECHERNINSULATORSINGLEBANDNBODYHAMILTONIAN_H
-#define PARTICLEONLATTICECHERNINSULATORSINGLEBANDNBODYHAMILTONIAN_H
+#ifndef PARTICLEONLATTICETIMEREVERSALBREAKINGSINGLEBANDNBODYHAMILTONIAN_H
+#define PARTICLEONLATTICETIMEREVERSALBREAKINGSINGLEBANDNBODYHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -51,7 +51,7 @@ using std::endl;
 class AbstractArchitecture;
 
 
-class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandHamiltonian
+class ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian : public ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian
 {
 
  protected:
@@ -80,22 +80,11 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
 
   // default constructor
   //
-  ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian();
-
-  // constructor
-  //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // nbrSiteX = number of sites in the x direction
-  // nbrSiteY = number of sites in the y direction
-  // bandParameter = band parameter
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double bandParameter, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian();
 
   // destructor
   //
-  ~ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian();
+  ~ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian();
   
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
@@ -269,7 +258,7 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
 
-inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::EvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -315,7 +304,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateM
 // nbrVectors = number of vectors that have to be evaluated together
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
-inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::EvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 														   ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
@@ -357,7 +346,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateM
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
 
-inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
   //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -406,7 +395,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermitian
 // nbrVectors = number of vectors that have to be evaluated together
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
-inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::HermitianEvaluateMNNBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 														 ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   //int Dim = particles->GetHilbertSpaceDimension();
@@ -468,7 +457,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::Hermitian
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index,
+inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index,
 														  int* indexArray, Complex* coefficientArray, long& position)
 {
   int Index;
@@ -553,7 +542,7 @@ inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateM
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
 
-inline void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateMNNBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::EvaluateMNNBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
   int Index;
   double Coefficient = 0.0;
