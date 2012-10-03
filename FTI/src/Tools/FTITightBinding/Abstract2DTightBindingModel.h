@@ -113,6 +113,14 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = Chern number
   virtual double ComputeChernNumber(int band);
 
+ protected:
+
+  // write an header that describes the tight binding model
+  // 
+  // output = reference on the output stream
+  // return value  = reference on the output stream
+  virtual ofstream& WriteHeader(ofstream& output);
+
 };
 
 // get the linearized momentum index

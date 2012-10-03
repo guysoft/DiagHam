@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                  class of abstract 1D tight binding model                  //
+//                    class of generic 2D tight binding model                 //
 //                                                                            //
-//                        last modification : 01/05/2012                      //
+//                        last modification : 03/10/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,83 +28,30 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef GENERIC2DTIGHTBINDINGMODEL_H
+#define GENERIC2DTIGHTBINDINGMODEL_H
+
+
 #include "config.h"
-#include "Tools/FTITightBinding/Abstract1DTightBindingModel.h"
-#include "GeneralTools/Endian.h"
-
-#include <fstream>
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 
-using std::ofstream;
-using std::endl;
-
-
-// default constructor
-//
-
-Abstract1DTightBindingModel::Abstract1DTightBindingModel()
+class Generic2DTightBindingModel : public Abstract2DTightBindingModel
 {
-  this->EnergyBandStructure = 0;
-  this->OneBodyBasis = 0;
-}
 
-// destructor
-//
+ protected:
 
-Abstract1DTightBindingModel::~Abstract1DTightBindingModel()
-{
-  if (this->OneBodyBasis != 0)
-    {
-      delete[] this->OneBodyBasis;
-    }
-  if (this->EnergyBandStructure != 0)
-    {
-      for (int i = 0; i < this->NbrBands; ++i)
-	{
-	  delete[] this->EnergyBandStructure[i];
-	}
-      delete[] this->EnergyBandStructure;
-    }
-}
+ public:
 
-// write an header that describes the tight binding model
-// 
-// output = reference on the output stream
-// return value  = reference on the output stream
+  // default constructor
+  //
+  // fileName = name of the binary file that contains the band structure information
+  Generic2DTightBindingModel(char* fileName);
 
-ofstream& Abstract1DTightBindingModel::WriteHeader(ofstream& output)
-{
-  int Dimension = 1;
-  int HeaderSize = ((2 * Dimension) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
-  WriteLittleEndian(output, HeaderSize);
-  WriteLittleEndian(output, Dimension);
-  WriteLittleEndian(output, this->NbrSiteX);
-  WriteLittleEndian(output, this->KxFactor);
-  WriteLittleEndian(output, this->GammaX);
-  return output; 
-}
+  // destructor
+  //
+  ~Generic2DTightBindingModel();
 
-// write the energy spectrum in an ASCII file
-//
-// fileName = name of the ASCII file 
-// return value = true if no error occured
+};
 
-bool Abstract1DTightBindingModel::WriteAsciiSpectrum(char* fileName)
-{
-  ofstream File;
-  File.open(fileName);
-  this->WriteASCIIHeader(File, '#');
-  File << "# kx";
-  for (int i = 0; i < this->NbrBands; ++i)
-    File <<  "    E_" << i;
-  File << endl;
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    {
-      File << kx; 
-      for (int i = 0; i < this->NbrBands; ++i)
-	File << " " << this->EnergyBandStructure[i][kx];
-      File << endl;
-    }
-  File.close();
-  return true;
-}
+#endif

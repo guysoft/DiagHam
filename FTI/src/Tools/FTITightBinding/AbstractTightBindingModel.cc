@@ -58,6 +58,18 @@ ostream& AbstractTightBindingModel::WriteASCIIHeader(ostream& output, char comme
   return output;
 }
 
+// write an header that describes the tight binding model
+// 
+// output = reference on the output stream
+// return value  = reference on the output stream
+
+ofstream& AbstractTightBindingModel::WriteHeader(ofstream& output)
+{
+  int HeaderSize = 0;
+  WriteLittleEndian(output, HeaderSize);
+  return output; 
+}
+
 // write the energy spectrum in an ASCII file
 //
 // fileName = name of the ASCII file 
@@ -152,6 +164,7 @@ bool AbstractTightBindingModel::WriteBandStructure(char* fileName)
   File.open(fileName, ios::binary | ios::out);
   WriteLittleEndian(File, this->NbrBands);
   WriteLittleEndian(File, this->NbrStatePerBand);
+  this->WriteHeader(File);
   for (int kx = 0; kx < this->NbrStatePerBand; ++kx)
     for (int i = 0; i < this->NbrBands; ++i)
       {

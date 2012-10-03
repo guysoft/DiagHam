@@ -97,6 +97,12 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
 
  protected:
 
+  // write an header that describes the tight binding model
+  // 
+  // output = reference on the output stream
+  // return value  = reference on the output stream
+  virtual ofstream& WriteHeader(ofstream& output);
+
 };
 
 // get the energy at a given momentum of the band structure

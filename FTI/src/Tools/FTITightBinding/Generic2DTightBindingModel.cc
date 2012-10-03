@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                     class of generic tight binding model                   //
+//                    class of generic 2D tight binding model                 //
 //                                                                            //
-//                        last modification : 01/05/2012                      //
+//                        last modification : 03/10/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/GenericTightBindingModel.h"
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 #include "GeneralTools/Endian.h"
 
 #include <fstream>
@@ -46,7 +46,7 @@ using std::endl;
 //
 // fileName = name of the binary file that contains the band structure information
 
-GenericTightBindingModel::GenericTightBindingModel(char* fileName)
+Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
 {
   ifstream File;
   File.open(fileName, ios::binary | ios::in);
@@ -64,17 +64,20 @@ GenericTightBindingModel::GenericTightBindingModel(char* fileName)
   ReadLittleEndian(File, this->NbrStatePerBand);
   int HeaderSize = -1;
   ReadLittleEndian(File, HeaderSize);
-  if (HeaderSize >= (2 * sizeof(int) + 2* sizeof(double)))
+  if (HeaderSize >= (3 * sizeof(int) + 4 * sizeof(double)))
     {
       int TmpDimension = -1;
       ReadLittleEndian(File, TmpDimension);
-      if (TmpDimension >= 1)
+      if (TmpDimension >= 2)
 	{
 	  ReadLittleEndian(File, this->NbrSiteX);
 	  ReadLittleEndian(File, this->KxFactor);
-	  ReadLittleEndian(File, this->GammaX);	  
+	  ReadLittleEndian(File, this->GammaX);	 
+	  ReadLittleEndian(File, this->NbrSiteY);
+	  ReadLittleEndian(File, this->KyFactor);
+	  ReadLittleEndian(File, this->GammaY);	  
 	}
-      HeaderSize -= (2 * sizeof(int) + 2* sizeof(double));
+      HeaderSize -= (3 * sizeof(int) + 4 * sizeof(double));
       if (HeaderSize > 0) 
 	File.seekg (HeaderSize, ios::cur);
     }
@@ -83,6 +86,9 @@ GenericTightBindingModel::GenericTightBindingModel(char* fileName)
       this->NbrSiteX = this->NbrStatePerBand;
       this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
       this->GammaX = 0.0;
+      this->NbrSiteY = this->NbrStatePerBand;
+      this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+      this->GammaY = 0.0;
       File.seekg (HeaderSize, ios::cur);
     }
   this->EnergyBandStructure = new double*[this->NbrBands];
@@ -112,6 +118,6 @@ GenericTightBindingModel::GenericTightBindingModel(char* fileName)
 // destructor
 //
 
-GenericTightBindingModel::~GenericTightBindingModel()
+Generic2DTightBindingModel::~Generic2DTightBindingModel()
 {
 }

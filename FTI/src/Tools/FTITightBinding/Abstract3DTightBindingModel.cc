@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract3DTightBindingModel.h"
+#include "GeneralTools/Endian.h"
 
 #include <fstream>
 
@@ -50,6 +51,29 @@ Abstract3DTightBindingModel::Abstract3DTightBindingModel()
 
 Abstract3DTightBindingModel::~Abstract3DTightBindingModel()
 {
+}
+
+// write an header that describes the tight binding model
+// 
+// output = reference on the output stream
+// return value  = reference on the output stream
+
+ofstream& Abstract3DTightBindingModel::WriteHeader(ofstream& output)
+{
+  int Dimension = 3;
+  int HeaderSize = ((2 * Dimension) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
+  WriteLittleEndian(output, HeaderSize);
+  WriteLittleEndian(output, Dimension);
+  WriteLittleEndian(output, this->NbrSiteX);
+  WriteLittleEndian(output, this->KxFactor);
+  WriteLittleEndian(output, this->GammaX);
+  WriteLittleEndian(output, this->NbrSiteY);
+  WriteLittleEndian(output, this->KyFactor);
+  WriteLittleEndian(output, this->GammaY);
+  WriteLittleEndian(output, this->NbrSiteZ);
+  WriteLittleEndian(output, this->KzFactor);
+  WriteLittleEndian(output, this->GammaZ);
+  return output; 
 }
 
 // write the energy spectrum in an ASCII file

@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
+#include "GeneralTools/Endian.h"
 
 #include <fstream>
 #include <iostream>
@@ -53,6 +54,26 @@ Abstract2DTightBindingModel::Abstract2DTightBindingModel()
 
 Abstract2DTightBindingModel::~Abstract2DTightBindingModel()
 {
+}
+
+// write an header that describes the tight binding model
+// 
+// output = reference on the output stream
+// return value  = reference on the output stream
+
+ofstream& Abstract2DTightBindingModel::WriteHeader(ofstream& output)
+{
+  int Dimension = 2;
+  int HeaderSize = ((2 * Dimension) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
+  WriteLittleEndian(output, HeaderSize);
+  WriteLittleEndian(output, Dimension);
+  WriteLittleEndian(output, this->NbrSiteX);
+  WriteLittleEndian(output, this->KxFactor);
+  WriteLittleEndian(output, this->GammaX);
+  WriteLittleEndian(output, this->NbrSiteY);
+  WriteLittleEndian(output, this->KyFactor);
+  WriteLittleEndian(output, this->GammaY);
+  return output; 
 }
 
 // write the energy spectrum in an ASCII file
