@@ -36,7 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 #include "Polynomial/Polynomial.h"
 
