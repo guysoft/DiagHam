@@ -89,10 +89,10 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
       this->NbrSiteX = this->NbrStatePerBand;
       this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
       this->GammaX = 0.0;
-      this->NbrSiteY = this->NbrStatePerBand;
+      this->NbrSiteY = 1;
       this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
       this->GammaY = 0.0;
-      this->NbrSiteZ = this->NbrStatePerBand;
+      this->NbrSiteZ = 1;
       this->KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);
       this->GammaZ = 0.0;
       File.seekg (HeaderSize, ios::cur);
@@ -106,7 +106,7 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
 	  ReadLittleEndian(File, this->EnergyBandStructure[i][j]);
 	}
     }
-  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int)))
+  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + HeaderSize))
     {
       this->OneBodyBasis = 0;
     }

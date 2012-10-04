@@ -94,7 +94,7 @@ GenericTightBindingModel::GenericTightBindingModel(char* fileName)
 	  ReadLittleEndian(File, this->EnergyBandStructure[i][j]);
 	}
     }
-  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int)))
+  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + HeaderSize))
     {
       this->OneBodyBasis = 0;
     }

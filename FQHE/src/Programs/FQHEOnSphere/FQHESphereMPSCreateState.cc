@@ -25,6 +25,7 @@ using std::ofstream;
 
 
 void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel);
+Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue);
 
 
 int main(int argc, char** argv)
@@ -147,14 +148,61 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
   int* StartingIndexPerPLevel = new int [pLevel + 1];
   int* NbrIndicesPerPLevel = new int [pLevel + 1];
   StartingIndexPerPLevel[0] = 0;
-  NbrIndicesPerPLevel[0] = u1BosonBasis[0]->GetHilbertSpaceDimension();
+  int NbrNValue = ((2 * pLevel) + laughlinIndex);
+  NbrIndicesPerPLevel[0] = u1BosonBasis[0]->GetHilbertSpaceDimension() * NbrNValue;
   for (int i = 1; i <= pLevel; ++i)
     {
       StartingIndexPerPLevel[i] = StartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
-      NbrIndicesPerPLevel[i] = u1BosonBasis[i]->GetHilbertSpaceDimension();
+      NbrIndicesPerPLevel[i] = u1BosonBasis[i]->GetHilbertSpaceDimension()  * NbrNValue;
     }
   int MatrixSize = NbrIndicesPerPLevel[pLevel] + StartingIndexPerPLevel[pLevel];
+
   bMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      BosonOnDiskShort* TmpSpace = u1BosonBasis[i];
+      for (int j = 1; j < NbrNValue; ++j)
+	{
+	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
+	    {
+	      bMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), 1.0);
+	    }
+	}
+    }
+
   bMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  unsigned long* Partition1 = new unsigned long [pLevel + 1];
+  unsigned long* Partition2 = new unsigned long [pLevel + 1];
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      BosonOnDiskShort* TmpSpace1 = u1BosonBasis[i];
+      int MaxN1 = (2 * i) + laughlinIndex;
+      for (int j = 0; j <= pLevel; ++j)
+	{
+	  BosonOnDiskShort* TmpSpace2 = u1BosonBasis[j];
+	  int MaxN2 = (2 * 2) + laughlinIndex;
+	  int N1 = (2 * (i - j) - laughlinIndex + 1 + NbrNValue) / 2;
+	  int N2 = (2 * (i - j) + laughlinIndex - 1 + NbrNValue) / 2;
+	  for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
+	    {
+	      TmpSpace1->GetMonomial(k1, Partition1);
+	      for (int k2 = 0; k2 < TmpSpace1->GetHilbertSpaceDimension(); ++k2)
+		{
+		  TmpSpace2->GetMonomial(k2, Partition2);
+		  bMatrices[1].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), 
+						CreateLaughlinAMatrixElement(laughlinIndex, Partition1, Partition2, k1, k2, - (N1 + N2 - NbrNValue) / 2));
+		}
+	    }
+	}
+    }
+  delete[] Partition1;
+  delete[] Partition2;
 }
 
+Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue)
+{
+  Complex Tmp = 0.0;
+  if (nValue != (p2Level - p1Level))
+    return Tmp;
+  return Tmp;
+}
