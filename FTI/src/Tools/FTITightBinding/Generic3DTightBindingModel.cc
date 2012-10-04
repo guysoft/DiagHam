@@ -68,34 +68,34 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
     {
       int TmpDimension = -1;
       ReadLittleEndian(File, TmpDimension);
-      if (TmpDimension >= 3)
+      HeaderSize -= sizeof(int);
+      if (TmpDimension != 3)
 	{
-	  ReadLittleEndian(File, this->NbrSiteX);
-	  ReadLittleEndian(File, this->KxFactor);
-	  ReadLittleEndian(File, this->GammaX);	 
-	  ReadLittleEndian(File, this->NbrSiteY);
-	  ReadLittleEndian(File, this->KyFactor);
-	  ReadLittleEndian(File, this->GammaY);	  
-	  ReadLittleEndian(File, this->NbrSiteZ);
-	  ReadLittleEndian(File, this->KzFactor);
-	  ReadLittleEndian(File, this->GammaZ);	  
+	  cout << "error : " << fileName << " does not contain a valid 3D band structure" << endl;
+	  this->NbrBands = 0;
+	  this->NbrStatePerBand = 0;
+	  File.close();
+	  return;
 	}
-      HeaderSize -= (4 * sizeof(int) + 6 * sizeof(double));
-      if (HeaderSize > 0) 
-	File.seekg (HeaderSize, ios::cur);
+      ReadLittleEndian(File, this->NbrSiteX);
+      ReadLittleEndian(File, this->KxFactor);
+      ReadLittleEndian(File, this->GammaX);	 
+      ReadLittleEndian(File, this->NbrSiteY);
+      ReadLittleEndian(File, this->KyFactor);
+      ReadLittleEndian(File, this->GammaY);	  
+      ReadLittleEndian(File, this->NbrSiteZ);
+      ReadLittleEndian(File, this->KzFactor);
+      ReadLittleEndian(File, this->GammaZ);	  
+      HeaderSize -= (3 * sizeof(int) + 6 * sizeof(double));
+      File.seekg (HeaderSize, ios::cur);
     }
   else
     {
-      this->NbrSiteX = this->NbrStatePerBand;
-      this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
-      this->GammaX = 0.0;
-      this->NbrSiteY = 1;
-      this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
-      this->GammaY = 0.0;
-      this->NbrSiteZ = 1;
-      this->KzFactor = 2.0 * M_PI / ((double) this->NbrSiteZ);
-      this->GammaZ = 0.0;
-      File.seekg (HeaderSize, ios::cur);
+      cout << "error : " << fileName << " does not contain a valid 3D band structure" << endl;
+      this->NbrBands = 0;
+      this->NbrStatePerBand = 0;
+      File.close();
+      return;
     }
   this->EnergyBandStructure = new double*[this->NbrBands];
   for (int i = 0; i < this->NbrBands; ++i)

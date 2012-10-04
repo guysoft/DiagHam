@@ -68,13 +68,20 @@ GenericTightBindingModel::GenericTightBindingModel(char* fileName)
     {
       int TmpDimension = -1;
       ReadLittleEndian(File, TmpDimension);
+      HeaderSize -= sizeof(int);
       if (TmpDimension >= 1)
 	{
 	  ReadLittleEndian(File, this->NbrSiteX);
 	  ReadLittleEndian(File, this->KxFactor);
 	  ReadLittleEndian(File, this->GammaX);	  
+	  HeaderSize -= (sizeof(int) + 2* sizeof(double));
 	}
-      HeaderSize -= (2 * sizeof(int) + 2* sizeof(double));
+      else
+	{
+	  this->NbrSiteX = this->NbrStatePerBand;
+	  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+	  this->GammaX = 0.0;
+	}
       if (HeaderSize > 0) 
 	File.seekg (HeaderSize, ios::cur);
     }

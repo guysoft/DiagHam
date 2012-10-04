@@ -68,7 +68,8 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
     {
       int TmpDimension = -1;
       ReadLittleEndian(File, TmpDimension);
-      if (TmpDimension >= 2)
+      HeaderSize -= sizeof(int);
+      if (TmpDimension == 2)
 	{
 	  ReadLittleEndian(File, this->NbrSiteX);
 	  ReadLittleEndian(File, this->KxFactor);
@@ -76,20 +77,26 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
 	  ReadLittleEndian(File, this->NbrSiteY);
 	  ReadLittleEndian(File, this->KyFactor);
 	  ReadLittleEndian(File, this->GammaY);	  
+	  HeaderSize -= (2 * sizeof(int) + 4 * sizeof(double));
 	}
-      HeaderSize -= (3 * sizeof(int) + 4 * sizeof(double));
+      else
+	{
+	  cout << "error : " << fileName << " does not contain a valid 2D band structure" << endl;
+	  this->NbrBands = 0;
+	  this->NbrStatePerBand = 0;
+	  File.close();
+	  return;
+	}
       if (HeaderSize > 0) 
 	File.seekg (HeaderSize, ios::cur);
     }
   else
     {
-      this->NbrSiteX = this->NbrStatePerBand;
-      this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
-      this->GammaX = 0.0;
-      this->NbrSiteY = 1;
-      this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
-      this->GammaY = 0.0;
-      File.seekg (HeaderSize, ios::cur);
+      cout << "error : " << fileName << " does not contain a valid 2D band structure" << endl;
+      this->NbrBands = 0;
+      this->NbrStatePerBand = 0;
+      File.close();
+      return;
     }
   this->EnergyBandStructure = new double*[this->NbrBands];
   for (int i = 0; i < this->NbrBands; ++i)
