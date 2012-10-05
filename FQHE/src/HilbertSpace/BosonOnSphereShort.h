@@ -311,6 +311,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // finalState = reference on the array where the monomial representation has to be stored
   virtual void GetMonomial(long index, unsigned long*& finalState);
 
+  // convert a state to its occupation number representation
+  //
+  // index = index of the state
+  // finalState = reference on the array where the occupation number representation has to be stored
+  virtual void GetOccupationNumber(long index, unsigned long*& finalState);
+
   // evaluate wave function in real space using a given basis and only for a given range of components
   //
   // state = vector corresponding to the state in the Fock basis
@@ -945,6 +951,20 @@ inline void BosonOnSphereShort::GetMonomial(long index, unsigned long*& finalSta
 	}
     }
 }
+
+// convert a state to its occupation number representation
+//
+// index = index of the state
+// finalState = reference on the array where the occupation number representation has to be stored
+
+inline void BosonOnSphereShort::GetOccupationNumber(long index, unsigned long*& finalState)
+{
+  int TmpLzMax = 0;
+  this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], finalState, TmpLzMax);
+  for (TmpLzMax += 1; TmpLzMax <= this->LzMax; ++TmpLzMax) 
+    finalState[TmpLzMax] = 0x0ul; 
+}
+
 
 
 // convert a bosonic state to its monomial representation

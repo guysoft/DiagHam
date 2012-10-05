@@ -92,7 +92,8 @@ class Matrix
     Block = 0x1000,
     Upper = 0x2000,
     Lower = 0x4000,
-    BandDiagonal = 0x10000
+    BandDiagonal = 0x10000,
+    Sparse = 0x100000
   };
 
   // default constructor

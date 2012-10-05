@@ -367,6 +367,9 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (ComplexMatrix* bM
 	state[i] = TmpMatrix.ComplexTr();
       else
 	TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+      long NbrNonZeroMatrixElements = TmpMatrix.ComputeNbrNonZeroMatrixElements();
+      cout << i << " : " << NbrNonZeroMatrixElements << "/" << (((long) TmpMatrix.GetNbrRow()) * ((long) TmpMatrix.GetNbrColumn())) 
+	   << " (" << (100.0 * ((double) NbrNonZeroMatrixElements) / (((double) TmpMatrix.GetNbrRow()) * ((double) TmpMatrix.GetNbrColumn())) )<< "%)" << endl;
     }  
 }
   

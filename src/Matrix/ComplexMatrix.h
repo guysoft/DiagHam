@@ -77,7 +77,7 @@ class ComplexMatrix : public Matrix
   //
   // nbrRow = number of rows
   // nbrColumn = number of columns
-  // zero = tue if matrix elements have to be set to zero
+  // zero = true if matrix elements have to be set to zero
   ComplexMatrix(int nbrRow, int nbrColumn, bool zero = false);
 
   // constructor from matrix elements (without duplicating datas)
@@ -386,6 +386,11 @@ class ComplexMatrix : public Matrix
   //
   // return value = reference on modified matrix
   ComplexMatrix GetAdjoint();
+
+  // compute the number of non-zero matrix elements (zero having strictly zero square norm)
+  //
+  // return value = number of non-zero matrix elements
+  long ComputeNbrNonZeroMatrixElements();
 
   // evaluate the real part of the matrix trace
   //

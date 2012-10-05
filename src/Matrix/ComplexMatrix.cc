@@ -1140,6 +1140,20 @@ ComplexMatrix ComplexMatrix::GetAdjoint()
   return rst;
 }
 
+// compute the number of non-zero matrix elements (zero having strictly zero square norm)
+//
+// return value = number of non-zero matrix elements
+
+long ComplexMatrix::ComputeNbrNonZeroMatrixElements()
+{
+  long NbrNonZero = 0l;
+  for (int j=0; j < this->NbrColumn; ++j)
+    for (int i=0; i < this->NbrRow; ++i)
+      if (SqrNorm(this->Columns[j][i]) == 0.0)
+	++NbrNonZero;
+  return NbrNonZero;
+}
+
 // evaluate the real part of the matrix trace
 //
 // return value = real part of the matrix trace 
