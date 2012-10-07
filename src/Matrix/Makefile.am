@@ -20,8 +20,8 @@ ComplexUpperTriangularMatrix.cc \
 ComplexDiagonalMatrix.cc \
 RealBandDiagonalSymmetricMatrix.cc \
 ComplexLapackDeterminant.cc \
-BandDiagonalHermitianMatrix.cc
-
+BandDiagonalHermitianMatrix.cc \
+SparseComplexMatrix.cc
 
 libArray_a_SOURCES = \
 Double3DArray.cc \

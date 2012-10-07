@@ -1149,7 +1149,7 @@ long ComplexMatrix::ComputeNbrNonZeroMatrixElements()
   long NbrNonZero = 0l;
   for (int j=0; j < this->NbrColumn; ++j)
     for (int i=0; i < this->NbrRow; ++i)
-      if (SqrNorm(this->Columns[j][i]) == 0.0)
+      if (SqrNorm(this->Columns[j][i]) != 0.0)
 	++NbrNonZero;
   return NbrNonZero;
 }

@@ -11,6 +11,8 @@
 #include "Vector/RealVector.h"
 #include "Vector/LongRationalVector.h"
 
+#include "Matrix/SparseComplexMatrix.h"
+
 #include "Options/Options.h"
 
 #include <iostream>
@@ -121,6 +123,7 @@ int main(int argc, char** argv)
   
   int LaughlinIndex = 3;
   ComplexMatrix* BMatrices = new ComplexMatrix[2];
+  SparseComplexMatrix* SparseBMatrices = new SparseComplexMatrix[2];
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [Manager.GetInteger("p-truncation") + 1];
 //  unsigned long* Partition = new unsigned long [Manager.GetInteger("p-truncation") + 2];
   for (int i = 0; i <= Manager.GetInteger("p-truncation"); ++i)
@@ -141,10 +144,14 @@ int main(int argc, char** argv)
 //  	}
     }
   CreateLaughlinBMatrices (LaughlinIndex, BMatrices, U1BosonBasis, Manager.GetInteger("p-truncation"));
+  SparseBMatrices[0] = BMatrices[0];
+  SparseBMatrices[1] = BMatrices[1];
 //   cout << BMatrices[0] << endl;
+//   cout << SparseBMatrices[0] << endl;
 //   cout << BMatrices[1] << endl;
-  ComplexVector State (Space->GetHilbertSpaceDimension(), true);
-  Space->CreateStateFromMPSDescription(BMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
+//   cout << SparseBMatrices[1] << endl;
+  RealVector State (Space->GetHilbertSpaceDimension(), true);
+  Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
 
   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
     {
