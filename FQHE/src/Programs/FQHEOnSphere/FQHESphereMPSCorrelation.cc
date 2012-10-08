@@ -35,26 +35,21 @@ Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partitio
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHESphereMPSCreateState" , "0.01");
+  OptionManager Manager ("FQHESphereMPSCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
-//   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-//   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
-//   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
-  (*OutputGroup) += new BooleanOption ('\n', "show-basis", "display the  truncated Hilbert space");
-  (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_interaction-name_n_nbrparticles_2s_nbrfluxquanta_lz_totallz.0.vec");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereMPSCreateState -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereMPSCorrelation -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -63,65 +58,13 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrParticles = 0;
+  int NbrParticles = 0; 
   int NbrFluxQuanta = 0;
   int TotalLz = 0;
   int* ReferenceState = 0;
   if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
     return -1;
 
-//  ParticleOnSphere* Space = 0;
-  FermionOnSpherePTruncated* Space = 0;
-  if (Manager.GetBoolean("boson") == true)
-    {
-      cout << "bosons are not yet implemented" << endl;
-      return 0;
-    }
-  else
-    {
-#ifdef __64_BITS__
-	  if (NbrFluxQuanta <= 62)
-#else
-	  if (NbrFluxQuanta <= 30)
-#endif
-	    {
-	      Space = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
-	    }
-	  else
-	    {
-#ifdef __128_BIT_LONGLONG__
-	      if (NbrFluxQuanta <= 126)
-#else
-		if (NbrFluxQuanta <= 62)
-#endif
-		  {
-		    Space = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
-		  }
-		else
-		  {
-#ifdef __128_BIT_LONGLONG__
-		    cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
-#else
-		    cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
-#endif
-		    return 0;
-		  }
-	    }
-
-   }
-
-  cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
-
-  if (Manager.GetBoolean("show-basis") == true)
-    {
-      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << i << " : ";
-	  Space->PrintState(cout, i);
-	  cout << endl;
-	}
-      return 0;
-    }
   
   int LaughlinIndex = 3;
   int NbrBMatrices = 2;
@@ -150,67 +93,50 @@ int main(int argc, char** argv)
 	SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
     }
   
-  RealVector State (Space->GetHilbertSpaceDimension(), true);
-  Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
-  
-  Space->ConvertFromUnnormalizedMonomial(State);
+  int TmpIndex = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
+  TmpIndex = TmpIndex *  SparseBMatrices[0].GetNbrRow() + TmpIndex;  
+
+  SparseComplexMatrix* NormalizedFullB = new SparseComplexMatrix [NbrFluxQuanta + 1];
+  SparseComplexMatrix* NormalizedB1B1 = new SparseComplexMatrix [NbrFluxQuanta + 1];
+  double TmpBinomial = 1.0;
+  for (int i = 0; i <= NbrFluxQuanta; ++i)
+    {
+      NormalizedFullB[i] = SparseComplexMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], TmpBinomial, SparseTensorProductBMatrices[1][1]);
+      NormalizedB1B1[i].Copy(SparseTensorProductBMatrices[1][1]);
+      NormalizedB1B1[i] *= TmpBinomial;
+      TmpBinomial *= (double) (i + 1);
+      if (i < NbrFluxQuanta)
+	TmpBinomial /= (double) (NbrFluxQuanta - i);      
+    }
 
 
-//   SparseComplexMatrix FullB = SparseTensorProductBMatrices[0][0] + SparseTensorProductBMatrices[1][1];
-//   int TmpIndex = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
-//   TmpIndex = TmpIndex *  SparseBMatrices[0].GetNbrRow() + TmpIndex;  
-
-
-//   SparseComplexMatrix* NormalizedFullB = new SparseComplexMatrix [NbrFluxQuanta + 1];
-//   SparseComplexMatrix* NormalizedB1B1 = new SparseComplexMatrix [NbrFluxQuanta + 1];
-//   double TmpBinomial = 1.0;
-//   for (int i = 0; i <= NbrFluxQuanta; ++i)
-//     {
-//       NormalizedFullB[i] = SparseComplexMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], TmpBinomial, SparseTensorProductBMatrices[1][1]);
-//       NormalizedB1B1[i].Copy(SparseTensorProductBMatrices[1][1]);
-//       NormalizedB1B1[i] *= TmpBinomial;
-//       TmpBinomial *= (double) (i + 1);
-//       if (i < NbrFluxQuanta)
-// 	TmpBinomial /= (double) (NbrFluxQuanta - i);      
-//     }
-
-
-//   for (int i = 0; i <= NbrFluxQuanta; ++i)
-//     {
-//       ParticleOnSphereDensityOperator Operator (Space, i);
-//       Complex Density = Operator.MatrixElement(State, State);
-//       cout<< "n(" << i << ") = " << Density;
-//       SparseComplexMatrix TmpMatrix;
-//       SparseComplexMatrix TmpMatrixNorm;
-//       if (i == 0)
-// 	TmpMatrix.Copy(NormalizedB1B1[0]);
-//       else
-// 	{
-// 	  TmpMatrix.Copy(NormalizedFullB[0]);
-// 	}
-//       TmpMatrixNorm.Copy(NormalizedFullB[0]);
-//       for (int j = 1; j <= NbrFluxQuanta; ++j)
-// 	{
-// 	  if (j != i)
-// 	    TmpMatrix.Multiply(NormalizedFullB[j]);
-// 	  else
-// 	    TmpMatrix.Multiply(NormalizedB1B1[j]);
-// 	  TmpMatrixNorm.Multiply(NormalizedFullB[j]);
-// 	}
-//       TmpMatrix.GetMatrixElement(TmpIndex, TmpIndex, Density);
-//       Complex Norm = 0.0;
-//       TmpMatrixNorm.GetMatrixElement(TmpIndex, TmpIndex, Norm);      
-//       cout << " | " << Density << " " << Norm << " " << (Density / Norm) << endl;
-//       cout << endl;
-//     }
-
-
-
-//   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-//     {
-//       cout << i << " : ";
-//       Space->PrintState(cout, i) << " = " << State[i] << endl;
-//     }
+  for (int i = 0; i <= NbrFluxQuanta; ++i)
+    {
+      cout<< "n(" << i << ") = ";
+      SparseComplexMatrix TmpMatrix;
+      SparseComplexMatrix TmpMatrixNorm;
+      if (i == 0)
+	TmpMatrix.Copy(NormalizedB1B1[0]);
+      else
+	{
+	  TmpMatrix.Copy(NormalizedFullB[0]);
+	}
+      TmpMatrixNorm.Copy(NormalizedFullB[0]);
+      for (int j = 1; j <= NbrFluxQuanta; ++j)
+	{
+	  if (j != i)
+	    TmpMatrix.Multiply(NormalizedFullB[j]);
+	  else
+	    TmpMatrix.Multiply(NormalizedB1B1[j]);
+	  TmpMatrixNorm.Multiply(NormalizedFullB[j]);
+	}
+      Complex Density = 0.0;
+      TmpMatrix.GetMatrixElement(TmpIndex, TmpIndex, Density);
+      Complex Norm = 0.0;
+      TmpMatrixNorm.GetMatrixElement(TmpIndex, TmpIndex, Norm);      
+      cout << Density << " " << Norm << " " << (Density.Re / Norm.Re) << endl;
+      cout << endl;
+    }
 
   return 0;
 }

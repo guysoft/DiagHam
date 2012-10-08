@@ -185,6 +185,29 @@ class SparseComplexMatrix : public Matrix
   //
   void ClearMatrix ();
 
+  // add two matrices
+  //
+  // matrix1 = first matrix
+  // matrix2 = second matrix
+  // return value = sum of the two matrices
+  friend SparseComplexMatrix operator + (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
+
+  // difference of two matrices
+  //
+  // matrix1 = first matrix
+  // matrix2 = second matrix
+  // return value = difference of the two matrices
+  friend SparseComplexMatrix operator - (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
+
+  // create the linear combination of two matrices
+  //
+  // x1 = prefactor of the first matrix
+  // matrix1 = first matrix
+  // x2 = prefactor of the second matrix
+  // matrix2 = second matrix
+   // return value = linear combination
+  friend SparseComplexMatrix SparseComplexMatrixLinearCombination(const Complex& x1, const SparseComplexMatrix& matrix1, const Complex& x2, const SparseComplexMatrix& matrix2);
+
   // multiply a matrix by a real number
   //
   // x = real number to use

@@ -468,6 +468,192 @@ void SparseComplexMatrix::ClearMatrix ()
   return;
 }
 
+// add two matrices
+//
+// matrix1 = first matrix
+// matrix2 = second matrix
+// return value = sum of the two matrices
+
+SparseComplexMatrix operator + (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2)
+{
+  return SparseComplexMatrixLinearCombination(1.0, matrix1, 1.0, matrix2);
+}
+
+// difference of two matrices
+//
+// matrix1 = first matrix
+// matrix2 = second matrix
+// return value = difference of the two matrices
+
+SparseComplexMatrix operator - (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2)
+{
+  return SparseComplexMatrixLinearCombination(1.0, matrix1, -1.0, matrix2);
+}
+
+// create the linear combination of two matrices
+//
+// x1 = prefactor of the first matrix
+// matrix1 = first matrix
+// x2 = prefactor of the second matrix
+// matrix2 = second matrix
+// return value = linear combination
+
+SparseComplexMatrix SparseComplexMatrixLinearCombination(const Complex& x1, const SparseComplexMatrix& matrix1, const Complex& x2, const SparseComplexMatrix& matrix2)
+{
+  if ((matrix1.NbrRow != matrix2.NbrRow) || (matrix1.NbrColumn != matrix2.NbrColumn))
+    return SparseComplexMatrix();
+  long TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      if (matrix1.RowPointers[i] < 0l)
+	{
+	  if (matrix2.RowPointers[i] >= 0l)
+	    TmpNbrMatrixElements += matrix2.RowLastPointers[i] - matrix2.RowPointers[i] + 1l;	 	  
+	}
+      else
+	{
+	  if (matrix2.RowPointers[i] < 0l)
+	    TmpNbrMatrixElements += matrix1.RowLastPointers[i] - matrix1.RowPointers[i] + 1l;	 	  
+	  else
+	    {
+	      long MinPos1 = matrix1.RowPointers[i];
+	      long MinPos2 = matrix2.RowPointers[i];
+	      long MaxPos1 = matrix1.RowLastPointers[i];
+	      long MaxPos2 = matrix2.RowLastPointers[i];
+	      while (MinPos1 <= MaxPos1)
+		{
+		  while ((MinPos1 <= MaxPos1) && (matrix1.ColumnIndices[MinPos1] < matrix2.ColumnIndices[MinPos2]))
+		    {
+		      ++TmpNbrMatrixElements;
+		      ++MinPos1;
+		    }
+		  if (MinPos1 <= MaxPos1)
+		    {
+		      if (matrix1.ColumnIndices[MinPos1] == matrix2.ColumnIndices[MinPos2])
+			{
+			  ++TmpNbrMatrixElements;
+			  ++MinPos1;
+			  ++MinPos2;
+			}
+		      while ((MinPos2 <= MaxPos2) && (matrix2.ColumnIndices[MinPos2] < matrix1.ColumnIndices[MinPos1]))
+			{
+			  ++TmpNbrMatrixElements;
+			  ++MinPos2;
+			}
+		      if ((MinPos2 > MaxPos2) && (MinPos1 <= MaxPos1))
+			{
+			  TmpNbrMatrixElements += MaxPos1 - MinPos1 + 1l;
+			  MinPos1 = MaxPos1 + 1l;
+			}
+		    }
+		}
+	      if (MinPos2 <= MaxPos2)
+		{
+		  TmpNbrMatrixElements += MaxPos2 - MinPos2 + 1l;
+		}		  
+	    }
+	}
+    }  
+
+  SparseComplexMatrix TmpMatrix (matrix1.NbrRow, matrix1.NbrColumn, TmpNbrMatrixElements);
+  TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      if (matrix1.RowPointers[i] < 0l)
+	{
+	  if (matrix2.RowPointers[i] >= 0l)
+	    {
+	      TmpMatrix.RowPointers[i] = TmpNbrMatrixElements;
+	      long MinPos2 = matrix2.RowPointers[i];
+	      long MaxPos2 = matrix2.RowLastPointers[i];
+	      for (; MinPos2 <= MaxPos2; ++MinPos2)
+		{
+		  TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x2 * matrix2.MatrixElements[MinPos2];
+		  TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix2.ColumnIndices[MinPos2];
+		  ++TmpNbrMatrixElements;
+		}
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowLastPointers[i] = -1l;
+	      TmpMatrix.RowPointers[i] = -1l;
+	    }
+	}
+      else
+	{
+	  if (matrix2.RowPointers[i] < 0l)
+	    {
+	      TmpMatrix.RowPointers[i] = TmpNbrMatrixElements;
+	      long MinPos1 = matrix1.RowPointers[i];
+	      long MaxPos1 = matrix1.RowLastPointers[i];
+	      for (; MinPos1 <= MaxPos1; ++MinPos1)
+		{
+		  TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x1 * matrix1.MatrixElements[MinPos1];
+		  TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix1.ColumnIndices[MinPos1];
+		  ++TmpNbrMatrixElements;
+		}
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
+	    }
+	  else
+	    {
+	      long MinPos1 = matrix1.RowPointers[i];
+	      long MinPos2 = matrix2.RowPointers[i];
+	      long MaxPos1 = matrix1.RowLastPointers[i];
+	      long MaxPos2 = matrix2.RowLastPointers[i];
+	      TmpMatrix.RowPointers[i] = TmpNbrMatrixElements;
+	      while (MinPos1 <= MaxPos1)
+		{
+		  while ((MinPos1 <= MaxPos1) && (matrix1.ColumnIndices[MinPos1] < matrix2.ColumnIndices[MinPos2]))
+		    {
+		      TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x1 * matrix1.MatrixElements[MinPos1];
+		      TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix1.ColumnIndices[MinPos1];
+		      ++TmpNbrMatrixElements;
+		      ++MinPos1;
+		    }
+		  if (MinPos1 <= MaxPos1)
+		    {
+		      if (matrix1.ColumnIndices[MinPos1] == matrix2.ColumnIndices[MinPos2])
+			{
+			  TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x1 * matrix1.MatrixElements[MinPos1] + x2 * matrix2.MatrixElements[MinPos2];
+			  TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix1.ColumnIndices[MinPos1];
+			  ++TmpNbrMatrixElements;
+			  ++MinPos1;
+			  ++MinPos2;
+			}
+		      while ((MinPos2 <= MaxPos2) && (matrix2.ColumnIndices[MinPos2] < matrix1.ColumnIndices[MinPos1]))
+			{
+			  TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x2 * matrix2.MatrixElements[MinPos2];
+			  TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix2.ColumnIndices[MinPos2];
+			  ++TmpNbrMatrixElements;
+			  ++MinPos2;
+			}		  
+		      if (MinPos2 > MaxPos2)		  
+			{
+			  while (MinPos1 <= MaxPos1)
+			    {
+			      TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x1 * matrix1.MatrixElements[MinPos1];
+			      TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix1.ColumnIndices[MinPos1];
+			      ++TmpNbrMatrixElements;
+			      ++MinPos1;
+			    }
+			}
+		    }
+		}
+	      while (MinPos2 <= MaxPos2)
+		{
+		  TmpMatrix.MatrixElements[TmpNbrMatrixElements] = x2 * matrix2.MatrixElements[MinPos2];
+		  TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = matrix2.ColumnIndices[MinPos2];
+		  ++TmpNbrMatrixElements;
+		  ++MinPos2;
+		}		  
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
+	    }
+	}
+    }      
+  return TmpMatrix;
+}
+
 // multiply a matrix by a real number
 //
 // x = real number to use
@@ -644,6 +830,11 @@ SparseComplexMatrix TensorProduct (const SparseComplexMatrix& matrix1, const Spa
   SparseComplexMatrix TmpMatrix (matrix1.NbrRow * matrix2.NbrRow, 
 				 matrix1.NbrColumn * matrix2.NbrColumn, 
 				 matrix1.NbrMatrixElements * matrix2.NbrMatrixElements);
+  for (int i = 0; i < TmpMatrix.NbrRow; ++i)
+    {
+      TmpMatrix.RowPointers[i] = -1;
+      TmpMatrix.RowLastPointers[i] = -1;
+    }
   long TmpPosition = 0l;
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
@@ -684,7 +875,77 @@ SparseComplexMatrix TensorProduct (const SparseComplexMatrix& matrix1, const Spa
 
 SparseComplexMatrix SparseComplexMatrix::HermitianTranspose ()
 {
-  SparseComplexMatrix TmpMatrix (this->NbrRow, this->NbrColumn, this->NbrMatrixElements);
+  SparseComplexMatrix TmpMatrix (this->NbrColumn, this->NbrRow, this->NbrMatrixElements);
+  for (int i = 0; i < TmpMatrix.NbrRow; ++i)
+    {
+      TmpMatrix.RowPointers[i] = 0l;
+    }
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    ++TmpMatrix.RowPointers[this->ColumnIndices[i]];
+  int PreviousIndex = 0;
+  while ((PreviousIndex < TmpMatrix.NbrRow) && (TmpMatrix.RowPointers[PreviousIndex] == 0l))
+    {
+      TmpMatrix.RowPointers[PreviousIndex] = -1l;
+      TmpMatrix.RowLastPointers[PreviousIndex] = -1l;
+      ++PreviousIndex;        
+    }
+  int Index = PreviousIndex + 1;
+  TmpMatrix.RowLastPointers[PreviousIndex] = TmpMatrix.RowPointers[PreviousIndex] - 1l;
+  TmpMatrix.RowPointers[PreviousIndex] = 0l;
+  while (Index < TmpMatrix.NbrRow)
+    {
+      while ((Index < TmpMatrix.NbrRow) && (TmpMatrix.RowPointers[Index] == 0l))
+	{
+	  TmpMatrix.RowPointers[Index] = -1l;
+	  TmpMatrix.RowLastPointers[Index] = -1l;
+	  ++Index;
+	}
+      if (Index < TmpMatrix.NbrRow)
+	{
+	  TmpMatrix.RowLastPointers[Index] = TmpMatrix.RowPointers[Index] + TmpMatrix.RowLastPointers[PreviousIndex];;
+	  TmpMatrix.RowPointers[Index] = TmpMatrix.RowLastPointers[PreviousIndex] + 1l;
+	  PreviousIndex = Index;	  
+	  ++Index;
+	}
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      long& TmpPointer = TmpMatrix.RowPointers[this->ColumnIndices[MinPos]];
+	      TmpMatrix.MatrixElements[TmpPointer] = Conj(this->MatrixElements[MinPos]);
+	      TmpMatrix.ColumnIndices[TmpPointer] = i;
+	      ++TmpPointer;
+	    }
+	}
+    }
+  Index = 0;
+  while ((Index < TmpMatrix.NbrRow) && (TmpMatrix.RowPointers[Index] < 0l))
+    {
+      ++Index;        
+    }
+  long PreviousPointer =  TmpMatrix.RowPointers[Index];
+  TmpMatrix.RowPointers[Index] = 0l;
+  ++Index;
+   while (Index < TmpMatrix.NbrRow)
+    {
+      while ((Index < TmpMatrix.NbrRow) && (TmpMatrix.RowPointers[Index] < 0l))
+	{
+	  ++Index;
+	}
+      if (Index < TmpMatrix.NbrRow)
+	{
+	  long Tmp = TmpMatrix.RowPointers[Index];
+	  TmpMatrix.RowPointers[Index] = PreviousPointer;
+	  PreviousPointer = Tmp;
+	  ++Index;
+	}
+    }
+	
   return TmpMatrix;
 }
 
