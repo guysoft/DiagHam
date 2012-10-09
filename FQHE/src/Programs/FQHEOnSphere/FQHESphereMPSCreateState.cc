@@ -6,7 +6,9 @@
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 #include "MathTools/FactorialCoefficient.h"
 
-#include "Operator/ParticleOnSphereDensityOperator.h"
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/FQHEMPSCreateStateOperation.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -39,17 +41,24 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
+
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += OutputGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
+
 //   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
 //   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
 //   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
-  (*OutputGroup) += new BooleanOption ('\n', "show-basis", "display the  truncated Hilbert space");
-  (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_interaction-name_n_nbrparticles_2s_nbrfluxquanta_lz_totallz.0.vec");
+  (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
+  (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
+  (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -67,6 +76,15 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = 0;
   int TotalLz = 0;
   int* ReferenceState = 0;
+  char* OutputFileName = Manager.GetString("bin-output");
+  char* OutputTxtFileName = Manager.GetString("txt-output");
+  if ((OutputTxtFileName == 0) && (OutputFileName == 0))
+    {
+      cout << "error, an output file (binary or text) has to be provided" << endl;
+      return 0;
+    }
+
+
   if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
     return -1;
 
@@ -111,19 +129,8 @@ int main(int argc, char** argv)
    }
 
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
-
-  if (Manager.GetBoolean("show-basis") == true)
-    {
-      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << i << " : ";
-	  Space->PrintState(cout, i);
-	  cout << endl;
-	}
-      return 0;
-    }
   
-  int LaughlinIndex = 3;
+  int LaughlinIndex = Manager.GetInteger("laughlin-index");
   int NbrBMatrices = 2;
   ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
   SparseComplexMatrix* SparseBMatrices = new SparseComplexMatrix[NbrBMatrices];
@@ -151,67 +158,32 @@ int main(int argc, char** argv)
     }
   
   RealVector State (Space->GetHilbertSpaceDimension(), true);
-  Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
+
+
+  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
+  Operation.ApplyOperation(Architecture.GetArchitecture());
+  //    Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
+
+  if (Manager.GetBoolean("normalize-sphere"))
+    Space->ConvertFromUnnormalizedMonomial(State);
   
-  Space->ConvertFromUnnormalizedMonomial(State);
-
-
-//   SparseComplexMatrix FullB = SparseTensorProductBMatrices[0][0] + SparseTensorProductBMatrices[1][1];
-//   int TmpIndex = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
-//   TmpIndex = TmpIndex *  SparseBMatrices[0].GetNbrRow() + TmpIndex;  
-
-
-//   SparseComplexMatrix* NormalizedFullB = new SparseComplexMatrix [NbrFluxQuanta + 1];
-//   SparseComplexMatrix* NormalizedB1B1 = new SparseComplexMatrix [NbrFluxQuanta + 1];
-//   double TmpBinomial = 1.0;
-//   for (int i = 0; i <= NbrFluxQuanta; ++i)
-//     {
-//       NormalizedFullB[i] = SparseComplexMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], TmpBinomial, SparseTensorProductBMatrices[1][1]);
-//       NormalizedB1B1[i].Copy(SparseTensorProductBMatrices[1][1]);
-//       NormalizedB1B1[i] *= TmpBinomial;
-//       TmpBinomial *= (double) (i + 1);
-//       if (i < NbrFluxQuanta)
-// 	TmpBinomial /= (double) (NbrFluxQuanta - i);      
-//     }
-
-
-//   for (int i = 0; i <= NbrFluxQuanta; ++i)
-//     {
-//       ParticleOnSphereDensityOperator Operator (Space, i);
-//       Complex Density = Operator.MatrixElement(State, State);
-//       cout<< "n(" << i << ") = " << Density;
-//       SparseComplexMatrix TmpMatrix;
-//       SparseComplexMatrix TmpMatrixNorm;
-//       if (i == 0)
-// 	TmpMatrix.Copy(NormalizedB1B1[0]);
-//       else
-// 	{
-// 	  TmpMatrix.Copy(NormalizedFullB[0]);
-// 	}
-//       TmpMatrixNorm.Copy(NormalizedFullB[0]);
-//       for (int j = 1; j <= NbrFluxQuanta; ++j)
-// 	{
-// 	  if (j != i)
-// 	    TmpMatrix.Multiply(NormalizedFullB[j]);
-// 	  else
-// 	    TmpMatrix.Multiply(NormalizedB1B1[j]);
-// 	  TmpMatrixNorm.Multiply(NormalizedFullB[j]);
-// 	}
-//       TmpMatrix.GetMatrixElement(TmpIndex, TmpIndex, Density);
-//       Complex Norm = 0.0;
-//       TmpMatrixNorm.GetMatrixElement(TmpIndex, TmpIndex, Norm);      
-//       cout << " | " << Density << " " << Norm << " " << (Density / Norm) << endl;
-//       cout << endl;
-//     }
-
-
-
-//   for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-//     {
-//       cout << i << " : ";
-//       Space->PrintState(cout, i) << " = " << State[i] << endl;
-//     }
-
+  if (OutputTxtFileName != 0)
+    {
+      ofstream File;
+      File.open(OutputTxtFileName, ios::binary | ios::out);
+      File.precision(14);	
+      for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
+	{
+	  State.PrintComponent(File, i) << " ";
+	  Space->PrintStateMonomial(File, i) << endl;
+	}
+      File.close();
+    }
+  if (OutputFileName != 0)
+    {
+      State.WriteVector(OutputFileName);
+    }
+  
   return 0;
 }
 
