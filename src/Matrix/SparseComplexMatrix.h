@@ -236,6 +236,17 @@ class SparseComplexMatrix : public Matrix
   SparseComplexMatrix& Multiply (const SparseComplexMatrix& matrix, Complex* tmpMatrixElements, 
 				 int* tmpColumnIndices, Complex* tmpElements);
 
+  // multiply a matrix to the right by another matrix, providing all the required temporary arrays, extend their capacity if needed
+  //
+  // matrix = matrix used as multiplicator
+  // tmpMatrixElements = reference on the temporary array of complex numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = reference on the temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // nbrElements = reference ont the number of elements in tmpMatrixElements and tmpColumnIndices
+  // tmpElements = temporary array of complex numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  SparseComplexMatrix& Multiply (const SparseComplexMatrix& matrix, Complex*& tmpMatrixElements, int*& tmpColumnIndices, 
+				 long& nbrElements, Complex* tmpElements);
+
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements

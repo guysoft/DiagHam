@@ -143,4 +143,5 @@ BosonOnTorusWithSU3Spin.cc \
 BosonOnTorusWithSU4Spin.cc \
 BosonOnSquareLatticeMomentumSpaceLong.cc \
 FermionOnSpherePTruncated.cc \
-FermionOnSpherePTruncatedLong.cc
+FermionOnSpherePTruncatedLong.cc \
+FermionOnSphereMPSWrapper.cc

@@ -75,6 +75,7 @@ FermionOnSpherePTruncated::FermionOnSpherePTruncated (int nbrFermions, int& tota
   this->PLevel = pLevel;
   this->ReferenceStateMonomialBasis = new int [this->NbrFermions];
   int TmpIndex = 0;
+  this->ReferenceState = 0x0ul;
   for (int i = 0; i <= this->LzMax; ++i)
     {
       this->ReferenceState |= ((unsigned long) (referenceState[i] & 1)) << i;
@@ -212,6 +213,7 @@ FermionOnSpherePTruncated& FermionOnSpherePTruncated::operator = (const FermionO
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
   this->PLevel = fermions.PLevel;
+  this->ReferenceState = fermions.ReferenceState;
   this->ReferenceStateMonomialBasis = new int [this->NbrFermions];
   for (int i = 0; i < this->NbrFermions; ++i)
     this->ReferenceStateMonomialBasis[i] = fermions.ReferenceStateMonomialBasis[i];
@@ -431,4 +433,43 @@ RealVector FermionOnSpherePTruncated::ConvertToHaldaneBasis(RealVector& state, F
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     TmpVector[haldaneBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
   return TmpVector;
+}
+
+// find state index
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+int FermionOnSpherePTruncated::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+  if ((stateDescription > this->ReferenceState) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    {
+      return this->HilbertSpaceDimension;
+    }
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
 }
