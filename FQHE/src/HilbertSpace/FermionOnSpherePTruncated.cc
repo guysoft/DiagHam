@@ -419,4 +419,16 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseComplexMatr
   delete[] TmpElements;
 }
 
+// convert a gien state from truncated to Haldane basis
+//
+// state = reference on the vector to convert
+// haldaneBasis = reference on the Haldane basis to use
+// return value = converted vector
 
+RealVector FermionOnSpherePTruncated::ConvertToHaldaneBasis(RealVector& state, FermionOnSphereHaldaneBasis& haldaneBasis)
+{
+  RealVector TmpVector (haldaneBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[haldaneBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  return TmpVector;
+}

@@ -50,6 +50,7 @@ class FermionOnSphereHaldaneBasis :  public FermionOnSphere
 
   friend class FermionOnSphereHaldaneSymmetricBasis;
   friend class BosonOnSphereHaldaneBasisShort;
+  friend class FermionOnSpherePTruncated;
 
  protected:
 

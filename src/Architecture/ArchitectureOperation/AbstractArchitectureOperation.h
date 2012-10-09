@@ -86,7 +86,8 @@ class AbstractArchitectureOperation
       FQHESquareLatticeSymmetrizeU1U1StateOperation = 0x18021,
       FQHESphereBosonsWithSpinLandauLevelLiftOperation = 0x18022,
       FQHELatticeFourierTransformOperation = 0x18024,
-      FTIComputeBandStructureOperation = 0x30001
+      FTIComputeBandStructureOperation = 0x30001,
+      FQHEMPSCreateStateOperation = 0x30002
     };
   
   // destructor

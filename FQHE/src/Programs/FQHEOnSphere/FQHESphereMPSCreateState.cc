@@ -1,3 +1,4 @@
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
@@ -56,6 +57,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
+ 
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
@@ -166,23 +169,87 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("normalize-sphere"))
     Space->ConvertFromUnnormalizedMonomial(State);
-  
-  if (OutputTxtFileName != 0)
-    {
-      ofstream File;
-      File.open(OutputTxtFileName, ios::binary | ios::out);
-      File.precision(14);	
-      for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
-	{
-	  State.PrintComponent(File, i) << " ";
-	  Space->PrintStateMonomial(File, i) << endl;
-	}
-      File.close();
-    }
-  if (OutputFileName != 0)
-    {
-      State.WriteVector(OutputFileName);
-    }
+
+  if (Manager.GetBoolean("full-basis") == true)  
+   {
+     FermionOnSphereHaldaneBasis* SpaceHaldane = 0;
+     if (Manager.GetBoolean("boson") == true)
+      {
+        cout << "bosons are not yet implemented" << endl;
+        return 0;
+      }
+     else
+      {
+#ifdef __64_BITS__
+	  if (NbrFluxQuanta <= 62)
+#else
+	  if (NbrFluxQuanta <= 30)
+#endif
+	    {
+	      SpaceHaldane = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	    }
+	  else
+	    {
+#ifdef __128_BIT_LONGLONG__
+	      if (NbrFluxQuanta <= 126)
+#else
+		if (NbrFluxQuanta <= 62)
+#endif
+		  {
+		    SpaceHaldane = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+		  }
+		else
+		  {
+#ifdef __128_BIT_LONGLONG__
+		    cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
+#else
+		    cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
+#endif
+		    return 0;
+		  }
+	    }
+
+      }
+
+     RealVector NewState;
+     NewState = Space->ConvertToHaldaneBasis(State, *SpaceHaldane);
+
+     if (OutputTxtFileName != 0)
+      {
+        ofstream File;
+        File.open(OutputTxtFileName, ios::binary | ios::out);
+        File.precision(14);	
+        for (long i = 0; i < SpaceHaldane->GetLargeHilbertSpaceDimension(); ++i)
+	  {
+	    NewState.PrintComponent(File, i) << " ";
+	    Space->PrintStateMonomial(File, i) << endl;
+ 	  }
+        File.close();
+      }
+    if (OutputFileName != 0)
+      {
+        NewState.WriteVector(OutputFileName);
+      }
+   } //full-basis
+  else //do not convert to full Haldane basis
+   { 
+     if (OutputTxtFileName != 0)
+      {
+        ofstream File;
+        File.open(OutputTxtFileName, ios::binary | ios::out);
+        File.precision(14);	
+        for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
+	  {
+	    State.PrintComponent(File, i) << " ";
+	    Space->PrintStateMonomial(File, i) << endl;
+ 	  }
+        File.close();
+      }
+    if (OutputFileName != 0)
+      {
+        State.WriteVector(OutputFileName);
+      }
+   }
   
   return 0;
 }
