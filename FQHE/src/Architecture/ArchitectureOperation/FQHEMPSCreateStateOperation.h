@@ -60,6 +60,9 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
   int TraceFlag;  
 
+  // indicates the size of the block for precalculations
+  int PrecalculationBlockSize;
+
   // index of the first component
   long FirstComponent;
   // number of component to compute 
@@ -73,7 +76,8 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // bMatrices = array that gives the B matrices 
   // state = pointer to the vector where the MPS state will be stored
   // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
-  FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseComplexMatrix* bMatrices, RealVector* state, int traceFlag);
+  // blockSize = indicates the size of the block for precalculations
+  FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseComplexMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize);
   
   // copy constructor 
   //

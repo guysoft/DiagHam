@@ -50,8 +50,9 @@ using std::endl;
 // bMatrices = array that gives the B matrices 
 // state = pointer to the vector where the MPS state will be stored
 // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// blockSize = indicates the size of the block for precalculations
 
-FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseComplexMatrix* bMatrices, RealVector* state, int traceFlag)
+FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseComplexMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize)
 {
   this->FirstComponent = 0;
   this->NbrComponent = space->GetHilbertSpaceDimension();
@@ -59,6 +60,7 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(FermionOnSpherePTruncat
   this->OutputState = state;
   this->BMatrices = bMatrices;
   this->TraceFlag = traceFlag;  
+  this->PrecalculationBlockSize = blockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
 }
 
@@ -76,7 +78,7 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
   this->OutputState = operation.OutputState;
   this->BMatrices = operation.BMatrices;
   this->TraceFlag = operation.TraceFlag;  
-
+  this->PrecalculationBlockSize = operation.PrecalculationBlockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;	
 }
 
@@ -126,7 +128,7 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
 
-  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->TraceFlag, 0l, this->FirstComponent, this->NbrComponent);
+  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->TraceFlag, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
   
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);

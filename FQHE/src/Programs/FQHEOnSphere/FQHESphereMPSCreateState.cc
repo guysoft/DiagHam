@@ -42,11 +42,13 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
 
   Manager += SystemGroup;
   Manager += OutputGroup;
+  Manager += PrecalculationGroup;
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
@@ -58,7 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
- 
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
@@ -175,7 +177,8 @@ int main(int argc, char** argv)
   RealVector State (Space->GetHilbertSpaceDimension(), true);
 
 
-  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
+  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2),
+					Manager.GetInteger("precalculation-blocksize"));
   Operation.ApplyOperation(Architecture.GetArchitecture());
   //    Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
 

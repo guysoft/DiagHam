@@ -358,25 +358,69 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseComplexMatr
   Complex* TmpMatrixElements = new Complex [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
   int* TmpColumnIndices = new int [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
   Complex* TmpElements = new Complex [bMatrices[0].GetNbrRow()];
-  for (long i = initialIndex; i < MaxIndex; ++i)
+
+  if (memory <= 1l)
     {
-      if (((i - initialIndex) % 10000) == 0)
-        cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
-      unsigned long TmpStateDescription = this->StateDescription[i];
-      TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
-      TmpStateDescription >>= 1;
-      for (int j = 1; j <= this->LzMax; ++j)
+      for (long i = initialIndex; i < MaxIndex; ++i)
 	{
-	  TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
 	  TmpStateDescription >>= 1;
-	} 
-      if (traceFlag < 0)
-	state[i] = TmpMatrix.ComplexTr();
-      else
-	TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
-//       long NbrNonZeroMatrixElements = TmpMatrix.ComputeNbrNonZeroMatrixElements();
-//       cout << i << " : " << NbrNonZeroMatrixElements << "/" << (((long) TmpMatrix.GetNbrRow()) * ((long) TmpMatrix.GetNbrColumn())) 
-// 	   << " (" << (100.0 * ((double) NbrNonZeroMatrixElements) / (((double) TmpMatrix.GetNbrRow()) * ((double) TmpMatrix.GetNbrColumn())) )<< "%)" << endl;
+	  for (int j = 1; j <= this->LzMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  if (traceFlag < 0)
+	    state[i] = TmpMatrix.ComplexTr();
+	  else
+	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	}
+     }
+  else
+    {
+      int PrecalculationBlockSize = (int) memory;
+      unsigned long PrecalculationBlockMask = (0x1ul  << PrecalculationBlockSize) - 0x1ul;
+      int PrecalculationBlockLength  = this->LzMax - ((this->LzMax + 1) % PrecalculationBlockSize);
+      int RemaingOrbtals = (this->LzMax + 1) % PrecalculationBlockSize;
+      SparseComplexMatrix* TmpBlockbMatrices = new SparseComplexMatrix[1 << PrecalculationBlockSize];
+      for (unsigned long TmpState = 0x0ul; TmpState <= PrecalculationBlockMask; ++TmpState)
+	{
+	  unsigned long TmpStateDescription = TmpState;
+	  TmpBlockbMatrices[TmpState].Copy(bMatrices[TmpStateDescription & 0x1ul]);
+	  TmpStateDescription >>= 1;
+	  for (int j = 1; j <= this->LzMax; ++j)
+	    {
+	      TmpBlockbMatrices[TmpState].Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    }      
+	}
+      
+      for (long i = initialIndex; i < MaxIndex; ++i)
+	{
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask]);
+	  TmpStateDescription >>= PrecalculationBlockSize;
+	  int j = PrecalculationBlockSize;
+	  for (; j < PrecalculationBlockLength; j += PrecalculationBlockSize)
+	    {
+	      TmpMatrix.Multiply(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= PrecalculationBlockSize;
+	    } 
+	  for (; j <= this->LzMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  if (traceFlag < 0)
+	    state[i] = TmpMatrix.ComplexTr();
+	  else
+	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	}
     }  
   delete[] TmpMatrixElements;
   delete[] TmpColumnIndices;
@@ -403,22 +447,68 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseComplexMatr
   Complex* TmpMatrixElements = new Complex [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
   int* TmpColumnIndices = new int [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
   Complex* TmpElements = new Complex [bMatrices[0].GetNbrRow()];
-  for (long i = initialIndex; i < MaxIndex; ++i)
+
+  if (memory <= 1l)
     {
-      if (((i - initialIndex) % 10000) == 0)
-        cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
-      unsigned long TmpStateDescription = this->StateDescription[i];
-      TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
-      TmpStateDescription >>= 1;
-      for (int j = 1; j <= this->LzMax; ++j)
+      for (long i = initialIndex; i < MaxIndex; ++i)
 	{
-	  TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
 	  TmpStateDescription >>= 1;
-	} 
-      if (traceFlag < 0)
-	state[i] = TmpMatrix.Tr();
-      else
-	TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	  for (int j = 1; j <= this->LzMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  if (traceFlag < 0)
+	    state[i] = TmpMatrix.Tr();
+	  else
+	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	}
+    }
+  else
+    {
+      int PrecalculationBlockSize = (int) memory;
+      unsigned long PrecalculationBlockMask = (0x1ul  << PrecalculationBlockSize) - 0x1ul;
+      int PrecalculationBlockLength  = this->LzMax - ((this->LzMax + 1) % PrecalculationBlockSize);
+      int RemaingOrbtals = (this->LzMax + 1) % PrecalculationBlockSize;
+      SparseComplexMatrix* TmpBlockbMatrices = new SparseComplexMatrix[1 << PrecalculationBlockSize];
+      for (unsigned long TmpState = 0x0ul; TmpState <= PrecalculationBlockMask; ++TmpState)
+	{
+	  unsigned long TmpStateDescription = TmpState;
+	  TmpBlockbMatrices[TmpState].Copy(bMatrices[TmpStateDescription & 0x1ul]);
+	  TmpStateDescription >>= 1;
+	  for (int j = 1; j < PrecalculationBlockSize; ++j)
+	    {
+	      TmpBlockbMatrices[TmpState].Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    }      
+	}
+      for (long i = initialIndex; i < MaxIndex; ++i)
+	{
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask]);
+	  TmpStateDescription >>= PrecalculationBlockSize;
+	  int j = PrecalculationBlockSize;
+	  for (; j < PrecalculationBlockLength; j += PrecalculationBlockSize)
+	    {
+	      TmpMatrix.Multiply(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= PrecalculationBlockSize;
+	    } 
+	  for (; j <= this->LzMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  if (traceFlag < 0)
+	    state[i] = TmpMatrix.Tr();
+	  else
+	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	}
     }
   delete[] TmpMatrixElements;
   delete[] TmpColumnIndices;
