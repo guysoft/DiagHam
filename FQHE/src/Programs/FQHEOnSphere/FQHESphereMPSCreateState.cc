@@ -32,7 +32,7 @@ using std::ios;
 using std::ofstream;
 
 
-void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel);
+void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel, bool cylinderFlag, double kappa);
 Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue, FactorialCoefficient& coef);
 
 
@@ -62,6 +62,9 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
+  (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
+  (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
+
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -87,9 +90,18 @@ int main(int argc, char** argv)
       return 0;
     }
 
-
   if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
     return -1;
+
+  bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
+  double AspectRatio = Manager.GetDouble("aspect-ratio");
+  double kappa = 0.0;
+  if (CylinderFlag)
+    {
+       kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
+       cout<<"Cylinder geometry, kappa= "<<kappa<<endl;
+    }
+
 
 //  ParticleOnSphere* Space = 0;
   FermionOnSpherePTruncated* Space = 0;
@@ -143,7 +155,7 @@ int main(int argc, char** argv)
     {
       U1BosonBasis[i] = new BosonOnDiskShort(i, i, Manager.GetInteger("p-truncation") + 1);
     }
-  CreateLaughlinBMatrices (LaughlinIndex, BMatrices, U1BosonBasis, Manager.GetInteger("p-truncation"));
+  CreateLaughlinBMatrices (LaughlinIndex, BMatrices, U1BosonBasis, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
 
   for (int i = 0; i < NbrBMatrices; ++i)
     {
@@ -169,6 +181,9 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("normalize-sphere"))
     Space->ConvertFromUnnormalizedMonomial(State);
+  if (CylinderFlag)
+    State /= State.Norm();
+    //Space->NormalizeJackToCylinder(State, AspectRatio);
 
   if (Manager.GetBoolean("full-basis") == true)  
    {
@@ -254,7 +269,7 @@ int main(int argc, char** argv)
   return 0;
 }
 
-void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel)
+void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel, bool cylinderFlag, double kappa)
 {
   int* StartingIndexPerPLevel = new int [pLevel + 1];
   int* NbrIndicesPerPLevel = new int [pLevel + 1];
@@ -277,11 +292,15 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
 	{
 	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
 	    {
-	      bMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), 1.0);
+              int N1 = (j - NValueShift/2);
+	      Complex Tmp (1.0, 0.0);
+              if (cylinderFlag)
+                Tmp *= exp(-kappa*kappa*(i + (N1 - 1) * (N1 - 1)/(4.0 * laughlinIndex)+ (N1 * N1)/(4.0 * laughlinIndex)));
+	      bMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), Tmp);
 	    }
 	}
     }
-
+   
   bMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
   unsigned long* Partition1 = new unsigned long [pLevel + 2];
   unsigned long* Partition2 = new unsigned long [pLevel + 2];
@@ -290,11 +309,11 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
   for (int i = 0; i <= pLevel; ++i)
     {
       BosonOnDiskShort* TmpSpace1 = u1BosonBasis[i];
-      int MaxN1 = (2 * i) + laughlinIndex;
+      //int MaxN1 = (2 * i) + laughlinIndex;
       for (int j = 0; j <= pLevel; ++j)
 	{
 	  BosonOnDiskShort* TmpSpace2 = u1BosonBasis[j];
-	  int MaxN2 = (2 * 2) + laughlinIndex;
+	  //int MaxN2 = (2 * 2) + laughlinIndex;
 	  int N1 = (2 * (j - i) + laughlinIndex - 1 + NValueShift) / 2;
 	  int N2 = (2 * (j - i) - laughlinIndex + 1 + NValueShift) / 2;
 	  for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
@@ -304,12 +323,15 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
 		{
 		  TmpSpace2->GetOccupationNumber(k2, Partition2);
 		  Complex Tmp = CreateLaughlinAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+                  if (cylinderFlag)
+                    Tmp *= exp(-kappa*kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * laughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * laughlinIndex)));
 		  bMatrices[1].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
 //		  cout << i << " " << j << " | " << k1 << " " << k2 << " | " << N1 << " " << N2 << " " << (-(N1 + N2 - NValueShift) / 2) << " : " << Tmp << endl;
 		}
 	    }
 	}
     }
+
   delete[] Partition1;
   delete[] Partition2;
 }

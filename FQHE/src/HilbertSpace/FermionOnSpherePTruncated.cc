@@ -360,6 +360,8 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseComplexMatr
   Complex* TmpElements = new Complex [bMatrices[0].GetNbrRow()];
   for (long i = initialIndex; i < MaxIndex; ++i)
     {
+      if (((i - initialIndex) % 10000) == 0)
+        cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
       unsigned long TmpStateDescription = this->StateDescription[i];
       TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
       TmpStateDescription >>= 1;
@@ -403,6 +405,8 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseComplexMatr
   Complex* TmpElements = new Complex [bMatrices[0].GetNbrRow()];
   for (long i = initialIndex; i < MaxIndex; ++i)
     {
+      if (((i - initialIndex) % 10000) == 0)
+        cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
       unsigned long TmpStateDescription = this->StateDescription[i];
       TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
       TmpStateDescription >>= 1;
