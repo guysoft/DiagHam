@@ -388,6 +388,11 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value =  pointer to the array of broadcasted matrices or null pointer if an error occured null pointer if an error occured
   virtual Matrix** BroadcastMatrixArray(int& nbrMatrices, Matrix* matrix = 0);
 
+  // indicate if the current architecture allows to write on disk
+  //
+  // return value = true if the current architecture allows to write on disk
+  virtual bool CanWriteOnDisk();
+
   // get a temporary file name
   //
   // return value = string corresponding to a temporary file name

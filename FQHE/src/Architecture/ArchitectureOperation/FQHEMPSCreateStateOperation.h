@@ -93,7 +93,7 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // set the output state 
   // 
   // state = pointer to the output state
-  void SetOutputState (RealVector* state);
+  virtual void SetOutputState (RealVector* state);
   
   // get the output state 
   // 
@@ -109,12 +109,12 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // clone operation
   //
   // return value = pointer to cloned operation
-  AbstractArchitectureOperation* Clone();
+  virtual AbstractArchitectureOperation* Clone();
   
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool RawApplyOperation();
+  virtual bool RawApplyOperation();
   
  protected:
   
@@ -122,8 +122,13 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  virtual bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
+  // apply operation for SimpleMPI architecture
+  //
+  // architecture = pointer to the architecture
+  // return value = true if no error occurs
+  virtual bool ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture);
   
 };
 

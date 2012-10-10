@@ -190,3 +190,13 @@ bool AbstractArchitecture::ReadVector(RealVector& vector, const char* fileName)
 {
   return vector.ReadVector(fileName);
 }
+
+// indicate if the current architecture allows to write on disk
+//
+// return value = true if the current architecture allows to write on disk
+
+bool AbstractArchitecture::CanWriteOnDisk()
+{
+  return true;
+}
+

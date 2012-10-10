@@ -133,6 +133,11 @@ class AbstractArchitecture
   template <class Type>
   void Delete (Type*& pointer);
   
+  // indicate if the current architecture allows to write on disk
+  //
+  // return value = true if the current architecture allows to write on disk
+  virtual bool CanWriteOnDisk();
+
   // get a temporary file name
   //
   // return value = string corresponding to a temporary file name

@@ -179,92 +179,94 @@ int main(int argc, char** argv)
   Operation.ApplyOperation(Architecture.GetArchitecture());
   //    Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
 
-  if (Manager.GetBoolean("normalize-sphere"))
-    Space->ConvertFromUnnormalizedMonomial(State);
-  if (CylinderFlag)
-    State /= State.Norm();
-    //Space->NormalizeJackToCylinder(State, AspectRatio);
-
-  if (Manager.GetBoolean("full-basis") == true)  
-   {
-     FermionOnSphereHaldaneBasis* SpaceHaldane = 0;
-     if (Manager.GetBoolean("boson") == true)
-      {
-        cout << "bosons are not yet implemented" << endl;
-        return 0;
-      }
-     else
-      {
-#ifdef __64_BITS__
-	  if (NbrFluxQuanta <= 62)
-#else
-	  if (NbrFluxQuanta <= 30)
-#endif
+  if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
+    {
+      if (Manager.GetBoolean("normalize-sphere"))
+	Space->ConvertFromUnnormalizedMonomial(State);
+      if (CylinderFlag)
+	State /= State.Norm();
+      
+      if (Manager.GetBoolean("full-basis") == true)  
+	{
+	  FermionOnSphereHaldaneBasis* SpaceHaldane = 0;
+	  if (Manager.GetBoolean("boson") == true)
 	    {
-	      SpaceHaldane = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	      cout << "bosons are not yet implemented" << endl;
+	      return 0;
 	    }
 	  else
 	    {
-#ifdef __128_BIT_LONGLONG__
-	      if (NbrFluxQuanta <= 126)
+#ifdef __64_BITS__
+	      if (NbrFluxQuanta <= 62)
 #else
-		if (NbrFluxQuanta <= 62)
+		if (NbrFluxQuanta <= 30)
 #endif
 		  {
-		    SpaceHaldane = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+		    SpaceHaldane = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
 		  }
 		else
 		  {
 #ifdef __128_BIT_LONGLONG__
-		    cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
+		    if (NbrFluxQuanta <= 126)
 #else
-		    cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
+		      if (NbrFluxQuanta <= 62)
 #endif
-		    return 0;
+			{
+			  SpaceHaldane = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+			}
+		      else
+			{
+#ifdef __128_BIT_LONGLONG__
+			  cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
+#else
+			  cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
+#endif
+			  return 0;
+			}
 		  }
+	      
 	    }
-
-      }
-
-     RealVector NewState;
-     NewState = Space->ConvertToHaldaneBasis(State, *SpaceHaldane);
-
-     if (OutputTxtFileName != 0)
-      {
-        ofstream File;
-        File.open(OutputTxtFileName, ios::binary | ios::out);
-        File.precision(14);	
-        for (long i = 0; i < SpaceHaldane->GetLargeHilbertSpaceDimension(); ++i)
-	  {
-	    NewState.PrintComponent(File, i) << " ";
-	    Space->PrintStateMonomial(File, i) << endl;
- 	  }
-        File.close();
-      }
-    if (OutputFileName != 0)
-      {
-        NewState.WriteVector(OutputFileName);
-      }
-   } //full-basis
-  else //do not convert to full Haldane basis
-   { 
-     if (OutputTxtFileName != 0)
-      {
-        ofstream File;
-        File.open(OutputTxtFileName, ios::binary | ios::out);
-        File.precision(14);	
-        for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
-	  {
-	    State.PrintComponent(File, i) << " ";
-	    Space->PrintStateMonomial(File, i) << endl;
- 	  }
-        File.close();
-      }
-    if (OutputFileName != 0)
-      {
-        State.WriteVector(OutputFileName);
-      }
-   }
+	  
+	  RealVector NewState;
+	  NewState = Space->ConvertToHaldaneBasis(State, *SpaceHaldane);
+	  
+	  if (OutputTxtFileName != 0)
+	    {
+	      ofstream File;
+	      File.open(OutputTxtFileName, ios::binary | ios::out);
+	      File.precision(14);	
+	      for (long i = 0; i < SpaceHaldane->GetLargeHilbertSpaceDimension(); ++i)
+		{
+		  NewState.PrintComponent(File, i) << " ";
+		  Space->PrintStateMonomial(File, i) << endl;
+		}
+	      File.close();
+	    }
+	  if (OutputFileName != 0)
+	    {
+	      NewState.WriteVector(OutputFileName);
+	    }
+	}
+      else 
+	{ 
+	  if (OutputTxtFileName != 0)
+	    {
+	      ofstream File;
+	      File.open(OutputTxtFileName, ios::binary | ios::out);
+	      File.precision(14);	
+	      for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
+		{
+		  State.PrintComponent(File, i) << " ";
+		  Space->PrintStateMonomial(File, i) << endl;
+		}
+	      File.close();
+	    }
+	  if (OutputFileName != 0)
+	    {
+	      State.WriteVector(OutputFileName);
+	    }
+	}
+    }
   
   return 0;
 }

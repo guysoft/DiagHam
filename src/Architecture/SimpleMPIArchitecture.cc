@@ -1125,3 +1125,11 @@ bool SimpleMPIArchitecture::ReadVector(RealVector& vector, const char* fileName)
 #endif
 }
 
+// indicate if the current architecture allows to write on disk
+//
+// return value = true if the current architecture allows to write on disk
+
+bool SimpleMPIArchitecture::CanWriteOnDisk()
+{
+  return this->IsMasterNode();
+}

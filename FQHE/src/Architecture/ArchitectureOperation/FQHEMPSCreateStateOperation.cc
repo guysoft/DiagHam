@@ -176,3 +176,37 @@ bool FQHEMPSCreateStateOperation::ArchitectureDependentApplyOperation(SMPArchite
   delete[] TmpOperations;
   return true;
 }
+
+// apply operation for SimpleMPI architecture
+//
+// architecture = pointer to the architecture
+// return value = true if no error occurs
+
+bool FQHEMPSCreateStateOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+#ifdef __MPI__    
+  int Step = this->NbrComponent / architecture->GetNbrNodes();
+  int TmpFirstComponent = this->FirstComponent + (Step * architecture->GetNodeNbr());
+  int TmpNbrComponent = Step;
+  if ((architecture->GetNodeNbr() + 1) == architecture->GetNbrNodes())
+    {
+      TmpNbrComponent += this->NbrComponent % Step;
+    }
+  this->SetIndicesRange(TmpFirstComponent, TmpNbrComponent); 
+  switch (architecture->GetArchitectureID())
+    {	 
+    case AbstractArchitecture::MixedMPISMP:
+      this->ArchitectureDependentApplyOperation((SMPArchitecture*) (architecture->GetLocalArchitecture())); 
+      break;
+    default:
+      this->RawApplyOperation();
+      break;
+    }		
+  MPI::COMM_WORLD.Barrier();
+  architecture->SumVector(*(this->OutputState));	
+      
+  return true;
+#else
+  return this->RawApplyOperation();
+#endif
+}
