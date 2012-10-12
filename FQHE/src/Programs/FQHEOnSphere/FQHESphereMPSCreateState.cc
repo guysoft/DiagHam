@@ -2,10 +2,13 @@
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
+#include "HilbertSpace/BosonOnDiskWithSU2Spin.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
-#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 #include "MathTools/FactorialCoefficient.h"
+#include "MathTools/LongRational.h"
+
+#include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -32,9 +35,12 @@ using std::ios;
 using std::ofstream;
 
 
-void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel, bool cylinderFlag, double kappa);
+void CreateLaughlinBMatrices (int laughlinIndex, SparseComplexMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
 Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue, FactorialCoefficient& coef);
 
+void CreateMooreReadBMatrices (int mRIndex, SparseComplexMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
+
+LongRational ComputeDescendantScalarProduct (unsigned long* partition1, unsigned long* partition2, int position1, int position2, LongRational& centralCharge12, LongRational& weight);
 
 int main(int argc, char** argv)
 {
@@ -146,22 +152,18 @@ int main(int argc, char** argv)
    }
 
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
-  
+
   int LaughlinIndex = Manager.GetInteger("laughlin-index");
   int NbrBMatrices = 2;
-  ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
+
+  CreateMooreReadBMatrices (LaughlinIndex, 0, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+  
   SparseComplexMatrix* SparseBMatrices = new SparseComplexMatrix[NbrBMatrices];
   SparseComplexMatrix* SparseConjugateBMatrices = new SparseComplexMatrix[NbrBMatrices];
-  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [Manager.GetInteger("p-truncation") + 1];
-  for (int i = 0; i <= Manager.GetInteger("p-truncation"); ++i)
-    {
-      U1BosonBasis[i] = new BosonOnDiskShort(i, i, Manager.GetInteger("p-truncation") + 1);
-    }
-  CreateLaughlinBMatrices (LaughlinIndex, BMatrices, U1BosonBasis, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+  CreateLaughlinBMatrices (LaughlinIndex, SparseBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
 
   for (int i = 0; i < NbrBMatrices; ++i)
     {
-      SparseBMatrices[i] = BMatrices[i];
       SparseConjugateBMatrices[i] = SparseBMatrices[i].HermitianTranspose();
     }
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
@@ -274,25 +276,32 @@ int main(int argc, char** argv)
   return 0;
 }
 
-void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel, bool cylinderFlag, double kappa)
+void CreateLaughlinBMatrices (int laughlinIndex, SparseComplexMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa)
 {
+  int NbrBMatrices = 2;
+  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [pLevel + 1];
+  ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      U1BosonBasis[i] = new BosonOnDiskShort(i, i, pLevel + 1);
+    }
   int* StartingIndexPerPLevel = new int [pLevel + 1];
   int* NbrIndicesPerPLevel = new int [pLevel + 1];
   StartingIndexPerPLevel[0] = 0;
   int NbrNValue = ((2 * pLevel) + laughlinIndex);
   int NValueShift = NbrNValue - 1;
-  NbrIndicesPerPLevel[0] = u1BosonBasis[0]->GetHilbertSpaceDimension() * NbrNValue;
+  NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * NbrNValue;
   for (int i = 1; i <= pLevel; ++i)
     {
       StartingIndexPerPLevel[i] = StartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
-      NbrIndicesPerPLevel[i] = u1BosonBasis[i]->GetHilbertSpaceDimension()  * NbrNValue;
+      NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * NbrNValue;
     }
   int MatrixSize = NbrIndicesPerPLevel[pLevel] + StartingIndexPerPLevel[pLevel];
 
-  bMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  BMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
   for (int i = 0; i <= pLevel; ++i)
     {
-      BosonOnDiskShort* TmpSpace = u1BosonBasis[i];
+      BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
       for (int j = 1; j < NbrNValue; ++j)
 	{
 	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
@@ -301,23 +310,23 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
 	      Complex Tmp (1.0, 0.0);
               if (cylinderFlag)
                 Tmp *= exp(-kappa*kappa*(i + (N1 - 1) * (N1 - 1)/(4.0 * laughlinIndex)+ (N1 * N1)/(4.0 * laughlinIndex)));
-	      bMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), Tmp);
+	      BMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), Tmp);
 	    }
 	}
     }
    
-  bMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  BMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
   unsigned long* Partition1 = new unsigned long [pLevel + 2];
   unsigned long* Partition2 = new unsigned long [pLevel + 2];
   FactorialCoefficient Coef;
 
   for (int i = 0; i <= pLevel; ++i)
     {
-      BosonOnDiskShort* TmpSpace1 = u1BosonBasis[i];
+      BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
       //int MaxN1 = (2 * i) + laughlinIndex;
       for (int j = 0; j <= pLevel; ++j)
 	{
-	  BosonOnDiskShort* TmpSpace2 = u1BosonBasis[j];
+	  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
 	  //int MaxN2 = (2 * 2) + laughlinIndex;
 	  int N1 = (2 * (j - i) + laughlinIndex - 1 + NValueShift) / 2;
 	  int N2 = (2 * (j - i) - laughlinIndex + 1 + NValueShift) / 2;
@@ -330,7 +339,7 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
 		  Complex Tmp = CreateLaughlinAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
                   if (cylinderFlag)
                     Tmp *= exp(-kappa*kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * laughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * laughlinIndex)));
-		  bMatrices[1].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
+		  BMatrices[1].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
 //		  cout << i << " " << j << " | " << k1 << " " << k2 << " | " << N1 << " " << N2 << " " << (-(N1 + N2 - NValueShift) / 2) << " : " << Tmp << endl;
 		}
 	    }
@@ -339,7 +348,14 @@ void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, Boson
 
   delete[] Partition1;
   delete[] Partition2;
+
+  for (int i = 0; i < NbrBMatrices; ++i)
+    {
+      bMatrices[i] = BMatrices[i];
+    }
+  delete[] BMatrices;
 }
+
 
 Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue, FactorialCoefficient& coef)
 {
@@ -392,5 +408,77 @@ Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partitio
 //      cout << Tmp2 << endl;
       Tmp *= Tmp2;
     }
+  return Tmp;
+}
+
+void CreateMooreReadBMatrices (int mRIndex, SparseComplexMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa)
+{
+  int NbrBMatrices = 2;
+  BosonOnDiskWithSU2Spin** U1U1BosonBasis = new BosonOnDiskWithSU2Spin* [pLevel + 1];
+  ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
+  for (int i = 0; i <= pLevel; ++i)
+    {
+//      cout << "p level = " <<  i << endl;
+      U1U1BosonBasis[i] = new BosonOnDiskWithSU2Spin  (i, i, pLevel + 1);
+//       for (int j = 0; j < U1U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
+// 	U1U1BosonBasis[i]->PrintState(cout, j) << endl;
+    }
+
+  int* StartingIndexPerPLevel = new int [pLevel + 1];
+  int* NbrIndicesPerPLevel = new int [pLevel + 1];
+  StartingIndexPerPLevel[0] = 0;
+  int NbrNLambdaValue = 2 * (((2 * pLevel) + mRIndex));
+  int NLambdaValueShift = NbrNLambdaValue - 1;
+  NbrIndicesPerPLevel[0] = U1U1BosonBasis[0]->GetHilbertSpaceDimension() * NbrNLambdaValue;
+  for (int i = 1; i <= pLevel; ++i)
+    {
+      StartingIndexPerPLevel[i] = StartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
+      NbrIndicesPerPLevel[i] = U1U1BosonBasis[i]->GetHilbertSpaceDimension()  * NbrNLambdaValue;
+    }
+  int MatrixSize = NbrIndicesPerPLevel[pLevel] + StartingIndexPerPLevel[pLevel];
+
+  BMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
+//   for (int i = 0; i <= pLevel; ++i)
+//     {
+//       BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
+//       for (int j = 1; j < NbrNValue; ++j)
+// 	{
+// 	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
+// 	    {
+//               int N1 = (j - NValueShift/2);
+// 	      Complex Tmp (1.0, 0.0);
+//               if (cylinderFlag)
+//                 Tmp *= exp(-kappa*kappa*(i + (N1 - 1) * (N1 - 1)/(4.0 * mRIndex)+ (N1 * N1)/(4.0 * mRIndex)));
+// 	      BMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), Tmp);
+// 	    }
+// 	}
+//     }
+
+  BMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
+}
+
+
+LongRational ComputeDescendantScalarProduct (unsigned long* partition1, unsigned long* partition2, int position1, int position2, LongRational& centralCharge12, LongRational& weight)
+{
+  if (((position1 == 0) && (position2 > 0)) || ((position2 == 0) && (position1 > 0)))
+    {
+      return 0l;
+    }
+  if ((position1 == 1) && (position2 ==1))
+    {
+      if (partition1[1] != partition2[1])
+	{
+	  return 0l;
+	}
+      else
+	{
+	  LongRational Tmp1 (centralCharge12);
+	  Tmp1 *= partition1[1] * (partition1[1] * partition1[1] - 1l);
+	  LongRational Tmp2 (weight);
+	  Tmp2 *= 2l * partition1[1];
+	  return Tmp1 + Tmp2;
+	}
+    }
+  LongRational Tmp(0l);
   return Tmp;
 }

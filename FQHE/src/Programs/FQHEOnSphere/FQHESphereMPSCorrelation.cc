@@ -10,6 +10,9 @@
 #include "Operator/ParticleOnSphereDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 
+#include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
+#include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
+
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
@@ -48,7 +51,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
+  (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
+  (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*SystemGroup) += new SingleStringOption  ('\n', "state", "provide an external state for comparison purposes");
+  (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -61,6 +70,11 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
+
+  int NbrPoints = Manager.GetInteger("nbr-points");
+  bool DensityFlag = Manager.GetBoolean("density");
+  bool ChordFlag = Manager.GetBoolean("chord");
+  bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
 
   int NbrParticles = 0; 
   int NbrFluxQuanta = 0;
@@ -117,7 +131,14 @@ int main(int argc, char** argv)
 	      }
 	}      
     }
-  
+
+  int LandauLevel = 0;
+  AbstractFunctionBasis* Basis;
+  if (LandauLevel == 0)
+    Basis = new ParticleOnSphereFunctionBasis(NbrFluxQuanta);
+  else
+    Basis = new ParticleOnSphereGenericLLFunctionBasis(NbrFluxQuanta - (2 * LandauLevel), LandauLevel);
+
   int LaughlinIndex = Manager.GetInteger("laughlin-index");
   int NbrBMatrices = 2;
   ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
@@ -144,52 +165,145 @@ int main(int argc, char** argv)
   RealVector DummyState (1);
   DummyState[0] = 1.0;
 
-  cout << "correlation = ";
-  for (int m1 = 0; m1 < NbrFluxQuanta; ++m1)
-    for (int m2 = m1 + 1; m2 <= NbrFluxQuanta; ++m2)
-      for (int n1 = 0; n1 < NbrFluxQuanta; ++n1)
-	{
-	  int n2 = m1 + m2 - n1;
-	  if ((n2 > n1) && (n2 <= NbrFluxQuanta))
-	    {
-	      cout << m1 << "," << m2 << ";" << n1 <<  "," << n2 << " = ";   
-	      if (Space != 0)
-		{
-		  ParticleOnSphereDensityDensityOperator Operator (Space, m1, m2, n1, n2);
-		  Complex TmpDensityDensity = Operator.MatrixElement(State, State);
-		  cout << TmpDensityDensity.Re << " ";
-		  ParticleOnSphereDensityDensityOperator Operator2 (&SpaceWrapper, m1, m2, n1, n2);
-		  Complex TmpDensityDensity2 = Operator2.MatrixElement(DummyState, DummyState);
-		  cout << TmpDensityDensity2.Re << " ";
-		  if (fabs(TmpDensityDensity.Re - TmpDensityDensity2.Re) > 1e-10)
-		    cout << " error";
-		  cout << endl;
-		}
-	      else
-		{
-		  ParticleOnSphereDensityDensityOperator Operator2 (&SpaceWrapper, m1, m2, n1, n2);
-		  Complex TmpDensityDensity = Operator2.MatrixElement(DummyState, DummyState);
-		  cout << TmpDensityDensity.Re << " ";
-		  cout << endl;
-		}
-	    }
-	}
 
-  for (int i = 0; i <= NbrFluxQuanta; ++i)
+  Complex TmpValue;
+  RealVector Value(2, true);
+  Complex* PrecalculatedValues = new Complex [NbrFluxQuanta + 1];	  
+  if (DensityFlag == false)
     {
-      cout<< "n(" << i << ") = ";
-      if (Space != 0)
+      for (int i = 0; i <= NbrFluxQuanta; ++i)
 	{
-	  ParticleOnSphereDensityOperator Operator (Space, i);
-	  Complex TmpDensity = Operator.MatrixElement(State, State);
-	  cout << TmpDensity.Re << " ";
+	  Basis->GetFunctionValue(Value, TmpValue, NbrFluxQuanta);
+	  ParticleOnSphereDensityDensityOperator Operator (&SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
+	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);// * TmpValue * Conj(TmpValue);
 	}
-      ParticleOnSphereDensityOperator Operator2 (&SpaceWrapper, i);
-      Complex TmpDensity2 = Operator2.MatrixElement(DummyState, DummyState);
-      cout << TmpDensity2.Re << " ";
-
-      cout << endl;
     }
+  else
+    {
+      for (int i = 0; i <= NbrFluxQuanta; ++i)
+	{
+	  ParticleOnSphereDensityOperator Operator (&SpaceWrapper, i);
+	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
+	}
+    }
+  
+  ofstream File;
+  File.precision(14);
+
+  if (Manager.GetString("output-file") != 0)
+    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+  else
+    {
+      char* TmpFileName = new char [512];
+      if (DensityFlag == true)      
+	{
+	  sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rho", Manager.GetInteger("laughlin-index"),
+		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	}
+      else
+ 	{
+	  sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rhorho", Manager.GetInteger("laughlin-index"),
+		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	}
+     File.open(TmpFileName, ios::binary | ios::out);     
+   }
+  if (DensityFlag == true)      
+    File << "# density  coefficients  "  << endl;
+  else
+    File << "# pair correlation coefficients " << endl;
+  File << "#" << endl << "# (l+S)    n_l" << endl;
+  if (CoefficientOnlyFlag == false)
+    {
+      for (int i = 0; i <= NbrFluxQuanta; ++i)
+	File << "# " << i << " " << PrecalculatedValues[i]<< endl;
+    }
+  else
+    {
+      for (int i = 0; i <= NbrFluxQuanta; ++i)
+	File << i << " " << PrecalculatedValues[i]<< endl;
+    }
+
+
+  Complex Sum (0.0, 0.0);
+  Complex Sum2 (0.0, 0.0);
+  double X = 0.0;
+  double XInc = M_PI / ((double) NbrPoints);
+  if (CoefficientOnlyFlag == false)
+    {
+      double Factor1 = (16.0 * M_PI * M_PI) / ((double) (NbrParticles * NbrParticles));
+      if (DensityFlag == true)
+	Factor1 = 1.0;//4.0 * M_PI;
+      double Factor2;
+      if (Manager.GetBoolean("radians") == true)
+	Factor2 = 1.0;
+      else
+	Factor2 = sqrt (0.5 * NbrFluxQuanta);
+      for (int x = 0; x < NbrPoints; ++x)
+	{
+	  Value[0] = X;
+	  Sum = 0.0;
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+	    {
+	      Basis->GetFunctionValue(Value, TmpValue, i);
+	      Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+	    }
+	  if (ChordFlag == false)
+	    File << (X * Factor2) << " " << (Norm(Sum)  * Factor1) << endl;
+	  else
+	    File << (2.0 * Factor2 * sin (X * 0.5)) << " " << Norm(Sum)  * Factor1 << endl;
+	  X += XInc;
+	}
+    }
+  File.close();
+ 
+  delete[] PrecalculatedValues;
+
+//   cout << "correlation = ";
+//   for (int m1 = 0; m1 < NbrFluxQuanta; ++m1)
+//     for (int m2 = m1 + 1; m2 <= NbrFluxQuanta; ++m2)
+//       for (int n1 = 0; n1 < NbrFluxQuanta; ++n1)
+// 	{
+// 	  int n2 = m1 + m2 - n1;
+// 	  if ((n2 > n1) && (n2 <= NbrFluxQuanta))
+// 	    {
+// 	      cout << m1 << "," << m2 << ";" << n1 <<  "," << n2 << " = ";   
+// 	      if (Space != 0)
+// 		{
+// 		  ParticleOnSphereDensityDensityOperator Operator (Space, m1, m2, n1, n2);
+// 		  Complex TmpDensityDensity = Operator.MatrixElement(State, State);
+// 		  cout << TmpDensityDensity.Re << " ";
+// 		  ParticleOnSphereDensityDensityOperator Operator2 (&SpaceWrapper, m1, m2, n1, n2);
+// 		  Complex TmpDensityDensity2 = Operator2.MatrixElement(DummyState, DummyState);
+// 		  cout << TmpDensityDensity2.Re << " ";
+// 		  if (fabs(TmpDensityDensity.Re - TmpDensityDensity2.Re) > 1e-10)
+// 		    cout << " error";
+// 		  cout << endl;
+// 		}
+// 	      else
+// 		{
+// 		  ParticleOnSphereDensityDensityOperator Operator2 (&SpaceWrapper, m1, m2, n1, n2);
+// 		  Complex TmpDensityDensity = Operator2.MatrixElement(DummyState, DummyState);
+// 		  cout << TmpDensityDensity.Re << " ";
+// 		  cout << endl;
+// 		}
+// 	    }
+// 	}
+
+//   for (int i = 0; i <= NbrFluxQuanta; ++i)
+//     {
+//       cout<< "n(" << i << ") = ";
+//       if (Space != 0)
+// 	{
+// 	  ParticleOnSphereDensityOperator Operator (Space, i);
+// 	  Complex TmpDensity = Operator.MatrixElement(State, State);
+// 	  cout << TmpDensity.Re << " ";
+// 	}
+//       ParticleOnSphereDensityOperator Operator2 (&SpaceWrapper, i);
+//       Complex TmpDensity2 = Operator2.MatrixElement(DummyState, DummyState);
+//       cout << TmpDensity2.Re << " ";
+
+//       cout << endl;
+//     }
 
   return 0;
 }

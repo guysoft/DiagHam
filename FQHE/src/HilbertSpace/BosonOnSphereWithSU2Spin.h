@@ -107,6 +107,13 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // 
   BosonOnSphereWithSU2Spin ();
 
+  // basic constructor without any constraint on Sz
+  // 
+  // nbrBosons = number of bosons
+  // totalLz = twice the momentum total value
+  // lzMax = twice the maximum Lz value reached by a boson
+  BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, int lzMax);
+
   // basic constructor
   // 
   // nbrBosons = number of bosons
@@ -322,6 +329,14 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = Hilbert space dimension
   virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int nbrNUp, int nbrNDown);
 
+  // evaluate Hilbert space dimension without the Sz constraint
+  //
+  // nbrBosons = number of bosons
+  // lzMax = momentum maximum value for a boson
+  // totalLz = momentum total value
+  // return value = Hilbert space dimension
+  virtual long ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
+
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
@@ -339,6 +354,18 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrBosons, int lzMaxUp, int lzMaxDown, int totalLz, 
 			      int nbrNUp, int nbrNDown, long pos);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrBosons = number of bosons
+  // lzMax = momentum maximum value for a boson
+  // totalLz = momentum total value
+  // currentFermionicPositionUp = current fermionic position within the state description for the spin up
+  // currentFermionicPositionDown = current fermionic position within the state description for the spin down
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateStates(int nbrBosons, int lzMax, int totalLz, 
+			      int currentFermionicPositionUp, int currentFermionicPositionDown, long pos);
 
   // convert a bosonic state into its fermionic counterpart
   //

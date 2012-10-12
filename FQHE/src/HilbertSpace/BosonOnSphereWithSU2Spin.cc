@@ -56,6 +56,68 @@ BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin ()
 {
 }
 
+// basic constructor without any constraint on Sz
+// 
+// nbrBosons = number of bosons
+// totalLz = twice the momentum total value
+// lzMax = twice the maximum Lz value reached by a boson
+
+BosonOnSphereWithSU2Spin::BosonOnSphereWithSU2Spin (int nbrBosons, int totalLz, int lzMax)
+{
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->TotalLz = totalLz;
+  this->TotalSpin = 0;
+  this->LzMax = lzMax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->Flag.Initialize();
+  this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+
+  this->NbrBosonsUp = 0;
+  this->NbrBosonsDown = 0;
+  this->NUpLzMax = this->LzMax + this->NbrBosons - 1;
+  this->NDownLzMax = this->LzMax + this->NbrBosons - 1;
+  this->FermionicLzMax = this->NUpLzMax;
+  if (this->NDownLzMax > this->FermionicLzMax)
+    this->FermionicLzMax = this->NDownLzMax;
+  this->LargeHilbertSpaceDimension = this->ShiftedEvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1);
+  
+  this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
+  long TmpHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, (this->TotalLz + (this->NbrBosons * this->LzMax)) >> 1, 
+						       this->FermionicLzMax, this->FermionicLzMax, 0l);
+
+  if (TmpHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+    {
+      cout << TmpHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
+      cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU2Spin!" << endl;
+      exit(1);
+    }
+  this->LargeHilbertSpaceDimension = TmpHilbertSpaceDimension;
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  cout << "Hilbert space dimension = " << this->HilbertSpaceDimension << endl;  
+
+
+
+  this->GenerateLookUpTable(10000000);
+
+#ifdef __DEBUG__
+   int UsedMemory = 0;
+   UsedMemory += this->HilbertSpaceDimension * (4 * sizeof(unsigned long));
+   cout << "memory requested for Hilbert space = ";
+   if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+}
+
 // basic constructor
 // 
 // nbrBosons = number of bosons
@@ -445,6 +507,49 @@ long BosonOnSphereWithSU2Spin::GenerateStates(int nbrBosons, int lzMaxUp, int lz
 };
 
 
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// currentFermionicPositionUp = current fermionic position within the state description for the spin up
+// currentFermionicPositionDown = current fermionic position within the state description for the spin down
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long BosonOnSphereWithSU2Spin::GenerateStates(int nbrBosons, int lzMax, int totalLz, 
+					      int currentFermionicPositionUp, int currentFermionicPositionDown, long pos)
+{
+  if ((nbrBosons < 0) || (totalLz < 0))
+    return pos;
+  if ((nbrBosons == 0) && (totalLz == 0))
+    {
+      this->StateDescriptionUp[pos] = 0x0ul;
+      this->StateDescriptionDown[pos] = 0x0ul;
+      return (pos + 1l);
+    }
+  if (lzMax < 0)
+    return pos;
+
+  for (int i = nbrBosons; i >= 0; --i)
+    {
+      unsigned long MaskUp = ((0x1ul << i) - 0x1ul)  << (currentFermionicPositionUp - i - 1);
+      for (int j = nbrBosons - i; j >= 0; --j)
+	{
+	  long TmpPos = this->GenerateStates(nbrBosons - i - j, lzMax - 1, totalLz - (lzMax * (i + j)), 
+					     currentFermionicPositionUp - i - 1, currentFermionicPositionDown - j - 1, pos); 
+	  unsigned long MaskDown = ((0x1ul << j) - 0x1ul) << (currentFermionicPositionDown - j - 1);
+	  for (; pos < TmpPos; ++pos)
+	    {
+	      this->StateDescriptionUp[pos] |= MaskUp;
+	      this->StateDescriptionDown[pos] |= MaskDown;
+	    }
+	}
+    }
+  return pos;
+};
+
+
 // generate look-up table associated to current Hilbert space
 // 
 // memory = memory size that can be allocated for the look-up table
@@ -518,6 +623,34 @@ long BosonOnSphereWithSU2Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrBoson
       Tmp += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - (i + j), lzMax - 1, totalLz - (lzMax * (i + j)), 
 							nbrNUp - i, nbrNDown - j);
   return  Tmp;
+}
+
+// evaluate Hilbert space dimension without the Sz constraint
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// return value = Hilbert space dimension
+
+long BosonOnSphereWithSU2Spin::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz)
+{
+  if ((nbrBosons < 0) || (totalLz < 0))
+    return 0l;
+  if ((nbrBosons == 0) && (totalLz == 0))
+    return 1l;
+  if (lzMax < 0)
+    return 0l;
+  if (nbrBosons == 1)
+    {
+      if (lzMax >= totalLz)
+	return 2l;
+      else
+	return 0l;
+    }
+  long Tmp = 0l;
+  for (int i = nbrBosons; i >= 0; --i)
+    Tmp += (i + 1) * this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons - i, lzMax - 1, totalLz - (lzMax * i));
+  return Tmp;
 }
 
 // apply a^+_m_u a_n_d operator to a given state 
