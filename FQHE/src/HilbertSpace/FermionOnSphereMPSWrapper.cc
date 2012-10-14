@@ -67,12 +67,13 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper()
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
 // referenceState = array that describes the root configuration
+// cylinderFlag = use cylinder geometry instead of sphere
 // rowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
 // columnIndex = column index of the MPS element that has to be evaluated
 // bMatrices = array that gives the B matrices 
 // memory = amount of memory granted for precalculations
 
-FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
+FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  bool cylinderFlag,
 						      int rowIndex, int columnIndex, SparseComplexMatrix* bMatrices, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
@@ -81,6 +82,7 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->TotalLz = 0;
+  this->CylinderFlag = cylinderFlag;
   this->StateDescription = 0x0ul;
   int TmpIndex = 0;
   for (int i = 0; i <= this->LzMax; ++i)
@@ -128,7 +130,7 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   
   long TmpMemory = (((long) SparseTensorProductBMatrices[1][1].GetNbrRow()) * 
 		    ((long) SparseTensorProductBMatrices[1][1].GetNbrColumn())) / 100l;
-  cout << "Requested memory for sparse matrix multiplicaitons = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
+  cout << "Requested memory for sparse matrix multiplications = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
   this->TmpMatrixElements = new Complex [TmpMemory];
   this->TmpColumnIndices = new int [TmpMemory];
   this->TmpElements = new Complex [SparseTensorProductBMatrices[1][1].GetNbrRow()];
@@ -144,9 +146,12 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
       this->NormalizedB0B1[i] *= sqrt(TmpBinomial);
       this->NormalizedB1B0[i].Copy(SparseTensorProductBMatrices[1][0]);
       this->NormalizedB1B0[i] *= sqrt(TmpBinomial);
-      TmpBinomial *= (double) (i + 1);
-      if (i < this->LzMax)
-	TmpBinomial /= (double) (this->LzMax - i); 
+      if (this->CylinderFlag == false)  
+        {
+          TmpBinomial *= (double) (i + 1);
+          if (i < this->LzMax)
+	    TmpBinomial /= (double) (this->LzMax - i); 
+        }
       if (i > 0)     
 	TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[i], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
       else
@@ -179,6 +184,7 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper(const FermionOnSphereMPSWra
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
   this->Flag = fermions.Flag;
+  this->CylinderFlag = fermions.CylinderFlag;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -242,6 +248,7 @@ FermionOnSphereMPSWrapper& FermionOnSphereMPSWrapper::operator = (const FermionO
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
+  this->CylinderFlag = fermions.CylinderFlag;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
