@@ -126,8 +126,11 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   this->NormalizedB1B0 = new SparseComplexMatrix [this->LzMax + 1];
   this->NormalizedB0B0B1B1 = new SparseComplexMatrix [this->LzMax + 1];
   
-  this->TmpMatrixElements = new Complex [(SparseTensorProductBMatrices[1][1].GetNbrRow() * SparseTensorProductBMatrices[1][1].GetNbrColumn()) / 100];
-  this->TmpColumnIndices = new int [(SparseTensorProductBMatrices[1][1].GetNbrRow() * SparseTensorProductBMatrices[1][1].GetNbrColumn()) / 100];
+  long TmpMemory = (((long) SparseTensorProductBMatrices[1][1].GetNbrRow()) * 
+		    ((long) SparseTensorProductBMatrices[1][1].GetNbrColumn())) / 100l;
+  cout << "Requested memory for sparse matrix multiplicaitons = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
+  this->TmpMatrixElements = new Complex [TmpMemory];
+  this->TmpColumnIndices = new int [TmpMemory];
   this->TmpElements = new Complex [SparseTensorProductBMatrices[1][1].GetNbrRow()];
 
   SparseComplexMatrix TmpMatrixNorm;
