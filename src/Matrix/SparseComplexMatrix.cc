@@ -819,6 +819,7 @@ SparseComplexMatrix& SparseComplexMatrix::Multiply (const SparseComplexMatrix& m
   return *this;
 }
 
+
 // multiply a matrix to the right by another matrix, providing all the required temporary arrays, extend their capacity if needed
 //
 // matrix = matrix used as multiplicator
@@ -1031,6 +1032,16 @@ long SparseComplexMatrix::ComputeNbrNonZeroMatrixElements()
     if ((this->MatrixElements[i].Re != 0.0) || (this->MatrixElements[i].Im != 0.0))
       ++NbrNonZero;
   return NbrNonZero;
+}
+
+// compute the total amount of memory needed to store the sparse matrix
+//
+// return value = amount of memory (in bytes)
+
+unsigned long SparseComplexMatrix::GetAllocatedMemory()
+{
+  return (((2ul * sizeof(double)+ sizeof(int)) * this->NbrMatrixElements)
+	  + ((2ul * sizeof(int)) * this->NbrRow));
 }
 
 // evaluate the real part of the matrix trace

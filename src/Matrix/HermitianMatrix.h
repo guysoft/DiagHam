@@ -190,6 +190,10 @@ class HermitianMatrix : public Matrix
   //
   void ClearMatrix ();
 
+  // set matrix to identity 
+  //
+  void SetToIdentity();
+
   // return reference on real part of a given matrix element
   // to access the full complex valued matrix element, use GetMatrixElement
   //

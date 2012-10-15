@@ -665,6 +665,25 @@ void HermitianMatrix::ClearMatrix ()
   return;
 }
 
+// set matrix to identity 
+//
+
+void HermitianMatrix::SetToIdentity()
+{
+  int pos = 0.0;
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      this->DiagonalElements[i] = 1.0;
+      for (int j = i + 1; j < this->NbrRow; j++)
+	{
+	  this->RealOffDiagonalElements[pos] = 0.0;
+	  this->ImaginaryOffDiagonalElements[pos] = 0.0;
+	  pos++;
+	}
+    }
+  return;
+}
+
 
 // return reference on real part of a given matrix element
 // to access the full complex valued matrix element, use GetMatrixElement

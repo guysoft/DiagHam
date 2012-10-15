@@ -252,6 +252,11 @@ class SparseComplexMatrix : public Matrix
   // return value = number of non-zero matrix elements
   long ComputeNbrNonZeroMatrixElements();
 
+  // compute the total amount of memory needed to store the sparse matrix
+  //
+  // return value = amount of memory (in bytes)
+  unsigned long GetAllocatedMemory();
+
   // evaluate the real part of the matrix trace
   //
   // return value = real part of the matrix trace 
