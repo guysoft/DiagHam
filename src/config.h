@@ -96,6 +96,11 @@ typedef struct { doublereal r, i; } doublecomplex;
 #define __GMP__
 #endif
 
+// FFTW flag
+#ifdef HAVE_FFTW
+#define __FFTW__
+#endif
+
 // GSL flag
 #ifdef HAVE_GSL
 #define __GSL__

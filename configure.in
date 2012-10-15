@@ -196,6 +196,19 @@ if test X${HAVE_PKG_GMP} = Xyes; then
   GMP_LIBS="-lgmp -lgmpxx"
 fi
 
+dnl Cheks for fftw3 library
+
+AC_ARG_ENABLE(fftw, [AC_HELP_STRING([--enable-fftw],[enable fftw support])], [HAVE_PKG_FFTW=$enableval],[HAVE_PKG_FFTW=no])
+
+AC_MSG_CHECKING(whether we are using fftw library)
+AC_MSG_RESULT([${HAVE_PKG_FFTW}])
+
+if test X${HAVE_PKG_FFTW} = Xyes; then
+  AC_DEFINE(HAVE_FFTW,,[define if we are using fftw library])
+  AC_CHECK_LIB(fftw3,fftw_plan_dft_r2c_1d,FFTW_LIBS=-lfftw3,AC_MSG_ERROR([fftw library not found]))
+  FFTW_LIBS="-lfftw"
+fi
+
 
 dnl parse mpi options
 
@@ -510,6 +523,7 @@ AC_SUBST(SCALAPACK_LIBDIR)
 AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(BZ2_LIBS)
 AC_SUBST(GMP_LIBS)
+AC_SUBST(FFTW_LIBS)
 AC_SUBST(MAYBE_QUANTUMDOTS)
 AC_SUBST(MAYBE_SPIN)
 AC_SUBST(MAYBE_FQHE)
