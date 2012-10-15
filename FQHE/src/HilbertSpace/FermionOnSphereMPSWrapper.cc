@@ -67,13 +67,12 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper()
 // totalLz = twice the momentum total value
 // lzMax = twice the maximum Lz value reached by a fermion
 // referenceState = array that describes the root configuration
-// cylinderFlag = use cylinder geometry instead of sphere
 // rowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
 // columnIndex = column index of the MPS element that has to be evaluated
 // bMatrices = array that gives the B matrices 
 // memory = amount of memory granted for precalculations
 
-FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  bool cylinderFlag,
+FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
 						      int rowIndex, int columnIndex, SparseComplexMatrix* bMatrices, unsigned long memory)
 {
   this->NbrFermions = nbrFermions;
@@ -82,7 +81,6 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   this->LzMax = lzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->TotalLz = 0;
-  this->CylinderFlag = cylinderFlag;
   this->StateDescription = 0x0ul;
   int TmpIndex = 0;
   for (int i = 0; i <= this->LzMax; ++i)
@@ -146,12 +144,9 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
       this->NormalizedB0B1[i] *= sqrt(TmpBinomial);
       this->NormalizedB1B0[i].Copy(SparseTensorProductBMatrices[1][0]);
       this->NormalizedB1B0[i] *= sqrt(TmpBinomial);
-      if (this->CylinderFlag == false)  
-        {
-          TmpBinomial *= (double) (i + 1);
-          if (i < this->LzMax)
-	    TmpBinomial /= (double) (this->LzMax - i); 
-        }
+      TmpBinomial *= (double) (i + 1);
+      if (i < this->LzMax)
+	TmpBinomial /= (double) (this->LzMax - i); 
       if (i > 0)     
 	TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[i], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
       else
@@ -184,7 +179,6 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper(const FermionOnSphereMPSWra
   this->StateDescription = fermions.StateDescription;
   this->StateLzMax = fermions.StateLzMax;
   this->Flag = fermions.Flag;
-  this->CylinderFlag = fermions.CylinderFlag;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -195,8 +189,10 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper(const FermionOnSphereMPSWra
   this->NormalizedB0B1 = fermions.NormalizedB0B1;
   this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->StateNormalization = fermions.StateNormalization;
-  this->TmpMatrixElements = new Complex [(this->NormalizedB0B0B1B1[0].GetNbrRow() * this->NormalizedB0B0B1B1[0].GetNbrColumn()) / 100];
-  this->TmpColumnIndices = new int [(this->NormalizedB0B0B1B1[0].GetNbrRow() * this->NormalizedB0B0B1B1[0].GetNbrColumn()) / 100];
+  long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
+		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
+  this->TmpMatrixElements = new Complex [TmpMemory];
+  this->TmpColumnIndices = new int [TmpMemory];
   this->TmpElements = new Complex [this->NormalizedB0B0B1B1[0].GetNbrRow()];
 }
 
@@ -248,7 +244,6 @@ FermionOnSphereMPSWrapper& FermionOnSphereMPSWrapper::operator = (const FermionO
   this->LzMax = fermions.LzMax;
   this->NbrLzValue = fermions.NbrLzValue;
   this->Flag = fermions.Flag;
-  this->CylinderFlag = fermions.CylinderFlag;
   this->SignLookUpTable = fermions.SignLookUpTable;
   this->SignLookUpTableMask = fermions.SignLookUpTableMask;
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
@@ -259,8 +254,10 @@ FermionOnSphereMPSWrapper& FermionOnSphereMPSWrapper::operator = (const FermionO
   this->NormalizedB0B1 = fermions.NormalizedB0B1;
   this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->StateNormalization = fermions.StateNormalization;
-  this->TmpMatrixElements = new Complex [(this->NormalizedB0B0B1B1[0].GetNbrRow() * this->NormalizedB0B0B1B1[0].GetNbrColumn()) / 100];
-  this->TmpColumnIndices = new int [(this->NormalizedB0B0B1B1[0].GetNbrRow() * this->NormalizedB0B0B1B1[0].GetNbrColumn()) / 100];
+  long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
+		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
+  this->TmpMatrixElements = new Complex [TmpMemory];
+  this->TmpColumnIndices = new int [TmpMemory];
   this->TmpElements = new Complex [this->NormalizedB0B0B1B1[0].GetNbrRow()];
   return *this;
 }

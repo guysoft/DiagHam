@@ -168,6 +168,9 @@ int main(int argc, char** argv)
   SparseComplexMatrix* SparseConjugateBMatrices = new SparseComplexMatrix[NbrBMatrices];
   CreateLaughlinBMatrices (LaughlinIndex, SparseBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
 
+  return 0;
+
+
   for (int i = 0; i < NbrBMatrices; ++i)
     {
       SparseConjugateBMatrices[i] = SparseBMatrices[i].HermitianTranspose();
@@ -354,6 +357,60 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseComplexMatrix* bMatrices,
 
   delete[] Partition1;
   delete[] Partition2;
+
+//   HermitianMatrix TmpDensityMatrix(BMatrices[0].GetNbrRow(), true);
+//   HermitianMatrix TmpDensityMatrix2(BMatrices[0].GetNbrRow(), true);
+//   int OrbitalCut = 25;
+//   TmpDensityMatrix.SetToIdentity();
+//   for (int i = 0; i < 50; ++i)
+//     {
+//       cout << "iteration " << i << endl;
+//       TmpDensityMatrix2.ClearMatrix();
+//       TmpDensityMatrix2 += TmpDensityMatrix.Conjugate(BMatrices[0]);
+//       TmpDensityMatrix2 += TmpDensityMatrix.Conjugate(BMatrices[1]);
+//       TmpDensityMatrix.Copy(TmpDensityMatrix2);      
+//     }
+//   RealDiagonalMatrix TmpDiag;
+//   ComplexMatrix TmpBasis (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow(), true);
+//   TmpBasis.SetToIdentity();
+// #ifdef __LAPACK__
+//   TmpDensityMatrix2.LapackDiagonalize(TmpDiag, TmpBasis);
+// #else
+//   TmpDensityMatrix2.Diagonalize(TmpDiag, TmpBasis);
+// #endif
+//   int Count = TmpDiag.GetNbrRow();
+//   for (int n = 0; n < TmpDiag.GetNbrRow(); ++n)
+//     {
+//       if (fabs(TmpDiag(n, n)) > 1e-10)
+// 	++Count;
+//       cout << (TmpDiag(n, n)  / TmpDensityMatrix.Tr()) << " ";
+//     }
+//   cout << endl;
+
+//   ComplexMatrix TmpBasis2 (BMatrices[0].GetNbrRow(), Count, true);
+//   Count = 0;
+//   for (int n = 0; n < TmpDiag.GetNbrRow(); ++n)
+//     {
+//       if (fabs(TmpDiag(n, n)) > 1e-10)
+// 	{
+// 	  TmpBasis2[Count].Copy(TmpBasis[n]);
+// 	  ++Count;
+// 	}
+//     }
+
+
+//   TmpDensityMatrix.SetToIdentity();
+//   for (int i = 0; i < OrbitalCut; ++i)
+//     {
+//       cout << "iteration " << i << endl;
+//       TmpDensityMatrix2.ClearMatrix();
+//       TmpDensityMatrix2 += TmpDensityMatrix.InvConjugate(BMatrices[0]);
+//       TmpDensityMatrix2 += TmpDensityMatrix.InvConjugate(BMatrices[1]);
+//       TmpDensityMatrix.Copy(TmpDensityMatrix2);      
+//     }
+//   HermitianMatrix TmpDensityMatrix3 = TmpDensityMatrix.Conjugate(TmpBasis2);
+  
+
 
   for (int i = 0; i < NbrBMatrices; ++i)
     {

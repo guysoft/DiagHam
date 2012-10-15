@@ -56,8 +56,6 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   int LzMax;
   // number of Lz values in a state
   int NbrLzValue;
-  //use cylinder geometry instead of sphere
-  bool CylinderFlag;
 
   // array describing the reference state
   unsigned long StateDescription;
@@ -111,12 +109,11 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a fermion
   // referenceState = array that describes the root configuration
-  // cylinderFlag = use cylinder geometry instead of sphere
   // rowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
   // columnIndex = column index of the MPS element that has to be evaluated
   // bMatrices = array that gives the B matrices 
   // memory = amount of memory granted for precalculations
-  FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState, bool cylinderFlag,  
+  FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
 			     int rowIndex, int columnIndex, SparseComplexMatrix* bMatrices, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)

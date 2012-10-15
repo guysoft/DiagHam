@@ -2,6 +2,7 @@
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 #include "HilbertSpace/FermionOnSphereMPSWrapper.h"
+#include "HilbertSpace/FermionOnCylinderMPSWrapper.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -180,7 +181,15 @@ int main(int argc, char** argv)
   int TmpIndex = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
   TmpIndex = TmpIndex *  SparseBMatrices[0].GetNbrRow() + TmpIndex;  
 
-  FermionOnSphereMPSWrapper SpaceWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, CylinderFlag, TmpIndex, TmpIndex, SparseBMatrices);
+  FermionOnSphereMPSWrapper* SpaceWrapper = 0;
+  if (CylinderFlag == false)
+    {
+      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, TmpIndex, TmpIndex, SparseBMatrices);
+    }
+  else
+    {
+      SpaceWrapper = new FermionOnCylinderMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, TmpIndex, TmpIndex, SparseBMatrices);
+    }
   RealVector DummyState (1);
   DummyState[0] = 1.0;
 
@@ -193,7 +202,7 @@ int main(int argc, char** argv)
       for (int i = 0; i <= NbrFluxQuanta; ++i)
 	{
 	  Basis->GetFunctionValue(Value, TmpValue, NbrFluxQuanta);
-	  ParticleOnSphereDensityDensityOperator Operator (&SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
+	  ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
 	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);// * TmpValue * Conj(TmpValue);
 	}
     }
@@ -203,7 +212,7 @@ int main(int argc, char** argv)
       Complex CheckSum (0.0,0.0);
       for (int i = 0; i <= NbrFluxQuanta; ++i)
 	{
-	  ParticleOnSphereDensityOperator Operator (&SpaceWrapper, i);
+	  ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
 	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
           CheckSum += PrecalculatedValues[i];
           cout<<i<<" "<<PrecalculatedValues[i]<<endl;
