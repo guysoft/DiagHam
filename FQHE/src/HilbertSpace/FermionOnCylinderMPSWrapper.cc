@@ -99,7 +99,7 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& 
   this->Flag.Initialize();
   this->StateDescription = 0l;
   this->MaximumSignLookUp = 16;
-  this->GenerateLookUpTable(memory);
+  this->GenerateLookUpTable(10000000);
   this->MPSRowIndex = rowIndex;
   this->MPSColumnIndex = columnIndex;
 
@@ -121,10 +121,12 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& 
   delete[]SparseConjugateBMatrices;
 
 
-  this->NormalizedB1B1 = new SparseComplexMatrix [this->LzMax + 1];
-  this->NormalizedB0B1 = new SparseComplexMatrix [this->LzMax + 1];
-  this->NormalizedB1B0 = new SparseComplexMatrix [this->LzMax + 1];
-  this->NormalizedB0B0B1B1 = new SparseComplexMatrix [this->LzMax + 1];
+  this-> NbrPrecalculatedMatrixProducts = this->LzMax + 1;
+
+  this->NormalizedB1B1 = new SparseComplexMatrix [1];
+  this->NormalizedB0B1 = new SparseComplexMatrix [1];
+  this->NormalizedB1B0 = new SparseComplexMatrix [1];
+  this->NormalizedB0B0B1B1 = new SparseComplexMatrix [NbrPrecalculatedMatrixProducts];
   
   long TmpMemory = (((long) SparseTensorProductBMatrices[1][1].GetNbrRow()) * 
 		    ((long) SparseTensorProductBMatrices[1][1].GetNbrColumn())) / 100l;
@@ -133,18 +135,30 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& 
   this->TmpColumnIndices = new int [TmpMemory];
   this->TmpElements = new Complex [SparseTensorProductBMatrices[1][1].GetNbrRow()];
 
-  SparseComplexMatrix TmpMatrixNorm;
-  for (int i = 0; i <= this->LzMax; ++i)
+  this->NormalizedB0B0B1B1[0] = SparseComplexMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
+  this->NormalizedB1B1[0].Copy(SparseTensorProductBMatrices[1][1]);
+  this->NormalizedB0B1[0].Copy(SparseTensorProductBMatrices[0][1]);
+  this->NormalizedB1B0[0].Copy(SparseTensorProductBMatrices[1][0]);
+
+  unsigned long PrecalculationMemory = this->NormalizedB0B0B1B1[0].GetAllocatedMemory();
+  this->NbrPrecalculatedMatrixProducts = 0;
+  for (int i = 1; (i <= this->LzMax) && (PrecalculationMemory < memory); ++i)
     {
-      this->NormalizedB0B0B1B1[i] = SparseComplexMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
-      this->NormalizedB1B1[i].Copy(SparseTensorProductBMatrices[1][1]);
-      this->NormalizedB0B1[i].Copy(SparseTensorProductBMatrices[0][1]);
-      this->NormalizedB1B0[i].Copy(SparseTensorProductBMatrices[1][0]);
-      if (i > 0)     
-	TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[i], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-      else
-	TmpMatrixNorm.Copy(this->NormalizedB0B0B1B1[i]);
+      this->NormalizedB0B0B1B1[i].Copy(this->NormalizedB0B0B1B1[i - 1]);
+      this->NormalizedB0B0B1B1[i].Multiply(this->NormalizedB0B0B1B1[0], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+      PrecalculationMemory += this->NormalizedB0B0B1B1[0].GetAllocatedMemory();
+      ++this->NbrPrecalculatedMatrixProducts;
     }
+  cout << "Requested memory for precalculations = " << (PrecalculationMemory >> 20) << "Mb" << endl;
+  SparseComplexMatrix TmpMatrixNorm;
+  TmpMatrixNorm.Copy(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1]);
+  int NbrSteps = (this->LzMax + 1) / this->NbrPrecalculatedMatrixProducts;
+  for (int i = 1; i < NbrSteps; ++i)
+    TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+  NbrSteps = (this->LzMax + 1) % this->NbrPrecalculatedMatrixProducts;
+  if (NbrSteps > 0)
+    TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+    
   Complex Tmp;
   TmpMatrixNorm.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
   this->StateNormalization = Tmp.Re;
@@ -182,6 +196,7 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper(const FermionOnCylinder
   this->NormalizedB0B1 = fermions.NormalizedB0B1;
   this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->StateNormalization = fermions.StateNormalization;
+  this->NbrPrecalculatedMatrixProducts = fermions.NbrPrecalculatedMatrixProducts;
   long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
 		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
   this->TmpMatrixElements = new Complex [TmpMemory];
@@ -235,6 +250,7 @@ FermionOnCylinderMPSWrapper& FermionOnCylinderMPSWrapper::operator = (const Ferm
   this->NormalizedB0B1 = fermions.NormalizedB0B1;
   this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->StateNormalization = fermions.StateNormalization;
+  this->NbrPrecalculatedMatrixProducts = fermions.NbrPrecalculatedMatrixProducts;
   long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
 		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
   this->TmpMatrixElements = new Complex [TmpMemory];
@@ -332,28 +348,28 @@ int FermionOnCylinderMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int 
       if (j == m1)
 	{
 	  if ((m1 == n1) || (m1 == n2))
-	    TmpMatrix.Multiply(this->NormalizedB1B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+	    TmpMatrix.Multiply(this->NormalizedB1B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
 	  else
-	    TmpMatrix.Multiply(this->NormalizedB0B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+	    TmpMatrix.Multiply(this->NormalizedB0B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
 	}
       else
 	{
 	  if (j == m2)
 	    {
 	      if ((m2 == n1) || (m2 == n2))
-		TmpMatrix.Multiply(this->NormalizedB1B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		TmpMatrix.Multiply(this->NormalizedB1B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
 	      else
-		TmpMatrix.Multiply(this->NormalizedB0B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		TmpMatrix.Multiply(this->NormalizedB0B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
 	    }
 	  else
 	    {
 	      if ((j == n1) || (j == n2))
 		{
-		  TmpMatrix.Multiply(this->NormalizedB1B0[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		  TmpMatrix.Multiply(this->NormalizedB1B0[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
 		}
 	      else
 		{
-		  TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		  TmpMatrix.Multiply(this->NormalizedB0B0B1B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
 		}
 	    }
 	}
@@ -622,18 +638,42 @@ double FermionOnCylinderMPSWrapper::AdA (int index, int m)
   if (m == 0)
     {
       TmpMatrix.Copy(this->NormalizedB1B1[0]);
-      for (int j = 1; j <= this->LzMax; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+      int NbrSteps = this->LzMax / this->NbrPrecalculatedMatrixProducts;
+      for (int j = 0; j < NbrSteps; ++j)
+	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+      NbrSteps = this->LzMax % this->NbrPrecalculatedMatrixProducts;
+      if (NbrSteps > 0)
+	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
     }
   else
     {
-      TmpMatrix.Copy(this->NormalizedB0B0B1B1[0]);
-      for (int j = 1; j < m; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-      TmpMatrix.Multiply(NormalizedB1B1[m], TmpMatrixElements, TmpColumnIndices, TmpElements);
-      for (int j = m + 1; j <= this->LzMax; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-   }
+      int NbrSteps = m / this->NbrPrecalculatedMatrixProducts;
+      if (NbrSteps == 0)
+	TmpMatrix.Copy(this->NormalizedB0B0B1B1[m - 1]);
+      else
+	{
+	  TmpMatrix.Copy(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1]);
+	  for (int j = 1; j < NbrSteps; ++j)
+	    {
+	      TmpMatrix.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+	    }
+	  NbrSteps = m % this->NbrPrecalculatedMatrixProducts;
+	  if (NbrSteps > 0)
+	    {
+	      TmpMatrix.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+	    }
+	}
+      TmpMatrix.Multiply(NormalizedB1B1[0], TmpMatrixElements, TmpColumnIndices, TmpElements);
+      if (m < this->LzMax)
+	{
+	  NbrSteps = (this->LzMax - m) / this->NbrPrecalculatedMatrixProducts;
+	  for (int j = 0; j < NbrSteps; ++j)
+	    TmpMatrix.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+	  NbrSteps = (this->LzMax - m) % this->NbrPrecalculatedMatrixProducts;
+	  if (NbrSteps > 0)
+	    TmpMatrix.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+	}
+    }
   Complex Tmp = 0.0;
   TmpMatrix.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
   return Tmp.Re / this->StateNormalization;

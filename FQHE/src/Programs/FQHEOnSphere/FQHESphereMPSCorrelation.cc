@@ -46,8 +46,10 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   Manager += SystemGroup;
   Manager += OutputGroup;
+  Manager += PrecalculationGroup;
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
@@ -61,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*SystemGroup) += new SingleStringOption  ('\n', "state", "provide an external state for comparison purposes");
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -188,7 +191,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      SpaceWrapper = new FermionOnCylinderMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, TmpIndex, TmpIndex, SparseBMatrices);
+      SpaceWrapper = new FermionOnCylinderMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, TmpIndex, TmpIndex, SparseBMatrices, Manager.GetInteger("memory") << 20);
     }
   RealVector DummyState (1);
   DummyState[0] = 1.0;
