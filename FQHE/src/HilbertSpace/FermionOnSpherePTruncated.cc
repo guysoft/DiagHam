@@ -515,6 +515,94 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseComplexMatr
   delete[] TmpElements;
 }
 
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// memory = amount of memory that can be use to precompute matrix multiplications  
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int traceFlag, long memory, long initialIndex, long nbrComponents)
+{
+  SparseRealMatrix TmpMatrix;
+  long MaxIndex = initialIndex + nbrComponents;
+  if ((nbrComponents == 0l) || (MaxIndex > this->LargeHilbertSpaceDimension))
+    {
+      MaxIndex = this->LargeHilbertSpaceDimension;
+    }
+  double* TmpMatrixElements = new double [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
+  int* TmpColumnIndices = new int [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
+  double* TmpElements = new double [bMatrices[0].GetNbrRow()];
+
+  if (memory <= 1l)
+    {
+      for (long i = initialIndex; i < MaxIndex; ++i)
+	{
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
+	  TmpStateDescription >>= 1;
+	  for (int j = 1; j <= this->LzMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  if (traceFlag < 0)
+	    state[i] = TmpMatrix.Tr();
+	  else
+	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	}
+    }
+  else
+    {
+      int PrecalculationBlockSize = (int) memory;
+      unsigned long PrecalculationBlockMask = (0x1ul  << PrecalculationBlockSize) - 0x1ul;
+      int PrecalculationBlockLength  = this->LzMax - ((this->LzMax + 1) % PrecalculationBlockSize);
+      int RemaingOrbtals = (this->LzMax + 1) % PrecalculationBlockSize;
+      SparseRealMatrix* TmpBlockbMatrices = new SparseRealMatrix[1 << PrecalculationBlockSize];
+      for (unsigned long TmpState = 0x0ul; TmpState <= PrecalculationBlockMask; ++TmpState)
+	{
+	  unsigned long TmpStateDescription = TmpState;
+	  TmpBlockbMatrices[TmpState].Copy(bMatrices[TmpStateDescription & 0x1ul]);
+	  TmpStateDescription >>= 1;
+	  for (int j = 1; j < PrecalculationBlockSize; ++j)
+	    {
+	      TmpBlockbMatrices[TmpState].Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    }      
+	}
+      for (long i = initialIndex; i < MaxIndex; ++i)
+	{
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask]);
+	  TmpStateDescription >>= PrecalculationBlockSize;
+	  int j = PrecalculationBlockSize;
+	  for (; j < PrecalculationBlockLength; j += PrecalculationBlockSize)
+	    {
+	      TmpMatrix.Multiply(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= PrecalculationBlockSize;
+	    } 
+	  for (; j <= this->LzMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  if (traceFlag < 0)
+	    state[i] = TmpMatrix.Tr();
+	  else
+	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	}
+    }
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] TmpElements;
+}
+
 // convert a gien state from truncated to Haldane basis
 //
 // state = reference on the vector to convert

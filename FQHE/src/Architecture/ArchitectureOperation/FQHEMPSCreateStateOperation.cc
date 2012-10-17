@@ -59,6 +59,29 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(FermionOnSpherePTruncat
   this->Space = (FermionOnSpherePTruncated*) space->Clone();
   this->OutputState = state;
   this->BMatrices = bMatrices;
+  this->RealBMatrices = 0;
+  this->TraceFlag = traceFlag;  
+  this->PrecalculationBlockSize = blockSize;
+  this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
+}
+
+
+// constructor 
+//
+// space = pointer to the Hilbert space
+// bMatrices = array that gives the B matrices 
+// state = pointer to the vector where the MPS state will be stored
+// traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// blockSize = indicates the size of the block for precalculations
+
+FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseRealMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->Space = (FermionOnSpherePTruncated*) space->Clone();
+  this->OutputState = state;
+  this->BMatrices = 0;
+  this->RealBMatrices = bMatrices;
   this->TraceFlag = traceFlag;  
   this->PrecalculationBlockSize = blockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
@@ -77,6 +100,7 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
   this->Space = (FermionOnSpherePTruncated*) operation.Space->Clone();
   this->OutputState = operation.OutputState;
   this->BMatrices = operation.BMatrices;
+  this->RealBMatrices = operation.RealBMatrices;
   this->TraceFlag = operation.TraceFlag;  
   this->PrecalculationBlockSize = operation.PrecalculationBlockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;	
@@ -128,7 +152,10 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
 
-  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->TraceFlag, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+  if (this->RealBMatrices == 0)
+    this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->TraceFlag, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+  else
+    this->Space->CreateStateFromMPSDescription(this->RealBMatrices, *(this->OutputState), this->TraceFlag, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
   
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);

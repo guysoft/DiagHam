@@ -36,6 +36,7 @@
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "Matrix/SparseComplexMatrix.h"
+#include "Matrix/SparseRealMatrix.h"
 
 
 #include <iostream>
@@ -107,6 +108,16 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // nbrComponents = number of components to compute
   virtual void CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, RealVector& state, int traceFlag, long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
   
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int traceFlag, long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
+
   // convert a given state from truncated to Haldane basis
   //
   // state = reference on the vector to convert

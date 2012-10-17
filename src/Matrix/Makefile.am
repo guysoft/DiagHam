@@ -21,7 +21,8 @@ ComplexDiagonalMatrix.cc \
 RealBandDiagonalSymmetricMatrix.cc \
 ComplexLapackDeterminant.cc \
 BandDiagonalHermitianMatrix.cc \
-SparseComplexMatrix.cc
+SparseComplexMatrix.cc \
+SparseRealMatrix.cc
 
 libArray_a_SOURCES = \
 Double3DArray.cc \
