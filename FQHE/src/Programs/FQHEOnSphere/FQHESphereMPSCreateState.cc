@@ -1,6 +1,7 @@
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
+#include "HilbertSpace/BosonOnSpherePTruncated.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 #include "HilbertSpace/BosonOnDiskWithSU2Spin.h"
 
@@ -36,15 +37,11 @@ using std::ios;
 using std::ofstream;
 
 
-void CreateLaughlinBMatrices (int laughlinIndex, SparseComplexMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
-
-void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa);
-
-Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue, FactorialCoefficient& coef);
+void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, int nbrBMatrices, int pLevel, bool cylinderFlag, double kappa);
 
 double CreateLaughlinRealAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int qValue, FactorialCoefficient& coef);
 
-void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
+void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
 
 LongRational ComputeDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight);
 
@@ -53,7 +50,6 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
 					     LongRational& weight);
 
 int GetK2MatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
-
 
 int main(int argc, char** argv)
 {
@@ -77,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
+  (*SystemGroup) += new BooleanOption  ('\n', "k-2", "consider the (k=2,r) series of clustered states");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
@@ -125,11 +122,10 @@ int main(int argc, char** argv)
     }
 
 
-//  ParticleOnSphere* Space = 0;
-  FermionOnSpherePTruncated* Space = 0;
+  ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
-      cout << "bosons are not yet implemented" << endl;
+      Space = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
       return 0;
     }
   else
@@ -170,82 +166,32 @@ int main(int argc, char** argv)
   int LaughlinIndex = Manager.GetInteger("laughlin-index");
   int RIndex = Manager.GetInteger("r-index");
   int NbrBMatrices = 2;
+  if (Manager.GetBoolean("boson"))
+    {
+      NbrBMatrices = NbrParticles + 1;
+    }
 
-
-// code to check the A matrices properties
-
-//   int pLevel = Manager.GetInteger("p-truncation");
-//   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [pLevel + 1];
-//   for (int i = 0; i <= pLevel; ++i)
-//     {
-//       U1BosonBasis[i] = new BosonOnDiskShort(i, i, pLevel + 1);
-//     }
-//   unsigned long* Partition1 = new unsigned long [pLevel + 2];
-//   unsigned long* Partition2 = new unsigned long [pLevel + 2];
-//   FactorialCoefficient Coef;
-
-//   int* TmpIndex = new int [pLevel + 1];
-//   int TotalDim = 0;
-//   TmpIndex[0] = 0;
-//   for (int i = 1; i <= pLevel; ++i)
-//     TmpIndex[i] = TmpIndex[i - 1] + U1BosonBasis[i - 1]->GetHilbertSpaceDimension();
-//   TotalDim = TmpIndex[pLevel] + U1BosonBasis[pLevel]->GetHilbertSpaceDimension();
-//   ComplexMatrix TmpMatrix(TotalDim, TotalDim, true);
-//   cout << "matrix dimension = " << TotalDim << endl;
-//   for (int i = 0; i <= pLevel; ++i)
-//     {
-//       BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
-//       for (int j = 0; j <= pLevel; ++j)
-// 	{
-// 	  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-// 	  for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
-// 	    {
-// 	      TmpSpace1->GetOccupationNumber(k1, Partition1);
-// 	      for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
-// 		{
-// 		  TmpSpace2->GetOccupationNumber(k2, Partition2);
-// 		  Complex Tmp = CreateLaughlinAMatrixElement(LaughlinIndex, Partition1, Partition2, i, j, i - j, Coef);
-// 		  TmpMatrix.SetMatrixElement(TmpIndex[i] + k1, TmpIndex[j] + k2, Tmp);
-// 		}
-// 	    }
-// 	}
-//     }
-//   cout << "computing det" << endl;
-//   cout << "det = " << TmpMatrix.LapackDeterminant() << endl;
-//   return 0;
-
-  
 //   CreateMooreReadBMatrices (2, RIndex, 0, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
 //   return 0;
   
-  SparseComplexMatrix* SparseBMatrices = new SparseComplexMatrix[NbrBMatrices];
-//  SparseComplexMatrix* SparseConjugateBMatrices = new SparseComplexMatrix[NbrBMatrices];
-  CreateLaughlinBMatrices (LaughlinIndex, SparseBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+  SparseRealMatrix* SparseBMatrices = new SparseRealMatrix[NbrBMatrices];
+  if (Manager.GetBoolean("k-2") == false)
+    {
+      CreateLaughlinBMatrices (LaughlinIndex, SparseBMatrices, NbrBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+    }
+  else
+    {
+      CreateMooreReadBMatrices (2, RIndex, 0, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+    }
 
-//  return 0;
-
-
-//   for (int i = 0; i < NbrBMatrices; ++i)
-//     {
-//       SparseConjugateBMatrices[i] = SparseBMatrices[i].HermitianTranspose();
-//     }
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
-//   SparseComplexMatrix** SparseTensorProductBMatrices = new SparseComplexMatrix*[NbrBMatrices];
-//   for (int i = 0; i < NbrBMatrices; ++i)
-//     {
-//       SparseTensorProductBMatrices[i] = new SparseComplexMatrix[NbrBMatrices];
-//       for (int j = 0; j < NbrBMatrices; ++j)
-// 	SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
-//     }
-  
   RealVector State (Space->GetHilbertSpaceDimension(), true);
 
 
   FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2),
 					Manager.GetInteger("precalculation-blocksize"));
   Operation.ApplyOperation(Architecture.GetArchitecture());
-  //    Space->CreateStateFromMPSDescription(SparseBMatrices, State, Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2));
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
     {
@@ -296,7 +242,7 @@ int main(int argc, char** argv)
 	    }
 	  
 	  RealVector NewState;
-	  NewState = Space->ConvertToHaldaneBasis(State, *SpaceHaldane);
+	  NewState = ((FermionOnSpherePTruncated*) Space)->ConvertToHaldaneBasis(State, *SpaceHaldane);
 	  
 	  if (OutputTxtFileName != 0)
 	    {
@@ -339,146 +285,10 @@ int main(int argc, char** argv)
   return 0;
 }
 
-void CreateLaughlinBMatrices (int laughlinIndex, SparseComplexMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa)
+void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, int nbrBMatrices, int pLevel, bool cylinderFlag, double kappa)
 {
-  int NbrBMatrices = 2;
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [pLevel + 1];
-  ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
-  for (int i = 0; i <= pLevel; ++i)
-    {
-      U1BosonBasis[i] = new BosonOnDiskShort(i, i, pLevel + 1);
-    }
-  int* StartingIndexPerPLevel = new int [pLevel + 1];
-  int* NbrIndicesPerPLevel = new int [pLevel + 1];
-  StartingIndexPerPLevel[0] = 0;
-  int NbrNValue = ((2 * pLevel) + laughlinIndex);
-  int NValueShift = NbrNValue - 1;
-  NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * NbrNValue;
-  for (int i = 1; i <= pLevel; ++i)
-    {
-      StartingIndexPerPLevel[i] = StartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
-      NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * NbrNValue;
-    }
-  int MatrixSize = NbrIndicesPerPLevel[pLevel] + StartingIndexPerPLevel[pLevel];
-
-  BMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
-  for (int i = 0; i <= pLevel; ++i)
-    {
-      BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
-      for (int j = 1; j < NbrNValue; ++j)
-	{
-	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
-	    {
-              int N1 = (j - NValueShift/2);
-	      Complex Tmp (1.0, 0.0);
-              if (cylinderFlag)
-                Tmp *= exp(-kappa*kappa*(i + (N1 - 1) * (N1 - 1)/(4.0 * laughlinIndex)+ (N1 * N1)/(4.0 * laughlinIndex)));
-	      BMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), Tmp);
-	    }
-	}
-    }
-   
-  BMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
-  unsigned long* Partition1 = new unsigned long [pLevel + 2];
-  unsigned long* Partition2 = new unsigned long [pLevel + 2];
-  FactorialCoefficient Coef;
-
-  for (int i = 0; i <= pLevel; ++i)
-    {
-      BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
-      //int MaxN1 = (2 * i) + laughlinIndex;
-      for (int j = 0; j <= pLevel; ++j)
-	{
-	  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	  //int MaxN2 = (2 * 2) + laughlinIndex;
-	  int N1 = (2 * (j - i) + laughlinIndex - 1 + NValueShift) / 2;
-	  int N2 = (2 * (j - i) - laughlinIndex + 1 + NValueShift) / 2;
-	  for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
-	    {
-	      TmpSpace1->GetOccupationNumber(k1, Partition1);
-	      for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
-		{
-		  TmpSpace2->GetOccupationNumber(k2, Partition2);
-		  Complex Tmp = CreateLaughlinAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
-                  if (cylinderFlag)
-                    Tmp *= exp(-kappa*kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * laughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * laughlinIndex)));
-		  BMatrices[1].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
-//		  cout << i << " " << j << " | " << k1 << " " << k2 << " | " << N1 << " " << N2 << " " << (-(N1 + N2 - NValueShift) / 2) << " : " << Tmp << endl;
-		}
-	    }
-	}
-    }
-
-  delete[] Partition1;
-  delete[] Partition2;
-
-//   HermitianMatrix TmpDensityMatrix(BMatrices[0].GetNbrRow(), true);
-//   HermitianMatrix TmpDensityMatrix2(BMatrices[0].GetNbrRow(), true);
-//   int OrbitalCut = 25;
-//   TmpDensityMatrix.SetToIdentity();
-//   for (int i = 0; i < 50; ++i)
-//     {
-//       cout << "iteration " << i << endl;
-//       TmpDensityMatrix2.ClearMatrix();
-//       TmpDensityMatrix2 += TmpDensityMatrix.Conjugate(BMatrices[0]);
-//       TmpDensityMatrix2 += TmpDensityMatrix.Conjugate(BMatrices[1]);
-//       TmpDensityMatrix.Copy(TmpDensityMatrix2);      
-//     }
-//   RealDiagonalMatrix TmpDiag;
-//   ComplexMatrix TmpBasis (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow(), true);
-//   TmpBasis.SetToIdentity();
-// #ifdef __LAPACK__
-//   TmpDensityMatrix2.LapackDiagonalize(TmpDiag, TmpBasis);
-// #else
-//   TmpDensityMatrix2.Diagonalize(TmpDiag, TmpBasis);
-// #endif
-//   int Count = TmpDiag.GetNbrRow();
-//   for (int n = 0; n < TmpDiag.GetNbrRow(); ++n)
-//     {
-//       if (fabs(TmpDiag(n, n)) > 1e-10)
-// 	++Count;
-//       cout << (TmpDiag(n, n)  / TmpDensityMatrix.Tr()) << " ";
-//     }
-//   cout << endl;
-
-//   ComplexMatrix TmpBasis2 (BMatrices[0].GetNbrRow(), Count, true);
-//   Count = 0;
-//   for (int n = 0; n < TmpDiag.GetNbrRow(); ++n)
-//     {
-//       if (fabs(TmpDiag(n, n)) > 1e-10)
-// 	{
-// 	  TmpBasis2[Count].Copy(TmpBasis[n]);
-// 	  ++Count;
-// 	}
-//     }
-
-
-//   TmpDensityMatrix.SetToIdentity();
-//   for (int i = 0; i < OrbitalCut; ++i)
-//     {
-//       cout << "iteration " << i << endl;
-//       TmpDensityMatrix2.ClearMatrix();
-//       TmpDensityMatrix2 += TmpDensityMatrix.InvConjugate(BMatrices[0]);
-//       TmpDensityMatrix2 += TmpDensityMatrix.InvConjugate(BMatrices[1]);
-//       TmpDensityMatrix.Copy(TmpDensityMatrix2);      
-//     }
-//   HermitianMatrix TmpDensityMatrix3 = TmpDensityMatrix.Conjugate(TmpBasis2);
-  
-
-
-  for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      bMatrices[i] = BMatrices[i];
-    }
-  delete[] BMatrices;
-}
-
-
-void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa)
-{
-  int NbrBMatrices = 2;
-  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [pLevel + 1];
-  RealMatrix* BMatrices = new RealMatrix[NbrBMatrices];
+  RealMatrix* BMatrices = new RealMatrix[nbrBMatrices];
   for (int i = 0; i <= pLevel; ++i)
     {
       U1BosonBasis[i] = new BosonOnDiskShort(i, i, pLevel + 1);
@@ -513,7 +323,9 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, in
 	}
     }
    
-  BMatrices[1] = RealMatrix(MatrixSize, MatrixSize, true);
+  for (int m = 1; m < nbrBMatrices; ++m)
+    BMatrices[m] = RealMatrix(MatrixSize, MatrixSize, true);
+
   unsigned long* Partition1 = new unsigned long [pLevel + 2];
   unsigned long* Partition2 = new unsigned long [pLevel + 2];
   FactorialCoefficient Coef;
@@ -534,10 +346,13 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, in
 	      for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
 		{
 		  TmpSpace2->GetOccupationNumber(k2, Partition2);
-		  double Tmp = CreateLaughlinRealAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
-                  if (cylinderFlag)
-                    Tmp *= exp(-kappa*kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * laughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * laughlinIndex)));
-		  BMatrices[1].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
+		  for (int m = 1; m < nbrBMatrices; ++m)
+		    {
+		      double Tmp = CreateLaughlinRealAMatrixElement(laughlinIndex * m * m, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+		      if (cylinderFlag)
+			Tmp *= exp(-kappa*kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * laughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * laughlinIndex)));
+		      BMatrices[m].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
+		    }
 //		  cout << i << " " << j << " | " << k1 << " " << k2 << " | " << N1 << " " << N2 << " " << (-(N1 + N2 - NValueShift) / 2) << " : " << Tmp << endl;
 		}
 	    }
@@ -547,78 +362,22 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, in
   delete[] Partition1;
   delete[] Partition2;
 
-  for (int i = 0; i < NbrBMatrices; ++i)
+  for (int i = 0; i < nbrBMatrices; ++i)
     {
+      cout << i << " " << nbrBMatrices << endl;
       bMatrices[i] = BMatrices[i];
     }
   delete[] BMatrices;
 }
 
-
-Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, 
-				      int p1Level, int p2Level, int nValue, FactorialCoefficient& coef)
-{
-  Complex Tmp = 1.0;
-  if (nValue != (p1Level - p2Level))
-    {
-      Tmp = 0.0;
-      return Tmp;
-    }
-  int PMax = p1Level;
-  if (p2Level > p1Level)
-    PMax = p2Level;
-  for (int i = 1; i <= PMax; ++i)
-    {
-      Complex Tmp2 = 0.0;
-//      cout << partition1[i] << " " << partition2[i] << " " << i << " " << PMax << endl;
-      for (int j = 0; j <= partition1[i]; ++j)
-	{
-	  int k = partition2[i] + j - partition1[i];
-	  if ((k >= 0) && (k <= partition2[i]))
-	    {
-	      int Sum = k + j;
-	      coef.SetToOne();
-	      coef.PartialFactorialMultiply(partition1[i] - j + 1, partition1[i]);
-	      coef.PartialFactorialMultiply(partition2[i] - k + 1, partition2[i]);
-	      coef.FactorialDivide(j);
-	      coef.FactorialDivide(k);
-	      coef.FactorialDivide(j);
-	      coef.FactorialDivide(k);
-	      coef.PowerNMultiply(laughlinIndex, Sum);
-	      coef.PowerNDivide(i, Sum);
-//	      cout << "Sum=" << Sum << endl;
-	      switch  (Sum & 0x3)
-		{
-		case 0:
-		  Tmp2.Re += sqrt(coef.GetNumericalValue());
-		  break;
-		case 1:
-		  Tmp2.Im += sqrt(coef.GetNumericalValue());
-		  break;
-		case 2:
-		  Tmp2.Re -= sqrt(coef.GetNumericalValue());
-		  break;
-		case 3:
-		  Tmp2.Im -= sqrt(coef.GetNumericalValue());
-		  break;
-		}
-	    }
-	}
-//      cout << Tmp2 << endl;
-      Tmp *= Tmp2;
-    }
-  return Tmp;
-}
-
 double CreateLaughlinRealAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, 
 					 int p1Level, int p2Level, int qValue, FactorialCoefficient& coef)
 {
-  double Tmp = 1.0;
   if (qValue != (p1Level - p2Level))
     {
-      Tmp = 0.0;
-      return Tmp;
+      return 0.0;
     }
+  double Tmp = 1.0;
   int PMax = p1Level;
   if (p2Level > p1Level)
     PMax = p2Level;
@@ -640,7 +399,7 @@ double CreateLaughlinRealAMatrixElement (int laughlinIndex, unsigned long* parti
 	      coef.FactorialDivide(k);
 	      coef.PowerNMultiply(laughlinIndex, Sum);
 	      coef.PowerNDivide(i, Sum);
-	      Tmp2 +=  ((double) (1 - 2 * (Sum & 0x1))) * sqrt(coef.GetNumericalValue());
+	      Tmp2 += ((double) (1 - ((j & 1) << 1))) * sqrt(coef.GetNumericalValue());
 	    }
 	}
       Tmp *= Tmp2;
@@ -648,7 +407,7 @@ double CreateLaughlinRealAMatrixElement (int laughlinIndex, unsigned long* parti
   return Tmp;
 }
 
-void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa)
+void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa)
 {
 
 //   LongRational CentralCharge12 (-3l, 5l);
@@ -848,7 +607,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
 
 
   int NbrBMatrices = 2;
-  ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
+  RealMatrix* BMatrices = new RealMatrix[NbrBMatrices];
 
   int* StartingIndexPerPLevel = new int [pLevel + 1];
   int* NbrIndicesPerPLevel = new int [pLevel + 1];
@@ -868,7 +627,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
     }
   int MatrixSize = NbrIndicesPerPLevel[pLevel] + StartingIndexPerPLevel[pLevel];
   cout << "B matrix size = " << MatrixSize << endl;
-  BMatrices[0] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  BMatrices[0] = RealMatrix(MatrixSize, MatrixSize, true);
   for (int i = 0; i <= pLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -887,7 +646,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
 		    {
 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity.GetNbrColumn(); ++NeutralIndex2)
 			{
-			  Complex Tmp (0.0, 0.0);
+			  double Tmp = 0.0;
 			  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
 			    {
 			      double Tmp1 = 0.0;			      
@@ -905,7 +664,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
 		    {
 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi.GetNbrColumn(); ++NeutralIndex2)
 			{
-			  Complex Tmp (0.0, 0.0);
+			  double Tmp = 0.0;
 			  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
 			    {
 			      double Tmp1 = 0.0;			      
@@ -927,7 +686,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
   FactorialCoefficient Coef;
   unsigned long* Partition1 = new unsigned long [pLevel + 2];
   unsigned long* Partition2 = new unsigned long [pLevel + 2];
-  BMatrices[1] = ComplexMatrix(MatrixSize, MatrixSize, true);
+  BMatrices[1] = RealMatrix(MatrixSize, MatrixSize, true);
   for (int i = 0; i <= pLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -953,13 +712,13 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
 		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
 			{	      
 			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
-			  int N1 = (2 * (j - i) + laughlinIndex - 1 + NValueShift) / 2;
 			  int N2 = (2 * (j - i) - laughlinIndex + 1 + NValueShift) / 2;
+			  int N1 = N2 + laughlinIndex - 1;
 			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 			    {
 			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
 				{
-				  Complex Tmp (0.0, 0.0);
+				  double Tmp = 0.0;
 				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
 				    {
 				      double Tmp1 = 0.0;			      
@@ -969,19 +728,19 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
 					}
 				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
-				  Tmp *= CreateLaughlinAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+				  Tmp *= CreateLaughlinRealAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
 				  BMatrices[1].SetMatrixElement(GetK2MatrixIndex(ChargedIndex1, N1, NbrNValue, 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[p]), 
 								GetK2MatrixIndex(ChargedIndex2, N2, NbrNValue, 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), StartingIndexPerPLevel[q]), Tmp);
 				}
 
 			    }
-			  N1 = (2 * (j - i) + laughlinIndex - 1 + NValueShift) / 2;
 			  N2 = (2 * (j - i) - laughlinIndex + 1 + NValueShift) / 2;
+			  N1 = N2 + laughlinIndex - 1;
 			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 			    {
 			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
 				{
-				  Complex Tmp (0.0, 0.0);
+				  double Tmp = 0.0;
 				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
 				    {
 				      double Tmp1 = 0.0;			      
@@ -991,7 +750,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseComplexMatri
 					}
 				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
-				  Tmp *= CreateLaughlinAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+				  Tmp *= CreateLaughlinRealAMatrixElement(laughlinIndex, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
 				  BMatrices[1].SetMatrixElement(GetK2MatrixIndex(ChargedIndex1, N1, NbrNValue, 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[p]), 
 								GetK2MatrixIndex(ChargedIndex2, N2, NbrNValue, 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), StartingIndexPerPLevel[q]), Tmp);
 				}
@@ -1210,3 +969,4 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
   Tmp1 += Tmp2;
   return Tmp1;
 }
+

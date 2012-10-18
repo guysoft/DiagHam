@@ -6,9 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//         class of fermions on sphere truncated to a given P level           //
+//          class of bosons on sphere truncated to a given P level            //
+//   such that LzMax + NbrBosons - 1 < 63 or 31 (64 bits or 32bits systems)   //
 //                                                                            //
-//                        last modification : 28/09/2012                      //
+//                        last modification : 17/10/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,20 +29,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONSPHEREPTRUNCATED_H
-#define FERMIONONSPHEREPTRUNCATED_H
+#ifndef BOSONONSPHEREPTRUNCATED_H
+#define BOSONONSPHEREPTRUNCATED_H
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphere.h"
-#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/BosonOnSphereShort.h"
 #include "Matrix/SparseRealMatrix.h"
 
 
 #include <iostream>
 
 
-class FermionOnSpherePTruncated :  public FermionOnSphere
+class BosonOnSpherePTruncated :  public BosonOnSphereShort
 {
 
  protected:
@@ -58,36 +58,35 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
 
   // basic constructor
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of fermions
   // totalLz = momentum total value
-  // lzMax = maximum Lz value reached by a fermion
+  // lzMax = maximum Lz value reached by a boson
   // pLevel = truncation level
   // referenceState = array that describes the root configuration
-  // memory = amount of memory granted for precalculations
-  FermionOnSpherePTruncated (int nbrFermions, int& totalLz, int lzMax, int pLevel,
-			     int* referenceState, unsigned long memory = 10000000);
+  BosonOnSpherePTruncated (int nbrBosons, int& totalLz, int lzMax, int pLevel,
+			   int* referenceState);
 
   // copy constructor (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
-  FermionOnSpherePTruncated(const FermionOnSpherePTruncated& fermions);
+  // bosons = reference on the hilbert space to copy to copy
+  BosonOnSpherePTruncated(const BosonOnSpherePTruncated& bosons);
 
   // destructor
   //
-  virtual ~FermionOnSpherePTruncated ();
+  virtual ~BosonOnSpherePTruncated ();
 
   // assignment (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
+  // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnSpherePTruncated& operator = (const FermionOnSpherePTruncated& fermions);
+  BosonOnSpherePTruncated& operator = (const BosonOnSpherePTruncated& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  // create a state from its MPS description
+  // create a state from its MPS description, assuming the resulting state is real
   //
   // bMatrices = array that gives the B matrices 
   // state = reference to vector that will contain the state description
@@ -95,52 +94,9 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // memory = amount of memory that can be use to precompute matrix multiplications  
   // initialIndex = initial index to compute
   // nbrComponents = number of components to compute
-  void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int traceFlag, long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
-
-  // convert a given state from truncated to Haldane basis
-  //
-  // state = reference on the vector to convert
-  // haldaneBasis = reference on the Haldane basis to use
-  // return value = converted vector
-  RealVector ConvertToHaldaneBasis(RealVector& state, FermionOnSphereHaldaneBasis& haldaneBasis);
-
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int traceFlag, long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
+  
  protected:
-
-  // find state index
-  //
-  // stateDescription = unsigned integer describing the state
-  // lzmax = maximum Lz value reached by a fermion in the state
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
-
-  // evaluate Hilbert space dimension
-  //
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // totalLz = momentum total value
-  // level = current level for truncation
-  // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int level);
-
-  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
-  //
-  // nbrFermions = number of fermions
-  // lzMax = two times momentum maximum value for a fermion plus one 
-  // totalLz = momentum total value plus nbrFermions * (momentum maximum value for a fermion + 1)
-  // level = current level for truncation
-  // return value = Hilbert space dimension  
-  long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int level);
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // lzMax = momentum maximum value for a fermion
-  // currentLzMax = momentum maximum value for fermions that are still to be placed
-  // totalLz = momentum total value
-  // level = current level
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  long GenerateStates(int nbrFermions, int lzMax, int currentLzMax, int totalLz, int level, long pos);
 
 };
 

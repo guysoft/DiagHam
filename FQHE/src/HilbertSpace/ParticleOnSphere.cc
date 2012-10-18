@@ -1111,3 +1111,16 @@ RealVector& ParticleOnSphere::NormalizeJackToCylinder(RealVector& state, double 
 {
   return state;
 }
+
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// state = reference to vector that will contain the state description
+// traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// memory = amount of memory that can be use to precompute matrix multiplications  
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+void ParticleOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int traceFlag, long memory, long initialIndex, long nbrComponents)
+{
+}
+

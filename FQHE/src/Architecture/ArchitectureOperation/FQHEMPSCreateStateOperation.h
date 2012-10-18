@@ -35,12 +35,12 @@
 #include "config.h"
 #include "Vector/RealVector.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
-#include "HilbertSpace/FermionOnSpherePTruncated.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 
 
 
 class RealVector;
-class SparseComplexMatrix;
+class SparseRealMatrix;
 
 
 class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
@@ -49,16 +49,13 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
  protected:
   
   // pointer to the Hilbert space
-  FermionOnSpherePTruncated* Space;
+  ParticleOnSphere* Space;
 
   // vector where the MPS state will be stored
   RealVector* OutputState;
 
   // array that gives the B matrices 
-  SparseComplexMatrix* BMatrices;
-
-  // array that gives the real B matrices 
-  SparseRealMatrix* RealBMatrices;
+  SparseRealMatrix* BMatrices;
 
   // indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
   int TraceFlag;  
@@ -80,16 +77,7 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // state = pointer to the vector where the MPS state will be stored
   // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
   // blockSize = indicates the size of the block for precalculations
-  FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseComplexMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize);
-  
-  // constructor from real B matrices
-  //
-  // space = pointer to the Hilbert space
-  // bMatrices = array that gives the B matrices 
-  // state = pointer to the vector where the MPS state will be stored
-  // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
-  // blockSize = indicates the size of the block for precalculations
-  FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space, SparseRealMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize);
+  FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize);
   
   // copy constructor 
   //
@@ -100,7 +88,7 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   //
   // space= pointer to the HilbertSpace to use
   // architecture = pointer to the distributed architecture to use for communications
-  FQHEMPSCreateStateOperation(FermionOnSpherePTruncated* space,  SimpleMPIArchitecture* architecture);
+  FQHEMPSCreateStateOperation(ParticleOnSphere* space,  SimpleMPIArchitecture* architecture);
   
   // destructor
   //
