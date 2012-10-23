@@ -251,6 +251,12 @@ class SparseRealMatrix : public Matrix
   // return value = reference on output stream
   friend ostream& operator << (ostream& Str, const SparseRealMatrix& P);
 
+  // output the matrix in a sparse display (column formatted output)
+  //
+  // str = reference on output stream
+  // return value = reference on output stream
+  ostream& PrintNonZero (ostream& str);
+
 #ifdef USE_OUTPUT
 
  // Mathematica Output Stream overload
