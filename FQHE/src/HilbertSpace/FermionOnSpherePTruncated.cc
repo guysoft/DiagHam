@@ -378,9 +378,9 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
 	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
 	      TmpStateDescription >>= 1;
 	    } 
-// 	  cout << " final matrix " << i << " : ";
-// 	  TmpMatrix.PrintNonZero(cout) << endl;
-// 	  cout << "--------------------------------" << endl;
+//  	  cout << " final matrix " << i << " : ";
+//  	  TmpMatrix.PrintNonZero(cout) << endl;
+//  	  cout << "--------------------------------" << endl;
 //	  cout << TmpMatrix << endl;
 	  if (traceFlag < 0)
 	    state[i] = TmpMatrix.Tr();
