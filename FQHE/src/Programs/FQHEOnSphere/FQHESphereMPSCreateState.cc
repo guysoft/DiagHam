@@ -42,9 +42,18 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, in
 
 double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int qValue, FactorialCoefficient& coef);
 
+// creates the B matrices for the (k,r) clustered with k=2
+//
+// laughlinIndex = power of the Laughlin part 
+// rIndex = r value
+// bMatrices = array where the B matrices will be stored
+// pLevel = |P| level truncation
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
 void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
 
-LongRational ComputeDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight);
+// 
+LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight);
 
 LongRational ComputeDescendantMatrixElement (long* partition, int partitionLength, int descendantPosition, int position, 
 					     LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
@@ -180,7 +189,7 @@ int main(int argc, char** argv)
       NbrBMatrices = NbrParticles + 1;
     }
 
-//   CreateMooreReadBMatrices (2, RIndex, 0, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+//   CreateK2ClusteredStateBMatrices (2, RIndex, 0, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
 //   return 0;
   
   SparseRealMatrix* SparseBMatrices = new SparseRealMatrix[NbrBMatrices];
@@ -190,7 +199,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      CreateMooreReadBMatrices (2, RIndex, SparseBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+      CreateK2ClusteredStateBMatrices (2, RIndex, SparseBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
     }
 
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
@@ -415,7 +424,16 @@ double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator,
   return Tmp;
 }
 
-void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa)
+// creates the B matrices for the (k,r) clustered with k=2
+//
+// laughlinIndex = power of the Laughlin part 
+// rIndex = r value
+// bMatrices = array where the B matrices will be stored
+// pLevel = |P| level truncation
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+
+void CreateK2ClusteredStateBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa)
 {
   LongRational CentralCharge12 ((rIndex + 2l) - (2l * (rIndex - 1l) * (rIndex - 1l)), rIndex + 2l);
   cout << "central charge = " << CentralCharge12 << endl;
@@ -472,9 +490,9 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 		  Partition[PartitionLength] = -(long) k;
 		  ++PartitionLength;		  
 		}
-	    LongRational Tmp = ComputeDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity);
+	    LongRational Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity);
 	    ScalarProductIdentity[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
-	    Tmp = ComputeDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi);
+	    Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi);
 	    ScalarProductPsi[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
 	  }
       
@@ -886,7 +904,7 @@ inline int GetK2MatrixIndex(int charge, int chargedPartitionIndex, int nbrCharge
   return (((((nbrIdentityDescendant * fieldIndex) + neutralPartitionIndex) * chargeSectorDimension + chargedPartitionIndex) * nbrCharges + charge) + globalIndexShift);
 }
 
-LongRational ComputeDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight)
+LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight)
 {
   if (partitionLength == 0)
     {
@@ -923,7 +941,7 @@ LongRational ComputeDescendantScalarProduct (long* partition, int partitionLengt
 	partition[i - 2] = partition[i];
       Tmp += ((((Store * (Store * Store - 1l)) * centralCharge12)
 	       + (2l * Store) * (weight - TmpLength)) * 
-	      ComputeDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, weight));
+	      ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, weight));
       for (int i = partitionLength - 1; i > position; --i)
 	partition[i] = partition[i - 2];
       partition[position - 1] = Store;
@@ -939,12 +957,12 @@ LongRational ComputeDescendantScalarProduct (long* partition, int partitionLengt
       if ((Store1 + Store2) > 0)
 	{
 	  Tmp += ((Store1 - Store2) 
-		  * ComputeDescendantScalarProduct(partition, partitionLength - 1, position, centralCharge12, weight));
+		  * ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, position, centralCharge12, weight));
 	}
       else
 	{
 	  Tmp += ((Store1 - Store2) 
-		  * ComputeDescendantScalarProduct(partition, partitionLength - 1, position - 1, centralCharge12, weight));
+		  * ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, position - 1, centralCharge12, weight));
 	}
       for (int i = partitionLength - 1; i > position; --i)
 	partition[i] = partition[i - 1];
@@ -955,7 +973,7 @@ LongRational ComputeDescendantScalarProduct (long* partition, int partitionLengt
   long Store1 = partition[position - 1];
   partition[position - 1] = partition[position];
   partition[position] = Store1;
-  Tmp += ComputeDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, weight);
+  Tmp += ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, weight);
   Store1 = partition[position - 1];
   partition[position - 1] = partition[position];
   partition[position] = Store1;
