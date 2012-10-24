@@ -170,7 +170,10 @@ int main(int argc, char** argv)
   int MatrixElement = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
   if (Manager.GetBoolean("k-2") == true)
     {
-      MatrixElement = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
+      if ((Manager.GetInteger("r-index") & 1) == 0)
+	MatrixElement = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
+      else
+	MatrixElement = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
     }
   if (Manager.GetBoolean("boson"))
     {
@@ -729,7 +732,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 		}
 	      else
 		{
-		  for (int j = 2; j < NbrNValue; j += 2)
+		  for (int j = 2; j < NbrNValue; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
