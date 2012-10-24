@@ -512,6 +512,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 	    if (fabs(TmpDiag(n, n)) > Error)
 	      {
 		OrthogonalBasisIdentity[i][Count].Copy(TmpBasis[n]);
+		OrthogonalBasisIdentity[i][Count] /=  sqrt(TmpDiag(n, n));
 		++Count;
 	      }
 	}
@@ -547,6 +548,7 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 	    if (fabs(TmpDiag(n, n)) > Error)
 	      {
 		OrthogonalBasisPsi[i][Count].Copy(TmpBasis[n]);
+		OrthogonalBasisPsi[i][Count] /=  sqrt(TmpDiag(n, n));
 		++Count;
 	      }
 	}
@@ -591,20 +593,25 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 		      Partition[PartitionLength] = -(long) k;
 		      ++PartitionLength;		  
 		    }
-		cout << "< ";
-		for (int k = 0; k < Position; ++k)
-		  cout << Partition[k] << " ";
-		cout << "| ";
-		for (int k = Position; k < PartitionLength; ++k)
-		  cout << Partition[k] << " ";
-		cout << "> = ";	    
+// 		cout << "<0 (";
+// 		for (int k = 0; k < Position; ++k)
+// 		  cout << Partition[k] << " ";
+// 		cout << ")| 1 (";
+// 		for (int k = Position; k < PartitionLength; ++k)
+// 		  cout << Partition[k] << " ";
+// 		cout << ")> = ";	    
 		LongRational Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight);
-		cout << Tmp << " (0,1)   ";
+// 		cout << Tmp << endl;
+// 		cout << "<1 (";
+// 		for (int k = 0; k < Position; ++k)
+// 		  cout << Partition[k] << " ";
+// 		cout << ")| 0 (";
+// 		for (int k = Position; k < PartitionLength; ++k)
+// 		  cout << Partition[k] << " ";
+// 		cout << ")> = ";	    
 		MatrixPsi01[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
 		Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight);
- 		cout << Tmp << " (1,0)" << endl;
-// 		double Toto = Tmp.GetNumericalValue();
-// 		cout << m << " " <<  n << " " << MatrixPsi10[i][j].GetNbrRow() << " " << MatrixPsi10[i][j].GetNbrColumn() << " " << Toto << endl;
+// 		cout << Tmp << endl;
 		MatrixPsi10[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
 	      }
 	}
@@ -815,8 +822,10 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
 					{
 					  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+//					  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
 					}
 				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+//				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
 //				  cout <<  "Delta1=0 Delta2=1 " << NeutralIndex1 << " " << NeutralIndex2 <<  " " << " N1=" << N1 << " N2=" << N2 << " ChargedIndex1=" << ChargedIndex1 << " ChargedIndex2=" << ChargedIndex1 << " " << NValueShift << endl;
@@ -866,36 +875,36 @@ void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* 
 	}
     }
   
-  for (int i = 0; i <= pLevel; ++i)
-    {
-      cout << "level " << i << endl;
-      for (int p = 0; p <= i; ++p)
-	{
-	  cout << "StartingIndexPerPLevel[" << i << "][" << p << "] = " << StartingIndexPerPLevel[i][p] << endl;
-	  BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[i - p];
-	  RealMatrix& TmpOrthogonalBasisIdentity = OrthogonalBasisIdentity[i - p];
-	  RealMatrix& TmpOrthogonalBasisPsi = OrthogonalBasisPsi[i - p];
-	  RealSymmetricMatrix& TmpScalarProductIdentity = ScalarProductIdentity[i - p];
-	  RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[i - p];
-	  BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
-	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
-	    {	      
-	      for (int j = 0; j < NbrNValue; ++j)
-		{
-		  cout << "  Delta = 0" << endl ; 
-		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity.GetNbrColumn(); ++NeutralIndex1)
-		    {
-		      cout << "      mu=" << ChargedIndex << " N=" << j << " lambda=" << NeutralIndex1 << " : " << GetK2MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity.GetNbrColumn(), StartingIndexPerPLevel[i][p]) << endl;
-		    }
-		  cout << "  Delta = 1" << endl ; 
-		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi.GetNbrColumn(); ++NeutralIndex1)
-		    {
-		      cout << "      mu=" << ChargedIndex << " N=" << j << " lambda=" << NeutralIndex1 << " : " << GetK2MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity.GetNbrColumn(), StartingIndexPerPLevel[i][p]) << endl;
-		    }
-		}
-	    }
-	}
-    }
+//   for (int i = 0; i <= pLevel; ++i)
+//     {
+//       cout << "level " << i << endl;
+//       for (int p = 0; p <= i; ++p)
+// 	{
+// 	  cout << "StartingIndexPerPLevel[" << i << "][" << p << "] = " << StartingIndexPerPLevel[i][p] << endl;
+// 	  BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[i - p];
+// 	  RealMatrix& TmpOrthogonalBasisIdentity = OrthogonalBasisIdentity[i - p];
+// 	  RealMatrix& TmpOrthogonalBasisPsi = OrthogonalBasisPsi[i - p];
+// 	  RealSymmetricMatrix& TmpScalarProductIdentity = ScalarProductIdentity[i - p];
+// 	  RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[i - p];
+// 	  BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
+// 	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+// 	    {	      
+// 	      for (int j = 0; j < NbrNValue; ++j)
+// 		{
+// 		  cout << "  Delta = 0" << endl ; 
+// 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity.GetNbrColumn(); ++NeutralIndex1)
+// 		    {
+// 		      cout << "      mu=" << ChargedIndex << " N=" << j << " lambda=" << NeutralIndex1 << " : " << GetK2MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity.GetNbrColumn(), StartingIndexPerPLevel[i][p]) << endl;
+// 		    }
+// 		  cout << "  Delta = 1" << endl ; 
+// 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi.GetNbrColumn(); ++NeutralIndex1)
+// 		    {
+// 		      cout << "      mu=" << ChargedIndex << " N=" << j << " lambda=" << NeutralIndex1 << " : " << GetK2MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity.GetNbrColumn(), StartingIndexPerPLevel[i][p]) << endl;
+// 		    }
+// 		}
+// 	    }
+// 	}
+//     }
 
   for (int i = 0; i < NbrBMatrices; ++i)
     {
@@ -1001,9 +1010,9 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
     }
   while ((position > 0) && (partition[position - 1] < 0l))
     --position;
-//   for (int i = 0; i < partitionLength; ++i)
-//     cout << partition[i] << " ";
-//   cout << "| " << partitionLength << " " << descendantPosition << " " << position << endl;
+//    for (int i = 0; i < partitionLength; ++i)
+//      cout << partition[i] << " ";
+//    cout << "| " << partitionLength << " " << descendantPosition << " " << position << endl;
   if (descendantPosition == partitionLength) 
     {
       LongRational Tmp(1l);
@@ -1021,6 +1030,7 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
 	  Tmp2 += Tmp3;	  
 	  Tmp *= Tmp2;
 	}
+//      cout << "part max " << Tmp << endl;
       return Tmp;
     }
   if (position == 0)
@@ -1041,6 +1051,7 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
 	  Tmp *= Tmp2;
 	}
       Tmp *= 1l - (2l * (partitionLength & 1l));
+//      cout << "part 0 " << Tmp << endl;
       return Tmp;
     }
   if (descendantPosition < position)
@@ -1064,7 +1075,7 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
 	}
       else
 	{
-	  long Store1 = partition[position - 1];
+ 	  long Store1 = partition[position - 1];
 	  long Store2 = partition[position];
 	  partition[position - 1] += partition[position];
 	  for (int i = position + 1; i < partitionLength; ++i)
@@ -1112,7 +1123,7 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
     partition[i - 1] = partition[i];
   Tmp2 *= ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition - 1, position - 1, 
 					 centralCharge12, weight1, weight2, weight);
-  for (int i = partitionLength - 1; i > position; --i)
+  for (int i = partitionLength - 1; i >= position; --i)
     partition[i] = partition[i - 1];
   partition[position - 1] = Store;
   Tmp1 += Tmp2;
