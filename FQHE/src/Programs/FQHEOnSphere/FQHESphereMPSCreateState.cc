@@ -50,7 +50,7 @@ double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator,
 // pLevel = |P| level truncation
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
-void CreateMooreReadBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
+void CreateK2ClusteredStateBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
 
 // 
 LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight);
