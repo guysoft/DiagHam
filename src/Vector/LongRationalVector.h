@@ -50,6 +50,8 @@ using std::ostream;
 class LongRationalVector : public Vector
 {
 
+  friend class LongRationalMatrix;
+
  protected:
 
   // array for the vector components

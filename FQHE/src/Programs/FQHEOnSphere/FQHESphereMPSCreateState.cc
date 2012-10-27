@@ -38,11 +38,29 @@ using std::ios;
 using std::ofstream;
 
 
+// create the B matrices for the laughlin state
+//
+// laughlinIndex = power of the Laughlin part 
+// bMatrices = array where the B matrices will be stored
+// nbrBMatrices = number of B matrices to compute (max occupation + 1)
+// pLevel = |P| level truncation
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
 void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, int nbrBMatrices, int pLevel, bool cylinderFlag, double kappa);
 
-double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int qValue, FactorialCoefficient& coef);
+// create the matrix element of the B matrix U(1) part
+//
+// chargeNumerator = numerator of the charge (in sqrt(q) unit)
+// chargeDenominator = denominator of the charge (in sqrt(q) unit)
+// partition1 = U(1) partition associated to the left state
+// p1Level = length of partition1
+// partition2 = U(1) partition associated to the left state
+// p1Level = length of partition2
+// coef = reference on a temporary factorial coefficient
+// return value = matrix element
+double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, FactorialCoefficient& coef);
 
-// creates the B matrices for the (k,r) clustered with k=2
+// create the B matrices for the (k,r) clustered with k=2
 //
 // laughlinIndex = power of the Laughlin part 
 // rIndex = r value
@@ -59,7 +77,26 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
 					     LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
 					     LongRational& weight);
 
+// compute the linearized index of the B matrix for the k=2 case
+//
+// return value = linearized index
 int GetK2MatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
+
+// create the B matrices for the k=3 Read-Rezayi state
+//
+// laughlinIndex = power of the Laughlin part 
+// bMatrices = array where the B matrices will be stored
+// pLevel = |P| level truncation
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa);
+
+
+// compute the linearized index of the B matrix for the k=3 Read-Rezayi state
+//
+// return value = linearized index
+int GetReadRezayiK3MatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int nbrPsiDescendant, int globalIndexShift);
+
 
 int main(int argc, char** argv)
 {
@@ -84,6 +121,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "k-2", "consider the (k=2,r) series of clustered states");
+ (*SystemGroup) += new BooleanOption  ('\n', "rr-3", "consider the k= 3 Read-Rezayi state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
@@ -195,7 +233,10 @@ int main(int argc, char** argv)
   SparseRealMatrix* SparseBMatrices = new SparseRealMatrix[NbrBMatrices];
   if (Manager.GetBoolean("k-2") == false)
     {
-      CreateLaughlinBMatrices (LaughlinIndex, SparseBMatrices, NbrBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+      if (Manager.GetBoolean("rr-3") == false)
+	CreateLaughlinBMatrices (LaughlinIndex, SparseBMatrices, NbrBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
+      else
+	CreateReadRezayiK3StateBMatrices (2, SparseBMatrices, Manager.GetInteger("p-truncation"), CylinderFlag, kappa);
     }
   else
     {
@@ -303,6 +344,15 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// creates the B matrices for the laughlin state
+//
+// laughlinIndex = power of the Laughlin part 
+// bMatrices = array where the B matrices will be stored
+// nbrBMatrices = number of B matrices to compute (max occupation + 1)
+// pLevel = |P| level truncation
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+
 void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, int nbrBMatrices, int pLevel, bool cylinderFlag, double kappa)
 {
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [pLevel + 1];
@@ -365,7 +415,7 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, in
 		  TmpSpace2->GetOccupationNumber(k2, Partition2);
 		  for (int m = 1; m < nbrBMatrices; ++m)
 		    {
-		      double Tmp = CreateLaughlinAMatrixElement(laughlinIndex * m * m, 1, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+		      double Tmp = CreateLaughlinAMatrixElement(laughlinIndex * m * m, 1, Partition1, Partition2, i, j, Coef);
 		      if (cylinderFlag)
 			Tmp *= exp(-kappa*kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * laughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * laughlinIndex)));
 		      BMatrices[m].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
@@ -387,12 +437,8 @@ void CreateLaughlinBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices, in
 }
 
 double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator, unsigned long* partition1, unsigned long* partition2, 
-				     int p1Level, int p2Level, int qValue, FactorialCoefficient& coef)
+				     int p1Level, int p2Level, FactorialCoefficient& coef)
 {
-//   if (qValue != (p1Level - p2Level))
-//     {
-//       return 0.0;
-//     }
   double Tmp = 1.0;
   int PMax = p1Level;
   if (p2Level > p1Level)
@@ -432,6 +478,7 @@ double CreateLaughlinAMatrixElement (int chargeNumerator, int chargeDenominator,
 // pLevel = |P| level truncation
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// return value = matrix element
 
 void CreateK2ClusteredStateBMatrices (int laughlinIndex, int rIndex, SparseRealMatrix* bMatrices, int pLevel, bool cylinderFlag, double kappa)
 {
@@ -849,7 +896,7 @@ void CreateK2ClusteredStateBMatrices (int laughlinIndex, int rIndex, SparseRealM
 					}
 				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
-				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(GetK2MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								GetK2MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
@@ -879,7 +926,7 @@ void CreateK2ClusteredStateBMatrices (int laughlinIndex, int rIndex, SparseRealM
 					}
 				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
-				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, - (N1 + N2 - NValueShift) / 2, Coef);
+				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(GetK2MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								GetK2MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
@@ -1110,3 +1157,615 @@ LongRational ComputeDescendantMatrixElement (long* partition, int partitionLengt
   return Tmp1;
 }
 
+// create the B matrices for the k=3 Read-Rezayi state
+//
+// laughlinIndex = power of the Laughlin part 
+// bMatrices = array where the B matrices will be stored
+// pLevel = |P| level truncation
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+
+void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMatrices,int pLevel, bool cylinderFlag, double kappa)
+{
+  LongRational CentralCharge (4l, 5l);
+  cout << "central charge = " << CentralCharge << endl;
+  LongRational CentralCharge12(CentralCharge);
+  CentralCharge12 /= 12l;
+  LongRational WeightIdentity (0l, 1l);
+  LongRational WeightPsi (2l, 3l);
+  LongRational WeightW (3l);
+  long* Partition = new long[2 * (pLevel + 1)];
+  unsigned long* TmpPartition = new unsigned long [pLevel + 2];
+
+  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [pLevel + 1];
+  RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[pLevel + 1];
+  RealSymmetricMatrix* ScalarProductW = new RealSymmetricMatrix[pLevel + 1];
+  RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[pLevel + 1];
+  RealMatrix** MatrixPsi01 = new RealMatrix*[pLevel + 1];
+  RealMatrix** MatrixPsi10 = new RealMatrix*[pLevel + 1];
+  RealMatrix** MatrixPsi02 = new RealMatrix*[pLevel + 1];
+  RealMatrix** MatrixPsi20 = new RealMatrix*[pLevel + 1];
+  RealMatrix** MatrixPsi12 = new RealMatrix*[pLevel + 1];
+  RealMatrix** MatrixPsi21 = new RealMatrix*[pLevel + 1];
+  RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[pLevel + 1];
+  RealMatrix* OrthogonalBasisWLeft = new RealMatrix[pLevel + 1];
+  RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[pLevel + 1];
+  RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[pLevel + 1];
+  RealMatrix* OrthogonalBasisWRight = new RealMatrix[pLevel + 1];
+  RealMatrix* OrthogonalBasisPsiRight = new RealMatrix[pLevel + 1];
+
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      U1BosonBasis[i] = new BosonOnDiskShort (i, i, pLevel + 1);
+      MatrixPsi01[i] = new RealMatrix[pLevel + 1];
+      MatrixPsi10[i] = new RealMatrix[pLevel + 1];
+      MatrixPsi02[i] = new RealMatrix[pLevel + 1];
+      MatrixPsi20[i] = new RealMatrix[pLevel + 1];
+      MatrixPsi21[i] = new RealMatrix[pLevel + 1];
+      MatrixPsi12[i] = new RealMatrix[pLevel + 1];
+    }
+  
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      cout << "Level = " <<  i << endl;
+      ScalarProductIdentity[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      ScalarProductW[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      ScalarProductPsi[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	for (int m = n; m < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
+	  {
+	    int PartitionLength = 0;
+	    U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
+	    for (int k = 1; k <= i; ++k)
+	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		{
+		  ++PartitionLength;
+		}
+	    int Position = PartitionLength;
+	    PartitionLength = 0;
+	    for (int k = 1; k <= i; ++k)
+	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		{
+		   Partition[Position - PartitionLength - 1] = (long) k;
+		  ++PartitionLength;
+		}
+	    U1BosonBasis[i]->GetOccupationNumber(m, TmpPartition);	    
+	    for (int k = 1; k <= i; ++k)
+	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		{
+		  Partition[PartitionLength] = -(long) k;
+		  ++PartitionLength;		  
+		}
+	    LongRational Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity);
+	    ScalarProductIdentity[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
+	    Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightW);
+	    Tmp *= 3l;
+	    Tmp /= CentralCharge;
+	    ScalarProductW[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
+	    Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi);
+	    ScalarProductPsi[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
+	  }
+      
+      RealSymmetricMatrix TmpMatrix;
+      TmpMatrix.Copy(ScalarProductIdentity[i]);
+      RealMatrix TmpBasis(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension());
+      TmpBasis.SetToIdentity();
+      RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+      TmpMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
+#else
+      TmpMatrix.Diagonalize(TmpDiag, TmpBasis);
+#endif
+      double Error = 0.0;
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	if (fabs(TmpDiag(n, n)) > Error)
+	  Error = fabs(TmpDiag(n, n));
+      Error *= 1e-14;
+      if (Error < 1e-14)
+	Error = 1e-14;
+      int Count  = 0;
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	if (fabs(TmpDiag(n, n)) < Error)
+	  ++Count;
+      cout << "nbr of null vectors identity sector = " << Count << endl;
+      if (Count < U1BosonBasis[i]->GetHilbertSpaceDimension())
+	{
+	  OrthogonalBasisIdentityLeft[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count, true);
+	  OrthogonalBasisIdentityRight[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count, true);
+	  Count = 0;
+	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	    if (fabs(TmpDiag(n, n)) > Error)
+	      {
+		OrthogonalBasisIdentityLeft[i][Count].Copy(TmpBasis[n]);
+		OrthogonalBasisIdentityRight[i][Count].Copy(TmpBasis[n]);
+		if (TmpDiag(n, n) > 0)
+		  {
+		    OrthogonalBasisIdentityLeft[i][Count] /=  sqrt(TmpDiag(n, n));
+		    OrthogonalBasisIdentityRight[i][Count] /=  sqrt(TmpDiag(n, n));
+		  }
+		else
+		  {
+		    OrthogonalBasisIdentityLeft[i][Count] /=  sqrt(-TmpDiag(n, n));
+		    OrthogonalBasisIdentityRight[i][Count] /=  -sqrt(-TmpDiag(n, n));
+		  }
+		++Count;
+	      }
+	}
+      else
+	{
+	  OrthogonalBasisIdentityLeft[i] = RealMatrix();
+	  OrthogonalBasisIdentityRight[i] = RealMatrix();
+	}
+
+      TmpMatrix.Copy(ScalarProductW[i]);
+      TmpBasis.SetToIdentity();
+#ifdef __LAPACK__
+      TmpMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
+#else
+      TmpMatrix.Diagonalize(TmpDiag, TmpBasis);
+#endif
+      Error = 0.0;
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	if (fabs(TmpDiag(n, n)) > Error)
+	  Error = fabs(TmpDiag(n, n));
+      Error *= 1e-14;
+      if (Error < 1e-14)
+	Error = 1e-14;
+      Count  = 0;
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	if (fabs(TmpDiag(n, n)) < Error)
+	  ++Count;
+      cout << "nbr of null vectors W_-3 sector = " << Count << endl;
+      if (Count < U1BosonBasis[i]->GetHilbertSpaceDimension())
+	{
+	  OrthogonalBasisWLeft[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count);
+	  OrthogonalBasisWRight[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count);
+	  Count = 0;
+	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	    if (fabs(TmpDiag(n, n)) > Error)
+	      {
+		OrthogonalBasisWLeft[i][Count].Copy(TmpBasis[n]);
+		OrthogonalBasisWRight[i][Count].Copy(TmpBasis[n]);
+		if (TmpDiag(n, n) > 0)
+		  {
+		    OrthogonalBasisWLeft[i][Count] /=  sqrt(TmpDiag(n, n));
+		    OrthogonalBasisWRight[i][Count] /=  sqrt(TmpDiag(n, n));
+		  }
+		else
+		  {
+		    OrthogonalBasisWLeft[i][Count] /=  sqrt(-TmpDiag(n, n));
+		    OrthogonalBasisWRight[i][Count] /=  -sqrt(-TmpDiag(n, n));
+		  }
+		++Count;
+	      }
+	}
+      else
+	{
+	  OrthogonalBasisWLeft[i] = RealMatrix();
+	  OrthogonalBasisWRight[i] = RealMatrix();
+	}
+
+      TmpMatrix.Copy(ScalarProductPsi[i]);
+      TmpBasis.SetToIdentity();
+#ifdef __LAPACK__
+      TmpMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
+#else
+      TmpMatrix.Diagonalize(TmpDiag, TmpBasis);
+#endif
+      Error = 0.0;
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	if (fabs(TmpDiag(n, n)) > Error)
+	  Error = fabs(TmpDiag(n, n));
+      Error *= 1e-14;
+      if (Error < 1e-14)
+	Error = 1e-14;
+      Count  = 0;
+      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	if (fabs(TmpDiag(n, n)) < Error)
+	  ++Count;
+      cout << "nbr of null vectors Psi sector = " << Count << endl;
+      if (Count < U1BosonBasis[i]->GetHilbertSpaceDimension())
+	{
+	  OrthogonalBasisPsiLeft[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count);
+	  OrthogonalBasisPsiRight[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count);
+	  Count = 0;
+	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	    if (fabs(TmpDiag(n, n)) > Error)
+	      {
+		OrthogonalBasisPsiLeft[i][Count].Copy(TmpBasis[n]);
+		OrthogonalBasisPsiRight[i][Count].Copy(TmpBasis[n]);
+		if (TmpDiag(n, n) > 0)
+		  {
+		    OrthogonalBasisPsiLeft[i][Count] /=  sqrt(TmpDiag(n, n));
+		    OrthogonalBasisPsiRight[i][Count] /=  sqrt(TmpDiag(n, n));
+		  }
+		else
+		  {
+		    OrthogonalBasisPsiLeft[i][Count] /=  sqrt(-TmpDiag(n, n));
+		    OrthogonalBasisPsiRight[i][Count] /=  -sqrt(-TmpDiag(n, n));
+		  }
+		++Count;
+	      }
+	}
+      else
+	{
+	  OrthogonalBasisPsiLeft[i] = RealMatrix();
+	  OrthogonalBasisPsiRight[i] = RealMatrix();
+	}
+      cout << "---------------------------------" << endl;
+    }
+
+  cout << "computing Psi matrix elements" << endl;
+  LongRational Weight (WeightPsi);
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      for (int j = 0; j <= pLevel; ++j)
+	{
+	  MatrixPsi01[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  MatrixPsi10[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  MatrixPsi02[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  MatrixPsi20[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  MatrixPsi12[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  MatrixPsi21[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  cout << "Levels = " <<  i << " " << j << endl;
+	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	    for (int m = 0; m < U1BosonBasis[j]->GetHilbertSpaceDimension(); ++m)
+	      {
+		int PartitionLength = 0;
+		U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
+		for (int k = 1; k <= i; ++k)
+		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		    {
+		      ++PartitionLength;
+		    }
+		int Position = PartitionLength;
+		PartitionLength = 0;
+		for (int k = 1; k <= i; ++k)
+		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		    {
+		      Partition[Position - PartitionLength - 1] = (long) k;
+		      ++PartitionLength;
+		    }
+		U1BosonBasis[j]->GetOccupationNumber(m, TmpPartition);	    
+		for (int k = 1; k <= j; ++k)
+		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		    {
+		      Partition[PartitionLength] = -(long) k;
+		      ++PartitionLength;		  
+		    }
+		LongRational Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight);
+		MatrixPsi01[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
+		Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight);
+		MatrixPsi10[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
+		Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightW, Weight);
+		MatrixPsi02[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
+		Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightIdentity, Weight);
+		MatrixPsi20[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
+		Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightW, Weight);
+		MatrixPsi12[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * sqrt(26.0) / 9.0);
+		Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightPsi, Weight);
+		MatrixPsi21[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * sqrt(26.0) / 9.0);
+	      }
+	}
+    }
+
+
+  int NbrBMatrices = 2;
+  RealMatrix* BMatrices = new RealMatrix[NbrBMatrices];
+
+  int** StartingIndexPerPLevel = new int* [pLevel + 1];
+  int* TotalStartingIndexPerPLevel = new int [pLevel + 1];
+  int* NbrIndicesPerPLevel = new int [pLevel + 1];
+  TotalStartingIndexPerPLevel[0] = 0;
+  StartingIndexPerPLevel[0] = new int [1];
+  StartingIndexPerPLevel[0][0] = 0;
+
+  
+  int NbrNValue;
+  int NValueShift;
+  int QValue;
+  int QValueDenominator;
+  QValue = 5;
+  QValueDenominator = 3;
+  NbrNValue = QValueDenominator * (2 * pLevel) + 18 + 2 + 1;
+  NValueShift = QValueDenominator * pLevel + 8;
+
+     
+  NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn() + 
+									   OrthogonalBasisWLeft[0].GetNbrColumn())) * NbrNValue;
+  for (int i = 1; i <= pLevel; ++i)
+    {
+      TotalStartingIndexPerPLevel[i] = TotalStartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
+      StartingIndexPerPLevel[i] = new int [i + 1];      
+      StartingIndexPerPLevel[i][0] = TotalStartingIndexPerPLevel[i];
+      int Tmp = 0;
+      int Tmp2;
+      for (int j = 0; j < i; ++j)
+	{
+	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn() + 
+								OrthogonalBasisWLeft[i - j].GetNbrColumn()) * NbrNValue;
+	  StartingIndexPerPLevel[i][j + 1] = Tmp2 + StartingIndexPerPLevel[i][j];
+	  Tmp += Tmp2;
+	}
+      Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn() + 
+							    OrthogonalBasisWLeft[0].GetNbrColumn()) * NbrNValue;
+      NbrIndicesPerPLevel[i] =  Tmp;
+    }
+  
+  int MatrixSize = NbrIndicesPerPLevel[pLevel] + TotalStartingIndexPerPLevel[pLevel];
+  cout << "B matrix size = " << MatrixSize << endl;
+  BMatrices[0] = RealMatrix(MatrixSize, MatrixSize, true);
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      for (int p = 0; p <= i; ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[i - p];
+	  RealMatrix& TmpOrthogonalBasisIdentityLeft = OrthogonalBasisIdentityLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPsiLeft = OrthogonalBasisPsiLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisWLeft = OrthogonalBasisWLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisIdentityRight = OrthogonalBasisIdentityRight[i - p];
+	  RealMatrix& TmpOrthogonalBasisPsiRight = OrthogonalBasisPsiRight[i - p];
+	  RealMatrix& TmpOrthogonalBasisWRight = OrthogonalBasisWRight[i - p];
+	  RealSymmetricMatrix& TmpScalarProductIdentity = ScalarProductIdentity[i - p];
+	  RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductPsi[i - p];
+	  RealSymmetricMatrix& TmpScalarProductW = ScalarProductW[i - p];
+	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+	    {	      
+	      for (int j = QValueDenominator; j < NbrNValue; ++j)
+		{
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex2)
+			{
+			  double Tmp = 0.0;
+			  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
+			    {
+			      double Tmp1 = 0.0;			      
+			      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				{
+				  Tmp1 += TmpScalarProductIdentity(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentityRight(NeutralIndex4, NeutralIndex2);				  
+				}
+				  Tmp += TmpOrthogonalBasisIdentityLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
+			    }
+			  BMatrices[0].SetMatrixElement(GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+							GetReadRezayiK3MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			}
+		    }
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
+			{
+			  double Tmp = 0.0;
+			  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
+			    {
+			      double Tmp1 = 0.0;			      
+			      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				{
+				  Tmp1 += TmpScalarProductPsi(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsiRight(NeutralIndex4, NeutralIndex2);				  
+				}
+			      Tmp += TmpOrthogonalBasisPsiLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
+			    }
+			  BMatrices[0].SetMatrixElement(GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+							GetReadRezayiK3MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			}
+		    }
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisWLeft.GetNbrColumn(); ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisWLeft.GetNbrColumn(); ++NeutralIndex2)
+			{
+			  double Tmp = 0.0;
+			  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex3)
+			    {
+			      double Tmp1 = 0.0;			      
+			      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				{
+				  Tmp1 += TmpScalarProductW(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisWRight(NeutralIndex4, NeutralIndex2);				  
+				}
+			      Tmp += TmpOrthogonalBasisWLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
+			    }
+			  BMatrices[0].SetMatrixElement(GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 2, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+							GetReadRezayiK3MatrixIndex(j, ChargedIndex, NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 2, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  FactorialCoefficient Coef;
+  unsigned long* Partition1 = new unsigned long [pLevel + 2];
+  unsigned long* Partition2 = new unsigned long [pLevel + 2];
+  BMatrices[1] = RealMatrix(MatrixSize, MatrixSize, true);
+  for (int i = 0; i <= pLevel; ++i)
+    {
+      for (int p = 0; p <= i; ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	  RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisW1 = OrthogonalBasisWLeft[i - p];
+	  for (int j = 0; j <= pLevel; ++j)
+	    {
+	      for (int q = 0; q <= j; ++q)
+		{
+		  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		  RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisW2 = OrthogonalBasisWRight[j - q];
+		  RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
+		  RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
+		  RealMatrix& TmpMatrixPsi02 = MatrixPsi02[i - p][j - q];
+		  RealMatrix& TmpMatrixPsi20 = MatrixPsi20[i - p][j - q];	
+		  RealMatrix& TmpMatrixPsi12 = MatrixPsi12[i - p][j - q];
+		  RealMatrix& TmpMatrixPsi21 = MatrixPsi21[i - p][j - q];	
+	  
+		  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+		    {	      
+		      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			{	      
+			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			  int N2;
+			  int N1;
+			  N2 = QValueDenominator * (j - i) + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  double Tmp = 0.0;
+				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				    {
+				      double Tmp1 = 0.0;			      
+				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+					{
+					  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+					}
+				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+				    }
+				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+				}
+
+			    }
+			  N2 = QValueDenominator * (j - i) + 2 + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  double Tmp = 0.0;
+				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				    {
+				      double Tmp1 = 0.0;			      
+				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+					{
+					  Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+					}
+				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+				    }
+				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+				}
+			    }
+
+
+// 			  N2 = QValueDenominator * (j - i) - 8 + NValueShift;
+// 			  N1 = N2 + QValue - QValueDenominator;
+// 			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+// 			    {
+// 			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisW2.GetNbrColumn(); ++NeutralIndex2)
+// 				{
+// 				  double Tmp = 0.0;
+// 				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+// 				    {
+// 				      double Tmp1 = 0.0;			      
+// 				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+// 					{
+// 					  Tmp1 += TmpMatrixPsi02(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisW2(NeutralIndex4, NeutralIndex2);				  
+// 					}
+// 				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+// 				    }
+// 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+// 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+// 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 2, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+// 				}
+
+// 			    }
+// 			  N2 = QValueDenominator * (j - i) + 10 + NValueShift;
+// 			  N1 = N2 + QValue - 1;
+// 			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisW1.GetNbrColumn(); ++NeutralIndex1)
+// 			    {
+// 			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+// 				{
+// 				  double Tmp = 0.0;
+// 				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+// 				    {
+// 				      double Tmp1 = 0.0;			      
+// 				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+// 					{
+// 					  Tmp1 += TmpMatrixPsi20(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+// 					}
+// 				      Tmp += TmpOrthogonalBasisW1(NeutralIndex3, NeutralIndex1) * Tmp1;
+// 				    }
+// 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+// 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 2, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+// 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+// 				}
+// 			    }
+
+
+			  N2 = QValueDenominator * (j - i) - 7 + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisW2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  double Tmp = 0.0;
+				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				    {
+				      double Tmp1 = 0.0;			      
+				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+					{
+					  Tmp1 += TmpMatrixPsi12(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisW2(NeutralIndex4, NeutralIndex2);				  
+					}
+				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+				    }
+				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 2, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+				}
+
+			    }
+			  N2 = QValueDenominator * (j - i) + 9 + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisW1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  double Tmp = 0.0;
+				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				    {
+				      double Tmp1 = 0.0;			      
+				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+					{
+					  Tmp1 += TmpMatrixPsi21(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+					}
+				      Tmp += TmpOrthogonalBasisW1(NeutralIndex3, NeutralIndex1) * Tmp1;
+				    }
+				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 2, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
+								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+				}
+			    }
+
+			}
+		    }
+		}	      
+	    }
+	}
+    }
+  
+  for (int i = 0; i < NbrBMatrices; ++i)
+    {
+      bMatrices[i] = BMatrices[i];
+      cout << "B" << i << " = " << endl;
+      bMatrices[i].PrintNonZero(cout) << endl;
+    }
+  delete[] BMatrices;
+}
+
+// compute the linearized index of the B matrix for the k=3 Read-Rezayi state
+//
+// fieldIndex = field index (0 for the identity, 1 for psi, 2 for W_-3)
+// return value = linearized index
+
+int GetReadRezayiK3MatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int nbrPsiDescendant, int globalIndexShift)
+{
+  return ((((((nbrIdentityDescendant * ((fieldIndex >> 1) | (fieldIndex & 1))) + (nbrPsiDescendant * (fieldIndex >> 1))) + neutralPartitionIndex) * chargeSectorDimension + chargedPartitionIndex) * nbrCharges + charge) + globalIndexShift);
+}

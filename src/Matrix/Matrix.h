@@ -81,6 +81,7 @@ class Matrix
   {
     RealElements = 0x0001,
     ComplexElements = 0x0002,
+    LongRationalElements = 0x0004,
     Diagonal = 0x0010,
     TriDiagonal = 0x0020,
     Triangular = 0x0040,
