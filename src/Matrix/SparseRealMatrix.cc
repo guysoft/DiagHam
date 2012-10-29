@@ -369,7 +369,9 @@ void SparseRealMatrix::SetMatrixElement(int i, int j, double x)
     --TmpIndex1;
   long TmpIndex = 0l;
   if (TmpIndex1 >= 0)
-    TmpIndex = this->RowLastPointers[TmpIndex1] + 1l;
+    TmpIndex = this->RowLastPointers[TmpIndex1] + 1l;'
+
+]
   this->IncreaseNbrMatrixElements();
   for (int k = i + 1; k < this->NbrRow; ++k)
     {

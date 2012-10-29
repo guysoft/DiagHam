@@ -414,12 +414,16 @@ RealSymmetricMatrix  BosonOn4DSphere::EvaluatePartialDensityMatrixParticlePartit
     }
 
   int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
+  int ComplementaryTotalJz = this->TotalJz - jzSector;
+  int ComplementaryTotalKz = this->TotalKz - kzSector;
 
+  cout << "toto " << ComplementaryTotalJz << " " << ComplementaryTotalKz << " " << (ComplementaryNbrBosonSector * this->NbrFluxQuanta) << endl;
   if ((abs(this->TotalJz - jzSector) + abs(this->TotalKz - kzSector)) > (ComplementaryNbrBosonSector * this->NbrFluxQuanta))
     {
       RealSymmetricMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
     }
+  cout << "argh" << endl;
   cout << "nbr boson = " << nbrBosonSector << ", jz = " << jzSector << ", kz = " << kzSector << endl;
   BosonOn4DSphere TmpDestinationHilbertSpace(nbrBosonSector, this->NbrFluxQuanta, jzSector, kzSector);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
