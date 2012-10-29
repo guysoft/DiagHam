@@ -147,4 +147,5 @@ FermionOnSpherePTruncatedLong.cc \
 FermionOnSphereMPSWrapper.cc \
 BosonOnDiskWithSU2Spin.cc \
 FermionOnCylinderMPSWrapper.cc \
-BosonOnSpherePTruncated.cc
+BosonOnSpherePTruncated.cc \
+BosonOn4DSphere.cc

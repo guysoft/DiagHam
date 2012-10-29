@@ -56,8 +56,13 @@ class SparseRealMatrix : public Matrix
 
  protected:
 
-  // number of non-zero mtarix elements
+  // number of non-zero matrix elements
   long NbrMatrixElements; 
+
+  // maximum number of matrix elements that can be stored
+  long MaximumNbrMatrixElements;
+  //number of matrix elements that have to be added if the size of MatrixElements has to be increaed
+  long NbrMatrixElementPacketSize;
 
   // array that contains the matrix elements
   double* MatrixElements; 
@@ -78,6 +83,12 @@ class SparseRealMatrix : public Matrix
   // default constructor
   //
   SparseRealMatrix();
+
+  // constructor for a sparse matrix without any specific struture
+  //
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  SparseRealMatrix(int nbrRow, int nbrColumn);
 
   // constructor for a sparse matrix without any specific struture but a given number of non-zero matrix elements
   //
@@ -277,6 +288,11 @@ class SparseRealMatrix : public Matrix
   // maxPosition = maximum position of the row in the compressed row storage
   // return value = position of the column index (-1 if it does not exist)
   long FindColumnIndexPosition(int index, long minPosition, long maxPosition) const;
+
+  // increase the number of matrix elements
+  //
+  // nbrElements = number of elements to add
+  void IncreaseNbrMatrixElements(long nbrElements = 1l);
 
 };
 

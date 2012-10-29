@@ -1246,8 +1246,6 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 	    if ((3 + i) <= pLevel)
 	      {
 		Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightW);
-		Tmp *= 3l;
-		Tmp /= CentralCharge;
 		ScalarProductW[3 + i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
 	      }
 	    Tmp = ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi);
@@ -1470,29 +1468,19 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 		if ((3 + j) <= pLevel)
 		  {	  
 		    Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightW, Weight);
-		    MatrixPsi12[i][3 + j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * (-sqrt(26.0) / 9.0));
+		    MatrixPsi12[i][3 + j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * -sqrt(26.0) / 9.0);
 		  }
 		if ((3 + i) <= pLevel)
 		  {	  
 		    Tmp = ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightPsi, Weight);
-		    MatrixPsi21[3 + i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * (sqrt(26.0) / 9.0));
+		    MatrixPsi21[3 + i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * sqrt(26.0) / 9.0);
 		  }
 	      }
-	  if ((3 + j) <= pLevel)
-	    {
-	      cout << "Psi12=" << endl;
-	      cout << MatrixPsi12[i][3 + j] << endl;
-	    }
-	  if ((3 + i) <= pLevel)
-	    {
-	      cout << "Psi21=" << endl;
-	      cout << MatrixPsi21[3 + i][j] << endl;
-	    }	  
 	}
     }
 
   int NbrBMatrices = 2;
-  RealMatrix* BMatrices = new RealMatrix[NbrBMatrices];
+  SparseRealMatrix* BMatrices = new SparseRealMatrix[NbrBMatrices];
 
   int** StartingIndexPerPLevel = new int* [pLevel + 1];
   int* TotalStartingIndexPerPLevel = new int [pLevel + 1];
@@ -1541,7 +1529,8 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
   
   int MatrixSize = NbrIndicesPerPLevel[pLevel] + TotalStartingIndexPerPLevel[pLevel];
   cout << "B matrix size = " << MatrixSize << endl;
-  BMatrices[0] = RealMatrix(MatrixSize, MatrixSize, true);
+  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
+//  BMatrices[0] = RealMatrix(MatrixSize, MatrixSize, true);
   for (int i = 0; i <= pLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -1645,7 +1634,8 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
   FactorialCoefficient Coef;
   unsigned long* Partition1 = new unsigned long [pLevel + 2];
   unsigned long* Partition2 = new unsigned long [pLevel + 2];
-  BMatrices[1] = RealMatrix(MatrixSize, MatrixSize, true);
+  BMatrices[1] = SparseRealMatrix(MatrixSize, MatrixSize);
+//  BMatrices[1] = RealMatrix(MatrixSize, MatrixSize, true);
   for (int i = 0; i <= pLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -1692,8 +1682,6 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 				    }
 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
-				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 3, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
 
@@ -1716,8 +1704,6 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 				    }
 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
-				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 3, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
 			    }
@@ -1795,8 +1781,6 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 				      Tmp += TmpOrthogonalBasisW1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
-// 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 5, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-// 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 5, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 3, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
@@ -1856,8 +1840,6 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 5, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
-// 				  BMatrices[1].SetMatrixElement(GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 3, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-// 								GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 5, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
 			    }
 			}
@@ -1867,13 +1849,13 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
 	}
     }
 
-  for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      bMatrices[i] = BMatrices[i];
-//      cout << "B" << i << " = " << endl;
-//      bMatrices[i].PrintNonZero(cout) << endl;
-    }
-  delete[] BMatrices;
+   for (int i = 0; i < NbrBMatrices; ++i)
+     {
+       bMatrices[i] = BMatrices[i];
+      cout << "B" << i << " = " << endl;
+      bMatrices[i].PrintNonZero(cout) << endl;
+     }
+//   delete[] BMatrices;
 }
 
 // compute the linearized index of the B matrix for the k=3 Read-Rezayi state

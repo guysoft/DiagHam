@@ -51,11 +51,40 @@ SparseRealMatrix::SparseRealMatrix()
   this->RowPointers = 0;
   this->RowLastPointers = 0;
   this->NbrMatrixElements = 0l;
+  this->MaximumNbrMatrixElements = 0l;
+  this->NbrMatrixElementPacketSize = 0l;
   this->NbrRow = 0;
   this->NbrColumn = 0;
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;  
   this->MatrixType = Matrix::RealElements | Matrix::Sparse;
+}
+
+// constructor for a sparse matrix without any specific struture
+//
+// nbrRow = number of rows
+// nbrColumn = number of columns
+
+SparseRealMatrix::SparseRealMatrix(int nbrRow, int nbrColumn)
+{
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::RealElements | Matrix::Sparse;
+  this->NbrColumn = nbrColumn;
+  this->NbrRow = nbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->NbrMatrixElements = 0;
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  this->MaximumNbrMatrixElements = 1024l;
+  this->NbrMatrixElementPacketSize = 1024l;
+  this->MatrixElements = new double[this->MaximumNbrMatrixElements];
+  this->ColumnIndices = new int[this->MaximumNbrMatrixElements];
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      this->RowPointers[i] = -1l;
+      this->RowLastPointers[i] = -1l;
+    }
 }
 
 // constructor for a sparse matrix without any specific struture but a given number of non-zero matrix elements
@@ -74,6 +103,8 @@ SparseRealMatrix::SparseRealMatrix(int nbrRow, int nbrColumn, long nbrMatrixElem
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;
   this->NbrMatrixElements = nbrMatrixElements;
+  this->MaximumNbrMatrixElements = nbrMatrixElements;
+  this->NbrMatrixElementPacketSize = 0l;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
   this->MatrixElements = new double[this->NbrMatrixElements];
@@ -105,6 +136,8 @@ SparseRealMatrix::SparseRealMatrix(const SparseRealMatrix& M)
   this->RowPointers = M.RowPointers;
   this->RowLastPointers = M.RowLastPointers;
   this->NbrMatrixElements = M.NbrMatrixElements;
+  this->MaximumNbrMatrixElements = M.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = M.NbrMatrixElementPacketSize;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
@@ -125,6 +158,7 @@ SparseRealMatrix::SparseRealMatrix(Matrix& M)
       this->RowPointers = 0;
       this->RowLastPointers = 0;
       this->NbrMatrixElements = 0l;
+      this->MaximumNbrMatrixElements = 0l;
       this->NbrRow = 0;
       this->NbrColumn = 0;
       this->TrueNbrRow = 0;
@@ -178,6 +212,8 @@ SparseRealMatrix::SparseRealMatrix(Matrix& M)
 		}
 	    }
 	}
+      this->MaximumNbrMatrixElements = this->NbrMatrixElements;
+      this->NbrMatrixElementPacketSize = 0l;
       this->MatrixType = Matrix::RealElements | Matrix::Sparse;
     }
 }
@@ -218,6 +254,8 @@ SparseRealMatrix& SparseRealMatrix::operator = (const SparseRealMatrix& M)
   this->RowPointers = M.RowPointers;
   this->RowLastPointers = M.RowLastPointers;
   this->NbrMatrixElements = M.NbrMatrixElements;
+  this->MaximumNbrMatrixElements = M.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = M.NbrMatrixElementPacketSize;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
@@ -281,14 +319,76 @@ SparseRealMatrix& SparseRealMatrix::Copy (SparseRealMatrix& matrix)
 
 void SparseRealMatrix::SetMatrixElement(int i, int j, double x)
 {
-  if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
+  if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
-  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
-  if (TmpIndex == -1l)
+  if (this->NbrMatrixElementPacketSize == 0l)
     {
+      if (this->RowPointers[i] >= 0l)
+	{
+	  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+	  if (TmpIndex >= 0l)
+	    {
+	      this->MatrixElements[TmpIndex] = x;
+	      return;
+	    }
+	}     
       return;
     }
+  if (this->RowPointers[i] >= 0l)
+    {
+      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+      if (TmpIndex >= 0l)
+	{
+	  this->MatrixElements[TmpIndex] = x;
+	  return;
+	}
+      this->IncreaseNbrMatrixElements();
+      for (int k = i + 1; k < this->NbrRow; ++k)
+	{
+	  if (this->RowPointers[k] >= 0l)
+	    {
+	      ++this->RowPointers[k];
+	      ++this->RowLastPointers[k];
+	    }
+	}
+      TmpIndex = this->RowPointers[i];
+      while ((TmpIndex <= this->RowLastPointers[i]) && (this->ColumnIndices[TmpIndex] < j))
+	++TmpIndex;
+      for (long k = this->NbrMatrixElements - 2; k > TmpIndex;  --k)
+	{
+	  this->MatrixElements[k] = this->MatrixElements[k - 1];
+	  this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
+	}
+      this->MatrixElements[TmpIndex] = x;
+      this->ColumnIndices[TmpIndex] = j;
+      ++this->RowLastPointers[i];
+      return;
+    }
+  int TmpIndex1 = i;
+  while ((TmpIndex1 >= 0) && (this->RowPointers[TmpIndex1] == -1l))
+    --TmpIndex1;
+  long TmpIndex = 0l;
+  if (TmpIndex1 >= 0)
+    TmpIndex = this->RowLastPointers[TmpIndex1] + 1l;
+  this->IncreaseNbrMatrixElements();
+  for (int k = i + 1; k < this->NbrRow; ++k)
+    {
+      if (this->RowPointers[k] >= 0l)
+	{
+	  ++this->RowPointers[k];
+	  ++this->RowLastPointers[k];
+	}
+    }
+  for (long k = this->NbrMatrixElements - 2; k > TmpIndex;  --k)
+    {
+      this->MatrixElements[k] = this->MatrixElements[k - 1];
+      this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
+    }
   this->MatrixElements[TmpIndex] = x;
+  this->ColumnIndices[TmpIndex] = j;
+  this->RowPointers[i] = TmpIndex;
+  this->RowLastPointers[i] = TmpIndex;
+  return;
 }
 
 // add a value to a matrix element
@@ -307,6 +407,41 @@ void SparseRealMatrix::AddToMatrixElement(int i, int j, double x)
       return;
     }
   this->MatrixElements[TmpIndex] += x;
+}
+
+
+
+// increase the number of matrix elements
+//
+// nbrElements = number of elements to add
+
+void SparseRealMatrix::IncreaseNbrMatrixElements(long nbrElements)
+{
+  long TmpNbrMatrixElements = this->NbrMatrixElements + nbrElements;
+  if (TmpNbrMatrixElements <= this->MaximumNbrMatrixElements)
+    {
+      this->NbrMatrixElements = TmpNbrMatrixElements;
+      return;
+    }
+  long TmpMaximumNbrMatrixElements = this->MaximumNbrMatrixElements + this->NbrMatrixElementPacketSize;
+  double* TmpMatrixElements = new double[TmpMaximumNbrMatrixElements];
+  int* TmpColumnIndices = new int[TmpMaximumNbrMatrixElements];
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    {
+      TmpMatrixElements[i] = this->MatrixElements[i];
+      TmpColumnIndices[i] = this->ColumnIndices[i];
+    }
+  if (this->Flag.Shared() == false)
+    {
+      delete[] this->MatrixElements;
+      delete[] this->ColumnIndices;
+    }
+  else
+    {
+      this->Flag.Initialize();
+    }
+  this->MatrixElements = TmpMatrixElements;
+  this->ColumnIndices = TmpColumnIndices;
 }
 
 // Resize matrix

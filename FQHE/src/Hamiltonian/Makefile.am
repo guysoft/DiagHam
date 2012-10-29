@@ -110,4 +110,6 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian.cc \
 ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFullThreeBandHamiltonian.cc \
-ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian.cc
+ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian.cc \
+AbstractQHEOnSphereFullHamiltonian.cc \
+ParticleOn4DSphereDeltaHamiltonian.cc

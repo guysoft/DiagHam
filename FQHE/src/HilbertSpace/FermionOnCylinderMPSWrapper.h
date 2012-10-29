@@ -44,6 +44,8 @@ class FermionOnCylinderMPSWrapper :  public FermionOnSphereMPSWrapper
 
  protected:
 
+  // number of matrix products that are precomputed
+
   int NbrPrecalculatedMatrixProducts;
 
  public:
