@@ -76,8 +76,8 @@ SparseRealMatrix::SparseRealMatrix(int nbrRow, int nbrColumn)
   this->NbrMatrixElements = 0;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
-  this->MaximumNbrMatrixElements = 1024l;
   this->NbrMatrixElementPacketSize = 1024l;
+  this->MaximumNbrMatrixElements = this->NbrMatrixElementPacketSize;
   this->MatrixElements = new double[this->MaximumNbrMatrixElements];
   this->ColumnIndices = new int[this->MaximumNbrMatrixElements];
   for (int i = 0; i < this->NbrRow; i++)
@@ -334,7 +334,6 @@ void SparseRealMatrix::SetMatrixElement(int i, int j, double x)
 	}     
       return;
     }
-  cout << "OK" << endl;
   if (this->RowPointers[i] >= 0l)
     {
       long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
@@ -355,7 +354,7 @@ void SparseRealMatrix::SetMatrixElement(int i, int j, double x)
       TmpIndex = this->RowPointers[i];
       while ((TmpIndex <= this->RowLastPointers[i]) && (this->ColumnIndices[TmpIndex] < j))
 	++TmpIndex;
-      for (long k = this->NbrMatrixElements - 2; k > TmpIndex;  --k)
+      for (long k = this->NbrMatrixElements - 1; k > TmpIndex;  --k)
 	{
 	  this->MatrixElements[k] = this->MatrixElements[k - 1];
 	  this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
@@ -381,7 +380,7 @@ void SparseRealMatrix::SetMatrixElement(int i, int j, double x)
 	  ++this->RowLastPointers[k];
 	}
     }
-  for (long k = this->NbrMatrixElements - 2; k > TmpIndex;  --k)
+  for (long k = this->NbrMatrixElements - 1; k > TmpIndex;  --k)
     {
       this->MatrixElements[k] = this->MatrixElements[k - 1];
       this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
@@ -425,14 +424,15 @@ void SparseRealMatrix::IncreaseNbrMatrixElements(long nbrElements)
       this->NbrMatrixElements = TmpNbrMatrixElements;
       return;
     }
-  long TmpMaximumNbrMatrixElements = this->MaximumNbrMatrixElements + this->NbrMatrixElementPacketSize;
-  double* TmpMatrixElements = new double[TmpMaximumNbrMatrixElements];
-  int* TmpColumnIndices = new int[TmpMaximumNbrMatrixElements];
+  this->MaximumNbrMatrixElements += this->NbrMatrixElementPacketSize;
+  double* TmpMatrixElements = new double[this->MaximumNbrMatrixElements];
+  int* TmpColumnIndices = new int[this->MaximumNbrMatrixElements];
   for (long i = 0l; i < this->NbrMatrixElements; ++i)
     {
       TmpMatrixElements[i] = this->MatrixElements[i];
       TmpColumnIndices[i] = this->ColumnIndices[i];
     }
+  this->NbrMatrixElements = TmpNbrMatrixElements;
   if (this->Flag.Shared() == false)
     {
       delete[] this->MatrixElements;

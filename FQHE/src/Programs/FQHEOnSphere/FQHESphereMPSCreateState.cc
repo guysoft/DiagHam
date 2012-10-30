@@ -1852,8 +1852,8 @@ void CreateReadRezayiK3StateBMatrices (int laughlinIndex, SparseRealMatrix* bMat
    for (int i = 0; i < NbrBMatrices; ++i)
      {
        bMatrices[i] = BMatrices[i];
-      cout << "B" << i << " = " << endl;
-      bMatrices[i].PrintNonZero(cout) << endl;
+//       cout << "B" << i << " = " << endl;
+//       bMatrices[i].PrintNonZero(cout) << endl;
      }
 //   delete[] BMatrices;
 }
