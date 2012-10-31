@@ -255,6 +255,18 @@ class SparseRealMatrix : public Matrix
   // return value = hermitian transposed matrix
   SparseRealMatrix Transpose ();
 
+  // read matrix from a file 
+  //
+  // file = reference  on the input file stream
+  // return value = true if no error occurs
+  bool ReadMatrix (ifstream& file);
+
+  // write matrix in a file 
+  //
+  // file = reference on the output file stream
+  // return value = true if no error occurs
+  virtual bool WriteMatrix (ofstream& file);
+
   // Output Stream overload
   //
   // Str = reference on output stream

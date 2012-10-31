@@ -12,9 +12,8 @@
 
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
 
-#include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
-#include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
-#include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
+#include "Tools/FQHEMPS/FQHEMPSMatrixManager.h"
+#include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -47,35 +46,23 @@ int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHESphereMPSCreateState" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
-  OptionGroup* SystemGroup = new OptionGroup ("system options");
-  OptionGroup* OutputGroup = new OptionGroup ("output options");
-  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  FQHEMPSMatrixManager MPSMatrixManager;
 
-  Manager += SystemGroup;
-  Manager += OutputGroup;
-  Manager += PrecalculationGroup;
+  MPSMatrixManager.AddOptionGroup(&Manager);
+  OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
+  OptionGroup* OutputGroup = Manager.GetOptionGroup("output options");
+  OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-//   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-//   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
-//   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
-  (*SystemGroup) += new BooleanOption  ('\n', "k-2", "consider the (k=2,r) series of clustered states");
- (*SystemGroup) += new BooleanOption  ('\n', "rr-3", "consider the k= 3 Read-Rezayi state");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
-  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
+  (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
-  (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
-  (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
-  (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -156,19 +143,16 @@ int main(int argc, char** argv)
 
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
 
-  int LaughlinIndex = Manager.GetInteger("laughlin-index");
-  int RIndex = Manager.GetInteger("r-index");
-  int NbrBMatrices = 2;
   int MatrixElement = 0;
-  if (Manager.GetBoolean("boson"))
+
+  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta); 
+  if (Manager.GetBoolean("only-export"))
     {
-      NbrBMatrices = NbrParticles + 1;
+      return 0;
     }
-  AbstractFQHEMPSMatrix* MPSMatrix = 0; 
+
   if (Manager.GetBoolean("k-2") == true)
     {
-      MPSMatrix = new FQHEMPSClustered2RMatrix(Manager.GetInteger("r-index"), 2, Manager.GetInteger("p-truncation"), NbrBMatrices,
-					       CylinderFlag, Kappa);
       if ((Manager.GetInteger("r-index") & 1) == 0)
 	MatrixElement = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
       else
@@ -178,15 +162,11 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("rr-3") == true)
 	{
-	  MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, Manager.GetInteger("p-truncation"), NbrBMatrices,
-						   CylinderFlag, Kappa);
 	  MatrixElement = 3 * (Manager.GetInteger("p-truncation") + 1);
 	}
       else
 	{
-	  MPSMatrix = new FQHEMPSLaughlinMatrix(LaughlinIndex, Manager.GetInteger("p-truncation"), NbrBMatrices,
-						CylinderFlag, Kappa);
-	  MatrixElement = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
+	  MatrixElement = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
 	}
     }
 

@@ -53,6 +53,15 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   // kappa = cylinder aspect ratio
   FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices = 1, bool cylinderFlag = false, double kappa = 1.0);
 
+  // constructor from stored B matrices
+  //
+  // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  
+  // pLevel = |P| level truncation
+  // fileName = name of the file that contains the B matrices
+  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+  // kappa = cylinder aspect ratio
+  FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+
   // destructor
   //
   ~FQHEMPSReadRezayi3Matrix();

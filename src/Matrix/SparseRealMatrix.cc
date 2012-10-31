@@ -30,6 +30,7 @@
 
 #include "Matrix/SparseRealMatrix.h"
 #include "Vector/RealVector.h"
+#include "GeneralTools/Endian.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -294,6 +295,8 @@ SparseRealMatrix& SparseRealMatrix::Copy (SparseRealMatrix& matrix)
   this->NbrColumn = matrix.NbrColumn;
   this->TrueNbrRow = matrix.TrueNbrRow;
   this->TrueNbrColumn = matrix.TrueNbrColumn;  
+  this->MaximumNbrMatrixElements = matrix.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = matrix.NbrMatrixElementPacketSize;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
   this->MatrixElements = new double[this->NbrMatrixElements];
@@ -1142,6 +1145,103 @@ double SparseRealMatrix::Tr ()
 	  Trace += this->MatrixElements[TmpIndex];
       }
   return Trace;
+}
+
+// write matrix in a file 
+//
+// file = reference on the output file stream
+// return value = true if no error occurs
+
+bool SparseRealMatrix::WriteMatrix (ofstream& file)
+{
+  WriteLittleEndian(file, this->MatrixType);
+  WriteLittleEndian(file, this->NbrRow);
+  WriteLittleEndian(file, this->NbrColumn);
+  WriteLittleEndian(file, this->NbrMatrixElements);
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      WriteLittleEndian(file, this->RowPointers[j]);
+    }
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      WriteLittleEndian(file, this->RowLastPointers[j]);
+    }
+  for (long j = 0l; j < this->NbrMatrixElements; ++j)
+    {
+      WriteLittleEndian(file, this->MatrixElements[j]);
+    }
+  for (long j = 0l; j < this->NbrMatrixElements; ++j)
+    {
+      WriteLittleEndian(file, this->ColumnIndices[j]);
+    }
+  return true;
+}
+
+// read matrix from a file 
+//
+// file = reference  on the input file stream
+// return value = true if no error occurs
+
+bool SparseRealMatrix::ReadMatrix (ifstream& file)
+{
+  int TmpType = Matrix::RealElements;
+  ReadLittleEndian(file, TmpType);
+  if ((this->MatrixType & TmpType & Matrix::RealElements) == 0)
+    {
+      file.close();
+      return false;
+    }
+  if ((this->MatrixElements != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->MatrixElements;
+	delete[] this->ColumnIndices;
+	delete[] this->RowPointers;
+	delete[] this->RowLastPointers;
+      }
+  this->Flag.Initialize();
+
+  int TmpNbrRow;
+  int TmpNbrColumn;
+  ReadLittleEndian(file, TmpNbrRow);
+  ReadLittleEndian(file, TmpNbrColumn);
+  this->NbrRow = TmpNbrRow;
+  this->NbrColumn = TmpNbrColumn;
+  this->TrueNbrRow = TmpNbrRow;
+  this->TrueNbrColumn = TmpNbrColumn;  
+  long Tmp;
+  ReadLittleEndian(file, Tmp);
+  this->NbrMatrixElements = Tmp;
+  this->MaximumNbrMatrixElements = Tmp;
+  this->NbrMatrixElementPacketSize = 0;
+
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  this->MatrixElements = new double[this->NbrMatrixElements];
+  this->ColumnIndices = new int[this->NbrMatrixElements];
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      ReadLittleEndian(file, Tmp);
+      this->RowPointers[j] = Tmp;
+    }
+
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      ReadLittleEndian(file, Tmp);
+      this->RowLastPointers[j] = Tmp;
+    }
+  double Tmp2;
+  for (long j = 0l; j < this->NbrMatrixElements; ++j)
+    {
+      ReadLittleEndian(file, Tmp2);
+      this->MatrixElements[j] = Tmp2;
+    }
+  for (long j = 0l; j < this->NbrMatrixElements; ++j)
+    {
+      ReadLittleEndian(file, TmpNbrColumn);
+      this->ColumnIndices[j] =TmpNbrColumn;
+    }
+  return true;
 }
 
 // Output Stream overload

@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Matrix/SparseComplexMatrix.h"
+#include "Matrix/SparseRealMatrix.h"
 
 
 #include <iostream>
@@ -80,21 +80,21 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   int MPSColumnIndex;
 
   // array of normalized tensor product B_1 x B_1^+ (one per orbital)
-  SparseComplexMatrix* NormalizedB1B1;
+  SparseRealMatrix* NormalizedB1B1;
   // array of normalized tensor product B_0 x B_1^+ (one per orbital)
-  SparseComplexMatrix* NormalizedB0B1;
+  SparseRealMatrix* NormalizedB0B1;
   // array of normalized tensor product B_1 x B_0^+ (one per orbital)
-  SparseComplexMatrix* NormalizedB1B0;
+  SparseRealMatrix* NormalizedB1B0;
   // array of normalized tensor product B_0 x B_0^+ + B_1 x B_1^+ (one per orbital)
-  SparseComplexMatrix* NormalizedB0B0B1B1;
+  SparseRealMatrix* NormalizedB0B0B1B1;
 
   // state normalization
   double StateNormalization;
   
   // temporary arrays needed for the sparse matrix multiplications
-  Complex* TmpMatrixElements ;
+  double* TmpMatrixElements ;
   int* TmpColumnIndices;
-  Complex* TmpElements;
+  double* TmpElements;
 
 
  public:
@@ -114,7 +114,7 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   // bMatrices = array that gives the B matrices 
   // memory = amount of memory granted for precalculations
   FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
-			     int rowIndex, int columnIndex, SparseComplexMatrix* bMatrices, unsigned long memory = 10000000);
+			     int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

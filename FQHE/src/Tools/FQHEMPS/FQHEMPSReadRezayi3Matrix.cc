@@ -54,6 +54,25 @@ FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel
   this->CreateBMatrices();
 }
 
+// constructor from stored B matrices
+//
+// laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  
+// pLevel = |P| level truncation
+// fileName = name of the file that contains the B matrices
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+
+FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag, double kappa)
+{
+  this->RIndex = 2;
+  this->LaughlinIndex = laughlinIndex;
+  this->PLevel = pLevel;
+  this->CylinderFlag = cylinderFlag;
+  this->Kappa = kappa;
+  this->LoadMatrices(fileName);
+}
+
+
 // destructor
 //
 

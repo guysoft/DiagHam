@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnSphereMPSWrapper.h"
-#include "Matrix/SparseComplexMatrix.h"
+#include "Matrix/SparseRealMatrix.h"
 
 
 #include <iostream>
@@ -65,7 +65,7 @@ class FermionOnCylinderMPSWrapper :  public FermionOnSphereMPSWrapper
   // bMatrices = array that gives the B matrices 
   // memory = amount of memory granted for precalculations
   FermionOnCylinderMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
-			       int rowIndex, int columnIndex, SparseComplexMatrix* bMatrices, unsigned long memory = 10000000);
+			       int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

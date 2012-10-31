@@ -56,10 +56,20 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // rindex = r index (i.e. clustered (k=2,r) states) 
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
-  // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+  // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 1, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
+
+  // constructor from stored B matrices
+  //
+  // rindex = r index (i.e. clustered (k=2,r) states) 
+  // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
+  // pLevel = |P| level truncation
+  // fileName = name of the file that contains the B matrices
+  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+  // kappa = cylinder aspect ratio
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
 
   // destructor
   //

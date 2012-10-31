@@ -45,7 +45,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix()
 //
 // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
 // pLevel = |P| level truncation
-// nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+// nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 
@@ -58,6 +58,23 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->CreateBMatrices();
+}
+
+// constructor from stored B matrices
+//
+// laughlinIndex = power of the Laughlin part (i.e. 1/nu)
+// pLevel = |P| level truncation
+// fileName = name of the file that contains the B matrices
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+
+FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag, double kappa)
+{
+  this->LaughlinIndex = laughlinIndex;
+  this->PLevel = pLevel;
+  this->CylinderFlag = cylinderFlag;
+  this->Kappa = kappa;
+  this->LoadMatrices(fileName);
 }
 
 // destructor
