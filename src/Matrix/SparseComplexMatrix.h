@@ -297,7 +297,7 @@ class SparseComplexMatrix : public Matrix
 
 #endif
 
- protected:
+ public:
 
   // find the position of a given column index in a row
   //
@@ -306,6 +306,35 @@ class SparseComplexMatrix : public Matrix
   // maxPosition = maximum position of the row in the compressed row storage
   // return value = position of the column index (-1 if it does not exist)
   long FindColumnIndexPosition(int index, long minPosition, long maxPosition) const;
+
+  // get the row pointer
+  // i = position
+
+  long GetRowPointer(int i);
+
+  // get the last row pointer
+  // i = position
+
+  long GetRowLastPointer(int i);
+
+  // get the matrix element
+  // i = position
+
+  Complex GetMatrixElement(int i);
+
+  // get the column index
+  // i = position
+
+  int GetColumnIndex(int i);
+
+  // get the nbr of matrix elements
+  // i = position
+
+  long GetNbrMatrixElements();
+
+  //returns the array with indices of rows
+
+  void GetRowIndices(int* RowIndices);
 
 };
 
@@ -331,6 +360,47 @@ inline void SparseComplexMatrix::GetMatrixElement(int i, int j, double& x) const
   x = this->MatrixElements[TmpIndex].Re;
   return;
 }
+
+// get the row pointer
+// i = position
+
+inline long SparseComplexMatrix::GetRowPointer(int i)
+{
+  return this->RowPointers[i];
+}
+
+// get the last row pointer
+// i = position
+
+inline long SparseComplexMatrix::GetRowLastPointer(int i)
+{
+  return this->RowLastPointers[i];
+}
+
+// get the matrix element
+// i = position
+
+inline Complex SparseComplexMatrix::GetMatrixElement(int i)
+{
+  return this->MatrixElements[i];
+}
+
+// get the column index
+// i = position
+
+inline int SparseComplexMatrix::GetColumnIndex(int i)
+{
+  return this->ColumnIndices[i];
+}
+
+// get the nbr of matrix elements
+// i = position
+
+inline long SparseComplexMatrix::GetNbrMatrixElements()
+{
+  return this->NbrMatrixElements;
+}
+
 
 // get a matrix element
 //

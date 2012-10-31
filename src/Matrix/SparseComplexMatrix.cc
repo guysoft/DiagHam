@@ -1122,6 +1122,25 @@ ostream& operator << (ostream& Str, const SparseComplexMatrix& P)
   return Str;
 }
 
+//returns the array with indices of rows
+
+void SparseComplexMatrix::GetRowIndices(int* RowIndices)
+{
+  int counter = 0;
+    for (long i = 0; i < this->NbrRow; ++i)
+      for (long j = 0; j < this->NbrColumn; ++j)
+        {
+           Complex Tmp;
+           this->GetMatrixElement(i,j,Tmp);
+           if ((SqrNorm(Tmp) != 0) && (this->MatrixElements[counter].Re == Tmp.Re) && (this->MatrixElements[counter].Im == Tmp.Im) && (counter < this->NbrMatrixElements))
+             {
+               RowIndices[counter] = i;
+               counter++; 
+             }
+        }
+}
+
+
 #ifdef USE_OUTPUT
 
 // Mathematica Output Stream overload

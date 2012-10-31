@@ -39,7 +39,8 @@ using std::ofstream;
 void CreateLaughlinBMatrices (int laughlinIndex, ComplexMatrix* bMatrices, BosonOnDiskShort** u1BosonBasis, int pLevel, bool cylinderFlag, double kappa);
 Complex CreateLaughlinAMatrixElement (int laughlinIndex, unsigned long* partition1, unsigned long* partition2, int p1Level, int p2Level, int nValue, FactorialCoefficient& coef);
 Complex OverlapEig(ComplexVector& EigV, ComplexMatrix& TmpM, int MatDim, int i);
-
+void CompactPrintMatrix(Matrix& TmpMatrix, int MatDim);
+void ConvertSparseToDenseComplexMatrix(SparseComplexMatrix& Mat1, ComplexMatrix& Mat2, int MatDim);
 
 int main(int argc, char** argv)
 {
@@ -55,6 +56,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "number of orbitals in subsystem A", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles in subsystem A", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption ('\n', "cylinder", "evaluate density on the cylinder");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1);
@@ -93,22 +96,20 @@ int main(int argc, char** argv)
     }
 
 
+  int EntCut = Manager.GetInteger("la");
+  int Na = Manager.GetInteger("na");
 
   int LandauLevel = 0;
-  AbstractFunctionBasis* Basis;
-  if (CylinderFlag == false)
-   {
-     if (LandauLevel == 0)
-       Basis = new ParticleOnSphereFunctionBasis(NbrFluxQuanta);
-     else
-       Basis = new ParticleOnSphereGenericLLFunctionBasis(NbrFluxQuanta - (2 * LandauLevel), LandauLevel);
-   }
-  else
-   {
-       Basis = new ParticleOnCylinderFunctionBasis(NbrFluxQuanta, LandauLevel, AspectRatio);
-   }
 
   int LaughlinIndex = Manager.GetInteger("laughlin-index");
+
+
+  ofstream File;
+  File.precision(14);
+  char* TmpFileName = new char [512];
+  sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d_la_%d_na_%d.ent", Manager.GetInteger("laughlin-index"), Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, EntCut, Na);
+  File.open(TmpFileName, ios::binary | ios::out);     
+
   int NbrBMatrices = 2;
   ComplexMatrix* BMatrices = new ComplexMatrix[NbrBMatrices];
   SparseComplexMatrix* SparseBMatrices = new SparseComplexMatrix[NbrBMatrices];
@@ -135,26 +136,10 @@ int main(int argc, char** argv)
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
   cout<<"  ********************* B0 ********************* " <<endl;
-  for (int i = 0; i < MatDim; i++)
-    for (int j = 0; j < MatDim; j++)
-      {
-         Complex Tmp;
-         BMatrices[0].GetMatrixElement(i,j,Tmp);
-         if (Norm(Tmp) != 0.0)
-           cout<<"i= "<<i<<" j= "<<j<<" "<<Tmp<<endl;
-      }
-
+  CompactPrintMatrix(SparseBMatrices[0], MatDim);
 
   cout<<"  ********************* B1 ********************* " <<endl;
-  for (int i = 0; i < MatDim; i++)
-    for (int j = 0; j < MatDim; j++)
-      {
-         Complex Tmp;
-         BMatrices[1].GetMatrixElement(i,j,Tmp);
-         if (Norm(Tmp) != 0.0)
-           cout<<"i= "<<i<<" j= "<<j<<" "<<Tmp<<endl;
-      }
-
+  CompactPrintMatrix(SparseBMatrices[1], MatDim);
 
 
 
@@ -178,177 +163,238 @@ int main(int argc, char** argv)
     FirstB1.SetMatrixElement((Nmax-Nmin)/2, i, Tmp);
    }
 
-  //SparseComplexMatrix SparseFinalB0 = FinalB0;
-  //SparseComplexMatrix SparseFinalB1 = FinalB1;
-  //SparseComplexMatrix SparseFirstB0 = FirstB0;
-  //SparseComplexMatrix SparseFirstB1 = FirstB1;
+  SparseComplexMatrix SparseFinalB0(MatDim, MatDim, 0, true);
+  SparseFinalB0 = FinalB0;
+  SparseComplexMatrix SparseFinalB1(MatDim, MatDim, 0, true);
+  SparseFinalB1 = FinalB1;
+  SparseComplexMatrix SparseFirstB0(MatDim, MatDim, 0, true);
+  SparseFirstB0 = FirstB0;
+  SparseComplexMatrix SparseFirstB1(MatDim, MatDim, 0, true);
+  SparseFirstB1 = FirstB1;
 
 
-//  cout<<"  ********************* SparseFirstB0 ********************* " <<endl;
-//  cout << FirstB0;
+  cout<<"  ********************* SparseFirstB0 ********************* " <<endl;
+  CompactPrintMatrix(SparseFirstB0, MatDim);
 
-//  cout<<"  ********************* SparseFirstB1 ********************* " <<endl;
-//  cout << FirstB1;
+  cout<<"  ********************* SparseFirstB1 ********************* " <<endl;
+  CompactPrintMatrix(SparseFirstB1, MatDim);
 
-//  cout<<"  ********************* SparseFinalB0 ********************* " <<endl;
-//  cout << FinalB0;
+  cout<<"  ********************* SparseFinalB0 ********************* " <<endl;
+  CompactPrintMatrix(SparseFinalB0, MatDim);
 
-//  cout<<"  ********************* SparseFinalB1 ********************* " <<endl;
-//  cout << FinalB1;
-
-  int EntCut = 5;
-  double CutOff = 1e-12;
-
-  ComplexMatrix TmpM(MatDim, MatDim, true);
-
-  ComplexMatrix TmpM0 = FirstB0.GetAdjoint();
-  TmpM0.Multiply(FirstB0);
-  TmpM = TmpM + TmpM0;
-  ComplexMatrix TmpM1 = FirstB1.GetAdjoint();
-  TmpM1.Multiply(FirstB1);
-  TmpM = TmpM + TmpM1;
-
-  for (int i = 1; i < EntCut; i++)
-    {
-      TmpM0 = BMatrices[0].GetAdjoint();
-      TmpM0.Multiply(TmpM);
-      TmpM0.Multiply(BMatrices[0]);
-
-      TmpM1 = BMatrices[1].GetAdjoint();
-      TmpM1.Multiply(TmpM);
-      TmpM1.Multiply(BMatrices[1]);
-
-      TmpM = (TmpM0 + TmpM1);
-    }
-
-  cout<<"-------------------- TmpM ------------------ "<<endl;
-  for (int i = 0; i < MatDim; i++)
-    for (int j = 0; j < MatDim; j++)
-      {
-         Complex Tmp;
-         TmpM.GetMatrixElement(i,j,Tmp);
-         if (Norm(Tmp) != 0.0)
-           cout<<"i= "<<i<<" j= "<<j<<" "<<Tmp<<endl;
-      }
-
-
-  ComplexMatrix rhoM(MatDim, MatDim, true);
-  ComplexMatrix rhoM0 = FinalB0;
-  rhoM0.Multiply(FinalB0.GetAdjoint());
-  rhoM = rhoM + rhoM0;
-  ComplexMatrix rhoM1 = FinalB1;
-  rhoM1.Multiply(FinalB1.GetAdjoint());
-  rhoM = rhoM + rhoM1;
-
-  for (int i = (NbrFluxQuanta - 1); i >= EntCut; i--)
-    {
-      rhoM0.Copy(BMatrices[0]);
-      rhoM0.Multiply(rhoM);
-      rhoM0.Multiply(BMatrices[0].GetAdjoint());
-
-      rhoM1.Copy(BMatrices[1]);
-      rhoM1.Multiply(rhoM);
-      rhoM1.Multiply(BMatrices[1].GetAdjoint());
-
-      rhoM = (rhoM0 + rhoM1);
-    }
-
-  cout<<"-------------------- rhoM ------------------ "<<endl;
- 
-  for (int i = 0; i < MatDim; i++)
-    for (int j = 0; j < MatDim; j++)
-      {
-         Complex Tmp;
-         rhoM.GetMatrixElement(i,j,Tmp);
-         if (Norm(Tmp) != 0.0)
-           cout<<"i= "<<i<<" j= "<<j<<" "<<Tmp<<endl;
-      }
-
+  cout<<"  ********************* SparseFinalB1 ********************* " <<endl;
+  CompactPrintMatrix(SparseFinalB1, MatDim);
 
   delete[] BMatrices;
 
 
-  HermitianMatrix HRep = TmpM;
+  cout<<"Done preparing B matrices and the vectors at 0 and Nphi orbital"<<endl;
+
+  double CutOff = 1e-14;
+
+  SparseComplexMatrix TmpM(MatDim, MatDim, 0, true);
+
+  SparseComplexMatrix TmpM0(MatDim, MatDim, 0, true);
+  TmpM0 = SparseFirstB0.HermitianTranspose();
+  TmpM0.Multiply(SparseFirstB0);
+  TmpM = TmpM + TmpM0;
+  SparseComplexMatrix TmpM1(MatDim, MatDim, 0, true);
+  if (SparseFirstB1.ComputeNbrNonZeroMatrixElements() != 0)
+    TmpM1 = SparseFirstB1.HermitianTranspose();
+  TmpM1.Multiply(SparseFirstB1);
+  TmpM = TmpM + TmpM1;
+
+  for (int i = 1; i < EntCut; i++)
+    {
+      TmpM0 = SparseBMatrices[0].HermitianTranspose();
+      TmpM0.Multiply(TmpM);
+      TmpM0.Multiply(SparseBMatrices[0]);
+
+      TmpM1 = SparseBMatrices[1].HermitianTranspose();
+      TmpM1.Multiply(TmpM);
+      TmpM1.Multiply(SparseBMatrices[1]);
+
+      TmpM = (TmpM0 + TmpM1);
+    }
+
+  cout<<"-------------------- Overlap matrix computed ------------------ "<<endl;
+  //CompactPrintMatrix(TmpM, MatDim);
+
+  cout<<"Compute rho in nonorthogonal basis"<<endl;
+
+  SparseComplexMatrix rhoM(MatDim, MatDim, 0, true);
+  SparseComplexMatrix rhoM0 (MatDim, MatDim, 0, true);
+  rhoM0 = SparseFinalB0;
+  rhoM0.Multiply(SparseFinalB0.HermitianTranspose());
+  rhoM = rhoM + rhoM0;
+  SparseComplexMatrix rhoM1 (MatDim, MatDim, 0, true);
+  if (SparseFirstB1.ComputeNbrNonZeroMatrixElements() != 0)
+   {
+     rhoM1 = SparseFinalB1;
+     rhoM1.Multiply(SparseFinalB1.HermitianTranspose());
+   }
+  rhoM = rhoM + rhoM1;
+
+  for (int i = (NbrFluxQuanta - 1); i >= EntCut; i--)
+    {
+      rhoM0.Copy(SparseBMatrices[0]);
+      rhoM0.Multiply(rhoM);
+      rhoM0.Multiply(SparseBMatrices[0].HermitianTranspose());
+
+      rhoM1.Copy(SparseBMatrices[1]);
+      rhoM1.Multiply(rhoM);
+      rhoM1.Multiply(SparseBMatrices[1].HermitianTranspose());
+
+      rhoM = (rhoM0 + rhoM1);
+    }
+
+  cout<<"-------------------- rho in nonorthogonal basis computed ------------------ "<<endl;
+  //CompactPrintMatrix(rhoM, MatDim); 
+
+  ComplexMatrix TmpMDense (MatDim, MatDim, true);
+
+  ConvertSparseToDenseComplexMatrix(TmpM, TmpMDense, MatDim);
+
+  HermitianMatrix HRep = TmpMDense;
 
   RealDiagonalMatrix TmpDiag (MatDim);
   ComplexMatrix Q(MatDim, MatDim);
   HRep.LapackDiagonalize(TmpDiag, Q);
 
 
-//  cout<<"-------------------- Q ------------------ "<<endl;
-//  for (int i = 0; i < 3; i++)
-//      {
-//         cout<<"i= "<<i<<" Q= "<<Q[i]<<endl;
-//      }
-
-
-  cout<<"TmpM "<<endl;
+  //cout<<"TmpM "<<endl;
   int NonZeroEig = 0;
   for (int j = 0; j < MatDim; ++j)
    {
-     cout<<TmpDiag[j]<<" Eigenvector: ";
      if (fabs(TmpDiag[j])>CutOff)
       {  
+       //cout<<TmpDiag[j]<<" Eigenvector: ";
        NonZeroEig++;
        Q[j] /= sqrt(fabs(TmpDiag[j]));
-       for (int i = 0; i < MatDim; i++)
-         if (Norm(Q[j][i]) != 0) cout<<"i= "<<i<<" "<<Q[j][i]<<"; ";
+       //for (int i = 0; i < MatDim; i++)
+       //  if (Norm(Q[j][i]) > CutOff) cout<<"i= "<<i<<" "<<Q[j][i]<<"; ";
+       //cout<<endl;
       }  
-     cout<<endl;
    }
   cout<<endl;
-  cout<<"Nbr of nonzero= "<<NonZeroEig<<endl;
+  cout<<"Nbr of nonzero vectors= "<<NonZeroEig<<endl;
 
-  cout<<"Test overlap"<<endl;
 
-  for (int i = MatDim - 1; i >= (MatDim - NonZeroEig); --i)
+  int* PArray = new int [MatDim];
+  int* NArray = new int [MatDim];
+  int counter = 0;
+  for (int i = 0; i <= LambdaMax; ++i)
     {
-       Complex ov(0.0,0.0);
-       for (int k=0;k<MatDim;k++)
-        for (int l=0;l<MatDim;l++)
-          {
-            Complex Tmp;
-            TmpM.GetMatrixElement(k,l,Tmp);
-            ov+= Q[i][l] * Conj(Q[i][k]) * Conj(Tmp);
-          }
-       cout<<i<<" "<<ov<<" ; ";  
+     for (int k = 0; k < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++k)
+      for (int j = 0; j < (2 * LambdaMax + LaughlinIndex); ++j)
+        {
+		PArray[counter] = i;
+                NArray[counter] = (EntCut - (j - (2 * LambdaMax + LaughlinIndex - 1)/2))/LaughlinIndex;
+                counter++;
+        }
     }
+  cout<<endl;
+
+//  cout<<"Testing TmpM"<<endl;
+//  for(int i =0; i<MatDim; ++i)
+//    for(int j =0; j<MatDim; ++j)
+//      {
+//         Complex Tmp;
+//         TmpM.GetMatrixElement(i,j,Tmp);
+//         if (Norm(Tmp) > CutOff)
+//           {
+//             if ((PArray[i] != PArray[j]) || (NArray[i] != NArray[j]))
+//                cout<<i<<" "<<PArray[i]<<" "<<NArray[i]<<"; "<<j<<PArray[j]<<" "<<NArray[j]<<" "<<Tmp<<endl;
+//           }
+//      }
+
+//  cout<<"PArray, NArray "; for(int i=0; i<MatDim; ++i) cout<<i<<" "<<PArray[i]<<" "<<NArray[i]<<endl;
+
+//  cout<<"Analyze TmpM "<<endl;
+
+//  for (int j = (MatDim - NonZeroEig); j < MatDim; ++j)
+//   {
+//     if (fabs(TmpDiag[j])>CutOff)
+//      {  
+//       cout<<TmpDiag[j]<<" Eigenvector: ";
+//       for (int i = 0; i < MatDim; ++i)
+//         if (Norm(Q[j][i]) > sqrt(CutOff)) cout<<Q[j][i]<<" "<<PArray[i]<<" "<<NArray[i]<<" ; ";
+//       cout<<endl;
+//      }  
+//   }
+//  cout<<endl;
+
+
+  cout<<"-------------------- Start computing rho in the new basis --------------------"<<endl;
 
   ComplexMatrix NewrhoM(NonZeroEig, NonZeroEig, true);
 
+  int* RowIndices = new int[rhoM.GetNbrMatrixElements()]; 
+  rhoM.GetRowIndices(RowIndices);
+  int rowIndex, columnIndex;
+
+
   int offset = MatDim - NonZeroEig;
-  for (int i = MatDim - 1; i >= (MatDim - NonZeroEig); --i)
-    for (int j = MatDim - 1; j >= (MatDim - NonZeroEig); --j)
+  for (int i = (MatDim - NonZeroEig); i < MatDim; ++i)
+    for (int j = (MatDim - NonZeroEig); j < MatDim; ++j)
       {
         Complex TmpEl(0.0, 0.0);
-        for (int ii = 0; ii < MatDim; ++ii)
-          for (int jj = 0; jj < MatDim; ++jj)
+        for (int ii = 0; ii < rhoM.GetNbrMatrixElements(); ++ii)
             {
-               Complex Tmp;
-               rhoM.GetMatrixElement(ii, jj, Tmp);
-               TmpEl += Conj(Tmp) * OverlapEig(Q[j], TmpM, MatDim, jj) * Conj(OverlapEig(Q[i], TmpM, MatDim, ii));
+               columnIndex = rhoM.GetColumnIndex(ii);
+               rowIndex = RowIndices[ii];
+               TmpEl += Conj(rhoM.GetMatrixElement(ii)) * OverlapEig(Q[j], TmpMDense, MatDim, columnIndex) * Conj(OverlapEig(Q[i], TmpMDense, MatDim, rowIndex));
             }
         NewrhoM.SetMatrixElement(i - offset, j - offset, TmpEl); 
       }
 
-  cout<<"&&&&&&&&&&&&&&& NewrhoM &&&&&&&&&&&&&&&&&"<<endl;
-  cout<<NewrhoM<<endl;
+  cout<<"------------------ Done with new rho -----------------------"<<endl;
+  //CompactPrintMatrix(NewrhoM, NonZeroEig);
 
-  HermitianMatrix HRepRho = NewrhoM;
+  HermitianMatrix HRepRho = (NewrhoM/NewrhoM.Tr());
 
   RealDiagonalMatrix TmpDiagRho (NonZeroEig);
   ComplexMatrix QRho(NonZeroEig, NonZeroEig);
   HRepRho.LapackDiagonalize(TmpDiagRho, QRho);
 
-
-  TmpDiagRho /= TmpDiagRho.Tr();
-
   cout<<"Entanglement spectrum: "<<endl;
+
+  cout.precision(14); 
+
+  double Sum = 0.0;
   for (int j = 0; j < NonZeroEig; ++j)
    {
-     cout<<TmpDiagRho[j]<<" ";
+     if (fabs(TmpDiagRho[j]) > CutOff)
+      {
+        bool found = false;
+        for(int i = 0; i < NonZeroEig; ++i)
+          if (Norm(QRho[j][i]) > sqrt(CutOff)) 
+           {
+             for (int k = 0; k < MatDim; ++k)
+               if (Norm(Q[i + offset][k]) > sqrt(CutOff))
+                 if (NArray[k] == Na)
+                  {
+                    cout<<PArray[k]<<" "<<NArray[k]<<"     ";
+                    File<<PArray[k]<<" "<<NArray[k]<<"     ";
+                    k = MatDim;
+                    i = NonZeroEig;
+                    found = true;
+                  } 
+           }
+       if (found)
+        {
+         cout<<TmpDiagRho[j]<<endl;
+         File<<TmpDiagRho[j]<<endl;
+        }
+       Sum += TmpDiagRho[j];
+     }
    }
   cout<<endl;
+  cout<<"Sum = "<<Sum<<endl;
+
+  delete[] PArray;
+  delete[] NArray;
+  File.close();
 
 /*
   int TmpIndex = Manager.GetInteger("p-truncation") + ((LaughlinIndex - 1) / 2);
@@ -674,4 +720,28 @@ Complex OverlapEig(ComplexVector& EigV, ComplexMatrix& TmpM, int MatDim, int i)
       ov += EigV[ii] * Tmp;
    } 
  return ov;
+}
+
+void CompactPrintMatrix(Matrix& TmpMatrix, int MatDim)
+{
+  for (int i = 0; i < MatDim; i++)
+    for (int j = 0; j < MatDim; j++)
+      {
+         Complex Tmp;
+         TmpMatrix.GetMatrixElement(i, j, Tmp);
+         if (Norm(Tmp) != 0.0)
+           cout<<"i= "<<i<<" j= "<<j<<" "<<Tmp<<endl;
+      }
+}
+
+void ConvertSparseToDenseComplexMatrix(SparseComplexMatrix& Mat1, ComplexMatrix& Mat2, int MatDim)
+{
+  Mat2.ClearMatrix();
+  for (int i = 0; i < MatDim; i++)
+    for (int j = 0; j < MatDim; j++)
+      {
+         Complex Tmp;
+         Mat1.GetMatrixElement(i, j, Tmp);
+         Mat2.SetMatrixElement(i, j, Tmp);
+      }
 }
