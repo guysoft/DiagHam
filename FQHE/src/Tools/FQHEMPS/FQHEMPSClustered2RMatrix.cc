@@ -34,10 +34,17 @@
 #include "HilbertSpace/BosonOnDiskShort.h"
 
 
+// default constructor 
+//
+
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
+{
+}
+
 // constructor 
 //
 // rindex = r index (i.e. clustered (k=2,r) states) 
-// laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic MR at nu=1/2)  
+// laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
@@ -52,6 +59,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->CreateBMatrices();
 }
 
 // destructor
@@ -532,7 +540,9 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
     {
       delete[] MatrixPsi01[i];
       delete[] MatrixPsi10[i];
+      delete U1BosonBasis[i];
     }
+  delete[] U1BosonBasis;
   delete[] MatrixPsi01;
   delete[] MatrixPsi10;
   delete[] OrthogonalBasisIdentityLeft;

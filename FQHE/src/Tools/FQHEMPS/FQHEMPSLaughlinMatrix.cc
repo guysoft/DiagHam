@@ -57,6 +57,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->CreateBMatrices();
 }
 
 // destructor
@@ -148,6 +149,9 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
       this->RealBMatrices[i] = BMatrices[i];
     }
   delete[] BMatrices;
+  for (int i = 0; i <= this->PLevel; ++i)
+    delete U1BosonBasis[i];
+  delete[] U1BosonBasis;
 }
 
 // create the matrix element of the B matrix U(1) part
