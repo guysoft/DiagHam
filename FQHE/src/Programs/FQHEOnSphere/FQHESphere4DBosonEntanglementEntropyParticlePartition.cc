@@ -340,7 +340,8 @@ int main(int argc, char** argv)
       {
 	for (int SubsystemTotalKz = - SubsystemMaxTotalJz; SubsystemTotalKz <= SubsystemMaxTotalJz ; SubsystemTotalKz +=1)
 	{
-	  if (((SubsystemMaxTotalJz & 1) == ((SubsystemTotalJz + SubsystemTotalKz) & 1)) and (fabs(SubsystemTotalKz) <= fabs(SubsystemTotalJz)) and (fabs(SubsystemTotalKz) + fabs(SubsystemTotalJz) <= SubsystemMaxTotalJz))	  
+	  if (((SubsystemMaxTotalJz & 1) == ((SubsystemTotalJz + SubsystemTotalKz) & 1)) && 
+	      (fabs(SubsystemTotalKz) + fabs(SubsystemTotalJz) <= SubsystemMaxTotalJz))	  
 	  {
 	    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Jz=" << SubsystemTotalJz << " and subsystem total Kz=" << SubsystemTotalKz << endl;
 	    timeval TotalStartingTime;

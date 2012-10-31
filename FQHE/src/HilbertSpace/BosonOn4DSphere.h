@@ -50,8 +50,12 @@ class BosonOn4DSphere : public BosonOnSphereShort
   int NbrFluxQuanta;
   // total value of jz
   int TotalJz;
+  // shifted value of total jz
+  int ShiftedTotalJz;
   // total value of kz
   int TotalKz;
+  // shifted value of total kz
+  int ShiftedTotalKz;
   // array that gives the value of j for one particle corresponding to the linearized index
   int* quantumNumberJ;
   // array that gives the value of jz for one particle corresponding to the linearized index
@@ -117,7 +121,17 @@ class BosonOn4DSphere : public BosonOnSphereShort
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition(int nbrBosonSector, int jzSector, int kzsector,  RealVector& groundState, AbstractArchitecture* architecture = 0);
 
-
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+								  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
 
  protected:
 
