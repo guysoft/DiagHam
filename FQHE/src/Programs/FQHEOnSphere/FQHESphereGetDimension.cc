@@ -670,7 +670,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetString("output-file") == 0)
 		{
 		  OutputFileName = new char[256];
-		  sprintf (OutputFileName, "bosons_4dsphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		  sprintf (OutputFileName, "bosons_sphere4d_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
 		}
 	      ofstream File;
 	      File.open(OutputFileName, ios::binary | ios::out);
