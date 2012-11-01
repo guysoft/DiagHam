@@ -59,6 +59,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
@@ -143,7 +144,6 @@ int main(int argc, char** argv)
 
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
 
-  int MatrixElement = 0;
 
   AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta); 
   if (Manager.GetBoolean("only-export"))
@@ -151,22 +151,57 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if (Manager.GetBoolean("k-2") == true)
+  int MPSRowIndex = 0;
+  int MPSColumnIndex = 0;
+  if (Manager.GetBoolean("use-padding") == true)
     {
-      if ((Manager.GetInteger("r-index") & 1) == 0)
-	MatrixElement = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
-      else
-	MatrixElement = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
-    }
-  else
-    {
-      if (Manager.GetBoolean("rr-3") == true)
+      if (Manager.GetBoolean("k-2") == true)
 	{
-	  MatrixElement = 3 * (Manager.GetInteger("p-truncation") + 1);
+	  if ((Manager.GetInteger("r-index") & 1) == 0)
+	    MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
+	  else
+	    MPSRowIndex = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
 	}
       else
 	{
-	  MatrixElement = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
+	  if (Manager.GetBoolean("rr-3") == true)
+	    {
+	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 1);
+	    }
+	  else
+	    {
+	      MPSRowIndex = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
+	    }
+	}
+      MPSColumnIndex = MPSRowIndex;
+    }
+  else
+    {
+      if (Manager.GetBoolean("k-2") == true)
+	{
+	  if ((Manager.GetInteger("r-index") & 1) == 0)
+	    {
+	      MPSRowIndex = Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index");
+	      MPSColumnIndex = Manager.GetInteger("p-truncation");
+	    }
+	  else
+	    {
+	      MPSRowIndex = 2 * (Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index"));
+	      MPSColumnIndex = 2 * Manager.GetInteger("p-truncation");
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("rr-3") == true)
+	    {
+	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 2);
+	      MPSColumnIndex = 3 * Manager.GetInteger("p-truncation");
+	    }
+	  else
+	    {
+	      MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("laughlin-index") - 1);
+	      MPSColumnIndex = Manager.GetInteger("p-truncation");
+	    }
 	}
     }
 
@@ -177,7 +212,7 @@ int main(int argc, char** argv)
   RealVector State (Space->GetHilbertSpaceDimension(), true);
 
 
-  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MatrixElement, MatrixElement,
+  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MPSRowIndex, MPSColumnIndex,
 					Manager.GetInteger("precalculation-blocksize"));
   Operation.ApplyOperation(Architecture.GetArchitecture());
 

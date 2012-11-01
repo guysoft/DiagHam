@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
-  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
@@ -171,34 +171,68 @@ int main(int argc, char** argv)
 
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
   
-  int MatrixElement = 0;
-  if (Manager.GetBoolean("k-2") == true)
+  int MPSRowIndex = 0;
+  int MPSColumnIndex = 0;
+  if (Manager.GetBoolean("use-padding") == true)
     {
-      if ((Manager.GetInteger("r-index") & 1) == 0)
-	MatrixElement = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
-      else
-	MatrixElement = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
-    }
-  else
-    {
-      if (Manager.GetBoolean("rr-3") == true)
+      if (Manager.GetBoolean("k-2") == true)
 	{
-	  MatrixElement = 3 * (Manager.GetInteger("p-truncation") + 1);
+	  if ((Manager.GetInteger("r-index") & 1) == 0)
+	    MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
+	  else
+	    MPSRowIndex = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
 	}
       else
 	{
-	  MatrixElement = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
+	  if (Manager.GetBoolean("rr-3") == true)
+	    {
+	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 1);
+	    }
+	  else
+	    {
+	      MPSRowIndex = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
+	    }
+	}
+      MPSColumnIndex = MPSRowIndex;
+    }
+  else
+    {
+      if (Manager.GetBoolean("k-2") == true)
+	{
+	  if ((Manager.GetInteger("r-index") & 1) == 0)
+	    {
+	      MPSRowIndex = Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index");
+	      MPSColumnIndex = Manager.GetInteger("p-truncation");
+	    }
+	  else
+	    {
+	      MPSRowIndex = 2 * (Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index"));
+	      MPSColumnIndex = 2 * Manager.GetInteger("p-truncation");
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("rr-3") == true)
+	    {
+	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 2);
+	      MPSColumnIndex = 3 * Manager.GetInteger("p-truncation");
+	    }
+	  else
+	    {
+	      MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("laughlin-index") - 1);
+	      MPSColumnIndex = Manager.GetInteger("p-truncation");
+	    }
 	}
     }
 
   FermionOnSphereMPSWrapper* SpaceWrapper = 0;
   if (CylinderFlag == false)
     {
-      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MatrixElement, MatrixElement, SparseBMatrices);
+      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices);
     }
   else
     {
-      SpaceWrapper = new FermionOnCylinderMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MatrixElement, MatrixElement, SparseBMatrices, Manager.GetInteger("memory") << 20);
+      SpaceWrapper = new FermionOnCylinderMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices, Manager.GetInteger("memory") << 20);
     }
   RealVector DummyState (1);
   DummyState[0] = 1.0;
