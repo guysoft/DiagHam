@@ -17,6 +17,7 @@
 #include "HilbertSpace/FermionOnSphereFourLandauLevels.h"
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
+#include "HilbertSpace/BosonOn4DSphere.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -52,10 +53,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz-value", "twice the total lz value", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "jz-value", "twice the total value of jz (only useful in the bosonic 4D mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "kz-value", "twice the total value of kz (only useful in the bosonic 4D mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-lz", "consider particles with all Lz components");
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
@@ -99,6 +103,8 @@ int main(int argc, char** argv)
   int TotalLz = Manager.GetInteger("lz-value");
   int TotalTz = Manager.GetInteger("total-tz");
   int TotalY = Manager.GetInteger("total-y");
+  int TotalJz = Manager.GetInteger("jz-value");
+  int TotalKz = Manager.GetInteger("kz-value");
   bool AllLzFlag = Manager.GetBoolean("all-lz");
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
   bool AllSzFlag = Manager.GetBoolean("all-sz");
@@ -110,6 +116,7 @@ int main(int argc, char** argv)
   bool ThreeLLFlag = Manager.GetBoolean("3-ll");
   bool FourLLFlag = Manager.GetBoolean("4-ll");
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
+  bool FourDFlag = Manager.GetBoolean("4-D");
   int TotalSz = Manager.GetInteger("total-sz");
   int TotalIz = Manager.GetInteger("total-isosz");
   int TotalPz = Manager.GetInteger("total-entanglement");
@@ -130,14 +137,31 @@ int main(int argc, char** argv)
 	cout << "applying ("<<PauliK<<", "<<PauliR<<") exclusion statistics"<<endl;
       }
   }
+  
+  if (FourDFlag == true)
+  {
+    if (Manager.GetBoolean("boson") == false)
+      cout << "Warning : --4-D option only implemented in bosonic mode" << endl;
     
-  if (AllLzFlag == false)
+    if (- (NbrFluxQuanta*(NbrFluxQuanta+1)*(2*NbrFluxQuanta+1))/6 + NbrFluxQuanta*(NbrFluxQuanta*(NbrFluxQuanta+1))/2 + (NbrFluxQuanta + 1)*(NbrFluxQuanta + 1) + NbrParticles > 65)
+    {
+      cout << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+      return -1; 
+    } 
+    if (((NbrParticles * NbrFluxQuanta) & 1) != ((TotalJz + TotalKz) & 1)) 
+      {
+        cout << "incompatible values for the number of particles, the number of flux quanta and twice the total jz and kz value (nbr-particles * nbr-flux and jz + kz should have the same parity)" << endl;
+        return -1;
+      }
+  }
+  if ((AllLzFlag == false) and (FourDFlag == false))
     if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
       {
         cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
         return -1;
       }
 
+      
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
@@ -147,7 +171,12 @@ int main(int argc, char** argv)
 	    {
 	      if (HaldaneBasisFlag == false)
 		{
-		  Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+		  if (FourDFlag == false)
+		  {
+		    Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+		  }
+		  else
+		    Space = new BosonOn4DSphere(NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
 		}
 	      else
 		{
@@ -302,7 +331,7 @@ int main(int argc, char** argv)
 	{
 	  OutputFileName = new char[512];
 	  if (Manager.GetBoolean("boson") == true)
-	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false))
+	    if ((SU2SpinFlag == false) && (SU4SpinFlag == false) && (FourDFlag == false))
 	      sprintf (OutputFileName, "bosons_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	    else
 	      if (SU2SpinFlag == true)
@@ -311,7 +340,10 @@ int main(int argc, char** argv)
 		if (SU3SpinFlag == true)
 		  sprintf (OutputFileName, "bosons_sphere_su3_n_%d_2s_%d_lz_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalTz, TotalY);
 		else
-		  sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
+		  if (SU4SpinFlag == true)
+		    sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
+		  else
+		    sprintf (OutputFileName, "bosons_sphere4D_n_%d_2s_%d_jz_%d_kz_d.basis", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
 	  else
 	    if (SU2SpinFlag == true)
 	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);

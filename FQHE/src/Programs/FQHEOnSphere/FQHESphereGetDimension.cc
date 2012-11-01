@@ -217,6 +217,24 @@ long Boson2LLShiftedEvaluateFullHilbertSpaceDimension(int nbrBosons, int lzMax, 
 // return value = reference on the output stream
 ostream& Fermion3LLWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
 
+//evaluate Hilbert space dimension for bosons on the 4D sphere
+//
+//nbrBosons = number of bosons
+//nbrFluxQuanta = number of flux quanta
+//shiftedTotalJz = momentum jz total value (shifted by nbrBosons*nbrFluxQuanta)
+//totalShiftedKz = momentum kz total value (shifted by nbrBosons*nbrFluxQuanta)
+//return value = Hilbert space dimension
+long Boson4DSphereEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta, int shiftedTotalJz, int shiftedTotalKz, int currentJ, int currentJz, int currentKz, int currentTotalJz, int currentTotalKz);
+
+// save dimensions in a given output stream for bosons on the 4D sphere
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& Boson4DSphereWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta);
+
+
 
 int main(int argc, char** argv)
 {
@@ -231,6 +249,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available for bosons)");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "su3-spin", "consider particles with SU(3) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "su2su2-spin", "consider particles with SU(2)xSU(2) spin");
@@ -253,14 +272,20 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
-
+    
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
-  int  LzMin = 0;
+  int LzMin = 0;
+  int JzMin = 0;
+  int KzMin = 0;
   if (((NbrParticles * NbrFluxQuanta) & 1) != 0) //if odd then lzmin is 1/2
+    {
     LzMin = 1;
+    JzMin = 1;
+    }
+  
   if ((Manager.GetBoolean("su4-spin") == false) && (Manager.GetBoolean("su2-spin") == false) && 
-      (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && (Manager.GetBoolean("2-ll") == false) && (Manager.GetBoolean("3-ll") == false))
+      (Manager.GetBoolean("su3-spin") == false) && (Manager.GetBoolean("su2su2-spin") == false) && (Manager.GetBoolean("2-ll") == false) && (Manager.GetBoolean("3-ll") == false) && (Manager.GetBoolean("4-D") == false))
     {
       if (Manager.GetBoolean("ground-only") == true)
 	{
@@ -633,6 +658,31 @@ int main(int argc, char** argv)
 	}
       return 0;
     }
+    if (Manager.GetBoolean("4-D") == true)
+    {
+      if (Manager.GetBoolean("boson") == false)
+     	cout << "Fermionic mode not implemented for FQHE on the 4D sphere" << endl;
+      else
+      {
+	 if (Manager.GetBoolean("save-disk") == true)
+	    {
+	      char* OutputFileName = 0;
+	      if (Manager.GetString("output-file") == 0)
+		{
+		  OutputFileName = new char[256];
+		  sprintf (OutputFileName, "bosons_4dsphere_n_%d_2s_%d.dim", NbrParticles, NbrFluxQuanta);
+		}
+	      ofstream File;
+	      File.open(OutputFileName, ios::binary | ios::out);
+	      Boson4DSphereWriteDimension(File, NbrParticles, NbrFluxQuanta);
+	      File.close();
+	      delete[] OutputFileName;
+	     }
+	    else
+	    Boson4DSphereWriteDimension(cout, NbrParticles, NbrFluxQuanta);
+	
+	    }
+	}
   return 0;
 }
 
@@ -1611,3 +1661,72 @@ long BosonSU2ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int 
   return Tmp;  
 }
 
+
+//evaluate Hilbert space dimension for bosons on the 4D sphere
+//
+//nbrBosons = number of bosons
+
+//return value = Hilbert space dimension
+long Boson4DSphereEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta, int shiftedTotalJz, int shiftedTotalKz, int currentJ, int currentJz, int currentKz, int currentTotalJz, int currentTotalKz)
+{
+  if (nbrBosons < 0)
+    return 0l;
+  
+  if (currentKz < 0)
+   {
+     currentKz = nbrFluxQuanta - currentJ;
+     currentJz--;
+   }
+    
+  if (currentJz < 0)
+  {
+   currentJ--;
+   currentJz = currentJ;
+   currentKz = nbrFluxQuanta - currentJ;
+  }
+  
+  if (nbrBosons == 0)
+    {
+      if ((currentTotalJz == shiftedTotalJz) && (currentTotalKz == shiftedTotalKz))
+      {
+	return 1l;
+      }
+      else	
+	return 0l;
+    }
+    
+  if (currentJ < 0)
+    return 0l;
+  
+  long Count = 0;
+  for (int k = nbrBosons; k >= 0; --k)
+    Count += Boson4DSphereEvaluateHilbertSpaceDimension(nbrBosons - k, nbrFluxQuanta, shiftedTotalJz, shiftedTotalKz, currentJ, currentJz, currentKz - 1, currentTotalJz + (k * (2*currentJz - currentJ + nbrFluxQuanta)), currentTotalKz + (k * (2*currentKz + currentJ)));
+  return Count;
+}
+
+// save dimensions in a given output stream for bosons on the 4D sphere
+//
+// output = reference on the output stream
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = reference on the output stream
+ostream& Boson4DSphereWriteDimension(ostream& output, int nbrParticles, int nbrFluxQuanta)
+{
+  output << "# Hilbert space dimension in each Jz and Kz sector for " << nbrParticles << " bosons" << endl;
+  output << "# on the 4D sphere geometry with " << nbrFluxQuanta << " flux quanta" << endl;
+  output << "#" << endl << "#  dimensions for each subspaces with the following convention " << endl 
+	 << "# (twice the total Jz value) (twice the total Kz value) (dimension of the subspace with fixed Jz, Kz)" << endl << endl;
+	 
+  for (int jz = 0; jz <= nbrParticles*nbrFluxQuanta; jz ++)
+    {
+      for (int kz = 0; kz <= nbrParticles*nbrFluxQuanta - jz; kz ++)
+	 {
+	  if ((kz <= jz) and (((nbrParticles*nbrFluxQuanta) & 1) == ((kz + jz) & 1)) )
+	    {
+	      int shiftedTotalJz = jz + nbrParticles*nbrFluxQuanta;
+	      int shiftedTotalKz = kz + nbrParticles*nbrFluxQuanta;
+	      output << jz << " " << kz << " " << Boson4DSphereEvaluateHilbertSpaceDimension(nbrParticles, nbrFluxQuanta, shiftedTotalJz, shiftedTotalKz, nbrFluxQuanta, nbrFluxQuanta, 0, 0, 0) << endl;
+	    }
+	 }
+    }
+}	 

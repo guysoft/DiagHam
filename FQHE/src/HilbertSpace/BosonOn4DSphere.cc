@@ -262,7 +262,7 @@ bool BosonOn4DSphere::WriteHilbertSpace (char* fileName)
 ostream& BosonOn4DSphere::PrintState (ostream& Str, int state)
 {
   this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
-   cout << TemporaryStateLzMax << endl;
+   //cout << TemporaryStateLzMax << endl;
 //   Str << hex << this->FermionBasis->StateDescription[state] << dec << " " <<  this->FermionBasis->StateLzMax[state] << "   ";
   Str << "[";
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
