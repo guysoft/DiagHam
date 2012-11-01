@@ -342,12 +342,14 @@ long FermionOnSpherePTruncated::ShiftedEvaluateHilbertSpaceDimension(int nbrFerm
 //
 // bMatrices = array that gives the B matrices 
 // state = reference to vector that will contain the state description
-// traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
 // memory = amount of memory that can be use to precompute matrix multiplications  
 // initialIndex = initial index to compute
 // nbrComponents = number of components to compute
 
-void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int traceFlag, long memory, long initialIndex, long nbrComponents)
+void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex,
+							       long memory, long initialIndex, long nbrComponents)
 {
   SparseRealMatrix TmpMatrix;
   long MaxIndex = initialIndex + nbrComponents;
@@ -381,10 +383,10 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
 //  	  cout << " final matrix " << i << " : ";
 //	  TmpMatrix.PrintNonZero(cout) << endl;
 //	  cout << "--------------------------------" << endl;
-	  if (traceFlag < 0)
+	  if (mPSRowIndex < 0)
 	    state[i] = TmpMatrix.Tr();
 	  else
-	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	    TmpMatrix.GetMatrixElement(mPSRowIndex, mPSColumnIndex, state[i]);
 	}
     }
   else
@@ -423,10 +425,10 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
 	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
 	      TmpStateDescription >>= 1;
 	    } 
-	  if (traceFlag < 0)
+	  if (mPSRowIndex < 0)
 	    state[i] = TmpMatrix.Tr();
 	  else
-	    TmpMatrix.GetMatrixElement(traceFlag, traceFlag, state[i]);
+	    TmpMatrix.GetMatrixElement(mPSRowIndex, mPSColumnIndex, state[i]);
 	}
     }
   delete[] TmpMatrixElements;

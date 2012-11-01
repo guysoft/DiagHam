@@ -57,8 +57,10 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // array that gives the B matrices 
   SparseRealMatrix* BMatrices;
 
-  // indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
-  int TraceFlag;  
+  // row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  int MPSRowIndex;
+  // column index of the MPS element that has to be evaluated
+  int MPSColumnIndex;
 
   // indicates the size of the block for precalculations
   int PrecalculationBlockSize;
@@ -75,9 +77,11 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // space = pointer to the Hilbert space
   // bMatrices = array that gives the B matrices 
   // state = pointer to the vector where the MPS state will be stored
-  // traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
   // blockSize = indicates the size of the block for precalculations
-  FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize);
+  FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, RealVector* state, 
+			      int mPSRowIndex, int mPSColumnIndex, int blockSize);
   
   // copy constructor 
   //

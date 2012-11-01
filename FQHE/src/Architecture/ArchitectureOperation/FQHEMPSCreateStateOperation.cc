@@ -49,17 +49,20 @@ using std::endl;
 // space = pointer to the Hilbert space
 // bMatrices = array that gives the B matrices 
 // state = pointer to the vector where the MPS state will be stored
-// traceFlag = indicates the type of boundary conditions (-1 = trace, traceFlag >= 0 takes the final corresponding diagonal element)
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
 // blockSize = indicates the size of the block for precalculations
 
-FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, RealVector* state, int traceFlag, int blockSize)
+FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, RealVector* state, 
+							 int mPSRowIndex, int mPSColumnIndex, int blockSize)
 {
   this->FirstComponent = 0;
   this->NbrComponent = space->GetHilbertSpaceDimension();
   this->Space = (ParticleOnSphere*) space->Clone();
   this->OutputState = state;
   this->BMatrices = bMatrices;
-  this->TraceFlag = traceFlag;  
+  this->MPSRowIndex = mPSRowIndex;  
+  this->MPSColumnIndex = mPSColumnIndex;
   this->PrecalculationBlockSize = blockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
 }
@@ -77,7 +80,8 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
   this->Space = (ParticleOnSphere*) operation.Space->Clone();
   this->OutputState = operation.OutputState;
   this->BMatrices = operation.BMatrices;
-  this->TraceFlag = operation.TraceFlag;  
+  this->MPSRowIndex = operation.MPSRowIndex;  
+  this->MPSColumnIndex = operation.MPSColumnIndex;
   this->PrecalculationBlockSize = operation.PrecalculationBlockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;	
 }
@@ -128,7 +132,7 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
 
-  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->TraceFlag, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
   
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);

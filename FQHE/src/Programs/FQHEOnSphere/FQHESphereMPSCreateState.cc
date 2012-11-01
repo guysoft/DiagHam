@@ -177,7 +177,7 @@ int main(int argc, char** argv)
   RealVector State (Space->GetHilbertSpaceDimension(), true);
 
 
-  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MatrixElement,
+  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MatrixElement, MatrixElement,
 					Manager.GetInteger("precalculation-blocksize"));
   Operation.ApplyOperation(Architecture.GetArchitecture());
 
