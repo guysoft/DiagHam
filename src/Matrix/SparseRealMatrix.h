@@ -166,6 +166,10 @@ class SparseRealMatrix : public Matrix
   //
   void ClearMatrix ();
 
+  // set matrix to identity 
+  //
+  void SetToIdentity();
+
   // add two matrices
   //
   // matrix1 = first matrix
@@ -206,6 +210,17 @@ class SparseRealMatrix : public Matrix
   // matrix = matrix used as multiplicator
   // return value = reference on current matrix
   SparseRealMatrix& Multiply (const SparseRealMatrix& matrix);
+  
+  // multiply two matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseRealMatrix Multiply (const SparseRealMatrix& matrix, const SparseRealMatrix& matrix2, 
+				    double* tmpMatrixElements, int* tmpColumnIndices, double* tmpElements);
 
   // multiply a matrix to the right by another matrix, providing all the required temporary arrays
   //

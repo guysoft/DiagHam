@@ -60,6 +60,8 @@ using std::endl;
 
 SimpleMPIArchitecture::SimpleMPIArchitecture()
 {
+  this->MinimumIndices = 0;
+  this->MaximumIndices = 0;
 }
 
 // constructor
@@ -75,7 +77,8 @@ SimpleMPIArchitecture::SimpleMPIArchitecture(char* logFile)
   this->NbrMPINodes = MPI::COMM_WORLD.Get_size();
   this->MPIRank = MPI::COMM_WORLD.Get_rank();
   this->ClusterPerformanceArray = new double [this->NbrMPINodes];
-
+  this->MinimumIndices = 0;
+  this->MaximumIndices = 0;
   if (this->MPIRank != 0)
     {
       this->MasterNodeFlag = false;
@@ -145,8 +148,11 @@ SimpleMPIArchitecture::~SimpleMPIArchitecture()
 #ifdef __MPI__
   MPI::Finalize();
 #endif
-  delete [] this->MinimumIndices;
-  delete [] this->MaximumIndices;
+  if (this->MinimumIndices != 0)
+    {
+      delete [] this->MinimumIndices;
+      delete [] this->MaximumIndices;
+    }
   delete this->LocalArchitecture;
   if (this->ClusterPerformanceArray != 0)
     delete[] this->ClusterPerformanceArray;

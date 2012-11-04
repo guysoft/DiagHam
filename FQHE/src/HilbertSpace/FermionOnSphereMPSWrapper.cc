@@ -104,21 +104,23 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   this->MPSColumnIndex = columnIndex;
 
   int NbrBMatrices = 2;
-  SparseRealMatrix* SparseConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
+  this->BMatrices = new SparseRealMatrix[NbrBMatrices];
+  this->ConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
   for (int i = 0; i < NbrBMatrices; ++i)
     {
-      SparseConjugateBMatrices[i] = bMatrices[i].Transpose();
+      this->BMatrices[i] = bMatrices[i];
+      this->ConjugateBMatrices[i] = bMatrices[i].Transpose();
     }
-  SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
-  for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
-      for (int j = 0; j < NbrBMatrices; ++j)
-	{
-	  SparseTensorProductBMatrices[i][j] = TensorProduct(bMatrices[i], SparseConjugateBMatrices[j]);
-	}
-    }
-  delete[]SparseConjugateBMatrices;
+//   SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
+//   for (int i = 0; i < NbrBMatrices; ++i)
+//     {
+//       SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
+//       for (int j = 0; j < NbrBMatrices; ++j)
+// 	{
+// 	  SparseTensorProductBMatrices[i][j] = TensorProduct(bMatrices[i], SparseConjugateBMatrices[j]);
+// 	}
+//     }
+//   delete[]SparseConjugateBMatrices;
 
 
   this->NormalizedB1B1 = new SparseRealMatrix [this->LzMax + 1];
@@ -126,39 +128,66 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   this->NormalizedB1B0 = new SparseRealMatrix [this->LzMax + 1];
   this->NormalizedB0B0B1B1 = new SparseRealMatrix [this->LzMax + 1];
   
-  long TmpMemory = (((long) SparseTensorProductBMatrices[1][1].GetNbrRow()) * 
-		    ((long) SparseTensorProductBMatrices[1][1].GetNbrColumn())) / 100l;
-  cout << "Requested memory for sparse matrix multiplications = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
-  this->TmpMatrixElements = new double [TmpMemory];
-  this->TmpColumnIndices = new int [TmpMemory];
-  this->TmpElements = new double [SparseTensorProductBMatrices[1][1].GetNbrRow()];
+//   long TmpMemory = (((long) SparseTensorProductBMatrices[1][1].GetNbrRow()) * 
+// 		    ((long) SparseTensorProductBMatrices[1][1].GetNbrColumn())) / 100l;
+//   cout << "Requested memory for sparse matrix multiplications = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
+//   this->TmpMatrixElements = new double [TmpMemory];
+//   this->TmpColumnIndices = new int [TmpMemory];
+//   this->TmpElements = new double [SparseTensorProductBMatrices[1][1].GetNbrRow()];
 
-  SparseRealMatrix TmpMatrixNorm;
-  double TmpBinomial = 1.0;
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      this->NormalizedB0B0B1B1[i] = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], TmpBinomial, SparseTensorProductBMatrices[1][1]);
-      this->NormalizedB1B1[i].Copy(SparseTensorProductBMatrices[1][1]);
-      this->NormalizedB1B1[i] *= TmpBinomial;
-      this->NormalizedB0B1[i].Copy(SparseTensorProductBMatrices[0][1]);
-      this->NormalizedB0B1[i] *= sqrt(TmpBinomial);
-      this->NormalizedB1B0[i].Copy(SparseTensorProductBMatrices[1][0]);
-      this->NormalizedB1B0[i] *= sqrt(TmpBinomial);
-      TmpBinomial *= (double) (i + 1);
-      if (i < this->LzMax)
-	TmpBinomial /= (double) (this->LzMax - i); 
-      if (i > 0)     
-	TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[i], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-      else
-	TmpMatrixNorm.Copy(this->NormalizedB0B0B1B1[i]);
-    }
+//   SparseRealMatrix TmpMatrixNorm;
+//   double TmpBinomial = 1.0;
+//   for (int i = 0; i <= this->LzMax; ++i)
+//     {
+//       this->NormalizedB0B0B1B1[i] = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], TmpBinomial, SparseTensorProductBMatrices[1][1]);
+//       this->NormalizedB1B1[i].Copy(SparseTensorProductBMatrices[1][1]);
+//       this->NormalizedB1B1[i] *= TmpBinomial;
+//       this->NormalizedB0B1[i].Copy(SparseTensorProductBMatrices[0][1]);
+//       this->NormalizedB0B1[i] *= sqrt(TmpBinomial);
+//       this->NormalizedB1B0[i].Copy(SparseTensorProductBMatrices[1][0]);
+//       this->NormalizedB1B0[i] *= sqrt(TmpBinomial);
+//       TmpBinomial *= (double) (i + 1);
+//       if (i < this->LzMax)
+// 	TmpBinomial /= (double) (this->LzMax - i); 
+//       if (i > 0)     
+// 	TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[i], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
+//       else
+// 	TmpMatrixNorm.Copy(this->NormalizedB0B0B1B1[i]);
+//     }
+
+   long TmpMemory = (((long) this->BMatrices[0].GetNbrRow()) * 
+		     ((long) this->BMatrices[0].GetNbrRow() / 1l));
+   cout << "Requested memory for sparse matrix multiplications = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
+   this->TmpMatrixElements = new double [TmpMemory];
+   this->TmpColumnIndices = new int [TmpMemory];
+   this->TmpElements = new double [this->BMatrices[0].GetNbrRow()];
+   SparseRealMatrix TmpMatrixNorm (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
+   TmpMatrixNorm.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
+   double TmpBinomial = 1.0;
+   for (int i = 0; i <= this->LzMax; ++i)
+     {
+       SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrixNorm, 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrixNorm, 
+			     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       TmpMatrix3 *= TmpBinomial;
+       TmpMatrixNorm = TmpMatrix2 + TmpMatrix3;
+       TmpBinomial *= (double) (i + 1);
+       if (i < this->LzMax)
+	 TmpBinomial /= (double) (this->LzMax - i);        
+     }
   double Tmp;
-  TmpMatrixNorm.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
+//  TmpMatrixNorm.PrintNonZero(cout) << endl;
+  TmpMatrixNorm.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
   this->StateNormalization = Tmp;
 
-  for (int i = 0; i < NbrBMatrices; ++i)
-    delete[] SparseTensorProductBMatrices[i];
-  delete[] SparseTensorProductBMatrices;
+//   for (int i = 0; i < NbrBMatrices; ++i)
+//     delete[] SparseTensorProductBMatrices[i];
+//   delete[] SparseTensorProductBMatrices;
 
 }
 
@@ -188,12 +217,14 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper(const FermionOnSphereMPSWra
   this->NormalizedB1B1 = fermions.NormalizedB1B1;
   this->NormalizedB0B1 = fermions.NormalizedB0B1;
   this->NormalizedB1B0 = fermions.NormalizedB1B0;
+  this->BMatrices = fermions.BMatrices;
+  this->ConjugateBMatrices = fermions.ConjugateBMatrices;
   this->StateNormalization = fermions.StateNormalization;
-  long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
-		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
+  long TmpMemory = (((long) this->BMatrices[0].GetNbrRow()) * 
+		    ((long) this->BMatrices[0].GetNbrRow() / 1l));
   this->TmpMatrixElements = new double [TmpMemory];
   this->TmpColumnIndices = new int [TmpMemory];
-  this->TmpElements = new double [this->NormalizedB0B0B1B1[0].GetNbrRow()];
+  this->TmpElements = new double [this->BMatrices[0].GetNbrRow()];
 }
 
 // destructor
@@ -205,10 +236,12 @@ FermionOnSphereMPSWrapper::~FermionOnSphereMPSWrapper ()
     {
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
-      delete[] this->NormalizedB0B0B1B1;
-      delete[] this->NormalizedB1B1;
-      delete[] this->NormalizedB0B1;
-      delete[] this->NormalizedB1B0;
+//       delete[] this->NormalizedB0B0B1B1;
+//       delete[] this->NormalizedB1B1;
+//       delete[] this->NormalizedB0B1;
+//       delete[] this->NormalizedB1B0;
+      delete[] this->BMatrices;
+      delete[] this->ConjugateBMatrices;
     }
   delete[] this->TmpMatrixElements;
   delete[] this->TmpColumnIndices;
@@ -226,10 +259,12 @@ FermionOnSphereMPSWrapper& FermionOnSphereMPSWrapper::operator = (const FermionO
     {
       delete[] this->SignLookUpTable;
       delete[] this->SignLookUpTableMask;
-      delete[] this->NormalizedB0B0B1B1;
-      delete[] this->NormalizedB1B1;
-      delete[] this->NormalizedB0B1;
-      delete[] this->NormalizedB1B0;
+//       delete[] this->NormalizedB0B0B1B1;
+//       delete[] this->NormalizedB1B1;
+//       delete[] this->NormalizedB0B1;
+//       delete[] this->NormalizedB1B0;
+      delete[] this->BMatrices;
+      delete[] this->ConjugateBMatrices;
     }
   delete[] this->TmpMatrixElements;
   delete[] this->TmpColumnIndices;
@@ -254,11 +289,11 @@ FermionOnSphereMPSWrapper& FermionOnSphereMPSWrapper::operator = (const FermionO
   this->NormalizedB0B1 = fermions.NormalizedB0B1;
   this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->StateNormalization = fermions.StateNormalization;
-  long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
-		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
+  long TmpMemory = (((long) this->BMatrices[0].GetNbrRow()) * 
+		    ((long) this->BMatrices[0].GetNbrRow() / 1l));
   this->TmpMatrixElements = new double [TmpMemory];
   this->TmpColumnIndices = new int [TmpMemory];
-  this->TmpElements = new double [this->NormalizedB0B0B1B1[0].GetNbrRow()];
+  this->TmpElements = new double [this->BMatrices[0].GetNbrRow()];
   return *this;
 }
 
@@ -321,98 +356,131 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  unsigned long TmpState = this->StateDescription;
-  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
-#endif
-  TmpState &= ~(0x1ul << n2);
-  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
-#endif
-  TmpState &= ~(0x1ul << n1);
-  coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
-#endif
-  TmpState |= (0x1ul << m2);
-  coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
-#endif
-  TmpState |= (0x1ul << m1);
-  SparseRealMatrix TmpMatrix;
-  if (m1 == 0)
+  SparseRealMatrix TmpMatrix (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
+  TmpMatrix.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
+  double TmpBinomial = 1.0;
+  double Sign = 1.0;
+  for (int i = 0; i <= this->LzMax; ++i)
     {
-      if ((m1 == n1) || (m1 == n2))
-	TmpMatrix.Copy(this->NormalizedB1B1[0]);
-      else
-	TmpMatrix.Copy(this->NormalizedB0B1[0]);
-    }
-  else
-    {
-      if (m2 == 0)
-	{
-	  if ((m2 == n1) || (m2 == n2))
-	    TmpMatrix.Copy(this->NormalizedB1B1[0]);
-	  else
-	    TmpMatrix.Copy(this->NormalizedB0B1[0]);
-	}
-      else
-	{
-	  if ((0 == n1) || (0 == n2))
-	    {
-	      TmpMatrix.Copy(this->NormalizedB1B0[0]);
-	    }
-	  else
-	    {
-	      TmpMatrix.Copy(this->NormalizedB0B0B1B1[0]);
-	    }
-	}
-    }
-  for (int j = 1; j <= this->LzMax; ++j)
-    {
-      if (j == m1)
+      if (i == m1)
 	{
 	  if ((m1 == n1) || (m1 == n2))
-	    TmpMatrix.Multiply(this->NormalizedB1B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+	    {
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      Sign = 1.0;
+	      if (m1 > i)
+		Sign *= -1.0;
+	      if (m2 > i)
+		Sign *= -1.0;
+	      if (n1 > i)
+		Sign *= -1.0;
+	      if (n2 > i)
+		Sign *= -1.0; 
+	      TmpMatrix2 *= TmpBinomial * Sign;
+	      TmpMatrix = TmpMatrix2;
+	    }
 	  else
-	    TmpMatrix.Multiply(this->NormalizedB0B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+	    {
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      Sign = 1.0;
+	      if (m1 > i)
+		Sign *= -1.0;
+	      if (m2 > i)
+		Sign *= -1.0;
+	      TmpMatrix2 *= sqrt(TmpBinomial) * Sign;
+	      TmpMatrix = TmpMatrix2;
+	    }
 	}
       else
 	{
-	  if (j == m2)
+	  if (i == m2)
 	    {
 	      if ((m2 == n1) || (m2 == n2))
-		TmpMatrix.Multiply(this->NormalizedB1B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		{
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  Sign = 1.0;
+		  if (m1 > i)
+		    Sign *= -1.0;
+		  if (m2 > i)
+		    Sign *= -1.0;
+		  if (n1 > i)
+		    Sign *= -1.0;
+		  if (n2 > i)
+		    Sign *= -1.0; 
+		  TmpMatrix2 *= TmpBinomial * Sign;
+		  TmpMatrix = TmpMatrix2;
+		}
 	      else
-		TmpMatrix.Multiply(this->NormalizedB0B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		{
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  Sign = 1.0;
+		  if (m1 > i)
+		    Sign *= -1.0;
+		  if (m2 > i)
+		    Sign *= -1.0;
+		  TmpMatrix2 *= sqrt(TmpBinomial) * Sign;
+		  TmpMatrix = TmpMatrix2;
+		}
 	    }
 	  else
 	    {
-	      if ((j == n1) || (j == n2))
+	      if ((i == n1) || (i == n2))
 		{
-		  TmpMatrix.Multiply(this->NormalizedB1B0[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  Sign = 1.0;
+		  if (n1 > i)
+		    Sign *= -1.0;
+		  if (n2 > i)
+		    Sign *= -1.0; 
+		  TmpMatrix2 *= sqrt(TmpBinomial) * Sign;
+		  TmpMatrix = TmpMatrix2;
 		}
 	      else
 		{
-		  TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+					this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  Sign = 1.0;
+		  if (m1 > i)
+		    Sign *= -1.0;
+		  if (m2 > i)
+		    Sign *= -1.0;
+		  if (n1 > i)
+		    Sign *= -1.0;
+		  if (n2 > i)
+		    Sign *= -1.0; 
+		  TmpMatrix3 *= TmpBinomial * Sign;
+		  TmpMatrix = TmpMatrix2 + TmpMatrix3;
 		}
 	    }
 	}
+      TmpBinomial *= (double) (i + 1);
+      if (i < this->LzMax)
+	TmpBinomial /= (double) (this->LzMax - i);        
     }
   double Tmp = 0.0;
-  TmpMatrix.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
-  coefficient *= Tmp / this->StateNormalization;
+  TmpMatrix.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
+  coefficient = -Tmp / this->StateNormalization;
   return 0;
 }
 
@@ -670,24 +738,39 @@ int FermionOnSphereMPSWrapper::AdAd (int m1, int m2, double& coefficient)
 
 double FermionOnSphereMPSWrapper::AdA (int index, int m)
 {
-  SparseRealMatrix TmpMatrix;
-  if (m == 0)
-    {
-      TmpMatrix.Copy(this->NormalizedB1B1[0]);
-      for (int j = 1; j <= this->LzMax; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-    }
-  else
-    {
-      TmpMatrix.Copy(this->NormalizedB0B0B1B1[0]);
-      for (int j = 1; j < m; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-      TmpMatrix.Multiply(NormalizedB1B1[m], TmpMatrixElements, TmpColumnIndices, TmpElements);
-      for (int j = m + 1; j <= this->LzMax; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[j], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-   }
+   SparseRealMatrix TmpMatrix (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
+   TmpMatrix.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
+   double TmpBinomial = 1.0;
+   for (int i = 0; i <= this->LzMax; ++i)
+     {
+       if (i == m)
+	 {
+	   SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	   SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+						  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	   TmpMatrix2 *= TmpBinomial;
+	   TmpMatrix = TmpMatrix2;
+	 }
+       else
+	 {
+	   SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+						  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	   SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+						  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	   TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+				 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	   SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+						  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	   TmpMatrix3 *= TmpBinomial;
+	   TmpMatrix = TmpMatrix2 + TmpMatrix3;
+	 }
+       TmpBinomial *= (double) (i + 1);
+       if (i < this->LzMax)
+	 TmpBinomial /= (double) (this->LzMax - i);        
+     }
   double Tmp = 0.0;
-  TmpMatrix.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
+  TmpMatrix.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
   return Tmp / this->StateNormalization;
 }
 

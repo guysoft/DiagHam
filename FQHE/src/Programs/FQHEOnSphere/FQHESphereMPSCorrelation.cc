@@ -247,7 +247,7 @@ int main(int argc, char** argv)
 	{
 	  Basis->GetFunctionValue(Value, TmpValue, NbrFluxQuanta);
 	  ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
-	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);// * TmpValue * Conj(TmpValue);
+	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
 	}
     }
   else
@@ -259,7 +259,7 @@ int main(int argc, char** argv)
 	  ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
 	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
           CheckSum += PrecalculatedValues[i];
-          cout<<i<<" "<<PrecalculatedValues[i]<<endl;
+          cout<< i <<" " << PrecalculatedValues[i] << endl;
 	}
       cout<<"done. Checksum="<<CheckSum<<endl;
     }
@@ -292,12 +292,12 @@ int main(int argc, char** argv)
   if (CoefficientOnlyFlag == false)
     {
       for (int i = 0; i <= NbrFluxQuanta; ++i)
-	File << "# " << i << " " << PrecalculatedValues[i].Re<< " " << PrecalculatedValues[i].Im << endl;
+	File << "# " << i << " " << PrecalculatedValues[i].Re << endl;
     }
   else
     {
       for (int i = 0; i <= NbrFluxQuanta; ++i)
-	File << i << " " << PrecalculatedValues[i].Re<< " " << PrecalculatedValues[i].Im << endl;
+	File << i << " " << PrecalculatedValues[i].Re << endl;
     }
 
 
@@ -362,36 +362,41 @@ int main(int argc, char** argv)
  
   delete[] PrecalculatedValues;
 
-//   cout << "correlation = ";
-//   for (int m1 = 0; m1 < NbrFluxQuanta; ++m1)
-//     for (int m2 = m1 + 1; m2 <= NbrFluxQuanta; ++m2)
-//       for (int n1 = 0; n1 < NbrFluxQuanta; ++n1)
-// 	{
-// 	  int n2 = m1 + m2 - n1;
-// 	  if ((n2 > n1) && (n2 <= NbrFluxQuanta))
-// 	    {
-// 	      cout << m1 << "," << m2 << ";" << n1 <<  "," << n2 << " = ";   
-// 	      if (Space != 0)
-// 		{
-// 		  ParticleOnSphereDensityDensityOperator Operator (Space, m1, m2, n1, n2);
-// 		  Complex TmpDensityDensity = Operator.MatrixElement(State, State);
-// 		  cout << TmpDensityDensity.Re << " ";
-// 		  ParticleOnSphereDensityDensityOperator Operator2 (&SpaceWrapper, m1, m2, n1, n2);
-// 		  Complex TmpDensityDensity2 = Operator2.MatrixElement(DummyState, DummyState);
-// 		  cout << TmpDensityDensity2.Re << " ";
-// 		  if (fabs(TmpDensityDensity.Re - TmpDensityDensity2.Re) > 1e-10)
-// 		    cout << " error";
-// 		  cout << endl;
-// 		}
-// 	      else
-// 		{
-// 		  ParticleOnSphereDensityDensityOperator Operator2 (&SpaceWrapper, m1, m2, n1, n2);
-// 		  Complex TmpDensityDensity = Operator2.MatrixElement(DummyState, DummyState);
-// 		  cout << TmpDensityDensity.Re << " ";
-// 		  cout << endl;
-// 		}
-// 	    }
-// 	}
+  cout << "correlation = ";
+  for (int m1 = 0; m1 < 2; ++m1)//NbrFluxQuanta; ++m1)
+    for (int m2 = m1 + 1; m2 <= NbrFluxQuanta; ++m2)
+      for (int n1 = 0; n1 < NbrFluxQuanta; ++n1)
+	{
+	  int n2 = m1 + m2 - n1;
+	  if ((n2 > n1) && (n2 <= NbrFluxQuanta))
+	    {
+	      cout << m1 << "," << m2 << ";" << n1 <<  "," << n2 << " = ";   
+	      if (Space != 0)
+		{
+		  ParticleOnSphereDensityDensityOperator Operator (Space, m1, m2, n1, n2);
+		  Complex TmpDensityDensity = Operator.MatrixElement(State, State);
+		  cout << TmpDensityDensity.Re << " ";
+		  ParticleOnSphereDensityDensityOperator Operator2 (SpaceWrapper, m1, m2, n1, n2);
+		  Complex TmpDensityDensity2 = Operator2.MatrixElement(DummyState, DummyState);
+		  cout << TmpDensityDensity2.Re << " ";
+		  if (fabs(TmpDensityDensity.Re - TmpDensityDensity2.Re) > 1e-10)
+		    {
+		      if (fabs(fabs(TmpDensityDensity.Re) - fabs(TmpDensityDensity2.Re)) > 1e-10)
+			cout << " error";
+		      else
+			cout << " sign error";
+		    }
+		  cout << endl;
+		}
+	      else
+		{
+		  ParticleOnSphereDensityDensityOperator Operator2 (SpaceWrapper, m1, m2, n1, n2);
+		  Complex TmpDensityDensity = Operator2.MatrixElement(DummyState, DummyState);
+		  cout << TmpDensityDensity.Re << " ";
+		  cout << endl;
+		}
+	    }
+	}
 
 //   for (int i = 0; i <= NbrFluxQuanta; ++i)
 //     {

@@ -79,6 +79,9 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   // column index of the MPS element that has to be evaluated
   int MPSColumnIndex;
 
+  SparseRealMatrix* BMatrices;
+  SparseRealMatrix* ConjugateBMatrices;
+
   // array of normalized tensor product B_1 x B_1^+ (one per orbital)
   SparseRealMatrix* NormalizedB1B1;
   // array of normalized tensor product B_0 x B_1^+ (one per orbital)

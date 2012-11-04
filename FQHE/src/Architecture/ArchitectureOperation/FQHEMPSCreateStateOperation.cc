@@ -131,7 +131,6 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-
   this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
   
   timeval TotalEndingTime;

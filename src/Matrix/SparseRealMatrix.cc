@@ -108,21 +108,29 @@ SparseRealMatrix::SparseRealMatrix(int nbrRow, int nbrColumn, long nbrMatrixElem
   this->NbrMatrixElementPacketSize = 0l;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
-  this->MatrixElements = new double[this->NbrMatrixElements];
-  this->ColumnIndices = new int[this->NbrMatrixElements];
-  if (zero == true)
+  if (this->NbrMatrixElements > 0)
     {
-      for (int i = 0; i < this->NbrRow; i++)
+      this->MatrixElements = new double[this->NbrMatrixElements];
+      this->ColumnIndices = new int[this->NbrMatrixElements];
+      if (zero == true)
 	{
-	  this->RowPointers[i] = -1l;
-	  this->RowLastPointers[i] = -1l;
-	}
-      for (long i = 0l; i < this->NbrMatrixElements; ++i)
-	{
-	  this->MatrixElements[i] = 0.0;
-	  this->ColumnIndices[i] = -1;
+	  for (int i = 0; i < this->NbrRow; i++)
+	    {
+	      this->RowPointers[i] = -1l;
+	      this->RowLastPointers[i] = -1l;
+	    }
+	  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+	    {
+	      this->MatrixElements[i] = 0.0;
+	      this->ColumnIndices[i] = -1;
+	    }
 	}
    }
+  else
+    {
+      this->MatrixElements = 0;
+      this->ColumnIndices = 0;
+    }
 }
 
 // copy constructor (without duplicating datas)
@@ -553,6 +561,46 @@ void SparseRealMatrix::ClearMatrix ()
   return;
 }
 
+// set matrix to identity 
+//
+
+void SparseRealMatrix::SetToIdentity()
+{
+  if ((this->MatrixElements != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->MatrixElements;
+	delete[] this->ColumnIndices;
+	delete[] this->RowPointers;
+	delete[] this->RowLastPointers;
+      }
+  
+  this->NbrMatrixElements = (long) this->NbrRow;
+  if (this->NbrRow > this->NbrColumn)
+    {
+      this->NbrMatrixElements = (long) this->NbrColumn;
+    }
+  this->MaximumNbrMatrixElements = this->NbrMatrixElements;
+  this->NbrMatrixElementPacketSize = 0l;
+  this->MatrixElements = new double [this->NbrMatrixElements];
+  this->ColumnIndices = new int [this->NbrMatrixElements];
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    {
+      this->MatrixElements[i] = 1.0;
+      this->ColumnIndices[i] = (int) i;
+      this->RowPointers[i] = i;
+      this->RowLastPointers[i] = i;
+    }
+  for (int i = (int) this->NbrMatrixElements; i < this->NbrRow; ++i)
+    {
+      this->RowPointers[i] = -1l;
+      this->RowLastPointers[i] = -1l;
+    }
+  return;  
+}
+
 // add two matrices
 //
 // matrix1 = first matrix
@@ -835,6 +883,88 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix)
   return *this;
 }
 
+// multiply two matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseRealMatrix Multiply (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, 
+			   double* tmpMatrixElements, int* tmpColumnIndices, double* tmpElements)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseRealMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  double Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      tmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new double[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
+}
+
 // multiply a matrix to the right by another matrix, providing all the required temporary arrays
 //
 // matrix = matrix used as multiplicator
@@ -880,7 +1010,7 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix,
    
 	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
 	  for (int j = 0; j < matrix.NbrColumn; ++j)
-	    if (tmpElements[j] != 0)
+	    if (tmpElements[j] != 0.0)
 	      {
 		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
 		tmpColumnIndices[TmpNbrMatrixElements] = j;
