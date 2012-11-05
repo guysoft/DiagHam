@@ -17,4 +17,5 @@ MainTaskOperation.cc \
 AbstractArchitectureOperationManager.cc \
 ArchitectureBaseOperationManager.cc \
 OperatorMatrixElementOperation.cc \
-HamiltonianFullDiagonalizeOperation.cc 
+HamiltonianFullDiagonalizeOperation.cc \
+SparseMatrixMatrixMultiplyOperation.cc

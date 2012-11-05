@@ -25,6 +25,9 @@
 
 #include "Matrix/SparseComplexMatrix.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include "Options/Options.h"
 
 #include <iostream>
@@ -44,12 +47,14 @@ int main(int argc, char** argv)
   OptionManager Manager ("FQHESphereMPSCorrelation" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
+  ArchitectureManager Architecture;
   FQHEMPSMatrixManager MPSMatrixManager;
 
   MPSMatrixManager.AddOptionGroup(&Manager);
   OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
   OptionGroup* OutputGroup = Manager.GetOptionGroup("output options");
   OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
@@ -228,7 +233,7 @@ int main(int argc, char** argv)
   FermionOnSphereMPSWrapper* SpaceWrapper = 0;
   if (CylinderFlag == false)
     {
-      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices);
+      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices, Architecture.GetArchitecture());
     }
   else
     {

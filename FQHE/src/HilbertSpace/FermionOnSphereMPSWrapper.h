@@ -98,7 +98,11 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   double* TmpMatrixElements ;
   int* TmpColumnIndices;
   double* TmpElements;
-
+  // maximum number of matrix elements that can ba stored in TmpMatrixElements;
+  long MaxTmpMatrixElements;
+  
+  // pointer to the architecture
+  AbstractArchitecture* Architecture;
 
  public:
 
@@ -117,7 +121,8 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   // bMatrices = array that gives the B matrices 
   // memory = amount of memory granted for precalculations
   FermionOnSphereMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
-			     int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, unsigned long memory = 10000000);
+			     int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, AbstractArchitecture* architecture, 
+			     unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //

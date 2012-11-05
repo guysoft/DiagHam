@@ -31,6 +31,7 @@
 #include "Matrix/SparseRealMatrix.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/Endian.h"
+#include "Architecture/ArchitectureOperation/SparseMatrixMatrixMultiplyOperation.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -965,6 +966,31 @@ SparseRealMatrix Multiply (const SparseRealMatrix& matrix1, const SparseRealMatr
   return TmpMatrix;
 }
 
+// multiply two matrices, providing all the required temporary arrays and using architecture optimisation
+//
+// matrix1 = pointer to the left matrix
+// matrix2 = pointer to the right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// nbrTmpMatrixElements = maximum number of elements available in tmpMatrixElements
+// architecture = pointer to the architecture
+// return value = reference on current matrix
+
+SparseRealMatrix Multiply (SparseRealMatrix* matrix1, SparseRealMatrix* matrix2, 
+			   double* tmpMatrixElements, int* tmpColumnIndices, 
+			   long nbrTmpMatrixElements, AbstractArchitecture* architecture)
+{
+  if (matrix2->NbrRow != matrix1->NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  SparseMatrixMatrixMultiplyOperation Operation (matrix1, matrix2, tmpMatrixElements, tmpColumnIndices, nbrTmpMatrixElements);
+  Operation.ApplyOperation(architecture);  
+  SparseRealMatrix TmpMatrix(Operation.GetDestinationMatrix());
+  return TmpMatrix;
+}
+
 // multiply a matrix to the right by another matrix, providing all the required temporary arrays
 //
 // matrix = matrix used as multiplicator
@@ -1154,6 +1180,99 @@ SparseRealMatrix TensorProduct (const SparseRealMatrix& matrix1, const SparseRea
 	}
     }
   return TmpMatrix;  
+}
+
+// multiply three matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = matrix to conjugate
+// matrix3 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, const SparseRealMatrix& matrix3, 
+			    double* tmpMatrixElements, int* tmpColumnIndices, double* tmpElements)
+{
+  if ((matrix2.NbrRow != matrix1.NbrColumn) || (matrix3.NbrRow != matrix2.NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseRealMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  double Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      int TmpIndex2 = matrix2.ColumnIndices[MinPos2];
+		      long MinPos3 = matrix3.RowPointers[TmpIndex2];
+		      if (MinPos3 >= 0)
+			{
+			  double Tmp2 = Tmp * matrix2.MatrixElements[MinPos2];
+			  long MaxPos3 = matrix3.RowLastPointers[TmpIndex2];
+			  for (; MinPos3 <= MaxPos3; ++MinPos3)
+			    {
+			      tmpElements[matrix3.ColumnIndices[MinPos3]] += Tmp2 * matrix3.MatrixElements[MinPos3];
+			    }
+			}
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new double[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
 }
 
 // compute the transpose of the current matrix
