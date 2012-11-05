@@ -44,6 +44,10 @@
 #include <stdlib.h>
 #include <fstream>
 
+//#define MPSWRAPPER_MULT
+//#define MPSWRAPPER_SMP_MULT
+#define MPSWRAPPER_CONJ
+
 
 using std::cout;
 using std::endl;
@@ -130,29 +134,35 @@ FermionOnSphereMPSWrapper::FermionOnSphereMPSWrapper (int nbrFermions, int& tota
   double TmpBinomial = 1.0;
   for (int i = 0; i <= this->LzMax; ++i)
     {
-//        SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrixNorm, 
-// 					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-//        SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
-// 					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-//        TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrixNorm, 
-// 			     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-//        SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
-// 					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+       SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrixNorm, 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrixNorm, 
+			     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-// parallel version
-//        SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrixNorm, 
-// 					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-//        SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
-// 					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-//        TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrixNorm, 
-// 			     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-//        SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
-// 					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#ifdef MPSWRAPPER_SMP_MULT
+parallel version
+       SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrixNorm, 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+       SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+       TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrixNorm, 
+			     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+       SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
 
+#ifdef MPSWRAPPER_CONJ
       SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrixNorm, this->BMatrices[0], 
 						this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
       SparseRealMatrix TmpMatrix3 = Conjugate(this->ConjugateBMatrices[1], TmpMatrixNorm, this->BMatrices[1], 
 					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
        
        TmpMatrix3 *= TmpBinomial;
@@ -334,18 +344,24 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
 	{
 	  if ((m1 == n1) || (m1 == n2))
 	    {
-// 	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-// 	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-	      
+#ifdef MPSWRAPPER_SMP_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+
+#ifdef MPSWRAPPER_CONJ	      
 	      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[1],  
 						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
 	      Sign = 1.0;
 	      if (m1 > i)
@@ -361,18 +377,24 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
 	    }
 	  else
 	    {
-// 	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-// 	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
-// 						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-	      
+#ifdef MPSWRAPPER_SMP_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+
+#ifdef MPSWRAPPER_CONJ	      
 	      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[0],  
 						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
 	      Sign = 1.0;
 	      if (m1 > i)
@@ -389,19 +411,24 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
 	    {
 	      if ((m2 == n1) || (m2 == n2))
 		{
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#ifdef MPSWRAPPER_SMP_MULT
+		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
 
+#ifdef MPSWRAPPER_CONJ
 		  SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[1],  
 							  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-
+#endif
 
 		  Sign = 1.0;
 		  if (m1 > i)
@@ -417,19 +444,24 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
 		}
 	      else
 		{
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-//  		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
-//  							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-//  		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
-//  							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#ifdef MPSWRAPPER_SMP_MULT
+ 		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+ 		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
 
+#ifdef MPSWRAPPER_CONJ
 		  SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[0],  
 							  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-
+#endif
 		  Sign = 1.0;
 		  if (m1 > i)
 		    Sign *= -1.0;
@@ -443,19 +475,24 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
 	    {
 	      if ((i == n1) || (i == n2))
 		{
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#ifdef MPSWRAPPER_SMP_MULT
+		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrix, 
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
 
+#ifdef MPSWRAPPER_CONJ
 		  SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrix, this->BMatrices[1],  
 							  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-
+#endif
 		  Sign = 1.0;
 		  if (n1 > i)
 		    Sign *= -1.0;
@@ -466,29 +503,34 @@ int FermionOnSphereMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2
 		}
 	      else
 		{
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 		  TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
-// 					this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-// 		  SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#ifdef MPSWRAPPER_MULT
+ 		  SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+ 		  SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+ 		  TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+ 					this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+ 		  SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
 
-// 		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrix, 
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 		  TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
-// 					this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-// 		  SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
-// 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#ifdef MPSWRAPPER_SMP_MULT
+ 		  SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrix, 
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+ 		  SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+ 		  TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+ 					this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+ 		  SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
 
+#ifdef MPSWRAPPER_CONJ
 		  SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrix, this->BMatrices[0],  
 							  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
 		  SparseRealMatrix TmpMatrix3 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[1],  
 							  this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-
+#endif
 
 		  Sign = 1.0;
 		  if (m1 > i)
