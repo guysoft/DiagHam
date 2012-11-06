@@ -237,26 +237,25 @@ bool SparseMatrixMatrixMultiplyOperation::RawApplyOperation()
 			    }
 			}      
 		    }
-				    
-		  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
-		  for (int j = 0; j < this->RightMatrix->NbrColumn; ++j)
-		    if (TmpElements[j] != 0.0)
-		      {
-			this->LocalTmpMatrixElements[TmpNbrMatrixElements] = TmpElements[j];
-			this->LocalTmpColumnIndices[TmpNbrMatrixElements] = j;
-			TmpElements[j] = 0.0;
-			++TmpNbrMatrixElements;
-		      }	  
-		  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
-		    {
-		      this->DestinationMatrix.RowPointers[i] = -1l;
-		      this->DestinationMatrix.RowLastPointers[i] = -1l;
-		    }
-		  else
-		    {
-		      this->DestinationMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
-		      this->DestinationMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
-		    }
+		}				    
+	      PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	      for (int j = 0; j < this->RightMatrix->NbrColumn; ++j)
+		if (TmpElements[j] != 0.0)
+		  {
+		    this->LocalTmpMatrixElements[TmpNbrMatrixElements] = TmpElements[j];
+		    this->LocalTmpColumnIndices[TmpNbrMatrixElements] = j;
+		    TmpElements[j] = 0.0;
+		    ++TmpNbrMatrixElements;
+		  }	  
+	      if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+		{
+		  this->DestinationMatrix.RowPointers[i] = -1l;
+		  this->DestinationMatrix.RowLastPointers[i] = -1l;
+		}
+	      else
+		{
+		  this->DestinationMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+		  this->DestinationMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
 		}
 	    }
 	  else
