@@ -9,6 +9,9 @@
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSpherePTruncated.h"
+#include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
+#include "HilbertSpace/BosonOnSpherePTruncated.h"
 
 #include "Options/Options.h"
 
@@ -48,6 +51,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('i', "input-state", "file that describes states to fuse");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state of the output state");
+  (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full n-body basis");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -162,7 +167,19 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      if (HaldaneBasisFlag == false)
-		OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+		{
+		  if (Manager.GetBoolean("p-truncated") == false)
+		    {
+		      OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+		    }
+		  else
+		    {
+		      int* ReferenceState = 0;
+		      if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+			return -1;
+		      OutputBasis = new FermionOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), ReferenceState);
+		    }
+		}
 	      else
 		{
 		  int* ReferenceState = 0;
@@ -237,7 +254,17 @@ int main(int argc, char** argv)
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
-	      OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+	      if (Manager.GetBoolean("p-truncated") == false)
+		{
+		  OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+		}
+	      else
+		{
+		  int* ReferenceState = 0;
+		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
+		    return -1;
+		  OutputBasis = new BosonOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), ReferenceState);
+		}
 	    }
 	  else
 	    {
