@@ -51,7 +51,8 @@ class SparseMatrixMatrixMultiplyOperation: public AbstractArchitectureOperation
   SparseRealMatrix* LeftMatrix;
   // pointer to the matrix used as right matrix for the multiplication
   SparseRealMatrix* RightMatrix;
-
+  // pointer to the matrix used as the middle matrix for the 3 matrix multiplication
+  SparseRealMatrix* MiddleMatrix;
   // matrix where the product is stored
   SparseRealMatrix DestinationMatrix;
 
@@ -69,7 +70,7 @@ class SparseMatrixMatrixMultiplyOperation: public AbstractArchitectureOperation
   
   // constructor 
   //
-  // leftMatrix = pointer to the matrix used as left matrix for the multiplication and where the result will be stored
+  // leftMatrix = pointer to the matrix used as left matrix for the multiplication
   // rightMatrix = pointer to the matrix used as right matrix for the multiplication
   // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
   // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
@@ -77,6 +78,18 @@ class SparseMatrixMatrixMultiplyOperation: public AbstractArchitectureOperation
   SparseMatrixMatrixMultiplyOperation(SparseRealMatrix* leftMatrix, SparseRealMatrix* rightMatrix,
 				      double* tmpMatrixElements, int* tmpColumnIndices, 
 				      long nbrTmpMatrixElements);
+
+  // constructor for a product of three matrices 
+  //
+  // leftMatrix = pointer to the matrix used as left matrix for the multiplication
+  // middleMatrix = pointer to the matrix used as the middle matrix for the multiplication
+  // rightMatrix = pointer to the matrix used as right matrix for the multiplication
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // nbrTmpMatrixElements = maximum number of elements available in tmpMatrixElements
+  SparseMatrixMatrixMultiplyOperation (SparseRealMatrix* leftMatrix, SparseRealMatrix* middleMatrix, SparseRealMatrix* rightMatrix,
+				       double* tmpMatrixElements, int* tmpColumnIndices, 
+				       long nbrTmpMatrixElements);
 
   // copy constructor 
   //

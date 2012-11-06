@@ -37,7 +37,7 @@
 
 // constructor 
 //
-// leftMatrix = pointer to the matrix used as left matrix for the multiplication and where the result will be stored
+// leftMatrix = pointer to the matrix used as left matrix for the multiplication
 // rightMatrix = pointer to the matrix used as right matrix for the multiplication
 // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
 // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
@@ -51,6 +51,33 @@ SparseMatrixMatrixMultiplyOperation::SparseMatrixMatrixMultiplyOperation (Sparse
   this->NbrComponent = leftMatrix->GetNbrRow();
   this->LeftMatrix = leftMatrix;
   this->RightMatrix = rightMatrix;
+  this->MiddleMatrix = 0;
+  this->LocalTmpMatrixElements = tmpMatrixElements;
+  this->LocalTmpColumnIndices = tmpColumnIndices;
+  this->MaxTmpMatrixElements = nbrTmpMatrixElements;
+  this->LocalNbrMatrixElements = 0l;
+  this->DestinationMatrix = SparseRealMatrix (this->LeftMatrix->NbrRow, this->RightMatrix->NbrColumn, 0);
+  this->OperationType = AbstractArchitectureOperation::SparseMatrixMatrixMultiply;
+}
+
+// constructor for a product of three matrices 
+//
+// leftMatrix = pointer to the matrix used as left matrix for the multiplication
+// middleMatrix = pointer to the matrix used as the middle matrix for the multiplication
+// rightMatrix = pointer to the matrix used as right matrix for the multiplication
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// nbrTmpMatrixElements = maximum number of elements available in tmpMatrixElements
+
+SparseMatrixMatrixMultiplyOperation::SparseMatrixMatrixMultiplyOperation (SparseRealMatrix* leftMatrix, SparseRealMatrix* middleMatrix, SparseRealMatrix* rightMatrix,
+									  double* tmpMatrixElements, int* tmpColumnIndices, 
+									  long nbrTmpMatrixElements)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = leftMatrix->GetNbrRow();
+  this->LeftMatrix = leftMatrix;
+  this->RightMatrix = rightMatrix;
+  this->MiddleMatrix = middleMatrix;
   this->LocalTmpMatrixElements = tmpMatrixElements;
   this->LocalTmpColumnIndices = tmpColumnIndices;
   this->MaxTmpMatrixElements = nbrTmpMatrixElements;
@@ -69,6 +96,7 @@ SparseMatrixMatrixMultiplyOperation::SparseMatrixMatrixMultiplyOperation(const S
   this->NbrComponent = operation.NbrComponent;
   this->LeftMatrix = operation.LeftMatrix;
   this->RightMatrix = operation.RightMatrix;
+  this->MiddleMatrix = operation.MiddleMatrix;
   this->LocalTmpMatrixElements = operation.LocalTmpMatrixElements;
   this->LocalTmpColumnIndices = operation.LocalTmpColumnIndices;
   this->MaxTmpMatrixElements = operation.MaxTmpMatrixElements;
@@ -129,51 +157,113 @@ bool SparseMatrixMatrixMultiplyOperation::RawApplyOperation()
       TmpElements[i] = 0.0;
     }
   int LastComponent = this->FirstComponent + this->NbrComponent;
-  for (int i = this->FirstComponent; i < this->LeftMatrix->NbrRow; ++i)
+  if (this->MiddleMatrix == 0)
     {
-      long MinPos =  this->LeftMatrix->RowPointers[i];
-      if (MinPos >= 0l)
+      for (int i = this->FirstComponent; i < LastComponent; ++i)
 	{
-	  long MaxPos = this->LeftMatrix->RowLastPointers[i];
-	  for (; MinPos <= MaxPos; ++MinPos)
+	  long MinPos =  this->LeftMatrix->RowPointers[i];
+	  if (MinPos >= 0l)
 	    {
-	      int TmpIndex = this->LeftMatrix->ColumnIndices[MinPos];
-	      long MinPos2 = this->RightMatrix->RowPointers[TmpIndex];
-	      if (MinPos2 >= 0)
+	      long MaxPos = this->LeftMatrix->RowLastPointers[i];
+	      for (; MinPos <= MaxPos; ++MinPos)
 		{
-		  double Tmp = this->LeftMatrix->MatrixElements[MinPos];
-		  long MaxPos2 = this->RightMatrix->RowLastPointers[TmpIndex];
-		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		  int TmpIndex = this->LeftMatrix->ColumnIndices[MinPos];
+		  long MinPos2 = this->RightMatrix->RowPointers[TmpIndex];
+		  if (MinPos2 >= 0)
 		    {
-		      TmpElements[this->RightMatrix->ColumnIndices[MinPos2]] += Tmp * this->RightMatrix->MatrixElements[MinPos2];
-		    }      
+		      double Tmp = this->LeftMatrix->MatrixElements[MinPos];
+		      long MaxPos2 = this->RightMatrix->RowLastPointers[TmpIndex];
+		      for (; MinPos2 <= MaxPos2; ++MinPos2)
+			{
+			  TmpElements[this->RightMatrix->ColumnIndices[MinPos2]] += Tmp * this->RightMatrix->MatrixElements[MinPos2];
+			}      
+		    }
+		}	 
+	      PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	      for (int j = 0; j < this->RightMatrix->NbrColumn; ++j)
+		if (TmpElements[j] != 0.0)
+		  {
+		    this->LocalTmpMatrixElements[TmpNbrMatrixElements] = TmpElements[j];
+		    this->LocalTmpColumnIndices[TmpNbrMatrixElements] = j;
+		    TmpElements[j] = 0.0;
+		    ++TmpNbrMatrixElements;
+		  }	  
+	      if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+		{
+		  this->DestinationMatrix.RowPointers[i] = -1l;
+		  this->DestinationMatrix.RowLastPointers[i] = -1l;
 		}
-	    }	 
-   
-	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
-	  for (int j = 0; j < this->RightMatrix->NbrColumn; ++j)
-	    if (TmpElements[j] != 0.0)
-	      {
-		this->LocalTmpMatrixElements[TmpNbrMatrixElements] = TmpElements[j];
-		this->LocalTmpColumnIndices[TmpNbrMatrixElements] = j;
-		TmpElements[j] = 0.0;
-		++TmpNbrMatrixElements;
-	      }	  
-	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
-	    {
-	      this->DestinationMatrix.RowPointers[i] = -1l;
-	      this->DestinationMatrix.RowLastPointers[i] = 1l;
+	      else
+		{
+		  this->DestinationMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+		  this->DestinationMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
+		}
 	    }
 	  else
 	    {
-	      this->DestinationMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
-	      this->DestinationMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	      this->DestinationMatrix.RowPointers[i] = -1l;
+	      this->DestinationMatrix.RowLastPointers[i] = - 1l;
 	    }
 	}
-      else
+    }
+  else
+    {
+      for (int i = this->FirstComponent; i < LastComponent; ++i)
 	{
-	  this->DestinationMatrix.RowPointers[i] = -1l;
-	  this->DestinationMatrix.RowLastPointers[i] = -1;
+	  long MinPos =  this->LeftMatrix->RowPointers[i];
+	  if (MinPos >= 0l)
+	    {
+	      long MaxPos = this->LeftMatrix->RowLastPointers[i];
+	      for (; MinPos <= MaxPos; ++MinPos)
+		{
+		  int TmpIndex = this->LeftMatrix->ColumnIndices[MinPos];
+		  long MinPos2 = this->MiddleMatrix->RowPointers[TmpIndex];
+		  if (MinPos2 >= 0)
+		    {
+		      double Tmp = this->LeftMatrix->MatrixElements[MinPos];
+		      long MaxPos2 = this->MiddleMatrix->RowLastPointers[TmpIndex];
+		      for (; MinPos2 <= MaxPos2; ++MinPos2)
+			{
+			  int TmpIndex2 = this->MiddleMatrix->ColumnIndices[MinPos2];
+			  long MinPos3 = this->RightMatrix->RowPointers[TmpIndex2];
+			  if (MinPos3 >= 0)
+			    {
+			      double Tmp2 = Tmp * this->MiddleMatrix->MatrixElements[MinPos2];
+			      long MaxPos3 = this->RightMatrix->RowLastPointers[TmpIndex2];
+			      for (; MinPos3 <= MaxPos3; ++MinPos3)
+				{
+				  TmpElements[this->RightMatrix->ColumnIndices[MinPos3]] += Tmp2 * this->RightMatrix->MatrixElements[MinPos3];
+				}
+			    }
+			}      
+		    }
+				    
+		  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+		  for (int j = 0; j < this->RightMatrix->NbrColumn; ++j)
+		    if (TmpElements[j] != 0.0)
+		      {
+			this->LocalTmpMatrixElements[TmpNbrMatrixElements] = TmpElements[j];
+			this->LocalTmpColumnIndices[TmpNbrMatrixElements] = j;
+			TmpElements[j] = 0.0;
+			++TmpNbrMatrixElements;
+		      }	  
+		  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+		    {
+		      this->DestinationMatrix.RowPointers[i] = -1l;
+		      this->DestinationMatrix.RowLastPointers[i] = -1l;
+		    }
+		  else
+		    {
+		      this->DestinationMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+		      this->DestinationMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1l;
+		    }
+		}
+	    }
+	  else
+	    {
+	      this->DestinationMatrix.RowPointers[i] = -1l;
+	      this->DestinationMatrix.RowLastPointers[i] = -1l;
+	    }
 	}
     }
   delete[] TmpElements;
@@ -241,8 +331,20 @@ bool SparseMatrixMatrixMultiplyOperation::ArchitectureDependentApplyOperation(SM
   this->DestinationMatrix.MatrixElements = new double[this->DestinationMatrix.NbrMatrixElements];
   this->DestinationMatrix.ColumnIndices = new int[this->DestinationMatrix.NbrMatrixElements];
   long TmpIndex = 0l;
+  TmpFirstComponent = 0;  
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     {
+       int TmpLastComponent = TmpFirstComponent + Step;
+       if (TmpLastComponent > this->LeftMatrix->GetNbrRow())
+	 TmpLastComponent = this->LeftMatrix->GetNbrRow();
+       for (; TmpFirstComponent < TmpLastComponent; ++TmpFirstComponent)
+	 {
+ 	  if (this->DestinationMatrix.RowPointers[TmpFirstComponent] >= 0l)
+ 	    {
+ 	      this->DestinationMatrix.RowPointers[TmpFirstComponent] += TmpIndex;
+ 	      this->DestinationMatrix.RowLastPointers[TmpFirstComponent] += TmpIndex;
+ 	    }
+ 	}
       double* TmpMatrixElements = TmpOperations[i]->LocalTmpMatrixElements;
       int* TmpColumnIndices = TmpOperations[i]->LocalTmpColumnIndices;
       long TmpNbrMatrixElements = TmpOperations[i]->LocalNbrMatrixElements;
@@ -251,7 +353,7 @@ bool SparseMatrixMatrixMultiplyOperation::ArchitectureDependentApplyOperation(SM
 	  this->DestinationMatrix.MatrixElements[TmpIndex] = TmpMatrixElements[j];
 	  this->DestinationMatrix.ColumnIndices[TmpIndex] = TmpColumnIndices[j];
 	  ++TmpIndex;
-	}
+	}      
     }
   for (int i = 0; i < architecture->GetNbrThreads(); ++i)
     {

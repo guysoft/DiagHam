@@ -273,7 +273,7 @@ class SparseRealMatrix : public Matrix
   SparseRealMatrix& Multiply (const SparseRealMatrix& matrix, double*& tmpMatrixElements, int*& tmpColumnIndices, 
 			      long& nbrElements, double* tmpElements);
 
-  // multiply three matrices, providing all the required temporary arrays
+  // multiply three matrices, providing all the required temporary arrays and using architecture optimisation
   //
   // matrix1 = left matrix
   // matrix2 = matrix to conjugate
@@ -284,6 +284,20 @@ class SparseRealMatrix : public Matrix
   // return value = reference on current matrix
   friend SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, const SparseRealMatrix& matrix3, 
 				     double* tmpMatrixElements, int* tmpColumnIndices, double* tmpElements);
+
+  // multiply three matrices, providing all the required temporary arrays
+  //
+  // matrix1 = pointer to the left matrix
+  // matrix2 = pointer to the matrix to conjugate
+  // matrix3 = pointer to the right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // nbrTmpMatrixElements = maximum number of elements available in tmpMatrixElements
+  // architecture = pointer to the architecture
+  // return value = reference on current matrix
+  friend SparseRealMatrix Conjugate (SparseRealMatrix* matrix1, SparseRealMatrix* matrix2, SparseRealMatrix* matrix3, 
+				     double* tmpMatrixElements, int* tmpColumnIndices, 
+				     long nbrTmpMatrixElements, AbstractArchitecture* architecture);
 
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //

@@ -1275,6 +1275,33 @@ SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMat
   return TmpMatrix;
 }
 
+// multiply three matrices, providing all the required temporary arrays
+//
+// matrix1 = pointer to the left matrix
+// matrix2 = pointer to the matrix to conjugate
+// matrix3 = pointer to the right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// nbrTmpMatrixElements = maximum number of elements available in tmpMatrixElements
+// architecture = pointer to the architecture
+// return value = reference on current matrix
+
+SparseRealMatrix Conjugate (SparseRealMatrix* matrix1, SparseRealMatrix* matrix2, SparseRealMatrix* matrix3, 
+			    double* tmpMatrixElements, int* tmpColumnIndices, 
+			    long nbrTmpMatrixElements, AbstractArchitecture* architecture)
+{
+  if ((matrix2->NbrRow != matrix1->NbrColumn) || (matrix3->NbrRow != matrix2->NbrColumn))
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  SparseMatrixMatrixMultiplyOperation Operation (matrix1, matrix2, matrix3,
+						 tmpMatrixElements, tmpColumnIndices, nbrTmpMatrixElements);
+  Operation.ApplyOperation(architecture);  
+  SparseRealMatrix TmpMatrix(Operation.GetDestinationMatrix());
+  return TmpMatrix;
+}
+
 // compute the transpose of the current matrix
 //
 // return value = hermitian transposed matrix
