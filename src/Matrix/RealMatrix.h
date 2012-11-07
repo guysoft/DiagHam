@@ -38,6 +38,8 @@
 #include "Output/MathematicaOutput.h"
 #endif
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "Matrix/ComplexDiagonalMatrix.h"
+#include "MathTools/Complex.h"
 
 #include <iostream>
 
@@ -130,6 +132,13 @@ class RealMatrix : public Matrix
   // j = column position
   // x = reference on the variable where to store the requested matrix element
   void GetMatrixElement(int i, int j, double& x) const;
+
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x) const;
 
   // set a matrix element
   //
@@ -350,6 +359,19 @@ class RealMatrix : public Matrix
   // return value = pointer on the diagonal elements of D
   double* SingularValueDecomposition();
 
+  // Diagonalize a real matrix using the LAPACK library
+  //
+  // M = reference on complex diagonal matrix where result has to be stored
+  // return value = reference on complex diagonal matrix
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M);
+
+  // Diagonalize a real matrix and evaluate the left eigenstates using the LAPACK library
+  //
+  // M = reference on complex diagonal matrix where result has to be stored
+  // Q = matrix where transformation matrix has to be stored
+  // return value = reference on complex diagonal matrix
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
+
   // Output Stream overload
   //
   // Str = reference on output stream
@@ -432,6 +454,17 @@ class RealMatrix : public Matrix
 // x = reference on the variable where to store the requested matrix element
 
 inline void RealMatrix::GetMatrixElement(int i, int j, double& x) const
+{
+  x = this->Columns[j].Components[i];
+}
+
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+inline void RealMatrix::GetMatrixElement(int i, int j, Complex& x) const
 {
   x = this->Columns[j].Components[i];
 }

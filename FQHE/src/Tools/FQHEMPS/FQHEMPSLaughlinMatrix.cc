@@ -33,6 +33,17 @@
 #include "Matrix/SparseRealMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 
+#include "GeneralTools/Endian.h"
+
+#include <fstream>
+
+
+using std::cout;
+using std::endl;
+using std::ofstream;
+using std::ifstream;
+using std::ios;
+
 
 // default constructor 
 //
@@ -82,6 +93,8 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char
 
 FQHEMPSLaughlinMatrix::~FQHEMPSLaughlinMatrix()
 {
+  delete[] this->TotalStartingIndexPerPLevel;
+  delete[] this->NbrIndicesPerPLevel;
 }
   
 // create the B matrices for the laughlin state
@@ -95,24 +108,24 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
     {
       U1BosonBasis[i] = new BosonOnDiskShort(i, i, this->PLevel + 1);
     }
-  int* StartingIndexPerPLevel = new int [this->PLevel + 1];
-  int* NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  StartingIndexPerPLevel[0] = 0;
-  int NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
-  int NValueShift = NbrNValue - 1;
-  NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * NbrNValue;
+  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
+  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
+  this->TotalStartingIndexPerPLevel[0] = 0;
+  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
+  int NValueShift = this->NbrNValue - 1;
+  this->NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * this->NbrNValue;
   for (int i = 1; i <= this->PLevel; ++i)
     {
-      StartingIndexPerPLevel[i] = StartingIndexPerPLevel[i - 1] + NbrIndicesPerPLevel[i - 1];
-      NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * NbrNValue;
+      this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
+      this->NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * this->NbrNValue;
     }
-  int MatrixSize = NbrIndicesPerPLevel[this->PLevel] + StartingIndexPerPLevel[this->PLevel];
+  int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
 
   BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
   for (int i = 0; i <= this->PLevel; ++i)
     {
       BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
-      for (int j = 1; j < NbrNValue; ++j)
+      for (int j = 1; j < this->NbrNValue; ++j)
 	{
 	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
 	    {
@@ -120,7 +133,8 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	      double Tmp = 1.0;
               if (this->CylinderFlag)
                 Tmp *= exp(-this->Kappa*this->Kappa*(i + (N1 - 1) * (N1 - 1)/(4.0 * this->LaughlinIndex)+ (N1 * N1)/(4.0 * this->LaughlinIndex)));
-	      BMatrices[0].SetMatrixElement(StartingIndexPerPLevel[i] + ((k * NbrNValue) + j - 1), StartingIndexPerPLevel[i] + ((k * NbrNValue) + j), Tmp);
+	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(j - 1, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]),
+					    this->GetMatrixIndex(j, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), Tmp);
 	    }
 	}
     }
@@ -151,7 +165,8 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 		      double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex * m * m, 1, Partition1, Partition2, i, j, Coef);
 		      if (this->CylinderFlag)
 			Tmp *= exp(-this->Kappa*this->Kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * this->LaughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * this->LaughlinIndex)));
-		      BMatrices[m].SetMatrixElement(StartingIndexPerPLevel[i] + ((k1 * NbrNValue) + N1), StartingIndexPerPLevel[j] + ((k2 * NbrNValue) + N2), Tmp);
+		      BMatrices[m].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
+						    this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp);
 		    }
 		}
 	    }
@@ -216,3 +231,95 @@ double FQHEMPSLaughlinMatrix::CreateLaughlinAMatrixElement (int chargeNumerator,
     }
   return Tmp;
 }
+
+// extract a block with fixed quantum numbers of a given matrix written the MPS basis
+//
+// matrix = reference on the matrix
+// pLevel1 = tuncation level of the block left indices
+// q1 = charge index of the block left indices
+// pLevel1 = tuncation level of the block right indices
+// q2 = charge index of the block left indices
+// return value = block corresponding to the quantum numbers
+
+SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
+{
+  double Tmp;
+  SparseRealMatrix TmpMatrix;
+  int NbrK1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
+  int NbrK2 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
+  for (int k1 = 0; k1 < NbrK1; ++k1)
+    {
+      for (int k2 = 0; k2 < NbrK2; ++k2)
+	{
+	  matrix.GetMatrixElement(this->GetMatrixIndex(q1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[pLevel1]), 
+				  this->GetMatrixIndex(q2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[pLevel2]), Tmp);
+	  TmpMatrix.SetMatrixElement(k1, k2, Tmp);
+	}
+    }
+  return TmpMatrix;
+}
+
+// get the charge index range
+// 
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSLaughlinMatrix::GetChargeIndexRange (int& minQ, int& maxQ)
+{
+  minQ = 0;
+  maxQ = this->NbrNValue - 1;
+  return;
+}
+
+// load the specific informations from the file header
+// 
+// file = reference on the input file stream
+// return value = true if no error occurred  
+
+bool FQHEMPSLaughlinMatrix::LoadHeader (ifstream& file)
+{
+  int HeaderSize = 0;
+  ReadLittleEndian(file, HeaderSize);
+  ReadLittleEndian(file, this->PLevel);
+  ReadLittleEndian(file, this->LaughlinIndex);
+  ReadLittleEndian(file, this->NbrNValue);
+  ReadLittleEndian(file, this->CylinderFlag);
+  ReadLittleEndian(file, this->Kappa);
+  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
+  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      ReadLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      ReadLittleEndian(file, this->NbrIndicesPerPLevel[i]);
+    }
+  return true;
+}
+
+// save the specific informations to the file header 
+// 
+// file = reference on the output file stream
+// return value = true if no error occurred  
+
+bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
+{
+  int HeaderSize = (this->PLevel + 1) * (2 * sizeof(int)) + (sizeof(int) * 3) + sizeof(bool) + sizeof(double);
+  WriteLittleEndian(file, HeaderSize);
+  WriteLittleEndian(file, this->PLevel);
+  WriteLittleEndian(file, this->LaughlinIndex);
+  WriteLittleEndian(file, this->NbrNValue);
+  WriteLittleEndian(file, this->CylinderFlag);
+  WriteLittleEndian(file, this->Kappa);
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      WriteLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      WriteLittleEndian(file, this->NbrIndicesPerPLevel[i]);
+    }
+  return true;
+}
+

@@ -29,7 +29,9 @@
 
 
 #include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
+#include "MathTools/Complex.h"
 
 #include <math.h>
 
@@ -52,6 +54,14 @@ extern "C" void FORTRAN_NAME(dgesvd)(const char* jobu, const char* jobv, const i
 extern "C" void FORTRAN_NAME(dgesdd)(const char* jobz, const int* nbrRow, const int* nbrColumn, const double* matrix, const int* leadingDimension,
 				     const double* singularValues, const double* uMatrix, const int* uLeadingDimension, const double* vMatrix, 
 				     const int* vLeadingDimension, const double* workingArea, const int* workingAreaSize, const int* workingAreaInteger, const int* information);
+
+// binding to the LAPACK function
+//
+extern "C" void FORTRAN_NAME(dgeev)(const char* jobVL, const char* jobVR, const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				    const double* eigenvaluesRealPart, const double* eigenvaluesImaginaryPart, 
+				    const double* eigenvectorLeftMatrix, const int* leadingDimensionEigenvectorLeftMatrix,
+				    const double* eigenvectorRightMatrix, const int* leadingDimensionEigenvectorRightMatrix,
+				    const double* workingArea, const int* workingAreaSize, const int* information);
 
 #endif
 
@@ -1130,6 +1140,157 @@ double* RealMatrix::SingularValueDecomposition()
 #else
   return 0;
 #endif
+}
+
+// Diagonalize a real matrix using the LAPACK library
+//
+// M = reference on complex diagonal matrix where result has to be stored
+// return value = reference on complex diagonal matrix
+
+ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M)
+{
+  if (this->NbrColumn != this->NbrRow)
+    {
+      cout << "only square matrices can be diagonalized" << endl;
+      return M;
+    }
+#ifdef HAVE_LAPACK
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  char JobVL = 'N';
+  char JobVR = 'N';
+  double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[TotalIndex] = this->Columns[j][i];
+	  ++TotalIndex;
+	}
+    }
+  double* TmpEigenvalueReal = new double[this->NbrColumn];
+  double* TmpEigenvalueImaginary = new double[this->NbrColumn];
+  int TmpLeadingDimension = 1;
+  double* Dummy = 0;
+  double TmpWorkingArea;
+  FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+		      TmpEigenvalueReal, TmpEigenvalueImaginary,
+		      Dummy, &TmpLeadingDimension, Dummy, &TmpLeadingDimension,
+		      &TmpWorkingArea, &WorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+		      TmpEigenvalueReal, TmpEigenvalueImaginary,
+		      Dummy, &TmpLeadingDimension, Dummy, &TmpLeadingDimension,
+		      WorkingArea, &WorkingAreaSize, &Information);
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      M[i].Re = TmpEigenvalueReal[i];
+      M[i].Im = TmpEigenvalueImaginary[i];
+    }
+  delete[] WorkingArea;
+  delete[] TmpEigenvalueReal;
+  delete[] TmpEigenvalueImaginary;
+  delete[] TmpMatrix;
+#endif
+  return M;
+}
+
+// Diagonalize a real matrix and evaluate the left eigenstates using the LAPACK library
+//
+// M = reference on complex diagonal matrix where result has to be stored
+// Q = matrix where transformation matrix has to be stored
+// return value = reference on complex diagonal matrix
+
+ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q)
+{
+  if (this->NbrColumn != this->NbrRow)
+    {
+      cout << "only square matrices can be diagonalized" << endl;
+      return M;
+    }
+#ifdef HAVE_LAPACK
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  char JobVL = 'V';
+  char JobVR = 'N';
+  double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
+  double* TmpLeftEigenstates = new double [this->NbrColumn * this->NbrRow];
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[TotalIndex] = this->Columns[j][i];
+	  ++TotalIndex;
+	}
+    }
+  double* TmpEigenvalueReal = new double[this->NbrColumn];
+  double* TmpEigenvalueImaginary = new double[this->NbrColumn];
+  int TmpLeadingLeftDimension = this->NbrColumn;
+  int TmpLeadingRightDimension = 1;
+  double* Dummy = 0;
+  double TmpWorkingArea;
+  FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+		      TmpEigenvalueReal, TmpEigenvalueImaginary,
+		      TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
+		      &TmpWorkingArea, &WorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+		      TmpEigenvalueReal, TmpEigenvalueImaginary,
+		      TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
+		      WorkingArea, &WorkingAreaSize, &Information);
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      M[i].Re = TmpEigenvalueReal[i];
+      M[i].Im = TmpEigenvalueImaginary[i];
+    }
+  TotalIndex = 0l;
+  for (int i = 0; i < this->NbrRow;)
+    {
+      if ((i == (this->NbrRow - 1)) || (TmpEigenvalueImaginary[i] != -TmpEigenvalueImaginary[i + 1]) 
+	  || (TmpEigenvalueImaginary[i] == 0.0))
+	{
+	  Complex Tmp;
+	  for (int j = 0; j < this->NbrRow; ++j)
+	    {
+	      Tmp.Re = TmpLeftEigenstates[TotalIndex];
+	      Q.SetMatrixElement(j, i, Tmp);
+	      ++TotalIndex;
+	    }
+	  ++i;
+	}
+      else
+	{
+	  Complex Tmp;
+	  for (int j = 0; j < this->NbrRow; ++j)
+	    {
+	      Tmp.Re = TmpLeftEigenstates[TotalIndex];
+	      Q.SetMatrixElement(j, i, Tmp);
+	      Q.SetMatrixElement(j, i + 1, Tmp);
+	      ++TotalIndex;
+	    }
+	  for (int j = 0; j < this->NbrRow; ++j)
+	    {
+	      Q.GetMatrixElement(j, i, Tmp);
+	      Tmp.Im = TmpLeftEigenstates[TotalIndex];
+	      Q.SetMatrixElement(j, i, Tmp);
+	      Tmp.Im = -TmpLeftEigenstates[TotalIndex];
+	      Q.SetMatrixElement(j, i + 1, Tmp);
+	      ++TotalIndex;
+	    }
+	  i += 2;
+	}
+    }
+  delete[] TmpLeftEigenstates;
+  delete[] WorkingArea;
+  delete[] TmpEigenvalueReal;
+  delete[] TmpEigenvalueImaginary;
+  delete[] TmpMatrix;
+#endif
+  return M;
 }
 
 // Output Stream overload

@@ -63,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*SystemGroup) += new BooleanOption ('\n', "cylinder", "evaluate density on the cylinder");
+  (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate density on the cylinder");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
 
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
-  
+
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
   if (Manager.GetBoolean("use-padding") == true)
@@ -229,6 +230,77 @@ int main(int argc, char** argv)
 	    }
 	}
     }
+
+  if (Manager.GetBoolean("infinite-cylinder"))
+    {
+      int NbrBMatrices = 2;
+      SparseRealMatrix* SparseConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
+      for (int i = 0; i < NbrBMatrices; ++i)
+	{
+	  SparseConjugateBMatrices[i] = SparseBMatrices[i].Transpose();
+	}
+      SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
+      for (int i = 0; i < NbrBMatrices; ++i)
+    {
+      SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
+      for (int j = 0; j < NbrBMatrices; ++j)
+	{
+	  SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
+	}
+    }
+      delete[]SparseConjugateBMatrices;
+      SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
+      
+      RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
+      ComplexDiagonalMatrix TmpDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      ComplexMatrix Eigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpDiag, Eigenstates);
+      int LargestEigenvalueIndex = -1;
+      int LargestEigenvalueIndex2 = -1;
+      int LargestEigenvalueIndex3 = -1;
+      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+	if (Norm(TmpDiag[i]) > 1e-10)
+	  {
+	    if (LargestEigenvalueIndex < 0)
+	      {
+		LargestEigenvalueIndex = i;
+	      }
+	    else
+	      {
+		if (LargestEigenvalueIndex2 < 0)
+		  {
+		    LargestEigenvalueIndex2 = i;
+		  }
+		else
+		  {
+		    if (LargestEigenvalueIndex3 < 0)
+		      {
+			LargestEigenvalueIndex3 = i;
+		      }
+		  }
+	      }
+	    cout << Norm(TmpDiag[i]) << " ";
+	  }
+      cout << endl;
+      cout << LargestEigenvalueIndex << " : " << TmpDiag[LargestEigenvalueIndex]
+	   << " " << TmpDiag[LargestEigenvalueIndex2] << " " << TmpDiag[LargestEigenvalueIndex3] << endl;
+      RealMatrix NormalizedB1B1Full (SparseTensorProductBMatrices[1][1]);
+      ComplexVector Test2(NormalizedB0B0B1B1Full.GetNbrRow());
+      Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex]);
+      cout << (Eigenstates[LargestEigenvalueIndex] * Test2) << endl;
+      Complex Density = (Eigenstates[LargestEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex];
+      Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex2]);
+      cout << (Eigenstates[LargestEigenvalueIndex2] * Test2) << endl;
+      Density += (Eigenstates[LargestEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2];
+      Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex3]);
+      cout << (Eigenstates[LargestEigenvalueIndex3] * Test2) << endl;
+      Density = (Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3];
+ //     Density /= Norm(TmpDiag[LargestEigenvalueIndex]);
+      cout << Density << endl;
+      return 0;
+    }
+  
+
 
   FermionOnSphereMPSWrapper* SpaceWrapper = 0;
   if (CylinderFlag == false)

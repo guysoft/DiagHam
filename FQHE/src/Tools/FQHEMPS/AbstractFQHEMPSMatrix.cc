@@ -81,6 +81,7 @@ bool AbstractFQHEMPSMatrix::SaveMatrices (char* fileName)
       return false;
     }
   WriteLittleEndian(File, this->NbrBMatrices);
+  this->SaveHeader(File);
   if (this->RealBMatrices != 0)
     {
       int ComplexFlag  = 0;
@@ -114,6 +115,7 @@ bool AbstractFQHEMPSMatrix::LoadMatrices (char* fileName)
       return false;
     }
   ReadLittleEndian(File, this->NbrBMatrices);
+  this->LoadHeader(File);
   int ComplexFlag  = 0;
   ReadLittleEndian(File, ComplexFlag);
   if (ComplexFlag == 0)
@@ -130,6 +132,57 @@ bool AbstractFQHEMPSMatrix::LoadMatrices (char* fileName)
 	}
     }
   File.close();  
+  return true;
+}
+
+// extract a block with fixed quantum numbers of a given matrix written the MPS basis
+//
+// matrix = reference on the matrix
+// pLevel1 = tuncation level of the block left indices
+// q1 = charge index of the block left indices
+// pLevel1 = tuncation level of the block right indices
+// q2 = charge index of the block left indices
+// return value = block corresponding to the quantum numbers
+
+SparseRealMatrix AbstractFQHEMPSMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
+{
+  return SparseRealMatrix();
+}
+
+// get the charge index range
+// 
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void AbstractFQHEMPSMatrix::GetChargeIndexRange (int& minQ, int& maxQ)
+{
+  minQ = 1;
+  maxQ = 0;
+  return;
+}
+
+// load the specific informations from the file header
+// 
+// file = reference on the input file stream
+// return value = true if no error occurred  
+
+bool AbstractFQHEMPSMatrix::LoadHeader (ifstream& file)
+{
+  int HeaderSize = 0;
+  ReadLittleEndian(file, HeaderSize);
+  file.seekg (HeaderSize, ios::cur);
+  return true;
+}
+
+// save the specific informations to the file header 
+// 
+// file = reference on the output file stream
+// return value = true if no error occurred  
+
+bool AbstractFQHEMPSMatrix::SaveHeader (ofstream& file)
+{
+  int HeaderSize = 0;
+  WriteLittleEndian(file, HeaderSize);
   return true;
 }
 

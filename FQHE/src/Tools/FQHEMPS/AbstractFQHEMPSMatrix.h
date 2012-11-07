@@ -34,9 +34,14 @@
 
 #include "config.h"
 
+#include <fstream>
 
 class SparseRealMatrix;
 class SparseComplexMatrix;
+
+
+using std::ofstream;
+using std::ifstream;
 
 
 class AbstractFQHEMPSMatrix
@@ -80,7 +85,35 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the array
   virtual SparseRealMatrix* GetMatrices();
 
+  // extract a block with fixed quantum numbers of a given matrix written the MPS basis
+  //
+  // matrix = reference on the matrix
+  // pLevel1 = tuncation level of the block left indices
+  // q1 = charge index of the block left indices
+  // pLevel1 = tuncation level of the block right indices
+  // q2 = charge index of the block left indices
+  // return value = block corresponding to the quantum numbers
+  virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
+
+  // get the charge index range
+  // 
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int& minQ, int& maxQ);
+
  protected:
+
+  // load the specific informations from the file header
+  // 
+  // file = reference on the input file stream
+  // return value = true if no error occurred  
+  virtual bool LoadHeader (ifstream& file);
+
+  // save the specific informations to the file header 
+  // 
+  // file = reference on the output file stream
+  // return value = true if no error occurred  
+  virtual bool SaveHeader (ofstream& file);
 
 };
 

@@ -47,11 +47,18 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 
   // |P| level truncation
   int PLevel;
+  
+  // number of charge indices
+  int NbrNValue;
+  // first linearized index for each truncation level
+  int* TotalStartingIndexPerPLevel;
+  // number of linearized index per truncation level
+  int* NbrIndicesPerPLevel;
 
   // true if B_0 has to be normalized on the cylinder geometry
   bool CylinderFlag;
   // cylinder aspect ratio
-  bool Kappa;
+  double Kappa;
 
  public:
   
@@ -85,7 +92,44 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   //
   virtual void CreateBMatrices ();
 
+  // extract a block with fixed quantum numbers of a given matrix written the MPS basis
+  //
+  // matrix = reference on the matrix
+  // pLevel1 = tuncation level of the block left indices
+  // q1 = charge index of the block left indices
+  // pLevel1 = tuncation level of the block right indices
+  // q2 = charge index of the block left indices
+  // return value = block corresponding to the quantum numbers
+  virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
+
+  // get the charge index range
+  // 
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int& minQ, int& maxQ);
+
  protected:
+
+  // load the specific informations from the file header
+  // 
+  // file = reference on the input file stream
+  // return value = true if no error occurred  
+  virtual bool LoadHeader (ifstream& file);
+
+  // save the specific informations to the file header 
+  // 
+  // file = reference on the output file stream
+  // return value = true if no error occurred  
+  virtual bool SaveHeader (ofstream& file);
+
+  // compute the linearized index of the B matrix for the Laughlin states
+  //
+  // charge = charge index
+  // chargedPartitionIndex =index of the partition in the charge sector
+  // nbrCharges = total number of charge indices
+  // globalIndexShift = index of the first state at the considered level
+  // return value = linearized index
+  int GetMatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int globalIndexShift);
 
   // create the matrix element of the B matrix U(1) part
   //
@@ -101,6 +145,21 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 				       unsigned long* partition1, unsigned long* partition2, 
 				       int p1Level, int p2Level, FactorialCoefficient& coef);
 
+  
 };
+
+// compute the linearized index of the B matrix for the Laughlin states
+//
+// charge = charge index
+// chargedPartitionIndex =index of the partition in the charge sector
+// nbrCharges = total number of charge indices
+// globalIndexShift = index of the first state at the considered level
+// return value = linearized index
+
+inline int FQHEMPSLaughlinMatrix::GetMatrixIndex(int charge, int chargedPartitionIndex, 
+						 int nbrCharges, int globalIndexShift)
+{
+  return ((chargedPartitionIndex * nbrCharges + charge) + globalIndexShift);
+}
 
 #endif
