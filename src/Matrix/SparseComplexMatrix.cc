@@ -418,6 +418,25 @@ void SparseComplexMatrix::Resize (int nbrRow, int nbrColumn)
 
 void SparseComplexMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 {
+
+  if ((this->MatrixElements != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->MatrixElements;
+	delete[] this->ColumnIndices;
+	delete[] this->RowPointers;
+	delete[] this->RowLastPointers;
+      }
+
+  this->MatrixElements = 0;
+  this->ColumnIndices = 0;
+  this->RowPointers = 0;
+  this->RowLastPointers = 0;
+  this->NbrMatrixElements = 0l;
+  this->NbrRow = 0;
+  this->NbrColumn = 0;
+
+
 //   if (this->NbrRow != nbrRow)
 //     {
 //       for (int i = 0; i < this->NbrColumn; i++)
