@@ -105,6 +105,7 @@ int main(int argc, char** argv)
   sprintf (OutputName, "bosons_sphere4d_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
   
   int MinJz = 0;
+//   int MinJz = -NbrFluxQuanta*NbrBosons;
   int MaxJz = NbrFluxQuanta*NbrBosons;
   
   if (Manager.GetInteger("only-jz") != 1000)
@@ -116,16 +117,22 @@ int main(int argc, char** argv)
   for (int jz = MinJz; jz <= MaxJz; ++jz)
     {
       int MinKz = 0;
+//       int MinKz = -NbrFluxQuanta*NbrBosons;
       int MaxKz = NbrFluxQuanta*NbrBosons - jz;
+//       int MaxKz = NbrFluxQuanta*NbrBosons;
       if (Manager.GetInteger("only-kz") != 1000)
 	{
-	  MinJz = Manager.GetInteger("only-kz");
-	  MaxJz = Manager.GetInteger("only-kz");
+	  MinKz = Manager.GetInteger("only-kz");
+	  MaxKz = Manager.GetInteger("only-kz");
+	  if (((Manager.GetInteger("only-jz") + Manager.GetInteger("only-kz")) & 1 ) != ((NbrBosons * NbrFluxQuanta) & 1) or ((Manager.GetInteger("only-jz") + Manager.GetInteger("only-kz")) > NbrBosons * NbrFluxQuanta))
+	    cout << "Incompatible values for jz, kz, nbr of particles and number of flux quanta" << endl;
+	  if (Manager.GetInteger("only-jz") < Manager.GetInteger("only-kz"))
+	    cout << "jz should be bigger than kz" << endl;
 	}
       
       for (int kz = MinKz; kz <= MaxKz ; ++kz)
       {
-	if ((((jz + kz) & 1) == ((NbrBosons * NbrFluxQuanta) & 1)) and (kz<=jz))
+	if ((((jz + kz) & 1) == ((NbrBosons * NbrFluxQuanta) & 1)) && (abs(kz)<=abs(jz)) && (fabs(kz)+fabs(jz)<= NbrBosons*NbrFluxQuanta))
 	{
 	cout << "(jz,kz) = (" << jz << "," << kz << ")" << endl; 
       ParticleOnSphere* Space = new BosonOn4DSphere(NbrBosons, NbrFluxQuanta, jz, kz);

@@ -264,7 +264,7 @@ ostream& BosonOn4DSphere::PrintState (ostream& Str, int state)
   this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
    //cout << TemporaryStateLzMax << endl;
 //   Str << hex << this->FermionBasis->StateDescription[state] << dec << " " <<  this->FermionBasis->StateLzMax[state] << "   ";
-  Str << "[";
+  Str << this->FermionBasis->StateDescription[state] <<"[";
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
   {
    if (this->TemporaryState[index] > 0)
