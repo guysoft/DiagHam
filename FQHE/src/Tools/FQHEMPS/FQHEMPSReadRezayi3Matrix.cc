@@ -92,6 +92,9 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
   LongRational WeightIdentity (0l, 1l);
   LongRational WeightPsi (2l, 3l);
   LongRational WeightW (3l);
+  double WeightIdentityNumerical = WeightIdentity.GetNumericalValue();
+  double WeightPsiNumerical = WeightPsi.GetNumericalValue();
+  double WeightWNumerical = WeightW.GetNumericalValue();
   long* Partition = new long[2 * (this->PLevel + 1)];
   unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
 
@@ -473,6 +476,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 				}
 				  Tmp += TmpOrthogonalBasisIdentityLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 			    }
+			  if (this->CylinderFlag)
+			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
+								     + (((j - QValueDenominator) - NValueShift) * ((j - QValueDenominator) - NValueShift) / (4.0 * QValue * QValueDenominator))
+								     + (((j - NValueShift) * (j - NValueShift)) / (4.0 * QValue * QValueDenominator))));
 			  BMatrices[0].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 							this->GetReadRezayiK3MatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
 			}
@@ -492,6 +499,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 				}
 			      Tmp += TmpOrthogonalBasisPsiLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 			    }
+			  if (this->CylinderFlag)
+			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
+								     + (((j - QValueDenominator) - NValueShift) * ((j - QValueDenominator) - NValueShift) / (4.0 * QValue * QValueDenominator))
+								     + (((j - NValueShift) * (j - NValueShift)) / (4.0 * QValue*  QValueDenominator))));
 			  BMatrices[0].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 							this->GetReadRezayiK3MatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
 			  BMatrices[0].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 3, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
@@ -533,6 +544,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 				}
 			      Tmp += TmpOrthogonalBasisWLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 			    }
+			  if (this->CylinderFlag)
+			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
+								     + (((j - QValueDenominator) - NValueShift) * ((j - QValueDenominator) - NValueShift) / (4.0 * QValue * QValueDenominator))
+								     + (((j - NValueShift) * (j - NValueShift)) / (4.0 * QValue*  QValueDenominator))));
 			  BMatrices[0].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 5, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 							this->GetReadRezayiK3MatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 5, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), TmpOrthogonalBasisPsiLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
 			}
@@ -591,6 +606,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
 				  Tmp *= this->CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  if (this->CylinderFlag)
+				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+										   + ((N1 - NValueShift) * (N1 - NValueShift) / (2.0 * QValue * QValueDenominator))
+										   + (((N2 - NValueShift) * (N2 - NValueShift)) / (2.0 * QValue * QValueDenominator))));
 				  BMatrices[1].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								this->GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 3, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
@@ -613,6 +632,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
 				  Tmp *= this->CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  if (this->CylinderFlag)
+				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+										   + ((N1 - NValueShift) * (N1 - NValueShift) / (2.0 * QValue * QValueDenominator))
+										   + (((N2 - NValueShift) * (N2 - NValueShift)) / (2.0 * QValue * QValueDenominator))));
 				  BMatrices[1].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								this->GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
@@ -635,6 +658,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
 				  Tmp *= this->CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				  if (this->CylinderFlag)
+				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightPsiNumerical + WeightPsiNumerical + ((double) (i + j))
+										   + ((N1 - NValueShift) * (N1 - NValueShift) / (2.0 * QValue * QValueDenominator))
+										   + (((N2 - NValueShift) * (N2 - NValueShift)) / (2.0 * QValue * QValueDenominator))));
 				  BMatrices[1].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 3, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								this->GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
 				}
@@ -690,6 +717,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 					}
 				      Tmp += TmpOrthogonalBasisW1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
+				  if (this->CylinderFlag)
+				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+										   + ((N1 - NValueShift) * (N1 - NValueShift) / (2.0 * QValue * QValueDenominator))
+										   + (((N2 - NValueShift) * (N2 - NValueShift)) / (2.0 * QValue * QValueDenominator))));
 				  Tmp *= this->CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 5, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								this->GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 3, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
@@ -747,6 +778,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 					}
 				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 				    }
+				  if (this->CylinderFlag)
+				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+										   + ((N1 - NValueShift) * (N1 - NValueShift) / (2.0 * QValue * QValueDenominator))
+										   + (((N2 - NValueShift) * (N2 - NValueShift)) / (2.0 * QValue * QValueDenominator))));
 				  Tmp *= this->CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
 				  BMatrices[1].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), TmpOrthogonalBasisPsi1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
 								this->GetReadRezayiK3MatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 5, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), TmpOrthogonalBasisPsi2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);

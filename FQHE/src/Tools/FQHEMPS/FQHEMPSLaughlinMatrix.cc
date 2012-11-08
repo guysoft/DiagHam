@@ -129,10 +129,11 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	{
 	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
 	    {
-              int N1 = (j - NValueShift/2);
 	      double Tmp = 1.0;
               if (this->CylinderFlag)
-                Tmp *= exp(-this->Kappa*this->Kappa*(i + (N1 - 1) * (N1 - 1)/(4.0 * this->LaughlinIndex)+ (N1 * N1)/(4.0 * this->LaughlinIndex)));
+		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
+							 + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) / (4.0 * this->LaughlinIndex))
+							 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) / (4.0 * this->LaughlinIndex))));
 	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(j - 1, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]),
 					    this->GetMatrixIndex(j, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), Tmp);
 	    }
@@ -164,7 +165,9 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 		    {
 		      double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex * m * m, 1, Partition1, Partition2, i, j, Coef);
 		      if (this->CylinderFlag)
-			Tmp *= exp(-this->Kappa*this->Kappa*(0.5 * i + 0.5 * j + pow(N1 - NValueShift/2,2.0)/(4.0 * this->LaughlinIndex) + pow(N2 - NValueShift/2,2.0)/(4.0 * this->LaughlinIndex)));
+			Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
+								       + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift)  / (2.0 * this->LaughlinIndex))
+								       + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift))  / (2.0 * this->LaughlinIndex))));
 		      BMatrices[m].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
 						    this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp);
 		    }

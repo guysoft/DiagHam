@@ -97,11 +97,11 @@ int main(int argc, char** argv)
 
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
   double AspectRatio = Manager.GetDouble("aspect-ratio");
-  double kappa = 0.0;
+  double Kappa = 0.0;
   if (CylinderFlag)
     {
-       kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
-       cout<<"Cylinder geometry, kappa= "<<kappa<<endl;
+       Kappa = (2.0 * M_PI) / sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
+       cout<< "Cylinder geometry, kappa= " << Kappa << endl;
     }
 
 
