@@ -512,6 +512,24 @@ void SparseRealMatrix::Resize (int nbrRow, int nbrColumn)
 
 void SparseRealMatrix::ResizeAndClean (int nbrRow, int nbrColumn)
 {
+
+  if ((this->MatrixElements != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->MatrixElements;
+	delete[] this->ColumnIndices;
+	delete[] this->RowPointers;
+	delete[] this->RowLastPointers;
+      }
+
+  this->MatrixElements = 0;
+  this->ColumnIndices = 0;
+  this->RowPointers = 0;
+  this->RowLastPointers = 0;
+  this->NbrMatrixElements = 0l;
+  this->NbrRow = 0;
+  this->NbrColumn = 0;
+
 //   if (this->NbrRow != nbrRow)
 //     {
 //       for (int i = 0; i < this->NbrColumn; i++)
@@ -1627,4 +1645,20 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const SparseRealMatrix& 
 
 #endif
 
+//returns the array with indices of rows
 
+void SparseRealMatrix::GetRowIndices(int* RowIndices)
+{
+  int counter = 0;
+    for (long i = 0; i < this->NbrRow; ++i)
+      for (long j = 0; j < this->NbrColumn; ++j)
+        {
+           double Tmp;
+           this->GetMatrixElement(i,j,Tmp);
+           if ((fabs(Tmp) != 0) && (this->MatrixElements[counter] == Tmp) && (counter < this->NbrMatrixElements))
+             {
+               RowIndices[counter] = i;
+               counter++; 
+             }
+        }
+}

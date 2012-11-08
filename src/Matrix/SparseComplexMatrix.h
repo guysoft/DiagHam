@@ -307,16 +307,6 @@ class SparseComplexMatrix : public Matrix
   // return value = position of the column index (-1 if it does not exist)
   long FindColumnIndexPosition(int index, long minPosition, long maxPosition) const;
 
-  // get the row pointer
-  // i = position
-
-  long GetRowPointer(int i);
-
-  // get the last row pointer
-  // i = position
-
-  long GetRowLastPointer(int i);
-
   // get the matrix element
   // i = position
 
@@ -359,22 +349,6 @@ inline void SparseComplexMatrix::GetMatrixElement(int i, int j, double& x) const
     }
   x = this->MatrixElements[TmpIndex].Re;
   return;
-}
-
-// get the row pointer
-// i = position
-
-inline long SparseComplexMatrix::GetRowPointer(int i)
-{
-  return this->RowPointers[i];
-}
-
-// get the last row pointer
-// i = position
-
-inline long SparseComplexMatrix::GetRowLastPointer(int i)
-{
-  return this->RowLastPointers[i];
 }
 
 // get the matrix element

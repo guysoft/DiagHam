@@ -309,6 +309,25 @@ class SparseRealMatrix : public Matrix
   // return value = amount of memory (in bytes)
   unsigned long GetAllocatedMemory();
 
+  // get the matrix element
+  // i = position
+
+  double GetMatrixElement(int i);
+
+  // get the column index
+  // i = position
+
+  int GetColumnIndex(int i);
+
+  // get the nbr of matrix elements
+  // i = position
+
+  long GetNbrMatrixElements();
+
+  //returns the array with indices of rows
+
+  void GetRowIndices(int* RowIndices);
+
   // evaluate the real part of the matrix trace
   //
   // return value = real part of the matrix trace 
@@ -401,6 +420,32 @@ inline void SparseRealMatrix::GetMatrixElement(int i, int j, double& x) const
   x = this->MatrixElements[TmpIndex];
   return;
 }
+
+// get the matrix element
+// i = position
+
+inline double SparseRealMatrix::GetMatrixElement(int i)
+{
+  return this->MatrixElements[i];
+}
+
+// get the column index
+// i = position
+
+inline int SparseRealMatrix::GetColumnIndex(int i)
+{
+  return this->ColumnIndices[i];
+}
+
+// get the nbr of matrix elements
+// i = position
+
+inline long SparseRealMatrix::GetNbrMatrixElements()
+{
+  return this->NbrMatrixElements;
+}
+
+
 
 // find the position of a given column index in a row
 //

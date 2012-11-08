@@ -247,9 +247,10 @@ double FQHEMPSLaughlinMatrix::CreateLaughlinAMatrixElement (int chargeNumerator,
 SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
 {
   double Tmp;
-  SparseRealMatrix TmpMatrix;
+
   int NbrK1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
   int NbrK2 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
+  SparseRealMatrix TmpMatrix (NbrK1, NbrK2);
   for (int k1 = 0; k1 < NbrK1; ++k1)
     {
       for (int k2 = 0; k2 < NbrK2; ++k2)
@@ -259,6 +260,7 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, i
 	  TmpMatrix.SetMatrixElement(k1, k2, Tmp);
 	}
     }
+
   return TmpMatrix;
 }
 

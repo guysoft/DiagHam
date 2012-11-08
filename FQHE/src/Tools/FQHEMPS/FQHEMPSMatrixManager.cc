@@ -209,5 +209,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
       else
 	MPSMatrix->SaveMatrices(ExportFileName);
     }
+
+  delete[] ExportFileName;
   return MPSMatrix;
 }
