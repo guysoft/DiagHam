@@ -241,13 +241,13 @@ int main(int argc, char** argv)
 	}
       SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
       for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
-      for (int j = 0; j < NbrBMatrices; ++j)
 	{
-	  SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
+	  SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
+	  for (int j = 0; j < NbrBMatrices; ++j)
+	    {
+	      SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
+	    }
 	}
-    }
       delete[]SparseConjugateBMatrices;
       SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
       
@@ -287,15 +287,16 @@ int main(int argc, char** argv)
       RealMatrix NormalizedB1B1Full (SparseTensorProductBMatrices[1][1]);
       ComplexVector Test2(NormalizedB0B0B1B1Full.GetNbrRow());
       Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex]);
-      cout << (Eigenstates[LargestEigenvalueIndex] * Test2) << endl;
+      cout << ((Eigenstates[LargestEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex]) << endl;
       Complex Density = (Eigenstates[LargestEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex];
       Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex2]);
-      cout << (Eigenstates[LargestEigenvalueIndex2] * Test2) << endl;
+      cout << ((Eigenstates[LargestEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2]) << endl;
       Density += (Eigenstates[LargestEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2];
       Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex3]);
-      cout << (Eigenstates[LargestEigenvalueIndex3] * Test2) << endl;
-      Density = (Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3];
- //     Density /= Norm(TmpDiag[LargestEigenvalueIndex]);
+      cout << ((Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3]) << endl;
+      Density += (Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3];
+      Density /= 3.0;      
+      Density *= Kappa;
       cout << Density << endl;
       return 0;
     }

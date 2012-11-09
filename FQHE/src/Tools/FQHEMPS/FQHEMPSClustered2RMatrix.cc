@@ -854,9 +854,9 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
 SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
 {
   double Tmp;
-  SparseRealMatrix TmpMatrix;
   int NbrChargedIndex1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
   int NbrChargedIndex2 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
+  SparseRealMatrix TmpMatrix;
   for (int ChargedIndex1 = 0; ChargedIndex1 < NbrChargedIndex1; ++ChargedIndex1)
     {
       for (int ChargedIndex2 = 0; ChargedIndex2 < NbrChargedIndex2; ++ChargedIndex2)
@@ -865,7 +865,8 @@ SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix
 // 							 NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]),
 // 				  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, 
 // 							 NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
-	  TmpMatrix.SetMatrixElement(ChargedIndex1, ChargedIndex2, Tmp);
+	  if (Tmp != 0.0)
+	    TmpMatrix.SetMatrixElement(ChargedIndex1, ChargedIndex2, Tmp);
 	}
     }
   return TmpMatrix;

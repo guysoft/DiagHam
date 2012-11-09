@@ -688,7 +688,7 @@ void LatticeConnections::AddOptionGroup(OptionManager* manager)
 
 OptionManager* LatticeConnections::Options=NULL;
 
-int round(double a) {
+int LatticeConnectionRound(double a) {
 return int(a + 0.5);
 }
 
@@ -697,7 +697,7 @@ return int(a + 0.5);
 // length = length of array
 void LatticeConnections::ArraySort(int* array, int length)
 {
-  int inc = round(length/2.0);
+  int inc = LatticeConnectionRound(length/2.0);
   int tmpI;
   while (inc > 0)
     {
@@ -712,7 +712,7 @@ void LatticeConnections::ArraySort(int* array, int length)
 	    }
 	  array[j] = tmpI;
 	}
-      inc = round(inc / 2.2);
+      inc = LatticeConnectionRound(inc / 2.2);
     }
 }
 
@@ -723,7 +723,7 @@ void LatticeConnections::ArraySort(int* array, int length)
 // array2 = auxiliary array to be permuted in the same way
 void LatticeConnections::ArraySort2(int* array, int length, int **array2)
 {
-  int inc = round(length/2.0);
+  int inc = LatticeConnectionRound(length/2.0);
   int tmpI;
   int *tmpI2;
   while (inc > 0)
@@ -742,7 +742,7 @@ void LatticeConnections::ArraySort2(int* array, int length, int **array2)
 	  array[j] = tmpI;
 	  array2[j] = tmpI2;
 	}
-      inc = round(inc / 2.2);
+      inc = LatticeConnectionRound(inc / 2.2);
     }
 }
 

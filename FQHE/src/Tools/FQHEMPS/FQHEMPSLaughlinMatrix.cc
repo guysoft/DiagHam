@@ -257,7 +257,8 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, i
 	{
 	  matrix.GetMatrixElement(this->GetMatrixIndex(q1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[pLevel1]), 
 				  this->GetMatrixIndex(q2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[pLevel2]), Tmp);
-	  TmpMatrix.SetMatrixElement(k1, k2, Tmp);
+	  if (Tmp != 0.0)
+	    TmpMatrix.SetMatrixElement(k1, k2, Tmp);
 	}
     }
 
