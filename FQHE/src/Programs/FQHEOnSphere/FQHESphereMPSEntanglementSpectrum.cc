@@ -4,9 +4,11 @@
 #include "HilbertSpace/FermionOnSphereMPSWrapper.h"
 #include "HilbertSpace/FermionOnCylinderMPSWrapper.h"
 
-#include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
+
+#include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
+#include "MathTools/BinomialCoefficients.h"
 
 #include "Tools/FQHEMPS/FQHEMPSMatrixManager.h"
 #include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
@@ -34,10 +36,11 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-double OverlapEig(RealVector& EigV, SparseRealMatrix& TmpM, int TmpSectorDim, int i);
 
 int main(int argc, char** argv)
 {
+  cout.precision(14); 
+  
   OptionManager Manager ("FQHESphereMPSEntanglementSpectrum" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
@@ -161,14 +164,38 @@ int main(int argc, char** argv)
 
   ofstream File;
   File.precision(14);
-
+  
   if (Manager.GetString("output-file") != 0)
     File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
       char* TmpFileName = new char [512];
-      sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.ent", Manager.GetInteger("laughlin-index"),
+      char* StateName = new char [256];
+      if (Manager.GetBoolean("k-2") == true)
+	{
+	  sprintf (StateName, "clustered_k_2_r_%ld", Manager.GetInteger("r-index"));
+	}
+      else
+	{
+	  if (Manager.GetBoolean("rr-3") == true)
+	    {
+	      sprintf (StateName, "readrezayi3");
+	    }
+	  else
+	    {
+	      sprintf (StateName, "laughlin%ld", Manager.GetInteger("laughlin-index"));
+	    }
+	}      
+      if (CylinderFlag == true)
+	{
+	  sprintf(TmpFileName, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
 		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	}
+      else
+	{
+	  sprintf(TmpFileName, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
+		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	}
       File.open(TmpFileName, ios::binary | ios::out);     
    }
 
@@ -207,9 +234,15 @@ int main(int argc, char** argv)
   int* TmpColumnIndices = new int [MaxTmpMatrixElements];
   double * TmpElements = new double [BMatrices[0].GetNbrRow()];
 
+  double* NormalizationCoefficients = new double[NbrFluxQuanta + 1];
+  BinomialCoefficients Binomial(NbrFluxQuanta);
+  for (int i = 0; i <= NbrFluxQuanta; ++i)
+    {      
+      NormalizationCoefficients[i] = ((double) (NbrFluxQuanta + 1)) / Binomial.GetNumericalCoefficient(NbrFluxQuanta, i);
+    }
+
   SparseRealMatrix OverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
   OverlapMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);
-
   SparseRealMatrix TmpMatrix1;
   SparseRealMatrix TmpMatrix2;
   SparseRealMatrix TmpMatrix3;
@@ -224,13 +257,17 @@ int main(int argc, char** argv)
       TmpMatrix3 = Multiply(TmpMatrix1, BMatrices[1],  
 			    TmpMatrixElements, TmpColumnIndices, TmpElements); 
 
+      if (CylinderFlag == false)
+	TmpMatrix3 *= NormalizationCoefficients[i];
+      
       OverlapMatrix = TmpMatrix2 + TmpMatrix3;
+
     }
 
 
   cout<<"Compute density matrix in nonorthogonal basis (full space dimension, will be stored)"<<endl;
 
-  SparseRealMatrix rhoM;
+  SparseRealMatrix RhoA;
 
   TmpMatrix2 = Multiply(FinalBMatrices[0], FinalBMatrices[0].Transpose(), 
  			TmpMatrixElements, TmpColumnIndices, TmpElements); 
@@ -239,24 +276,28 @@ int main(int argc, char** argv)
    {
      TmpMatrix3 = Multiply(FinalBMatrices[1], FinalBMatrices[1].Transpose(), 
 			   TmpMatrixElements, TmpColumnIndices, TmpElements); 
-     rhoM = TmpMatrix2 + TmpMatrix3;
+      if (CylinderFlag == false)
+	TmpMatrix3 *= NormalizationCoefficients[NbrFluxQuanta];
+     RhoA = TmpMatrix2 + TmpMatrix3;
    }
   else
     {
-      rhoM = TmpMatrix2;
+      RhoA = TmpMatrix2;
     }
 
   for (int i = (NbrFluxQuanta - 1); i >= EntCut; i--)
     {
-      TmpMatrix1 = Multiply(BMatrices[0], rhoM, 
+      TmpMatrix1 = Multiply(BMatrices[0], RhoA, 
 			    TmpMatrixElements, TmpColumnIndices, TmpElements); 
       TmpMatrix2 = Multiply(TmpMatrix1, ConjugateBMatrices[0],  
 			    TmpMatrixElements, TmpColumnIndices, TmpElements); 
-      TmpMatrix1 = Multiply(BMatrices[1], rhoM, 
+      TmpMatrix1 = Multiply(BMatrices[1], RhoA, 
 			    TmpMatrixElements, TmpColumnIndices, TmpElements); 
       TmpMatrix3 = Multiply(TmpMatrix1, ConjugateBMatrices[1],  
 			    TmpMatrixElements, TmpColumnIndices, TmpElements);   
-      rhoM = TmpMatrix2 + TmpMatrix3;
+      if (CylinderFlag == false)
+	TmpMatrix3 *= NormalizationCoefficients[i];
+      RhoA = TmpMatrix2 + TmpMatrix3;
     }
 
   //Free up some space that is no longer needed (this needs to be done in a cleaner way)
@@ -275,87 +316,87 @@ int main(int argc, char** argv)
   int* RhoNSector = new int [MatDim];
   int* RhoPSector = new int [MatDim];
 
-  int NbrNValue = ((2 * LambdaMax) + LaughlinIndex);
+  int MinNValue;
+  int MaxNValue;
+  MPSMatrix->GetChargeIndexRange(MinNValue, MaxNValue);
+  int NbrNValue = MaxNValue - MinNValue + 1;
 
   for (int i =0 ; i < MatDim; i++)
    {
      RhoEigenvalues[i] = 0.0; 
      RhoNSector[i] = 0; 
-     RhoPSector[i]=0;
+     RhoPSector[i] = 0;
    }
 
-  int eigenvaluecounter = 0;
+  long NbrEigenvalues = 0l;
+  //  OverlapMatrix.PrintNonZero(cout) << endl;
   for (int NSector = 0; NSector < NbrNValue; NSector++)
     {
       for (int MomentumSector = 0; MomentumSector <= LambdaMax; MomentumSector++)
 	{
-	  SparseRealMatrix TmpMBlock = MPSMatrix->ExtractBlock(OverlapMatrix, MomentumSector, NSector, MomentumSector, NSector);
-	  
-	  int TmpSectorDim = TmpMBlock.GetNbrRow();
-	  
-	  RealSymmetricMatrix HRep (TmpMBlock);
-	  RealDiagonalMatrix TmpDiag (TmpSectorDim);
-	  RealMatrix Q(TmpSectorDim, TmpSectorDim);
-	  HRep.LapackDiagonalize(TmpDiag, Q);
-      
-	  int NonZeroEig = 0;
-	  for (int j = TmpSectorDim - 1; j >= 0; --j)
+	  SparseRealMatrix TmpOverlapBlock = MPSMatrix->ExtractBlock(OverlapMatrix, MomentumSector, NSector, MomentumSector, NSector);
+	  SparseRealMatrix RhoABlock = MPSMatrix->ExtractBlock(RhoA, MomentumSector, NSector, MomentumSector, NSector);
+
+	  if ((TmpOverlapBlock.ComputeNbrNonZeroMatrixElements() != 0) && (RhoABlock.ComputeNbrNonZeroMatrixElements()))
 	    {
-	      if (fabs(TmpDiag[j]) > CutOff)
-		{  
-		  NonZeroEig++;
-		  Q[j] /= sqrt(fabs(TmpDiag[j]));
-		}  
-	    }
-	  
-	  if (NonZeroEig > 0)
-	    {
+// 	      cout << "NSector=" << NSector << "  MomentumSector=" << MomentumSector << " : "<< endl;
+// 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
+	      int TmpSectorDim = TmpOverlapBlock.GetNbrRow();
 	      
-	      //cout<<"-------------------- Start computing rho in the new basis --------------------"<<endl;
+	      RealSymmetricMatrix HRep (TmpOverlapBlock);
+	      RealDiagonalMatrix TmpDiag (TmpSectorDim);
+	      RealMatrix Q(TmpSectorDim, TmpSectorDim);
+	      HRep.LapackDiagonalize(TmpDiag, Q);
 	      
-	      RealMatrix NewrhoM(NonZeroEig, NonZeroEig, true);
-	      
-	      SparseRealMatrix rhoMBlock = MPSMatrix->ExtractBlock(rhoM, MomentumSector, NSector, MomentumSector, NSector);
-	      //cout<<"rhoMBlock "<<rhoMBlock<<endl;
-	      
-	      
-	      int rowIndex, columnIndex;
-	      
-	      int offset = TmpSectorDim - NonZeroEig;
-	      for (int i = TmpSectorDim - 1; i >= offset; i--)
-		for (int j = TmpSectorDim - 1; j >= offset; j--)
-		  {
-		    double TmpEl = 0.0;
-		    for (int ii = 0; ii < TmpSectorDim; ++ii)
-		      for (int jj = 0; jj < TmpSectorDim; ++jj)
-			{
-			  double Tmp;
-			  rhoMBlock.GetMatrixElement(ii, jj, Tmp);
-			  TmpEl += Tmp * OverlapEig(Q[j], TmpMBlock, TmpSectorDim, jj) * OverlapEig(Q[i], TmpMBlock, TmpSectorDim, ii);
-			}
-		    
-		    NewrhoM.SetMatrixElement(i-offset, j-offset, TmpEl); 
-		  }
-	      
-	      RealSymmetricMatrix HRepRho ((Matrix&) NewrhoM);
-	      
-	      RealDiagonalMatrix TmpDiagRho (NonZeroEig);
-	      RealMatrix QRho(NonZeroEig, NonZeroEig);
-	      HRepRho.LapackDiagonalize(TmpDiagRho, QRho);
-	      
-	      cout<<"------------sector P = "<<MomentumSector<<" N = "<<((EntCut - (NSector - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex << "---------------"<<endl;
-	      
-	      cout.precision(14); 
-	      
-	      double Sum = 0.0;
-	      for (int j = 0; j < NonZeroEig; ++j)
+	      int NbrNonZeroVectors = 0;
+	      for (int j = 0; j < TmpSectorDim; ++j)
 		{
-		  //cout<<"Eigenvalue "<<TmpDiagRho[j]<<endl;
-		  TraceRho += TmpDiagRho[j];
-		  RhoEigenvalues[eigenvaluecounter]=TmpDiagRho[j];
-		  RhoNSector[eigenvaluecounter]=NSector;
-		  RhoPSector[eigenvaluecounter]=MomentumSector; 
-		  eigenvaluecounter++;
+		  if (fabs(TmpDiag[j]) > CutOff)
+		    {
+		      ++NbrNonZeroVectors;
+		    }
+		}
+	      if (NbrNonZeroVectors > 0)
+		{
+		  RealMatrix BlockBasisLeftMatrix (TmpSectorDim, NbrNonZeroVectors);
+		  RealMatrix BlockBasisRightMatrix (TmpSectorDim, NbrNonZeroVectors);
+		  NbrNonZeroVectors = 0;
+		  for (int j = 0; j < TmpSectorDim; ++j)
+		    {
+		      if (fabs(TmpDiag[j]) > CutOff)
+			{  			
+			  BlockBasisLeftMatrix[NbrNonZeroVectors].Copy(Q[j]);
+			  if (TmpDiag[j] > 0.0)
+			    BlockBasisLeftMatrix[NbrNonZeroVectors] /= sqrt(fabs(TmpDiag[j]));
+			  else
+			    BlockBasisLeftMatrix[NbrNonZeroVectors] /= -sqrt(fabs(TmpDiag[j]));
+			  BlockBasisRightMatrix[NbrNonZeroVectors].Copy(Q[j]);
+			  BlockBasisRightMatrix[NbrNonZeroVectors] /= sqrt(fabs(TmpDiag[j]));
+			  ++NbrNonZeroVectors;
+			}  
+		    }
+	      
+		  
+		  //cout<<"-------------------- Start computing rho in the new basis --------------------"<<endl;
+
+		  SparseRealMatrix TmpMat = Conjugate(TmpOverlapBlock, RhoABlock, TmpOverlapBlock.Transpose());
+		  RealSymmetricMatrix HRepRho = TmpMat.Conjugate(BlockBasisLeftMatrix, BlockBasisRightMatrix);
+
+		  RealDiagonalMatrix TmpDiagRho (NbrNonZeroVectors);
+		  HRepRho.LapackDiagonalize(TmpDiagRho);
+		  
+		  cout<<"------------sector P = "<<MomentumSector<<" N = "<<((EntCut - (NSector - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex << "---------------"<<endl;
+		  
+		  
+		  double Sum = 0.0;
+		  for (int j = 0; j < NbrNonZeroVectors; ++j)
+		    {
+		      TraceRho += TmpDiagRho[j];
+		      RhoEigenvalues[NbrEigenvalues]=TmpDiagRho[j];
+		      RhoNSector[NbrEigenvalues]=NSector;
+		      RhoPSector[NbrEigenvalues]=MomentumSector; 
+		      NbrEigenvalues++;
+		    }
 		}
 	    }
 	}
@@ -363,11 +404,12 @@ int main(int argc, char** argv)
   
   cout<<"Trace rho = "<<TraceRho<<endl;
 
+  File << "# l_a    N    Lz    lambda" << endl;
   for (int i=0; i<MatDim; ++i)
     if ((fabs(RhoEigenvalues[i]) > CutOff) && ((((EntCut - (RhoNSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
       {
-        cout<<"P= "<<RhoPSector[i]<<" N= "<<RhoNSector[i]<<" "<<RhoEigenvalues[i]/TraceRho<<endl;  
-        File<<RhoPSector[i]<<" "<<RhoNSector[i]<<" "<<RhoEigenvalues[i]/TraceRho<<endl;
+        cout<< "P= " << RhoPSector[i] << " N= " << RhoNSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
+        File << EntCut << " " << Na << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
       }
 
  delete[] RhoEigenvalues;
@@ -378,16 +420,3 @@ int main(int argc, char** argv)
  
   return 0;
 }
-
-double OverlapEig(RealVector& EigV, SparseRealMatrix& TmpM, int TmpSectorDim, int i)
-{
-  double Tmp;
-  double ov = 0.0;
-  for(int ii = 0; ii < TmpSectorDim; ii++)
-   {
-      TmpM.GetMatrixElement(ii, i, Tmp); 
-      ov += EigV[ii] * Tmp;
-   } 
- return ov;
-}
-

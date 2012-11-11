@@ -313,12 +313,21 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 
   SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
 
-  int** StartingIndexPerPLevel = new int* [this->PLevel + 1];
+  this->StartingIndexPerPLevel = new int* [this->PLevel + 1];
   this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
   this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
+  this->IdentityBasisDimension = new int [this->PLevel + 1];
+  this->PsiBasisDimension = new int [this->PLevel + 1];
+  this->U1BasisDimension = new int [this->PLevel + 1];	
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->IdentityBasisDimension[i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
+      this->PsiBasisDimension[i] = OrthogonalBasisPsiLeft[i].GetNbrColumn();
+      this->U1BasisDimension[i] = U1BosonBasis[i]->GetHilbertSpaceDimension();
+    }
   this->TotalStartingIndexPerPLevel[0] = 0;
-  StartingIndexPerPLevel[0] = new int [1];
-  StartingIndexPerPLevel[0][0] = 0;
+  this->StartingIndexPerPLevel[0] = new int [1];
+  this->StartingIndexPerPLevel[0][0] = 0;
 
   
   int NValueShift;
@@ -346,14 +355,14 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
   for (int i = 1; i <= this->PLevel; ++i)
     {
       this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
-      StartingIndexPerPLevel[i] = new int [i + 1];      
-      StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
+      this->StartingIndexPerPLevel[i] = new int [i + 1];      
+      this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
       int Tmp = 0;
       int Tmp2;
       for (int j = 0; j < i; ++j)
 	{
 	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn()) * this->NbrNValue;
-	  StartingIndexPerPLevel[i][j + 1] = Tmp2 + StartingIndexPerPLevel[i][j];
+	  this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
 	  Tmp += Tmp2;
 	}
       Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn()) * this->NbrNValue;
@@ -399,8 +408,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 				Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
 									 + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
+							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), Tmp);
 			    }
 			}
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
@@ -421,8 +430,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 				Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
 									 + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
+							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), Tmp);
 			    }
 			}
 		    }
@@ -449,8 +458,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 				Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
 									 + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
 									 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 2, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 2, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
+							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), Tmp);
 			    }
 			}
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
@@ -471,8 +480,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 				Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
 									 + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
 									 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 2, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
+			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 2, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
+							    this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), Tmp);
 			    }
 			}
 		    }
@@ -541,8 +550,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
 										   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
 										   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-								this->Get2RMatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
+								this->Get2RMatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), this->StartingIndexPerPLevel[j][q]), Tmp);
 				}
 
 			    }
@@ -575,8 +584,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
 										   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
 										   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
-								this->Get2RMatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), StartingIndexPerPLevel[j][q]), Tmp);
+				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
+								this->Get2RMatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), this->StartingIndexPerPLevel[j][q]), Tmp);
 				}
 			    }
 			}
@@ -854,20 +863,81 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
 SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
 {
   double Tmp;
-  int NbrChargedIndex1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
-  int NbrChargedIndex2 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
-  SparseRealMatrix TmpMatrix;
-  for (int ChargedIndex1 = 0; ChargedIndex1 < NbrChargedIndex1; ++ChargedIndex1)
+  int TmpNbrRow = 0;
+  for (int p = 0; p <= pLevel1; ++p)
+    TmpNbrRow += (this->IdentityBasisDimension[pLevel1 - p] + this->PsiBasisDimension[pLevel1 - p]) * this->U1BasisDimension[p];
+  int TmpNbrColumn = 0;
+  for (int p = 0; p <= pLevel2; ++p)
+    TmpNbrColumn += (this->IdentityBasisDimension[pLevel2 - p] + this->PsiBasisDimension[pLevel2 - p]) * this->U1BasisDimension[p];
+
+  SparseRealMatrix TmpMatrix(TmpNbrRow, TmpNbrColumn);
+  int CurrentShift1 = 0;
+  for (int p = 0; p <= pLevel1; ++p)
     {
-      for (int ChargedIndex2 = 0; ChargedIndex2 < NbrChargedIndex2; ++ChargedIndex2)
+      int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
+      int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
+      int TmpU1BasisDimension1 = this->U1BasisDimension[p];
+      int CurrentShift2 = 0;
+      for (int q = 0; q <= pLevel2; ++q)
 	{
-// 	  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, 
-// 							 NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]),
-// 				  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, 
-// 							 NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), StartingIndexPerPLevel[i][p]), Tmp);
-	  if (Tmp != 0.0)
-	    TmpMatrix.SetMatrixElement(ChargedIndex1, ChargedIndex2, Tmp);
+	  int TmpIdentityBasisDimension2 = this->IdentityBasisDimension[pLevel2 - q];
+	  int TmpPsiBasisDimension2 = this->PsiBasisDimension[pLevel2 - q];
+	  int TmpU1BasisDimension2 = this->U1BasisDimension[q];		  
+	  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
+	    {
+	      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpU1BasisDimension2; ++ChargedIndex2)
+		{
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
+			{
+			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
+									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
+									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+			  if (Tmp != 0.0)
+			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+			}
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
+			{
+			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
+									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
+									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+			  if (Tmp != 0.0)
+			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+			}
+		    }
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
+			{
+			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
+									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
+									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+			  if (Tmp != 0.0)
+			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+			}
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
+			{
+			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
+									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
+									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+			  if (Tmp != 0.0)
+			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+			}
+		    }
+		}
+	    }
+	  CurrentShift2 += (TmpIdentityBasisDimension2 + TmpPsiBasisDimension2) * TmpU1BasisDimension2;
 	}
+      CurrentShift1 += (TmpIdentityBasisDimension1 + TmpPsiBasisDimension1) * TmpU1BasisDimension1;
     }
   return TmpMatrix;
 }

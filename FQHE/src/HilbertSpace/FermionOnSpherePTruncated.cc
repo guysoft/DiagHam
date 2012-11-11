@@ -357,8 +357,11 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
     {
       MaxIndex = this->LargeHilbertSpaceDimension;
     }
-  double* TmpMatrixElements = new double [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
-  int* TmpColumnIndices = new int [bMatrices[0].GetNbrRow() * bMatrices[0].GetNbrColumn()];
+  long TmpMemory = (((long) bMatrices[0].GetNbrRow()) * ((long)bMatrices[0].GetNbrColumn()));
+  if (TmpMemory > (1l << 28))
+    TmpMemory = 1l << 28;
+  double* TmpMatrixElements = new double [TmpMemory];
+  int* TmpColumnIndices = new int [TmpMemory];
   double* TmpElements = new double [bMatrices[0].GetNbrRow()];
 
   if (memory <= 1l)

@@ -45,6 +45,16 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // r index (i.e. clustered (k=2,r) states) 
   int RIndex;
 
+
+  // indicate the first linearized index for fixed of the total p-level and the U(1) p-level
+  int** StartingIndexPerPLevel;
+  // number of non-zero vectors for the identity descendants at a given level 
+  int* IdentityBasisDimension;
+  // number of non-zero vectors for the psi  descendants at a given level 
+  int* PsiBasisDimension;
+  // number of U(1) mode at a given level 
+  int* U1BasisDimension;		  
+
  public:
   
   // default constructor 
@@ -143,6 +153,18 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   int Get2RMatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, 
 		       int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
 
+  // compute the linearized index of a block of the matrices with fixed charge and p-level values
+  //
+  // chargedPartitionIndex = index of the partition in the charge sector
+  // nbrCharges = total number of partitions at the current level
+  // chargeSectorDimension =  total number of partitions in the charge sector
+  // fieldIndex = field index (0 for the identity, 1 for psi)
+  // neutralPartitionIndex = index of the state in the neutral sector (linearly independant basis)
+  // nbrIdentityDescendant = number of linearly independent descendant of the identity at the current level
+  // globalIndexShift = index of the first state at the considered level 
+  // return value = linearized index
+  int Get2RReducedMatrixIndex(int chargedPartitionIndex, int chargeSectorDimension, 
+			      int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
 
 };
 
@@ -164,6 +186,23 @@ inline int FQHEMPSClustered2RMatrix::Get2RMatrixIndex(int charge, int chargedPar
 						      int nbrIdentityDescendant, int globalIndexShift)
 {
   return (((((nbrIdentityDescendant * fieldIndex) + neutralPartitionIndex) * chargeSectorDimension + chargedPartitionIndex) * nbrCharges + charge) + globalIndexShift);
+}
+
+// compute the linearized index of a block of the matrices with fixed charge and p-level values
+//
+// chargedPartitionIndex = index of the partition in the charge sector
+// nbrCharges = total number of partitions at the current level
+// chargeSectorDimension =  total number of partitions in the charge sector
+// fieldIndex = field index (0 for the identity, 1 for psi)
+// neutralPartitionIndex = index of the state in the neutral sector (linearly independant basis)
+// nbrIdentityDescendant = number of linearly independent descendant of the identity at the current level
+// globalIndexShift = index of the first state at the considered level 
+// return value = linearized index
+
+inline int FQHEMPSClustered2RMatrix::Get2RReducedMatrixIndex(int chargedPartitionIndex, int chargeSectorDimension, 
+							     int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift)
+{
+  return (globalIndexShift + (chargedPartitionIndex + chargeSectorDimension * ((fieldIndex * nbrIdentityDescendant) + neutralPartitionIndex)));
 }
 
 #endif

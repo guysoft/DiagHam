@@ -29,6 +29,7 @@
 
 
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/RealMatrix.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/Endian.h"
 #include "Architecture/ArchitectureOperation/SparseMatrixMatrixMultiplyOperation.h"
@@ -1198,6 +1199,65 @@ SparseRealMatrix TensorProduct (const SparseRealMatrix& matrix1, const SparseRea
 	}
     }
   return TmpMatrix;  
+}
+
+// conjugate the current sparse matrix (M1^+ A M2), assuming A is symmetric
+//
+// matrix1 = left matrix used for the conjugation
+// matrix2 = left matrix used for the conjugation
+// return value = conjugated symmetric matrix
+
+RealSymmetricMatrix SparseRealMatrix::Conjugate (RealMatrix& matrix1, RealMatrix& matrix2)
+{
+  if ((matrix1.GetNbrRow() != this->NbrRow) || (matrix2.GetNbrRow() != this->NbrColumn) || 
+      (matrix1.GetNbrColumn() != matrix2.GetNbrColumn()))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return RealSymmetricMatrix(); 
+    }
+  RealSymmetricMatrix TmpMatrix(matrix1.GetNbrColumn(), true);
+  for (int i = 0; i < matrix1.GetNbrColumn(); ++i)
+    {
+      for (int k = 0; k < this->NbrRow; ++k)
+	{
+	  long MinPos =  this->RowPointers[k];
+	  if (MinPos >= 0l)
+	    {
+	      long MaxPos = this->RowLastPointers[k];
+	      for (; MinPos <= MaxPos; ++MinPos)
+		{
+		  double Tmp = matrix1[i][k] * this->MatrixElements[MinPos];
+		  int TmpIndex = this->ColumnIndices[MinPos];
+		  for (int j = i; j < matrix2.GetNbrColumn(); ++j)
+		    {
+		      double Tmp2 = Tmp * matrix2[j][TmpIndex];
+		      TmpMatrix.AddToMatrixElement(i, j, Tmp2);
+		    }
+		}
+	    }
+	}
+    }
+  return TmpMatrix;
+}
+
+// conjugate a matrix
+//
+// matrix1 = left matrix
+// matrix2 = matrix to conjugate
+// matrix3 = right matrix
+// return value = reference on conjugated matrix
+
+SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, 			    
+			    const SparseRealMatrix& matrix3)
+{
+  double* TmpMatrixElements = new double[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
+  int* TmpColumnIndices = new int[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
+  double* TmpElements = new double [matrix1.NbrRow];
+  SparseRealMatrix TmpMatrix = Conjugate(matrix1, matrix2, matrix3, TmpMatrixElements, TmpColumnIndices, TmpElements);
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] TmpElements;
+  return TmpMatrix;
 }
 
 // multiply three matrices, providing all the required temporary arrays

@@ -39,6 +39,7 @@
 #endif
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/GarbageFlag.h"
 
@@ -273,7 +274,23 @@ class SparseRealMatrix : public Matrix
   SparseRealMatrix& Multiply (const SparseRealMatrix& matrix, double*& tmpMatrixElements, int*& tmpColumnIndices, 
 			      long& nbrElements, double* tmpElements);
 
-  // multiply three matrices, providing all the required temporary arrays and using architecture optimisation
+  // conjugate the current sparse matrix (M1^+ A M2), assuming A is symmetric
+  //
+  // matrix1 = left matrix used for the conjugation
+  // matrix2 = left matrix used for the conjugation
+  // return value = conjugated symmetric matrix
+  RealSymmetricMatrix Conjugate (RealMatrix& matrix1, RealMatrix& matrix2);
+
+  // conjugate a matrix
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // return value = reference on conjugated matrix
+  friend SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, 
+				     const SparseRealMatrix& matrix3);
+
+  // conjugate a matrix, providing all the required temporary arrays and using architecture optimisation
   //
   // matrix1 = left matrix
   // matrix2 = matrix to conjugate
