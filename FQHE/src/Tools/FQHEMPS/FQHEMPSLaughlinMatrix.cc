@@ -120,7 +120,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
       this->NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * this->NbrNValue;
     }
   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
-
+  cout << "B matrix size = " << MatrixSize << endl;
   BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
   for (int i = 0; i <= this->PLevel; ++i)
     {
