@@ -68,11 +68,11 @@ Complex ParticleOnCylinderFunctionBasis::GetFunctionValue(double x, double y, do
 
   double Normalization = 1.0/sqrt(L * sqrt(M_PI));
    
-  Complex Result = Phase * exp(-0.5 * pow(x + kappa * index,2.0));
+  Complex Result = Phase * exp(-0.5 * pow(x - kappa * index,2.0));
 
   if (this->LandauLevel == 1)
     {
-      Result *= (2.0 * (x + kappa * index));    
+      Result *= (2.0 * (x - kappa * index));    
       Normalization /= sqrt(2.0);
     }
   else if (this->LandauLevel > 1)

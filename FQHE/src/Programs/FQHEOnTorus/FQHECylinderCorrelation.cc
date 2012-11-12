@@ -11,6 +11,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 
 #include "Operator/ParticleOnSphereDensityOperator.h"
+#include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "FunctionBasis/ParticleOnCylinderFunctionBasis.h"
 #include "Hamiltonian/ParticleOnCylinderStructureFactor.h"
 
@@ -67,6 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
+  (*SystemGroup) += new BooleanOption  ('\n', "rho-rho","evaluate rho-rho correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "structure-factor","evaluate the guiding center structure factor", false);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-points", "number of points along the cylinder", 50);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
@@ -95,6 +97,8 @@ int main(int argc, char** argv)
   int XPoints = Manager.GetInteger("x-points");
   double Ratio = Manager.GetDouble("ratio");
   bool EvaluateS0Q = Manager.GetBoolean("structure-factor");
+  bool EvaluateRhoRho = Manager.GetBoolean("rho-rho");
+
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   bool Statistics = true;
   if (Manager.GetString("eigenstate") == 0)
@@ -240,6 +244,50 @@ int main(int argc, char** argv)
    }
   cout<<endl;
   cout<<"Sum of all occupations: "<<CheckOccupations<<endl;
+
+  if (EvaluateRhoRho)
+   {
+     Complex TmpValue;
+     RealVector Value(2, true);
+     Complex* PrecalculatedValues = new Complex [KyMax + 1];	  
+
+      cout<<"density-density precalculate ";
+      for (int i = 0; i <= KyMax; ++i)
+	{
+             TmpValue = Basis.GetFunctionValue(-0.5*H, 0.0, -0.5*KyMax);
+	    ParticleOnSphereDensityDensityOperator Operator (Space, i, 0, i, 0);
+	    PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
+             cout<< i <<" " << PrecalculatedValues[i] << " "<<TmpValue * Conj(TmpValue)<<endl;
+	}
+      cout<<"done."<<endl;
+  
+    File << "# pair correlation coefficients " << endl;
+    File << "#" << endl << "# (l+S)    n_l" << endl;
+      for (int i = 0; i <= KyMax; ++i)
+	File << "# " << i << " " << PrecalculatedValues[i].Re << endl;
+    double XInc = (H + 2.0)/ ((double) NbrPoints);
+
+        for (int k = 0; k <= NbrPoints; ++k)
+	  {
+            double X = -0.5*(H + 2.0) + (double)k * XInc;
+	    Complex Sum (0.0, 0.0);
+	    for (int i = 0; i <= KyMax; ++i)
+	      {
+	        Complex TmpValue = Basis.GetFunctionValue(X, 0.0, (double)i - 0.5 * KyMax);
+	        Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+	      }
+            File << X << " " << Norm(Sum) << endl;
+	  }
+       
+
+   File.close();
+ 
+  delete[] PrecalculatedValues;
+
+  return 0;
+
+  }
+
 
   double XPosition = -0.5*H;
   while (XPosition <= 0.5*H)

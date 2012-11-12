@@ -1027,7 +1027,8 @@ void FermionOnSphereMPSWrapper::GenerateLookUpTable(unsigned long memory)
 
 void FermionOnSphereMPSWrapper::GenerateSignLookUpTable()
 {
-  // look-up tables for evaluating sign when applying creation/annihilation operators
+  
+  cout<<" look-up tables for evaluating sign when applying creation/annihilation operators "<<endl;
   int Size = 1 << this->MaximumSignLookUp;
   this->SignLookUpTable = new double [Size];
   int Count;

@@ -265,6 +265,8 @@ int main(int argc, char** argv)
     }
 
 
+  cout << OverlapMatrix << endl;
+
   cout<<"Compute density matrix in nonorthogonal basis (full space dimension, will be stored)"<<endl;
 
   SparseRealMatrix RhoA;

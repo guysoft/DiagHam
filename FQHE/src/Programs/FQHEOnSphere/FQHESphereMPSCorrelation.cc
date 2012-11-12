@@ -310,23 +310,42 @@ int main(int argc, char** argv)
     }
   else
     {
-      SpaceWrapper = new FermionOnCylinderMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices, Manager.GetInteger("memory") << 20);
+      SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices, Architecture.GetArchitecture());
     }
   RealVector DummyState (1);
   DummyState[0] = 1.0;
 
+
+  double H;
+  if (CylinderFlag) 
+    {
+      H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
+      cout<<"Cylinder H= "<<H<<endl;
+    }
 
   Complex TmpValue;
   RealVector Value(2, true);
   Complex* PrecalculatedValues = new Complex [NbrFluxQuanta + 1];	  
   if (DensityFlag == false)
     {
+      cout<<"density-density precalculate ";
       for (int i = 0; i <= NbrFluxQuanta; ++i)
 	{
-	  Basis->GetFunctionValue(Value, TmpValue, NbrFluxQuanta);
-	  ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
-	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
+          if (CylinderFlag == false)
+           { 
+ 	     Basis->GetFunctionValue(Value, TmpValue, NbrFluxQuanta);
+	     ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
+ 	     PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
+           }
+          else
+           { 
+             TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(-0.5 * H, 0.0, -0.5 * NbrFluxQuanta);
+     	     ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, 0, i, 0);
+	     PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
+           }
+          cout<< i <<" " << PrecalculatedValues[i] << " "<<TmpValue * Conj(TmpValue)<<endl;
 	}
+      cout<<"done."<<endl;
     }
   else
     {
@@ -352,12 +371,24 @@ int main(int argc, char** argv)
       char* TmpFileName = new char [512];
       if (DensityFlag == true)      
 	{
-	  sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rho", Manager.GetInteger("laughlin-index"),
+          if (Manager.GetBoolean("k-2") == true)
+  	       sprintf(TmpFileName, "fermions_k_2_r_%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rho", Manager.GetInteger("r-index"),
+		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+          else if (Manager.GetBoolean("rr-3") == true)
+  	       sprintf(TmpFileName, "fermions_RR3_plevel_%ld_n_%d_2s_%d_lz_%d.0.rho", Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+          else
+	    sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rho", Manager.GetInteger("laughlin-index"),
 		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
 	}
       else
  	{
-	  sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rhorho", Manager.GetInteger("laughlin-index"),
+          if (Manager.GetBoolean("k-2") == true)
+  	       sprintf(TmpFileName, "fermions_k_2_r_%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rhorho", Manager.GetInteger("r-index"),
+		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+          else if (Manager.GetBoolean("rr-3") == true)
+  	       sprintf(TmpFileName, "fermions_RR3_plevel_%ld_n_%d_2s_%d_lz_%d.0.rhorho", Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+          else
+	    sprintf(TmpFileName, "fermions_laughlin%ld_plevel_%ld_n_%d_2s_%d_lz_%d.0.rhorho", Manager.GetInteger("laughlin-index"),
 		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
 	}
      File.open(TmpFileName, ios::binary | ios::out);     
@@ -414,23 +445,20 @@ int main(int argc, char** argv)
      } 
  else //cylinder
   {
-    double H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
-    cout<<"Cylinder H= "<<H<<endl;
-    double X = -0.5 * H;
-    double XInc = H / ((double) NbrPoints);
+    double XInc = (H + 4.0) / ((double) NbrPoints);
 
     if (CoefficientOnlyFlag == false)
       {
-        for (int x = 0; x < NbrPoints; ++x)
+        for (int k = 0; k <= NbrPoints; ++k)
 	  {
+            double X = -0.5 * (H + 4.0) + (double)k * XInc;
 	    Complex Sum (0.0, 0.0);
 	    for (int i = 0; i <= NbrFluxQuanta; ++i)
 	      {
-	        Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i-0.5*NbrFluxQuanta);
+	        Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i - 0.5 * NbrFluxQuanta);
 	        Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
 	      }
-            File << X << " " << Norm(Sum) << endl;
-	    X += XInc;
+            File << X << " " << Norm(Sum) * pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
 	  }
        }
 
