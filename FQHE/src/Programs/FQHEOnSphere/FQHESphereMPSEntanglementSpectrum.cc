@@ -229,6 +229,8 @@ int main(int argc, char** argv)
 
   long MaxTmpMatrixElements = (((long) BMatrices[0].GetNbrRow()) * 
 				((long) BMatrices[0].GetNbrRow() / 1l));
+  if (MaxTmpMatrixElements  > (1l << 28))
+    MaxTmpMatrixElements  = 1l << 28; 
   cout << "Requested memory for sparse matrix multiplications = " << ((MaxTmpMatrixElements * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
   double* TmpMatrixElements = new double [MaxTmpMatrixElements];
   int* TmpColumnIndices = new int [MaxTmpMatrixElements];
@@ -264,8 +266,6 @@ int main(int argc, char** argv)
 
     }
 
-
-  cout << OverlapMatrix << endl;
 
   cout<<"Compute density matrix in nonorthogonal basis (full space dimension, will be stored)"<<endl;
 
@@ -307,8 +307,6 @@ int main(int argc, char** argv)
   delete[] BMatrices; 
   delete[] ConjugateBMatrices; 
   delete[] FinalBMatrices;
-  delete[] TmpMatrixElements;
-  delete[] TmpColumnIndices;
   delete[] TmpElements;
 
   cout<<"Proceed to calculate ES per momentum P sector (all N sectors)"<<endl;
@@ -331,7 +329,7 @@ int main(int argc, char** argv)
    }
 
   long NbrEigenvalues = 0l;
-  OverlapMatrix.PrintNonZero(cout) << endl;
+  //  OverlapMatrix.PrintNonZero(cout) << endl;
   for (int NSector = 0; NSector < NbrNValue; NSector++)
     {
       for (int MomentumSector = 0; MomentumSector <= LambdaMax; MomentumSector++)
@@ -342,7 +340,7 @@ int main(int argc, char** argv)
 	  if ((TmpOverlapBlock.ComputeNbrNonZeroMatrixElements() != 0) && (RhoABlock.ComputeNbrNonZeroMatrixElements()))
 	    {
  	      cout << "NSector=" << NSector << "  MomentumSector=" << MomentumSector << " : "<< endl;
- 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
+	      // 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
 	      int TmpSectorDim = TmpOverlapBlock.GetNbrRow();
 	      
 	      RealSymmetricMatrix HRep (TmpOverlapBlock);
@@ -381,7 +379,10 @@ int main(int argc, char** argv)
 		  
 		  //cout<<"-------------------- Start computing rho in the new basis --------------------"<<endl;
 
-		  SparseRealMatrix TmpMat = Conjugate(TmpOverlapBlock, RhoABlock, TmpOverlapBlock.Transpose());
+		  TmpElements = new double [TmpOverlapBlock.GetNbrRow()];
+		  SparseRealMatrix TmpMat = Conjugate(TmpOverlapBlock, RhoABlock, TmpOverlapBlock.Transpose(),
+						      TmpMatrixElements, TmpColumnIndices, TmpElements);
+		  delete[] TmpElements;
 		  RealSymmetricMatrix HRepRho = TmpMat.Conjugate(BlockBasisLeftMatrix, BlockBasisRightMatrix);
 
 		  RealDiagonalMatrix TmpDiagRho (NbrNonZeroVectors);
@@ -414,9 +415,11 @@ int main(int argc, char** argv)
         File << EntCut << " " << Na << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
       }
 
- delete[] RhoEigenvalues;
- delete[] RhoPSector;
- delete[] RhoNSector;
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] RhoEigenvalues;
+  delete[] RhoPSector;
+  delete[] RhoNSector;
 
   File.close();
  
