@@ -458,7 +458,7 @@ int main(int argc, char** argv)
 	        Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i - 0.5 * NbrFluxQuanta);
 	        Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
 	      }
-            File << X << " " << Norm(Sum) * pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
+            File << X << " " << Norm(Sum) << endl; //* pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
 	  }
        }
 

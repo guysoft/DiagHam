@@ -265,11 +265,11 @@ int main(int argc, char** argv)
     File << "#" << endl << "# (l+S)    n_l" << endl;
       for (int i = 0; i <= KyMax; ++i)
 	File << "# " << i << " " << PrecalculatedValues[i].Re << endl;
-    double XInc = (H + 2.0)/ ((double) NbrPoints);
+    double XInc = (H + 4.0)/ ((double) NbrPoints);
 
         for (int k = 0; k <= NbrPoints; ++k)
 	  {
-            double X = -0.5*(H + 2.0) + (double)k * XInc;
+            double X = -0.5*(H + 4.0) + (double)k * XInc;
 	    Complex Sum (0.0, 0.0);
 	    for (int i = 0; i <= KyMax; ++i)
 	      {
