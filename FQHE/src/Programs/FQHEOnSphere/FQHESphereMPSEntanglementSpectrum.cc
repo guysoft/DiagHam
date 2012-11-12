@@ -331,7 +331,7 @@ int main(int argc, char** argv)
    }
 
   long NbrEigenvalues = 0l;
-  //  OverlapMatrix.PrintNonZero(cout) << endl;
+  OverlapMatrix.PrintNonZero(cout) << endl;
   for (int NSector = 0; NSector < NbrNValue; NSector++)
     {
       for (int MomentumSector = 0; MomentumSector <= LambdaMax; MomentumSector++)
@@ -341,8 +341,8 @@ int main(int argc, char** argv)
 
 	  if ((TmpOverlapBlock.ComputeNbrNonZeroMatrixElements() != 0) && (RhoABlock.ComputeNbrNonZeroMatrixElements()))
 	    {
-// 	      cout << "NSector=" << NSector << "  MomentumSector=" << MomentumSector << " : "<< endl;
-// 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
+ 	      cout << "NSector=" << NSector << "  MomentumSector=" << MomentumSector << " : "<< endl;
+ 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
 	      int TmpSectorDim = TmpOverlapBlock.GetNbrRow();
 	      
 	      RealSymmetricMatrix HRep (TmpOverlapBlock);
@@ -408,7 +408,7 @@ int main(int argc, char** argv)
 
   File << "# l_a    N    Lz    lambda" << endl;
   for (int i=0; i<MatDim; ++i)
-    if ((fabs(RhoEigenvalues[i]) > CutOff) && ((((EntCut - (RhoNSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
+    if ((fabs(RhoEigenvalues[i]) > CutOff))// && ((((EntCut - (RhoNSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
       {
         cout<< "P= " << RhoPSector[i] << " N= " << RhoNSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
         File << EntCut << " " << Na << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;

@@ -39,6 +39,8 @@
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 
+#include "Matrix/SparseRealMatrix.h"
+
 
 #include <cstring>
 #include <stdlib.h>
@@ -208,6 +210,9 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 	MPSMatrix->SaveMatrices(this->Options->GetString("export-bmatrixname"));
       else
 	MPSMatrix->SaveMatrices(ExportFileName);
+      cout << "number of non-zero matrix elements:" << endl;
+      for (int i = 0; i < NbrBMatrices; ++i)
+	cout << "B[" << i << "] = " << MPSMatrix->GetMatrices()[i].ComputeNbrNonZeroMatrixElements() << endl;
     }
 
   delete[] ExportFileName;

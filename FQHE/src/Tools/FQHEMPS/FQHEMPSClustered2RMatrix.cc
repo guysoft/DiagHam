@@ -877,13 +877,34 @@ SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix
       int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
       int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
       int TmpU1BasisDimension1 = this->U1BasisDimension[p];
+      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
+	{
+	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
+	    {
+	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
+									   NeutralIndex1, TmpIdentityBasisDimension1, 
+									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
+	    }
+	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
+	    {
+	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
+									   NeutralIndex1, TmpIdentityBasisDimension1, 
+									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
+	    }
+	}
+    }
+  for (int p = 0; p <= pLevel1; ++p)
+    {
+      int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
+      int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
+      int TmpU1BasisDimension1 = this->U1BasisDimension[p];
       int CurrentShift2 = 0;
       for (int q = 0; q <= pLevel2; ++q)
 	{
 	  int TmpIdentityBasisDimension2 = this->IdentityBasisDimension[pLevel2 - q];
 	  int TmpPsiBasisDimension2 = this->PsiBasisDimension[pLevel2 - q];
 	  int TmpU1BasisDimension2 = this->U1BasisDimension[q];		  
-	  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
+ 	  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
 	    {
 	      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpU1BasisDimension2; ++ChargedIndex2)
 		{
