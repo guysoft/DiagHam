@@ -106,6 +106,13 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // return value = converted vector
   RealVector ConvertToHaldaneBasis(RealVector& state, FermionOnSphereHaldaneBasis& haldaneBasis);
 
+  // create the Jack polynomial decomposition corresponding to the root partition
+  //
+  // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
+  // alpha = value of the Jack polynomial alpha coefficient
+  // return value = decomposition of the corresponding Jack polynomial on the unnormalized basis
+  virtual RealVector& GenerateJackPolynomial(RealVector& jack, double alpha);
+
  protected:
 
   // find state index

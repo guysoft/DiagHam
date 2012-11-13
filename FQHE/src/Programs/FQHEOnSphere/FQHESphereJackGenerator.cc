@@ -13,6 +13,9 @@
 #include "HilbertSpace/BosonOnSphereHaldaneHugeBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisLong.h"
+#include "HilbertSpace/FermionOnSpherePTruncated.h"
+#include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
+#include "HilbertSpace/BosonOnSpherePTruncated.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -99,6 +102,8 @@ int main(int argc, char** argv)
 #else
   (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
 #endif
+  (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full squeezed basis");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the Jack polynomial decomposition into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the Jack polynomial decomposition into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "fortran-header", "add a header to the text file to make the file fortan compatible");
@@ -606,6 +611,25 @@ int main(int argc, char** argv)
 	if (NbrFluxQuanta < 31)
 #endif
 	  {
+	    if (Manager.GetBoolean("p-truncated") == true)
+	      {
+		FermionOnSpherePTruncated* InitialSpace = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+		RealVector OutputState;
+		OutputState = RealVector(InitialSpace->GetLargeHilbertSpaceDimension(), true);
+		InitialSpace->GenerateJackPolynomial(OutputState, Alpha);
+		if (Manager.GetBoolean("normalize"))
+		  InitialSpace->ConvertFromUnnormalizedMonomial(OutputState);
+		if (OutputTxtFileName != 0)
+		  {
+		    FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
+		  }
+		if (OutputFileName != 0)
+		  {
+		    OutputState.WriteVector(OutputFileName);
+		  }
+		return 0;
+	      }
+	    
 	    FermionOnSphereHaldaneBasis* InitialSpace;
 	    if (Manager.GetBoolean("large-basis") == true)
 	      {
@@ -671,7 +695,7 @@ int main(int argc, char** argv)
 		  }
 		if (OutputFileName != 0)
 		  {
-		    OutputState.WriteVector(OutputFileName);
+			OutputState.WriteVector(OutputFileName);
 		  }
 	      }
 	    else
@@ -718,7 +742,7 @@ int main(int argc, char** argv)
 		      if (Manager.GetBoolean("normalize"))
 			{
 			  cout << "calculations have been done with rational numbers, normalization will not be done" << endl;
-			}
+			    }
 		      if (OutputTxtFileName != 0)
 			{
 			  FQHESphereJackTxtExportPolynomial(OutputTxtFileName, OutputState, *InitialSpace, Manager, NbrParticles, AlphaNumerator, AlphaDenominator, Manager.GetBoolean("fermion"));
