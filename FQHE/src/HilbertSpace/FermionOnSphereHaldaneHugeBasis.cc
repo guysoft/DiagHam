@@ -4388,23 +4388,46 @@ RealVector& FermionOnSphereHaldaneHugeBasis::NormalizeJackToCylinder(RealVector&
   long double kappa = (long double)2.0 * Pi_L/Length;
   long double Norm = (long double)0.0;
 
-  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
-   {
-      TmpState = this->StateDescription[i];
-      long double Sum2MSquare = (long double)0.0;
-      for (int j = this->LzMax; j >= 0; --j)
-        if (((TmpState >> j) & 1ul) != 0ul)
-           Sum2MSquare += (j - 0.5*LzMax) * (j - 0.5*LzMax);
-
-      state[i] *= expl((long double)0.5 * kappa * kappa * Sum2MSquare); 
-     
-      Norm += state[i] * state[i];
-      if ((i & 0x3fffl) == 0l)
+  if (this->StateDescription != 0)
+    {
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
 	{
-	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
-	  cout.flush();
+	  TmpState = this->StateDescription[i];
+	  long double Sum2MSquare = (long double)0.0;
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      Sum2MSquare += (j - 0.5*LzMax) * (j - 0.5*LzMax);
+	  
+	  state[i] *= expl((long double)0.5 * kappa * kappa * Sum2MSquare); 
+	  
+	  Norm += state[i] * state[i];
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
 	}
-   }
+    }
+  else
+    {
+      for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  TmpState = this->GetStateFactorized(i);
+	  long double Sum2MSquare = (long double)0.0;
+	  for (int j = this->LzMax; j >= 0; --j)
+	    if (((TmpState >> j) & 1ul) != 0ul)
+	      Sum2MSquare += (j - 0.5*LzMax) * (j - 0.5*LzMax);
+	  
+	  state[i] *= expl((long double)0.5 * kappa * kappa * Sum2MSquare); 
+	  
+	  Norm += state[i] * state[i];
+	  if ((i & 0x3fffl) == 0l)
+	    {
+	      cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
+	      cout.flush();
+	    }
+	}
+    }
   cout<<"Norm= "<<Norm<<endl;
   state /= sqrtl(Norm);
  
