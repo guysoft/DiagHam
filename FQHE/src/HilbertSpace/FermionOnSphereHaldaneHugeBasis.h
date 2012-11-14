@@ -559,6 +559,13 @@ class FermionOnSphereHaldaneHugeBasis :  public ParticleOnSphere
   // return value = converted state
   virtual RealVector& ConvertFromUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
 
+  // normalize Jack with respect to cylinder basis
+  //
+  // state = reference to the Jack state to normalize
+  // aspect = aspect ratio of cylinder
+  // return value = normalized state
+  RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
+
   // fuse two states which belong to different Hilbert spaces 
   //
   // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
