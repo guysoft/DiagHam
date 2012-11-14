@@ -81,8 +81,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-na", "minimum size of the particles whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
-// 	 (*SystemGroup) += new SingleIntegerOption  ('\n', "min-lza", "minimum values of Lz whose sectors has to be evaluated", -1);
-//     (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lza", "maximum values of Lz whose sectors has to be evaluated (0 if equal to half the total system size)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-jza", "minimum values of Jz whose sectors has to be evaluated", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-jza", "maximum values of Jz whose sectors has to be evaluated (0 if equal to half the total system size)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-kza", "minimum values of Kz whose sectors has to be evaluated", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-kza", "maximum values of Kz whose sectors has to be evaluated (0 if equal to half the total system size)", -1);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerate ground state");
 //   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
@@ -92,8 +94,10 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
-//   (*OutputGroup) += new BooleanOption ('\n', "lza-filter", "compute the eigenstates of the reduced density matrix only for a given value of lza");
-//   (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
+  (*OutputGroup) += new BooleanOption ('\n', "lza-filter", "compute the eigenstates of the reduced density matrix only for a given value of lza");
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "jza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Jz value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "kza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Kz value", 0);
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "na-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with na particles", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
 //   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
 #ifdef __LAPACK__
@@ -142,7 +146,13 @@ int main(int argc, char** argv)
   bool LargestLSector = Manager.GetBoolean("largest-lz");
   bool PositiveSectors = Manager.GetBoolean("positive-momenta");
 //   bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
-//   int FilterLza = Manager.GetInteger("lza-eigenstate");
+  int MinJza = Manager.GetInteger("min-jza");
+  int MinKza = Manager.GetInteger("min-kza");
+  int MaxJza = Manager.GetInteger("max-jza");
+  int MaxKza = Manager.GetInteger("max-kza");
+  int FilterJza = Manager.GetInteger("jza-eigenstate");
+  int FilterKza = Manager.GetInteger("kza-eigenstate");
+  int FilterNa = Manager.GetInteger("na-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
 //   bool SVDFlag = Manager.GetBoolean("use-svd");
@@ -155,8 +165,8 @@ int main(int argc, char** argv)
   BosonOn4DSphere** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
-// 	int MaxLzA = Manager.GetInteger("max-lza");
-// 	int MinLzA = Manager.GetInteger("min-lza");
+//   int MaxLzA = Manager.GetInteger("max-lza");
+//   int MinLzA = Manager.GetInteger("min-lza");
 //   if ((ComputeLValueFlag == true) && (DensityMatrixFileName == 0))
 //     {
 //       cout << "compute-lvalue only valid when density-matrix is activated" << endl;
@@ -302,12 +312,17 @@ int main(int argc, char** argv)
       double DensitySum = 0.0;
       
       int SubsystemMaxTotalJz = SubsystemNbrParticles * NbrFluxQuanta;
-      int SubsystemTotalJz = - SubsystemMaxTotalJz; 
-      int SubsystemTotalKz = - SubsystemMaxTotalJz;
-// 						if ((MinJzA != -1) && (MinJzA > SubsystemTotalJz))
-// 				SubsystemTotalJz = MinJzA;
-// 			if ((MaxJzA != -1) && (MaxJzA < SubsystemMaxTotalJz))
-// 				SubsystemMaxTotalJz = MaxJzA;
+      int SubsystemMaxTotalKz = SubsystemNbrParticles * NbrFluxQuanta;
+      int SubsystemMinTotalJz = - SubsystemMaxTotalJz; 
+      int SubsystemMinTotalKz = - SubsystemMaxTotalJz;
+      if ((MinJza != -1) && (MinJza > SubsystemMinTotalJz))
+	SubsystemMinTotalJz = MinJza;
+      if ((MinJza != -1) && (MaxJza < SubsystemMaxTotalJz))
+	SubsystemMaxTotalJz = MaxJza;
+      if ((MinKza != -1) && (MinKza > SubsystemMinTotalKz))
+	SubsystemMinTotalKz = MinKza;
+      if ((MaxKza != -1) && (MaxKza < SubsystemMaxTotalKz))
+	SubsystemMaxTotalJz = MaxKza;
 //       if (LargestLSector == true)
 // 	{
 // 	  if (((LzMax * NbrParticles) & 1) == 0)
@@ -323,22 +338,22 @@ int main(int argc, char** argv)
 // 	}
       if (PositiveSectors == true)
 	{
-	   SubsystemTotalKz = 0;
+	   SubsystemMinTotalKz = 0;
 	   
 	  if (((NbrFluxQuanta * NbrParticles) & 1) == 0)
 	    {
-	      SubsystemTotalJz = 0;
+	      SubsystemMinTotalJz = 0;
 	     }
 	  else
 	    {
-	      SubsystemTotalJz = 1;
+	      SubsystemMinTotalJz = 1;
 	    }
 	}
      
 	
-      for (; SubsystemTotalJz <= SubsystemMaxTotalJz; SubsystemTotalJz += 1)
+      for (int SubsystemTotalJz = SubsystemMinTotalJz; SubsystemTotalJz <= SubsystemMaxTotalJz; SubsystemTotalJz += 1)
       {
-	for (int SubsystemTotalKz = - SubsystemMaxTotalJz; SubsystemTotalKz <= SubsystemMaxTotalJz ; SubsystemTotalKz +=1)
+	for (int SubsystemTotalKz = SubsystemMinTotalKz; SubsystemTotalKz <= SubsystemMaxTotalJz ; SubsystemTotalKz +=1)
 	{
 	  if (((SubsystemMaxTotalJz & 1) == ((SubsystemTotalJz + SubsystemTotalKz) & 1)) && 
 	      (fabs(SubsystemTotalKz) + fabs(SubsystemTotalJz) <= SubsystemMaxTotalJz))	  
@@ -400,16 +415,73 @@ int main(int argc, char** argv)
 	      
 		 
 #ifdef __LAPACK__
-		      if (LapackFlag == true)
-			PartialDensityMatrix.LapackDiagonalize(TmpDiag);
-		      else
-			PartialDensityMatrix.Diagonalize(TmpDiag);
+	  if (LapackFlag == true)
+	    {
+	    if ((EigenstateFlag == true) && (FilterNa == SubsystemNbrParticles) && (FilterJza == SubsystemTotalJz ) && (FilterKza == SubsystemTotalKz))
+		{
+		 RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(), PartialDensityMatrix.GetNbrRow(), true);
+		 for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		    TmpEigenstates[i][i] = 1.0;
+		 PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+		 TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+		 char* TmpEigenstateName = new char[512];
+		 int MaxNbrEigenstates = NbrEigenstates;
+		 if (NbrEigenstates == 0)
+		    MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+		 for (int i = 0; i < MaxNbrEigenstates; ++i)
+		   {
+		    if (TmpDiag[i] > 1e-14)
+		      {
+			sprintf (TmpEigenstateName,
+			"bosons_sphere4d_density_n_%d_2s_%d_jz_%d_kz_%d_na_%d_jza_%d_kza_%d.%d.vec",
+			  NbrParticles, NbrFluxQuanta, TotalJz[0],TotalKz[0],SubsystemNbrParticles, SubsystemTotalJz, SubsystemTotalKz, i);
+			  TmpEigenstates[i].WriteVector(TmpEigenstateName);
+			}
+		    }
+		    delete[] TmpEigenstateName;
+		  }
+		  else
+		    {
+		      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		    }
+		  }
+	    else
+		  {
+		    if ((EigenstateFlag == true) && (FilterNa == SubsystemNbrParticles) && (FilterJza == SubsystemTotalJz ) && (FilterKza == SubsystemTotalKz ))
+				{
+				  RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+							    PartialDensityMatrix.GetNbrRow(), true);
+				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				    TmpEigenstates[i][i] = 1.0;
+				  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
+				  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+				  char* TmpEigenstateName = new char[512];
+				  int MaxNbrEigenstates = NbrEigenstates;
+				  if (NbrEigenstates == 0)
+				    MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+				  for (int i = 0; i < MaxNbrEigenstates; ++i)
+				    {
+				      if (TmpDiag[i] > 1e-14)
+					{
+					  sprintf (TmpEigenstateName,
+			"bosons_sphere4d_density_n_%d_2s_%d_jz_%d_kz_%d_na_%d_jza_%d_kza_%d.%d.vec",
+			  NbrParticles, NbrFluxQuanta, TotalJz[0],TotalKz[0],SubsystemNbrParticles, SubsystemTotalJz, SubsystemTotalKz, i);
+					  TmpEigenstates[i].WriteVector(TmpEigenstateName);
+					}
+				    }
+				  delete[] TmpEigenstateName;
+				}
+			      else
+				{
+				  PartialDensityMatrix.Diagonalize(TmpDiag);
+				}
+			    }
 #else
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
+			  PartialDensityMatrix.Diagonalize(TmpDiag);
 #endif		  
-		      TmpDiag.SortMatrixDownOrder();
+			
 		    
-		 cout << "ok" << endl;
+		
 		  if (DensityMatrixFileName != 0)
 		    {
 		      ofstream DensityMatrixFile;
