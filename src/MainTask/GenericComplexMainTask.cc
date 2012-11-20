@@ -83,8 +83,8 @@ using std::ofstream;
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
 
 GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
-					 AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
-					 double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName)
+					       AbstractHamiltonian* hamiltonian, char *subspaceStr, char *subspaceLegend,
+					       double shift, char* outputFileName, bool firstRun, char* eigenvectorFileName)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));

@@ -53,6 +53,7 @@ AbstractFQHEMPSMatrix::AbstractFQHEMPSMatrix()
   this->NbrBMatrices = 0;
   this->RealBMatrices = 0;
   this->ComplexBMatrices = 0;
+  this->QuasiholeBMatrices = 0;
 }
 
 // destructor
@@ -64,6 +65,8 @@ AbstractFQHEMPSMatrix::~AbstractFQHEMPSMatrix()
     delete[] this->RealBMatrices;
   if (this->ComplexBMatrices != 0)
     delete[] this->ComplexBMatrices;
+  if (this->QuasiholeBMatrices != 0)
+    delete[] this->QuasiholeBMatrices;
 }
   
 // save the matrices 
@@ -186,3 +189,14 @@ bool AbstractFQHEMPSMatrix::SaveHeader (ofstream& file)
   return true;
 }
 
+// get the B matrices corresponding to localized quasiholes
+//
+// nbrQuasiholes = number of quasiholes
+// quasiholePositions = quasihole positions
+// return value = array of nbrQuasiholes matrices corresponding to each quasihole
+
+SparseComplexMatrix* AbstractFQHEMPSMatrix::GetQuasiholeBMatrices(int nbrQuasiholes, Complex* quasiholePositions)
+{
+  return 0;
+}
+  

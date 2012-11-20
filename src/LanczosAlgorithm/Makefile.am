@@ -25,6 +25,7 @@ InternalReorthogonalizedLanczosAlgorithm.cc \
 ProjectedLanczosAlgorithmWithGroundState.cc \
 ProjectedReorthogonalizedLanczosAlgorithmDiskStorage.cc \
 ComplexBasicBlockLanczosAlgorithm.cc \
-FullReorthogonalizedComplexBlockLanczosAlgorithm.cc
+FullReorthogonalizedComplexBlockLanczosAlgorithm.cc \
+BasicArnoldiAlgorithm.cc
 
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 

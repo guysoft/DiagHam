@@ -29,6 +29,7 @@
 
 
 #include "Matrix/SparseComplexMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "Vector/ComplexVector.h"
 
 #include <iostream>
@@ -51,11 +52,40 @@ SparseComplexMatrix::SparseComplexMatrix()
   this->RowPointers = 0;
   this->RowLastPointers = 0;
   this->NbrMatrixElements = 0l;
+  this->MaximumNbrMatrixElements = 0l;
+  this->NbrMatrixElementPacketSize = 0l;
   this->NbrRow = 0;
   this->NbrColumn = 0;
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;  
   this->MatrixType = Matrix::ComplexElements | Matrix::Sparse;
+}
+
+// constructor for a sparse matrix without any specific struture
+//
+// nbrRow = number of rows
+// nbrColumn = number of columns
+
+SparseComplexMatrix::SparseComplexMatrix(int nbrRow, int nbrColumn)
+{
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::ComplexElements | Matrix::Sparse;
+  this->NbrColumn = nbrColumn;
+  this->NbrRow = nbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->NbrMatrixElements = 0;
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  this->NbrMatrixElementPacketSize = 1024l;
+  this->MaximumNbrMatrixElements = this->NbrMatrixElementPacketSize;
+  this->MatrixElements = new Complex[this->MaximumNbrMatrixElements];
+  this->ColumnIndices = new int[this->MaximumNbrMatrixElements];
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      this->RowPointers[i] = -1l;
+      this->RowLastPointers[i] = -1l;
+    }
 }
 
 // constructor for a sparse matrix without any specific struture but a given number of non-zero matrix elements
@@ -74,6 +104,8 @@ SparseComplexMatrix::SparseComplexMatrix(int nbrRow, int nbrColumn, long nbrMatr
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;
   this->NbrMatrixElements = nbrMatrixElements;
+  this->MaximumNbrMatrixElements = nbrMatrixElements;
+  this->NbrMatrixElementPacketSize = 0l;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
   this->MatrixElements = new Complex[this->NbrMatrixElements];
@@ -105,11 +137,44 @@ SparseComplexMatrix::SparseComplexMatrix(const SparseComplexMatrix& M)
   this->RowPointers = M.RowPointers;
   this->RowLastPointers = M.RowLastPointers;
   this->NbrMatrixElements = M.NbrMatrixElements;
+  this->MaximumNbrMatrixElements = M.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = M.NbrMatrixElementPacketSize;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
   this->TrueNbrColumn = M.TrueNbrColumn;  
   this->MatrixType = Matrix::ComplexElements | Matrix::Sparse;
+}
+
+// copy constructor from a sparse real matrix (duplicating all data)
+//
+// M = matrix to copy
+
+SparseComplexMatrix::SparseComplexMatrix(const SparseRealMatrix& M)
+{
+  this->NbrMatrixElements = M.NbrMatrixElements;
+  this->MaximumNbrMatrixElements = M.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = M.NbrMatrixElementPacketSize;
+  this->NbrRow = M.NbrRow;
+  this->NbrColumn = M.NbrColumn;
+  this->TrueNbrRow = M.TrueNbrRow;
+  this->TrueNbrColumn = M.TrueNbrColumn;  
+  this->MatrixType = Matrix::ComplexElements | Matrix::Sparse;
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  this->MatrixElements = new Complex[this->NbrMatrixElements];
+  this->ColumnIndices = new int[this->NbrMatrixElements];
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      this->RowPointers[i] = M.RowPointers[i];
+      this->RowLastPointers[i] = M.RowLastPointers[i];
+    }
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    {
+      this->MatrixElements[i] = M.MatrixElements[i];
+      this->ColumnIndices[i] = M.ColumnIndices[i];
+    }
+  this->Flag.Initialize();
 }
 
 // copy constructor (duplicating all datas)
@@ -124,6 +189,7 @@ SparseComplexMatrix::SparseComplexMatrix(Matrix& M)
       this->ColumnIndices = 0;
       this->RowPointers = 0;
       this->RowLastPointers = 0;
+      this->MaximumNbrMatrixElements = 0l;
       this->NbrMatrixElements = 0l;
       this->NbrRow = 0;
       this->NbrColumn = 0;
@@ -178,6 +244,8 @@ SparseComplexMatrix::SparseComplexMatrix(Matrix& M)
 		}
 	    }
 	}
+      this->MaximumNbrMatrixElements = this->NbrMatrixElements;
+      this->NbrMatrixElementPacketSize = 0l;
       this->MatrixType = Matrix::ComplexElements | Matrix::Sparse;
     }
 }
@@ -218,6 +286,8 @@ SparseComplexMatrix& SparseComplexMatrix::operator = (const SparseComplexMatrix&
   this->RowPointers = M.RowPointers;
   this->RowLastPointers = M.RowLastPointers;
   this->NbrMatrixElements = M.NbrMatrixElements;
+  this->MaximumNbrMatrixElements = M.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = M.NbrMatrixElementPacketSize;
   this->NbrRow = M.NbrRow;
   this->NbrColumn = M.NbrColumn;
   this->TrueNbrRow = M.TrueNbrRow;
@@ -256,6 +326,8 @@ SparseComplexMatrix& SparseComplexMatrix::Copy (SparseComplexMatrix& matrix)
   this->NbrColumn = matrix.NbrColumn;
   this->TrueNbrRow = matrix.TrueNbrRow;
   this->TrueNbrColumn = matrix.TrueNbrColumn;  
+  this->MaximumNbrMatrixElements = matrix.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = matrix.NbrMatrixElementPacketSize;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
   this->MatrixElements = new Complex[this->NbrMatrixElements];
@@ -283,12 +355,17 @@ void SparseComplexMatrix::SetMatrixElement(int i, int j, double x)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
     return;
-  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
-  if (TmpIndex == -1l)
+  if (this->NbrMatrixElementPacketSize == 0l)
     {
+      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+      if (TmpIndex >= 0l)
+	{
+	  this->MatrixElements[TmpIndex] = x;
+	  return;
+	}
       return;
     }
-  this->MatrixElements[TmpIndex] = x;
+  this->SetMatrixElement(i, j, Complex (x));
 }
 
 // set a matrix element
@@ -301,12 +378,72 @@ void SparseComplexMatrix::SetMatrixElement(int i, int j, const Complex& x)
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
     return;
-  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
-  if (TmpIndex == -1l)
+  if (this->NbrMatrixElementPacketSize == 0l)
     {
+      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+      if (TmpIndex >= 0l)
+	{
+	  this->MatrixElements[TmpIndex] = x;
+	  return;
+	}
       return;
     }
+  if (this->RowPointers[i] >= 0l)
+    {
+      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+      if (TmpIndex >= 0l)
+	{
+	  this->MatrixElements[TmpIndex] = x;
+	  return;
+	}
+      this->IncreaseNbrMatrixElements();
+      for (int k = i + 1; k < this->NbrRow; ++k)
+	{
+	  if (this->RowPointers[k] >= 0l)
+	    {
+	      ++this->RowPointers[k];
+	      ++this->RowLastPointers[k];
+	    }
+	}
+      TmpIndex = this->RowPointers[i];
+      while ((TmpIndex <= this->RowLastPointers[i]) && (this->ColumnIndices[TmpIndex] < j))
+	++TmpIndex;
+      for (long k = this->NbrMatrixElements - 1; k > TmpIndex;  --k)
+	{
+	  this->MatrixElements[k] = this->MatrixElements[k - 1];
+	  this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
+	}
+      this->MatrixElements[TmpIndex] = x;
+      this->ColumnIndices[TmpIndex] = j;
+      ++this->RowLastPointers[i];
+      return;
+    }
+  int TmpIndex1 = i;
+  while ((TmpIndex1 >= 0) && (this->RowPointers[TmpIndex1] == -1l))
+    --TmpIndex1;
+  long TmpIndex = 0l;
+  if (TmpIndex1 >= 0)
+    TmpIndex = this->RowLastPointers[TmpIndex1] + 1l;
+
+  this->IncreaseNbrMatrixElements();
+  for (int k = i + 1; k < this->NbrRow; ++k)
+    {
+      if (this->RowPointers[k] >= 0l)
+	{
+	  ++this->RowPointers[k];
+	  ++this->RowLastPointers[k];
+	}
+    }
+  for (long k = this->NbrMatrixElements - 1; k > TmpIndex;  --k)
+    {
+      this->MatrixElements[k] = this->MatrixElements[k - 1];
+      this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
+    }
   this->MatrixElements[TmpIndex] = x;
+  this->ColumnIndices[TmpIndex] = j;
+  this->RowPointers[i] = TmpIndex;
+  this->RowLastPointers[i] = TmpIndex;
+  return;
 }
 
 // set a matrix element
@@ -319,13 +456,18 @@ void SparseComplexMatrix::SetMatrixElement(int i, int j, double real, double ima
 {
   if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
     return;
-  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
-  if (TmpIndex == -1l)
+  if (this->NbrMatrixElementPacketSize == 0l)
     {
+      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+      if (TmpIndex >= 0l)
+	{
+	  this->MatrixElements[TmpIndex].Re = real;
+	  this->MatrixElements[TmpIndex].Im = imag;
+	  return;
+	}
       return;
     }
-  this->MatrixElements[TmpIndex].Re = real;
-  this->MatrixElements[TmpIndex].Im = imag;
+  this->SetMatrixElement(i, j, Complex (real, imag));
 }
 
 
@@ -362,6 +504,40 @@ void SparseComplexMatrix::AddToMatrixElement(int i, int j, const Complex& x)
       return;
     }
   this->MatrixElements[TmpIndex] += x;
+}
+
+// increase the number of matrix elements
+//
+// nbrElements = number of elements to add
+
+void SparseComplexMatrix::IncreaseNbrMatrixElements(long nbrElements)
+{
+  long TmpNbrMatrixElements = this->NbrMatrixElements + nbrElements;
+  if (TmpNbrMatrixElements <= this->MaximumNbrMatrixElements)
+    {
+      this->NbrMatrixElements = TmpNbrMatrixElements;
+      return;
+    }
+  this->MaximumNbrMatrixElements += this->NbrMatrixElementPacketSize;
+  Complex* TmpMatrixElements = new Complex[this->MaximumNbrMatrixElements];
+  int* TmpColumnIndices = new int[this->MaximumNbrMatrixElements];
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    {
+      TmpMatrixElements[i] = this->MatrixElements[i];
+      TmpColumnIndices[i] = this->ColumnIndices[i];
+    }
+  this->NbrMatrixElements = TmpNbrMatrixElements;
+  if (this->Flag.Shared() == false)
+    {
+      delete[] this->MatrixElements;
+      delete[] this->ColumnIndices;
+    }
+  else
+    {
+      this->Flag.Initialize();
+    }
+  this->MatrixElements = TmpMatrixElements;
+  this->ColumnIndices = TmpColumnIndices;
 }
 
 // Resize matrix
@@ -485,6 +661,46 @@ void SparseComplexMatrix::ClearMatrix ()
   for (long i = 0l; i < this->NbrMatrixElements; ++i)
     this->MatrixElements[i] = 0.0;
   return;
+}
+
+// set matrix to identity 
+//
+
+void SparseComplexMatrix::SetToIdentity()
+{
+  if ((this->MatrixElements != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->MatrixElements;
+	delete[] this->ColumnIndices;
+	delete[] this->RowPointers;
+	delete[] this->RowLastPointers;
+      }
+  
+  this->NbrMatrixElements = (long) this->NbrRow;
+  if (this->NbrRow > this->NbrColumn)
+    {
+      this->NbrMatrixElements = (long) this->NbrColumn;
+    }
+  this->MaximumNbrMatrixElements = this->NbrMatrixElements;
+  this->NbrMatrixElementPacketSize = 0l;
+  this->MatrixElements = new Complex [this->NbrMatrixElements];
+  this->ColumnIndices = new int [this->NbrMatrixElements];
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    {
+      this->MatrixElements[i] = 1.0;
+      this->ColumnIndices[i] = (int) i;
+      this->RowPointers[i] = i;
+      this->RowLastPointers[i] = i;
+    }
+  for (int i = (int) this->NbrMatrixElements; i < this->NbrRow; ++i)
+    {
+      this->RowPointers[i] = -1l;
+      this->RowLastPointers[i] = -1l;
+    }
+  return;  
 }
 
 // add two matrices
@@ -910,6 +1126,475 @@ SparseComplexMatrix& SparseComplexMatrix::Multiply (const SparseComplexMatrix& m
   return *this;
 }
 
+
+// multiply two matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, 
+			      Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseComplexMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      tmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
+}
+
+// multiply a matrix to the right by another matrix, providing all the required temporary arrays
+//
+// matrix = matrix used as multiplicator
+// tmpMatrixElements = temporary array of complex numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of complex numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseComplexMatrix& SparseComplexMatrix::Multiply (const SparseRealMatrix& matrix, 
+						    Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements)
+{
+  if (matrix.NbrRow != this->NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return *this; 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = this->ColumnIndices[MinPos];
+	      long MinPos2 = matrix.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = this->MatrixElements[MinPos];
+		  long MaxPos2 = matrix.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      tmpElements[matrix.ColumnIndices[MinPos2]] += Tmp * matrix.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix.NbrColumn; ++j)
+	    if ((tmpElements[j].Re != 0) || (tmpElements[j].Im != 0))
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  this->RowPointers[i] = PreviousTmpNbrMatrixElements;
+	  this->RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	}
+    }
+  delete[] this->MatrixElements;
+  delete[] this->ColumnIndices;
+  this->NbrMatrixElements = TmpNbrMatrixElements;
+  this->MatrixElements = new Complex[this->NbrMatrixElements];
+  this->ColumnIndices = new int[this->NbrMatrixElements];
+  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+    {
+      this->MatrixElements[i] = tmpMatrixElements[i];
+      this->ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return *this;
+}
+
+// multiply two matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, 
+			      Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseComplexMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      tmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
+}
+
+// multiply two matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseComplexMatrix Multiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2, 
+			      Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseComplexMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      tmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
+}
+
+
+// conjugate the current sparse matrix (M1^+ A M2), assuming A is symmetric
+//
+// matrix1 = left matrix used for the conjugation
+// matrix2 = left matrix used for the conjugation
+// return value = conjugated symmetric matrix
+
+HermitianMatrix SparseComplexMatrix::Conjugate (ComplexMatrix& matrix1, ComplexMatrix& matrix2)
+{
+  if ((matrix1.GetNbrRow() != this->NbrRow) || (matrix2.GetNbrRow() != this->NbrColumn) || 
+      (matrix1.GetNbrColumn() != matrix2.GetNbrColumn()))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return HermitianMatrix(); 
+    }
+  HermitianMatrix TmpMatrix(matrix1.GetNbrColumn(), true);
+  for (int i = 0; i < matrix1.GetNbrColumn(); ++i)
+    {
+      for (int k = 0; k < this->NbrRow; ++k)
+	{
+	  long MinPos =  this->RowPointers[k];
+	  if (MinPos >= 0l)
+	    {
+	      long MaxPos = this->RowLastPointers[k];
+	      for (; MinPos <= MaxPos; ++MinPos)
+		{
+		  Complex Tmp = Conj(matrix1[i][k]) * this->MatrixElements[MinPos];
+		  int TmpIndex = this->ColumnIndices[MinPos];
+		  for (int j = i; j < matrix2.GetNbrColumn(); ++j)
+		    {
+		      Complex Tmp2 = Tmp * matrix2[j][TmpIndex];
+		      TmpMatrix.AddToMatrixElement(i, j, Tmp2);
+		    }
+		}
+	    }
+	}
+    }
+  return TmpMatrix;
+}
+
+// conjugate a matrix
+//
+// matrix1 = left matrix
+// matrix2 = matrix to conjugate
+// matrix3 = right matrix
+// return value = reference on conjugated matrix
+
+SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, 			    
+			       const SparseComplexMatrix& matrix3)
+{
+  Complex* TmpMatrixElements = new Complex[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
+  int* TmpColumnIndices = new int[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
+  Complex* TmpElements = new Complex [matrix1.NbrRow];
+  SparseComplexMatrix TmpMatrix = Conjugate(matrix1, matrix2, matrix3, TmpMatrixElements, TmpColumnIndices, TmpElements);
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] TmpElements;
+  return TmpMatrix;
+}
+
+// multiply three matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = matrix to conjugate
+// matrix3 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, const SparseComplexMatrix& matrix3, 
+			       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements)
+{
+  if ((matrix2.NbrRow != matrix1.NbrColumn) || (matrix3.NbrRow != matrix2.NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return SparseComplexMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      int TmpIndex2 = matrix2.ColumnIndices[MinPos2];
+		      long MinPos3 = matrix3.RowPointers[TmpIndex2];
+		      if (MinPos3 >= 0)
+			{
+			  Complex Tmp2 = Tmp * matrix2.MatrixElements[MinPos2];
+			  long MaxPos3 = matrix3.RowLastPointers[TmpIndex2];
+			  for (; MinPos3 <= MaxPos3; ++MinPos3)
+			    {
+			      tmpElements[matrix3.ColumnIndices[MinPos3]] += Tmp2 * matrix3.MatrixElements[MinPos3];
+			    }
+			}
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
+}
+
 // compute the tensor product of two sparse matrices (matrix1 x matrix2), and store the result in a sparse matrix
 //
 // matrix1 = reference on the left matrix
@@ -1139,24 +1824,6 @@ ostream& operator << (ostream& Str, const SparseComplexMatrix& P)
       Str << endl;
     }
   return Str;
-}
-
-//returns the array with indices of rows
-
-void SparseComplexMatrix::GetRowIndices(int* RowIndices)
-{
-  int counter = 0;
-    for (long i = 0; i < this->NbrRow; ++i)
-      for (long j = 0; j < this->NbrColumn; ++j)
-        {
-           Complex Tmp;
-           this->GetMatrixElement(i,j,Tmp);
-           if ((SqrNorm(Tmp) != 0) && (this->MatrixElements[counter].Re == Tmp.Re) && (this->MatrixElements[counter].Im == Tmp.Im) && (counter < this->NbrMatrixElements))
-             {
-               RowIndices[counter] = i;
-               counter++; 
-             }
-        }
 }
 
 

@@ -1160,8 +1160,8 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix,
 SparseRealMatrix TensorProduct (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2)
 {
   SparseRealMatrix TmpMatrix (matrix1.NbrRow * matrix2.NbrRow, 
-				 matrix1.NbrColumn * matrix2.NbrColumn, 
-				 matrix1.NbrMatrixElements * matrix2.NbrMatrixElements);
+			      matrix1.NbrColumn * matrix2.NbrColumn, 
+			      matrix1.NbrMatrixElements * matrix2.NbrMatrixElements);
   for (int i = 0; i < TmpMatrix.NbrRow; ++i)
     {
       TmpMatrix.RowPointers[i] = -1;

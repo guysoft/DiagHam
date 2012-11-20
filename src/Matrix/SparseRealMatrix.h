@@ -50,6 +50,7 @@ using std::ostream;
 
 
 class AbstractArchitecture;
+class SparseComplexMatrix;
 
 
 class SparseRealMatrix : public Matrix
@@ -58,6 +59,8 @@ class SparseRealMatrix : public Matrix
   friend class RealMatrix;
   friend class RealVector;
   friend class SparseMatrixMatrixMultiplyOperation;
+  friend class TensorProductSparseMatrixHamiltonian;
+  friend class SparseComplexMatrix;
 
  protected:
 
@@ -356,6 +359,28 @@ class SparseRealMatrix : public Matrix
   // matrix2 = reference on the right matrix
   // return value = tensor product
   friend SparseRealMatrix TensorProduct (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2);
+
+  // multiply two matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, 
+				       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
+
+  // multiply two matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Multiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2, 
+				       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
 
   // compute the transpose of the current matrix
   //

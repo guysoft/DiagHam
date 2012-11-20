@@ -536,7 +536,7 @@ class ComplexMatrix : public Matrix
   //
   Complex LapackDeterminant ();
 
-    // Diagonalize a hermitian matrix using the LAPACK library (modifying current matrix)
+  // Diagonalize a hermitian matrix using the LAPACK library (modifying current matrix)
   //
   // M = reference on real diagonal matrix of eigenvalues
   // err = absolute error on matrix element
@@ -558,7 +558,7 @@ class ComplexMatrix : public Matrix
   // M = reference on real diagonal matrix of eigenvalues
   // Q = matrix where transformation matrix has to be stored
   // S = matrix where Schur form of matrix has to be stored
-  // return value = reference o1n real matrix consisting of eigenvalues
+  // return value = reference on real matrix consisting of eigenvalues
   ComplexDiagonalMatrix& LapackSchurForm (ComplexDiagonalMatrix& M, ComplexMatrix& Q, ComplexMatrix &S);
 
  private:

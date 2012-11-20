@@ -5,4 +5,5 @@ noinst_LIBRARIES=libHamiltonian.a
 libHamiltonian_a_SOURCES=AbstractHamiltonian.cc \
 ExplicitHamiltonian.cc \
 FileBasedHamiltonian.cc \
-FileBasedHermitianHamiltonian.cc
+FileBasedHermitianHamiltonian.cc \
+TensorProductSparseMatrixHamiltonian.cc

@@ -18,6 +18,10 @@
 #include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
 #include "FunctionBasis/ParticleOnCylinderFunctionBasis.h"
 
+#include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
+
+#include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
@@ -235,8 +239,10 @@ int main(int argc, char** argv)
     {
       int NbrBMatrices = 2;
       SparseRealMatrix* SparseConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
+      double* Coefficients = new double[NbrBMatrices];
       for (int i = 0; i < NbrBMatrices; ++i)
 	{
+	  Coefficients[i] = 1.0;
 	  SparseConjugateBMatrices[i] = SparseBMatrices[i].Transpose();
 	}
       SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
@@ -248,10 +254,36 @@ int main(int argc, char** argv)
 	      SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
 	    }
 	}
-      delete[]SparseConjugateBMatrices;
+      //      delete[]SparseConjugateBMatrices;
       SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
       
       RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
+
+      TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseConjugateBMatrices, Coefficients);
+
+      BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), 1, 3000, false);
+      Arnoldi.SetHamiltonian(&EHamiltonian);
+      Arnoldi.InitializeLanczosAlgorithm();
+      Arnoldi.RunLanczosAlgorithm(3);
+      while (Arnoldi.TestConvergence() == false)
+	{
+	  Arnoldi.RunLanczosAlgorithm(1);
+	}
+//       RealMatrix NormalizedB0B0B1B1Full2(NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow());
+//       EHamiltonian.GetHamiltonian(NormalizedB0B0B1B1Full2);
+//       cout << SparseBMatrices[0] << endl;
+//       cout << SparseConjugateBMatrices[0] << endl;
+//       cout << NormalizedB0B0B1B1Full2 << endl;
+//       cout << NormalizedB0B0B1B1Full << endl;
+//       for (int i = 0; i < NormalizedB0B0B1B1Full2.GetNbrRow(); ++i)
+// 	for (int j = 0; j < NormalizedB0B0B1B1Full2.GetNbrColumn(); ++j)
+// 	  {					
+// 	    if (NormalizedB0B0B1B1Full2[j][i] != NormalizedB0B0B1B1Full[i][j])
+// 	      cout << "error " << i << " " << j << " : " 
+// 		   << NormalizedB0B0B1B1Full2[j][i] << " " << NormalizedB0B0B1B1Full[i][j] << endl;
+// 	  }
+
+//      return 0;
       ComplexDiagonalMatrix TmpDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
       ComplexMatrix Eigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
       NormalizedB0B0B1B1Full.LapackDiagonalize(TmpDiag, Eigenstates);
@@ -296,7 +328,7 @@ int main(int argc, char** argv)
       cout << ((Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3]) << endl;
       Density += (Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3];
       Density /= 3.0;      
-      Density *= Kappa;
+//      Density *= Kappa;
       cout << Density << endl;
       return 0;
     }

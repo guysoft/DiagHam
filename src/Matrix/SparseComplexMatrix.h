@@ -37,8 +37,11 @@
 #ifdef USE_OUTPUT
 #include "Output/MathematicaOutput.h"
 #endif
+
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/ComplexDiagonalMatrix.h"
+#include "Matrix/SparseRealMatrix.h"
+
 #include "Vector/ComplexVector.h"
 #include "GeneralTools/GarbageFlag.h"
 
@@ -60,6 +63,11 @@ class SparseComplexMatrix : public Matrix
   // number of non-zero mtarix elements
   long NbrMatrixElements; 
 
+  // maximum number of matrix elements that can be stored
+  long MaximumNbrMatrixElements;
+  //number of matrix elements that have to be added if the size of MatrixElements has to be increaed
+  long NbrMatrixElementPacketSize;
+
   // array that contains the matrix elements
   Complex* MatrixElements; 
 
@@ -80,6 +88,12 @@ class SparseComplexMatrix : public Matrix
   //
   SparseComplexMatrix();
 
+  // constructor for a sparse matrix without any specific struture
+  //
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  SparseComplexMatrix(int nbrRow, int nbrColumn);
+
   // constructor for a sparse matrix without any specific struture but a given number of non-zero matrix elements
   //
   // nbrRow = number of rows
@@ -93,7 +107,12 @@ class SparseComplexMatrix : public Matrix
   // M = matrix to copy
   SparseComplexMatrix(const SparseComplexMatrix& M);
 
-  // copy constructor (duplicating all datas)
+  // copy constructor from a sparse real matrix (duplicating all data)
+  //
+  // M = matrix to copy
+  SparseComplexMatrix(const SparseRealMatrix& M);
+
+  // copy constructor (duplicating all data)
   //
   // M = matrix to copy
   SparseComplexMatrix(Matrix& M);
@@ -185,6 +204,10 @@ class SparseComplexMatrix : public Matrix
   //
   void ClearMatrix ();
 
+  // set matrix to identity 
+  //
+  void SetToIdentity();
+
   // add two matrices
   //
   // matrix1 = first matrix
@@ -226,6 +249,17 @@ class SparseComplexMatrix : public Matrix
   // return value = reference on current matrix
   SparseComplexMatrix& Multiply (const SparseComplexMatrix& matrix);
 
+  // multiply two matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, 
+				       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
+
   // multiply a matrix to the right by another matrix, providing all the required temporary arrays
   //
   // matrix = matrix used as multiplicator
@@ -246,6 +280,66 @@ class SparseComplexMatrix : public Matrix
   // return value = reference on current matrix
   SparseComplexMatrix& Multiply (const SparseComplexMatrix& matrix, Complex*& tmpMatrixElements, int*& tmpColumnIndices, 
 				 long& nbrElements, Complex* tmpElements);
+
+  // multiply a matrix to the right by another matrix, providing all the required temporary arrays
+  //
+  // matrix = matrix used as multiplicator
+  // tmpMatrixElements = temporary array of complex numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of complex numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  SparseComplexMatrix& Multiply (const SparseRealMatrix& matrix, Complex* tmpMatrixElements, 
+				 int* tmpColumnIndices, Complex* tmpElements);
+
+  // multiply two matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, 
+				       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
+
+  // multiply two matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Multiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2, 
+				       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
+
+  // conjugate the current sparse matrix (M1^+ A M2), assuming A is hermitian
+  //
+  // matrix1 = left matrix used for the conjugation
+  // matrix2 = left matrix used for the conjugation
+  // return value = conjugated hermitian matrix
+  HermitianMatrix Conjugate (ComplexMatrix& matrix1, ComplexMatrix& matrix2);
+
+  // conjugate a matrix
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // return value = reference on conjugated matrix
+  friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, 
+					const SparseComplexMatrix& matrix3);
+
+  // multiply three matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, const SparseComplexMatrix& matrix3, 
+					Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
 
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
@@ -297,7 +391,7 @@ class SparseComplexMatrix : public Matrix
 
 #endif
 
- public:
+ protected:
 
   // find the position of a given column index in a row
   //
@@ -307,24 +401,10 @@ class SparseComplexMatrix : public Matrix
   // return value = position of the column index (-1 if it does not exist)
   long FindColumnIndexPosition(int index, long minPosition, long maxPosition) const;
 
-  // get the matrix element
-  // i = position
-
-  Complex GetMatrixElement(int i);
-
-  // get the column index
-  // i = position
-
-  int GetColumnIndex(int i);
-
-  // get the nbr of matrix elements
-  // i = position
-
-  long GetNbrMatrixElements();
-
-  //returns the array with indices of rows
-
-  void GetRowIndices(int* RowIndices);
+  // increase the number of matrix elements
+  //
+  // nbrElements = number of elements to add
+  void IncreaseNbrMatrixElements(long nbrElements = 1l);
 
 };
 
@@ -350,31 +430,6 @@ inline void SparseComplexMatrix::GetMatrixElement(int i, int j, double& x) const
   x = this->MatrixElements[TmpIndex].Re;
   return;
 }
-
-// get the matrix element
-// i = position
-
-inline Complex SparseComplexMatrix::GetMatrixElement(int i)
-{
-  return this->MatrixElements[i];
-}
-
-// get the column index
-// i = position
-
-inline int SparseComplexMatrix::GetColumnIndex(int i)
-{
-  return this->ColumnIndices[i];
-}
-
-// get the nbr of matrix elements
-// i = position
-
-inline long SparseComplexMatrix::GetNbrMatrixElements()
-{
-  return this->NbrMatrixElements;
-}
-
 
 // get a matrix element
 //

@@ -33,6 +33,7 @@
 
 
 #include "config.h"
+#include "MathTools/Complex.h" 
 
 #include <fstream>
 
@@ -57,6 +58,9 @@ class AbstractFQHEMPSMatrix
 
   // array where the B matrices are stored (for complex matrices)
   SparseComplexMatrix* ComplexBMatrices;
+
+  // array where the B matrices for quasiholes are stored
+  SparseRealMatrix* QuasiholeBMatrices;
 
  public:
   
@@ -85,6 +89,13 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the array
   virtual SparseRealMatrix* GetMatrices();
 
+  // get the B matrices corresponding to localized quasiholes
+  //
+  // nbrQuasiholes = number of quasiholes
+  // quasiholePositions = quasihole positions
+  // return value = array of nbrQuasiholes matrices corresponding to each quasihole
+  virtual SparseComplexMatrix* GetQuasiholeBMatrices(int nbrQuasiholes, Complex* quasiholePositions);
+  
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix
