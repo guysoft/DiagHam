@@ -87,7 +87,7 @@ class FermionOnSphereLong :  public ParticleOnSphere
   friend class FermionOnSphereHaldaneSymmetricBasisLong;
   friend class BosonOnSphereLong;
   friend class BosonOnSphereHaldaneBasisLong;
-
+  friend class BosonOn4DSphereLong;
   friend class BosonOnSquareLatticeMomentumSpaceLong;
 
  protected:

@@ -18,6 +18,7 @@
 #include "HilbertSpace/BosonOnSphereTwoLandauLevels.h"
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/BosonOn4DSphere.h"
+#include "HilbertSpace/BosonOn4DSphereLong.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -122,6 +123,7 @@ int main(int argc, char** argv)
   int TotalPz = Manager.GetInteger("total-entanglement");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   int PauliK=0, PauliR=0;
+  int NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)*(NbrFluxQuanta + 3) / 6;
   {
     int TmpL=0;
     int *TmpIs=Manager.GetIntegers("pauli",TmpL);
@@ -143,7 +145,7 @@ int main(int argc, char** argv)
     if (Manager.GetBoolean("boson") == false)
       cout << "Warning : --4-D option only implemented in bosonic mode" << endl;
     
-    if (- (NbrFluxQuanta*(NbrFluxQuanta+1)*(2*NbrFluxQuanta+1))/6 + NbrFluxQuanta*(NbrFluxQuanta*(NbrFluxQuanta+1))/2 + (NbrFluxQuanta + 1)*(NbrFluxQuanta + 1) + NbrParticles > 65)
+    if (- (NbrFluxQuanta*(NbrFluxQuanta+1)*(2*NbrFluxQuanta+1))/6 + NbrFluxQuanta*(NbrFluxQuanta*(NbrFluxQuanta+1))/2 + (NbrFluxQuanta + 1)*(NbrFluxQuanta + 1) + NbrParticles > 129)
     {
       cout << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
       return -1; 
@@ -176,7 +178,12 @@ int main(int argc, char** argv)
 		    Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
 		  }
 		  else
-		    Space = new BosonOn4DSphere(NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+		  {
+		    if (NbrOrbitals + NbrParticles < 65)
+		      Space = new BosonOn4DSphere(NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+		    else 
+		      Space = new BosonOn4DSphereLong(NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+		   }
 		}
 	      else
 		{
@@ -343,7 +350,7 @@ int main(int argc, char** argv)
 		  if (SU4SpinFlag == true)
 		    sprintf (OutputFileName, "bosons_sphere_su4_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
 		  else
-		    sprintf (OutputFileName, "bosons_sphere4D_n_%d_2s_%d_jz_%d_kz_d.basis", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+		    sprintf (OutputFileName, "bosons_sphere4d_n_%d_2s_%d_jz_%d_kz_%d.basis", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
 	  else
 	    if (SU2SpinFlag == true)
 	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);

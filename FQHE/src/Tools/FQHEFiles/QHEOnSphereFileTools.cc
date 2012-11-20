@@ -149,6 +149,119 @@ bool FQHEOnSphereFindSystemInfoFromFileName(char* filename, int& nbrParticles, i
   return true;
 }
 
+// try to guess system information from PES file name
+//
+// filename = file name
+// nbrParticles = reference to the total number of particles (grab it only if initial value is 0)
+// nbrParticlesA = reference to the number of particles na in subsystem A (grab it only if initial value is 0)
+// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnSphereFindSystemInfoFromPESFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& lzMax, bool& statistics)
+{
+  char* StrNbrParticles;
+  if (nbrParticles == 0)
+    {
+      StrNbrParticles = strstr(filename, "_n_");
+      if (StrNbrParticles == 0)
+	StrNbrParticles = strstr(filename, "_p_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 3;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      nbrParticles = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess number of particles from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (nbrParticlesA == 0)
+    {
+      StrNbrParticles = strstr(filename, "_na_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 4;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      nbrParticlesA = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess number of particles in subsystem A from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (lzMax == 0)
+    {
+      StrNbrParticles = strstr(filename, "_2s_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 4;
+	  int SizeString = 0;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      lzMax = atoi(StrNbrParticles);
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess maximum momentum from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (statistics == true)
+    {
+      if (strstr(filename, "fermion") == 0)
+	{
+	  if (strstr(filename, "boson") == 0)
+	    {
+	      cout << "can't guess particle statistics from file name " << filename << endl;
+	      return false;	  
+	    }
+	  else
+	    {
+	      statistics = false;
+	    }
+	}
+      else
+	{
+	  statistics = true;
+	}
+    }
+  return true;
+}
 
 // try to guess system information from file name
 //
@@ -513,7 +626,7 @@ bool FQHEOnSphereWithSU4SpinFindSystemInfoFromVectorFileName(char* filename, int
 bool FQHEOn4DSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta, int& jz, int& kz, bool& statistics)
 {
   if (FQHEOnSphereFindSystemInfoFromFileName(filename, nbrParticles, nbrFluxQuanta, statistics) == false)
-     return false;
+    return false;
   
   char* StrNbrParticles;
   if (jz == 0)
@@ -577,3 +690,80 @@ bool FQHEOn4DSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrPart
   return true;
 }
 
+
+// try to guess system information from PES vector file name for a system of bosons on the 4D sphere
+//
+// filename = vector file name
+// nbrParticles = reference to the total number of particles (grab it only if initial value is 0)
+// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// jz = reference to twice the z projection of the  jz angular momentum (grab it only if initial value is 0)
+// kz = reference to twice the z projection of the  kz angular momentum (grab it only if initial value is 0)
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& nbrFluxQuanta, int& jz, int& kz, bool& statistics)
+{
+  if (FQHEOnSphereFindSystemInfoFromPESFileName(filename, nbrParticles, nbrParticlesA, nbrFluxQuanta, statistics) == false)
+    return false;
+  
+  char* StrNbrParticles;
+  if (jz == 0)
+    {
+      StrNbrParticles = strstr(filename, "_jza_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 5;
+	  int SizeString = 0;
+	  if (StrNbrParticles[SizeString] == '-')
+	    ++SizeString;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      jz = atoi(StrNbrParticles);
+	      cout << "jza = " << jz << endl;
+	      StrNbrParticles[SizeString] = '_';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess z projection of the jza angular momentum from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  if (kz == 0)
+    {
+      StrNbrParticles = strstr(filename, "_kza_");
+      if (StrNbrParticles != 0)
+	{
+	  StrNbrParticles += 5;
+	  int SizeString = 0;
+	  if (StrNbrParticles[SizeString] == '-')
+	    ++SizeString;
+	  while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+		 && (StrNbrParticles[SizeString] <= '9'))
+	    ++SizeString;
+	  if ((StrNbrParticles[SizeString] == '.') && (SizeString != 0))
+	    {
+	      StrNbrParticles[SizeString] = '\0';
+	      kz = atoi(StrNbrParticles);
+	      cout << "kza = " << kz << endl;
+	      StrNbrParticles[SizeString] = '.';
+	      StrNbrParticles += SizeString;
+	    }
+	  else
+	    StrNbrParticles = 0;
+	}
+      if (StrNbrParticles == 0)
+	{
+	  cout << "can't guess z projection of the kza angular momentum from file name " << filename << endl;
+	  return false;            
+	}
+    }
+  return true;
+}

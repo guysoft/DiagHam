@@ -2,8 +2,10 @@
 #include "HilbertSpace/BosonOnSphere.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasis.h"
 #include "HilbertSpace/BosonOnSphereShort.h"
+#include "HilbertSpace/BosonOnSphereLong.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOn4DSphere.h"
+#include "HilbertSpace/BosonOn4DSphereLong.h"
 
 #include "Hamiltonian/ParticleOn4DSphereDeltaHamiltonian.h"
 
@@ -107,6 +109,7 @@ int main(int argc, char** argv)
   int MinJz = 0;
 //   int MinJz = -NbrFluxQuanta*NbrBosons;
   int MaxJz = NbrFluxQuanta*NbrBosons;
+  int NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)*(NbrFluxQuanta + 3) / 6;
   
   if (Manager.GetInteger("only-jz") != 1000)
   {
@@ -135,7 +138,11 @@ int main(int argc, char** argv)
 	if ((((jz + kz) & 1) == ((NbrBosons * NbrFluxQuanta) & 1)) && (abs(kz)<=abs(jz)) && (fabs(kz)+fabs(jz)<= NbrBosons*NbrFluxQuanta))
 	{
 	cout << "(jz,kz) = (" << jz << "," << kz << ")" << endl; 
-      ParticleOnSphere* Space = new BosonOn4DSphere(NbrBosons, NbrFluxQuanta, jz, kz);
+      ParticleOnSphere* Space = 0;
+      if (NbrOrbitals + NbrBosons < 65)
+	Space = new BosonOn4DSphere(NbrBosons, NbrFluxQuanta, jz, kz);
+      else
+	Space = new BosonOn4DSphereLong(NbrBosons, NbrFluxQuanta, jz, kz);
      
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

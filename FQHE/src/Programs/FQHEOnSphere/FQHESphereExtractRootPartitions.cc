@@ -35,6 +35,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOn4DSphere.h"
 
 #include <iostream>
 #include <cstring>
@@ -62,6 +63,11 @@ int ReshuffleVectors (RealVector* vectors, int nbrVectors, double componentError
 // return value = index of the first non-zero component for the first vector 
 int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors);
 
+// get the quantum numbers Jz, Kz of a N-particle 4D state 
+//
+//totalJz = array that gives the sector Jz for all values of the linearized index
+//totalKz = array that gives the sector Kz for all values of the linearized index
+void GetSectorsJzKzFromLinearizedIndex(int nbrParticles, int nbrFluxQuanta, int* totalJz, int* totalKz);
 
 int main(int argc, char** argv)
 {
@@ -83,6 +89,8 @@ int main(int argc, char** argv)
   (*MainGroup) += new SingleStringOption  ('o', "output", "output name for the root partition list (default name uses input-file, replacing dat extension with root)");
   (*MainGroup) += new BooleanOption  ('\n', "save-states", "save the states corresponding to each root configuration");
   (*MainGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
+  (*MainGroup) += new BooleanOption  ('\n', "4-D" , "use a Hilbert space with SO(5) symmetry (only available in eigenstate-list mode)");
+  (*MainGroup) += new BooleanOption  ('\n', "PES-eigenstate" , "use a list of reduced density matrix eigenstates instead of energy eigenstates");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -107,19 +115,28 @@ int main(int argc, char** argv)
   double VectorError = Manager.GetDouble("component-error");
   int NbrFluxQuanta = 0;
   int NbrParticles = 0;
+  int NbrTotParticles = 0;
   bool FermionFlag = true;
   bool SU2SpinFlag = false;
   bool SU3SpinFlag = false;
   bool SU4SpinFlag = false;
+  bool FourDFlag = Manager.GetBoolean("4-D");
+  bool PESFlag = Manager.GetBoolean("PES-eigenstate");
   int TotalSz = 0;
   int TotalTz = 0;
   int TotalY = 0;
   int TotalIz = 0;
   int TotalPz = 0;
+  int TotalJz = 0;
+  int TotalKz = 0;
   int TotalMaxLz = 0;
   int MaxLzValue = 0;
+  int MaxJzValue = 0;
+  int MaxKzValue = 0;
   int MinLzValue = 0;
   int* LzDegeneracy = 0;
+  int* totalJz = 0;
+  int* totalKz = 0;
   long TotalNbrZeroEnergyStates = 0l;
   bool SaveStates = Manager.GetBoolean("save-states");
 
@@ -162,11 +179,14 @@ int main(int argc, char** argv)
 	  EigenstateListFile.DumpErrors(cout);
 	  return -1;
 	}
-      if (FQHEOnSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0), NbrParticles, NbrFluxQuanta, MaxLzValue, FermionFlag) == false)
+      if (FourDFlag == false)
+      {
+	if (FQHEOnSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0), NbrParticles, NbrFluxQuanta, MaxLzValue, FermionFlag) == false)  
 	{
-	  cout << "can't retrieve system information form file name " << EigenstateListFile(0,0) << endl;
+	  cout << "can't retrieve system information from file name " << EigenstateListFile(0,0) << endl;
 	  return -1;
 	}
+      
       FQHEOnSphereFindInternalSymmetryGroupFromFileName(EigenstateListFile(0,0), SU2SpinFlag, SU3SpinFlag, SU4SpinFlag);          
       MinLzValue = MaxLzValue;
       TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
@@ -175,6 +195,43 @@ int main(int argc, char** argv)
       for (int i = 0 ; i < TotalMaxLz; ++i)
 	LzDegeneracy[i] = 0;
       LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
+      }
+      else
+      {
+	if (PESFlag == false)
+	{
+	  if (FQHEOn4DSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0),NbrParticles, NbrFluxQuanta, MaxJzValue, MaxKzValue,FermionFlag) == false)
+	  {
+	    cout << "can't retrieve system information from 4d file name " << EigenstateListFile(0,0) << endl;
+	    return -1;
+	  }
+	}
+	else
+	{
+	  if (FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(EigenstateListFile(0,0),NbrTotParticles,NbrParticles, NbrFluxQuanta, MaxJzValue, MaxKzValue,FermionFlag) == false)
+	  {
+	    cout << "can't retrieve system information from 4d file name " << EigenstateListFile(0,0) << endl;
+	    return -1;
+	  }
+	}
+	int TotalNbrSectors = 2*NbrParticles*NbrFluxQuanta*(NbrParticles*NbrFluxQuanta + 1) + 1;
+// 	cout << TotalNbrSectors << endl;
+	totalJz = new int[TotalNbrSectors];
+	totalKz = new int[TotalNbrSectors];
+	GetSectorsJzKzFromLinearizedIndex(NbrParticles, NbrFluxQuanta, totalJz, totalKz);
+	if (MaxJzValue >= 0) 
+	  MaxLzValue = MaxKzValue + NbrParticles*NbrFluxQuanta + 2*NbrParticles*NbrFluxQuanta*MaxJzValue - MaxJzValue*(MaxJzValue - 1);
+	else
+	  MaxLzValue = -(MaxKzValue + NbrParticles*NbrFluxQuanta + MaxJzValue + (2*NbrParticles*NbrFluxQuanta + MaxJzValue + 1)*(-MaxJzValue - 1)) - 1;
+// 	MaxLzValue = MaxLzValue + NbrParticles*NbrFluxQuanta*NbrParticles*NbrFluxQuanta ;
+	MinLzValue = MaxLzValue;
+	TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
+	LzDegeneracy = new int[TotalMaxLz + 1];
+	TotalNbrZeroEnergyStates = EigenstateListFile.GetNbrLines();
+	for (int i = 0 ; i < TotalMaxLz; ++i)
+	  LzDegeneracy[i] = 0;
+	 LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
+      }
     }
       
   if (TotalNbrZeroEnergyStates == 0l)
@@ -218,14 +275,51 @@ int main(int argc, char** argv)
 
   for (int TotalLz = MinLzValue; TotalLz <= MaxLzValue; TotalLz += 2)
     {
-      if ((TotalMaxLz & 1) != 0)
-	{
-	  File << "Lz = " << TotalLz << "/2 : " << endl;
-	}
+      if (FourDFlag == false)
+      {
+	if ((TotalMaxLz & 1) != 0)
+	  {
+	    File << "Lz = " << TotalLz << "/2 : " << endl;
+	  }
+	else
+	  {
+	    File << "Lz = " << (TotalLz  >> 1) << " : " << endl;
+	  }
+      }
       else
+      {
+	int Shift = NbrParticles*NbrFluxQuanta*NbrParticles*NbrFluxQuanta ;
+	int TotalMaxJz = totalJz[TotalMaxLz + Shift];
+	int TotalMaxKz = totalKz[TotalMaxLz + Shift];
+	TotalJz = totalJz[TotalLz + Shift];
+	TotalKz = totalKz[TotalLz + Shift];
+	cout << TotalJz << "  " << TotalKz << endl;
+	if ((TotalMaxJz & 1) != 0)
+	  {
+	    File << "Jz = " << TotalJz << "/2 , ";
+	    if ((TotalMaxKz & 1) != 0)
+	    {
+	      File << "Kz = " << TotalKz << "/2 : " << endl;
+	    }
+	    else 
+	    {
+	     File << "Kz = " << (TotalKz  >> 1) << " : " << endl;
+	    }
+	  }
+	else
 	{
-	  File << "Lz = " << (TotalLz  >> 1) << " : " << endl;
-	}      
+	 File << "Jz = " << (TotalJz  >> 1) << " , ";
+	 if ((TotalMaxKz & 1) != 0)
+	    {
+	      File << "Kz = " << TotalKz << "/2 : " << endl;
+	    }
+	    else 
+	    {
+	     File << "Kz = " << (TotalKz  >> 1) << " : " << endl;
+	    }
+	}
+	
+      }
       int TmpNbrStates = LzDegeneracy[(TotalLz  - MinLzValue) >> 1];
       RealVector* TmpVectors = 0;
       LongRationalVector* TmpRationalVectors = 0;
@@ -346,16 +440,25 @@ int main(int argc, char** argv)
 	{
 	  if (SU2SpinFlag == false)
 	    {
-	      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
-	      if (TmpRationalVectors == 0)
-		{
-		  sprintf (FilePrefix, "bosons_");
-		}
+	      if (FourDFlag == false)
+	      {
+		Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
+		if (TmpRationalVectors == 0)
+		  {
+		    sprintf (FilePrefix, "bosons_");
+		  }
+		else
+		  {
+		    sprintf (FilePrefix, "bosons_rational_");
+		  }
+		sprintf (FileSuffix, "n_%d_2s_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalLz);
+	      }
 	      else
-		{
-		  sprintf (FilePrefix, "bosons_rational_");
-		}
-	      sprintf (FileSuffix, "n_%d_2s_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalLz);
+	      {
+		Space = new BosonOn4DSphere(NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+		sprintf (FilePrefix, "bosons_sphere4d_");
+		sprintf (FileSuffix, "n_%d_2s_%d_jz_%d_kz_%d.", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
+	      }
 	    }
 	  else
 	    {
@@ -552,3 +655,30 @@ int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors)
     }
   return MinTmpPos;
 }
+
+// get the quantum numbers Jz, Kz of a N-particle 4D state 
+//
+//totalJz = array that gives the sector Jz for all values of the linearized index
+//totalKz = array that gives the sector Kz for all values of the linearized index
+void GetSectorsJzKzFromLinearizedIndex(int nbrParticles, int nbrFluxQuanta, int* totalJz, int* totalKz)
+  {
+    int Jzmax = nbrParticles*nbrFluxQuanta;
+    int index = 0;
+    int ShiftedIndex = 0;
+    for (int Jz = -Jzmax; Jz <= Jzmax; ++Jz)
+      {
+	for (int Kz = -Jzmax + abs(Jz); Kz <= Jzmax - abs(Jz) ; ++Kz)
+	  {
+	      if (Jz >=0)
+		  index = Kz + Jzmax + 2*Jzmax*Jz - Jz*(Jz - 1);
+	      else
+		  index = -(Kz + Jzmax + Jz + (2*Jzmax + 1 + Jz)*(-Jz - 1)) - 1;
+		ShiftedIndex = index + Jzmax*Jzmax;
+	      totalJz[ShiftedIndex] = Jz;
+	      totalKz[ShiftedIndex] = Kz;
+	      
+// 	      cout << Jz << " " << Kz << " : " << index << " " << ShiftedIndex << endl;
+	  }
+	}
+      
+  }

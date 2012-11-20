@@ -299,6 +299,15 @@ long BosonOn4DSphere::GenerateStates(unsigned long* stateDescription, int nbrBos
 
   if (nbrBosons < 0)
     return pos;
+  if (currentTotalKz > this->ShiftedTotalKz)
+    return pos;
+  if (currentTotalJz > this->ShiftedTotalJz)
+    return pos;
+  if (currentTotalJz + nbrBosons*(currentJ + this->NbrFluxQuanta) < this->ShiftedTotalJz)
+    return pos;
+  if (currentTotalKz + nbrBosons*(2*this->NbrFluxQuanta + currentJ) < this->ShiftedTotalKz)
+    return pos;
+  
   if (currentKz < 0)
    {
      currentKz = this->NbrFluxQuanta - currentJ;
@@ -321,6 +330,7 @@ long BosonOn4DSphere::GenerateStates(unsigned long* stateDescription, int nbrBos
       else	
 	return pos;
     }
+
   if (currentJ < 0)
     return pos;
 
@@ -348,6 +358,14 @@ long BosonOn4DSphere::GenerateStates(unsigned long* stateDescription, int nbrBos
 long BosonOn4DSphere::EvaluateHilbertSpaceDimension(int nbrBosons, int currentJ, int currentJz, int currentKz, int currentTotalJz, int currentTotalKz)
 {
   if (nbrBosons < 0)
+    return 0l;
+  if (currentTotalKz > this->ShiftedTotalKz)
+    return 0l;
+  if (currentTotalJz > this->ShiftedTotalJz)
+    return 0l;
+  if (currentTotalJz + nbrBosons*(currentJ + this->NbrFluxQuanta) < this->ShiftedTotalJz)
+    return 0l;
+  if (currentTotalKz + nbrBosons*(2*this->NbrFluxQuanta + currentJ) < this->ShiftedTotalKz)
     return 0l;
   
   if (currentKz < 0)

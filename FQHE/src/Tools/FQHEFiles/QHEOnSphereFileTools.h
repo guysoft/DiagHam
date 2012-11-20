@@ -132,4 +132,26 @@ bool FQHEOnSphereWithSU4SpinFindSystemInfoFromVectorFileName(char* filename, int
 // return value = true if no error occured
 bool FQHEOn4DSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta, int& jz, int& kz, bool& statistics);
 
+// try to guess system information from PES vector file name for a system of bosons on the 4D sphere
+//
+// filename = vector file name
+// nbrParticles = reference to the total number of particles (grab it only if initial value is 0)
+// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// jz = reference to twice the z projection of the  jz angular momentum (grab it only if initial value is 0)
+// kz = reference to twice the z projection of the  kz angular momentum (grab it only if initial value is 0)
+// statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& nbrFluxQuanta, int& jz, int& kz, bool& statistics);
+
+// try to guess system information from PES file name
+//
+// filename = file name
+// nbrParticles = reference to the total number of particles (grab it only if initial value is 0)
+// nbrParticlesA = reference to the number of particles na in subsystem A (grab it only if initial value is 0)
+// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
+// return value = true if no error occured
+
+bool FQHEOnSphereFindSystemInfoFromPESFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& lzMax, bool& statistics);
 #endif
