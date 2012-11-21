@@ -1671,6 +1671,15 @@ long Boson4DSphereEvaluateHilbertSpaceDimension(int nbrBosons, int nbrFluxQuanta
 {
   if (nbrBosons < 0)
     return 0l;
+  if (currentTotalKz > shiftedTotalKz)
+    return 0l;
+  if (currentTotalJz > shiftedTotalJz)
+    return 0l;
+  if (currentTotalJz + nbrBosons*(currentJ + nbrFluxQuanta) < shiftedTotalJz)
+    return 0l;
+  if (currentTotalKz + nbrBosons*(2*nbrFluxQuanta + currentJ) < shiftedTotalKz)
+    return 0l;
+  
   
   if (currentKz < 0)
    {
