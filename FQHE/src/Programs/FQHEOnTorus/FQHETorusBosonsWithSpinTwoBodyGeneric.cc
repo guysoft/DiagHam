@@ -129,14 +129,10 @@ int main(int argc, char** argv)
     {
       if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
 	return -1;
-      if(FQHETorusSU2GetOneBodyPseudopotentials (Manager.GetString("interaction-file"), MaxMomentum, OneBodyPotentialUpUp, OneBodyPotentialDownDown,OneBodyPotentialUpDown ) == false)
-	return -1;
+//       if(FQHETorusSU2GetOneBodyPseudopotentials (Manager.GetString("interaction-file"), MaxMomentum, OneBodyPotentialUpUp, OneBodyPotentialDownDown,OneBodyPotentialUpDown ) == false)
+// 	return -1;
     }
     
-  for (int i =0; i< MaxMomentum; i++)
-    cout << OneBodyPotentialUpDown[i]<<" ";
-  cout <<endl;
-
   char* OutputFileName = new char [512];
   sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
   ofstream File;
