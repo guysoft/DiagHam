@@ -373,6 +373,12 @@ class SparseComplexMatrix : public Matrix
   // return value = hermitian transposed matrix
   SparseComplexMatrix HermitianTranspose ();
 
+  // output the matrix in a sparse display (column formatted output)
+  //
+  // str = reference on output stream
+  // return value = reference on output stream
+  ostream& PrintNonZero (ostream& str);
+
   // Output Stream overload
   //
   // Str = reference on output stream

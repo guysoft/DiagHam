@@ -94,6 +94,7 @@ class Matrix
     Upper = 0x2000,
     Lower = 0x4000,
     BandDiagonal = 0x10000,
+    Hessenberg = 0x20000,
     Sparse = 0x100000
   };
 

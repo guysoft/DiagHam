@@ -76,9 +76,9 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
   this->Flag.Initialize();
   this->StrongConvergenceFlag = strongConvergence;
   this->PreviousLastWantedEigenvalue = 0.0;
-  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  this->ComplexPreviousWantedEigenvalues = new Complex [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
-    this->PreviousWantedEigenvalues[i] = 0.0;
+    this->ComplexPreviousWantedEigenvalues[i] = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->EigenvectorPrecision = 0.0;
 }
@@ -101,9 +101,9 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algori
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->EigenvectorPrecision = algorithm.EigenvectorPrecision;
   this->StrongConvergenceFlag = algorithm.StrongConvergenceFlag;
-  this->PreviousWantedEigenvalues = new double [this->NbrEigenvalue];
+  this->ComplexPreviousWantedEigenvalues = new Complex [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
-    this->PreviousWantedEigenvalues[i] = 0.0;
+    this->ComplexPreviousWantedEigenvalues[i] = 0.0;
   this->TemporaryCoefficients = algorithm.TemporaryCoefficients;
 }
 
@@ -117,7 +117,7 @@ BasicArnoldiAlgorithm::~BasicArnoldiAlgorithm()
       delete[] this->ArnoldiVectors;
       delete[]  this->TemporaryCoefficients;
     }
-  delete[] this->PreviousWantedEigenvalues;
+  delete[] this->ComplexPreviousWantedEigenvalues;
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -312,7 +312,6 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
     }
   for (int i = this->Index + 2; i < Dimension; ++i)
     {
-      cout << i << " " << Dimension << endl;
       for (int k = 0; k < i; ++k)
 	{
 	  this->ReducedMatrix.GetMatrixElement(k, i, this->TemporaryCoefficients[k]);
@@ -343,7 +342,7 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
     {
       this->PreviousLastWantedEigenvalue = Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1]);
       for (int i = 0; i < this->NbrEigenvalue; ++i)
-	this->PreviousWantedEigenvalues[i] = Norm(this->ComplexDiagonalizedMatrix[i]);
+	this->ComplexPreviousWantedEigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
       this->Diagonalize();
       this->ComplexDiagonalizedMatrix.SortMatrixUpOrder();
     }
@@ -353,7 +352,7 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
       this->ComplexDiagonalizedMatrix.SortMatrixUpOrder();
       this->PreviousLastWantedEigenvalue = 2.0 * Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1]);
       for (int i = 0; i < this->NbrEigenvalue; ++i)
-	this->PreviousWantedEigenvalues[i] = 2.0 * Norm(this->ComplexDiagonalizedMatrix[i]);
+	this->ComplexPreviousWantedEigenvalues[i] = 2.0 * this->ComplexDiagonalizedMatrix[i];
     }
 }
 
@@ -366,24 +365,25 @@ bool BasicArnoldiAlgorithm::TestConvergence ()
 {
   if (this->ReducedMatrix.GetNbrRow() > this->NbrEigenvalue)
     {
+      cout << this->Index << " " << this->ComplexDiagonalizedMatrix[0] << " " << this->ComplexPreviousWantedEigenvalues[0] << endl;
       if (this->StrongConvergenceFlag == true)
 	{
 	  for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
 	    {
-	      if (Norm(this->ComplexDiagonalizedMatrix[i] - this->PreviousWantedEigenvalues[i]) > 
+	      if (Norm(this->ComplexDiagonalizedMatrix[i] - this->ComplexPreviousWantedEigenvalues[i]) > 
 		  (this->EigenvaluePrecision * Norm(this->ComplexDiagonalizedMatrix[i])))
 		{ 
 		  if (Norm(ComplexDiagonalizedMatrix[i]) > MACHINE_PRECISION)
 		    return false;
 		  else
-		    if (Norm(this->PreviousWantedEigenvalues[i]) > MACHINE_PRECISION)
+		    if (Norm(this->ComplexPreviousWantedEigenvalues[i]) > MACHINE_PRECISION)
 		      return false;
 		}
 	    }
 	  return true;
 	}
       else
-	if ((Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1]) - this->PreviousLastWantedEigenvalue) < 
+	if (Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1] - this->ComplexPreviousWantedEigenvalues[this->NbrEigenvalue - 1]) < 
 	    (this->EigenvaluePrecision * Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1])))
 	  {
 	    return true;

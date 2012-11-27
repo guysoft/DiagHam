@@ -44,6 +44,7 @@ class LongRationalVector;
 class LongRational;
 class AbstractArchitecture;
 class SparseRealMatrix;
+class SparseComplexMatrix;
 
 
 class ParticleOnSphere :  public AbstractQHEParticle
@@ -739,6 +740,19 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // initialIndex = initial index to compute
   // nbrComponents = number of components to compute
   virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, RealVector& state, int mPSRowIndex, int mPSColumnIndex, 
+					      long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
+
+  // create a state from its MPS description, inclusing additional quasihole matrices
+  //
+  // bMatrices = array that gives the B matrices 
+  // state = reference to vector that will contain the state description
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholeBMatrices,
+					      ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
 					      long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
 
 };

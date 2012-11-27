@@ -106,7 +106,7 @@ FQHEMPSLaughlinQuasiholeMatrix::~FQHEMPSLaughlinQuasiholeMatrix()
 // quasiholePositions = quasihole positions
 // return value = array of nbrQuasiholes matrices corresponding to each quasihole
 
-SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeBMatrices(int nbrQuasiholes, Complex* quasiholePositions)
+SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions)
 {
   SparseComplexMatrix* TmpQuasiholeBMatrices = new SparseComplexMatrix[nbrQuasiholes];
   for (int i = 0; i < nbrQuasiholes; ++i)
@@ -118,16 +118,17 @@ SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeBMatrices(int n
       for (int q = 0; q <= this->PLevel; ++q)
 	{
 	  int NbrParitions2 = this->NbrIndicesPerPLevel[q] / this->NbrNValue;	  
-	  for (int N2 = 0; N2 < this->NbrNValue; ++N2)
+	  for (int N2 = 0; N2 < (this->NbrNValue - 1); ++N2)
 	    {
 	      int N1 = N2 + 1;
 	      for (int i = 0; i < nbrQuasiholes; ++i)
 		{
 		  if (Norm(quasiholePositions[i]) > MACHINE_PRECISION)
-		    TmpCoefficient[i] = pow (quasiholePositions[i], ((double) (2 * N1 + 1)) / ((double) this->LaughlinIndex) + ((double) (p - q)));
+		    TmpCoefficient[i] = pow (quasiholePositions[i], ((double) (2 * N1 - this->NbrNValue + 2)) / (20 * ((double) this->LaughlinIndex)) + ((double) (p - q)));
 		  else
 		    {
-		      if ((2 * N1 + 1) == (this->LaughlinIndex * (p - q)))
+		      cout << N1 << " " << this->NbrNValue << " " << (2 * N1 - this->NbrNValue + 2) << endl;
+		      if ((2 * N1 - this->NbrNValue - 1) == (2 * this->LaughlinIndex * (q - p)))
 			{
 			  TmpCoefficient[i] = 1.0;
 			}
@@ -153,6 +154,12 @@ SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeBMatrices(int n
 	}
     }
   delete[] TmpCoefficient;
+  for (int i = 0; i < nbrQuasiholes; ++i)
+    {
+      cout << " final matrix " << i << " : ";
+      TmpQuasiholeBMatrices[i].PrintNonZero(cout) << endl;
+      cout << "--------------------------------" << endl;
+    }
   return TmpQuasiholeBMatrices;
 }
 
@@ -202,6 +209,7 @@ void FQHEMPSLaughlinQuasiholeMatrix::CreateBMatrices ()
    
   for (int m = 1; m < this->NbrBMatrices; ++m)
     this->RealBMatrices[m] = SparseRealMatrix(MatrixSize, MatrixSize);
+  this->QuasiholeBMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
 
   unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
   unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
@@ -229,7 +237,7 @@ void FQHEMPSLaughlinQuasiholeMatrix::CreateBMatrices ()
 		  this->RealBMatrices[1].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
 						this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp);
 		  Tmp = this->CreateLaughlinAMatrixElement(1, this->LaughlinIndex, Partition1, Partition2, i, j, Coef);
-		  for (int N2 = 0; N2 < this->NbrNValue; ++N2)
+		  for (int N2 = 0; N2 < (this->NbrNValue - 1); ++N2)
 		    {
 		      int N1 = N2 + 1;
 		      double Tmp2 = Tmp;

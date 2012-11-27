@@ -24,6 +24,8 @@
 #include "Vector/RealVector.h"
 #include "Vector/LongRationalVector.h"
 
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 #include "Matrix/SparseComplexMatrix.h"
 #include "Matrix/SparseRealMatrix.h"
 
@@ -62,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
+  (*OutputGroup) += new BooleanOption ('\n', "normalize-jack", "use the Jack normalization, forcing the first component to be 1");
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
 
@@ -102,6 +105,19 @@ int main(int argc, char** argv)
        cout<<"Cylinder geometry, kappa= "<<Kappa<<endl;
     }
 
+  int NbrQuasiholes = 0;
+  Complex* QuasiholePositions = 0;
+  if (Manager.GetString("with-quasiholes") != 0)
+    {
+      MultiColumnASCIIFile InputQuasiholePosition;
+      if (InputQuasiholePosition.Parse(Manager.GetString("with-quasiholes")) == false)
+	{
+	  InputQuasiholePosition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      QuasiholePositions = InputQuasiholePosition.GetAsComplexArray(0);
+      NbrQuasiholes = InputQuasiholePosition.GetNbrLines();
+   }
 
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
@@ -209,20 +225,68 @@ int main(int argc, char** argv)
 
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
-  RealVector State (Space->GetHilbertSpaceDimension(), true);
+  SparseComplexMatrix* SparseQuasiholeBMatrices = 0;
+  if (NbrQuasiholes > 0)
+    SparseQuasiholeBMatrices = MPSMatrix->GetQuasiholeMatrices(NbrQuasiholes, QuasiholePositions);
+  RealVector State ;
+  ComplexVector ComplexState ;
+  if (NbrQuasiholes > 0)
+    ComplexState = ComplexVector(Space->GetHilbertSpaceDimension(), true);
+  else
+    State = RealVector(Space->GetHilbertSpaceDimension(), true);
 
 
-  FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MPSRowIndex, MPSColumnIndex,
-					Manager.GetInteger("precalculation-blocksize"));
-  Operation.ApplyOperation(Architecture.GetArchitecture());
+  if (NbrQuasiholes > 0)
+    {
+      FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, SparseQuasiholeBMatrices, NbrQuasiholes, &ComplexState, MPSRowIndex, MPSColumnIndex,
+					    Manager.GetInteger("precalculation-blocksize"));
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+    }
+  else
+    {
+      FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MPSRowIndex, MPSColumnIndex,
+					    Manager.GetInteger("precalculation-blocksize"));
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+    }
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
     {
       if (Manager.GetBoolean("normalize-sphere"))
-	Space->ConvertFromUnnormalizedMonomial(State);
-      if (CylinderFlag)
-	State /= State.Norm();
-      
+	{
+	  if (NbrQuasiholes == 0)
+	    {
+	      Space->ConvertFromUnnormalizedMonomial(State);
+	    }
+	}
+      else
+	{
+	  if (CylinderFlag == true)
+	    {
+	      if (NbrQuasiholes == 0)
+		{
+		  State /= State.Norm();
+		}
+	      else
+		{
+		  ComplexState /= ComplexState.Norm();
+		}
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("normalize-jack") == true)
+		{
+		  if (NbrQuasiholes == 0)
+		    {
+		      State /= State[0];
+		    }
+		  else
+		    {
+		      ComplexState /= ComplexState[0];
+		    }
+		}
+	    
+	    }
+	}
       if (Manager.GetBoolean("full-basis") == true)  
 	{
 	  FermionOnSphereHaldaneBasis* SpaceHaldane = 0;
@@ -286,21 +350,43 @@ int main(int argc, char** argv)
 	}
       else 
 	{ 
-	  if (OutputTxtFileName != 0)
+	  if (NbrQuasiholes > 0)
 	    {
-	      ofstream File;
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);	
-	      for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
+	      if (OutputTxtFileName != 0)
 		{
-		  State.PrintComponent(File, i) << " ";
-		  Space->PrintStateMonomial(File, i) << endl;
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);	
+		  for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      ComplexState.PrintComponent(File, i) << " ";
+		      Space->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
 		}
-	      File.close();
+	      if (OutputFileName != 0)
+		{
+		  ComplexState.WriteVector(OutputFileName);
+		}
 	    }
-	  if (OutputFileName != 0)
+	  else
 	    {
-	      State.WriteVector(OutputFileName);
+	      if (OutputTxtFileName != 0)
+		{
+		  ofstream File;
+		  File.open(OutputTxtFileName, ios::binary | ios::out);
+		  File.precision(14);	
+		  for (long i = 0; i < Space->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      State.PrintComponent(File, i) << " ";
+		      Space->PrintStateMonomial(File, i) << endl;
+		    }
+		  File.close();
+		}
+	      if (OutputFileName != 0)
+		{
+		  State.WriteVector(OutputFileName);
+		}
 	    }
 	}
     }

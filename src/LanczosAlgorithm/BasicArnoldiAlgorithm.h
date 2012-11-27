@@ -69,7 +69,7 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // value of the last wanted eigenvalue at previous Arnoldi iteration
   double PreviousLastWantedEigenvalue;
   // value of the wanted eigenvalue at previous Arnoldi iteration
-  double* PreviousWantedEigenvalues;
+  Complex* ComplexPreviousWantedEigenvalues;
   // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
   bool StrongConvergenceFlag;
 

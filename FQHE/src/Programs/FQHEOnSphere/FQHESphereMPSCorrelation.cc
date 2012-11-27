@@ -261,14 +261,14 @@ int main(int argc, char** argv)
 
       TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseConjugateBMatrices, Coefficients);
 
-      BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), 1, 3000, false);
-      Arnoldi.SetHamiltonian(&EHamiltonian);
-      Arnoldi.InitializeLanczosAlgorithm();
-      Arnoldi.RunLanczosAlgorithm(3);
-      while (Arnoldi.TestConvergence() == false)
-	{
-	  Arnoldi.RunLanczosAlgorithm(1);
-	}
+       BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), 1, 3000, false);
+       Arnoldi.SetHamiltonian(&EHamiltonian);
+       Arnoldi.InitializeLanczosAlgorithm();
+       Arnoldi.RunLanczosAlgorithm(3);
+//        while (Arnoldi.TestConvergence() == false)
+//  	{
+//  	  Arnoldi.RunLanczosAlgorithm(1);
+//  	}
 //       RealMatrix NormalizedB0B0B1B1Full2(NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow());
 //       EHamiltonian.GetHamiltonian(NormalizedB0B0B1B1Full2);
 //       cout << SparseBMatrices[0] << endl;
@@ -286,13 +286,14 @@ int main(int argc, char** argv)
 //      return 0;
       ComplexDiagonalMatrix TmpDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
       ComplexMatrix Eigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
-      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpDiag, Eigenstates);
+      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpDiag, Eigenstates, false);
       int LargestEigenvalueIndex = -1;
       int LargestEigenvalueIndex2 = -1;
       int LargestEigenvalueIndex3 = -1;
       for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
 	if (Norm(TmpDiag[i]) > 1e-10)
 	  {
+	    cout << TmpDiag[i] << " ";
 	    if (LargestEigenvalueIndex < 0)
 	      {
 		LargestEigenvalueIndex = i;
@@ -311,22 +312,71 @@ int main(int argc, char** argv)
 		      }
 		  }
 	      }
-	    cout << Norm(TmpDiag[i]) << " ";
+//	    cout << Norm(TmpDiag[i]) << " ";
 	  }
       cout << endl;
-      cout << LargestEigenvalueIndex << " : " << TmpDiag[LargestEigenvalueIndex]
-	   << " " << TmpDiag[LargestEigenvalueIndex2] << " " << TmpDiag[LargestEigenvalueIndex3] << endl;
+
+      ComplexDiagonalMatrix TmpLeftDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      ComplexMatrix LeftEigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpLeftDiag, LeftEigenstates, true);
+      int LargestLeftEigenvalueIndex = -1;
+      int LargestLeftEigenvalueIndex2 = -1;
+      int LargestLeftEigenvalueIndex3 = -1;
+      for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+	if (Norm(TmpLeftDiag[i]) > 1e-10)
+	  {
+	    if (LargestLeftEigenvalueIndex < 0)
+	      {
+		LargestLeftEigenvalueIndex = i;
+	      }
+	    else
+	      {
+		if (LargestLeftEigenvalueIndex2 < 0)
+		  {
+		    LargestLeftEigenvalueIndex2 = i;
+		  }
+		else
+		  {
+		    if (LargestLeftEigenvalueIndex3 < 0)
+		      {
+			LargestLeftEigenvalueIndex3 = i;
+		      }
+		  }
+	      }
+//	    cout << Norm(TmpLeftDiag[i]) << " ";
+	  }
+
+//       cout << endl;
+//       cout << "right : " << LargestEigenvalueIndex << " : " << TmpDiag[LargestEigenvalueIndex]
+// 	   << " " << TmpDiag[LargestEigenvalueIndex2] << " " << TmpDiag[LargestEigenvalueIndex3] << endl;
+//       cout << "left : " << LargestLeftEigenvalueIndex << " : " << TmpLeftDiag[LargestLeftEigenvalueIndex]
+// 	   << " " << TmpLeftDiag[LargestLeftEigenvalueIndex2] << " " << TmpLeftDiag[LargestLeftEigenvalueIndex3] << endl;
+//       cout << "right overlaps = ";
+//       cout << (Eigenstates[LargestEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex]) << " " 
+// 	   << (Eigenstates[LargestEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex2]) << " " 
+// 	   << (Eigenstates[LargestEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex3]) << " " 
+// 	   << (Eigenstates[LargestEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2]) << " " 
+// 	   << (Eigenstates[LargestEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex3]) << " " 
+// 	   << (Eigenstates[LargestEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]) << endl;
+//       cout << "left/right overlaps = ";
+//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex]) << " " 
+// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex2]) << " " 
+// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex3]) << " " 
+// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2]) << " " 
+// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex3]) << " " 
+// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]) << endl;
+
       RealMatrix NormalizedB1B1Full (SparseTensorProductBMatrices[1][1]);
       ComplexVector Test2(NormalizedB0B0B1B1Full.GetNbrRow());
       Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex]);
-      cout << ((Eigenstates[LargestEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex]) << endl;
-      Complex Density = (Eigenstates[LargestEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex];
+      cout << ((LeftEigenstates[LargestLeftEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex] / (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex])) << endl;
+      Complex Density = (LeftEigenstates[LargestLeftEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex] / (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex]);
       Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex2]);
-      cout << ((Eigenstates[LargestEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2]) << endl;
-      Density += (Eigenstates[LargestEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2];
+      cout << ((LeftEigenstates[LargestLeftEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2] / (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2])) << endl;
+      Density += (LeftEigenstates[LargestLeftEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2] / (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2]);
       Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex3]);
-      cout << ((Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3]) << endl;
-      Density += (Eigenstates[LargestEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3];
+      cout << ((LeftEigenstates[LargestLeftEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3] / (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3])) << endl;
+      Density += (LeftEigenstates[LargestLeftEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3] / (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]);
       Density /= 3.0;      
 //      Density *= Kappa;
       cout << Density << endl;

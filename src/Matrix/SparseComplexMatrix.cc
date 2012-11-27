@@ -1826,6 +1826,27 @@ ostream& operator << (ostream& Str, const SparseComplexMatrix& P)
   return Str;
 }
 
+// output the matrix in a sparse display (column formatted output)
+//
+// str = reference on output stream
+// return value = reference on output stream
+
+ostream& SparseComplexMatrix::PrintNonZero (ostream& str) 
+{
+  for (long i = 0; i < this->NbrRow; ++i)
+    if (this->RowPointers[i] >= 0l)
+      {
+	long MinPos = this->RowPointers[i];
+	long MaxPos = this->RowLastPointers[i];
+	while (MinPos <= MaxPos)
+	  {
+	    str << i << " " << this->ColumnIndices[MinPos] << " " << this->MatrixElements[MinPos] << endl;
+	    ++MinPos;
+	  }
+      }
+  return str;
+}
+
 
 #ifdef USE_OUTPUT
 

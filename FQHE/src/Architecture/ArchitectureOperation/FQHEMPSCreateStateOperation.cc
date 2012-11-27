@@ -60,13 +60,43 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space
   this->NbrComponent = space->GetHilbertSpaceDimension();
   this->Space = (ParticleOnSphere*) space->Clone();
   this->OutputState = state;
+  this->ComplexOutputState = 0;  
   this->BMatrices = bMatrices;
+  this->QuasiholeBMatrices = 0;
+  this->NbrQuasiholes = 0;
   this->MPSRowIndex = mPSRowIndex;  
   this->MPSColumnIndex = mPSColumnIndex;
   this->PrecalculationBlockSize = blockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
 }
 
+// constructor for MPS with quasiholes
+//
+// space = pointer to the Hilbert space
+// bMatrices = array that gives the B matrices 
+// quasiholeBMatrices = array that gives the B matrices for quasiholes 
+// nbrQuasiholes = number of quasiholes 
+// state = pointer to the vector where the MPS state will be stored
+// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// mPSColumnIndex = column index of the MPS element that has to be evaluated
+// blockSize = indicates the size of the block for precalculations
+
+FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholes,
+							 ComplexVector* state, int mPSRowIndex, int mPSColumnIndex, int blockSize)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->Space = (ParticleOnSphere*) space->Clone();
+  this->OutputState = 0;
+  this->ComplexOutputState = state;  
+  this->BMatrices = bMatrices;
+  this->QuasiholeBMatrices = quasiholeBMatrices;
+  this->NbrQuasiholes = nbrQuasiholes;
+  this->MPSRowIndex = mPSRowIndex;  
+  this->MPSColumnIndex = mPSColumnIndex;
+  this->PrecalculationBlockSize = blockSize;
+  this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
+}
 
 // copy constructor 
 //
@@ -79,7 +109,10 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
 
   this->Space = (ParticleOnSphere*) operation.Space->Clone();
   this->OutputState = operation.OutputState;
+  this->ComplexOutputState = operation.ComplexOutputState;  
   this->BMatrices = operation.BMatrices;
+  this->QuasiholeBMatrices = operation.QuasiholeBMatrices;
+  this->NbrQuasiholes = operation.NbrQuasiholes;
   this->MPSRowIndex = operation.MPSRowIndex;  
   this->MPSColumnIndex = operation.MPSColumnIndex;
   this->PrecalculationBlockSize = operation.PrecalculationBlockSize;
@@ -131,8 +164,11 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
-  
+  if (this->NbrQuasiholes == 0)
+    this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+  else
+    this->Space->CreateStateFromMPSDescription(this->BMatrices, this->QuasiholeBMatrices, this->NbrQuasiholes, *(this->ComplexOutputState), 
+					       this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
@@ -208,8 +244,10 @@ bool FQHEMPSCreateStateOperation::ArchitectureDependentApplyOperation(SimpleMPIA
       break;
     }		
   MPI::COMM_WORLD.Barrier();
-  architecture->SumVector(*(this->OutputState));	
-      
+  if (this->OutputState != 0)
+    architecture->SumVector(*(this->OutputState));	
+  else
+    architecture->SumVector(*(this->ComplexOutputState));	
   return true;
 #else
   return this->RawApplyOperation();

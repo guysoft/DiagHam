@@ -425,8 +425,8 @@ double ParticleOnTorusCoulombHamiltonian::EvaluateInteractionCoefficient(int m1,
 
 double ParticleOnTorusCoulombHamiltonian::GetVofQ(double Q2_half)
 {
-  double Result;
-  double Q2=2.0*Q2_half;
+  double Result = 1.0;
+  double Q2 = 2.0*Q2_half;
   if (Q2_half != 0.0)
     {
       Result = this->FormFactor(Q2_half);

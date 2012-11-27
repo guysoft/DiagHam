@@ -1745,11 +1745,10 @@ ComplexDiagonalMatrix& ComplexMatrix::Diagonalize (ComplexDiagonalMatrix& M, Com
 // Diagonalize a complex skew symmetric matrix using the LAPACK library (modifying current matrix)
 //
 // M = reference on real diagonal matrix of eigenvalues
-// err = absolute error on matrix element
-// maxIter = maximum number of iteration to fund an eigenvalue
+// leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
 // return value = reference on real matrix consisting of eigenvalues
 
-ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M)
+ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, bool leftFlag)
 {
   if (this->NbrColumn != this->NbrRow)
     return M;
@@ -1773,7 +1772,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
   int DimensionM=NbrRow;
   int iLow=1;
   int iHigh=DimensionM;
-  doublecomplex *complexWork=new doublecomplex[1];
+  doublecomplex *complexWork = new doublecomplex[1];
   int lComplexWork=-1;
   // balancing omitted
   // workspace query
@@ -1781,7 +1780,7 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
 		       complexWork, &lComplexWork, &Information);
   lComplexWork=(int)(complexWork[0].r);
   delete [] complexWork;
-  complexWork=new doublecomplex[lComplexWork];
+  complexWork = new doublecomplex[lComplexWork];
   FORTRAN_NAME(zgehrd)(&DimensionM, &iLow, &iHigh, TmpMatrix, &DimensionM, Tau,
 		       complexWork, &lComplexWork, &Information);  
   if (Information < 0)
@@ -1827,11 +1826,10 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& 
 //
 // M = reference on real diagonal matrix of eigenvalues
 // Q = matrix where transformation matrix has to be stored
-// err = absolute error on matrix element
-// maxIter = maximum number of iteration to fund an eigenvalue
+// leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
 // return value = reference on real matrix consisting of eigenvalues
 
-ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q)
+ComplexDiagonalMatrix& ComplexMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag)
 {
   if (M.GetNbrColumn() != this->NbrColumn)
     M.Resize(this->NbrColumn, this->NbrColumn);

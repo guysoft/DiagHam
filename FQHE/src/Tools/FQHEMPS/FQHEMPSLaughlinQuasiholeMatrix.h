@@ -78,7 +78,7 @@ class FQHEMPSLaughlinQuasiholeMatrix : public FQHEMPSLaughlinMatrix
   // nbrQuasiholes = number of quasiholes
   // quasiholePositions = quasihole positions
   // return value = array of nbrQuasiholes matrices corresponding to each quasihole
-  virtual SparseComplexMatrix* GetQuasiholeBMatrices(int nbrQuasiholes, Complex* quasiholePositions);
+  virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
 
  protected:
 

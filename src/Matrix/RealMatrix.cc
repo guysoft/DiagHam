@@ -1145,9 +1145,10 @@ double* RealMatrix::SingularValueDecomposition()
 // Diagonalize a real matrix using the LAPACK library
 //
 // M = reference on complex diagonal matrix where result has to be stored
+// leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
 // return value = reference on complex diagonal matrix
 
-ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M)
+ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, bool leftFlag)
 {
   if (this->NbrColumn != this->NbrRow)
     {
@@ -1157,8 +1158,18 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M)
 #ifdef HAVE_LAPACK
   int Information = 0;
   int WorkingAreaSize = -1;
-  char JobVL = 'N';
-  char JobVR = 'N';
+  char JobVL;
+  char JobVR;
+  if (leftFlag == true)
+    {
+      JobVL = 'V';
+      JobVR = 'N';
+    }
+  else
+    {
+      JobVL = 'N';
+      JobVR = 'V';
+    }
   double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
   long TotalIndex = 0l;
   for (int j = 0; j < this->NbrColumn; ++j)
@@ -1201,9 +1212,10 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M)
 //
 // M = reference on complex diagonal matrix where result has to be stored
 // Q = matrix where transformation matrix has to be stored
+// leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
 // return value = reference on complex diagonal matrix
 
-ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q)
+ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag)
 {
   if (this->NbrColumn != this->NbrRow)
     {
@@ -1213,8 +1225,18 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
 #ifdef HAVE_LAPACK
   int Information = 0;
   int WorkingAreaSize = -1;
-  char JobVL = 'V';
-  char JobVR = 'N';
+  char JobVL;
+  char JobVR;
+  if (leftFlag == true)
+    {
+      JobVL = 'V';
+      JobVR = 'N';
+    }
+  else
+    {
+      JobVL = 'N';
+      JobVR = 'V';
+    }
   double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
   double* TmpLeftEigenstates = new double [this->NbrColumn * this->NbrRow];
   long TotalIndex = 0l;
@@ -1228,20 +1250,50 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
     }
   double* TmpEigenvalueReal = new double[this->NbrColumn];
   double* TmpEigenvalueImaginary = new double[this->NbrColumn];
-  int TmpLeadingLeftDimension = this->NbrColumn;
-  int TmpLeadingRightDimension = 1;
+  int TmpLeadingLeftDimension;
+  int TmpLeadingRightDimension;
+  if (leftFlag == true)
+    {
+      TmpLeadingLeftDimension = this->NbrColumn;
+      TmpLeadingRightDimension = 1;
+    }
+  else
+    {
+      TmpLeadingRightDimension = this->NbrColumn;
+      TmpLeadingLeftDimension = 1;
+    }
   double* Dummy = 0;
   double TmpWorkingArea;
-  FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-		      TmpEigenvalueReal, TmpEigenvalueImaginary,
-		      TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
-		      &TmpWorkingArea, &WorkingAreaSize, &Information);
+  if (leftFlag == true)
+    {
+      FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+			  TmpEigenvalueReal, TmpEigenvalueImaginary,
+			  TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
+			  &TmpWorkingArea, &WorkingAreaSize, &Information);
+    }
+  else
+    {
+      FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+			  TmpEigenvalueReal, TmpEigenvalueImaginary,
+			  Dummy, &TmpLeadingLeftDimension, TmpLeftEigenstates, &TmpLeadingRightDimension, 
+			  &TmpWorkingArea, &WorkingAreaSize, &Information);
+    }
   WorkingAreaSize = (int) TmpWorkingArea;
   double* WorkingArea = new double [WorkingAreaSize];
-  FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-		      TmpEigenvalueReal, TmpEigenvalueImaginary,
-		      TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
-		      WorkingArea, &WorkingAreaSize, &Information);
+  if (leftFlag == true)
+    {
+      FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+			  TmpEigenvalueReal, TmpEigenvalueImaginary,
+			  TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
+			  WorkingArea, &WorkingAreaSize, &Information);
+    }
+  else
+    {
+      FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
+			  TmpEigenvalueReal, TmpEigenvalueImaginary,
+			  Dummy, &TmpLeadingLeftDimension, TmpLeftEigenstates, &TmpLeadingRightDimension, 
+			  WorkingArea, &WorkingAreaSize, &Information);
+    }
   for (int i = 0; i < this->NbrRow; ++i)
     {
       M[i].Re = TmpEigenvalueReal[i];

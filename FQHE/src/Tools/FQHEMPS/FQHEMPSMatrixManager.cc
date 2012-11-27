@@ -38,6 +38,7 @@
 #include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
+#include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 
@@ -105,6 +106,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new BooleanOption  ('\n', "rr-3", "consider the k= 3 Read-Rezayi state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*PrecalculationGroup) += new SingleStringOption('\n', "import-bmatrices", "import the B matrices from a given binary file instead of computing them");
   (*PrecalculationGroup) += new BooleanOption ('\n', "export-bmatrices", "export the B matrices in a binary file");
   (*PrecalculationGroup) += new SingleStringOption('\n', "export-bmatrixname", "use a custom output file name to export the B matrices instead of the default one");
@@ -133,74 +135,104 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
   AbstractFQHEMPSMatrix* MPSMatrix = 0; 
   char* ExportFileName = 0;
   int NbrBMatrices = 2;
-  if (this->Options->GetBoolean("k-2") == true)
+  if (this->Options->GetString("with-quasiholes") == 0)
     {
-      if (this->Options->GetString("import-bmatrices") != 0)
+      if (this->Options->GetBoolean("k-2") == true)
 	{
-	  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-						   this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+	  if (this->Options->GetString("import-bmatrices") != 0)
+	    {
+	      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
+						       this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+	    }
+	  else
+	    {
+	      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+						       CylinderFlag, Kappa);
+	    }
+	  ExportFileName = new char [512];
+	  if (CylinderFlag == false)
+	    {
+	      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_clustered_k_2_r_%ld_q_2_p_%ld_n_%d.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices);
+	    }
+	  else
+	    {
+	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_clustered_k_2_r_%ld_q_2_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+	    }
 	}
       else
 	{
-	  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-						   CylinderFlag, Kappa);
-	}
-      ExportFileName = new char [512];
-      if (CylinderFlag == false)
-	{
-	  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_clustered_k_2_r_%ld_q_2_p_%ld_n_%d.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices);
-	}
-      else
-	{
-	  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_clustered_k_2_r_%ld_q_2_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+	  if (this->Options->GetBoolean("rr-3") == true)
+	    {
+	      if (this->Options->GetString("import-bmatrices") != 0)
+		{
+		  MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"), 
+							   CylinderFlag, Kappa);
+		}
+	      else
+		{
+		  MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							   CylinderFlag, Kappa);
+		}
+	      ExportFileName = new char [512];
+	      if (CylinderFlag == false)
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_readrezayi3_q_2_p_%ld_n_%d.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices);
+		}
+	      else
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_readrezayi3_q_2_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+		}
+	    }
+	  else
+	    {
+	      if (this->Options->GetString("import-bmatrices") != 0)
+		{
+		  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
+							CylinderFlag, Kappa);
+		}
+	      else
+		{
+		  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							CylinderFlag, Kappa);
+		}
+	      ExportFileName = new char [512];
+	      if (CylinderFlag == false)
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_laughlin_q_%ld_p_%ld_n_%d.dat", this->Options->GetInteger("laughlin-index"), 
+			  this->Options->GetInteger("p-truncation"), NbrBMatrices);
+		}
+	      else
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_laughlin_q_%ld_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("laughlin-index"), 
+			  this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+		}
+	    }
 	}
     }
   else
     {
-      if (this->Options->GetBoolean("rr-3") == true)
+      if (this->Options->GetBoolean("k-2") == true)
 	{
-	  if (this->Options->GetString("import-bmatrices") != 0)
-	    {
-	      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"), 
-						       CylinderFlag, Kappa);
-	    }
-	  else
-	    {
-	      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-						       CylinderFlag, Kappa);
-	    }
-	  ExportFileName = new char [512];
-	  if (CylinderFlag == false)
-	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_readrezayi3_q_2_p_%ld_n_%d.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices);
-	    }
-	  else
-	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_readrezayi3_q_2_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
-	    }
+	  MPSMatrix = 0;
 	}
       else
 	{
-	  if (this->Options->GetString("import-bmatrices") != 0)
+	  if (this->Options->GetBoolean("rr-3") == true)
 	    {
-	      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
-						    CylinderFlag, Kappa);
+	      MPSMatrix = 0;
 	    }
 	  else
 	    {
-	      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
-						    CylinderFlag, Kappa);
-	    }
-	  ExportFileName = new char [512];
-	  if (CylinderFlag == false)
-	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_laughlin_q_%ld_p_%ld_n_%d.dat", this->Options->GetInteger("laughlin-index"), 
-		      this->Options->GetInteger("p-truncation"), NbrBMatrices);
-	    }
-	  else
-	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_laughlin_q_%ld_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("laughlin-index"), 
-		      this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+	      if (this->Options->GetString("import-bmatrices") != 0)
+		{
+		  MPSMatrix = new FQHEMPSLaughlinQuasiholeMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
+							CylinderFlag, Kappa);
+		}
+	      else
+		{
+		  MPSMatrix = new FQHEMPSLaughlinQuasiholeMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							CylinderFlag, Kappa);
+		}
 	    }
 	}
     }

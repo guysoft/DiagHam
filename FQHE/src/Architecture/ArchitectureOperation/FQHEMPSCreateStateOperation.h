@@ -41,6 +41,7 @@
 
 class RealVector;
 class SparseRealMatrix;
+class SparseComplexMatrix;
 
 
 class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
@@ -53,9 +54,16 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
 
   // vector where the MPS state will be stored
   RealVector* OutputState;
+  // vector where the MPS state will be stored (complex version)
+  ComplexVector* ComplexOutputState;
 
   // array that gives the B matrices 
   SparseRealMatrix* BMatrices;
+
+  // array that gives the B matrices for quasiholes 
+  SparseComplexMatrix* QuasiholeBMatrices;
+  // number of quasiholes 
+  int NbrQuasiholes;
 
   // row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
   int MPSRowIndex;
@@ -82,6 +90,19 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // blockSize = indicates the size of the block for precalculations
   FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, RealVector* state, 
 			      int mPSRowIndex, int mPSColumnIndex, int blockSize);
+  
+  // constructor for MPS with quasiholes
+  //
+  // space = pointer to the Hilbert space
+  // bMatrices = array that gives the B matrices 
+  // quasiholeBMatrices = array that gives the B matrices for quasiholes 
+  // nbrQuasiholes = number of quasiholes 
+  // state = pointer to the vector where the MPS state will be stored
+  // mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // mPSColumnIndex = column index of the MPS element that has to be evaluated
+  // blockSize = indicates the size of the block for precalculations
+  FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholes,
+			      ComplexVector* state, int mPSRowIndex, int mPSColumnIndex, int blockSize);
   
   // copy constructor 
   //

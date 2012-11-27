@@ -195,7 +195,7 @@ bool AbstractFQHEMPSMatrix::SaveHeader (ofstream& file)
 // quasiholePositions = quasihole positions
 // return value = array of nbrQuasiholes matrices corresponding to each quasihole
 
-SparseComplexMatrix* AbstractFQHEMPSMatrix::GetQuasiholeBMatrices(int nbrQuasiholes, Complex* quasiholePositions)
+SparseComplexMatrix* AbstractFQHEMPSMatrix::GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions)
 {
   return 0;
 }

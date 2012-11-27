@@ -362,15 +362,17 @@ class RealMatrix : public Matrix
   // Diagonalize a real matrix using the LAPACK library
   //
   // M = reference on complex diagonal matrix where result has to be stored
+  // leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // return value = reference on complex diagonal matrix
-  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M);
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, bool leftFlag = false);
 
   // Diagonalize a real matrix and evaluate the left eigenstates using the LAPACK library
   //
   // M = reference on complex diagonal matrix where result has to be stored
   // Q = matrix where transformation matrix has to be stored
+  // leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // return value = reference on complex diagonal matrix
-  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag = false);
 
   // Output Stream overload
   //

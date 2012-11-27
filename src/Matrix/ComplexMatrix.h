@@ -516,8 +516,6 @@ class ComplexMatrix : public Matrix
   // Diagonalize an hermitian matrix (modifying current matrix)
   //
   // M = reference on real diagonal matrix where result has to be stored
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
   // return value = reference on real tridiagonal symmetric matrix
   ComplexDiagonalMatrix& Diagonalize (ComplexDiagonalMatrix& M);
 
@@ -525,8 +523,6 @@ class ComplexMatrix : public Matrix
   //
   // M = reference on real diagonal matrix where result has to be stored
   // Q = matrix where transformation matrix has to be stored
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
   // return value = reference on real tridiagonal symmetric matrix
   ComplexDiagonalMatrix& Diagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
 
@@ -539,19 +535,17 @@ class ComplexMatrix : public Matrix
   // Diagonalize a hermitian matrix using the LAPACK library (modifying current matrix)
   //
   // M = reference on real diagonal matrix of eigenvalues
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
+  // leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // return value = reference on real matrix consisting of eigenvalues
-  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M);
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, bool leftFlag = false);
 
   // Diagonalize a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
   //
   // M = reference on real diagonal matrix of eigenvalues
   // Q = matrix where transformation matrix has to be stored
-  // err = absolute error on matrix element
-  // maxIter = maximum number of iteration to fund an eigenvalue
+  // leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // return value = reference on real matrix consisting of eigenvalues
-  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
+  ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag = false);
 
   // reduce a complex matrix to its Schur form S
   //
