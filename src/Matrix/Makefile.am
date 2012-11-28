@@ -23,7 +23,8 @@ ComplexLapackDeterminant.cc \
 BandDiagonalHermitianMatrix.cc \
 SparseComplexMatrix.cc \
 SparseRealMatrix.cc \
-LongRationalMatrix.cc
+LongRationalMatrix.cc \
+ComplexUpperHessenbergMatrix.cc
 
 libArray_a_SOURCES = \
 Double3DArray.cc \
