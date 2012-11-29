@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 #ifdef  __64_BITS__
       if ((MaxMomentum + NbrParticles - 1) < 63)
 #else
-	if ((MaxMomentum + NbrParticles - 1) < 1)	
+	if ((MaxMomentum + NbrParticles - 1) < 31)	
 #endif
 	  {
 	    Space = new BosonOnTorusShort(NbrParticles, MaxMomentum, Momentum);	    

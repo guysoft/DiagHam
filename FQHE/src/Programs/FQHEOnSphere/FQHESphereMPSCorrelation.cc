@@ -67,7 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
   (*SystemGroup) += new BooleanOption ('\n', "cylinder", "evaluate density on the cylinder");
-  (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate density on the cylinder");
+  (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate density on the infinite cylinder");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 	  SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
 	  for (int j = 0; j < NbrBMatrices; ++j)
 	    {
-	      SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
+	      SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseBMatrices[j]);//, SparseConjugateBMatrices[j]);
 	    }
 	}
       //      delete[]SparseConjugateBMatrices;
@@ -259,12 +259,12 @@ int main(int argc, char** argv)
       
       RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
 
-      TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseConjugateBMatrices, Coefficients);
+//       TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseConjugateBMatrices, Coefficients);
 
-       BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), 1, 3000, false);
-       Arnoldi.SetHamiltonian(&EHamiltonian);
-       Arnoldi.InitializeLanczosAlgorithm();
-       Arnoldi.RunLanczosAlgorithm(3);
+//        BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), 1, 3000, false);
+//        Arnoldi.SetHamiltonian(&EHamiltonian);
+//        Arnoldi.InitializeLanczosAlgorithm();
+//        Arnoldi.RunLanczosAlgorithm(3);
 //        while (Arnoldi.TestConvergence() == false)
 //  	{
 //  	  Arnoldi.RunLanczosAlgorithm(1);

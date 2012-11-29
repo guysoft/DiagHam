@@ -58,13 +58,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "number of orbitals in subsystem A", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles in subsystem A", 0);
+  (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate the entnaglement spectrum on the infinite cylinder");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESphereMPSCorrelation -h" << endl;
+      cout << "see man page for option syntax or type FQHESphereMPSEntanglementSpectrum -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -199,6 +200,70 @@ int main(int argc, char** argv)
       File.open(TmpFileName, ios::binary | ios::out);     
    }
 
+
+  if (Manager.GetBoolean("infinite-cylinder"))
+    {
+      int NbrBMatrices = 2;
+      SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
+      for (int i = 0; i < NbrBMatrices; ++i)
+	{
+	  SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
+	  for (int j = 0; j < NbrBMatrices; ++j)
+	    {
+	      SparseTensorProductBMatrices[i][j] = TensorProduct(BMatrices[i], BMatrices[j]);
+	    }
+	}
+      SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);      
+      RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
+
+      ComplexDiagonalMatrix TmpLeftDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      ComplexMatrix LeftEigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpLeftDiag, LeftEigenstates, true);
+      int LargestLeftEigenvalueIndex = -1;
+      int LargestLeftEigenvalueIndex2 = -1;
+      int LargestLeftEigenvalueIndex3 = -1;
+      for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+	if (Norm(TmpLeftDiag[i]) > 1e-10)
+	  {
+	    if (LargestLeftEigenvalueIndex < 0)
+	      {
+		LargestLeftEigenvalueIndex = i;
+	      }
+	    else
+	      {
+		if (LargestLeftEigenvalueIndex2 < 0)
+		  {
+		    LargestLeftEigenvalueIndex2 = i;
+		  }
+		else
+		  {
+		    if (LargestLeftEigenvalueIndex3 < 0)
+		      {
+			LargestLeftEigenvalueIndex3 = i;
+		      }
+		  }
+	      }
+	    cout << TmpLeftDiag[i]  << " ";
+	  }
+      cout << endl;
+      int TmpBMatrixDimension = BMatrices[0].GetNbrRow();
+      ComplexMatrix MDaggerM (TmpBMatrixDimension, TmpBMatrixDimension);
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	for (int j = 0; j < TmpBMatrixDimension; ++j)
+	  MDaggerM[j][i] = (LeftEigenstates[LargestLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + LeftEigenstates[LargestLeftEigenvalueIndex2][j * TmpBMatrixDimension + i] + LeftEigenstates[LargestLeftEigenvalueIndex3][j * TmpBMatrixDimension + i]) / sqrt(3.0);
+      cout << MDaggerM << endl;
+      cout << endl;
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	for (int j = 0; j < TmpBMatrixDimension; ++j)
+	  MDaggerM[j][i] = (Phase(2.0 *M_PI/3.0) * LeftEigenstates[LargestLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + Phase(4.0 *M_PI/3.0) * LeftEigenstates[LargestLeftEigenvalueIndex2][j * TmpBMatrixDimension + i] + LeftEigenstates[LargestLeftEigenvalueIndex3][j * TmpBMatrixDimension + i]) / sqrt(3.0);
+      cout << MDaggerM << endl;
+      cout << endl;
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	for (int j = 0; j < TmpBMatrixDimension; ++j)
+	  MDaggerM[j][i] = (Phase(4.0 *M_PI/3.0) * LeftEigenstates[LargestLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + Phase(2.0 *M_PI/3.0) * LeftEigenstates[LargestLeftEigenvalueIndex2][j * TmpBMatrixDimension + i] + LeftEigenstates[LargestLeftEigenvalueIndex3][j * TmpBMatrixDimension + i]) / sqrt(3.0);
+      cout << MDaggerM << endl;
+      return 0;
+    }
 
   int MatDim = BMatrices[0].GetNbrRow();
   int LambdaMax = Manager.GetInteger("p-truncation");
