@@ -56,7 +56,7 @@ using std::ostream;
 
 AbstractQHEOnSphereFullHamiltonian::AbstractQHEOnSphereFullHamiltonian()
 {
-  this->HermitianSymmetryFlag = false;
+  this->HermitianSymmetryFlag = true;
 }
 
 // destructor
