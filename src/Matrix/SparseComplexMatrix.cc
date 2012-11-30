@@ -1494,7 +1494,7 @@ SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseC
 {
   Complex* TmpMatrixElements = new Complex[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
   int* TmpColumnIndices = new int[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
-  Complex* TmpElements = new Complex [matrix1.NbrRow];
+  Complex* TmpElements = new Complex [matrix3.NbrColumn];
   SparseComplexMatrix TmpMatrix = Conjugate(matrix1, matrix2, matrix3, TmpMatrixElements, TmpColumnIndices, TmpElements);
   delete[] TmpMatrixElements;
   delete[] TmpColumnIndices;
@@ -1522,7 +1522,7 @@ SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseC
     }
   long TmpNbrMatrixElements = 0l;
   long PreviousTmpNbrMatrixElements = 0l;
-  for (int i = 0; i < matrix2.NbrColumn; ++i)
+  for (int i = 0; i < matrix3.NbrColumn; ++i)
     {
       tmpElements[i] = 0.0;
     }
@@ -1559,7 +1559,7 @@ SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseC
 	    }	 
    
 	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
-	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	  for (int j = 0; j < matrix3.NbrColumn; ++j)
 	    if (tmpElements[j] != 0.0)
 	      {
 		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];

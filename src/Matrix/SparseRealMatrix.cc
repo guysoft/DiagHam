@@ -159,8 +159,9 @@ SparseRealMatrix::SparseRealMatrix(const SparseRealMatrix& M)
 // copy constructor (duplicating all datas)
 //
 // M = matrix to copy
+// accuracy = value below which a matrix element is considered to be zero
 
-SparseRealMatrix::SparseRealMatrix(Matrix& M)
+SparseRealMatrix::SparseRealMatrix(Matrix& M, double accuracy)
 {
   if ((M.GetNbrRow() == 0) || (M.GetNbrColumn() == 0))
     {
@@ -193,7 +194,7 @@ SparseRealMatrix::SparseRealMatrix(Matrix& M)
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      M.GetMatrixElement(i, j, Tmp);
-	      if (Tmp != 0.0)
+	      if (fabs(Tmp) > accuracy)
 		++this->NbrMatrixElements;
 	    }
 	  if (PreviousNbrMatrixElements == this->NbrMatrixElements)
@@ -215,7 +216,7 @@ SparseRealMatrix::SparseRealMatrix(Matrix& M)
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      M.GetMatrixElement(i, j, Tmp);
-	      if (Tmp != 0.0)
+	      if (fabs(Tmp) > accuracy)
 		{
 		  this->MatrixElements[this->NbrMatrixElements] = Tmp;
 		  this->ColumnIndices[this->NbrMatrixElements] = j;
@@ -1252,7 +1253,7 @@ SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMat
 {
   double* TmpMatrixElements = new double[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
   int* TmpColumnIndices = new int[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
-  double* TmpElements = new double [matrix1.NbrRow];
+  double* TmpElements = new double [matrix3.NbrColumn];
   SparseRealMatrix TmpMatrix = Conjugate(matrix1, matrix2, matrix3, TmpMatrixElements, TmpColumnIndices, TmpElements);
   delete[] TmpMatrixElements;
   delete[] TmpColumnIndices;
@@ -1280,7 +1281,7 @@ SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMat
     }
   long TmpNbrMatrixElements = 0l;
   long PreviousTmpNbrMatrixElements = 0l;
-  for (int i = 0; i < matrix2.NbrColumn; ++i)
+  for (int i = 0; i < matrix3.NbrColumn; ++i)
     {
       tmpElements[i] = 0.0;
     }
@@ -1317,7 +1318,7 @@ SparseRealMatrix Conjugate (const SparseRealMatrix& matrix1, const SparseRealMat
 	    }	 
    
 	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
-	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	  for (int j = 0; j < matrix3.NbrColumn; ++j)
 	    if (tmpElements[j] != 0.0)
 	      {
 		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];

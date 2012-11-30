@@ -116,23 +116,23 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereBosonsWithSpin -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
   
-  int NbrBosons = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int LzMax = ((SingleIntegerOption*) Manager["lzmax"])->GetInteger();
-  int SzTotal = ((SingleIntegerOption*) Manager["total-sz"])->GetInteger();
+  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int LzMax = Manager.GetInteger("lzmax");
+  int SzTotal = Manager.GetInteger("total-sz");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
 
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;  
-  int InitialLz = ((SingleIntegerOption*) Manager["initial-lz"])->GetInteger();
-  int NbrLz = ((SingleIntegerOption*) Manager["nbr-lz"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
-  char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
-  bool onDiskCacheFlag = ((BooleanOption*) Manager["allow-disk-storage"])->GetBoolean();
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;  
+  int InitialLz = Manager.GetInteger("initial-lz");
+  int NbrLz = Manager.GetInteger("nbr-lz");
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
+  char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
+  bool onDiskCacheFlag = Manager.GetBoolean("allow-disk-storage");
   bool FirstRun = true;
   double** PseudoPotentials  = new double*[10];
   for (int i = 0; i < 3; ++i)
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
 
       if (Manager.GetBoolean("l2-s2-only"))
 	{
-	  if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
+	  if (Manager.GetDouble("l2-factor") != 0.0)
 	    {
 	      Hamiltonian = new ParticleOnSphereWithSpinL2Hamiltonian(Space, NbrBosons, LzMax, L*LSign, 
 								      Architecture.GetArchitecture(),
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 						      ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 	      
 	      
-	      if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
+	      if (Manager.GetDouble("s2-factor") != 0.0)
 		Hamiltonian->AddS2(L, SzTotal, Manager.GetDouble("s2-factor"),
 				   ((unsigned long)Manager.GetInteger("s2-memory")) << 20, !Manager.GetBoolean("all-sz"));
 	    }
@@ -262,10 +262,10 @@ int main(int argc, char** argv)
 	  Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrBosons, LzMax, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
 								       Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
 	  
-	  if (((SingleDoubleOption*) Manager["s2-factor"])->GetDouble() != 0.0)
-	    Hamiltonian->AddS2(L*LSign, SzTotal, ((SingleDoubleOption*) Manager["s2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
-	  if (((SingleDoubleOption*) Manager["l2-factor"])->GetDouble() != 0.0)
-	    Hamiltonian->AddL2(L*LSign, SzTotal, ((SingleDoubleOption*) Manager["l2-factor"])->GetDouble(), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
+	  if (Manager.GetDouble("s2-factor") != 0.0)
+	    Hamiltonian->AddS2(L*LSign, SzTotal, Manager.GetDouble("s2-factor"), ((unsigned long)Manager.GetInteger("s2-memory")) << 20);
+	  if (Manager.GetDouble("l2-factor") != 0.0)
+	    Hamiltonian->AddL2(L*LSign, SzTotal, Manager.GetDouble("l2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20);
 	}
       
       Hamiltonian->ShiftHamiltonian(Shift);
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 	  Hamiltonian->SavePrecalculation(SavePrecalculationFileName);
 	}
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [120];
 	  sprintf (EigenvectorName, "bosons_sphere_su2_%s%s_n_%d_2s_%d_sz_%d_lz_%d",

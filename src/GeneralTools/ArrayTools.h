@@ -388,6 +388,8 @@ void SortArrayDownOrdering(double* doubleArray, ClassName* array, long nbrValue)
 	ClassName Pivot2 = array[i];
 	doubleArray[i] = doubleArray[j];
 	doubleArray[j] = Pivot;
+	array[i] = array[j];
+	array[j] = Pivot2;
 	i = 0;
 	while (true)
 	  {

@@ -464,6 +464,178 @@ int Matrix::Rank(double accuracy)
   return 0;
 }
 
+// test if a matrix is diagonal
+//
+// accuracy = numerical accuracy used to define a zero 
+// return value = true if the matrix is diagonal
+
+bool Matrix::IsDiagonal(double accuracy)
+{
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < i; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (fabs(Tmp) > accuracy)
+		return false;
+	    }      
+	  for (int j = i + 1; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (fabs(Tmp) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  else
+    {
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < i; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (Norm(Tmp) > accuracy)
+		return false;
+	    }      
+	  for (int j = i + 1; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (Norm(Tmp) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  return true;
+}
+
+// test if a matrix is symmetric
+//
+// accuracy = numerical accuracy used to define a zero 
+// return value = true if the matrix is symmetric
+
+bool Matrix::IsSymmetric(double accuracy)
+{
+  if (this->NbrRow != this->NbrColumn)
+    return false;
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      double Tmp1;
+      double Tmp2;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < i; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp1);
+	      this->GetMatrixElement(j, i, Tmp2);
+	      if (fabs(Tmp1 - Tmp2) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  else
+    {
+      Complex Tmp1;
+      Complex Tmp2;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  this->GetMatrixElement(i, i, Tmp1);
+	  if (fabs(Tmp1.Im) > accuracy)
+	    return false;
+	  for (int j = 0; j < i; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp1);
+	      this->GetMatrixElement(j, i, Tmp2);
+	      if (Norm(Tmp1 - Tmp2) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  return true;
+}
+
+// test if a matrix is hermitian
+//
+// accuracy = numerical accuracy used to define a zero 
+// return value = true if the matrix is diagonal
+
+bool Matrix::IsHermitian(double accuracy)
+{
+  if (this->NbrRow != this->NbrColumn)
+    return false;
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      double Tmp1;
+      double Tmp2;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < i; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp1);
+	      this->GetMatrixElement(j, i, Tmp2);
+	      if (fabs(Tmp1 - Tmp2) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  else
+    {
+      Complex Tmp1;
+      Complex Tmp2;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  this->GetMatrixElement(i, i, Tmp1);
+	  if (fabs(Tmp1.Im) > accuracy)
+	    return false;
+	  for (int j = 0; j < i; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp1);
+	      this->GetMatrixElement(j, i, Tmp2);
+	      if (Norm(Tmp1 - Conj(Tmp2)) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  return true;
+}
+
+// test if a matrix is real
+//
+// accuracy = numerical accuracy used to define a zero 
+// return value = true if the matrix is real
+
+bool Matrix::IsReal(double accuracy)
+{
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      return true;
+    }
+  else
+    {
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (fabs(Tmp.Im) > accuracy)
+		return false;
+	    }      
+	}
+      return true;
+    }
+  return true;
+}
+
 // write matrix in a file in ascii mode, storing only its non zero elements, 
 // first column being the row index, second being the column index, the third is the matrix element real part and the fourth column the matrix element imaginary part
 //

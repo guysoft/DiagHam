@@ -114,7 +114,8 @@ class SparseRealMatrix : public Matrix
   // copy constructor (duplicating all datas)
   //
   // M = matrix to copy
-  SparseRealMatrix(Matrix& M);
+  // accuracy = value below which a matrix element is considered to be zero
+  SparseRealMatrix(Matrix& M, double accuracy = 0.0);
 
   // destructor
   //

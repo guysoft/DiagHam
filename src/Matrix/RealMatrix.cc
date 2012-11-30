@@ -911,16 +911,44 @@ RealMatrix& RealMatrix::NormalizeColumns ()
 
 RealMatrix& RealMatrix::Transpose ()
 {
-  if (this->NbrRow != this->NbrColumn)
-    return *this; 
-  double tmp;
-  for (int i = 0; i < this->NbrColumn; i++)
-    for (int j = i + 1; j < this->NbrColumn; j++)
-      {
-	tmp = this->Columns[i].Components[j];
-	this->Columns[i].Components[j] = this->Columns[j].Components[i];
-	this->Columns[j].Components[i] = tmp;;
-      }
+  if (this->NbrRow == this->NbrColumn)
+    {
+      double tmp;
+      for (int i = 0; i < this->NbrColumn; i++)
+	for (int j = i + 1; j < this->NbrColumn; j++)
+	  {
+	    tmp = this->Columns[i].Components[j];
+	    this->Columns[i].Components[j] = this->Columns[j].Components[i];
+	    this->Columns[j].Components[i] = tmp;;
+	  }
+    }
+  else
+    {
+      RealVector* TmpColumns = new RealVector [this->NbrRow];
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  TmpColumns[i] = RealVector(this->NbrColumn);
+	  for (int j = 0; j < this->NbrColumn; j++)
+	    TmpColumns[i][j] = this->Columns[j][i];
+	}
+      if (this->ColumnGarbageFlag != 0)
+	{
+	  if ((*(this->ColumnGarbageFlag)) == 1)
+	    {
+	      delete[] this->Columns;
+	    }
+	  else
+	    {
+	      (*(this->ColumnGarbageFlag))--;
+	    }
+	}
+      this->Columns = TmpColumns;
+      int Tmp = this->NbrRow;
+      this->NbrRow = this->NbrColumn;
+      this->NbrColumn = Tmp;
+      this->TrueNbrRow = this->NbrRow;
+      this->TrueNbrColumn = this->NbrColumn;      
+    }
   return *this;
 }
 

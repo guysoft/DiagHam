@@ -233,6 +233,30 @@ class Matrix
   // return value = rank
   virtual int Rank(double accuracy);
 
+  // test if a matrix is diagonal
+  //
+  // accuracy = numerical accuracy used to define a zero 
+  // return value = true if the matrix is diagonal
+  virtual bool IsDiagonal(double accuracy = MACHINE_PRECISION);
+
+  // test if a matrix is symmetric
+  //
+  // accuracy = numerical accuracy used to define a zero 
+  // return value = true if the matrix is symmetric
+  virtual bool IsSymmetric(double accuracy = MACHINE_PRECISION);
+
+  // test if a matrix is hermitian
+  //
+  // accuracy = numerical accuracy used to define a zero 
+  // return value = true if the matrix is diagonal
+  virtual bool IsHermitian(double accuracy = MACHINE_PRECISION);
+
+  // test if a matrix is real
+  //
+  // accuracy = numerical accuracy used to define a zero 
+  // return value = true if the matrix is real
+  virtual bool IsReal(double accuracy = MACHINE_PRECISION);
+
   // Output Stream overload
   //
   // str = reference on output stream
