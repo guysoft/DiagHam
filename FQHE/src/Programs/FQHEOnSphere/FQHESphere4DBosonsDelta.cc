@@ -8,6 +8,7 @@
 #include "HilbertSpace/BosonOn4DSphereLong.h"
 
 #include "Hamiltonian/ParticleOn4DSphereDeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOn4DSphereThreeBodyDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -63,6 +64,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
+  (*SystemGroup) += new BooleanOption ('\n', "three-body", "use three body delta interaction instead of two-body interaction");
   /*
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");*/
 //   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
@@ -101,10 +103,14 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
+  bool ThreeBodyFlag = Manager.GetBoolean("three-body");
   
 
   char* OutputName = new char [256];
-  sprintf (OutputName, "bosons_sphere4d_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
+  if (ThreeBodyFlag == false)
+    sprintf (OutputName, "bosons_sphere4d_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
+  else
+    sprintf (OutputName, "bosons_sphere4d_threebody_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
   
   int MinJz = 0;
 //   int MinJz = -NbrFluxQuanta*NbrBosons;
@@ -150,19 +156,28 @@ int main(int argc, char** argv)
 //       for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 // 	Space->PrintState(cout, i);
        
-      AbstractQHEOnSphereFullHamiltonian* Hamiltonian = 0;
+      AbstractQHEHamiltonian* Hamiltonian = 0;
            
-      
-      Hamiltonian = new ParticleOn4DSphereDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta,
+      if (ThreeBodyFlag == false)
+      {
+	Hamiltonian = new ParticleOn4DSphereDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta,
 							   Architecture.GetArchitecture(), 
 							   Memory);
+      }
+      else
+      {
+	Hamiltonian = new ParticleOn4DSphereThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
+      }
 //        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
 //        Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_sphere4d_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
+	  if (ThreeBodyFlag == false)
+	    sprintf (EigenvectorName, "bosons_sphere4d_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
+	  else 
+	    sprintf (EigenvectorName, "bosons_sphere4d_threebody_delta_n_%d_2s_%d_jz_%d_kz_%d", NbrBosons, NbrFluxQuanta, jz, kz);
 	}
 	
       char* ContentPrefix = new char[256];

@@ -132,6 +132,29 @@ class BosonOn4DSphere : public BosonOnSphereShort
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
+  
+  // get the quantum numbers j, jz, kz of a one particle state 
+  //
+  //quantumNumberJ = array that gives the quantum number j for a single particle state
+  //quantumNumberJz = array that gives the quantum number j for a single particle stateDescription
+  //quantumNumberKz = array that gives the quantum number j for a single particle state
+  inline void GetQuantumNumbersFromLinearizedIndex(int* quantumNumberJ, int* quantumNumberJz, int* quantumNumberKz)
+  {
+    for (int j = 0; j <= this->NbrFluxQuanta; ++j)
+      {
+	for (int jz = 0; jz <= j; ++jz)
+	{
+	  for (int kz = 0; kz <= this->NbrFluxQuanta - j; ++kz)
+	  {
+	    int index = -((j-1)*j*(2*j-1))/6 + this->NbrFluxQuanta*j*(j-1)/2 + (this->NbrFluxQuanta+1)*j+ (this->NbrFluxQuanta + 1 - j)*jz +kz;
+	    quantumNumberJ[index] = j;
+	    quantumNumberJz[index] = jz;
+	    quantumNumberKz[index] = kz;
+	    
+	  }
+	}
+      }
+  }
 
  protected:
 
@@ -162,28 +185,7 @@ class BosonOn4DSphere : public BosonOnSphereShort
 
  
   
-  // get the quantum numbers j, jz, kz of a one particle state 
-  //
-  //quantumNumberJ = array that gives the quantum number j for a single particle state
-  //quantumNumberJz = array that gives the quantum number j for a single particle stateDescription
-  //quantumNumberKz = array that gives the quantum number j for a single particle state
-  inline void GetQuantumNumbersFromLinearizedIndex(int* quantumNumberJ, int* quantumNumberJz, int* quantumNumberKz)
-  {
-    for (int j = 0; j <= this->NbrFluxQuanta; ++j)
-      {
-	for (int jz = 0; jz <= j; ++jz)
-	{
-	  for (int kz = 0; kz <= this->NbrFluxQuanta - j; ++kz)
-	  {
-	    int index = -((j-1)*j*(2*j-1))/6 + this->NbrFluxQuanta*j*(j-1)/2 + (this->NbrFluxQuanta+1)*j+ (this->NbrFluxQuanta + 1 - j)*jz +kz;
-	    quantumNumberJ[index] = j;
-	    quantumNumberJz[index] = jz;
-	    quantumNumberKz[index] = kz;
-	    
-	  }
-	}
-      }
-  }
+  
 };
 
 
