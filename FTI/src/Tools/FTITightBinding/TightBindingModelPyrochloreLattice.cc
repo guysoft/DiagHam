@@ -105,131 +105,125 @@ TightBindingModelPyrochloreLattice::~TightBindingModelPyrochloreLattice()
 
 void TightBindingModelPyrochloreLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
-  if (nbrStates == 0l)
-    nbrStates = this->NbrStatePerBand;
-  long MaxStateIndex = minStateIndex + nbrStates;
-  double KX;
-  double KY;
-  double KZ;
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    if (nbrStates == 0l)
+        nbrStates = this->NbrStatePerBand;
+    long MaxStateIndex = minStateIndex + nbrStates;
+
+    // b[i][j] = e_j * b_i / a
+    double r = 1.0 / sqrt(2.0);
+    double b[4][3] = {
+        {r, 0, r},
+        {0, r, r},
+        {0, 0, 0},
+        {r, r, 0}
+    };
+
+    // bb1[i][m][n] = e_i * ((b_n - b_m) x (2 * b_n + 2 * b_m - \sum b))
+    double bb1[3][4][4];
+    for (int m = 0; m < 4; ++m)
     {
-      for (int ky = 0; ky < this->NbrSiteY; ++ky)
-	{
-	  for (int kz = 0; kz < this->NbrSiteZ; ++kz)
-	    {
-	      int Index = this->GetLinearizedMomentumIndex(kx, ky, kz);
-	      if ((Index >= minStateIndex) && (Index < MaxStateIndex))
-		{
-		  KX = this->KxFactor * (((double) kx) + this->GammaX);
-		  KY = this->KyFactor * (((double) ky) + this->GammaY);
-		  KZ = this->KzFactor * (((double) kz) + this->GammaZ);
-		  
-		  Complex HHopping12 = 1.0 + Phase(KX-KZ);
-		  Complex HHopping13 = 1.0 + Phase(KX);
-		  Complex HHopping14 = 1.0 + Phase(KX-KY);
-		  Complex HHopping23 = 1.0 + Phase(KZ);
- 		  Complex HHopping24 = 1.0 + Phase(KZ-KY);
- 		  Complex HHopping34 = 1.0 + Phase(-KY);
+        for (int n = 0; n < 4; ++n)
+        {
+            double d1[3];
+            double d2[3];
+            for (int i = 0; i < 3; ++i)
+            {
+                d1[i] = b[n][i] - b[m][i];
+                d2[i] = 2 * (b[n][i] + b[m][i]) - 2 * r;
+            }
+            bb1[0][m][n] = d1[1] * d2[2] - d1[2] * d2[1];
+            bb1[1][m][n] = d1[2] * d2[0] - d1[0] * d2[2];
+            bb1[2][m][n] = d1[0] * d2[1] - d1[1] * d2[0];
+        }
+    }
 
-		  
-		  Complex HSONN12 = this->NNSpinOrbit * I() * (1.0+Phase(KX-KZ));
-		  Complex HSONN13 = this->NNSpinOrbit * I() * (1.0+Phase(KX));
-		  Complex HSONN14 = this->NNSpinOrbit * I() * (1.0+Phase(KX-KY));
-		  Complex HSONN23 = this->NNSpinOrbit * I() * (1.0+Phase(KZ));
-		  Complex HSONN24 = this->NNSpinOrbit * I() * (Phase(-KY+KZ)+1.0);
-		  Complex HSONN34 = this->NNSpinOrbit * I() * (Phase(-KY)+1.0);
-		  
-		  Complex HSONN56 = -this->NNSpinOrbit * I() * (1.0+Phase(KX-KZ));
-		  Complex HSONN57 = -this->NNSpinOrbit * I() * (1.0+Phase(KX));
-		  Complex HSONN58 = -this->NNSpinOrbit * I() * (1.0+Phase(KX-KY));
-		  Complex HSONN67 = -this->NNSpinOrbit * I() * (1.0+Phase(KZ));
-		  Complex HSONN68 = -this->NNSpinOrbit * I() * (Phase(-KY+KZ)+1.0);
-		  Complex HSONN78 = -this->NNSpinOrbit * I() * (Phase(-KY)+1.0);
+    // bb2[i][m][n][l] = e_i * ((b_m - b_l) x (b_n - b_l))
+    double bb2[3][4][4][4];
+    for (int m = 0; m < 4; ++m)
+    {
+        for (int n = 0; n < 4; ++n)
+        {
+            for (int l = 0; l < 4; ++l)
+            {
+                double d1[3];
+                double d2[3];
+                for (int i = 0; i < 3; ++i)
+                {
+                    d1[i] = b[m][i] - b[l][i];
+                    d2[i] = b[n][i] - b[l][i];
+                }
+                bb2[0][m][n][l] = d1[1] * d2[2] - d1[2] * d2[1];
+                bb2[1][m][n][l] = d1[2] * d2[0] - d1[0] * d2[2];
+                bb2[2][m][n][l] = d1[0] * d2[1] - d1[1] * d2[0];
+            }
+        }
+    }
 
+    for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    {
+        for (int ky = 0; ky < this->NbrSiteY; ++ky)
+        {
+            for (int kz = 0; kz < this->NbrSiteZ; ++kz)
+            {
+                int Index = this->GetLinearizedMomentumIndex(kx, ky, kz);
+                if ((Index >= minStateIndex) && (Index < MaxStateIndex))
+                {
+                    double x = this->KxFactor * (((double) kx) + this->GammaX);
+                    double y = this->KyFactor * (((double) ky) + this->GammaY);
+                    double z = this->KzFactor * (((double) kz) + this->GammaZ);
+                    double kb[4] = {x, z, 0, y}; // kb[orbital i] = 2 * k * b_i
 
-		  Complex HSONNN12 = this->NextNNSpinOrbit * I() * (-0.5 * Phase(-KZ) + 0.5 * Phase(KY - KZ) - 0.5 * Phase(KX - KY) + 0.5 * Phase(KX));
-		  Complex HSONNN13 = this->NextNNSpinOrbit * I() * (Phase(KY) - Phase(KX - KY));
-		  Complex HSONNN14 = this->NextNNSpinOrbit * I() * (- Phase(-KY) + Phase(KX));
-		  Complex HSONNN23 = this->NextNNSpinOrbit * I() * (Phase(-KY + KZ) - Phase(KY));
-		  Complex HSONNN24 = this->NextNNSpinOrbit * I() * (Phase(-KY) - Phase(KZ));
-		  Complex HSONNN34 = this->NextNNSpinOrbit * I() * (-0.5 * Phase(-KX) - 0.5 * Phase(-KY + KZ) + 0.5 * Phase(-KZ) + 0.5 * Phase(KX - KY));
-		  
-		  Complex HSONNN56 = -this->NextNNSpinOrbit * I() * (-0.5 * Phase(-KZ) + 0.5 * Phase(KY - KZ) - 0.5 * Phase(KX - KY) + 0.5 * Phase(KX));
-		  Complex HSONNN57 = -this->NextNNSpinOrbit * I() * (Phase(KY) - Phase(KX - KY));
-		  Complex HSONNN58 = -this->NextNNSpinOrbit * I() * (- Phase(-KY) + Phase(KX));
-		  Complex HSONNN67 = -this->NextNNSpinOrbit * I() * (Phase(-KY + KZ) - Phase(KY));
-		  Complex HSONNN68 = -this->NextNNSpinOrbit * I() * (Phase(-KY) - Phase(KZ));
-		  Complex HSONNN78 = -this->NextNNSpinOrbit * I() * (-0.5 * Phase(-KX) - 0.5 * Phase(-KY + KZ) + 0.5 * Phase(-KZ) + 0.5 * Phase(KX - KY));
-		  
-		  Complex HSONNN16 = this->NextNNSpinOrbit * ((I() * (Phase(-KZ) - Phase(KX)))   - (Phase(KY - KZ) - Phase(KX - KY)));
-		  Complex HSONNN17 = this->NextNNSpinOrbit * ((I() * (- Phase(KZ) + Phase(KX - KZ)))     - (-0.5 * Phase(KZ) + 0.5 * Phase(KY) - 0.5 * Phase(KX - KY) + 0.5 * Phase(KX - KZ)));
-		  Complex HSONNN18 = this->NextNNSpinOrbit * ((I() * (0.5 * Phase(-KY) - 0.5 * Phase(-KY + KZ) + 0.5 * Phase(KX - KZ) - 0.5 * Phase(KX))) - (- Phase(-KY + KZ) + Phase(KX - KZ)));
-		  Complex HSONNN25 = this->NextNNSpinOrbit * ((I() * (- Phase(-KX + KY) + Phase(-KY + KZ)))      - (- Phase(-KX) + Phase(KZ)));
-		  Complex HSONNN27 = this->NextNNSpinOrbit * ((I() * (-0.5 * Phase(-KX + KZ) + 0.5 * Phase(-KY + KZ) - 0.5 * Phase(KY) + 0.5 * Phase(KX)))        - (- Phase(-KX + KZ) + Phase(KX)));
-		  Complex HSONNN28 = this->NextNNSpinOrbit * ((I() * (- Phase(-KX + KZ) + Phase(KX - KY)))       - (-0.5 * Phase(-KX + KZ) - 0.5 * Phase(-KY) + 0.5 * Phase(KZ) + 0.5 * Phase(KX - KY)));
-		  Complex HSONNN35 = this->NextNNSpinOrbit * ((I() * (Phase(-KX + KY) - Phase(-KY)))     - (0.5 * Phase(-KX + KZ) - 0.5 * Phase(-KX + KY) + 0.5 * Phase(-KY) - 0.5 * Phase(-KZ)));
-		  Complex HSONNN36 = this->NextNNSpinOrbit * ((I() * (0.5 * Phase(-KX) - 0.5 * Phase(-KY) + 0.5 * Phase(KY - KZ) - 0.5 * Phase(KX - KZ))) - (Phase(-KY) - Phase(KY - KZ)));
-		  Complex HSONNN38 = this->NextNNSpinOrbit * ((I() * (Phase(-KX) - Phase(KX - KY)))      - (Phase(-KY + KZ) - Phase(-KZ)));
-		  Complex HSONNN45 = this->NextNNSpinOrbit * ((I() * (-0.5 * Phase(-KX) + 0.5 * Phase(-KX + KZ) - 0.5 * Phase(KY - KZ) + 0.5 * Phase(KY)))        - (Phase(-KX) - Phase(KY)));
-		  Complex HSONNN46 = this->NextNNSpinOrbit * ((I() * (- Phase(-KZ) + Phase(KY))) - (0.5 * Phase(-KX + KY) + 0.5 * Phase(-KZ) - 0.5 * Phase(KY) - 0.5 * Phase(KX - KZ)));
-		  Complex HSONNN47 = this->NextNNSpinOrbit * ((I() * (Phase(KZ) - Phase(KY - KZ)))       - (Phase(-KX + KY) - Phase(KX)));
+                    HermitianMatrix H(this->NbrBands, true); // spin structure (u u u u d d d d)
 
-		  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-		  
-		  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HHopping12 + HSONNN12);
-		  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HHopping13 + HSONNN13);
-		  TmpOneBodyHamiltonian.SetMatrixElement(0, 3, HHopping14 + HSONNN14);
-		  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HHopping23 + HSONNN23);
-		  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, HHopping24 + HSONNN24);
-		  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, HHopping34 + HSONNN34);
-		  
-		  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, HHopping12 + HSONNN56);
-		  TmpOneBodyHamiltonian.SetMatrixElement(4, 6, HHopping13 + HSONNN57);
-		  TmpOneBodyHamiltonian.SetMatrixElement(4, 7, HHopping14 + HSONNN58);
-		  TmpOneBodyHamiltonian.SetMatrixElement(5, 6, HHopping23 + HSONNN67);
-		  TmpOneBodyHamiltonian.SetMatrixElement(5, 7, HHopping24 + HSONNN68);
-		  TmpOneBodyHamiltonian.SetMatrixElement(6, 7, HHopping34 + HSONNN78);
+                    // fill the lower triangle H[n, m]
+                    for (int m = 0; m < 4; ++m)
+                    {
+                        for (int n = 0; n < 4; ++n) // need both n < m and n > m to get all the spin flip terms
+                        {
+                            if (m == n)
+                                continue;
+                            Complex t = (1 + Phase(kb[n] - kb[m])); // use +t rather than -t as in Guo&Franz
+                            Complex s[3];
+                            for (int i = 0; i < 3; ++i)
+                            {
+                                s[i] = I() * this->NNSpinOrbit / sqrt(2.0) * bb1[i][m][n] * (1 + Phase(kb[n] - kb[m]));
+                                for (int l = 0; l < 4; ++l)
+                                    if ((l != m) && (l != n))
+                                        s[i] += I() * this->NextNNSpinOrbit * bb2[i][m][n][l] * (Phase(kb[n] - kb[l]) + Phase(kb[l] - kb[m]));
+                            }
+                            H.SetMatrixElement(n, m, t + s[2]);
+                            H.SetMatrixElement(n + 4, m + 4, t - s[2]);
+                            H.SetMatrixElement(n + 4, m, s[0] + I() * s[1]);
+                        }
+                    }
 
-		  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, HSONNN16);
-		  TmpOneBodyHamiltonian.SetMatrixElement(0, 6, HSONNN17);
-		  TmpOneBodyHamiltonian.SetMatrixElement(0, 7, HSONNN18);
-		  TmpOneBodyHamiltonian.SetMatrixElement(1, 4, HSONNN25);
-		  TmpOneBodyHamiltonian.SetMatrixElement(1, 6, HSONNN27);
-		  TmpOneBodyHamiltonian.SetMatrixElement(1, 7, HSONNN28);
-		  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, HSONNN35);
-		  TmpOneBodyHamiltonian.SetMatrixElement(2, 5, HSONNN36);
-		  TmpOneBodyHamiltonian.SetMatrixElement(2, 7, HSONNN38);
-		  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, HSONNN45);
-		  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, HSONNN46);
-		  TmpOneBodyHamiltonian.SetMatrixElement(3, 6, HSONNN47);
-
-		  if (this->OneBodyBasis != 0)
-		    {
-		      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
-		      TmpMatrix.SetToIdentity();
-		      RealDiagonalMatrix TmpDiag;
+                    if (this->OneBodyBasis != 0)
+                    {
+                        ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+                        TmpMatrix.SetToIdentity();
+                        RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+                        H.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-		      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+                        H.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-		      this->OneBodyBasis[Index] = TmpMatrix;
-		      for (int i = 0; i < this->NbrBands; ++i)
-			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		    }
-		  else
-		    {
-		      RealDiagonalMatrix TmpDiag;
+                        this->OneBodyBasis[Index] = TmpMatrix;
+                        for (int i = 0; i < this->NbrBands; ++i)
+                            this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+                    }
+                    else
+                    {
+                        RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+                        H.LapackDiagonalize(TmpDiag);
 #else
-		      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+                        H.Diagonalize(TmpDiag);
 #endif
-		      for (int i = 0; i < this->NbrBands; ++i)
-			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		    }
-		}
-	    }
-	}
+                        for (int i = 0; i < this->NbrBands; ++i)
+                            this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+                    }
+                }
+            }
+        }
     }
 }

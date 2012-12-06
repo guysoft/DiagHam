@@ -904,6 +904,29 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix)
   return *this;
 }
 
+// multiply two matrices
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// return value = reference on current matrix
+
+SparseRealMatrix Multiply (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix();      
+    }
+  double* TmpMatrixElements = new double[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements];
+  int* TmpColumnIndices = new int[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements];
+  double* TmpElements = new double [matrix2.NbrColumn];
+  SparseRealMatrix TmpM = Multiply(matrix1, matrix2, TmpMatrixElements, TmpColumnIndices, TmpElements);
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] TmpElements;
+  return TmpM;
+}
+
 // multiply two matrices, providing all the required temporary arrays
 //
 // matrix1 = left matrix

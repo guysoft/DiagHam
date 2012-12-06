@@ -180,8 +180,9 @@ SparseComplexMatrix::SparseComplexMatrix(const SparseRealMatrix& M)
 // copy constructor (duplicating all datas)
 //
 // M = matrix to copy
+// accuracy = value below which a matrix element is considered to be zero
 
-SparseComplexMatrix::SparseComplexMatrix(Matrix& M)
+SparseComplexMatrix::SparseComplexMatrix(Matrix& M, double accuracy)
 {
   if ((M.GetNbrRow() == 0) || (M.GetNbrColumn() == 0))
     {
@@ -214,7 +215,7 @@ SparseComplexMatrix::SparseComplexMatrix(Matrix& M)
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      M.GetMatrixElement(i, j, Tmp);
-	      if (SqrNorm(Tmp) != 0.0)
+	      if (Norm(Tmp) > accuracy)
 		++this->NbrMatrixElements;
 	    }
 	  if (PreviousNbrMatrixElements == this->NbrMatrixElements)
@@ -236,7 +237,7 @@ SparseComplexMatrix::SparseComplexMatrix(Matrix& M)
 	  for (int j = 0; j < this->NbrColumn; ++j)
 	    {
 	      M.GetMatrixElement(i, j, Tmp);
-	      if (SqrNorm(Tmp) != 0.0)
+	      if (Norm(Tmp) > accuracy)
 		{
 		  this->MatrixElements[this->NbrMatrixElements] = Tmp;
 		  this->ColumnIndices[this->NbrMatrixElements] = j;
@@ -1595,6 +1596,119 @@ SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseC
   return TmpMatrix;
 }
 
+// conjugate a matrix
+//
+// matrix1 = left matrix
+// matrix2 = matrix to conjugate
+// matrix3 = right matrix
+// return value = reference on conjugated matrix
+
+SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, 			    
+			       const SparseComplexMatrix& matrix3)
+{
+  Complex* TmpMatrixElements = new Complex[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
+  int* TmpColumnIndices = new int[matrix1.NbrMatrixElements * matrix2.NbrMatrixElements * matrix3.NbrMatrixElements];
+  Complex* TmpElements = new Complex [matrix3.NbrColumn];
+  SparseComplexMatrix TmpMatrix = Conjugate(matrix1, matrix2, matrix3, TmpMatrixElements, TmpColumnIndices, TmpElements);
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] TmpElements;
+  return TmpMatrix;
+}
+
+// multiply three matrices, providing all the required temporary arrays
+//
+// matrix1 = left matrix
+// matrix2 = matrix to conjugate
+// matrix3 = right matrix
+// tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+// tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+// return value = reference on current matrix
+
+SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, const SparseComplexMatrix& matrix3, 
+			       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements)
+{
+  if ((matrix2.NbrRow != matrix1.NbrColumn) || (matrix3.NbrRow != matrix2.NbrColumn))
+    {
+      cout << "error, cannot conjugate the matrices" << endl;
+      return SparseComplexMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix3.NbrColumn; ++i)
+    {
+      tmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      int TmpIndex2 = matrix2.ColumnIndices[MinPos2];
+		      long MinPos3 = matrix3.RowPointers[TmpIndex2];
+		      if (MinPos3 >= 0)
+			{
+			  Complex Tmp2 = Tmp * matrix2.MatrixElements[MinPos2];
+			  long MaxPos3 = matrix3.RowLastPointers[TmpIndex2];
+			  for (; MinPos3 <= MaxPos3; ++MinPos3)
+			    {
+			      tmpElements[matrix3.ColumnIndices[MinPos3]] += Tmp2 * matrix3.MatrixElements[MinPos3];
+			    }
+			}
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix3.NbrColumn; ++j)
+	    if (tmpElements[j] != 0.0)
+	      {
+		tmpMatrixElements[TmpNbrMatrixElements] = tmpElements[j];
+		tmpColumnIndices[TmpNbrMatrixElements] = j;
+		tmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  for (long i = 0l; i < TmpNbrMatrixElements; ++i)
+    {
+      TmpMatrix.MatrixElements[i] = tmpMatrixElements[i];
+      TmpMatrix.ColumnIndices[i] = tmpColumnIndices[i];
+    }
+  return TmpMatrix;
+}
+
 // compute the tensor product of two sparse matrices (matrix1 x matrix2), and store the result in a sparse matrix
 //
 // matrix1 = reference on the left matrix
@@ -1633,6 +1747,56 @@ SparseComplexMatrix TensorProduct (const SparseComplexMatrix& matrix1, const Spa
 		      for (long k2 = MinM2; k2 <= MaxM2; ++k2)
 			{
 			  TmpMatrix.MatrixElements[TmpPosition] =  Tmp * matrix2.MatrixElements[k2];
+			  TmpMatrix.ColumnIndices[TmpPosition] =  matrix2.ColumnIndices[k2] + Shift;			
+			  ++TmpPosition;
+			}
+		    }
+		  TmpMatrix.RowLastPointers[RowIndex] = TmpPosition - 1l;
+		}
+	    }
+	}
+    }
+  return TmpMatrix;  
+}
+
+// compute the tensor product of two sparse matrices, applying conjugation on the left one (conj(matrix1) x matrix2), and store the result in a sparse matrix
+//
+// matrix1 = reference on the left matrix
+// matrix2 = reference on the right matrix
+// return value = tensor product
+
+SparseComplexMatrix TensorProductWithConjugation (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2)
+{
+  SparseComplexMatrix TmpMatrix (matrix1.NbrRow * matrix2.NbrRow, 
+				 matrix1.NbrColumn * matrix2.NbrColumn, 
+				 matrix1.NbrMatrixElements * matrix2.NbrMatrixElements);
+  for (int i = 0; i < TmpMatrix.NbrRow; ++i)
+    {
+      TmpMatrix.RowPointers[i] = -1;
+      TmpMatrix.RowLastPointers[i] = -1;
+    }
+  long TmpPosition = 0l;
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      if (matrix1.RowPointers[i] >= 0l)
+	{
+	  long MinM1 = matrix1.RowPointers[i];
+	  long MaxM1 = matrix1.RowLastPointers[i];
+	  for (int j = 0; j < matrix2.NbrRow; ++j)
+	    {
+	      if (matrix2.RowPointers[j] >= 0l)
+		{
+		  int RowIndex = i *  matrix2.NbrRow + j;
+		  TmpMatrix.RowPointers[RowIndex] = TmpPosition;
+		  long MinM2 = matrix2.RowPointers[j];
+		  long MaxM2 = matrix2.RowLastPointers[j];
+		  for (long k1 = MinM1; k1 <= MaxM1; ++k1)
+		    {
+		      int Shift =  matrix1.ColumnIndices[k1] * matrix2.NbrColumn;
+		      Complex Tmp =  matrix1.MatrixElements[k1];
+		      for (long k2 = MinM2; k2 <= MaxM2; ++k2)
+			{
+			  TmpMatrix.MatrixElements[TmpPosition] =  Tmp * Conj(matrix2.MatrixElements[k2]);
 			  TmpMatrix.ColumnIndices[TmpPosition] =  matrix2.ColumnIndices[k2] + Shift;			
 			  ++TmpPosition;
 			}

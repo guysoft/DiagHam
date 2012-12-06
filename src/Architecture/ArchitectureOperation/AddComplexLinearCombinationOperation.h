@@ -36,7 +36,9 @@
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
+#include "Vector/RealVector.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 
 class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
@@ -55,6 +57,14 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   ComplexVector** SourceVectorByPointers;
   // matrix containing the vectors that have to be added (can be used instead of SourceVector)
   ComplexMatrix SourceVectorMatrix;
+
+  // vector array containing the vectors that have to be added (real version)
+  RealVector* RealSourceVector;
+  // vector array containing pointers to the vectors that have to be added (real version)
+  RealVector** RealSourceVectorByPointers;
+  // matrix containing the vectors that have to be added (can be used instead of SourceVector)  (real version)
+  RealMatrix RealSourceVectorMatrix;
+
   // number of vector that have to be added
   int NbrVector;
   // coefficient of the linear combination (null if coefficients are real)
@@ -114,6 +124,30 @@ class AddComplexLinearCombinationOperation: public AbstractArchitectureOperation
   // nbrVector = number of vector that have to be added
   // coefficients = coefficient of the linear combination
   AddComplexLinearCombinationOperation(ComplexVector* destinationVector, ComplexMatrix& sourceVector, int nbrVector, double* coefficients);
+
+ // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = array containing the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, RealVector* sourceVector, int nbrVector, Complex* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = array containing pointers to the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, RealVector** sourceVector, int nbrVector, Complex* coefficients);
+
+  // constructor 
+  //
+  // destinationVector = vector to which the linear combination has to be added
+  // sourceVector = matrix containing the vectors that have to be added
+  // nbrVector = number of vector that have to be added
+  // coefficients = coefficient of the linear combination
+  AddComplexLinearCombinationOperation(ComplexVector* destinationVector, RealMatrix& sourceVector, int nbrVector, Complex* coefficients);
 
   // copy constructor 
   //

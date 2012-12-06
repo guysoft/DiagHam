@@ -1140,6 +1140,50 @@ ComplexMatrix ComplexMatrix::GetAdjoint()
   return rst;
 }
 
+// compute the hermitian transpose of the current matrix
+//
+// return value = reference on the current matrix
+
+ComplexMatrix& ComplexMatrix::HermitianTranspose ()
+{
+  if (this->NbrRow == this->NbrColumn)
+    {
+      Complex tmp;
+      for (int i = 0; i < this->NbrColumn; i++)
+	{
+	  for (int j = i + 1; j < this->NbrColumn; j++)
+	    {
+	      tmp = this->Columns[i].Components[j];
+	      this->Columns[i].Components[j] = Conj(this->Columns[j].Components[i]);
+	      this->Columns[j].Components[i] = Conj(tmp);
+	    }
+	  this->Columns[i].Components[i] = Conj(this->Columns[i].Components[i]);
+	}
+    }
+  else
+    {
+      ComplexVector* TmpColumns = new ComplexVector [this->NbrRow];
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  TmpColumns[i] = ComplexVector(this->NbrColumn);
+	  for (int j = 0; j < this->NbrColumn; j++)
+	    TmpColumns[i][j] = Conj(this->Columns[j][i]);
+	}
+      if (this->Flag.Shared() == false)
+	{
+	  delete[] this->Columns;
+	}
+      this->Flag.Initialize();
+      this->Columns = TmpColumns;
+      int Tmp = this->NbrRow;
+      this->NbrRow = this->NbrColumn;
+      this->NbrColumn = Tmp;
+      this->TrueNbrRow = this->NbrRow;
+      this->TrueNbrColumn = this->NbrColumn;      
+    }
+  return *this;
+}
+
 // compute the number of non-zero matrix elements (zero having strictly zero square norm)
 //
 // return value = number of non-zero matrix elements

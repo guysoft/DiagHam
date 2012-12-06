@@ -216,6 +216,8 @@ int main(int argc, char** argv)
 	    }
 	}
       SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);      
+      SparseRealMatrix NormalizedB0B0B1B1V2 = Multiply (NormalizedB0B0B1B1, NormalizedB0B0B1B1);
+      SparseRealMatrix NormalizedB0B0B1B1V3 = Multiply (NormalizedB0B0B1B1V2, NormalizedB0B0B1B1);
       RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
 
       ComplexDiagonalMatrix TmpLeftDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
@@ -241,8 +243,12 @@ int main(int argc, char** argv)
 	  }
       SortArrayDownOrdering<int>(NonZeroEigenvalueNorms, NonZeroEigenvalueIndices, NbrNonZeroEigenvalues);
 //       for (int i = 0; i < NbrNonZeroEigenvalues; ++i)
-// 	cout << NonZeroEigenvalueIndices[i] << " " << NonZeroEigenvalueNorms[i] << " " << TmpLeftDiag[NonZeroEigenvalueIndices[i]] << endl;
-      cout << "selected eigenvalues " <<  NonZeroEigenvalueIndices[0] << " " << NonZeroEigenvalueIndices[1] << " " << NonZeroEigenvalueIndices[2] << endl;
+// 	cout << i << " : " << TmpLeftDiag[NonZeroEigenvalueIndices[i]] << " " << TmpLeftDiag[NonZeroEigenvalueIndices[i]] << " " 
+// 	     << NonZeroEigenvalueNorms[i] << endl;
+   
+      cout << "selected left eigenvalues " <<  TmpLeftDiag[NonZeroEigenvalueIndices[0]] << " (" << NonZeroEigenvalueIndices[0] << "), " 
+	   << " " << TmpLeftDiag[NonZeroEigenvalueIndices[1]] << " (" << NonZeroEigenvalueIndices[1] << "), " 
+	   << " " << TmpLeftDiag[NonZeroEigenvalueIndices[2]] << " (" << NonZeroEigenvalueIndices[2] << ")" << endl;
       int RealLeftEigenvalueIndex = NonZeroEigenvalueIndices[0];
       int ComplexLeftEigenvalueIndex = NonZeroEigenvalueIndices[1];
       int ComplexConjLeftEigenvalueIndex = NonZeroEigenvalueIndices[2];
@@ -270,20 +276,143 @@ int main(int argc, char** argv)
 		}
 	    }	  
 	}
-      cout << "real eigenvalue = " << RealLeftEigenvalueIndex << endl;
+      cout << "real left eigenvalue = " << RealLeftEigenvalueIndex << endl;
+
+      ComplexDiagonalMatrix TmpRightDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      ComplexMatrix RightEigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
+      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpRightDiag, RightEigenstates, false);
+      int LargestRightEigenvalueIndex = -1;
+      int LargestRightEigenvalueIndex2 = -1;
+      int LargestRightEigenvalueIndex3 = -1;
+      int NbrNonZeroRightEigenvalues = 0;
+      for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
+	{
+	  if (Norm(TmpRightDiag[i]) > Error)
+	    ++NbrNonZeroRightEigenvalues;
+	}
+      int* NonZeroRightEigenvalueIndices = new int [NbrNonZeroRightEigenvalues];
+      double* NonZeroRightEigenvalueNorms = new double [NbrNonZeroRightEigenvalues];
+      NbrNonZeroRightEigenvalues = 0;
+      for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
+	if (Norm(TmpRightDiag[i]) > Error)
+	  {
+	    NonZeroRightEigenvalueIndices[NbrNonZeroRightEigenvalues] = i;
+	    NonZeroRightEigenvalueNorms[NbrNonZeroRightEigenvalues] = Norm(TmpRightDiag[i]);
+	    ++NbrNonZeroRightEigenvalues;
+	  }
+      SortArrayDownOrdering<int>(NonZeroRightEigenvalueNorms, NonZeroRightEigenvalueIndices, NbrNonZeroRightEigenvalues);
+      cout << "selected right eigenvalues " <<  NonZeroRightEigenvalueIndices[0] << " " << NonZeroRightEigenvalueIndices[1] << " " << NonZeroRightEigenvalueIndices[2] << endl;
+      int RealRightEigenvalueIndex = NonZeroRightEigenvalueIndices[0];
+      int ComplexRightEigenvalueIndex = NonZeroRightEigenvalueIndices[1];
+      int ComplexConjRightEigenvalueIndex = NonZeroRightEigenvalueIndices[2];
+      if (fabs(TmpRightDiag[NonZeroRightEigenvalueIndices[0]].Im) < Error)
+	{
+	  RealRightEigenvalueIndex = NonZeroRightEigenvalueIndices[0];
+	  ComplexRightEigenvalueIndex  = NonZeroRightEigenvalueIndices[1];
+	  ComplexConjRightEigenvalueIndex  = NonZeroRightEigenvalueIndices[2];
+	}
+      else
+	{
+	  if (fabs(TmpRightDiag[NonZeroRightEigenvalueIndices[1]].Im) < Error)
+	    {
+	      RealRightEigenvalueIndex = NonZeroRightEigenvalueIndices[1];
+	      ComplexRightEigenvalueIndex  = NonZeroRightEigenvalueIndices[0];
+	      ComplexConjRightEigenvalueIndex  = NonZeroRightEigenvalueIndices[2];
+	    }
+	  else
+	    {
+	      if (fabs(TmpRightDiag[NonZeroRightEigenvalueIndices[2]].Im) < Error)
+		{
+		  RealRightEigenvalueIndex = NonZeroRightEigenvalueIndices[2];
+		  ComplexRightEigenvalueIndex  = NonZeroRightEigenvalueIndices[0];
+		  ComplexConjRightEigenvalueIndex  = NonZeroRightEigenvalueIndices[1];
+		}
+	    }	  
+	}
+      if ((TmpRightDiag[ComplexConjRightEigenvalueIndex].Im * TmpLeftDiag[ComplexConjLeftEigenvalueIndex].Im) < 0.0)
+	{
+	  int Tmp = ComplexConjRightEigenvalueIndex;
+	  ComplexConjRightEigenvalueIndex = ComplexRightEigenvalueIndex;
+	  ComplexRightEigenvalueIndex = Tmp;
+	}
+      cout << "real right eigenvalue = " << RealRightEigenvalueIndex << endl;
+      
+      cout << (LeftEigenstates[RealLeftEigenvalueIndex] * RightEigenstates[RealRightEigenvalueIndex]) << endl;
+      cout << (LeftEigenstates[ComplexLeftEigenvalueIndex] * RightEigenstates[ComplexRightEigenvalueIndex]) << endl;
+      cout << (LeftEigenstates[ComplexConjLeftEigenvalueIndex] * RightEigenstates[ComplexRightEigenvalueIndex]) << endl;
+      cout << (LeftEigenstates[ComplexLeftEigenvalueIndex] * RightEigenstates[ComplexConjRightEigenvalueIndex]) << endl;
+      cout << (LeftEigenstates[ComplexConjLeftEigenvalueIndex] * RightEigenstates[ComplexConjRightEigenvalueIndex]) << endl;
+
+      cout << (LeftEigenstates[RealLeftEigenvalueIndex] * LeftEigenstates[ComplexLeftEigenvalueIndex]) << endl;
+      cout << (LeftEigenstates[RealLeftEigenvalueIndex] * LeftEigenstates[ComplexConjLeftEigenvalueIndex]) << endl;
+
+
       int TmpBMatrixDimension = BMatrices[0].GetNbrRow();
-      ComplexMatrix MDaggerM (TmpBMatrixDimension, TmpBMatrixDimension);
+      ComplexMatrix LeftMDaggerM (TmpBMatrixDimension, TmpBMatrixDimension);
+      cout << "test " << endl;
+//      ++MPSRowIndex;
+//      ++MPSColumnIndex;
+//       ++MPSRowIndex;
+//       ++MPSColumnIndex;
+//       ++MPSRowIndex;
+//       ++MPSColumnIndex;
+//       cout << RightEigenstates[RealRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] << endl;
+//       cout << RightEigenstates[ComplexRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] << endl;
+//       cout << RightEigenstates[ComplexConjRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] << endl;
+
+      cout << (RightEigenstates[RealRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+	        /  (LeftEigenstates[RealRightEigenvalueIndex] * RightEigenstates[RealRightEigenvalueIndex])) << endl;
+      cout << (RightEigenstates[ComplexRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+	       /  (LeftEigenstates[ComplexLeftEigenvalueIndex] * RightEigenstates[ComplexRightEigenvalueIndex])) << endl;
+      cout << (RightEigenstates[ComplexConjRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+	       /  (LeftEigenstates[ComplexConjLeftEigenvalueIndex] * RightEigenstates[ComplexConjRightEigenvalueIndex])) << endl;
       for (int i = 0; i < TmpBMatrixDimension; ++i)
 	for (int j = 0; j < TmpBMatrixDimension; ++j)
-	  MDaggerM[j][i] = (LeftEigenstates[RealLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + LeftEigenstates[ComplexLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + LeftEigenstates[ComplexConjLeftEigenvalueIndex][j * TmpBMatrixDimension + i]) / sqrt(3.0);
-      if (MDaggerM.IsReal(Error) == true)
-	cout << "M^+M is real" << endl;
-      if (MDaggerM.IsSymmetric(Error) == true)
-	cout << "M^+M is symmetric" << endl;
-      if (MDaggerM.IsHermitian(Error) == true)
-	cout << "M^+M is hermitian" << endl;
+	  {
+ 	    LeftMDaggerM[j][i] = (LeftEigenstates[RealLeftEigenvalueIndex][j * TmpBMatrixDimension + i] * RightEigenstates[RealRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+ 				  /  (LeftEigenstates[RealRightEigenvalueIndex] * RightEigenstates[RealRightEigenvalueIndex]));
+  	    LeftMDaggerM[j][i] += (LeftEigenstates[ComplexLeftEigenvalueIndex][j * TmpBMatrixDimension + i] * RightEigenstates[ComplexRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+  				  /  (LeftEigenstates[ComplexLeftEigenvalueIndex] * RightEigenstates[ComplexRightEigenvalueIndex]));
+  	    LeftMDaggerM[j][i] += (LeftEigenstates[ComplexConjLeftEigenvalueIndex][j * TmpBMatrixDimension + i] * RightEigenstates[ComplexConjRightEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+  				  /  (LeftEigenstates[ComplexConjLeftEigenvalueIndex] * RightEigenstates[ComplexConjRightEigenvalueIndex]));
+	  }
 
-      RealSymmetricMatrix SymMDaggerM (MDaggerM);
+//       SparseRealMatrix SparseLeftMDaggerM (LeftMDaggerM);
+//       for (int i = 0;i < 7; ++i)
+// 	{
+// 	  SparseRealMatrix TmpOverlapBlock = MPSMatrix->ExtractBlock(SparseLeftMDaggerM, 2, i, 2, 2);      
+// 	  cout << TmpOverlapBlock << endl << endl;
+// 	}
+
+      if (LeftMDaggerM.IsReal(Error) == true)
+	cout << "left M^+M is real" << endl;
+      if (LeftMDaggerM.IsSymmetric(Error) == true)
+	cout << "left M^+M is symmetric" << endl;
+      if (LeftMDaggerM.IsHermitian(Error) == true)
+	cout << "left M^+M is hermitian" << endl;
+
+      ComplexMatrix RightMDaggerM (TmpBMatrixDimension, TmpBMatrixDimension);
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	for (int j = 0; j < TmpBMatrixDimension; ++j)
+	  {
+	    RightMDaggerM[j][i] = (RightEigenstates[RealRightEigenvalueIndex][j * TmpBMatrixDimension + i] * LeftEigenstates[RealLeftEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+				  /  (LeftEigenstates[RealLeftEigenvalueIndex] * RightEigenstates[RealRightEigenvalueIndex]));
+	    RightMDaggerM[j][i] += (RightEigenstates[ComplexRightEigenvalueIndex][j * TmpBMatrixDimension + i] * LeftEigenstates[ComplexLeftEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+				  /  (LeftEigenstates[ComplexLeftEigenvalueIndex] * RightEigenstates[ComplexRightEigenvalueIndex]));
+	    RightMDaggerM[j][i] += (RightEigenstates[ComplexConjRightEigenvalueIndex][j * TmpBMatrixDimension + i] * LeftEigenstates[ComplexConjLeftEigenvalueIndex][MPSRowIndex * TmpBMatrixDimension + MPSColumnIndex] 
+				  /  (LeftEigenstates[ComplexConjLeftEigenvalueIndex] * RightEigenstates[ComplexConjRightEigenvalueIndex]));
+	  }
+
+
+//	  RightMDaggerM[j][i] = RightEigenstates[RealRightEigenvalueIndex][j * TmpBMatrixDimension + i];// + LeftEigenstates[ComplexLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + LeftEigenstates[ComplexConjLeftEigenvalueIndex][j * TmpBMatrixDimension + i]) / sqrt(3.0);
+      if (RightMDaggerM.IsReal(Error) == true)
+	cout << "right M^+M is real" << endl;
+      if (RightMDaggerM.IsSymmetric(Error) == true)
+	cout << "right M^+M is symmetric" << endl;
+      if (RightMDaggerM.IsHermitian(Error) == true)
+	cout << "right M^+M is hermitian" << endl;
+
+      RealSymmetricMatrix SymMDaggerM (LeftMDaggerM);
       RealMatrix TmpBasis(SymMDaggerM.GetNbrRow(), SymMDaggerM.GetNbrRow());
       TmpBasis.SetToIdentity();
       RealDiagonalMatrix TmpDiag;
@@ -294,135 +423,160 @@ int main(int argc, char** argv)
 #endif
       int NbrZeroEigenvalues = 0;
       for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	if (fabs(TmpDiag(i, i)) < Error)
-	  ++NbrZeroEigenvalues;
-      cout << "nbr of zero eigenvalues = " << NbrZeroEigenvalues <<  " / " << TmpDiag.GetNbrRow() << endl;
-
-      RealMatrix LeftM = RealMatrix (TmpDiag.GetNbrRow(),TmpDiag.GetNbrRow() -  NbrZeroEigenvalues);
-      RealMatrix RightMInv = RealMatrix (TmpDiag.GetNbrRow(),TmpDiag.GetNbrRow() -  NbrZeroEigenvalues);
-      int Count = 0;
-      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	if (fabs(TmpDiag(i, i)) > Error)
-	  {
-	    LeftM[Count].Copy(TmpBasis[i]);
-	    RightMInv[Count].Copy(TmpBasis[i]);
-	    if (TmpDiag(i, i) > 0)
-	      {
-		LeftM[Count] *=  sqrt(TmpDiag(i, i));
-		RightMInv[Count] /= sqrt(TmpDiag(i, i));		
-	      }
-	    else
-	      {
-		LeftM[Count] *=  sqrt(-TmpDiag(i, i));
-		RightMInv[Count] /= sqrt(-TmpDiag(i, i));		
-	      }
-	    ++Count;
-	  }
-      LeftM.Transpose();
-//      cout << RightMInv << endl;
-//       RealMatrix TmpMatrix = LeftM * RightMInv;
-//       cout << TmpMatrix << endl;
-
-      SparseRealMatrix SparseLeftM(LeftM, Error);
-      SparseRealMatrix SparseRightMInv(RightMInv, Error);
-//       SparseLeftM.PrintNonZero(cout) << endl;
-//       SparseRightMInv.PrintNonZero(cout) << endl;
-      SparseRealMatrix* BTildaMatrices = new SparseRealMatrix[NbrBMatrices];
-      for (int i = 0; i < NbrBMatrices; ++i)
-	BTildaMatrices[i] = Conjugate(SparseLeftM, BMatrices[i], SparseRightMInv);
-      
-      SparseRealMatrix** SparseTensorProductBTildaMatrices = new SparseRealMatrix*[NbrBMatrices];
-      for (int i = 0; i < NbrBMatrices; ++i)
 	{
-	  SparseTensorProductBTildaMatrices[i] = new SparseRealMatrix[NbrBMatrices];
-	  for (int j = 0; j < NbrBMatrices; ++j)
+	  if (fabs(TmpDiag(i, i)) < Error)
 	    {
-	      SparseTensorProductBTildaMatrices[i][j] = TensorProduct(BTildaMatrices[i], BTildaMatrices[j]);
-	    }
-	}
-      SparseRealMatrix NormalizedB0B0B1B12 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBTildaMatrices[0][0], 1.0, SparseTensorProductBTildaMatrices[1][1]);      
-      RealMatrix NormalizedB0B0B1B1Full2 (NormalizedB0B0B1B12);
-      LeftEigenstates.SetToIdentity();
-      NormalizedB0B0B1B1Full2.LapackDiagonalize(TmpLeftDiag, LeftEigenstates, true);
-      LargestLeftEigenvalueIndex = -1;
-      LargestLeftEigenvalueIndex2 = -1;
-      LargestLeftEigenvalueIndex3 = -1;
-      NbrNonZeroEigenvalues = 0;
-      for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
-	if (Norm(TmpLeftDiag[i]) > Error)
-	  ++NbrNonZeroEigenvalues;
-      int* NonZeroEigenvalueIndices2 = new int [NbrNonZeroEigenvalues];
-      double* NonZeroEigenvalueNorms2 = new double [NbrNonZeroEigenvalues];
-      NbrNonZeroEigenvalues = 0;
-      for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
-	if (Norm(TmpLeftDiag[i]) > Error)
-	  {
-	    NonZeroEigenvalueIndices2[NbrNonZeroEigenvalues] = i;
-	    NonZeroEigenvalueNorms2[NbrNonZeroEigenvalues] = Norm(TmpLeftDiag[i]);
-	    ++NbrNonZeroEigenvalues;
-	  }
-      SortArrayDownOrdering<int>(NonZeroEigenvalueNorms2, NonZeroEigenvalueIndices2, NbrNonZeroEigenvalues);
-//       for (int i = 0; i < NbrNonZeroEigenvalues; ++i)
-// 	cout << NonZeroEigenvalueIndices2[i] << " " << NonZeroEigenvalueNorms2[i] << " " << TmpLeftDiag[NonZeroEigenvalueIndices2[i]] << endl;
-      cout << "selected eigenvalues " <<  NonZeroEigenvalueIndices2[0] << " " << NonZeroEigenvalueIndices2[1] << " " << NonZeroEigenvalueIndices2[2] << endl;
-      RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[0];
-      ComplexLeftEigenvalueIndex = NonZeroEigenvalueIndices2[1];
-      ComplexConjLeftEigenvalueIndex = NonZeroEigenvalueIndices2[2];
-      if (fabs(TmpLeftDiag[NonZeroEigenvalueIndices2[0]].Im) < Error)
-	{
-	  RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[0];
-	  ComplexLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[1];
-	  ComplexConjLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[2];
-	}
-      else
-	{
-	  if (fabs(TmpLeftDiag[NonZeroEigenvalueIndices2[1]].Im) < Error)
-	    {
-	      RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[1];
-	      ComplexLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[0];
-	      ComplexConjLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[2];
+	      ++NbrZeroEigenvalues;	    
 	    }
 	  else
 	    {
-	      if (fabs(TmpLeftDiag[NonZeroEigenvalueIndices2[2]].Im) < Error)
-		{
-		  RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[2];
-		  ComplexLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[0];
-		  ComplexConjLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[1];
-		}
-	    }	  
-	}
-      cout << "real eigenvalue = " << RealLeftEigenvalueIndex << endl;
-
-      TmpBMatrixDimension = BTildaMatrices[0].GetNbrRow();
-      ComplexMatrix RhoA (TmpBMatrixDimension, TmpBMatrixDimension);
-      for (int i = 0; i < TmpBMatrixDimension; ++i)
-	for (int j = 0; j < TmpBMatrixDimension; ++j)
-	  RhoA[j][i] = (LeftEigenstates[RealLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + LeftEigenstates[ComplexLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + LeftEigenstates[ComplexConjLeftEigenvalueIndex][j * TmpBMatrixDimension + i]) / sqrt(3.0);
-      if (RhoA.IsReal(Error) == true)
-	cout << "rho_A is real" << endl;
-      if (RhoA.IsSymmetric(Error) == true)
-	cout << "rho_A is symmetric" << endl;
-      if (RhoA.IsHermitian(Error) == true)
-	cout << "rho_A is hermitian" << endl;
-      if (RhoA.IsDiagonal(Error) == true)
-	{
-	  cout << "rho_A is diagonal" << endl;
-	  int Count = 0;
-	  for (int i = 0; i < TmpBMatrixDimension; ++i)
-	    {
-	      double Tmp;
-	      RhoA.GetMatrixElement(i, i, Tmp);
-	      cout << i << " " << Tmp << endl;
-	      if (fabs(Tmp) > Error)
-		{
-		  cout << Count << " : " << Tmp << endl;
-		  ++Count;
-		}
+	      cout << "ev="  << TmpDiag(i, i) << endl;
 	    }
 	}
+      cout << "nbr of zero eigenvalues = " << NbrZeroEigenvalues <<  " / " << TmpDiag.GetNbrRow() << endl;
 
-//      cout << RhoA << endl;
+//       ComplexMatrix LeftM = ComplexMatrix (TmpDiag.GetNbrRow(),TmpDiag.GetNbrRow() -  NbrZeroEigenvalues, true);
+//       ComplexMatrix RightMInv = ComplexMatrix (TmpDiag.GetNbrRow(),TmpDiag.GetNbrRow() -  NbrZeroEigenvalues, true);
+//       int Count = 0;
+//       for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+// 	if (fabs(TmpDiag(i, i)) > Error)
+// 	  {
+// 	    ComplexVector& TmpLeftVector = LeftM[Count];
+// 	    ComplexVector& TmpRightVector = RightMInv[Count];
+// 	    RealVector& TmpVector = TmpBasis[i];
+// 	    if (TmpDiag(i, i) > 0)
+// 	      {
+// 		double Factor = sqrt(TmpDiag(i, i));
+// 		double InvFactor = 1.0 / sqrt(TmpDiag(i, i));
+// 		for (int j = 0; j < TmpDiag.GetNbrRow(); ++j)
+// 		  {
+// 		    TmpLeftVector[j].Re = TmpVector[j] * Factor;
+// 		    TmpRightVector[j].Re = TmpVector[j] * InvFactor;
+// 		  }
+// 	      }
+// 	    else
+// 	      {
+// 		double Factor = sqrt(-TmpDiag(i, i));
+// 		double InvFactor = 1.0 / sqrt(-TmpDiag(i, i));
+// 		for (int j = 0; j < TmpDiag.GetNbrRow(); ++j)
+// 		  {
+// 		    TmpLeftVector[j].Im = TmpVector[j] * Factor;
+// 		    TmpRightVector[j].Im = TmpVector[j] * InvFactor;
+// 		  }
+// 	      }
+// 	    ++Count;
+// 	  }
+//       LeftM.HermitianTranspose();
+// //      cout << RightMInv << endl;
+//       ComplexMatrix TmpMatrix = LeftM * RightMInv;
+// //      cout << TmpMatrix << endl;
+
+//       SparseComplexMatrix SparseLeftM(LeftM, Error);
+//       SparseComplexMatrix SparseRightMInv(RightMInv, Error);
+// //       SparseLeftM.PrintNonZero(cout) << endl;
+// //       SparseRightMInv.PrintNonZero(cout) << endl;
+//       SparseComplexMatrix* BTildaMatrices = new SparseComplexMatrix[NbrBMatrices];
+//       for (int i = 0; i < NbrBMatrices; ++i)
+// 	BTildaMatrices[i] = Conjugate(SparseLeftM, BMatrices[i], SparseRightMInv);
+      
+//       SparseComplexMatrix** SparseTensorProductBTildaMatrices = new SparseComplexMatrix*[NbrBMatrices];
+//       for (int i = 0; i < NbrBMatrices; ++i)
+// 	{
+// 	  SparseTensorProductBTildaMatrices[i] = new SparseComplexMatrix[NbrBMatrices];
+// 	  for (int j = 0; j < NbrBMatrices; ++j)
+// 	    {
+// 	      SparseTensorProductBTildaMatrices[i][j] = TensorProductWithConjugation(BTildaMatrices[i], BTildaMatrices[j]);
+// 	    }
+// 	}
+//       SparseComplexMatrix NormalizedB0B0B1B12 = SparseComplexMatrixLinearCombination(1.0, SparseTensorProductBTildaMatrices[0][0], 1.0, SparseTensorProductBTildaMatrices[1][1]);      
+//       ComplexMatrix NormalizedB0B0B1B1Full2 (NormalizedB0B0B1B12);
+//       ComplexMatrix ComplexLeftEigenstates (NormalizedB0B0B1B12.GetNbrRow(), NormalizedB0B0B1B12.GetNbrRow());
+//       ComplexLeftEigenstates.SetToIdentity();
+//       NormalizedB0B0B1B1Full2.LapackDiagonalize(TmpLeftDiag, ComplexLeftEigenstates);//, true);
+//       LargestLeftEigenvalueIndex = -1;
+//       LargestLeftEigenvalueIndex2 = -1;
+//       LargestLeftEigenvalueIndex3 = -1;
+//       NbrNonZeroEigenvalues = 0;
+//       for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+// 	if (Norm(TmpLeftDiag[i]) > Error)
+// 	  ++NbrNonZeroEigenvalues;
+//       int* NonZeroEigenvalueIndices2 = new int [NbrNonZeroEigenvalues];
+//       double* NonZeroEigenvalueNorms2 = new double [NbrNonZeroEigenvalues];
+//       NbrNonZeroEigenvalues = 0;
+//       for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+// 	if (Norm(TmpLeftDiag[i]) > Error)
+// 	  {
+// 	    NonZeroEigenvalueIndices2[NbrNonZeroEigenvalues] = i;
+// 	    NonZeroEigenvalueNorms2[NbrNonZeroEigenvalues] = Norm(TmpLeftDiag[i]);
+// 	    ++NbrNonZeroEigenvalues;
+// 	  }
+//       SortArrayDownOrdering<int>(NonZeroEigenvalueNorms2, NonZeroEigenvalueIndices2, NbrNonZeroEigenvalues);
+//       for (int i = 0; i < NbrNonZeroEigenvalues; ++i)
+// 	cout << NonZeroEigenvalueIndices2[i] << " " << NonZeroEigenvalueNorms2[i] << " " << TmpLeftDiag[NonZeroEigenvalueIndices2[i]] << endl;
+//       cout << "selected eigenvalues " <<  NonZeroEigenvalueIndices2[0] << " " << NonZeroEigenvalueIndices2[1] << " " << NonZeroEigenvalueIndices2[2] << endl;
+//       RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[0];
+//       ComplexLeftEigenvalueIndex = NonZeroEigenvalueIndices2[1];
+//       ComplexConjLeftEigenvalueIndex = NonZeroEigenvalueIndices2[2];
+//       if (fabs(TmpLeftDiag[NonZeroEigenvalueIndices2[0]].Im) < Error)
+// 	{
+// 	  RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[0];
+// 	  ComplexLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[1];
+// 	  ComplexConjLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[2];
+// 	}
+//       else
+// 	{
+// 	  if (fabs(TmpLeftDiag[NonZeroEigenvalueIndices2[1]].Im) < Error)
+// 	    {
+// 	      RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[1];
+// 	      ComplexLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[0];
+// 	      ComplexConjLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[2];
+// 	    }
+// 	  else
+// 	    {
+// 	      if (fabs(TmpLeftDiag[NonZeroEigenvalueIndices2[2]].Im) < Error)
+// 		{
+// 		  RealLeftEigenvalueIndex = NonZeroEigenvalueIndices2[2];
+// 		  ComplexLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[0];
+// 		  ComplexConjLeftEigenvalueIndex  = NonZeroEigenvalueIndices2[1];
+// 		}
+// 	    }	  
+// 	}
+//       cout << "real eigenvalue = " << RealLeftEigenvalueIndex << endl;
+
+//       TmpBMatrixDimension = BTildaMatrices[0].GetNbrRow();
+//       ComplexMatrix RhoA (TmpBMatrixDimension, TmpBMatrixDimension);
+//       for (int i = 0; i < TmpBMatrixDimension; ++i)
+// 	for (int j = 0; j < TmpBMatrixDimension; ++j)
+// 	  RhoA[j][i] = (ComplexLeftEigenstates[RealLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + ComplexLeftEigenstates[ComplexLeftEigenvalueIndex][j * TmpBMatrixDimension + i] + ComplexLeftEigenstates[ComplexConjLeftEigenvalueIndex][j * TmpBMatrixDimension + i]) / sqrt(3.0);
+//       if (RhoA.IsReal(Error) == true)
+// 	cout << "rho_A is real" << endl;
+//       if (RhoA.IsSymmetric(Error) == true)
+// 	cout << "rho_A is symmetric" << endl;
+//       if (RhoA.IsHermitian(Error) == true)
+// 	cout << "rho_A is hermitian" << endl;
+//       if (RhoA.IsDiagonal(Error) == true)
+// 	{
+// 	  cout << "rho_A is diagonal" << endl;
+// 	  int Count = 0;
+// 	  for (int i = 0; i < TmpBMatrixDimension; ++i)
+// 	    {
+// 	      double Tmp;
+// 	      RhoA.GetMatrixElement(i, i, Tmp);
+// 	      cout << i << " " << Tmp << endl;
+// 	      if (fabs(Tmp) > Error)
+// 		{
+// 		  cout << Count << " : " << Tmp << endl;
+// 		  ++Count;
+// 		}
+// 	    }
+// 	}
+
+// //      cout << RhoA << endl;
+//       for (int i = 0; i < TmpBMatrixDimension; ++i)
+// 	for (int j = 0; j < TmpBMatrixDimension; ++j)
+// 	  if (Norm(RhoA[i][j]) > Error)
+// 	    cout << i << " " << j << " = " << RhoA[i][j] << endl;
+// 	  cout << endl << endl;
 
 //       cout << TmpMatrix << endl;
 //       for (int i = 0; i < TmpBMatrixDimension; ++i)

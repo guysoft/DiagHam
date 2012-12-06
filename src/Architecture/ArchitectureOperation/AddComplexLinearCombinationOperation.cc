@@ -49,6 +49,8 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = sourceVector;
   this->SourceVectorByPointers = 0;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
@@ -70,6 +72,8 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = 0;
   this->SourceVectorByPointers = sourceVector;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
@@ -92,6 +96,8 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->SourceVector = 0;
   this->SourceVectorByPointers = 0;
   this->SourceVectorMatrix = sourceVector;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
   this->NbrVector = nbrVector;
   this->Coefficients = coefficients;
   this->RealCoefficients = 0;
@@ -113,6 +119,8 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = sourceVector;
   this->SourceVectorByPointers = 0;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
   this->NbrVector = nbrVector;
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
@@ -134,6 +142,8 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (Comp
   this->NbrComponent = destinationVector->GetVectorDimension();
   this->SourceVector = 0;
   this->SourceVectorByPointers = sourceVector;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
   this->NbrVector = nbrVector;
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
@@ -156,9 +166,81 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(Compl
   this->SourceVector = 0;
   this->SourceVectorByPointers = 0;
   this->SourceVectorMatrix = sourceVector;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
   this->NbrVector = nbrVector;
   this->Coefficients = 0;
   this->RealCoefficients = coefficients;
+  this->DestinationVector = destinationVector;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
+}
+
+// constructor 
+//
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
+
+AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (ComplexVector* destinationVector, RealVector* sourceVector, 
+									    int nbrVector, Complex* coefficients)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = destinationVector->GetVectorDimension();
+  this->SourceVector = 0;
+  this->SourceVectorByPointers = 0;
+  this->RealSourceVector = sourceVector;
+  this->RealSourceVectorByPointers = 0;
+  this->NbrVector = nbrVector;
+  this->Coefficients = coefficients;
+  this->RealCoefficients = 0;
+  this->DestinationVector = destinationVector;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
+}
+
+// constructor 
+//
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = array containing pointers to the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
+
+AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation (ComplexVector* destinationVector, RealVector** sourceVector, 
+									    int nbrVector, Complex* coefficients)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = destinationVector->GetVectorDimension();
+  this->SourceVector = 0;
+  this->SourceVectorByPointers = 0;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = sourceVector;
+  this->NbrVector = nbrVector;
+  this->Coefficients = coefficients;
+  this->RealCoefficients = 0;
+  this->DestinationVector = destinationVector;  
+  this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
+}
+
+// constructor 
+//
+// destinationVector = vector to which the linear combination has to be added
+// sourceVector = matrix containing the vectors that have to be added
+// nbrVector = number of vector that have to be added
+// coefficients = coefficient of the linear combination
+
+AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(ComplexVector* destinationVector, RealMatrix& sourceVector, 
+									   int nbrVector, Complex* coefficients)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = destinationVector->GetVectorDimension();
+  this->SourceVector = 0;
+  this->SourceVectorByPointers = 0;
+  this->RealSourceVector = 0;
+  this->RealSourceVectorByPointers = 0;
+  this->RealSourceVectorMatrix = sourceVector;
+  this->NbrVector = nbrVector;
+  this->Coefficients = coefficients;
+  this->RealCoefficients = 0;
   this->DestinationVector = destinationVector;  
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
 }
@@ -177,8 +259,11 @@ AddComplexLinearCombinationOperation::AddComplexLinearCombinationOperation(const
   this->OperationType = AbstractArchitectureOperation::AddComplexLinearCombination;
   this->SourceVector = operation.SourceVector;
   this->SourceVectorByPointers = operation.SourceVectorByPointers;
+  this->RealSourceVector = operation.RealSourceVector;
+  this->RealSourceVectorByPointers = operation.RealSourceVectorByPointers;
   this->DestinationVector = operation.DestinationVector;  
   this->SourceVectorMatrix = operation.SourceVectorMatrix;
+  this->RealSourceVectorMatrix = operation.RealSourceVectorMatrix;
 }
   
 // destructor
@@ -214,49 +299,74 @@ AbstractArchitectureOperation* AddComplexLinearCombinationOperation::Clone()
 
 bool AddComplexLinearCombinationOperation::RawApplyOperation()
 {
-  if (this->RealCoefficients == 0)
+  if ((this->RealSourceVector != 0) || (this->RealSourceVectorByPointers != 0) || (this->RealSourceVectorMatrix.GetNbrRow() != 0))
     {
-      if (this->SourceVector != 0)
+      if (this->RealSourceVector != 0)
 	for (int i = 0; i < this->NbrVector; ++i)
 	  {
-	    this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVector[i]), this->FirstComponent, 
+	    this->DestinationVector->AddLinearCombination(Coefficients[i], (this->RealSourceVector[i]), this->FirstComponent, 
 							  this->NbrComponent);
 	  }
       else
-	if (this->SourceVectorByPointers != 0)
+	if (this->RealSourceVectorByPointers != 0)
 	  for (int i = 0; i < this->NbrVector; ++i)
 	    {
-	      this->DestinationVector->AddLinearCombination(Coefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
+	      this->DestinationVector->AddLinearCombination(Coefficients[i], *(this->RealSourceVectorByPointers[i]), this->FirstComponent, 
 							    this->NbrComponent);
 	    }
 	else
 	  for (int i = 0; i < this->NbrVector; ++i)
 	    {
-	      this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+	      this->DestinationVector->AddLinearCombination(Coefficients[i], (this->RealSourceVectorMatrix[i]), this->FirstComponent, 
 							    this->NbrComponent);
-	    }
+	    }     
     }
   else
     {
-      if (this->SourceVector != 0)
-	for (int i = 0; i < this->NbrVector; ++i)
-	  {
-	    this->DestinationVector->AddLinearCombination(RealCoefficients[i], (this->SourceVector[i]), this->FirstComponent, 
-							  this->NbrComponent);
-	  }
+      if (this->RealCoefficients == 0)
+	{
+	  if (this->SourceVector != 0)
+	    for (int i = 0; i < this->NbrVector; ++i)
+	      {
+		this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVector[i]), this->FirstComponent, 
+							      this->NbrComponent);
+	      }
+	  else
+	    if (this->SourceVectorByPointers != 0)
+	      for (int i = 0; i < this->NbrVector; ++i)
+		{
+		  this->DestinationVector->AddLinearCombination(Coefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
+								this->NbrComponent);
+		}
+	    else
+	      for (int i = 0; i < this->NbrVector; ++i)
+		{
+		  this->DestinationVector->AddLinearCombination(Coefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+								this->NbrComponent);
+		}
+	}
       else
-	if (this->SourceVectorByPointers != 0)
-	  for (int i = 0; i < this->NbrVector; ++i)
-	    {
-	      this->DestinationVector->AddLinearCombination(RealCoefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
-							    this->NbrComponent);
-	    }
-	else
-	  for (int i = 0; i < this->NbrVector; ++i)
-	    {
-	      this->DestinationVector->AddLinearCombination(RealCoefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
-							    this->NbrComponent);
-	    }
+	{
+	  if (this->SourceVector != 0)
+	    for (int i = 0; i < this->NbrVector; ++i)
+	      {
+		this->DestinationVector->AddLinearCombination(RealCoefficients[i], (this->SourceVector[i]), this->FirstComponent, 
+							      this->NbrComponent);
+	      }
+	  else
+	    if (this->SourceVectorByPointers != 0)
+	      for (int i = 0; i < this->NbrVector; ++i)
+		{
+		  this->DestinationVector->AddLinearCombination(RealCoefficients[i], *(this->SourceVectorByPointers[i]), this->FirstComponent, 
+								this->NbrComponent);
+		}
+	    else
+	      for (int i = 0; i < this->NbrVector; ++i)
+		{
+		  this->DestinationVector->AddLinearCombination(RealCoefficients[i], (this->SourceVectorMatrix[i]), this->FirstComponent, 
+								this->NbrComponent);
+		}
+	}
     }
   return true;
 }

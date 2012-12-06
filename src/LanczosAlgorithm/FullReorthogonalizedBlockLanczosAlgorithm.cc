@@ -66,7 +66,9 @@ FullReorthogonalizedBlockLanczosAlgorithm::FullReorthogonalizedBlockLanczosAlgor
   this->MaximumNumberIteration = maxIter;
   this->NbrEigenvalue = nbrEigenvalue;
   if ((this->MaximumNumberIteration % this->BlockSize) != 0)
-    this->MaximumNumberIteration = ((this->MaximumNumberIteration / this->BlockSize) + 1) * this->BlockSize;
+    this->MaximumNumberIteration = ((this->MaximumNumberIteration / this->BlockSize) + 2) * this->BlockSize;
+  else
+    this->MaximumNumberIteration += this->BlockSize;
   this->LanczosVectors = new RealVector [this->MaximumNumberIteration];
   this->TemporaryCoefficients = new double [this->MaximumNumberIteration];
 
@@ -153,7 +155,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::InitializeLanczosAlgorithm()
   for (int i = 0; i < Dimension; i++)
     this->LanczosVectors[0][i] = (drand48() - 0.5) * 2.0;
   this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
-  double* TmpCoef = new double [this->NbrEigenvalue];
+  double* TmpCoef = new double [this->BlockSize];
   for (int j = 1; j < this->BlockSize; ++j)
     {
       this->LanczosVectors[j] = RealVector (Dimension);
@@ -179,7 +181,7 @@ void FullReorthogonalizedBlockLanczosAlgorithm::InitializeLanczosAlgorithm(const
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->LanczosVectors[0] = vector;
-  double* TmpCoef = new double [this->NbrEigenvalue];
+  double* TmpCoef = new double [this->BlockSize];
   for (int j = 1; j < this->BlockSize; ++j)
     {
       this->LanczosVectors[j] = RealVector (Dimension);

@@ -387,6 +387,11 @@ class ComplexMatrix : public Matrix
   // return value = reference on modified matrix
   ComplexMatrix GetAdjoint();
 
+  // compute the hermitian transpose of the current matrix
+  //
+  // return value = reference on the current matrix
+  ComplexMatrix& HermitianTranspose ();
+
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements

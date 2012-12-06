@@ -963,6 +963,25 @@ ComplexVector& ComplexVector::AddLinearCombination (const Complex& x, const Comp
   return *this;
 }
 
+// add a linear combination to a given vector, for a given range of indices
+//
+// x = multiplicative coefficient
+// V = vector to add
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::AddLinearCombination (const Complex& x, const RealVector& V, int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  if ((LastComponent > this->Dimension) || (LastComponent > V.Dimension))
+    return *this;
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      this->Components[i].Re += x.Re * V.Components[i];
+      this->Components[i].Im += x.Im * V.Components[i];
+    }
+  return *this;
+}
+
 // add a linear combination of two vectors to a given vector
 //
 // x1 = multiplicative coefficient of first vector

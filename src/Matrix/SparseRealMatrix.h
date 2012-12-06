@@ -220,6 +220,13 @@ class SparseRealMatrix : public Matrix
   // return value = reference on current matrix
   SparseRealMatrix& Multiply (const SparseRealMatrix& matrix);
   
+  // multiply two matrices
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // return value = reference on current matrix
+  friend SparseRealMatrix Multiply (const SparseRealMatrix& matrix, const SparseRealMatrix& matrix2);
+
   // multiply two matrices, providing all the required temporary arrays
   //
   // matrix1 = left matrix
@@ -319,6 +326,27 @@ class SparseRealMatrix : public Matrix
   friend SparseRealMatrix Conjugate (SparseRealMatrix* matrix1, SparseRealMatrix* matrix2, SparseRealMatrix* matrix3, 
 				     double* tmpMatrixElements, int* tmpColumnIndices, 
 				     long nbrTmpMatrixElements, AbstractArchitecture* architecture);
+
+  // conjugate a matrix
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // return value = reference on conjugated matrix
+  friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, 
+					const SparseComplexMatrix& matrix3);
+
+  // multiply three matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, const SparseComplexMatrix& matrix3, 
+					Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
 
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //

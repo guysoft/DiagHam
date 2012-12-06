@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2003 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                      class of basic  Arnoldi algorithm                     //
+//                   class of basic block Arnoldi algorithm                   //
 //                         for non symmetric matrices                         //
 //                                                                            //
-//                        last modification : 17/11/2012                      //
+//                        last modification : 05/12/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,11 +29,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+#include "LanczosAlgorithm/BasicBlockArnoldiAlgorithm.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleVectorHamiltonianMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/AddRealLinearCombinationOperation.h"
 #include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
@@ -53,13 +53,14 @@ using std::endl;
 //
 // architecture = architecture to use for matrix operations
 // nbrEigenvalue = number of wanted eigenvalues
+// blockSize = size of the block used for the block Lanczos algorithm
 // maxIter = an approximation of maximal number of iteration
 // highEnergy = true if the higher energy part of the spectrum has to be computed instead of the lower energy part
 // leftFlag= compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
-BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
-					     bool highEnergy, bool leftFlag, bool strongConvergence) 
+BasicBlockArnoldiAlgorithm::BasicBlockArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int blockSize, int maxIter, 
+						       bool highEnergy, bool leftFlag, bool strongConvergence) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -67,6 +68,9 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
   this->NbrEigenvalue = nbrEigenvalue;
   this->ArnoldiVectors = new RealVector [this->MaximumNumberIteration];
   this->TemporaryCoefficients = new double [this->MaximumNumberIteration];
+  this->BlockSize = blockSize;
+//   if (this->BlockSize < 2)
+//     this->BlockSize = 2;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
@@ -96,7 +100,7 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
 //
 // algorithm = algorithm from which new one will be created
 
-BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algorithm) 
+BasicBlockArnoldiAlgorithm::BasicBlockArnoldiAlgorithm(const BasicBlockArnoldiAlgorithm& algorithm) 
 {
   this->Index = algorithm.Index;
   this->MaximumNumberIteration = algorithm.MaximumNumberIteration;
@@ -104,6 +108,7 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algori
   this->ArnoldiVectors = new RealVector [this->MaximumNumberIteration];
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;
   this->Flag = algorithm.Flag;
+  this->BlockSize = algorithm.BlockSize;
   this->Architecture = algorithm.Architecture;
   this->NbrEigenvalue = algorithm.NbrEigenvalue;
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
@@ -123,7 +128,7 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algori
 // destructor
 //
 
-BasicArnoldiAlgorithm::~BasicArnoldiAlgorithm() 
+BasicBlockArnoldiAlgorithm::~BasicBlockArnoldiAlgorithm() 
 {
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -136,42 +141,63 @@ BasicArnoldiAlgorithm::~BasicArnoldiAlgorithm()
 // initialize Lanczos algorithm with a random vector
 //
 
-void BasicArnoldiAlgorithm::InitializeLanczosAlgorithm() 
+void BasicBlockArnoldiAlgorithm::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->ArnoldiVectors[0] = RealVector (Dimension);
-  this->ArnoldiVectors[1] = RealVector (Dimension);
-  this->ArnoldiVectors[2] = RealVector (Dimension);
-  for (int i = 0; i < Dimension; i++)
+  for (int i = 0; i < (3 * this->BlockSize); ++i)
     {
-//       this->ArnoldiVectors[0].Re(i) = (rand() - 32767) * 0.5;
-//       this->ArnoldiVectors[0].Im(i) = (rand() - 32767) * 0.5;
-      this->ArnoldiVectors[0][i] = (rand() - 32767) * 0.5;
+      this->ArnoldiVectors[i] = RealVector (Dimension);
     }
-  this->ArnoldiVectors[0] /= this->ArnoldiVectors[0].Norm();
+  double* TmpCoef = new double [this->BlockSize];
+  for (int j = 0; j <  this->BlockSize; ++j)
+    {
+      for (int i = 0; i < Dimension; i++)
+	{
+	  this->ArnoldiVectors[j][i] = (rand() - 32767) * 0.5;
+	}
+      for (int i = 0; i < j; ++i)
+	TmpCoef[i] = this->ArnoldiVectors[j] * this->ArnoldiVectors[i];
+      for (int i = 0; i < j; ++i)
+	this->ArnoldiVectors[j].AddLinearCombination(-TmpCoef[i], this->ArnoldiVectors[i]);
+      this->ArnoldiVectors[j] /= this->ArnoldiVectors[j].Norm();
+    }
+  delete[] TmpCoef;
   this->Index = 0;
-  this->TridiagonalizedMatrix.Resize(0, 0);
 }
   
 // initialize Lanczos algorithm with a given vector
 //
 // vector = reference to the vector used as first step vector
 
-void BasicArnoldiAlgorithm::InitializeLanczosAlgorithm(const Vector& vector) 
+void BasicBlockArnoldiAlgorithm::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  for (int i = 1; i < (3 * this->BlockSize); ++i)
+    {
+      this->ArnoldiVectors[i] = RealVector (Dimension);
+    }
   this->ArnoldiVectors[0] = vector;
-  this->ArnoldiVectors[1] = RealVector (Dimension);
-  this->ArnoldiVectors[2] = RealVector (Dimension);
+  double* TmpCoef = new double [this->BlockSize];
+  for (int j = 1; j <  this->BlockSize; ++j)
+    {
+      for (int i = 0; i < Dimension; i++)
+	{
+	  this->ArnoldiVectors[j][i] = (rand() - 32767) * 0.5;
+	}
+      for (int i = 0; i < j; ++i)
+	TmpCoef[i] = this->ArnoldiVectors[j] * this->ArnoldiVectors[i];
+      for (int i = 0; i < j; ++i)
+	this->ArnoldiVectors[j].AddLinearCombination(-TmpCoef[i], this->ArnoldiVectors[i]);
+      this->ArnoldiVectors[j] /= this->ArnoldiVectors[j].Norm();
+    }
   this->Index = 0;
-  this->TridiagonalizedMatrix.Resize(0, 0);
 }
 
 // get last produced vector
 //
 // return value = reference on lest produced vector
 
-Vector& BasicArnoldiAlgorithm::GetGroundState()
+Vector& BasicBlockArnoldiAlgorithm::GetGroundState()
 {
   this->GroundState = ComplexVector(this->ArnoldiVectors[0].GetLargeVectorDimension(), true);
   ComplexMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
@@ -185,7 +211,7 @@ Vector& BasicArnoldiAlgorithm::GetGroundState()
   for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
     SortedDiagonalizedMatrix[i] = TmpDiag[i];
 #else
-  cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
+  cout << "lapack is required for BasicBlockArnoldiAlgorithm" << endl;
 #endif
   if (this->HighEnergyFlag == false)
     SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
@@ -206,7 +232,7 @@ Vector& BasicArnoldiAlgorithm::GetGroundState()
 // nbrEigenstates = number of needed eigenstates
 // return value = array containing the eigenstates
 
-Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
+Vector* BasicBlockArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
 {
   ComplexVector* Eigenstates = new ComplexVector [nbrEigenstates];
   ComplexMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
@@ -220,7 +246,7 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
   for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
     SortedDiagonalizedMatrix[i] = TmpDiag[i];
 #else
-  cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
+  cout << "lapack is required for BasicBlockArnoldiAlgorithm" << endl;
 #endif
   if (this->HighEnergyFlag == false)
     SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector);
@@ -245,59 +271,97 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
 //
 // nbrIter = number of iteration to do 
 
-void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter) 
+void BasicBlockArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter) 
 {
   int Dimension;
   if (this->Index == 0)
     {
       if (nbrIter < 2)
 	nbrIter = 2;
-      Dimension = nbrIter;
+      Dimension = nbrIter * this->BlockSize;
       this->ReducedMatrix.Resize(Dimension, Dimension);
 
-      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->ArnoldiVectors[0]), &(this->ArnoldiVectors[1]));
+      MultipleVectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, this->ArnoldiVectors, &(this->ArnoldiVectors[this->BlockSize]), 
+							     this->BlockSize);
       Operation1.ApplyOperation(this->Architecture);
-      this->ReducedMatrix[0][0] = (this->ArnoldiVectors[0] * this->ArnoldiVectors[1]);
-      this->ArnoldiVectors[1].AddLinearCombination(-this->ReducedMatrix[0][0], this->ArnoldiVectors[0]);
-      this->ReducedMatrix[0][1] = this->ArnoldiVectors[1].Norm(); 
-      this->ArnoldiVectors[1] /= this->ReducedMatrix[0][1]; 
-      VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->ArnoldiVectors[1]), &(this->ArnoldiVectors[2]));
-      Operation2.ApplyOperation(this->Architecture);
-      this->ReducedMatrix[1][0] = (this->ArnoldiVectors[0] * this->ArnoldiVectors[2]);
-      this->ReducedMatrix[1][1] = (this->ArnoldiVectors[1] * this->ArnoldiVectors[2]);
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  MultipleRealScalarProductOperation Operation2 (&(this->ArnoldiVectors[i + this->BlockSize]), this->ArnoldiVectors,   
+							 this->BlockSize, this->TemporaryCoefficients);
+	  Operation2.ApplyOperation(this->Architecture);
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    {
+	      this->ReducedMatrix[i][j] = this->TemporaryCoefficients[j];
+	    }
+	}
+
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  for (int j = 0; j < this->BlockSize; ++j)
+	    this->TemporaryCoefficients[j] = -this->ReducedMatrix(i, j);
+	  AddRealLinearCombinationOperation Operation2 (&(this->ArnoldiVectors[this->BlockSize + i]), this->ArnoldiVectors, 
+						       this->BlockSize, this->TemporaryCoefficients);
+	  Operation2.ApplyOperation(this->Architecture);
+	}
+
+      this->ReorthogonalizeVectors(&(this->ArnoldiVectors[this->BlockSize]), this->BlockSize, this->ReducedMatrix, this->BlockSize, 0);
+
+      MultipleVectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &(this->ArnoldiVectors[this->BlockSize]), 
+							     &(this->ArnoldiVectors[2 * this->BlockSize]), this->BlockSize);
+      Operation3.ApplyOperation(this->Architecture);
+      for (int i = 0; i < this->BlockSize; ++i)
+	{
+	  MultipleRealScalarProductOperation Operation2 (&(this->ArnoldiVectors[i + (2 * this->BlockSize)]), 
+							 this->ArnoldiVectors,   
+							 2 * this->BlockSize, this->TemporaryCoefficients);
+	  Operation2.ApplyOperation(this->Architecture);
+	  for (int j = 0; j < (2 * this->BlockSize); ++j)
+	    {
+	      this->ReducedMatrix[this->BlockSize + i][j] = this->TemporaryCoefficients[j];
+	    }
+	}
+      nbrIter -= 2;
+      this->Index = 2;
     }
   else
     {
-      Dimension = this->ReducedMatrix.GetNbrRow() + nbrIter;
+      Dimension = this->ReducedMatrix.GetNbrRow() + nbrIter * this->BlockSize;
       this->ReducedMatrix.Resize(Dimension, Dimension);
     }
-  for (int i = this->Index + 2; i < Dimension; ++i)
+  for (; nbrIter > 0; --nbrIter)
     {
-      for (int k = 0; k < i; ++k)
+      int NewVectorPosition = this->Index * this->BlockSize;
+      for (int j = 0; j < this->BlockSize; ++j)
 	{
-	  this->ReducedMatrix.GetMatrixElement(k, i - 1, this->TemporaryCoefficients[k]);
-	  this->TemporaryCoefficients[k] *= -1.0;
+	  for (int k = 0; k < NewVectorPosition; ++k)
+	    {
+	      this->ReducedMatrix.GetMatrixElement(k, NewVectorPosition - this->BlockSize + j, this->TemporaryCoefficients[k]);
+	      this->TemporaryCoefficients[k] *= -1.0;
+	    }
+	  AddRealLinearCombinationOperation Operation2 (&(this->ArnoldiVectors[NewVectorPosition + j]), this->ArnoldiVectors, 
+							NewVectorPosition, this->TemporaryCoefficients);	  
+	  Operation2.ApplyOperation(this->Architecture);
 	}
-      AddRealLinearCombinationOperation Operation2 (&(this->ArnoldiVectors[i]), this->ArnoldiVectors, i, this->TemporaryCoefficients);	  
-      Operation2.ApplyOperation(this->Architecture);
-      double VectorNorm = this->ArnoldiVectors[i].Norm();
-      this->ReducedMatrix.SetMatrixElement(i, i - 1, VectorNorm);
-      if (VectorNorm < 1e-5)
-	{
-	  cout << "subspace !!! " << i << endl;
-	}
-      this->ArnoldiVectors[i] /= VectorNorm;
-      this->Index++;
-      this->ArnoldiVectors[i + 1] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
-      VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->ArnoldiVectors[i]), &(this->ArnoldiVectors[i + 1]));
+
+      this->ReorthogonalizeVectors(&(this->ArnoldiVectors[NewVectorPosition]), this->BlockSize, this->ReducedMatrix, 
+				   NewVectorPosition, NewVectorPosition - this->BlockSize);  
+
+      for (int j = 0; j < this->BlockSize; ++j)
+	this->ArnoldiVectors[NewVectorPosition + this->BlockSize + j] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
+      MultipleVectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->ArnoldiVectors[NewVectorPosition]), 
+							    &(this->ArnoldiVectors[NewVectorPosition + this->BlockSize]), this->BlockSize);
       Operation.ApplyOperation(this->Architecture);
-      MultipleRealScalarProductOperation Operation3 (&(this->ArnoldiVectors[i + 1]), this->ArnoldiVectors,
-						     i + 1, this->TemporaryCoefficients);
-      Operation3.ApplyOperation(this->Architecture);
-      for (int j = 0; j <= i; ++j)
+      for (int j = 0; j < this->BlockSize; ++j)
 	{
-	  this->ReducedMatrix.SetMatrixElement(j, i, this->TemporaryCoefficients[j]);
+	  MultipleRealScalarProductOperation Operation3 (&(this->ArnoldiVectors[NewVectorPosition + this->BlockSize + j]), this->ArnoldiVectors,
+							 NewVectorPosition + this->BlockSize, this->TemporaryCoefficients);
+	  Operation3.ApplyOperation(this->Architecture);
+	  for (int k = 0; k < (NewVectorPosition + this->BlockSize); ++k)
+	    {
+	      this->ReducedMatrix.SetMatrixElement(k, NewVectorPosition + j, this->TemporaryCoefficients[k]);
+	    }
 	}
+      ++this->Index;
     }
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
@@ -328,7 +392,7 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 //
 // return value = true if convergence has been reached
 
-bool BasicArnoldiAlgorithm::TestConvergence ()
+bool BasicBlockArnoldiAlgorithm::TestConvergence ()
 {
   if (this->ReducedMatrix.GetNbrRow() > this->NbrEigenvalue)
     {
@@ -365,10 +429,12 @@ bool BasicArnoldiAlgorithm::TestConvergence ()
 // diagonalize tridiagonalized matrix and find ground state energy
 //
 
-void BasicArnoldiAlgorithm::Diagonalize () 
+void BasicBlockArnoldiAlgorithm::Diagonalize () 
 {
   int Dimension = this->ReducedMatrix.GetNbrRow();
   this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
+  if (this->Index < 5)
+    cout << this->TemporaryReducedMatrix << endl;
 #ifdef __LAPACK__
   ComplexDiagonalMatrix TmpDiag (this->TemporaryReducedMatrix.GetNbrColumn());
   this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag);
@@ -376,12 +442,46 @@ void BasicArnoldiAlgorithm::Diagonalize ()
   for (int i = 0; i < this->TemporaryReducedMatrix.GetNbrColumn(); ++i)
     this->ComplexDiagonalizedMatrix[i] = TmpDiag[i];
 #else
-  cout << "error, LAPACK is required for BasicArnoldiAlgorithm" << endl;
+  cout << "error, LAPACK is required for BasicBlockArnoldiAlgorithm" << endl;
 #endif
   this->GroundStateEnergy = Norm(this->ComplexDiagonalizedMatrix[0]);
   for (int DiagPos = 1; DiagPos < Dimension; DiagPos++)
     if (Norm(this->ComplexDiagonalizedMatrix[DiagPos]) < this->GroundStateEnergy)
       this->GroundStateEnergy = Norm(this->ComplexDiagonalizedMatrix[DiagPos]);  
   return;
+}
+
+// reorthogonalize a set of vectors using Gram-Schmidt algorithm
+//
+// vectors = array of vectors to reorthogonalize
+// nbrVectors = number of vectors to reorthogonalize
+// matrix = matrix where transformation matrix has to be stored
+// rowShift = shift to apply to matrix row index to reach the upper leftmost element
+// columnShift = shift to apply to matrix column index to reach the upper leftmost element
+
+void BasicBlockArnoldiAlgorithm::ReorthogonalizeVectors (RealVector* vectors, int nbrVectors, RealMatrix& matrix,
+							 int rowShift, int columnShift)
+{
+  double TmpNorm = vectors[0].Norm();
+  matrix[columnShift][rowShift] = TmpNorm;
+  vectors[0] /= TmpNorm;
+  for (int i = 1; i < nbrVectors; ++i)
+    {
+      MultipleRealScalarProductOperation Operation (&(vectors[i]), 
+						    vectors,   
+						    i, this->TemporaryCoefficients);
+      Operation.ApplyOperation(this->Architecture);
+      for (int j = 0; j < i; ++j)
+	{
+	  matrix(rowShift + j, columnShift + i) = this->TemporaryCoefficients[j];
+	  this->TemporaryCoefficients[j] *= -1.0;
+	}
+      AddRealLinearCombinationOperation Operation2 (&(vectors[i]), vectors, 
+						    i, this->TemporaryCoefficients);	  
+      Operation2.ApplyOperation(this->Architecture);
+      TmpNorm = vectors[i].Norm();      
+      matrix[columnShift + i][rowShift + i] = TmpNorm;
+      vectors[i] /= TmpNorm;      
+    }
 }
 

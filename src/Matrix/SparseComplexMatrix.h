@@ -115,7 +115,8 @@ class SparseComplexMatrix : public Matrix
   // copy constructor (duplicating all data)
   //
   // M = matrix to copy
-  SparseComplexMatrix(Matrix& M);
+  // accuracy = value below which a matrix element is considered to be zero
+  SparseComplexMatrix(Matrix& M, double accuracy = 0.0);
 
   // destructor
   //
@@ -341,6 +342,27 @@ class SparseComplexMatrix : public Matrix
   friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2, const SparseComplexMatrix& matrix3, 
 					Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
 
+  // conjugate a matrix
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // return value = reference on conjugated matrix
+  friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, 
+					const SparseComplexMatrix& matrix3);
+
+  // multiply three matrices, providing all the required temporary arrays
+  //
+  // matrix1 = left matrix
+  // matrix2 = matrix to conjugate
+  // matrix3 = right matrix
+  // tmpMatrixElements = temporary array of real numbers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpColumnIndices = temporary array of integers, the dimension should be equal or higher to the resulting number of non zero elements
+  // tmpElements = temporary array of real numbers, the dimension should be equal to the "matrix" number of rows 
+  // return value = reference on current matrix
+  friend SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2, const SparseComplexMatrix& matrix3, 
+					Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
+
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //
   // return value = number of non-zero matrix elements
@@ -367,6 +389,13 @@ class SparseComplexMatrix : public Matrix
   // matrix2 = reference on the right matrix
   // return value = tensor product
   friend SparseComplexMatrix TensorProduct (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
+
+  // compute the tensor product of two sparse matrices, applying conjugation on the left one (conj(matrix1) x matrix2), and store the result in a sparse matrix
+  //
+  // matrix1 = reference on the left matrix
+  // matrix2 = reference on the right matrix
+  // return value = tensor product
+  friend SparseComplexMatrix TensorProductWithConjugation (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
 
   // compute the hermitian transpose of the current matrix
   //

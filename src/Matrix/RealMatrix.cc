@@ -318,6 +318,49 @@ Matrix* RealMatrix::Clone ()
   return ((Matrix*) new RealMatrix (*this));
 }
 
+// copy a matrix into another (duplicating data)
+//
+// matrix = matrix to copy
+// return value = reference on current matrix
+
+RealMatrix& RealMatrix::Copy (RealMatrix& matrix)
+{
+  if (this->ColumnGarbageFlag != 0)
+    {
+      if ((*(this->ColumnGarbageFlag)) == 1)
+	{
+	  delete[] this->Columns;
+	  delete this->ColumnGarbageFlag;
+	}
+      else
+	(*(this->ColumnGarbageFlag))--;
+    }
+  if (matrix.ColumnGarbageFlag != 0)
+    {
+      this->ColumnGarbageFlag = new int;
+      *(this->ColumnGarbageFlag) = 1;
+      this->NbrRow = matrix.NbrRow;
+      this->NbrColumn = matrix.NbrColumn;
+      this->TrueNbrRow = matrix.TrueNbrRow;
+      this->TrueNbrColumn = matrix.TrueNbrColumn;
+      this->MatrixType = Matrix::RealElements;
+      this->Columns = new RealVector[this->NbrColumn];
+      for (int i = 0; i < this->NbrColumn; i++)
+	this->Columns[i].Copy(matrix.Columns[i]);
+    }
+  else
+    {
+      this->Columns = 0;
+      this->ColumnGarbageFlag = 0;
+      this->NbrRow = 0;
+      this->NbrColumn = 0;
+      this->TrueNbrRow = 0;
+      this->TrueNbrColumn = 0;
+      this->MatrixType = Matrix::RealElements;
+    }
+  return *this;
+}
+
 // set a matrix element
 //
 // i = line position
@@ -1190,13 +1233,13 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
   char JobVR;
   if (leftFlag == true)
     {
-      JobVL = 'V';
+      JobVL = 'N';
       JobVR = 'N';
     }
   else
     {
       JobVL = 'N';
-      JobVR = 'V';
+      JobVR = 'N';
     }
   double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
   long TotalIndex = 0l;

@@ -126,6 +126,12 @@ class RealMatrix : public Matrix
   // retrun value = pointer on new matrix 
   Matrix* Clone ();
 
+  // copy a matrix into another (duplicating data)
+  //
+  // matrix = matrix to copy
+  // return value = reference on current matrix
+  RealMatrix& Copy (RealMatrix& matrix);
+
   // get a matrix element (real part if complex)
   //
   // i = line position

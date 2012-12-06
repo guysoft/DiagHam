@@ -168,7 +168,7 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm()
       for (int i = 0; i < Dimension; i++)
 	this->LanczosVectors[0][i] = (drand48() - 0.5) * 2.0;
       this->LanczosVectors[0] /= this->LanczosVectors[0].Norm();
-      double* TmpCoef = new double [this->NbrEigenvalue];
+      double* TmpCoef = new double [this->BlockSize];
       for (int j = 1; j < this->BlockSize; ++j)
 	{
 	  this->LanczosVectors[j] = RealVector (Dimension);
@@ -216,8 +216,8 @@ void BasicBlockLanczosAlgorithm::InitializeLanczosAlgorithm(const Vector& vector
     {
       int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
       this->LanczosVectors[0] = vector;
-      double* TmpCoef = new double [this->NbrEigenvalue];
-      for (int j = 1; j < this->NbrEigenvalue; ++j)
+      double* TmpCoef = new double [this->BlockSize];
+      for (int j = 1; j < this->BlockSize; ++j)
 	{
 	  this->LanczosVectors[j] = RealVector (Dimension);
 	  for (int i = 0; i < Dimension; ++i)
