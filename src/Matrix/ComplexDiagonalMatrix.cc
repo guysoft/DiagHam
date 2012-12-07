@@ -698,27 +698,53 @@ Complex ComplexDiagonalMatrix::Determinant ()
 
 // Sort Matrix such that diagnonal elements are sort in decreasing order
 //
+// normSort = sort with respect to the norm instead of the real part
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder()
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(bool normSort)
 {
   int ReducedDim = this->NbrColumn - 2;
   Complex tmp;
   int MinPos;
-  Complex MinValue;
-  for (int i = 0; i <= ReducedDim; i++)
+  if (normSort == false)
     {
-      MinPos = this->NbrColumn - 1;
-      MinValue = this->DiagonalElements[MinPos];
-      for (int j = ReducedDim; j >= i; j--)
-	if (this->DiagonalElements[j].Re > MinValue.Re)
+      Complex MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
 	{
-	  MinValue = this->DiagonalElements[j];
-	  MinPos = j;
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = this->DiagonalElements[MinPos];
+	  for (int j = ReducedDim; j >= i; j--)
+	    {
+	      if (this->DiagonalElements[j].Re > MinValue.Re)
+		{
+		  MinValue = this->DiagonalElements[j];
+		  MinPos = j;
+		}
+	    }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = MinValue;
+	  this->DiagonalElements[MinPos] = tmp;
 	}
-      tmp = this->DiagonalElements[i];
-      this->DiagonalElements[i] = MinValue;
-      this->DiagonalElements[MinPos] = tmp;
+    }
+  else
+    {
+      double MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
+	{
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = SqrNorm(this->DiagonalElements[MinPos]);
+	  for (int j = ReducedDim; j >= i; j--)
+	    {
+	      if (SqrNorm(this->DiagonalElements[j]) > MinValue)
+		{
+		  MinValue = SqrNorm(this->DiagonalElements[j]);
+		  MinPos = j;
+		}
+	    }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = this->DiagonalElements[MinPos];
+	  this->DiagonalElements[MinPos] = tmp;
+	}
     }
   return *this;
 }
@@ -729,56 +755,102 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder()
 // matrix = matrix on which transformation has to be applied
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix& matrix)
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix& matrix, bool normSort)
 {
   int ReducedDim = this->NbrColumn - 2;
   ComplexVector TmpV;
   Complex tmp;
   int MinPos;
-  Complex MinValue;
-  for (int i = 0; i <= ReducedDim; i++)
+  if (normSort == false)
     {
-      MinPos = this->NbrColumn - 1;
-      MinValue = this->DiagonalElements[MinPos];
-      for (int j = ReducedDim; j >= i; j--)
-	if (this->DiagonalElements[j].Re > MinValue.Re)
-	  {
-	    MinValue = this->DiagonalElements[j];
-	    MinPos = j;
-	  }
-      tmp = this->DiagonalElements[i];
-      this->DiagonalElements[i] = MinValue;
-      this->DiagonalElements[MinPos] = tmp;
-      TmpV = matrix[i];
-      matrix[i] = matrix[MinPos];
-      matrix[MinPos] = TmpV;
+      Complex MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
+	{
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = this->DiagonalElements[MinPos];
+	  for (int j = ReducedDim; j >= i; j--)
+	    if (this->DiagonalElements[j].Re > MinValue.Re)
+	      {
+		MinValue = this->DiagonalElements[j];
+		MinPos = j;
+	      }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = MinValue;
+	  this->DiagonalElements[MinPos] = tmp;
+	  TmpV = matrix[i];
+	  matrix[i] = matrix[MinPos];
+	  matrix[MinPos] = TmpV;
+	}
+    }
+  else
+    {
+      double MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
+	{
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = SqrNorm(this->DiagonalElements[MinPos]);
+	  for (int j = ReducedDim; j >= i; j--)
+	    if ( SqrNorm(this->DiagonalElements[j])>  MinValue)
+	      {
+		MinValue =  SqrNorm(this->DiagonalElements[j]);
+		MinPos = j;
+	      }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = this->DiagonalElements[MinPos];
+	  this->DiagonalElements[MinPos] = tmp;
+	  TmpV = matrix[i];
+	  matrix[i] = matrix[MinPos];
+	  matrix[MinPos] = TmpV;
+	}
     }
   return *this;
 }
 
 // Sort Matrix such that diagnonal elements are sort in increasing order
 //
+// normSort = sort with respect to the norm instead of the real part
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder()
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(bool normSort)
 {
   int ReducedDim = this->NbrColumn - 2;
   Complex tmp;
   int MinPos;
-  Complex MinValue;
-  for (int i = 0; i <= ReducedDim; i++)
+  if (normSort == false)
     {
-      MinPos = this->NbrColumn - 1;
-      MinValue = this->DiagonalElements[MinPos];
-      for (int j = ReducedDim; j >= i; j--)
-	if (this->DiagonalElements[j].Re < MinValue.Re)
+      Complex MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
 	{
-	  MinValue = this->DiagonalElements[j];
-	  MinPos = j;
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = this->DiagonalElements[MinPos];
+	  for (int j = ReducedDim; j >= i; j--)
+	    if (this->DiagonalElements[j].Re < MinValue.Re)
+	      {
+		MinValue = this->DiagonalElements[j];
+		MinPos = j;
+	      }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = MinValue;
+	  this->DiagonalElements[MinPos] = tmp;
 	}
-      tmp = this->DiagonalElements[i];
-      this->DiagonalElements[i] = MinValue;
-      this->DiagonalElements[MinPos] = tmp;
+    }
+  else
+    {
+      double MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
+	{
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = SqrNorm(this->DiagonalElements[MinPos]);
+	  for (int j = ReducedDim; j >= i; j--)
+	    if (SqrNorm(this->DiagonalElements[j]) < MinValue)
+	      {
+		MinValue = SqrNorm(this->DiagonalElements[j]);
+		MinPos = j;
+	      }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = this->DiagonalElements[MinPos];
+	  this->DiagonalElements[MinPos] = tmp;
+	}
     }
   return *this;
 }
@@ -790,29 +862,53 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder()
 // matrix = matrix on which transformation has to be applied
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& matrix)
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& matrix, bool normSort)
 {
   int ReducedDim = this->NbrColumn - 2;
   ComplexVector TmpV;
   Complex tmp;
   int MinPos;
-  Complex MinValue;
-  for (int i = 0; i <= ReducedDim; i++)
+  if (normSort == false)
     {
-      MinPos = this->NbrColumn - 1;
-      MinValue = this->DiagonalElements[MinPos];
-      for (int j = ReducedDim; j >= i; j--)
-	if (this->DiagonalElements[j].Re < MinValue.Re)
+      Complex MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
 	{
-	  MinValue = this->DiagonalElements[j];
-	  MinPos = j;
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = this->DiagonalElements[MinPos];
+	  for (int j = ReducedDim; j >= i; j--)
+	    if (this->DiagonalElements[j].Re < MinValue.Re)
+	      {
+		MinValue = this->DiagonalElements[j];
+		MinPos = j;
+	      }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = MinValue;
+	  this->DiagonalElements[MinPos] = tmp;
+	  TmpV = matrix[i];
+	  matrix[i] = matrix[MinPos];
+	  matrix[MinPos] = TmpV;
 	}
-      tmp = this->DiagonalElements[i];
-      this->DiagonalElements[i] = MinValue;
-      this->DiagonalElements[MinPos] = tmp;
-      TmpV = matrix[i];
-      matrix[i] = matrix[MinPos];
-      matrix[MinPos] = TmpV;
+    }
+  else
+    {
+      double MinValue;
+      for (int i = 0; i <= ReducedDim; i++)
+	{
+	  MinPos = this->NbrColumn - 1;
+	  MinValue = SqrNorm(this->DiagonalElements[MinPos]);
+	  for (int j = ReducedDim; j >= i; j--)
+	    if (SqrNorm(this->DiagonalElements[j]) < MinValue)
+	      {
+		MinValue = SqrNorm(this->DiagonalElements[j]);
+		MinPos = j;
+	      }
+	  tmp = this->DiagonalElements[i];
+	  this->DiagonalElements[i] = this->DiagonalElements[MinPos];
+	  this->DiagonalElements[MinPos] = tmp;
+	  TmpV = matrix[i];
+	  matrix[i] = matrix[MinPos];
+	  matrix[MinPos] = TmpV;
+	}
     }
   return *this;
 }

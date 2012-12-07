@@ -21,6 +21,7 @@
 #include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+#include "LanczosAlgorithm/BasicComplexArnoldiAlgorithm.h"
 #include "LanczosAlgorithm/BasicBlockArnoldiAlgorithm.h"
 
 #include "Vector/Vector.h"
@@ -249,21 +250,26 @@ int main(int argc, char** argv)
 	}
 
        TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseConjugateBMatrices, Coefficients);
-       int NbrEigenstates = 2;
-//       BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);
-       BasicBlockArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, NbrEigenstates, 3000, true, false, false);
+       int NbrEigenstates = 3;
+       BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);
+//       BasicComplexArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);
+//       BasicBlockArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, NbrEigenstates, 3000, true, false, false);
        Arnoldi.SetHamiltonian(&EHamiltonian);
        Arnoldi.InitializeLanczosAlgorithm();
        Arnoldi.RunLanczosAlgorithm(3);
        while (Arnoldi.TestConvergence() == false)
-	 {
-	   Arnoldi.RunLanczosAlgorithm(1);
-	 }
-       ComplexVector* Test = (ComplexVector*) Arnoldi.GetEigenstates(NbrEigenstates);       
-       cout << (Test[0] * Test[0]) << endl;
-       ComplexVector TestE (Test[0].GetVectorDimension());
-       EHamiltonian.Multiply(Test[0], TestE);
-       cout << (TestE * Test[0]) << endl;
+ 	 {
+ 	   Arnoldi.RunLanczosAlgorithm(1);
+ 	 }
+        ComplexVector* Test = (ComplexVector*) Arnoldi.GetEigenstates(NbrEigenstates);  
+	for (int i = 0; i < NbrEigenstates; ++i)
+	  {
+	    cout << (Test[i] * Test[i]) << endl;
+	    ComplexVector TestE (Test[i].GetVectorDimension());
+	    EHamiltonian.Multiply(Test[i], TestE);
+	    cout << (TestE * Test[i]) << endl;
+	  }
+
 //       RealMatrix NormalizedB0B0B1B1Full2(NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow());
 //       EHamiltonian.GetHamiltonian(NormalizedB0B0B1B1Full2);
 //       cout << SparseBMatrices[0] << endl;
@@ -278,7 +284,7 @@ int main(int argc, char** argv)
 // 		   << NormalizedB0B0B1B1Full2[j][i] << " " << NormalizedB0B0B1B1Full[i][j] << endl;
 // 	  }
 
-//      return 0;
+      return 0;
 
       SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
       for (int i = 0; i < NbrBMatrices; ++i)
@@ -293,6 +299,7 @@ int main(int argc, char** argv)
       SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
       
       RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
+      ComplexMatrix NormalizedB0B0B1B1FullC (NormalizedB0B0B1B1Full);
 
 
       ComplexDiagonalMatrix TmpDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
@@ -325,10 +332,20 @@ int main(int argc, char** argv)
 	    cout << TmpDiag[i] << " " << Norm(TmpDiag[i]) << endl;
 	  }
       cout << endl;
+
+      ComplexDiagonalMatrix TmpDiag2 (NormalizedB0B0B1B1FullC.GetNbrRow(), true);  
+      NormalizedB0B0B1B1FullC.LapackDiagonalize(TmpDiag2);
+      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+       if (Norm(TmpDiag2[i]) > 1e-10)
+	  {
+	    cout << TmpDiag2[i] << " " << Norm(TmpDiag2[i]) << endl;
+	  }
+      cout << endl;
+
       return 0;
-      cout << (Eigenstates[LargestEigenvalueIndex] * Test[0]) << endl;
-      cout << (Eigenstates[LargestEigenvalueIndex2] * Test[0]) << endl;
-      cout << (Eigenstates[LargestEigenvalueIndex3] * Test[0]) << endl;
+//       cout << (Eigenstates[LargestEigenvalueIndex] * Test[0]) << endl;
+//       cout << (Eigenstates[LargestEigenvalueIndex2] * Test[0]) << endl;
+//       cout << (Eigenstates[LargestEigenvalueIndex3] * Test[0]) << endl;
 
       ComplexDiagonalMatrix TmpLeftDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
       ComplexMatrix LeftEigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
@@ -380,9 +397,9 @@ int main(int argc, char** argv)
 // 	   << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex3]) << " " 
 // 	   << (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]) << endl;
 
-      cout << (LeftEigenstates[LargestLeftEigenvalueIndex] * Test[0]) << endl;
-      cout << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Test[0]) << endl;
-      cout << (LeftEigenstates[LargestLeftEigenvalueIndex3] * Test[0]) << endl;
+//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex] * Test[0]) << endl;
+//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Test[0]) << endl;
+//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex3] * Test[0]) << endl;
 
       RealMatrix NormalizedB1B1Full (SparseTensorProductBMatrices[1][1]);
       ComplexVector Test2(NormalizedB0B0B1B1Full.GetNbrRow());

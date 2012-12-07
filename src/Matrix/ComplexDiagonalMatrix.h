@@ -307,27 +307,31 @@ class ComplexDiagonalMatrix : public Matrix
 
   // Sort Matrix such that diagnonal elements are sort in decreasing order
   //
+  // normSort = sort with respect to the norm instead of the real part
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixDownOrder();
+  ComplexDiagonalMatrix& SortMatrixDownOrder(bool normSort = false);
   
   // Sort Matrix such that diagnonal elements are sort in decreasing order
   // and apply corresponding transformation to column of a given complex matrix 
   //
   // matrix = matrix on which transformation has to be applied
+  // normSort = sort with respect to the norm instead of the real part
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix);
+  ComplexDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix, bool normSort = false);
 
   // Sort Matrix such that diagnonal elements are sort in increasing order
   //
+  // normSort = sort with respect to the norm instead of the real part
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixUpOrder();
+  ComplexDiagonalMatrix& SortMatrixUpOrder(bool normSort = false);
   
   // Sort Matrix such that diagnonal elements are sort in increasing order
   // and apply corresponding transformation to column of a given complex matrix 
   //
   // matrix = matrix on which transformation has to be applied
+  // normSort = sort with respect to the norm instead of the real part
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix);
+  ComplexDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix, bool normSort = false);
 
   // Output Stream overload
   //
