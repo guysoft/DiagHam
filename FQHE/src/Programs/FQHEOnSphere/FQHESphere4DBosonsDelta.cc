@@ -143,6 +143,7 @@ int main(int argc, char** argv)
       {
 	if ((((jz + kz) & 1) == ((NbrBosons * NbrFluxQuanta) & 1)) && (abs(kz)<=abs(jz)) && (fabs(kz)+fabs(jz)<= NbrBosons*NbrFluxQuanta))
 	{
+// 	   
 	cout << "(jz,kz) = (" << jz << "," << kz << ")" << endl; 
       ParticleOnSphere* Space = 0;
       if (NbrOrbitals + NbrBosons < 65)

@@ -5,7 +5,7 @@
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpace.h"
-
+#include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
 
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.h"
 #include "Hamiltonian/ParticleOnCubicLatticeFullFourBandSimpleTIHamiltonian.h"
@@ -251,7 +251,14 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		  if (TotalNbrSites + NbrParticles <= 64)
+		    {		  
+		      Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		    }
+		    else
+		    {
+		      Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
+		    }
 		}
 	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	

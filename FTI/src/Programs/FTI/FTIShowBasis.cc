@@ -13,6 +13,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnHyperCubicLatticeWithSU2SpinMomentumSpace.h"
 
 #include "Vector/ComplexVector.h"
@@ -245,8 +246,16 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ,
+	      if (NbrParticles + NbrSiteX*NbrSiteY*NbrSiteZ <= 64)
+	      {
+		Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ,
 								       TotalKx, TotalKy, TotalKz);
+	      }
+	      else
+	      {
+		Space = new BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ,
+								       TotalKx, TotalKy, TotalKz);
+	      }
 	    }
 	}
       if (Manager.GetString("save-hilbert") != 0)

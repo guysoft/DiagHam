@@ -54,6 +54,7 @@ class BosonOnSphereLong :  public ParticleOnSphere
   friend class BosonOnSphereSymmetricBasisLong;
   friend class BosonOnSphereHaldaneSymmetricBasisLong;
   friend class BosonOnSphereHaldaneHugeBasisLong;
+  friend class BosonOnSphereWithSU4SpinLong;
 
  protected:
 
