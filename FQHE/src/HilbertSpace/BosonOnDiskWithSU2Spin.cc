@@ -48,6 +48,8 @@
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 // basic constructor
@@ -183,19 +185,6 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
 	  cout << TmpLargeHilbertSpaceDimension << " " << this->LargeHilbertSpaceDimension << endl;
 	  cout << "Mismatch in State-count and State Generation in BosonOnSphereWithSU2Spin!" << endl;
 	  exit(1);
-	}
-      for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
-	{
-	  unsigned long TmpState = this->StateDescriptionUp[i];
-	  unsigned long Tmp = 0l;
-	  for (int j = 0; j <= this->FermionicLzMax; ++j)
-	    Tmp += (TmpState >> j) & 0x1ul;
-	  this->StateDescriptionUp[i] >>= this->NbrBosons - Tmp; 
-	  TmpState = this->StateDescriptionDown[i];
-	  Tmp = 0l;
-	  for (int j = 0; j <= this->FermionicLzMax; ++j)
-	    Tmp += (TmpState >> j) & 0x1ul;
-	  this->StateDescriptionDown[i] >>= this->NbrBosons - Tmp; 
 	}
       SortDoubleElementArrayDownOrdering<unsigned long>(this->StateDescriptionUp, this->StateDescriptionDown, TmpLargeHilbertSpaceDimension);
   

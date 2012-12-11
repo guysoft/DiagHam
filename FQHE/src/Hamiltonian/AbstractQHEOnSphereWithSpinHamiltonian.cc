@@ -401,7 +401,6 @@ RealVector* AbstractQHEOnSphereWithSpinHamiltonian::LowLevelMultipleAddMultiplyP
 
 long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int lastComponent)
 {
-  cout <<"Pre IM Here"<<endl;
   int Index;
   double Coefficient = 0.0;
   double Coefficient2 = 0.0;
@@ -541,7 +540,6 @@ long AbstractQHEOnSphereWithSpinHamiltonian::PartialFastMultiplicationMemory(int
     }
   if (this->OneBodyInteractionFactorsupdown != 0)
     {
-       cout <<" IM Here"<<endl;
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  for (int j=0; j<= this->LzMax; ++j)

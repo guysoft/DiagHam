@@ -299,7 +299,19 @@ int QHEOnDiskMainTask::ExecuteMainTask()
   if (this->Hamiltonian->GetHilbertSpaceDimension() < this->FullDiagonalizationLimit)
     {
       RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+      timeval TotalStartingTime;
+      timeval TotalEndingTime;
+      double Dt;
+      gettimeofday (&(TotalStartingTime), 0);
       this->Hamiltonian->GetHamiltonian(HRep);
+      gettimeofday (&(TotalEndingTime), 0);
+      if (this->ShowIterationTime == true)
+	{
+	  Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+	    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+	  cout << "hamiltonian representation done in " << Dt << "s" << endl;
+	}
+      gettimeofday (&(TotalStartingTime), 0);
       if (this->Hamiltonian->GetHilbertSpaceDimension() > 1)
 	{
 #ifdef __LAPACK__
@@ -309,6 +321,13 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 	      if (this->EvaluateEigenvectors == false)
 		{
 		  HRep.LapackDiagonalize(TmpDiag);
+		  gettimeofday (&(TotalEndingTime), 0);
+		  if (this->ShowIterationTime == true)
+		    {
+		      Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+		      cout << "diagonalization done in " << Dt << "s" << endl;
+		    }
 		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 		    File << this->LValue << " " << (TmpDiag[j] - this->EnergyShift) << endl;
 		}
@@ -316,6 +335,13 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 		{
 		  RealMatrix Q(this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
 		  HRep.LapackDiagonalize(TmpDiag, Q);
+		  gettimeofday (&(TotalEndingTime), 0);
+		  if (this->ShowIterationTime == true)
+		    {
+		      Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+		      cout << "diagonalization done in " << Dt << "s" << endl;
+		    }
 		  if (this->EvaluateEigenvectors == true)
 		    {
 		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
@@ -352,6 +378,13 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 		  HRep.Householder(TmpTriDiag, 1e-7);
 		  TmpTriDiag.Diagonalize();
 		  TmpTriDiag.SortMatrixUpOrder();
+		  gettimeofday (&(TotalEndingTime), 0);
+		  if (this->ShowIterationTime == true)
+		    {
+		      Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+		      cout << "diagonalization done in " << Dt << "s" << endl;
+		    }
 		  for (int j = 0; j < this->Hamiltonian->GetHilbertSpaceDimension() ; ++j)
 		    File << this->LValue << " " << (TmpTriDiag.DiagonalElement(j) - this->EnergyShift) << endl;
 		}
@@ -361,6 +394,13 @@ int QHEOnDiskMainTask::ExecuteMainTask()
 		  HRep.Householder(TmpTriDiag, 1e-7, Q);
 		  TmpTriDiag.Diagonalize(Q);
 		  TmpTriDiag.SortMatrixUpOrder(Q);
+		  gettimeofday (&(TotalEndingTime), 0);
+		  if (this->ShowIterationTime == true)
+		    {
+		      Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);		      
+		      cout << "diagonalization done in " << Dt << "s" << endl;
+		    }
 		  if (this->EvaluateEigenvectors == true)
 		    {
 		      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];

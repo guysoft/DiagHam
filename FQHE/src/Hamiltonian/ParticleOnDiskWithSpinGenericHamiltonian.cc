@@ -39,7 +39,7 @@
 #include "Output/MathematicaOutput.h"
 
 #include "MathTools/FactorialCoefficient.h"
-#include "MathTools/ClebschGordanCoefficients.h"
+#include "MathTools/ClebschGordanDiskCoefficients.h"
 
 #include "Hamiltonian/ParticleOnDiskGenericHamiltonian.h"
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
@@ -68,6 +68,7 @@ ParticleOnDiskWithSpinGenericHamiltonian::ParticleOnDiskWithSpinGenericHamiltoni
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
+// totalLz = system total value
 // architecture = architecture to use for precalculation
 // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
@@ -78,7 +79,7 @@ ParticleOnDiskWithSpinGenericHamiltonian::ParticleOnDiskWithSpinGenericHamiltoni
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnDiskWithSpinGenericHamiltonian::ParticleOnDiskWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, 
+ParticleOnDiskWithSpinGenericHamiltonian::ParticleOnDiskWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, int totalLz,
 										   double** pseudoPotential, double* onebodyPotentialUpUp, 
 										   double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
 										   AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
@@ -89,16 +90,25 @@ ParticleOnDiskWithSpinGenericHamiltonian::ParticleOnDiskWithSpinGenericHamiltoni
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
+  this->TwoParticleLzMax = 2 * this->LzMax;
+  if (totalLz < this->TwoParticleLzMax)
+    this->TwoParticleLzMax = totalLz;
   this->OneBodyTermFlag = false;
   this->Architecture = architecture;
   this->PseudoPotentials = new double* [3];
   this->L2Hamiltonian = 0;
   this->S2Hamiltonian = 0;
+  this->MaxPseudoPotentials = new int[3];
   for (int j = 0; j < 3; ++j)
     {
       this->PseudoPotentials[j] = new double [this->LzMax + this->NbrLzValue];
-      for (int i = 0; i <= (2 * this->NbrLzValue); ++i)
-	this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+      this->MaxPseudoPotentials[j] = 0;
+      for (int i = 0; i <= (2 * this->LzMax); ++i)
+	{
+	  this->PseudoPotentials[j][i] = pseudoPotential[j][i];
+	  if (this->PseudoPotentials[j][i] != 0.0)
+	    this->MaxPseudoPotentials[j] = i;
+	}
     }
   this->EvaluateInteractionFactors();
   this->HamiltonianShift = 0.0;
@@ -176,6 +186,7 @@ ParticleOnDiskWithSpinGenericHamiltonian::~ParticleOnDiskWithSpinGenericHamilton
   for (int j = 0; j < 3; ++j)
     delete[] this->PseudoPotentials[j];
   delete[] this->PseudoPotentials;
+  delete[] this->MaxPseudoPotentials;
 }
 
 // evaluate all interaction factors
@@ -186,11 +197,8 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
   this->M1IntraValue = 0;
   this->M1InterValue = 0;
   
-//  ClebschGordanDiskCoefficients CGCoefficients(this->LzMax);
-  ClebschGordanCoefficients Clebsch (this->LzMax, this->LzMax);
-  int J = 2 * this->LzMax - 2;
-  // int m4;
-  double ClebschCoef;
+  ClebschGordanDiskCoefficients CGCoefficients(this->LzMax);
+
   long TotalNbrInteractionFactors = 0;
 
   int Sign = 1;
@@ -204,7 +212,8 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
     this->NbrInterSectorIndicesPerSum[i] = 0;
   for (int m1 = 0; m1 <= this->LzMax; ++m1)
     for (int m2 = 0; m2 <= this->LzMax; ++m2)
-      ++this->NbrInterSectorIndicesPerSum[m1 + m2];      
+      if ((m1 + m2) <= this->TwoParticleLzMax)
+	++this->NbrInterSectorIndicesPerSum[m1 + m2];      
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
@@ -214,9 +223,12 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
   for (int m1 = 0; m1 <= this->LzMax; ++m1)
     for (int m2 = 0; m2 <= this->LzMax; ++m2)
       {
-	this->InterSectorIndicesPerSum[(m1 + m2)][this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
-	this->InterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
-	++this->NbrInterSectorIndicesPerSum[(m1 + m2)];
+	if ((m1 + m2) <= this->TwoParticleLzMax)
+	  {
+	    this->InterSectorIndicesPerSum[(m1 + m2)][this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1] = m1;
+	    this->InterSectorIndicesPerSum[(m1 + m2)][1 + (this->NbrInterSectorIndicesPerSum[(m1 + m2)] << 1)] = m2;
+	    ++this->NbrInterSectorIndicesPerSum[(m1 + m2)];
+	  }
       }
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
@@ -227,7 +239,10 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 < this->LzMax; ++m1)
 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
+	  if ((m1 + m2) <= this->TwoParticleLzMax)
+	    {
+	      ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
+	    }
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
@@ -237,9 +252,12 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
       for (int m1 = 0; m1 < this->LzMax; ++m1)
 	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
 	  {
-	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1] = m1;
-	    this->IntraSectorIndicesPerSum[(m1 + m2) - 1][1 + (this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1)] = m2;
-	    ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
+	    if ((m1 + m2) <= this->TwoParticleLzMax)
+	      {
+		this->IntraSectorIndicesPerSum[(m1 + m2) - 1][this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1] = m1;
+		this->IntraSectorIndicesPerSum[(m1 + m2) - 1][1 + (this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1] << 1)] = m2;
+		++this->NbrIntraSectorIndicesPerSum[(m1 + m2) - 1];
+	      }
 	  }
 
       this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
@@ -251,23 +269,20 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int m1 = (this->IntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      int m1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int m2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int MaxSum = m1 + m2;
 	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 		{
-		  int m3 = (this->IntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  this->InteractionFactorsupup[i][Index] = 0.0;
 		  this->InteractionFactorsdowndown[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
+		  for (int j = 1; j <= MaxSum; j += 2)
 		    {
-		      if (((J >> 1) & 1) == Sign)
-			{
-			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-			  this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
-			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
-			}
+		      TmpCoefficient =  (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
+		      this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][j] * TmpCoefficient;
+		      this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][j] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupup[i][Index] *= -4.0;
 		  this->InteractionFactorsdowndown[i][Index] *= -4.0;
@@ -285,18 +300,18 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
 	      double Factor = 2.0;
-	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      int m1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+	      int m2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int MaxSum = m1 + m2;
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  this->InteractionFactorsupdown[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
+		  for (int j = 0; j <= MaxSum; ++j)
 		    {
-		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
+		      TmpCoefficient =  (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
+		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][j] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupdown[i][Index] *= -Factor;
 		  ++TotalNbrInteractionFactors;
@@ -313,7 +328,10 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	this->NbrIntraSectorIndicesPerSum[i] = 0;      
       for (int m1 = 0; m1 <= this->LzMax; ++m1)
 	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	  if ((m1 + m2) <= this->TwoParticleLzMax)
+	    {
+	      ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	    }
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
@@ -323,9 +341,12 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
       for (int m1 = 0; m1 <= this->LzMax; ++m1)
 	for (int m2 = m1; m2 <= this->LzMax; ++m2)
 	  {
-	    this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
-	    this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
-	    ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	    if ((m1 + m2) <= this->TwoParticleLzMax)
+	      {
+		this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;
+		this->IntraSectorIndicesPerSum[m1 + m2][1 + (this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1)] = m2;
+		++this->NbrIntraSectorIndicesPerSum[m1 + m2];
+	      }
 	  }
 
       this->InteractionFactorsupup = new double* [this->NbrIntraSectorSums];
@@ -337,23 +358,27 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	    {
-	      int m1 = (this->IntraSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      int m1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	      int m2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int MaxSum = m1 + m2;
+	      if ((this->MaxPseudoPotentials[0] < MaxSum) || (this->MaxPseudoPotentials[1] < MaxSum))
+		{
+		  if (this->MaxPseudoPotentials[0] >= this->MaxPseudoPotentials[1])
+		    MaxSum = this->MaxPseudoPotentials[0];
+		  else
+		    MaxSum = this->MaxPseudoPotentials[1];
+		}
 	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 		{
-		  int m3 = (this->IntraSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  this->InteractionFactorsupup[i][Index] = 0.0;
 		  this->InteractionFactorsdowndown[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
+		  for (int j = 0; j <= MaxSum; j += 2)
 		    {
-		      if (((J >> 1) & 1) != Sign)
-			{
-			  TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-			  this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][J >> 1] * TmpCoefficient;
-			  this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][J >> 1] * TmpCoefficient;
-			}
+		      TmpCoefficient =  (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
+		      this->InteractionFactorsupup[i][Index] += this->PseudoPotentials[0][j] * TmpCoefficient;
+		      this->InteractionFactorsdowndown[i][Index] += this->PseudoPotentials[1][j] * TmpCoefficient;
 		    }
 		  if (m1 != m2)
 		    {
@@ -379,18 +404,20 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
 	      double Factor = 2.0;
-	      int m1 = (this->InterSectorIndicesPerSum[i][j1 << 1] << 1) - this->LzMax;
-	      int m2 = (this->InterSectorIndicesPerSum[i][(j1 << 1) + 1] << 1) - this->LzMax;
+	      int m1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+	      int m2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+	      int MaxSum = m1 + m2;
+	      if (this->MaxPseudoPotentials[2] < MaxSum)
+		MaxSum = this->MaxPseudoPotentials[2];
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  int m3 = (this->InterSectorIndicesPerSum[i][j2 << 1] << 1) - this->LzMax;
-		  int m4 = (this->InterSectorIndicesPerSum[i][(j2 << 1) + 1] << 1) - this->LzMax;
-		  Clebsch.InitializeCoefficientIterator(m1, m2);
+		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 		  this->InteractionFactorsupdown[i][Index] = 0.0;
-		  while (Clebsch.Iterate(J, ClebschCoef))
+		  for (int j = 0; j <= MaxSum; ++j)
 		    {
-		      TmpCoefficient = ClebschCoef * Clebsch.GetCoefficient(m3, m4, J);
-		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][J >> 1] * TmpCoefficient;
+		      TmpCoefficient =  (CGCoefficients.GetCoefficient(m1, m2, j) * CGCoefficients.GetCoefficient(m3, m4, j));
+		      this->InteractionFactorsupdown[i][Index] += this->PseudoPotentials[2][j] * TmpCoefficient;
 		    }
 		  this->InteractionFactorsupdown[i][Index] *= Factor;
 		  ++TotalNbrInteractionFactors;
@@ -399,7 +426,6 @@ void ParticleOnDiskWithSpinGenericHamiltonian::EvaluateInteractionFactors()
 	    }
 	}
     }
-
 
  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
  cout << "====================================" << endl;

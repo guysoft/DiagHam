@@ -54,9 +54,16 @@ class ParticleOnDiskWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithS
 
  protected:
 
+  
+  // maximum total Lz value that can be reached by two particles
+  int TwoParticleLzMax;
+
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)
   // first index refered to the spin sector (sorted as up-up, down-down, up-down)
   double** PseudoPotentials;
+  
+  // maximum index where a non zero pseudo-potential occurs
+  int* MaxPseudoPotentials;
 
  public:
 
@@ -69,6 +76,7 @@ class ParticleOnDiskWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithS
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
+  // totalLz = system total Lz value
   // architecture = architecture to use for precalculation
   // pseudoPotential = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
   //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
@@ -78,7 +86,7 @@ class ParticleOnDiskWithSpinGenericHamiltonian : public AbstractQHEOnSphereWithS
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnDiskWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, double** pseudoPotential,
+  ParticleOnDiskWithSpinGenericHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax, int totalLz, double** pseudoPotential,
 					   double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
 					   double* onebodyPotentialUpDown, AbstractArchitecture* architecture, long memory = -1, 
 					   bool onDiskCacheFlag = false, char* precalculationFileName = 0);

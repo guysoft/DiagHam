@@ -53,10 +53,9 @@ class BosonOnDiskWithSU2Spin :  public BosonOnSphereWithSU2Spin
   // 
   // nbrBosons = number of bosons
   // totalLz = twice the momentum total value
-  // lzMax = twice the maximum Lz value reached by a boson
   // totalSpin = twice the total spin value
-  // memory = amount of memory granted for precalculations
-  BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int lzMax, int totalSpin);
+  // lzMax = twice the maximum Lz value reached by a boson
+  BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int totalSpin, int lzMax);
 
   // copy constructor (without duplicating datas)
   //

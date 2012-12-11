@@ -2,15 +2,18 @@
 #include "HilbertSpace/ParticleOnSphereManager.h"
 #include "HilbertSpace/BosonOnDiskWithSU2Spin.h"
 
+#include "Hamiltonian/ParticleOnDiskWithSpinGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinGenericHamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
-#include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
+#include "LanczosAlgorithm/LanczosManager.h"
+
 #include "MainTask/QHEOnSphereMainTask.h"
+#include "MainTask/QHEOnDiskMainTask.h"
+
 
 #include "Tools/FQHEFiles/FQHESpherePseudopotentialTools.h"
 
@@ -61,16 +64,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "maximum-momentum", "maximum total angular momentum to study", 10, true, 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "minimum-momentum", "minimum total angular momentum to study", 1, true, 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "force-maxmomentum", "force the maximum single particle momentum to a particular value (negative from the number of particles and the state total angular momentum)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
-  (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "start the Haldane algorithm from Laughlin state with exponent m)", -1);
-  (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
-
-  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 0);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 1000);
   (*PrecalculationGroup) += new BooleanOption  ('\n', "allow-disk-storage", "expand memory for fast multiplication using disk storage",false);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
@@ -91,25 +91,35 @@ int main(int argc, char** argv)
       return 0;
     }
   
-  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int NbrParticles = Manager.GetInteger("nbr-particles");
   int MMin = Manager.GetInteger("minimum-momentum");
   int MMax = Manager.GetInteger("maximum-momentum");
-  if (MMin < (((NbrParticles - 1) * (NbrParticles)) / 2))
-    MMin = (((NbrParticles - 1) * (NbrParticles)) / 2);
+  if (MMin < 0)
+    MMin = 0;
   if (MMax < MMin)
     MMax = MMin;
   int ForceMaxMomentum = Manager.GetInteger("force-maxmomentum");
   int SzTotal = Manager.GetInteger("total-sz");
-  bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;  
-  int InitialLz = Manager.GetInteger("initial-lz");
-  int NbrLz = Manager.GetInteger("nbr-lz");
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
   bool onDiskCacheFlag = Manager.GetBoolean("allow-disk-storage");
   bool FirstRun = true;
-  double** PseudoPotentials  = new double*[10];
+
+
+  int NbrUp = (NbrParticles + SzTotal) >> 1;
+  int NbrDown = (NbrParticles - SzTotal) >> 1;
+  if ((NbrUp < 0 ) || (NbrDown < 0 ))
+    {
+      cout << "This value of the spin z projection cannot be achieved with this particle number!" << endl;
+      return -1;
+    }
+
+  int LzMax = 2 * ForceMaxMomentum;
+  if (ForceMaxMomentum < 0)
+    LzMax = 2 * MMax;
+  double** PseudoPotentials  = new double*[3];
   for (int i = 0; i < 3; ++i)
     {
       PseudoPotentials[i] = new double[LzMax + 1];
@@ -119,36 +129,26 @@ int main(int argc, char** argv)
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;
 
-  int NbrUp = (NbrBosons + SzTotal) >> 1;
-  int NbrDown = (NbrBosons - SzTotal) >> 1;
-  if ((NbrUp < 0 ) || (NbrDown < 0 ))
-    {
-      cout << "This value of the spin z projection cannot be achieved with this particle number!" << endl;
-      return -1;
-    }
-
   if (Manager.GetString("interaction-file") == 0)
     {
-      if (!Manager.GetBoolean("l2-s2-only"))
-	{
-	  cout << "an interaction file has to be provided" << endl;
-	  return -1;
-	}
+      cout << "an interaction file has to be provided" << endl;
+      return -1;
     }
   else
     {
-      if (FQHEDiskSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
-					 OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
+      if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
+					   OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
 	return -1;
     }
+
 
   char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];
   if (ForceMaxMomentum >= 0)
     sprintf (OutputNameLz, "bosons_disk_su2_%s_n_%d_lzmax_%d_lz_%d_sz_%d.dat", Manager.GetString("interaction-name"),
-	     NbrBosons, ForceMaxMomentum, MMax, SzTotal);
+	     NbrParticles, ForceMaxMomentum, MMax, SzTotal);
   else
-    sprintf (OutputNameLz, "bosons_disk_su2_%s_n_%d_lzmax_%d_lz_%d_sz_%d.dat", Manager.GetString("interaction-name"),
-	     NbrBosons, MMax, SzTotal);
+    sprintf (OutputNameLz, "bosons_disk_su2_%s_n_%d_lz_%d_sz_%d.dat", Manager.GetString("interaction-name"),
+	     NbrParticles, MMax, SzTotal);
 
   for (int  L = MMin; L <= MMax; ++L)
     {
@@ -156,8 +156,7 @@ int main(int argc, char** argv)
       if ((ForceMaxMomentum >= 0) && (ForceMaxMomentum < TmpMaxMomentum))
 	TmpMaxMomentum = ForceMaxMomentum;
       ParticleOnSphereWithSpin* Space = 0;
-      Space = new FermionOnDisk(NbrParticles, L, TmpMaxMomentum, MemorySpace);
-
+      Space = new BosonOnDiskWithSU2Spin(NbrParticles, L, SzTotal, TmpMaxMomentum);
       double Shift = 0.0;
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
@@ -165,8 +164,10 @@ int main(int argc, char** argv)
 
       AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian;
 
-      Hamiltonian = new ParticleOnDiskWithSpinGenericHamiltonian(Space, NbrBosons, TmpMaxMomentum, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
-								 Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+      Hamiltonian = new ParticleOnDiskWithSpinGenericHamiltonian(Space, NbrParticles, TmpMaxMomentum, L, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
+ 								 Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
+//      Hamiltonian = new ParticleOnSphereWithSpinGenericHamiltonian(Space, NbrParticles, TmpMaxMomentum, PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, NULL, 
+//								 Architecture.GetArchitecture(), Memory, onDiskCacheFlag, LoadPrecalculationFileName);
        
       Hamiltonian->ShiftHamiltonian(Shift);
       if (SavePrecalculationFileName != 0)
@@ -177,11 +178,16 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [120];
-	  sprintf (EigenvectorName, "bosons_disk_su2_%s_n_%d_2s_%d_sz_%d_lz_%d",
-		   Manager.GetString("interaction-name"),
-		   NbrBosons, LzMax, SzTotal, L*LSign);
+	  if (ForceMaxMomentum >= 0)
+	    sprintf (EigenvectorName, "bosons_disk_su2_%s_n_%d_lzmax_%d_lz_%d_sz_%d",
+		     Manager.GetString("interaction-name"),
+		     NbrParticles, ForceMaxMomentum, L, SzTotal);
+	  else
+	    sprintf (EigenvectorName, "bosons_disk_su2_%s_n_%d_lz_%d_sz_%d",
+		     Manager.GetString("interaction-name"),
+		     NbrParticles, L, SzTotal);
 	}
-      QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
+      QHEOnDiskMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       delete Hamiltonian;
@@ -193,10 +199,8 @@ int main(int argc, char** argv)
 	}
       if (FirstRun == true)
 	FirstRun = false;
-      if (HaldaneBasisFlag) return 0; // only one subspace defined...
     }
   delete[] OutputNameLz;
-  delete[] ExtraTerms;
   return 0;
 }
 

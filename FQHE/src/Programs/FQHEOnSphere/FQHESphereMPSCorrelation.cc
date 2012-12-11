@@ -249,7 +249,7 @@ int main(int argc, char** argv)
 	  SparseConjugateBMatrices[i] = SparseBMatrices[i].Transpose();
 	}
 
-       TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseConjugateBMatrices, Coefficients);
+       TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);
        int NbrEigenstates = 3;
        BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);
 //       BasicComplexArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);

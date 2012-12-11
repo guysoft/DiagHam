@@ -141,7 +141,6 @@ bool FQHEOn4DSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrPart
 // kz = reference to twice the z projection of the  kz angular momentum (grab it only if initial value is 0)
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // return value = true if no error occured
-
 bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& nbrFluxQuanta, int& jz, int& kz, bool& statistics);
 
 // try to guess system information from PES file name
@@ -152,6 +151,6 @@ bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrP
 // lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
 // statistics = reference to flag for fermionic statistics (true for fermion, false fro bosons, grab it only if initial value is true)
 // return value = true if no error occured
-
 bool FQHEOnSphereFindSystemInfoFromPESFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& lzMax, bool& statistics);
+
 #endif
