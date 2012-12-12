@@ -117,8 +117,6 @@ int main(int argc, char** argv)
   char* StatisticPrefix = new char [16];
   if (Manager.GetBoolean("boson") == false)
     {
-      cout << "fermions are not yet implemented" << endl;
-      return 0;
       sprintf (StatisticPrefix, "fermions");
     }
   else
