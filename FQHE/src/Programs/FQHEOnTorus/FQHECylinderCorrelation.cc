@@ -233,14 +233,14 @@ int main(int argc, char** argv)
 
   Complex* Occupations= new Complex [KyMax+1];
       
-  cout<<"Orbital occupations: ";
+  cout<<"Orbital occupations: "<<endl;
   Complex CheckOccupations(0,0);
   for (int i = 0; i <= KyMax; ++i)
    {
      ParticleOnSphereDensityOperator Operator (Space, i);
      Occupations[i] = Operator.MatrixElement(State, State);
      CheckOccupations += Occupations[i];
-     cout << Occupations[i] <<" ";
+     cout << i << " " << Occupations[i].Re << " " << Occupations[i].Im << endl;
    }
   cout<<endl;
   cout<<"Sum of all occupations: "<<CheckOccupations<<endl;

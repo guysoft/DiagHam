@@ -114,4 +114,5 @@ ParticleOnLatticeQuantumSpinHallThreeBandHamiltonian.cc \
 AbstractQHEOnSphereFullHamiltonian.cc \
 ParticleOn4DSphereDeltaHamiltonian.cc \
 ParticleOnDiskWithSpinGenericHamiltonian.cc \
-ParticleOn4DSphereThreeBodyDeltaHamiltonian.cc
+ParticleOn4DSphereThreeBodyDeltaHamiltonian.cc \
+ParticleOnCylinderFluctuatingMetricHamiltonian.cc
