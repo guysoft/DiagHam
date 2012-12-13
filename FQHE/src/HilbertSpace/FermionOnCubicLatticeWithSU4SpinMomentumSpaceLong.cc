@@ -69,7 +69,7 @@ using std::ios;
 // memory = amount of memory granted for precalculations
 
 FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong::FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong (int nbrFermions, int nbrSiteX, int nbrSiteY, int nbrSiteZ, int kxMomentum, int kyMomentum, int kzMomentum, unsigned long memory)
-{  
+{ 
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->SzFlag = false;
@@ -106,8 +106,28 @@ FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong::FermionOnCubicLatticeWithSU4S
 	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
 	}
       this->GenerateLookUpTable(memory);
+      double coef = 0.0;
+/*
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-  	this->PrintState(cout, i) << endl;
+      {
+	for (int k1 = 0; k1 < 2; k1++)
+	  {
+	    for (int k2 = 0; k2 < 2; k2++)
+	    {
+	      double coef1 = this->AsigmaAsigma(i,k1,k2, 0, 0);
+	      if (coef1 != 0)
+	      {
+		if (this->AdsigmaAdsigma(k1,k2,0,0,coef) != this->HilbertSpaceDimension)
+		{
+		  cout << i ;
+		  this->PrintState(cout, i) << " : " ;
+		  cout << this->AdsigmaAdsigma(k1,k2,0,0,coef) ;
+		  this->PrintState(cout,this->AdsigmaAdsigma(k1,k2,0,0,coef)) << " " << coef1 << " " << coef << endl;
+		}
+	    }
+	  }
+	  }
+      }*/
       
 #ifdef __DEBUG__
       long UsedMemory = 0;
@@ -261,7 +281,9 @@ ostream& FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong::PrintState (ostream&
 	Str << "(" << TmpKx << "," << TmpKy << "," << TmpKz << ",d,B)";
     }
   Str << "]";
-  Str << " " << state << " " << this->FindStateIndex (TmpState, this->StateHighestBit[state]);
+//      Str  << this->StateHighestBit[state] << " " << hex << ((unsigned long) (TmpState >> 64)) << "." << ((unsigned long) TmpState) << dec << endl;
+
+//   Str << " " << state << " " << this->FindStateIndex (TmpState, this->StateHighestBit[state]);
   return Str;
 }
 

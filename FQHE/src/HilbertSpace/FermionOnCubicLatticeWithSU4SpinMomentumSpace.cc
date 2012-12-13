@@ -106,7 +106,29 @@ FermionOnCubicLatticeWithSU4SpinMomentumSpace::FermionOnCubicLatticeWithSU4SpinM
 //       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 // 	this->PrintState(cout, i) << " " << hex << this->StateDescription[i] << dec << endl;
       this->GenerateLookUpTable(memory);
-      
+      double coef = 0.0;
+//       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+//       {
+// 	for (int k1 = 0; k1 < 2; k1++)
+// 	  {
+// 	    for (int k2 = 0; k2 < 2; k2++)
+// 	    {
+// 	    double coef1 = this->AsigmaAsigma(i,k1,k2, 0, 0);
+// // 	    cout << coef1 << endl;
+// 	    if (coef1 != 0)
+// 	    {
+// 	      if (this->AdsigmaAdsigma(k1,k2,0,0,coef) != this->HilbertSpaceDimension)
+// 	      {
+// 		cout << i ;
+// 		this->PrintState(cout, i) << " : " ;
+// 		cout << this->AdsigmaAdsigma(k1,k2,0,0,coef) ;
+// 		this->PrintState(cout,this->AdsigmaAdsigma(k1,k2,0,0,coef)) << " " << coef1 << " " << coef << endl;
+// 	      }
+// 	      }
+// 	    }
+// 	  }
+// 	
+//       }
 #ifdef __DEBUG__
       long UsedMemory = 0;
       UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));

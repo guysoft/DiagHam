@@ -37,6 +37,15 @@
 
 #include <iostream>
 
+#include <cstring>
+#include <stdlib.h>
+#include <math.h>
+#include <fstream>
+
+using std::cout;
+using std::endl;
+using std::ios;
+using std::ofstream;
 
 class FermionOnSphere;
 class FermionOnSphereWithSpin;

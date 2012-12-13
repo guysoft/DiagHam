@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnHyperCubicLatticeWithSpinMomentumSpace.h"
 
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
@@ -174,7 +175,14 @@ int main(int argc, char** argv)
 		    {
 		      if (Manager.GetBoolean("3d") == true)
 			{
-			  Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+			  if (NbrSiteX*NbrSiteY*NbrSiteZ <= 15)
+			  {
+			    Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+			  }
+			  else
+			  {
+			     Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+			  }
 			}
 		      else 
 			{

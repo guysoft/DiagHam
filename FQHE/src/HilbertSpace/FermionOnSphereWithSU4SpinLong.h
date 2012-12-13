@@ -39,6 +39,16 @@
 
 #include <iostream>
 
+#include <cstring>
+#include <stdlib.h>
+#include <math.h>
+#include <fstream>
+
+using std::cout;
+using std::endl;
+using std::ios;
+using std::ofstream;
+
 
 class FermionOnSphere;
 class FermionOnSphereWithSpin;
@@ -840,7 +850,7 @@ inline double FermionOnSphereWithSU4SpinLong::AsigmaAsigma (int index, int n1, i
   n1 += 3 - sigma1;
   n2 <<= 2;
   n2 += 3 - sigma2;
- if (((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n1)) == 0) || ((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n2)) == 0) || (n1 == n2))
+ if (((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n1)) == ((ULONGLONG) 0x0ul)) || ((this->ProdATemporaryState & (((ULONGLONG) 0x1ul) << n2)) == ((ULONGLONG) 0x0ul)) || (n1 == n2))
     return 0.0;
   this->ProdALzMax = this->StateHighestBit[index];
   double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
@@ -865,9 +875,9 @@ inline double FermionOnSphereWithSU4SpinLong::AsigmaAsigma (int index, int n1, i
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 112)) & this->SignLookUpTableMask[n1 + 112]];
 #endif
   this->ProdATemporaryState &= ~(((ULONGLONG) 0x1ul) << n1);
-  if (this->ProdATemporaryState != 0x0ul)
+  if (this->ProdATemporaryState != (ULONGLONG)0x0ul)
     {
-      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == ((ULONGLONG) 0x0ul))
 	--this->ProdALzMax;
     }
   else
@@ -886,12 +896,12 @@ inline double FermionOnSphereWithSU4SpinLong::AsigmaAsigma (int index, int n1, i
 
 inline int FermionOnSphereWithSU4SpinLong::AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient)
 {
-  unsigned long TmpState = this->ProdATemporaryState;
+  ULONGLONG TmpState = this->ProdATemporaryState;
   m1 <<= 2;
   m1 += 3 - sigma1;
   m2 <<= 2;
   m2 += 3 - sigma2;
-  if (((TmpState & (((ULONGLONG) 0x1ul) << m1)) != 0) || ((TmpState & (((ULONGLONG) 0x1ul) << m2)) != 0) || (m1 == m2))
+  if (((TmpState & (((ULONGLONG) 0x1ul) << m1)) != ((ULONGLONG) 0x0ul)) || ((TmpState & (((ULONGLONG) 0x1ul) << m2)) != ((ULONGLONG) 0x0ul)) || (m1 == m2))
     return this->HilbertSpaceDimension;
   int NewLzMax = this->ProdALzMax;
   coefficient = 1.0;

@@ -140,8 +140,8 @@ int main(int argc, char** argv)
       TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
 							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture(), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
-      double BandSpread = TightBindingModel.ComputeBandSpread(0);
-      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      double BandSpread = TightBindingModel.ComputeBandSpread(3);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(3);
       cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
 	{
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
 		      {
 			Space = new FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, i, j, k);
 		      }
-		}
+		  }
 	      else
 		{
 		  if (TotalNbrSites + NbrParticles <= 64)

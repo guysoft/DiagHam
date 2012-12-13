@@ -699,7 +699,7 @@ ostream& FermionOnSphereWithSU4SpinLong::PrintState (ostream& Str, int state)
 	Str << "0 ";
       Str << "| ";
     }
-  return Str;
+   return Str;
 }
 
 // generate all states corresponding to the constraints
