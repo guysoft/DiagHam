@@ -24,7 +24,8 @@ BandDiagonalHermitianMatrix.cc \
 SparseComplexMatrix.cc \
 SparseRealMatrix.cc \
 LongRationalMatrix.cc \
-ComplexUpperHessenbergMatrix.cc
+ComplexUpperHessenbergMatrix.cc \
+RealUpperHessenbergMatrix.cc
 
 libArray_a_SOURCES = \
 Double3DArray.cc \

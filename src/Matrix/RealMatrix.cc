@@ -1241,7 +1241,7 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
       JobVL = 'N';
       JobVR = 'N';
     }
-  double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
+  double* TmpMatrix = new double [((long) this->NbrColumn) * this->NbrRow];
   long TotalIndex = 0l;
   for (int j = 0; j < this->NbrColumn; ++j)
     {
@@ -1308,8 +1308,8 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
       JobVL = 'N';
       JobVR = 'V';
     }
-  double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
-  double* TmpLeftEigenstates = new double [this->NbrColumn * this->NbrRow];
+  double* TmpMatrix = new double [((long) this->NbrColumn) * this->NbrRow];
+  double* TmpLeftEigenstates = new double [((long) this->NbrColumn) * this->NbrRow];
   long TotalIndex = 0l;
   for (int j = 0; j < this->NbrColumn; ++j)
     {

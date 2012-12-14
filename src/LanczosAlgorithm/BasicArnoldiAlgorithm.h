@@ -41,6 +41,7 @@
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/GarbageFlag.h"
+#include "Matrix/RealUpperHessenbergMatrix.h"
 
 
 class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
@@ -60,9 +61,9 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   GarbageFlag Flag;
 
   // Hessenberg matrix of the Hamiltonian in the Krylov subspace
-  RealMatrix ReducedMatrix;
+  RealUpperHessenbergMatrix ReducedMatrix;
   // temporary matrix used to duplicated ReducedMatrix before diagonalize it
-  RealMatrix TemporaryReducedMatrix;
+  RealUpperHessenbergMatrix TemporaryReducedMatrix;
 
   ComplexDiagonalMatrix ComplexDiagonalizedMatrix;
 

@@ -71,13 +71,13 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
       this->ComplexDiagonalizedMatrix = ComplexDiagonalMatrix(this->MaximumNumberIteration, true);
-      this->ReducedMatrix = RealMatrix(this->MaximumNumberIteration, this->MaximumNumberIteration, true);
+      this->ReducedMatrix = RealUpperHessenbergMatrix (this->MaximumNumberIteration, true);
     }
   else
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->ComplexDiagonalizedMatrix = ComplexDiagonalMatrix();
-      this->ReducedMatrix = RealMatrix();
+      this->ReducedMatrix = RealUpperHessenbergMatrix();
    }
   this->Architecture = architecture;
   this->Flag.Initialize();
@@ -218,7 +218,9 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
   ComplexDiagonalMatrix TmpDiag (SortedDiagonalizedMatrix.GetNbrColumn(), true);
   this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag, TmpEigenvector, this->LeftFlag);
   for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
-    SortedDiagonalizedMatrix[i] = TmpDiag[i];
+    {
+      SortedDiagonalizedMatrix[i] = TmpDiag[i];
+    }
 #else
   cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
 #endif
@@ -230,8 +232,9 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
   Complex* TmpCoefficents = new Complex [SortedDiagonalizedMatrix.GetNbrColumn()];
   for (int i = 0; i < nbrEigenstates; ++i)
     {
+      double TmpNorm = 1.0 / TmpEigenvector[i].Norm();
       for (int j = 0; j < SortedDiagonalizedMatrix.GetNbrColumn(); ++j)
-	TmpCoefficents[j] = TmpEigenvector[i][j];
+	TmpCoefficents[j] = TmpEigenvector[i][j] * TmpNorm;
       Eigenstates[i] = ComplexVector(this->ArnoldiVectors[0].GetVectorDimension(), true);
       AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), this->ArnoldiVectors, 
 						      SortedDiagonalizedMatrix.GetNbrColumn(),  TmpCoefficents);
@@ -257,14 +260,17 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->ArnoldiVectors[0]), &(this->ArnoldiVectors[1]));
       Operation1.ApplyOperation(this->Architecture);
-      this->ReducedMatrix[0][0] = (this->ArnoldiVectors[0] * this->ArnoldiVectors[1]);
-      this->ArnoldiVectors[1].AddLinearCombination(-this->ReducedMatrix[0][0], this->ArnoldiVectors[0]);
-      this->ReducedMatrix[0][1] = this->ArnoldiVectors[1].Norm(); 
-      this->ArnoldiVectors[1] /= this->ReducedMatrix[0][1]; 
+      this->ReducedMatrix.SetMatrixElement(0, 0, (this->ArnoldiVectors[0] * this->ArnoldiVectors[1]));
+      double Tmp;
+      this->ReducedMatrix.GetMatrixElement(0, 0, Tmp);
+      this->ArnoldiVectors[1].AddLinearCombination(-Tmp, this->ArnoldiVectors[0]);
+      this->ReducedMatrix.SetMatrixElement(1, 0, this->ArnoldiVectors[1].Norm()); 
+      this->ReducedMatrix.GetMatrixElement(1, 0, Tmp);
+      this->ArnoldiVectors[1] /=  Tmp; 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->ArnoldiVectors[1]), &(this->ArnoldiVectors[2]));
       Operation2.ApplyOperation(this->Architecture);
-      this->ReducedMatrix[1][0] = (this->ArnoldiVectors[0] * this->ArnoldiVectors[2]);
-      this->ReducedMatrix[1][1] = (this->ArnoldiVectors[1] * this->ArnoldiVectors[2]);
+      this->ReducedMatrix.SetMatrixElement(0, 1, (this->ArnoldiVectors[0] * this->ArnoldiVectors[2]));
+      this->ReducedMatrix.SetMatrixElement(1, 1, (this->ArnoldiVectors[1] * this->ArnoldiVectors[2]));
     }
   else
     {
