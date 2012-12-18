@@ -61,6 +61,10 @@ class ParticleOnCubicLatticeFourBandPyrochloreHamiltonian : public ParticleOnLat
   double UPotential;
   // repulsive on-site potential strength between opposite spins
   double VPotential;
+  // repulsive nearest neighbor potential strength between identical spins
+  double WUPotential;
+  // repulsive nearest neighbor potential strength between opposite spins
+  double WVPotential;
 
   // pointer to the tight binding model
   Abstract3DTightBindingModel* TightBindingModel;
@@ -88,7 +92,7 @@ class ParticleOnCubicLatticeFourBandPyrochloreHamiltonian : public ParticleOnLat
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnCubicLatticeFourBandPyrochloreHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential,  Abstract3DTightBindingModel* tightBindingModel, 
+  ParticleOnCubicLatticeFourBandPyrochloreHamiltonian(ParticleOnSphereWithSU4Spin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSiteZ, double uPotential, double vPotential, double wuPotential, double wvPotential, Abstract3DTightBindingModel* tightBindingModel, 
 						      bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
@@ -121,7 +125,61 @@ class ParticleOnCubicLatticeFourBandPyrochloreHamiltonian : public ParticleOnLat
 						       int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
 						       int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 						       int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
-    
+  
+  // compute the contribution to the onsite interaction matrix elements with the same spin
+  // 
+  // oneBodyBasis = array of transformation basis matrices
+  // momentumIndex1 = compact momentum index of the first creation operator
+  // momentumIndex2 = compact momentum index of the second creation operator
+  // momentumIndex3 = compact momentum index of the first annihilation operator
+  // momentumIndex4 = compact momentum index of the second annihiliation operator
+  // energyIndex1 = energy index of the first creation operator
+  // energyIndex2 = energy index of the second creation operator
+  // energyIndex3 = energy index of the first annihilation operator
+  // energyIndex4 = energy index of the second annihiliation operator
+  // factorU = repulsive on-site potential strength between identical spins
+  //return value = corresponding matrix element
+  Complex ComputeOnSiteContributionSameSpin(ComplexMatrix* oneBodyBasis,
+						       int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+						       int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,double factorU);
+  
+  // compute the contribution to the onsite interaction matrix elements with opposite spin
+  // 
+  // oneBodyBasis = array of transformation basis matrices
+  // momentumIndex1 = compact momentum index of the first creation operator
+  // momentumIndex2 = compact momentum index of the second creation operator
+  // momentumIndex3 = compact momentum index of the first annihilation operator
+  // momentumIndex4 = compact momentum index of the second annihiliation operator
+  // energyIndex1 = energy index of the first creation operator
+  // energyIndex2 = energy index of the second creation operator
+  // energyIndex3 = energy index of the first annihilation operator
+  // energyIndex4 = energy index of the second annihiliation operator
+  // factorV = repulsive on-site potential strength between opposite spins
+  // epsilon = sign of the permutation +1 for bosons, -1 for fermions
+  //return value = corresponding matrix element
+  Complex ComputeOnSiteContributionOppositeSpin(ComplexMatrix* oneBodyBasis,
+						       int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+						       int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,double factorV, int epsilon);
+  
+  
+  // compute the contribution to the nearest neighbor interaction 
+  // 
+  // oneBodyBasis = array of transformation basis matrices
+  // momentumIndex1 = compact momentum index of the first creation operator
+  // momentumIndex2 = compact momentum index of the second creation operator
+  // momentumIndex3 = compact momentum index of the first annihilation operator
+  // momentumIndex4 = compact momentum index of the second annihiliation operator
+  // energyIndex1 = energy index of the first creation operator
+  // energyIndex2 = energy index of the second creation operator
+  // energyIndex3 = energy index of the first annihilation operator
+  // energyIndex4 = energy index of the second annihiliation operator
+  // factorWU = repulsive nearest neighbor potential strength between identical spins
+  // factorWV = repulsive nearest neighbor potential strength between opposite spins
+  // epsilon = sign of the permutation +1 for bosons, -1 for fermions
+  //return value = corresponding matrix element
+  Complex ComputeNearestNeighborInteractionContribution(ComplexMatrix* oneBodyBasis,
+						       int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+						       int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4, double factorWU, double factorWV, int epsilon);
 
 };
 

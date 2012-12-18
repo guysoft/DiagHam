@@ -162,7 +162,8 @@ int main(int argc, char** argv)
 	Space = new BosonOnTorusWithSpin (NbrBosons, MaxMomentum, YMomentum2);
 	
 
-      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+      cout << PseudoPotentials[0][0] << " " << PseudoPotentials[1][0] << " " << PseudoPotentials[2][0] << " " << endl;
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(Space, NbrBosons, MaxMomentum, XRatio,
 											  NbrPseudoPotentials[0], PseudoPotentials[0],
 											  NbrPseudoPotentials[1], PseudoPotentials[1],

@@ -69,7 +69,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site potential strength between identical spins for bosons or repulsive nearest neighbor site potential strength between identical spins for fermions", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive nearest neighbor site potential strength between opposite spins (fermions only)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "wu-potential", "repulsive nearest neighbor site potential strength between identical spins", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "wv-potential", "repulsive nearest neighbor site potential strength between opposite spins", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "lambda-nn", "spin orbit coupling to neareast neighbor sites", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "lambda-nextnn", "spin orbit coupling to next neareast neighbor sites", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
   char* FilePrefix = new char [512];
   sprintf (FilePrefix, "%s_quantumspinhall3d_pyrochlore_n_%d_x_%d_y_%d_z_%d_sonn_%f_sonnn_%f",  StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"));
   char* EigenvalueOutputFile = new char [1024];
-  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_w_%f_gx_%f_gy_%f_gz_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
+  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_wu_%f_wv_%f_gx_%f_gy_%f_gz_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("wu-potential"), Manager.GetDouble("wv-potential"), 
 	   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
@@ -195,9 +196,21 @@ int main(int argc, char** argv)
 // 						       Architecture.GetArchitecture());
 
   
-//   ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
-//   ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
+  
 
+//   double* TmpChem = new double[8];
+//     TmpChem[0] = -1.0;
+//     TmpChem[1] = -1.0;
+//     TmpChem[2] = 1.0;
+//     TmpChem[3] = 1.0;
+//     TmpChem[4] = -1.0;
+//     TmpChem[5] = -1.0;
+//     TmpChem[6] = 1.0;
+//     TmpChem[7] = 1.0;
+//     TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
+// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+  ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
+  ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
 //   for (int i = 0; i < 8; ++i)
 //     {
 //       double Sum = 0.0;
@@ -211,17 +224,7 @@ int main(int argc, char** argv)
 // 	}
 //       cout << "sum = " << Sum << endl;
 //     }
-//     double* TmpChem = new double[8];
-//     TmpChem[0] = -1.0;
-//     TmpChem[1] = -1.0;
-//     TmpChem[2] = 1.0;
-//     TmpChem[3] = 1.0;
-//     TmpChem[4] = -1.0;
-//     TmpChem[5] = -1.0;
-//     TmpChem[6] = 1.0;
-//     TmpChem[7] = 1.0;
-//     TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
-// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+    
 
    bool FirstRunFlag = true;
    for (int i = MinKx; i <= MaxKx; ++i)
@@ -262,7 +265,7 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      AbstractHamiltonian* Hamiltonian = 0;
 	      Hamiltonian = new ParticleOnCubicLatticeFourBandPyrochloreHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-										    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel,
+										    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("wu-potential"), Manager.GetDouble("wv-potential"), &TightBindingModel,
 										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 // 	      Hamiltonian = new ParticleOnCubicLatticeFullFourBandSimpleTIHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
 // 										      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel,
