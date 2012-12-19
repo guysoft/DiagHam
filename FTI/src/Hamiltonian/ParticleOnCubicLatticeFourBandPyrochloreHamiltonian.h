@@ -88,6 +88,8 @@ class ParticleOnCubicLatticeFourBandPyrochloreHamiltonian : public ParticleOnLat
   // nbrSiteZ = number of sites in the z direction
   // uPotential = repulsive on-site potential strength between identical spins
   // vPotential = repulsive on-site potential strength between opposite spins
+  // wuPotential = repulsive nearest neighbor strength between identical spins
+  // wvPotential = repulsive nearest neighbor strength between opposite spins
   // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation

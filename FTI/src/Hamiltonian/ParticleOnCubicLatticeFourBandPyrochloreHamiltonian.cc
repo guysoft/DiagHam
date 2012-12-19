@@ -870,6 +870,7 @@ Complex ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::ComputeNearestNeigh
  TmpWV += this->ComputeTransfomationBasisContribution(oneBodyBasis, momentumIndex3, momentumIndex4, momentumIndex2, momentumIndex1, energyIndex3, energyIndex4, energyIndex2, energyIndex1, 6, 3, 6, 3)*(1.0 + Phase(-(TmpKy3 - TmpKy2)));
  TmpWV += this->ComputeTransfomationBasisContribution(oneBodyBasis, momentumIndex4, momentumIndex3, momentumIndex2, momentumIndex1, energyIndex4, energyIndex3, energyIndex2, energyIndex1, 6, 3, 6, 3)*(1.0 + Phase(-(TmpKy4 - TmpKy2)))*epsilon;
  
+ TmpWU *= factorWU;
  TmpWV *= factorWV;
  
  Complex Tmp;
