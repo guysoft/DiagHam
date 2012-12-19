@@ -53,6 +53,15 @@ using std::endl;
 // special flag to track the method used in matrix-vector multiplication, for debugging purpose only
 //#define __DEBUG_MATRIXVECTOR_MULT__
 
+
+// default constructor
+//
+
+AbstractHamiltonian::AbstractHamiltonian()
+{
+  this->LeftHamiltonianVectorMultiplicationFlag = false;
+}
+
 // destructor
 //
 
@@ -86,9 +95,19 @@ HermitianMatrix& AbstractHamiltonian::GetHamiltonian (HermitianMatrix& M)
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
       else
 	this->LowLevelMultiply(TmpV1, TmpV2);
-      for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
 	{
-	  M.SetMatrixElement(i, j, TmpV2[j]);
+	  for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      M.SetMatrixElement(i, j, TmpV2[j]);
+	    }
+	}
+      else
+	{
+	  for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      M.SetMatrixElement(j, i, TmpV2[j]);
+	    }
 	}
       TmpV1[i] = 0.0;
     }
@@ -111,9 +130,19 @@ ComplexMatrix& AbstractHamiltonian::GetHamiltonian (ComplexMatrix& M)
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
       else
 	this->LowLevelMultiply(TmpV1, TmpV2);
-      for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
 	{
-	  M.SetMatrixElement(i, j, TmpV2[j]);
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      M.SetMatrixElement(i, j, TmpV2[j]);
+	    }
+	}
+      else
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    {
+	      M.SetMatrixElement(j, i, TmpV2[j]);
+	    }
+	{
 	}
       TmpV1[i] = 0.0;
     }
@@ -136,8 +165,16 @@ RealSymmetricMatrix& AbstractHamiltonian::GetHamiltonian (RealSymmetricMatrix& M
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
       else
 	this->LowLevelMultiply(TmpV1, TmpV2);
-      for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
-	M.SetMatrixElement(i, j, TmpV2[j]);
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
+	{
+	  for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
+	    M.SetMatrixElement(i, j, TmpV2[j]);
+	}
+      else
+	{
+	  for (int j = i; j < this->GetHilbertSpaceDimension(); j++)
+	    M.SetMatrixElement(j, i, TmpV2[j]);
+	}
       TmpV1[i] = 0.0;	
     }
   return M;
@@ -159,8 +196,16 @@ RealMatrix& AbstractHamiltonian::GetHamiltonian (RealMatrix& M)
 	this->HermitianLowLevelMultiply(TmpV1, TmpV2);
       else
 	this->LowLevelMultiply(TmpV1, TmpV2);
-      for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
-	M.SetMatrixElement(i, j, TmpV2[j]);
+      if (this->LeftHamiltonianVectorMultiplicationFlag == false)
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    M.SetMatrixElement(j, i, TmpV2[j]);
+	}
+      else
+	{
+	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
+	    M.SetMatrixElement(i, j, TmpV2[j]);
+	}
       TmpV1[i] = 0.0;	
     }
   return M;
@@ -180,6 +225,12 @@ Matrix& AbstractHamiltonian::GetHamiltonian (Matrix& M)
       break;
       case (Matrix::ComplexElements | Matrix::Hermitian):
 	return this->GetHamiltonian((HermitianMatrix&) M);
+      break;
+      case (Matrix::RealElements):
+	return this->GetHamiltonian((RealMatrix&) M);
+      break;
+      case (Matrix::ComplexElements):
+	return this->GetHamiltonian((ComplexMatrix&) M);
       break;
     default:
       return M;

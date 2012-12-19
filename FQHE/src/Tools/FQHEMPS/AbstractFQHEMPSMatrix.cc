@@ -200,3 +200,26 @@ SparseComplexMatrix* AbstractFQHEMPSMatrix::GetQuasiholeMatrices(int nbrQuasihol
   return 0;
 }
   
+// get the range for the bond index when fixing the tuncation level and the charge index
+//
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// return value = range for the bond index with fixed tuncation level and charge index
+
+int AbstractFQHEMPSMatrix::GetBondIndexRange(int pLevel, int qValue)
+{
+  return 0;
+}
+
+// get the bond index for a fixed truncation level and the charge index 
+//
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// localIndex = bond index in the pLevel and qValue restricted range
+// return value = bond index in the full bond index range
+
+int AbstractFQHEMPSMatrix::GetBondIndexWithFixedChargeAndPLevel(int pLevel, int qValue)
+{
+  return 0;
+}
+

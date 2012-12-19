@@ -56,6 +56,33 @@ RealTriDiagonalSymmetricMatrix& AbstractLanczosAlgorithm::GetDiagonalizedMatrix 
   return this->DiagonalizedMatrix;
 }
 
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+void AbstractLanczosAlgorithm::GetEigenvalues (double*& eigenvalues, int nbrEigenvalues)
+{
+  eigenvalues = new double [nbrEigenvalues];
+  for (int i = 0; i < nbrEigenvalues; ++i)
+    {
+      eigenvalues[i] = this->DiagonalizedMatrix(i, i);
+    }
+}
+
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+
+void AbstractLanczosAlgorithm::GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues)
+{
+  eigenvalues = new Complex [nbrEigenvalues];
+  for (int i = 0; i < nbrEigenvalues; ++i)
+    {
+      eigenvalues[i] = this->DiagonalizedMatrix(i, i);
+    }
+}
+
 // get ground state energy
 //
 // return value = ground state energy

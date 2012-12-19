@@ -846,6 +846,26 @@ Complex ComplexVector::PartialScalarProduct (const ComplexVector& vRight, int fi
   return tmp;
 }
 
+// Euclidian scalar product between two vectors (i.e. \sum_i V1[i] * V2[i])
+//
+// V1 = first vector
+// V2 = second vector
+// return value = result of scalar product
+
+Complex EuclidianScalarProduct (const ComplexVector& V1, const ComplexVector& V2)
+{
+  Complex Tmp  = 0.0;
+  long Min = V1.LargeDimension;
+  if (Min > V2.LargeDimension)
+    Min = V2.LargeDimension;
+  for (long i = 0; i < Min; ++i)
+    {
+      Tmp += V1.Components[i] * V2.Components[i];
+    }
+  return Tmp;
+  
+}
+
 // sum two vectors
 //
 // V1 = vector to add
@@ -2239,9 +2259,20 @@ double ComplexVector::Norm()
   if (this->Dimension == 0)
     return 0.0;
   double tmp = this->Components[0].Re * this->Components[0].Re + this->Components[0].Im * this->Components[0].Im;
-  for (long i = 1; i  < this->LargeDimension; ++i)
+  for (long i = 1l; i  < this->LargeDimension; ++i)
     tmp += this->Components[i].Re * this->Components[i].Re + this->Components[i].Im * this->Components[i].Im;
   return sqrt(tmp);
+}
+  
+// conjugate the vector
+//
+// return value = reference on current vector
+
+ComplexVector& ComplexVector::Conjugate()
+{
+  for (long i = 0l; i  < this->LargeDimension; ++i)
+    this->Components[i].Im *= -1.0;
+  return *this;
 }
   
 // get square of vector norm

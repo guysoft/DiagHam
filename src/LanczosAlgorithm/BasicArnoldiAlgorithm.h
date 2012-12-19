@@ -128,6 +128,18 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // return value = array containing the eigenstates
   Vector* GetEigenstates(int nbrEigenstates);
 
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (double*& eigenvalues, int nbrEigenvalues);
+
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues);
+
   // run current Arnoldi algorithm (continue from previous results if Arnoldi algorithm has already been run)
   //
   // nbrIter = number of iteration to do 

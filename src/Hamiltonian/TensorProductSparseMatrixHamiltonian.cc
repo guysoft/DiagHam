@@ -64,6 +64,7 @@ TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int n
   this->HamiltonianShift = 0.0;
   long HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();
   this->HilbertSpace = new UndescribedHilbertSpace(HamiltonianDimension);
+  this->LeftHamiltonianVectorMultiplicationFlag = true;
 }
 
 // destructor

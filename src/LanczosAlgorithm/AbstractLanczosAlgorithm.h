@@ -35,6 +35,7 @@
 #include "config.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
+#include "MathTools/Complex.h"
 
 
 class RealVector;
@@ -112,6 +113,18 @@ class AbstractLanczosAlgorithm
   // nbrEigenstates = number of needed eigenstates
   // return value = array containing the eigenstates
   virtual Vector* GetEigenstates(int nbrEigenstates);
+
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (double*& eigenvalues, int nbrEigenvalues);
+
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues);
 
   // run current Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
   //

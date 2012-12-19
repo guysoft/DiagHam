@@ -55,10 +55,17 @@ class AbstractHamiltonian
 {
 
  protected:
-
+  
   GarbageFlag Flag;
 
+  // flag to indicate if hamiltonian-vector multiplication is done on the left hand side
+  bool LeftHamiltonianVectorMultiplicationFlag;
+
  public:
+
+  // default constructor
+  //
+  AbstractHamiltonian();
 
   // destructor
   //

@@ -276,6 +276,13 @@ class ComplexVector : public Vector
   // return value = result of the partial scalar product
   Complex PartialScalarProduct (const ComplexVector& vRight, int firstComponent, int nbrComponent, int step = 1);
 
+  // Euclidian scalar product between two vectors (i.e. \sum_i V1[i] * V2[i])
+  //
+  // V1 = first vector
+  // V2 = second vector
+  // return value = result of scalar product
+  friend Complex EuclidianScalarProduct (const ComplexVector& V1, const ComplexVector& V2);
+
   // sum two vectors
   //
   // V1 = vector to add
@@ -680,6 +687,11 @@ class ComplexVector : public Vector
   //
   // return value = reference on current vector
   ComplexVector& Normalize();
+  
+  // conjugate the vector
+  //
+  // return value = reference on current vector
+  ComplexVector& Conjugate();
   
   // Extract a subvector from a given vector
   //

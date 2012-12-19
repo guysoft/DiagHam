@@ -370,6 +370,33 @@ bool BasicArnoldiAlgorithm::TestConvergence ()
   return false;
 }
 
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+void BasicArnoldiAlgorithm::GetEigenvalues (double*& eigenvalues, int nbrEigenvalues)
+{
+  eigenvalues = new double [nbrEigenvalues];
+  for (int i = 0; i < nbrEigenvalues; ++i)
+    {
+      eigenvalues[i] = this->ComplexDiagonalizedMatrix[i].Re;
+    }
+}
+
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+
+void BasicArnoldiAlgorithm::GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues)
+{
+  eigenvalues = new Complex [nbrEigenvalues];
+  for (int i = 0; i < nbrEigenvalues; ++i)
+    {
+      eigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
+    }
+}
+
 // diagonalize tridiagonalized matrix and find ground state energy
 //
 
