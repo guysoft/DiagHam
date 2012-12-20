@@ -104,28 +104,52 @@ RealMatrix::RealMatrix(int nbrRow, int nbrColumn, bool zero)
 // array = one dimensional array where the matrix elements are stored (all components of the first column, then all components of the second column,...)
 // nbrRow = number of rows
 // nbrColumn = number of columns
-// zero = tue if matrix elements have to be set to zero
+// columnOrder = elements in array are ordered column-wise  (all components of the first column, then all components of the second column,...)
 
-RealMatrix::RealMatrix(double* array, int nbrRow, int nbrColumn)
+RealMatrix::RealMatrix(double* array, int nbrRow, int nbrColumn, bool columnOrder)
 {
-  this->ColumnGarbageFlag = new int;
-  *(this->ColumnGarbageFlag) = 1;
-  this->NbrColumn = nbrColumn;
-  this->NbrRow = nbrRow;
-  this->TrueNbrRow = this->NbrRow;
-  this->TrueNbrColumn = this->NbrColumn;
-  this->Columns = new RealVector [this->NbrColumn];
-  for (int i = 0; i < this->NbrColumn; i++)
-    {
-      this->Columns[i] = RealVector (this->NbrRow);
-    }
+  if (columnOrder == true)
+   {
+     this->ColumnGarbageFlag = new int;
+     *(this->ColumnGarbageFlag) = 1;
+     this->NbrColumn = nbrColumn;
+     this->NbrRow = nbrRow;
+     this->TrueNbrRow = this->NbrRow;
+     this->TrueNbrColumn = this->NbrColumn;
+     this->Columns = new RealVector [this->NbrColumn];
+     for (int i = 0; i < this->NbrColumn; i++)
+      {
+        this->Columns[i] = RealVector (this->NbrRow);
+      }
   
-  long Index = 0;
-  for (int j = 0; j < this->NbrRow; j++)
-    for (int i = 0; i < this->NbrColumn; i++)
-      this->Columns[i][j] = array[Index++];
+     long Index = 0;
+     for (int j = 0; j < this->NbrRow; j++)
+       for (int i = 0; i < this->NbrColumn; i++)
+         this->Columns[i][j] = array[Index++];
 
-  this->MatrixType = Matrix::RealElements;
+     this->MatrixType = Matrix::RealElements;
+   }
+  else //order by rows instead
+   {
+     this->ColumnGarbageFlag = new int;
+     *(this->ColumnGarbageFlag) = 1;
+     this->NbrColumn = nbrColumn;
+     this->NbrRow = nbrRow;
+     this->TrueNbrRow = this->NbrRow;
+     this->TrueNbrColumn = this->NbrColumn;
+     this->Columns = new RealVector [this->NbrColumn];
+     for (int i = 0; i < this->NbrColumn; i++)
+      {
+        this->Columns[i] = RealVector (this->NbrRow);
+      }
+  
+     long Index = 0;
+     for (int i = 0; i < this->NbrRow; i++)
+       for (int j = 0; j < this->NbrColumn; j++)
+         this->Columns[i][j] = array[Index++];
+
+     this->MatrixType = Matrix::RealElements;
+   }
 }
 
 // constructor from matrix elements (without duplicating datas)
@@ -1122,9 +1146,10 @@ double RealMatrix::Permanent()
 // 
 // uMatrix = reference on the U matrix
 // vMatrix = reference on the V matrix
+// truncatedUVFlag = if false, set JOBZ = 'A' (returns full U, V matrices)
 // return value = pointer on the diagonal elements of D
 
-double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix)
+double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix, bool truncatedUVFlag)
 {
 #ifdef HAVE_LAPACK
   int MinDimension = this->NbrColumn;
@@ -1136,7 +1161,11 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   int IntegerWorkingAreaSize = -1;
   double TmpWorkingArea;
   int TmpIntegerWorkingArea;
-  char Jobz = 'S';
+  char Jobz;
+  if (truncatedUVFlag == false)
+     Jobz = 'A';
+  else
+     Jobz = 'S';
   double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
   int TotalIndex = 0;
   for (int j = 0; j < this->NbrColumn; ++j)
@@ -1148,17 +1177,28 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
 	}
     }
   double* TmpUMatrix = new double [this->NbrRow * this->NbrRow];
+  for (int i = 0; i < (this->NbrRow * this->NbrRow); ++i)
+    TmpUMatrix[i] = 0;
   double* TmpVMatrix = new double [this->NbrColumn * this->NbrColumn];
+  for (int i = 0; i < (this->NbrColumn * this->NbrColumn); ++i)
+    TmpVMatrix[i] = 0;
+
   int SizeLDU = this->NbrRow;
-  int SizeLDVT = MinDimension;//this->NbrColumn;
+  int SizeLDVT;
+  if (truncatedUVFlag == false)
+    SizeLDVT = this->NbrColumn;
+  else 
+    SizeLDVT = MinDimension;
+
+
   FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information); 
   WorkingAreaSize = (int) TmpWorkingArea;
   double* WorkingArea = new double [WorkingAreaSize];
   IntegerWorkingAreaSize = 8 * MinDimension;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
   FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
-  uMatrix = RealMatrix(TmpUMatrix, this->NbrRow, this->NbrRow);
-  vMatrix = RealMatrix(TmpVMatrix, this->NbrColumn, MinDimension);
+  uMatrix = RealMatrix(TmpUMatrix, this->NbrRow, this->NbrRow, false);
+  vMatrix = RealMatrix(TmpVMatrix, this->NbrColumn, this->NbrColumn, false);
   delete[] TmpUMatrix;
   delete[] TmpVMatrix;
   delete[] WorkingArea;

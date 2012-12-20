@@ -86,11 +86,11 @@ class RealMatrix : public Matrix
 
   // constructor for one dimensional array
   //
-  // array = one dimensional array where the matrix elements are stored (all components of the first column, then all components of the second column,...)
+  // array = one dimensional array where the matrix elements are stored
   // nbrRow = number of rows
   // nbrColumn = number of columns
-  // zero = tue if matrix elements have to be set to zero
-  RealMatrix(double* array, int nbrRow, int nbrColumn);
+  // columnOrder = elements in array are ordered column-wise  (all components of the first column, then all components of the second column,...)
+  RealMatrix(double* array, int nbrRow, int nbrColumn, bool columnOrder = true);
 
 #ifdef __MPI__
   // constructor from informations sent using MPI
@@ -357,8 +357,9 @@ class RealMatrix : public Matrix
   // 
   // uMatrix = reference on the U matrix
   // vMatrix = reference on the V matrix
+  // truncatedUVFlag = if false, set JOBZ = 'A' (returns full U, V matrices)
   // return value = pointer on the diagonal elements of D
-  double* SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix);
+  double* SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix, bool truncatedUVFlag = true);
 
   // compute the diagonal part of the singular value decomposition U D V^t
   // 
