@@ -99,6 +99,21 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // return value = block corresponding to the quantum numbers
   virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
 
+  // get the range for the bond index when fixing the tuncation level and the charge index
+  //
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // return value = range for the bond index with fixed tuncation level and charge index
+  virtual int GetBondIndexRange(int pLevel, int qValue);
+
+  // get the bond index for a fixed truncation level and the charge index 
+  //
+  // localIndex = bond index in the pLevel and qValue restricted range
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // return value = bond index in the full bond index range
+  virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
+
  protected:
 
   // load the specific informations from the file header

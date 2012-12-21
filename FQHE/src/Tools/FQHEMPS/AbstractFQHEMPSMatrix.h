@@ -115,11 +115,11 @@ class AbstractFQHEMPSMatrix
 
   // get the bond index for a fixed truncation level and the charge index 
   //
+  // localIndex = bond index in the pLevel and qValue restricted range
   // pLevel = tuncation level of the block
   // qValue = charge index of the block
-  // localIndex = bond index in the pLevel and qValue restricted range
   // return value = bond index in the full bond index range
-  virtual int GetBondIndexWithFixedChargeAndPLevel(int pLevel, int qValue);
+  virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
 
   // get the charge index range
   // 

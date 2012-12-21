@@ -123,6 +123,7 @@ int main(int argc, char** argv)
   
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
+  int NbrEigenstates = 0;
   if (Manager.GetBoolean("use-padding") == true)
     {
       if (Manager.GetBoolean("k-2") == true)
@@ -131,16 +132,19 @@ int main(int argc, char** argv)
 	    MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
 	  else
 	    MPSRowIndex = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
+	  NbrEigenstates = Manager.GetInteger("r-index") + 2;
 	}
       else
 	{
 	  if (Manager.GetBoolean("rr-3") == true)
 	    {
 	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 1);
+	      NbrEigenstates = 5;
 	    }
 	  else
 	    {
 	      MPSRowIndex = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
+	      NbrEigenstates = Manager.GetInteger("laughlin-index");
 	    }
 	}
       MPSColumnIndex = MPSRowIndex;
@@ -159,6 +163,7 @@ int main(int argc, char** argv)
 	      MPSRowIndex = 2 * (Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index"));
 	      MPSColumnIndex = 2 * Manager.GetInteger("p-truncation");
 	    }
+	  NbrEigenstates = Manager.GetInteger("r-index") + 2;
 	}
       else
 	{
@@ -166,11 +171,13 @@ int main(int argc, char** argv)
 	    {
 	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 2);
 	      MPSColumnIndex = 3 * Manager.GetInteger("p-truncation");
+	      NbrEigenstates = 5;
 	    }
 	  else
 	    {
 	      MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("laughlin-index") - 1);
 	      MPSColumnIndex = Manager.GetInteger("p-truncation");
+	      NbrEigenstates = Manager.GetInteger("laughlin-index");
 	    }
 	}
     }
@@ -216,7 +223,6 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("infinite-cylinder"))
     {
       int NbrBMatrices = 2;
-      int NbrEigenstates = 3;
       double Error = 1e-10;
       int FullDiagonalizationLimit = 1000;
 
@@ -228,7 +234,8 @@ int main(int argc, char** argv)
 	  Coefficients[i] = 1.0;
 	  SparseTransposeBMatrices[i] = SparseBMatrices[i].Transpose();
 	}
-
+      
+      
       TensorProductSparseMatrixHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);
       ComplexVector* LeftEigenstates = 0;
       Complex* LeftEigenvalues = 0;
@@ -244,10 +251,11 @@ int main(int argc, char** argv)
 
       cout << "eigenvalues : " << endl;
       for (int i = 0; i < NbrEigenstates; ++i)
-	cout << LeftEigenvalues[i] << " " << RightEigenvalues[i] << endl;;
+	cout << LeftEigenvalues[i] << " " << RightEigenvalues[i] 
+	     << "   moduli : " << Norm(LeftEigenvalues[i]) << " " << Norm(RightEigenvalues[i]) <<endl;
       cout << endl;
       
-      cout << "checking scalar products between left and right :" << endl;
+      cout << "checking scalar products between left and right E eigenstates:" << endl;
       for (int i = 0; i < NbrEigenstates; ++i)
 	for (int j = 0; j < NbrEigenstates; ++j)
 	  {
@@ -257,144 +265,135 @@ int main(int argc, char** argv)
 	    cout << "< " << i << " | " << j << " > = " << EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[j]) << " " << Test << endl;
 	  }
       
-      cout << "checking scalar products between right and right :" << endl;
-      for (int i = 0; i < NbrEigenstates; ++i)
-	for (int j = 0; j < NbrEigenstates; ++j)
-	  cout << "< " << i << " | " << j << " > = " << (RightEigenstates[i] * RightEigenstates[j]) << endl;
-      
-      cout << "checking scalar products between left and left :" << endl;
-      for (int i = 0; i < NbrEigenstates; ++i)
-	for (int j = 0; j < NbrEigenstates; ++j)
-	  cout << "< " << i << " | " << j << " > = " << (LeftEigenstates[i] * LeftEigenstates[j]) << endl;
-      
-      int TmpBMatrixDimension = BMatrices[0].GetNbrRow();
-      ComplexMatrix LeftMDaggerM (TmpBMatrixDimension, TmpBMatrixDimension);
-
-      Complex* TmpFactors = new Complex [NbrEigenstates];
-      for (int i = 0;i < NbrEigenstates; ++i)
-	TmpFactors[i] = RightEigenstates[i][MPSRowIndex * TmpBMatrixDimension + MPSRowIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
-      for (int i = 0; i < TmpBMatrixDimension; ++i)
-	for (int j = 0; j < TmpBMatrixDimension; ++j)
-	  {
-	    LeftMDaggerM[j][i] = 0.0;
-	    for (int k = 0; k < NbrEigenstates; ++k)
-	      LeftMDaggerM[j][i] += (LeftEigenstates[k][j * TmpBMatrixDimension + i] * TmpFactors[k]);
- 	  }
-
-      if (LeftMDaggerM.IsReal(Error) == true)
-	cout << "left M^+M is real" << endl;
-      if (LeftMDaggerM.IsSymmetric(Error) == true)
-	cout << "left M^+M is symmetric" << endl;
-      if (LeftMDaggerM.IsHermitian(Error) == true)
-	cout << "left M^+M is hermitian" << endl;
-
-      cout << LeftMDaggerM << endl;
-
-      ComplexMatrix RightMDaggerM (TmpBMatrixDimension, TmpBMatrixDimension);
-      for (int i = 0;i < NbrEigenstates; ++i)
-	TmpFactors[i] = LeftEigenstates[i][MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
-       for (int i = 0; i < TmpBMatrixDimension; ++i)
-	for (int j = 0; j < TmpBMatrixDimension; ++j)
-	  {
-	    RightMDaggerM[j][i] = 0.0;
-	    for (int k = 0; k < NbrEigenstates; ++k)
-	      RightMDaggerM[j][i] += (RightEigenstates[k][j * TmpBMatrixDimension + i] * TmpFactors[k]);
-	  }
-
-
-      if (RightMDaggerM.IsReal(Error) == true)
-	cout << "right M^+M is real" << endl;
-      if (RightMDaggerM.IsSymmetric(Error) == true)
-	cout << "right M^+M is symmetric" << endl;
-      if (RightMDaggerM.IsHermitian(Error) == true)
-	cout << "right M^+M is hermitian" << endl;
-
-
-       RealSymmetricMatrix SymLeftMDaggerM (LeftMDaggerM);
-       RealMatrix TmpLeftBasis(SymLeftMDaggerM.GetNbrRow(), SymLeftMDaggerM.GetNbrRow());
-       TmpLeftBasis.SetToIdentity();
-       RealDiagonalMatrix TmpDiag;
+      int MinQValue = 0;
+      int MaxQValue = 0;
+      MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
+      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	{
+	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	    {
+	      int IndexRange = MPSMatrix->GetBondIndexRange(PLevel, QValue);
+	      if (IndexRange >= 0)
+		{
+		  int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
+		  ComplexMatrix LeftMDaggerM (IndexRange, IndexRange);		    
+		  Complex* TmpFactors = new Complex [NbrEigenstates];
+		  for (int i = 0;i < NbrEigenstates; ++i)
+		    TmpFactors[i] = RightEigenstates[i][MPSRowIndex * TmpBMatrixDimension + MPSRowIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+		  for (int i = 0; i < IndexRange; ++i)
+		    for (int j = 0; j < IndexRange; ++j)
+		      {
+			LeftMDaggerM[j][i] = 0.0;
+			for (int k = 0; k < NbrEigenstates; ++k)
+			  LeftMDaggerM[j][i] += (LeftEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
+								    + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpFactors[k]);
+		      }
+		  
+		  
+		  ComplexMatrix RightMDaggerM (IndexRange, IndexRange);
+		  for (int i = 0;i < NbrEigenstates; ++i)
+		    TmpFactors[i] = LeftEigenstates[i][MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+		  for (int i = 0; i < IndexRange; ++i)
+		    for (int j = 0; j < IndexRange; ++j)
+		      {
+			RightMDaggerM[j][i] = 0.0;
+			for (int k = 0; k < NbrEigenstates; ++k)
+			  RightMDaggerM[j][i] += (RightEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
+								      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpFactors[k]);
+		      }
+		  
+		  
+		  RealSymmetricMatrix SymLeftMDaggerM (LeftMDaggerM);
+		  RealMatrix TmpLeftBasis(SymLeftMDaggerM.GetNbrRow(), SymLeftMDaggerM.GetNbrRow());
+		  TmpLeftBasis.SetToIdentity();
+		  RealDiagonalMatrix TmpLeftDiag;
 #ifdef __LAPACK__
-      SymLeftMDaggerM.LapackDiagonalize(TmpDiag, TmpLeftBasis);
+		  SymLeftMDaggerM.LapackDiagonalize(TmpLeftDiag, TmpLeftBasis);
 #else
-      SymLeftMDaggerM.Diagonalize(TmpDiag, TmpLeftBasis);
+		  SymLeftMDaggerM.Diagonalize(TmpLeftDiag, TmpLeftBasis);
 #endif
-      int NbrZeroEigenvalues = 0;
-      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	{
-	  if (fabs(TmpDiag(i, i)) < Error)
-	    {
-	      ++NbrZeroEigenvalues;	    
-	    }
-	  else
-	    {
-	      cout << "ev="  << TmpDiag(i, i) << endl;
-	    }
-	}
-      cout << "left nbr of zero eigenvalues = " << NbrZeroEigenvalues <<  " / " << TmpDiag.GetNbrRow() << endl;
-      RealMatrix TruncatedLeftBasis (TmpDiag.GetNbrRow(),TmpDiag.GetNbrRow() -  NbrZeroEigenvalues, true);
-      NbrZeroEigenvalues = 0;
-      for (int i = 0; i < TmpLeftBasis.GetNbrColumn(); ++i)
-	{
-	  if (fabs(TmpDiag(i, i)) > Error)
-	    {
-	      TruncatedLeftBasis[NbrZeroEigenvalues].Copy(TmpLeftBasis[i]);
-	      ++NbrZeroEigenvalues;
-	    }
-	}
+		  int NbrZeroLeftEigenvalues = 0;
+		  for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+		    {
+		      if (fabs(TmpLeftDiag(i, i)) < Error)
+			{
+			  ++NbrZeroLeftEigenvalues;	    
+			}
+		    }
 
-      RealSymmetricMatrix SymRightMDaggerM (RightMDaggerM);
-      RealMatrix TmpRightBasis(SymRightMDaggerM.GetNbrRow(), SymRightMDaggerM.GetNbrRow());
-      TmpRightBasis.SetToIdentity();
+		  RealSymmetricMatrix SymRightMDaggerM (RightMDaggerM);
+		  RealMatrix TmpRightBasis(SymRightMDaggerM.GetNbrRow(), SymRightMDaggerM.GetNbrRow());
+		  RealDiagonalMatrix TmpRightDiag;
+		  TmpRightBasis.SetToIdentity();
 #ifdef __LAPACK__
-      SymRightMDaggerM.LapackDiagonalize(TmpDiag, TmpRightBasis);
+		  SymRightMDaggerM.LapackDiagonalize(TmpRightDiag, TmpRightBasis);
 #else
-      SymRightMDaggerM.Diagonalize(TmpDiag, TmpRightBasis);
+		  SymRightMDaggerM.Diagonalize(TmpRightDiag, TmpRightBasis);
 #endif
-      NbrZeroEigenvalues = 0;
-      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	{
-	  if (fabs(TmpDiag(i, i)) < Error)
-	    {
-	      ++NbrZeroEigenvalues;	    
-	    }
-	  else
-	    {
-	      cout << "ev="  << TmpDiag(i, i) << endl;
+		  int NbrZeroRightEigenvalues = 0;
+		  for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
+		    {
+		      if (fabs(TmpRightDiag(i, i)) < Error)
+			{
+			  ++NbrZeroRightEigenvalues;	    
+			}
+		    }
+
+
+		  
+		  if ((NbrZeroLeftEigenvalues < SymLeftMDaggerM.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightMDaggerM.GetNbrRow()))
+		    {
+		      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(),TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
+		      NbrZeroLeftEigenvalues = 0;
+		      for (int i = 0; i < TmpLeftBasis.GetNbrColumn(); ++i)
+			{
+			  if (fabs(TmpLeftDiag(i, i)) > Error)
+			    {
+			      TruncatedLeftBasis[NbrZeroLeftEigenvalues].Copy(TmpLeftBasis[i]);
+			      ++NbrZeroLeftEigenvalues;
+			    }
+			}
+		      
+		      RealMatrix TruncatedRightBasis (TmpRightDiag.GetNbrRow(),TmpRightDiag.GetNbrRow() -  NbrZeroRightEigenvalues, true);
+		      NbrZeroRightEigenvalues = 0;
+		      for (int i = 0; i < TmpRightBasis.GetNbrColumn(); ++i)
+			{
+			  if (fabs(TmpRightDiag(i, i)) > Error)
+			    {
+			      TruncatedRightBasis[NbrZeroRightEigenvalues].Copy(TmpRightBasis[i]);
+			      ++NbrZeroRightEigenvalues;
+			    }
+			}
+		      
+		      RealMatrix TranposedTruncatedRightBasis = TruncatedRightBasis.DuplicateAndTranspose();
+		      TruncatedRightBasis.Multiply(TranposedTruncatedRightBasis);		      
+		      RealMatrix TranposedTruncatedLeftBasis = TruncatedLeftBasis.DuplicateAndTranspose();
+		      TranposedTruncatedLeftBasis.Multiply(TruncatedRightBasis);
+		      TranposedTruncatedLeftBasis.Multiply(TruncatedLeftBasis);
+		      
+		      RealSymmetricMatrix ReducedDensityMatrix (TruncatedLeftBasis.GetNbrColumn(), true);
+		      
+		      if (ReducedDensityMatrix.IsDiagonal() == true)
+			{
+			  cout << "the reduced density matrix is diagonal" << endl;
+			}
+		      else
+			{
+			  cout << "the reduced density matrix is not diagonal" << endl;
+			}
+		      int NbrNonZeroEigenvalues = 0;
+		      for (int i = 0; i < TranposedTruncatedLeftBasis.GetNbrColumn(); ++i)
+			{
+			  if (fabs(TranposedTruncatedLeftBasis(i, i)) > Error)
+			    {
+			      ++NbrNonZeroEigenvalues;
+			    }
+			}
+		      cout << PLevel << " " << QValue << " " << NbrNonZeroEigenvalues << endl;
+		    }
+		}
 	    }
 	}
-      cout << "right nbr of zero eigenvalues = " << NbrZeroEigenvalues <<  " / " << TmpDiag.GetNbrRow() << endl;
-      RealMatrix TruncatedRightBasis (TmpDiag.GetNbrRow(),TmpDiag.GetNbrRow() -  NbrZeroEigenvalues, true);
-      NbrZeroEigenvalues = 0;
-      for (int i = 0; i < TmpRightBasis.GetNbrColumn(); ++i)
-	{
-	  if (fabs(TmpDiag(i, i)) > Error)
-	    {
-	      TruncatedRightBasis[NbrZeroEigenvalues].Copy(TmpRightBasis[i]);
-	      ++NbrZeroEigenvalues;
-	    }
-	}
-
-      RealMatrix TranposedTruncatedRightBasis = TruncatedRightBasis.DuplicateAndTranspose();
-      TruncatedRightBasis.Multiply(TranposedTruncatedRightBasis);
- 
-      RealMatrix TranposedTruncatedLeftBasis = TruncatedLeftBasis.DuplicateAndTranspose();
-      TranposedTruncatedLeftBasis.Multiply(TruncatedRightBasis);
-      TranposedTruncatedLeftBasis.Multiply(TruncatedLeftBasis);
-//      cout << TranposedTruncatedLeftBasis << endl;
-
-      RealSymmetricMatrix ReducedDensityMatrix (TruncatedLeftBasis.GetNbrColumn(), true);
-
-      NbrZeroEigenvalues = 0;
-      for (int i = 0; i < TranposedTruncatedLeftBasis.GetNbrColumn(); ++i)
-	{
-	  if (fabs(TranposedTruncatedLeftBasis(i, i)) > Error)
-	    {
-	      ++NbrZeroEigenvalues;
-	    }
-	}
-      cout << "NbrZeroEigenvalues = " << NbrZeroEigenvalues << endl;
-
       
       return 0;
     }
@@ -688,8 +687,6 @@ void MPSDiagonalizeEMatrix(AbstractHamiltonian* hamiltonian, int nbrEigenstates,
     {
       eigenstates[i] = TmpEigenstates[TmpIndices[i]];
       eigenvalues[i] = TmpEigenvalues[TmpIndices[i]];
-//       if ((leftFlag == true) && (fabs(eigenvalues[i].Im) > error))
-// 	eigenstates[i].Conjugate();
     }
   for (int i = 0; i < nbrEigenstates; ++i)
     {

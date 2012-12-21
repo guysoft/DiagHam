@@ -265,6 +265,31 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, i
   return TmpMatrix;
 }
 
+// get the range for the bond index when fixing the tuncation level and the charge index
+//
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// return value = range for the bond index with fixed tuncation level and charge index
+
+int FQHEMPSLaughlinMatrix::GetBondIndexRange(int pLevel, int qValue)
+{
+  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue))
+    return 0;
+  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValue;  
+}
+
+// get the bond index for a fixed truncation level and the charge index 
+//
+// localIndex = bond index in the pLevel and qValue restricted range
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// return value = bond index in the full bond index range
+
+int FQHEMPSLaughlinMatrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
+{  
+  return (this->TotalStartingIndexPerPLevel[pLevel] + (localIndex * this->NbrNValue + qValue));
+}
+
 // get the charge index range
 // 
 // minQ = reference on the lowest charge index

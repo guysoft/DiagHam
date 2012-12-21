@@ -70,6 +70,21 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   //
   virtual void CreateBMatrices ();
 
+  // get the range for the bond index when fixing the tuncation level and the charge index
+  //
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // return value = range for the bond index with fixed tuncation level and charge index
+  virtual int GetBondIndexRange(int pLevel, int qValue);
+
+  // get the bond index for a fixed truncation level and the charge index 
+  //
+  // localIndex = bond index in the pLevel and qValue restricted range
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // return value = bond index in the full bond index range
+  virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
+
  protected:
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states

@@ -153,7 +153,7 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
 								      int firstComponent, int nbrComponent)
 {
   int IndexStep = this->LeftMatrices[0].GetNbrColumn();
-  int LastComponent = firstComponent + nbrComponent;
+  int LastComponent = firstComponent + nbrComponent - 1;
   int AMatrixLastIndex = LastComponent / this->LeftMatrices[0].GetNbrRow();
   int BMatrixLastIndex = LastComponent % this->LeftMatrices[0].GetNbrRow();
   long TmpARowPointer;
@@ -167,16 +167,16 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
       int AMatrixStartingIndex = firstComponent / this->LeftMatrices[0].GetNbrRow();
       int BMatrixStartingIndex = firstComponent % this->LeftMatrices[0].GetNbrRow();
       int TotalIndex = firstComponent;
-      for (; AMatrixStartingIndex <  AMatrixLastIndex; ++AMatrixStartingIndex)
+      for (; AMatrixStartingIndex <=  AMatrixLastIndex; ++AMatrixStartingIndex)
 	{
 	  TmpARowPointer = TmpLeftMatrix.RowPointers[AMatrixStartingIndex];
 	  if (TmpARowPointer >= 0l)
 	    {
 	      TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[AMatrixStartingIndex];
-	      int TmpBMatrixLastIndex = TmpRightMatrix.GetNbrRow();
-	      if (AMatrixStartingIndex == (AMatrixLastIndex - 1))
+	      int TmpBMatrixLastIndex = TmpRightMatrix.GetNbrRow() - 1;
+	      if (AMatrixStartingIndex == AMatrixLastIndex)
 		TmpBMatrixLastIndex = BMatrixLastIndex;
-	      for (; BMatrixStartingIndex <  TmpBMatrixLastIndex; ++BMatrixStartingIndex)
+	      for (; BMatrixStartingIndex <= TmpBMatrixLastIndex; ++BMatrixStartingIndex)
 		{
 		  TmpBRowPointer = TmpRightMatrix.RowPointers[BMatrixStartingIndex];
 		  if (TmpBRowPointer >= 0l)
