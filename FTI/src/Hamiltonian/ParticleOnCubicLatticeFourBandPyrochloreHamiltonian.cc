@@ -310,8 +310,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
 		  }
       
       double Factor = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ))*2.0*this->VPotential;
-      double FactorWU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ))*this->WUPotential;
-      double FactorWV = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ))*this->WVPotential;
+      double FactorWU = 1.0 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ))*this->WUPotential;
+      double FactorWV = 1.0 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ))*this->WVPotential;
       Complex* TmpInteractionFactor;
       int* TmpIndices;
       int* TmpIndices2;
@@ -483,8 +483,8 @@ void ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::EvaluateInteractionFac
       
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * this->UPotential;
       double FactorV = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * 2.0 * this->VPotential;
-      double FactorWU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * this->WUPotential;
-      double FactorWV = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * this->WVPotential;
+      double FactorWU = 1.0 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * this->WUPotential;
+      double FactorWV = 1.0 / ((double) (this->NbrSiteX * this->NbrSiteY * this->NbrSiteZ)) * this->WVPotential;
       Complex* TmpInteractionFactor;
       int* TmpIndices;
       int* TmpIndices2;
@@ -645,9 +645,9 @@ Complex ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::ComputeOnSiteContri
     Tmp += this->ComputeTransfomationBasisContribution(oneBodyBasis, momentumIndex4, momentumIndex3, momentumIndex2, momentumIndex1, energyIndex4, energyIndex3, energyIndex2, energyIndex1, i, i, i, i);
    }
   Tmp *= factorU;
-  if (momentumIndex1 == momentumIndex2 && energyIndex1 == energyIndex2)
+  if ((momentumIndex1 == momentumIndex2) && (energyIndex1 == energyIndex2))
     Tmp *= 0.5;
-  if (momentumIndex3 == momentumIndex4 && energyIndex3 == energyIndex4)
+  if ((momentumIndex3 == momentumIndex4) && (energyIndex3 == energyIndex4))
     Tmp *= 0.5;
   return Tmp;
 }
@@ -680,10 +680,13 @@ Complex ParticleOnCubicLatticeFourBandPyrochloreHamiltonian::ComputeOnSiteContri
       Tmp += epsilon*this->ComputeTransfomationBasisContribution(oneBodyBasis, momentumIndex4, momentumIndex3, momentumIndex2, momentumIndex1, energyIndex4, energyIndex3, energyIndex2, energyIndex1, i, i + 4, i, i + 4);
     }
   Tmp *= factorV;
-  if (momentumIndex1 == momentumIndex2 && energyIndex1 == energyIndex2 && epsilon == 1)
-    Tmp *= 0.5;
-  if (momentumIndex3 == momentumIndex4 && energyIndex3 == energyIndex4 && epsilon == 1)
-    Tmp *= 0.5;
+  if (epsilon == 1)
+  {
+    if ((momentumIndex1 == momentumIndex2) && (energyIndex1 == energyIndex2))
+      Tmp *= 0.5;
+    if ((momentumIndex3 == momentumIndex4) && (energyIndex3 == energyIndex4))
+      Tmp *= 0.5;
+  }
   return Tmp;  
 }
 
