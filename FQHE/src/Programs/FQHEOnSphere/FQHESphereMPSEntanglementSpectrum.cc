@@ -208,13 +208,29 @@ int main(int argc, char** argv)
 	}      
       if (CylinderFlag == true)
 	{
-	  sprintf(TmpFileName, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
-		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	  if (Manager.GetBoolean("infinite-cylinder"))
+	    {
+	      sprintf(TmpFileName, "fermions_infinite_cylinder_%s_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", StateName,
+		      Manager.GetInteger("p-truncation"));
+	    }
+	  else
+	    {
+	      sprintf(TmpFileName, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
+		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	    }
 	}
       else
 	{
-	  sprintf(TmpFileName, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
-		  Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	  if (Manager.GetBoolean("infinite-cylinder"))
+	    {
+	      sprintf(TmpFileName, "fermions_infinite_%s_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", StateName,
+		      Manager.GetInteger("p-truncation"));
+	    }
+	  else
+	    {
+	      sprintf(TmpFileName, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
+		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
+	    }
 	}
       File.open(TmpFileName, ios::binary | ios::out);     
    }
@@ -268,9 +284,16 @@ int main(int argc, char** argv)
       int MinQValue = 0;
       int MaxQValue = 0;
       MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
-      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+      char* OutputFileName = Manager.GetString("output-file");
+      if (OutputFileName == 0)
 	{
-	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	  char* TmpExtension = new char[512];
+	  sprintf(TmpExtension, "fermions_infinite_cylinder_n_0_2s_0_lz.0.0.full.ent");
+	}
+      File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
+      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	{
+	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	    {
 	      int IndexRange = MPSMatrix->GetBondIndexRange(PLevel, QValue);
 	      if (IndexRange >= 0)
@@ -350,6 +373,7 @@ int main(int argc, char** argv)
 			  if (fabs(TmpLeftDiag(i, i)) > Error)
 			    {
 			      TruncatedLeftBasis[NbrZeroLeftEigenvalues].Copy(TmpLeftBasis[i]);
+			      TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(TmpLeftDiag(i, i));
 			      ++NbrZeroLeftEigenvalues;
 			    }
 			}
@@ -361,6 +385,7 @@ int main(int argc, char** argv)
 			  if (fabs(TmpRightDiag(i, i)) > Error)
 			    {
 			      TruncatedRightBasis[NbrZeroRightEigenvalues].Copy(TmpRightBasis[i]);
+			      TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(TmpRightDiag(i, i));
 			      ++NbrZeroRightEigenvalues;
 			    }
 			}
@@ -386,6 +411,7 @@ int main(int argc, char** argv)
 			{
 			  if (fabs(TranposedTruncatedLeftBasis(i, i)) > Error)
 			    {
+			      File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TranposedTruncatedLeftBasis(i, i) << endl;
 			      ++NbrNonZeroEigenvalues;
 			    }
 			}
@@ -394,7 +420,7 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
-      
+      File.close();
       return 0;
     }
 

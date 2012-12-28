@@ -130,6 +130,13 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // chargedPartitionIndex =index of the partition in the charge sector
   void GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex);
 
+  // compute the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  virtual void GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue);
+
  protected:
 
   // load the specific informations from the file header
@@ -213,6 +220,21 @@ inline void FQHEMPSLaughlinMatrix::GetPNFromMatrixIndex(int index, int& charge, 
           }
      }
      
+}
+
+// compute the  level and the charge index of a given matrix index
+//
+// index = matrix index
+// pLevel = reference on the level
+// qValue = reference on the charge index
+
+inline void FQHEMPSLaughlinMatrix::GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue)
+{
+  pLevel = 0;
+  while ((pLevel <= this->PLevel) && (this->TotalStartingIndexPerPLevel[pLevel] < index))
+    ++pLevel;
+  --pLevel;
+  qValue = (index - this->TotalStartingIndexPerPLevel[pLevel]) % this->NbrNValue;
 }
 
 #endif

@@ -135,6 +135,13 @@ class AbstractFQHEMPSMatrix
   // chargedPartitionIndex =index of the partition in the charge sector
   virtual void GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex);
 
+  // compute the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  virtual void GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue);
+
  protected:
 
   // load the specific informations from the file header
@@ -169,6 +176,18 @@ inline SparseRealMatrix* AbstractFQHEMPSMatrix::GetMatrices()
 inline void AbstractFQHEMPSMatrix::GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex)
 {
   cout << "Dummy. " << endl;
+}
+
+// compute the level and the charge index of a given matrix index
+//
+// index = matrix index
+// pLevel = reference on the level
+// qValue = reference on the charge index
+
+inline void AbstractFQHEMPSMatrix::GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue)
+{
+  pLevel = -1;
+  qValue = -1;
 }
 
 #endif

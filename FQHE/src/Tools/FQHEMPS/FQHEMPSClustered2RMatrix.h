@@ -220,4 +220,5 @@ inline int FQHEMPSClustered2RMatrix::Get2RReducedMatrixIndex(int chargedPartitio
   return (globalIndexShift + (chargedPartitionIndex + chargeSectorDimension * ((fieldIndex * nbrIdentityDescendant) + neutralPartitionIndex)));
 }
 
+
 #endif
