@@ -12,6 +12,7 @@
 
 #include "Tools/FQHEMPS/FQHEMPSMatrixManager.h"
 #include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -1012,7 +1013,11 @@ int main(int argc, char** argv)
   EntMatrixOnSite.Copy(*NewDVMatrix);
   EntMatrixOnSite.Multiply(NewUDOld);
   EntMatrixOnSite.Resize(NewDVMatrix->GetNbrRow(), NewUDOld.GetNbrColumn());
-  SingularValues = EntMatrixOnSite.SingularValueDecomposition();
+
+  UMatrix = new RealMatrix (NewDVMatrix->GetNbrRow(), NewDVMatrix->GetNbrRow(), true);
+  VMatrix = new RealMatrix (NewUDOld.GetNbrColumn(), NewUDOld.GetNbrColumn(), true);
+
+  SingularValues = EntMatrixOnSite.SingularValueDecomposition(*UMatrix, *VMatrix, false);
 
   SingularDimension = NewDVMatrix->GetNbrRow();
   if (NewUDOld.GetNbrColumn() < NewDVMatrix->GetNbrRow())
@@ -1032,9 +1037,99 @@ int main(int argc, char** argv)
         cout<<SingularValues[i]/Trace<<endl;
     } 
   cout<<endl; 
+ 
+  double CutOff2 = 1e-10;
 
+  int LeftRow = NewDVMatrix->GetNbrRow();
+  int RightColumn = NewUDOld.GetNbrColumn(); 
+  
+  cout<<"Left rows " << LeftRow << " right columns " << RightColumn << endl;
+
+  double* IndexMat = new double [LeftRow];
+  for (int i = 0; i < LeftRow; i++) 
+    IndexMat[i] = 0.0; 
+
+  for (int i = 0; i < LeftRow; i++)
+   for (int j = 0; j < RightColumn; j++)
+     {
+       bool found = false;
+       for (int k = 0; (k < MatDim) && (found == false); k++)
+         {
+            double Tmp1, Tmp2;
+            NewDVMatrix->GetMatrixElement(i, k, Tmp1);
+            NewUDOld.GetMatrixElement(k, j, Tmp2);
+            if ((fabs(Tmp1) > CutOff2) && (fabs(Tmp2) > CutOff2))
+              {
+                IndexMat[i] = k;
+                found = true;
+              }
+         }
+     }
+
+  cout<<"IndexMat = ";
+  for (int i = 0; i < LeftRow; i++)
+    cout << IndexMat[i] << " ";
+  cout<<endl;
+
+
+  cout<<"Entanglement levels with quantum numbers La,Na,P: "<<endl;
+
+  bool* RowIndicator = new bool[UMatrix->GetNbrRow()];
+  for (int i = 0; i < UMatrix->GetNbrRow(); ++i)
+    RowIndicator[i] = false;
+  int TmpParticlesA, TmpP, TmpN;
+
+  for (int i = 0; i < SingularDimension; i++)
+    {
+      if (fabs(SingularValues[i]) > CutOff)
+       {
+          UMatrix->GetMatrixElement (i, i, Tmp);
+          if (fabs(Tmp) > CutOff2)
+            {
+               RowIndicator[i] = true; 
+               MPSMatrix->GetPNFromMatrixIndex (IndexMat[i], TmpN, TmpP);
+               TmpParticlesA = (EntCut - (TmpN - (2 * LambdaMax + LaughlinIndex - 1)/2))/LaughlinIndex;
+               if (TmpParticlesA == Na)
+                 {
+                  cout << "Na= " << TmpParticlesA << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
+                  File << TmpParticlesA << " " << TmpP << " " << SingularValues[i]/Trace << endl;
+                 }
+            }
+          else
+           {
+             bool found = false;
+             for (int j = 0; ((j < UMatrix->GetNbrRow()) && (found == false)); ++j)
+               {
+                 if (RowIndicator[j] == false)
+                   {
+                     UMatrix->GetMatrixElement(j, i, Tmp);
+                     if ( (fabs(Tmp) > CutOff2) && (IndexMat[j] != 0) )
+                       {
+                          found = true;
+                          RowIndicator[j] = true;
+                          MPSMatrix->GetPNFromMatrixIndex (IndexMat[j], TmpN, TmpP);
+                          TmpParticlesA = (EntCut - (TmpN - (2 * LambdaMax + LaughlinIndex - 1)/2))/LaughlinIndex;
+                          if (TmpParticlesA == Na)
+                           { 
+                            cout << "Na= " << TmpParticlesA << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
+                            File << TmpParticlesA << " " << TmpP << " " << SingularValues[i]/Trace << endl;
+                           }  
+                       }
+                   }
+               } 
+           }  
+       }
+    } 
+  cout<<endl; 
+
+  delete[] RowIndicator;
+  delete UMatrix;
+  delete VMatrix;
+  delete[] IndexMat;
   delete NewDVMatrix;
   delete[] SingularValues;  
+
+
 
 /*
   OverlapMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);

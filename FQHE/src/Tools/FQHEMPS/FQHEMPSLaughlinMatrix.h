@@ -123,6 +123,13 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int& minQ, int& maxQ);
 
+  // compute P, N from the linearized index of the B matrix for the Laughlin states
+  //
+  // index = linearized index
+  // charge = charge index
+  // chargedPartitionIndex =index of the partition in the charge sector
+  void GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex);
+
  protected:
 
   // load the specific informations from the file header
@@ -175,6 +182,37 @@ inline int FQHEMPSLaughlinMatrix::GetMatrixIndex(int charge, int chargedPartitio
 						 int nbrCharges, int globalIndexShift)
 {
   return ((chargedPartitionIndex * nbrCharges + charge) + globalIndexShift);
+}
+
+// compute P, N from the linearized index of the B matrix for the Laughlin states
+//
+// index = linearized index
+// charge = charge index
+// chargedPartitionIndex =index of the partition in the charge sector
+
+inline void FQHEMPSLaughlinMatrix::GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex)
+{
+   int i = 0;
+   bool found = false;
+   int U1dim;  
+   int TmpSum = this->NbrIndicesPerPLevel[0];
+   
+   while ((i <= this->PLevel) && (found == false))
+     {
+        if (index < TmpSum)
+           {
+             found = true;
+             chargedPartitionIndex = i;
+             U1dim = this->NbrIndicesPerPLevel[i]/this->NbrNValue;
+             charge = (this->NbrIndicesPerPLevel[i] - (TmpSum - index)) % this->NbrNValue;
+           }
+        else
+          {
+             i++;
+             TmpSum += this->NbrIndicesPerPLevel[i];      
+          }
+     }
+     
 }
 
 #endif

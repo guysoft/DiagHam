@@ -43,7 +43,8 @@ class SparseComplexMatrix;
 
 using std::ofstream;
 using std::ifstream;
-
+using std::cout;
+using std::endl;
 
 class AbstractFQHEMPSMatrix
 {
@@ -127,6 +128,13 @@ class AbstractFQHEMPSMatrix
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int& minQ, int& maxQ);
 
+  // compute P, N from the linearized index of the B matrix for the Laughlin states
+  //
+  // index = linearized index
+  // charge = charge index
+  // chargedPartitionIndex =index of the partition in the charge sector
+  virtual void GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex);
+
  protected:
 
   // load the specific informations from the file header
@@ -150,6 +158,17 @@ class AbstractFQHEMPSMatrix
 inline SparseRealMatrix* AbstractFQHEMPSMatrix::GetMatrices()
 {
   return this->RealBMatrices;
+}
+
+// compute P, N from the linearized index of the B matrix for the Laughlin states
+//
+// index = linearized index
+// charge = charge index
+// chargedPartitionIndex =index of the partition in the charge sector
+
+inline void AbstractFQHEMPSMatrix::GetPNFromMatrixIndex(int index, int& charge, int& chargedPartitionIndex)
+{
+  cout << "Dummy. " << endl;
 }
 
 #endif

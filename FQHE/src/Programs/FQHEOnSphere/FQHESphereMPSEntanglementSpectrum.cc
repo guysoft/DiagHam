@@ -609,7 +609,7 @@ int main(int argc, char** argv)
   for (int i=0; i<MatDim; ++i)
     if (((fabs(RhoEigenvalues[i]) > CutOff)) && ((((EntCut - (RhoNSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
       {
-        cout<< "P= " << RhoPSector[i] << " N= " << RhoNSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
+        cout<< "Na= " << Na << " P= " << RhoPSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
         File << EntCut << " " << Na << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
       }
 
