@@ -416,7 +416,7 @@ int main(int argc, char** argv)
 		      double Sum = 0.0;
 		      for (int i = 0; i < TranposedTruncatedLeftBasis.GetNbrColumn(); ++i)
 			{
-			  if (TranposedTruncatedLeftBasis(i, i) > Error)
+			  if (TranposedTruncatedLeftBasis(i, i) > 0.0)
 			    {
 			      File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TranposedTruncatedLeftBasis(i, i) <<  " " << (-log(TranposedTruncatedLeftBasis(i, i))) <<endl;
 			      Sum += TranposedTruncatedLeftBasis(i, i);
