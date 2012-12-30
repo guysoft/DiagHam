@@ -303,6 +303,13 @@ class Matrix
   // return value = true if no error occurs
   virtual bool ReadMatrix (char* fileName);
 
+  // output the matrix in a sparse display (column formatted output)
+  //
+  // str = reference on output stream
+  // error = numerical accuracy below which a matrix element is considered to be equal to zero
+  // return value = reference on output stream  
+  virtual ostream& PrintNonZero (ostream& str, double error = MACHINE_PRECISION);
+
 #ifdef __MPI__
 
   // send a matrix to a given MPI process

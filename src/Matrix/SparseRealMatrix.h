@@ -438,8 +438,9 @@ class SparseRealMatrix : public Matrix
   // output the matrix in a sparse display (column formatted output)
   //
   // str = reference on output stream
+  // error = numerical accuracy below which a matrix element is considered to be equal to zero (discarded fro sparse matrices)
   // return value = reference on output stream
-  ostream& PrintNonZero (ostream& str);
+  ostream& PrintNonZero (ostream& str, double error = MACHINE_PRECISION);
 
 #ifdef USE_OUTPUT
 

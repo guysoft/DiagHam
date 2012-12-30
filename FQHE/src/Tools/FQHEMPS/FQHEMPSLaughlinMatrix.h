@@ -231,7 +231,7 @@ inline void FQHEMPSLaughlinMatrix::GetPNFromMatrixIndex(int index, int& charge, 
 inline void FQHEMPSLaughlinMatrix::GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue)
 {
   pLevel = 0;
-  while ((pLevel <= this->PLevel) && (this->TotalStartingIndexPerPLevel[pLevel] < index))
+  while ((pLevel <= this->PLevel) && (this->TotalStartingIndexPerPLevel[pLevel] <= index))
     ++pLevel;
   --pLevel;
   qValue = (index - this->TotalStartingIndexPerPLevel[pLevel]) % this->NbrNValue;

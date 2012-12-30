@@ -291,6 +291,15 @@ int main(int argc, char** argv)
 	  sprintf(TmpExtension, "fermions_infinite_cylinder_n_0_2s_0_lz.0.0.full.ent");
 	}
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
+
+      int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
+      Complex* TmpLeftFactors = new Complex [NbrEigenstates];
+      Complex* TmpRightFactors = new Complex [NbrEigenstates];
+      for (int i = 0; i < NbrEigenstates; ++i)
+	TmpLeftFactors[i] = RightEigenstates[i][MPSRowIndex * TmpBMatrixDimension + MPSRowIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+      for (int i = 0; i < NbrEigenstates; ++i)
+	TmpRightFactors[i] = LeftEigenstates[i][MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+
       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	{
 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
@@ -298,31 +307,29 @@ int main(int argc, char** argv)
 	      int IndexRange = MPSMatrix->GetBondIndexRange(PLevel, QValue);
 	      if (IndexRange >= 0)
 		{
-		  int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
 		  ComplexMatrix LeftMDaggerM (IndexRange, IndexRange);		    
-		  Complex* TmpFactors = new Complex [NbrEigenstates];
-		  for (int i = 0;i < NbrEigenstates; ++i)
-		    TmpFactors[i] = RightEigenstates[i][MPSRowIndex * TmpBMatrixDimension + MPSRowIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
 		  for (int i = 0; i < IndexRange; ++i)
 		    for (int j = 0; j < IndexRange; ++j)
 		      {
 			LeftMDaggerM[j][i] = 0.0;
 			for (int k = 0; k < NbrEigenstates; ++k)
-			  LeftMDaggerM[j][i] += (LeftEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-								    + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpFactors[k]);
+			  {
+			    LeftMDaggerM[j][i] += (LeftEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
+								      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpLeftFactors[k]);
+			  }
 		      }
 		  
 		  
 		  ComplexMatrix RightMDaggerM (IndexRange, IndexRange);
-		  for (int i = 0;i < NbrEigenstates; ++i)
-		    TmpFactors[i] = LeftEigenstates[i][MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
 		  for (int i = 0; i < IndexRange; ++i)
 		    for (int j = 0; j < IndexRange; ++j)
 		      {
 			RightMDaggerM[j][i] = 0.0;
 			for (int k = 0; k < NbrEigenstates; ++k)
-			  RightMDaggerM[j][i] += (RightEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-								      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpFactors[k]);
+			  {
+			    RightMDaggerM[j][i] += (RightEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
+									+ MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpRightFactors[k]);
+			  }
 		      }
 		  
 		  
@@ -361,9 +368,7 @@ int main(int argc, char** argv)
 			  ++NbrZeroRightEigenvalues;	    
 			}
 		    }
-
-
-		  
+		 
 		  if ((NbrZeroLeftEigenvalues < SymLeftMDaggerM.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightMDaggerM.GetNbrRow()))
 		    {
 		      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(),TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
@@ -390,6 +395,7 @@ int main(int argc, char** argv)
 			    }
 			}
 		      
+
 		      RealMatrix TranposedTruncatedRightBasis = TruncatedRightBasis.DuplicateAndTranspose();
 		      TruncatedRightBasis.Multiply(TranposedTruncatedRightBasis);		      
 		      RealMatrix TranposedTruncatedLeftBasis = TruncatedLeftBasis.DuplicateAndTranspose();
@@ -397,7 +403,7 @@ int main(int argc, char** argv)
 		      TranposedTruncatedLeftBasis.Multiply(TruncatedLeftBasis);
 		      
 		      RealSymmetricMatrix ReducedDensityMatrix (TruncatedLeftBasis.GetNbrColumn(), true);
-		      
+
 		      if (ReducedDensityMatrix.IsDiagonal() == true)
 			{
 			  cout << "the reduced density matrix is diagonal" << endl;
@@ -407,19 +413,23 @@ int main(int argc, char** argv)
 			  cout << "the reduced density matrix is not diagonal" << endl;
 			}
 		      int NbrNonZeroEigenvalues = 0;
+		      double Sum = 0.0;
 		      for (int i = 0; i < TranposedTruncatedLeftBasis.GetNbrColumn(); ++i)
 			{
-			  if (fabs(TranposedTruncatedLeftBasis(i, i)) > Error)
+			  if (TranposedTruncatedLeftBasis(i, i) > Error)
 			    {
-			      File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TranposedTruncatedLeftBasis(i, i) << endl;
+			      File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TranposedTruncatedLeftBasis(i, i) <<  " " << (-log(TranposedTruncatedLeftBasis(i, i))) <<endl;
+			      Sum += TranposedTruncatedLeftBasis(i, i);
 			      ++NbrNonZeroEigenvalues;
 			    }
 			}
-		      cout << PLevel << " " << QValue << " " << NbrNonZeroEigenvalues << endl;
+		      cout << "P=" << PLevel << " " << " Q=" << QValue << " NbrStates=" << NbrNonZeroEigenvalues << " Tr(rho_A)=" << Sum << endl;
 		    }
 		}
 	    }
 	}
+      delete[] TmpLeftFactors;
+      delete[] TmpRightFactors;
       File.close();
       return 0;
     }

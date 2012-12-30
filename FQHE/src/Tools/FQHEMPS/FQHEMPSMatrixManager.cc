@@ -113,6 +113,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*PrecalculationGroup) += new BooleanOption ('\n', "only-export", "only export the B matrices in a binary file and exit from the program");
   (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
   (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
+  (*OutputGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
 }
 
 
@@ -128,7 +129,10 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
   double Kappa = 0.0;
   if (CylinderFlag)
     {
-       Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
+      if (this->Options->GetDouble("cylinder-perimeter") > 0.0)
+	Kappa = (2.0 * M_PI)/sqrt(this->Options->GetDouble("cylinder-perimeter"));
+      else
+	Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
        cout<<"Cylinder geometry, kappa= " << Kappa << endl;
     }
 

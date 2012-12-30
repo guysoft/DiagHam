@@ -405,8 +405,9 @@ class SparseComplexMatrix : public Matrix
   // output the matrix in a sparse display (column formatted output)
   //
   // str = reference on output stream
+  // error = numerical accuracy below which a matrix element is considered to be equal to zero
   // return value = reference on output stream
-  ostream& PrintNonZero (ostream& str);
+  ostream& PrintNonZero (ostream& str, double error = MACHINE_PRECISION);
 
   // Output Stream overload
   //

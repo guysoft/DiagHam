@@ -1660,9 +1660,10 @@ ostream& operator << (ostream& Str, const SparseRealMatrix& P)
 // output the matrix in a sparse display (column formatted output)
 //
 // str = reference on output stream
+// error = numerical accuracy below which a matrix element is considered to be equal to zero (discarded fro sparse matrices)
 // return value = reference on output stream
 
-ostream& SparseRealMatrix::PrintNonZero (ostream& str) 
+ostream& SparseRealMatrix::PrintNonZero (ostream& str, double error) 
 {
   for (long i = 0; i < this->NbrRow; ++i)
     if (this->RowPointers[i] >= 0l)
