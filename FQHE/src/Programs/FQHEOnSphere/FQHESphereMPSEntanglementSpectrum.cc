@@ -448,6 +448,7 @@ int main(int argc, char** argv)
   cout<<"Done preparing B matrices and the vectors at 0 and Nphi orbital"<<endl;
 
   double CutOff = 1e-14;
+  double TmpTrace;
 
   cout<<"Proceed to calculate overlap matrix (full space dimension, and it will be stored) "<<endl;
 
@@ -487,7 +488,16 @@ int main(int argc, char** argv)
 	TmpMatrix3 *= NormalizationCoefficients[i];
       
       OverlapMatrix = TmpMatrix2 + TmpMatrix3;
-
+      
+      TmpTrace = OverlapMatrix.Tr();
+      if (fabs(TmpTrace) > CutOff)
+        OverlapMatrix /= TmpTrace;
+      else
+        {
+          cout << "Warning: trying to normalize with 0! " << endl;
+          exit(1);
+        } 
+      
     }
 
 
@@ -524,6 +534,15 @@ int main(int argc, char** argv)
       if (CylinderFlag == false)
 	TmpMatrix3 *= NormalizationCoefficients[i];
       RhoA = TmpMatrix2 + TmpMatrix3;
+
+      TmpTrace = RhoA.Tr();
+      if (fabs(TmpTrace) > CutOff)
+        RhoA /= TmpTrace;
+      else
+        {
+          cout << "Warning: trying to normalize with 0! " << endl;
+          exit(1);
+        } 
     }
 
   //Free up some space that is no longer needed (this needs to be done in a cleaner way)

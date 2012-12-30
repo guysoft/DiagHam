@@ -214,6 +214,7 @@ int main(int argc, char** argv)
   cout << "B matrix size = " << MatDim << "x" << MatDim << endl;
 
   double CutOff = 1e-14;
+  double TmpTrace;
 
   double* NormalizationCoefficients = new double[NbrFluxQuanta + 1];
   BinomialCoefficients Binomial(NbrFluxQuanta);
@@ -306,9 +307,13 @@ int main(int argc, char** argv)
   //cout<<endl;
 
   int NbrNonZeroSingularValues = 0;
+  TmpTrace = 0.0;
   for (int i = 0; i < SingularDimension; i++)
    if (SingularValues[i] > CutOff)
+    {
      NbrNonZeroSingularValues++;
+     TmpTrace += SingularValues[i];
+    }
 
   //cout<<"non zero = "<<NbrNonZeroSingularValues<<endl;
 
@@ -363,6 +368,13 @@ int main(int argc, char** argv)
              TmpBUD->SetMatrixElement(i, j + OldNbrNonZeroSingularValues, Tmp);
            }
 
+       if (fabs(TmpTrace) > CutOff)  
+          (*TmpBUD) /= TmpTrace;
+       else
+         { 
+           cout << "Warning: trying to normalize with 0! " << endl;
+           exit(1);
+         } 
 
        delete NewUDMatrix;
 
@@ -385,9 +397,13 @@ int main(int argc, char** argv)
        //cout<<endl;
 
        int NbrNonZeroSingularValues = 0;
+       TmpTrace = 0.0;
        for (int i = 0; i < SingularDimension; i++)
          if (SingularValues[i] > CutOff)
-           NbrNonZeroSingularValues++; 
+          {
+            NbrNonZeroSingularValues++; 
+            TmpTrace += SingularValues[i];
+          }
 
        //cout<<"non zero = "<<NbrNonZeroSingularValues<<endl;
 
@@ -477,9 +493,13 @@ int main(int argc, char** argv)
   //cout<<endl;
 
   NbrNonZeroSingularValues = 0;
+  TmpTrace = 0.0;
   for (int i = 0; i < SingularDimension; i++)
    if (SingularValues[i] > CutOff)
-     NbrNonZeroSingularValues++;
+    { 
+      NbrNonZeroSingularValues++;
+      TmpTrace += SingularValues[i];
+    }  
 
   //cout<<"non zero = "<<NbrNonZeroSingularValues<<endl;
 
@@ -537,6 +557,14 @@ int main(int argc, char** argv)
              TmpBUD->SetMatrixElement(i + OldNbrNonZeroSingularValues, j, Tmp);
            }
 
+       if (fabs(TmpTrace) > CutOff)  
+          (*TmpBUD) /= TmpTrace;
+       else
+         { 
+          cout << "Warning: trying to normalize with 0! " << endl;
+          exit(1);
+         } 
+
 
        delete NewDVMatrix;
 
@@ -567,9 +595,13 @@ int main(int argc, char** argv)
        //cout<<endl;
 
        int NbrNonZeroSingularValues = 0;
+       TmpTrace = 0.0;
        for (int i = 0; i < SingularDimension; i++)
          if (SingularValues[i] > CutOff)
-           NbrNonZeroSingularValues++; 
+          { 
+            NbrNonZeroSingularValues++; 
+            TmpTrace += SingularValues[i];
+          }
 
        //cout<<"non zero = "<<NbrNonZeroSingularValues<<endl;
 
@@ -635,6 +667,7 @@ int main(int argc, char** argv)
         cout<<SingularValues[i]/Trace<<endl;
     } 
   cout<<endl; 
+  cout<<"Tr= "<<Trace<<endl;
  
   double CutOff2 = 1e-10;
 
