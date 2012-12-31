@@ -361,6 +361,13 @@ class RealMatrix : public Matrix
   // return value = pointer on the diagonal elements of D
   double* SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& vMatrix, bool truncatedUVFlag = true);
 
+  // compute singular value decomposition U D V^t
+  // 
+  // uMatrix = reference on the U matrix
+  // diagonal = reference on the diagonal D matrix
+  // vMatrix = reference on the V matrix
+  void SingularValueDecomposition(RealMatrix& uMatrix, RealDiagonalMatrix& diagonal, RealMatrix& vMatrix, bool truncatedUVFlag = true);
+
   // compute the diagonal part of the singular value decomposition U D V^t
   // 
   // return value = pointer on the diagonal elements of D

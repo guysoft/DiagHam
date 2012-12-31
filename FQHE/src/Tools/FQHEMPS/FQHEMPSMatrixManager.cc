@@ -130,7 +130,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
   if (CylinderFlag)
     {
       if (this->Options->GetDouble("cylinder-perimeter") > 0.0)
-	Kappa = (2.0 * M_PI)/sqrt(this->Options->GetDouble("cylinder-perimeter"));
+	Kappa = (2.0 * M_PI) / this->Options->GetDouble("cylinder-perimeter");
       else
 	Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
        cout<<"Cylinder geometry, kappa= " << Kappa << endl;
@@ -253,4 +253,22 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 
   delete[] ExportFileName;
   return MPSMatrix;
+}
+
+
+// get the cylinder perimeter (in magnetic length unit) if the cylinder geometry if used
+//
+// nbrFluxQuanta = number of flux quanta
+// return value = cylinder perimeter (negative if another geometry is used)
+
+double FQHEMPSMatrixManager::GetCylinderPerimeter(int nbrFluxQuanta)
+{
+  if (this->Options->GetBoolean("normalize-cylinder"))
+    {
+      if (this->Options->GetDouble("cylinder-perimeter") > 0.0)
+	return this->Options->GetDouble("cylinder-perimeter");
+      else
+	return (sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * this->Options->GetDouble("aspect-ratio")));
+    }
+  return -1.0;
 }

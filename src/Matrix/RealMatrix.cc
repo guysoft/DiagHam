@@ -32,6 +32,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/RealVector.h"
 #include "MathTools/Complex.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 #include <math.h>
 
@@ -1207,6 +1208,19 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
 #else
   return 0;
 #endif
+}
+
+// compute singular value decomposition U D V^t
+// 
+// uMatrix = reference on the U matrix
+// diagonal = reference on the diagonal D matrix
+// vMatrix = reference on the V matrix
+// truncatedUVFlag = if false, set JOBZ = 'A' (returns full U, V matrices)
+
+void RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealDiagonalMatrix& diagonal, RealMatrix& vMatrix, bool truncatedUVFlag)
+{
+  double* TmpDiag = this->SingularValueDecomposition(uMatrix, vMatrix, truncatedUVFlag);
+  diagonal = RealDiagonalMatrix(TmpDiag, uMatrix.NbrColumn);
 }
 
 // compute the diagonal part of the singular value decomposition U D V^t

@@ -97,13 +97,6 @@ int main(int argc, char** argv)
   int Na = Manager.GetInteger("na");
 
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
-  double AspectRatio = Manager.GetDouble("aspect-ratio");
-  double kappa = 0.0;
-  if (CylinderFlag)
-    {
-       kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
-       cout << "Cylinder geometry, kappa= "<<kappa<<endl;
-    }
 
   int LandauLevel = 0;
 
@@ -210,8 +203,8 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("infinite-cylinder"))
 	    {
-	      sprintf(TmpFileName, "fermions_infinite_cylinder_%s_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", StateName,
-		      Manager.GetInteger("p-truncation"));
+	      sprintf(TmpFileName, "fermions_infinite_cylinder_%s_perimeter_%f_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
 	    }
 	  else
 	    {

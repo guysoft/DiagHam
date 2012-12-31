@@ -69,6 +69,11 @@ class FQHEMPSMatrixManager
   // return value = pointer to the MPS matrice class 
   AbstractFQHEMPSMatrix* GetMPSMatrices(int nbrFluxQuanta = 0);
 
+  // get the cylinder perimeter (in magnetic length unit) if the cylinder geometry if used
+  //
+  // nbrFluxQuanta = number of flux quanta
+  // return value = cylinder perimeter (negative if another geometry is used)
+  double GetCylinderPerimeter(int nbrFluxQuanta = 0);
 
  protected:
 
