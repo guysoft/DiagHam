@@ -277,12 +277,6 @@ int main(int argc, char** argv)
       int MinQValue = 0;
       int MaxQValue = 0;
       MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
-      char* OutputFileName = Manager.GetString("output-file");
-      if (OutputFileName == 0)
-	{
-	  char* TmpExtension = new char[512];
-	  sprintf(TmpExtension, "fermions_infinite_cylinder_n_0_2s_0_lz.0.0.full.ent");
-	}
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
       int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
@@ -364,7 +358,7 @@ int main(int argc, char** argv)
 		 
 		  if ((NbrZeroLeftEigenvalues < SymLeftMDaggerM.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightMDaggerM.GetNbrRow()))
 		    {
-		      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(),TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
+		      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(), TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
 		      NbrZeroLeftEigenvalues = 0;
 		      for (int i = 0; i < TmpLeftBasis.GetNbrColumn(); ++i)
 			{
@@ -376,7 +370,7 @@ int main(int argc, char** argv)
 			    }
 			}
 		      
-		      RealMatrix TruncatedRightBasis (TmpRightDiag.GetNbrRow(),TmpRightDiag.GetNbrRow() -  NbrZeroRightEigenvalues, true);
+		      RealMatrix TruncatedRightBasis (TmpRightDiag.GetNbrRow(), TmpRightDiag.GetNbrRow() -  NbrZeroRightEigenvalues, true);
 		      NbrZeroRightEigenvalues = 0;
 		      for (int i = 0; i < TmpRightBasis.GetNbrColumn(); ++i)
 			{
@@ -559,33 +553,31 @@ int main(int argc, char** argv)
 
   double TraceRho = 0.0;
   double* RhoEigenvalues = new double [MatDim];
-  int* RhoNSector = new int [MatDim];
+  int* RhoQSector = new int [MatDim];
   int* RhoPSector = new int [MatDim];
-
-  int MinNValue;
-  int MaxNValue;
-  MPSMatrix->GetChargeIndexRange(MinNValue, MaxNValue);
-  int NbrNValue = MaxNValue - MinNValue + 1;
 
   for (int i =0 ; i < MatDim; i++)
    {
      RhoEigenvalues[i] = 0.0; 
-     RhoNSector[i] = 0; 
+     RhoQSector[i] = 0; 
      RhoPSector[i] = 0;
    }
 
   long NbrEigenvalues = 0l;
   OverlapMatrix.PrintNonZero(cout) << endl;
-  for (int NSector = 0; NSector < NbrNValue; NSector++)
+  int MinQValue = 0;
+  int MaxQValue = 0;
+  MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
+  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
     {
-      for (int MomentumSector = 0; MomentumSector <= LambdaMax; MomentumSector++)
+      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
-	  SparseRealMatrix TmpOverlapBlock = MPSMatrix->ExtractBlock(OverlapMatrix, MomentumSector, NSector, MomentumSector, NSector);
-	  SparseRealMatrix RhoABlock = MPSMatrix->ExtractBlock(RhoA, MomentumSector, NSector, MomentumSector, NSector);
+	  SparseRealMatrix TmpOverlapBlock = MPSMatrix->ExtractBlock(OverlapMatrix, PLevel, QValue, PLevel, QValue);
+	  SparseRealMatrix RhoABlock = MPSMatrix->ExtractBlock(RhoA, PLevel, QValue, PLevel, QValue);
 
 	  if ((TmpOverlapBlock.ComputeNbrNonZeroMatrixElements() != 0) && (RhoABlock.ComputeNbrNonZeroMatrixElements()))
 	    {
- 	      cout << "NSector=" << NSector << "  MomentumSector=" << MomentumSector << " : "<< endl;
+ 	      cout << "QValue=" << QValue << "  PLevel=" << PLevel << " : "<< endl;
 	      // 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
 	      int TmpSectorDim = TmpOverlapBlock.GetNbrRow();
 	      
@@ -634,17 +626,19 @@ int main(int argc, char** argv)
 		  RealDiagonalMatrix TmpDiagRho (NbrNonZeroVectors);
 		  HRepRho.LapackDiagonalize(TmpDiagRho);
 		  
-		  cout<<"------------sector P = "<<MomentumSector<<" N = "<<((EntCut - (NSector - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex << "---------------"<<endl;
+		  cout<<"------------sector P = "<<PLevel<<" N = "<<((EntCut - (QValue - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex << "---------------"<<endl;
 		  
 		  
 		  double Sum = 0.0;
 		  for (int j = 0; j < NbrNonZeroVectors; ++j)
 		    {
 		      TraceRho += TmpDiagRho[j];
-		      RhoEigenvalues[NbrEigenvalues]=TmpDiagRho[j];
-		      RhoNSector[NbrEigenvalues]=NSector;
-		      RhoPSector[NbrEigenvalues]=MomentumSector; 
+		      RhoEigenvalues[NbrEigenvalues] = TmpDiagRho[j];
+		      RhoQSector[NbrEigenvalues] = QValue;
+		      RhoPSector[NbrEigenvalues] = PLevel; 
 		      NbrEigenvalues++;
+// 		      if (TmpDiagRho[j] > 0.0)
+// 			File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TmpDiagRho[j] <<  " " << (-log(TmpDiagRho[j])) <<endl;
 		    }
 		}
 	    }
@@ -654,8 +648,8 @@ int main(int argc, char** argv)
   cout<<"Trace rho = "<<TraceRho<<endl;
 
   File << "# l_a    N    Lz    lambda" << endl;
-  for (int i=0; i<MatDim; ++i)
-    if (((fabs(RhoEigenvalues[i]) > CutOff)) && ((((EntCut - (RhoNSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
+  for (int i = 0; i < MatDim; ++i)
+    if (((fabs(RhoEigenvalues[i]) > CutOff)) && ((((EntCut - (RhoQSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
       {
         cout<< "Na= " << Na << " P= " << RhoPSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
         File << EntCut << " " << Na << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
@@ -665,7 +659,7 @@ int main(int argc, char** argv)
   delete[] TmpColumnIndices;
   delete[] RhoEigenvalues;
   delete[] RhoPSector;
-  delete[] RhoNSector;
+  delete[] RhoQSector;
 
   File.close();
  

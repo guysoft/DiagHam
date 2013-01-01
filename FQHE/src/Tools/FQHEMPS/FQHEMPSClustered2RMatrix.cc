@@ -860,108 +860,108 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
 // q2 = charge index of the block left indices
 // return value = block corresponding to the quantum numbers
 
-SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
-{
-  double Tmp;
-  int TmpNbrRow = 0;
-  for (int p = 0; p <= pLevel1; ++p)
-    TmpNbrRow += (this->IdentityBasisDimension[pLevel1 - p] + this->PsiBasisDimension[pLevel1 - p]) * this->U1BasisDimension[p];
-  int TmpNbrColumn = 0;
-  for (int p = 0; p <= pLevel2; ++p)
-    TmpNbrColumn += (this->IdentityBasisDimension[pLevel2 - p] + this->PsiBasisDimension[pLevel2 - p]) * this->U1BasisDimension[p];
+// SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
+// {
+//   double Tmp;
+//   int TmpNbrRow = 0;
+//   for (int p = 0; p <= pLevel1; ++p)
+//     TmpNbrRow += (this->IdentityBasisDimension[pLevel1 - p] + this->PsiBasisDimension[pLevel1 - p]) * this->U1BasisDimension[p];
+//   int TmpNbrColumn = 0;
+//   for (int p = 0; p <= pLevel2; ++p)
+//     TmpNbrColumn += (this->IdentityBasisDimension[pLevel2 - p] + this->PsiBasisDimension[pLevel2 - p]) * this->U1BasisDimension[p];
 
-  SparseRealMatrix TmpMatrix(TmpNbrRow, TmpNbrColumn);
-  int CurrentShift1 = 0;
-  for (int p = 0; p <= pLevel1; ++p)
-    {
-      int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
-      int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
-      int TmpU1BasisDimension1 = this->U1BasisDimension[p];
-      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
-	{
-	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
-	    {
-	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
-									   NeutralIndex1, TmpIdentityBasisDimension1, 
-									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
-	    }
-	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
-	    {
-	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
-									   NeutralIndex1, TmpIdentityBasisDimension1, 
-									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
-	    }
-	}
-    }
-  for (int p = 0; p <= pLevel1; ++p)
-    {
-      int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
-      int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
-      int TmpU1BasisDimension1 = this->U1BasisDimension[p];
-      int CurrentShift2 = 0;
-      for (int q = 0; q <= pLevel2; ++q)
-	{
-	  int TmpIdentityBasisDimension2 = this->IdentityBasisDimension[pLevel2 - q];
-	  int TmpPsiBasisDimension2 = this->PsiBasisDimension[pLevel2 - q];
-	  int TmpU1BasisDimension2 = this->U1BasisDimension[q];		  
- 	  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
-	    {
-	      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpU1BasisDimension2; ++ChargedIndex2)
-		{
-		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
-		    {
-		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
-			{
-			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
-									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
-									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-			  if (Tmp != 0.0)
-			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-			}
-		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
-			{
-			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
-									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
-									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-			  if (Tmp != 0.0)
-			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-			}
-		    }
-		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
-		    {
-		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
-			{
-			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
-									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
-									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-			  if (Tmp != 0.0)
-			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-			}
-		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
-			{
-			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
-									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
-									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-			  if (Tmp != 0.0)
-			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-			}
-		    }
-		}
-	    }
-	  CurrentShift2 += (TmpIdentityBasisDimension2 + TmpPsiBasisDimension2) * TmpU1BasisDimension2;
-	}
-      CurrentShift1 += (TmpIdentityBasisDimension1 + TmpPsiBasisDimension1) * TmpU1BasisDimension1;
-    }
-  return TmpMatrix;
-}
+//   SparseRealMatrix TmpMatrix(TmpNbrRow, TmpNbrColumn);
+//   int CurrentShift1 = 0;
+//   for (int p = 0; p <= pLevel1; ++p)
+//     {
+//       int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
+//       int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
+//       int TmpU1BasisDimension1 = this->U1BasisDimension[p];
+//       for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
+// 	{
+// 	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
+// 	    {
+// 	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
+// 									   NeutralIndex1, TmpIdentityBasisDimension1, 
+// 									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
+// 	    }
+// 	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
+// 	    {
+// 	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
+// 									   NeutralIndex1, TmpIdentityBasisDimension1, 
+// 									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
+// 	    }
+// 	}
+//     }
+//   for (int p = 0; p <= pLevel1; ++p)
+//     {
+//       int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
+//       int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
+//       int TmpU1BasisDimension1 = this->U1BasisDimension[p];
+//       int CurrentShift2 = 0;
+//       for (int q = 0; q <= pLevel2; ++q)
+// 	{
+// 	  int TmpIdentityBasisDimension2 = this->IdentityBasisDimension[pLevel2 - q];
+// 	  int TmpPsiBasisDimension2 = this->PsiBasisDimension[pLevel2 - q];
+// 	  int TmpU1BasisDimension2 = this->U1BasisDimension[q];		  
+//  	  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
+// 	    {
+// 	      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpU1BasisDimension2; ++ChargedIndex2)
+// 		{
+// 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
+// 		    {
+// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
+// 			{
+// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+// 			  if (Tmp != 0.0)
+// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+// 			}
+// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
+// 			{
+// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+// 			  if (Tmp != 0.0)
+// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+// 			}
+// 		    }
+// 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
+// 		    {
+// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
+// 			{
+// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+// 			  if (Tmp != 0.0)
+// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+// 			}
+// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
+// 			{
+// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
+// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
+// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
+// 			  if (Tmp != 0.0)
+// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
+// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
+// 			}
+// 		    }
+// 		}
+// 	    }
+// 	  CurrentShift2 += (TmpIdentityBasisDimension2 + TmpPsiBasisDimension2) * TmpU1BasisDimension2;
+// 	}
+//       CurrentShift1 += (TmpIdentityBasisDimension1 + TmpPsiBasisDimension1) * TmpU1BasisDimension1;
+//     }
+//   return TmpMatrix;
+// }
 
 // get the range for the bond index when fixing the tuncation level and the charge index
 //

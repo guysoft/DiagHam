@@ -97,7 +97,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // pLevel1 = tuncation level of the block right indices
   // q2 = charge index of the block left indices
   // return value = block corresponding to the quantum numbers
-  virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
+//  virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
 
   // get the range for the bond index when fixing the tuncation level and the charge index
   //

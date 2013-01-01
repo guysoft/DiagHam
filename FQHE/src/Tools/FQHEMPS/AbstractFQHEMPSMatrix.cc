@@ -149,7 +149,23 @@ bool AbstractFQHEMPSMatrix::LoadMatrices (char* fileName)
 
 SparseRealMatrix AbstractFQHEMPSMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
 {
-  return SparseRealMatrix();
+  int BlockNbrRow = this->GetBondIndexRange(pLevel1, q1);
+  int BlockNbrColumn = this->GetBondIndexRange(pLevel2, q2);
+  SparseRealMatrix TmpMatrix(BlockNbrRow, BlockNbrColumn);
+  double Tmp = 0.0;
+  for (int i = 0; i < BlockNbrRow; ++i)
+    {
+      for (int j = 0; j < BlockNbrColumn; ++j)
+	{
+	  matrix.GetMatrixElement(this->GetBondIndexWithFixedChargeAndPLevel(i, pLevel1, q1),
+				  this->GetBondIndexWithFixedChargeAndPLevel(j, pLevel2, q2), Tmp);
+	  if (Tmp != 0.0)
+	    {
+	      TmpMatrix.SetMatrixElement(i, j, Tmp);
+	    }
+	}
+    }
+  return TmpMatrix;
 }
 
 // get the charge index range
