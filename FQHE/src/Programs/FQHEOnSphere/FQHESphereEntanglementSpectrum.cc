@@ -41,7 +41,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "show-counting", "show degeneracy counting for each Lz value");
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
   (*SystemGroup) += new BooleanOption ('\n', "ls-sorted", "for the particle entanglement spectrum with su2-spin on the sphere, sort the spectrum with respect to L and S");
-  (*SystemGroup) += new SingleDoubleOption ('\n', "degeneracy-error", "error below which two reduced density matrix eigenvalues are assumed to be degenerated", 1e-12);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
