@@ -89,6 +89,11 @@ class RealDiagonalMatrix : public Matrix
   // M = matrix to copy
   RealDiagonalMatrix(const RealDiagonalMatrix& M);
 
+  // copy constructor (duplicating the data)
+  //
+  // matrix = matrix to copy
+  RealDiagonalMatrix(const Matrix& matrix);
+
   // destructor
   //
   ~RealDiagonalMatrix();

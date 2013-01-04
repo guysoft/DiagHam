@@ -111,6 +111,32 @@ RealDiagonalMatrix::RealDiagonalMatrix(const RealDiagonalMatrix& M)
   this->MatrixType = Matrix::RealElements | Matrix::Symmetric | Matrix::Diagonal;
 }
 
+// copy constructor (duplicating the data)
+//
+// matrix = matrix to copy
+
+RealDiagonalMatrix::RealDiagonalMatrix(const Matrix& matrix)
+{
+  this->NbrRow = matrix.GetNbrRow();
+  this->NbrColumn = matrix.GetNbrColumn();
+  if (this->NbrRow > this->NbrColumn)
+    this->NbrRow = this->NbrColumn;
+  else
+    this->NbrColumn = this->NbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->DiagonalGarbageFlag =  new int;
+  *(this->DiagonalGarbageFlag) = 1;
+  double Tmp;
+  this->DiagonalElements = new double [this->NbrRow];
+  for (int i = 0; i < this->NbrRow; i++)
+    {
+      matrix.GetMatrixElement(i, i, Tmp);
+      this->DiagonalElements[i] = Tmp;
+    }
+  this->MatrixType = Matrix::RealElements | Matrix::Symmetric | Matrix::Diagonal;
+}
+
 // destructor
 //
 

@@ -40,6 +40,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "show-minmaxlza", "show minimum an maximum Lz value that can be reached");
   (*SystemGroup) += new BooleanOption ('\n', "show-counting", "show degeneracy counting for each Lz value");
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
+  (*SystemGroup) += new BooleanOption ('\n', "ls-sorted", "for the particle entanglement spectrum with su2-spin on the sphere, sort the spectrum with respect to L and S");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "degeneracy-error", "error below which two reduced density matrix eigenvalues are assumed to be degenerated", 1e-12);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -385,6 +387,7 @@ int main(int argc, char** argv)
 	{
 	  int* LzValues = DensityMatrix.GetAsIntegerArray(4);
 	  int* SzValues = DensityMatrix.GetAsIntegerArray(1);
+	  int** SzaLzaValueArray = 0;
 	  long Index = 0l;
 	  long MaxIndex = DensityMatrix.GetNbrLines();
 	  while ((Index < MaxIndex) && (NaValues[Index] != NbrParticlesInPartition))
@@ -410,42 +413,153 @@ int main(int argc, char** argv)
 	      ofstream File;
 	      File.open(OutputFileName, ios::out);
 	      File.precision(14);
-	      File << "# na sz lz lambda -log(lambda)";
-	      File << endl;
-	      int TmpIndex = Index;
-	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+	      if (Manager.GetBoolean("ls-sorted") == false)
 		{
-		  double Tmp = Coefficients[Index];
-		  if (Tmp > Error)
+		  File << "# na sz lz lambda -log(lambda)";
+		  File << endl;
+		  int TmpIndex = Index;
+		  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
 		    {
-		      int TmpLza = LzValues[Index];
-		      File << NbrParticlesInPartition << " " << (0.5 * SzValues[Index]) << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
-		      File << endl;
-		      if (TmpLza < MinLza)
-			MinLza = TmpLza;
-		      if (TmpLza > MaxLza)
-			MaxLza = TmpLza;
+		      double Tmp = Coefficients[Index];
+		      if (Tmp > Error)
+			{
+			  int TmpLza = LzValues[Index];
+			  File << NbrParticlesInPartition << " " << (0.5 * SzValues[Index]) << " " << (0.5 * TmpLza) << " " << Tmp << " " << (-log(Tmp));
+			  File << endl;
+			  if (TmpLza < MinLza)
+			    MinLza = TmpLza;
+			  if (TmpLza > MaxLza)
+			    MaxLza = TmpLza;
+			}
+		      ++Index;
 		    }
-		  ++Index;
-		}
-	      int** SzaLzaValueArray = new int* [NbrParticlesInPartition + 1];
-	      for (int TmpSza = 0; TmpSza <= NbrParticlesInPartition; ++TmpSza)
-		{
-		  SzaLzaValueArray[TmpSza] = new int[((MaxLza - MinLza ) >> 1) + 1];
-		  for (int i = MinLza; i <= MaxLza; i += 2)
-		    SzaLzaValueArray[TmpSza][(i - MinLza) >> 1] = 0; 
-		}
-	      Index = TmpIndex;
-	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
-		{
-		  if (Coefficients[Index] > Error)
+		  SzaLzaValueArray = new int* [NbrParticlesInPartition + 1];
+		  for (int TmpSza = 0; TmpSza <= NbrParticlesInPartition; ++TmpSza)
 		    {
-		      SzaLzaValueArray[(SzValues[Index] + NbrParticlesInPartition) >> 1][(LzValues[Index] - MinLza) >> 1]++; 
+		      SzaLzaValueArray[TmpSza] = new int[((MaxLza - MinLza ) >> 1) + 1];
+		      for (int i = MinLza; i <= MaxLza; i += 2)
+			SzaLzaValueArray[TmpSza][(i - MinLza) >> 1] = 0; 
 		    }
-		  ++Index;
+		  Index = TmpIndex;
+		  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		    {
+		      if (Coefficients[Index] > Error)
+			{
+			  SzaLzaValueArray[(SzValues[Index] + NbrParticlesInPartition) >> 1][(LzValues[Index] - MinLza) >> 1]++; 
+			}
+		      ++Index;
+		    }
+		  if (Manager.GetBoolean("show-minmaxlza"))
+		    {
+		      cout << "min Lza = " << MinLza << endl;
+		      cout << "max Lza = " << MaxLza << endl;
+		    }
+		  
+		  if ((Manager.GetBoolean("show-counting")) && (SzaLzaValueArray != 0))
+		    {
+		      cout << "degeneracy counting (SzA Lza NbrStates) : " << endl;
+		      for (int j = 0; j <= NbrParticlesInPartition; ++j)
+			{
+			  for (int i = MinLza; i <= MaxLza; i += 2)
+			    {
+			      cout << (j - (NbrParticlesInPartition * 0.5)) << " " << (0.5 * i) << " " << SzaLzaValueArray[j][(i - MinLza) >> 1] << endl; 
+			    }
+			}
+		    }	      
 		}
-	      File.close();	      
-
+	      else
+		{
+		  File << "# na s l lambda -log(lambda)";
+		  File << endl;
+		  int MinSza = 1 << 30;
+		  int MaxSza = -MinSza; 
+		  int TmpIndex = Index;
+		  int LargestSzSector = SzValues[Index];
+		  int LargestLzSector = LzValues[Index];
+		  while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		    {
+		      if (abs(LzValues[Index]) < abs(LargestLzSector))
+			LargestLzSector = LzValues[Index];
+		      if (abs(SzValues[Index]) < abs(LargestSzSector))
+			LargestSzSector = SzValues[Index];
+		      double Tmp = Coefficients[Index];
+		      if (Tmp > Error)
+			{
+			  int TmpLza = LzValues[Index];
+			  if ((TmpLza < MinLza) && (TmpLza >= 0))
+			    MinLza = TmpLza;
+			  if ((TmpLza > MaxLza) && (TmpLza >= 0))
+			    MaxLza = TmpLza;
+			  int TmpSza = SzValues[Index];
+			  if ((TmpSza < MinSza) && (TmpSza >= 0))
+			    MinSza = TmpSza;
+			  if ((TmpSza > MaxSza) && (TmpSza >= 0))
+			    MaxSza = TmpSza;
+			}
+		      ++Index;
+		    }
+		  MaxIndex = Index;
+		  Index = TmpIndex;
+		  while ((Index < MaxIndex) && ((LzValues[Index] != LargestLzSector) || (SzValues[Index] != LargestSzSector)))
+		    {
+		      ++Index;
+		    }
+		  int LargestSectorStartingIndex = Index;
+		  while ((Index < MaxIndex) && (LzValues[Index] == LargestLzSector) && (SzValues[Index] == LargestSzSector))
+		    {
+		      ++Index;
+		    }
+		  int LargestSectorEndingIndex = Index;
+		  int LargestSectorNbrIndices = LargestSectorEndingIndex - LargestSectorStartingIndex;
+		  int* LSector = new int [LargestSectorNbrIndices];
+		  int* SSector = new int [LargestSectorNbrIndices];
+		  double* ErrorSector = new double [LargestSectorNbrIndices];
+		  LargestLzSector = abs(LargestLzSector);
+		  LargestSzSector = abs(LargestSzSector);
+		  double DegeneracyError = Manager.GetDouble("degeneracy-error");
+		  for (int i = 0; i < LargestSectorNbrIndices; ++i)
+		    {
+		      double Tmp = Coefficients[i + LargestSectorStartingIndex];
+		      if (Tmp > Error)
+			{
+			  int TmpLSector = LargestLzSector;
+			  int TmpSSector = LargestSzSector;
+			  Index = TmpIndex;
+			  while (Index < MaxIndex)
+			    {
+			      double Tmp2 = Coefficients[Index];
+			      
+			      if ((Tmp2 > Error)  && (fabs(Tmp2 - Tmp) < DegeneracyError))
+				{
+				  if (abs(LzValues[Index]) > TmpLSector)
+				    TmpLSector = abs(LzValues[Index]);
+				  if (abs(SzValues[Index]) > TmpSSector)
+				    TmpSSector = abs(SzValues[Index]);			      
+				}
+			      ++Index;
+			    }
+			  LSector[i] = TmpLSector;
+			  SSector[i] = TmpSSector;		      
+			}
+		    }
+		  SzaLzaValueArray = new int* [NbrParticlesInPartition + 1];
+		  for (int TmpSza = 0; TmpSza <= NbrParticlesInPartition; ++TmpSza)
+		    {
+		      SzaLzaValueArray[TmpSza] = new int[((MaxLza - MinLza ) >> 1) + 1];
+		      for (int i = MinLza; i <= MaxLza; i += 2)
+			SzaLzaValueArray[TmpSza][(i - MinLza) >> 1] = 0; 
+		    }
+		  for (int i = 0; i < LargestSectorNbrIndices; ++i)
+		    {
+		      double Tmp = Coefficients[i + LargestSectorStartingIndex];
+		      if (Tmp > Error)
+			{
+			  SzaLzaValueArray[SSector[i]][(LSector[i] - MinLza) >> 1]++;
+			  File << NbrParticlesInPartition << " " << (0.5 * SSector[i]) << " " << (0.5 * LSector[i]) << " " << Tmp << " " << (-log(Tmp));
+			  File << endl;
+			}
+		    }
+		}
 	      if (Manager.GetBoolean("show-minmaxlza"))
 		{
 		  cout << "min Lza = " << MinLza << endl;
@@ -454,15 +568,18 @@ int main(int argc, char** argv)
 	      
 	      if ((Manager.GetBoolean("show-counting")) && (SzaLzaValueArray != 0))
 		{
-		  cout << "degeneracy counting (SzA Lza NbrStates) : " << endl;
-		  for (int j = 0; j <= NbrParticlesInPartition; ++j)
+		  cout << "degeneracy counting (Sa La NbrStates) : " << endl;
+		  for (int j = (NbrParticlesInPartition & 1); j <= NbrParticlesInPartition; j += 2)
 		    {
 		      for (int i = MinLza; i <= MaxLza; i += 2)
 			{
-			  cout << (j - (NbrParticlesInPartition * 0.5)) << " " << (0.5 * i) << " " << SzaLzaValueArray[j][(i - MinLza) >> 1] << endl; 
+			  if (SzaLzaValueArray[j][(i - MinLza) >> 1] > 0)
+			    cout << (j * 0.5) << " " << (0.5 * i) << " " << SzaLzaValueArray[j][(i - MinLza) >> 1] << endl; 
 			}
 		    }
-		}	      
+		}
+	      File.close();	      
+
 	      return 0;	      
 	    }
 	  else
