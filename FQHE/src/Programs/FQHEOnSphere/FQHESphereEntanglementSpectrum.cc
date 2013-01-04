@@ -486,62 +486,127 @@ int main(int argc, char** argv)
 		      if (Tmp > Error)
 			{
 			  int TmpLza = LzValues[Index];
-			  if ((TmpLza < MinLza) && (TmpLza >= 0))
+			  if (TmpLza < MinLza)
 			    MinLza = TmpLza;
-			  if ((TmpLza > MaxLza) && (TmpLza >= 0))
+			  if (TmpLza > MaxLza)
 			    MaxLza = TmpLza;
 			  int TmpSza = SzValues[Index];
-			  if ((TmpSza < MinSza) && (TmpSza >= 0))
+			  if (TmpSza < MinSza)
 			    MinSza = TmpSza;
-			  if ((TmpSza > MaxSza) && (TmpSza >= 0))
+			  if (TmpSza > MaxSza)
 			    MaxSza = TmpSza;
 			}
 		      ++Index;
 		    }
 		  MaxIndex = Index;
 		  Index = TmpIndex;
-		  while ((Index < MaxIndex) && ((LzValues[Index] != LargestLzSector) || (SzValues[Index] != LargestSzSector)))
+		  int** NbrSzLzSortedSpectrum = new int* [((MaxSza - MinSza) >> 1) + 1];
+		  for (int j = MinSza; j <= MaxSza; j += 2)
 		    {
-		      ++Index;
+		      NbrSzLzSortedSpectrum[(j - MinSza) >> 1] = new int[((MaxLza - MinLza ) >> 1) + 1];
+		      for (int i = MinLza; i <= MaxLza; i += 2)
+			NbrSzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1] = 0; 
 		    }
-		  int LargestSectorStartingIndex = Index;
-		  while ((Index < MaxIndex) && (LzValues[Index] == LargestLzSector) && (SzValues[Index] == LargestSzSector))
+		  while (Index < MaxIndex)
 		    {
-		      ++Index;
-		    }
-		  int LargestSectorEndingIndex = Index;
-		  int LargestSectorNbrIndices = LargestSectorEndingIndex - LargestSectorStartingIndex;
-		  int* LSector = new int [LargestSectorNbrIndices];
-		  int* SSector = new int [LargestSectorNbrIndices];
-		  double* ErrorSector = new double [LargestSectorNbrIndices];
-		  LargestLzSector = abs(LargestLzSector);
-		  LargestSzSector = abs(LargestSzSector);
-		  double DegeneracyError = Manager.GetDouble("degeneracy-error");
-		  for (int i = 0; i < LargestSectorNbrIndices; ++i)
-		    {
-		      double Tmp = Coefficients[i + LargestSectorStartingIndex];
-		      if (Tmp > Error)
+		      if (Coefficients[Index] > Error)
 			{
-			  int TmpLSector = LargestLzSector;
-			  int TmpSSector = LargestSzSector;
-			  Index = TmpIndex;
-			  while (Index < MaxIndex)
+			  NbrSzLzSortedSpectrum[(SzValues[Index] - MinSza) >> 1][(LzValues[Index] - MinLza) >> 1]++; 		       
+			}
+		      ++Index;
+		    }
+		  double*** SzLzSortedSpectrum = new double** [((MaxSza - MinSza) >> 1) + 1];
+		  for (int j = MinSza; j <= MaxSza; j += 2)
+		    {
+		      SzLzSortedSpectrum[(j - MinSza) >> 1] = new double*[((MaxLza - MinLza ) >> 1) + 1];
+		      for (int i = MinLza; i <= MaxLza; i += 2)
+			{
+			  int& TmpIndex2 = NbrSzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  if (TmpIndex2 > 0)
 			    {
-			      double Tmp2 = Coefficients[Index];
-			      
-			      if ((Tmp2 > Error)  && (fabs(Tmp2 - Tmp) < DegeneracyError))
-				{
-				  if (abs(LzValues[Index]) > TmpLSector)
-				    TmpLSector = abs(LzValues[Index]);
-				  if (abs(SzValues[Index]) > TmpSSector)
-				    TmpSSector = abs(SzValues[Index]);			      
-				}
-			      ++Index;
+			      SzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1] = new double [TmpIndex2];
+			      TmpIndex2 = 0; 
 			    }
-			  LSector[i] = TmpLSector;
-			  SSector[i] = TmpSSector;		      
 			}
 		    }
+		  Index = TmpIndex;
+		  while (Index < MaxIndex)
+		    {
+		      if (Coefficients[Index] > Error)
+			{
+			  int& TmpIndex2 = NbrSzLzSortedSpectrum[(SzValues[Index] - MinSza) >> 1][(LzValues[Index] - MinLza) >> 1];
+			  SzLzSortedSpectrum[(SzValues[Index] - MinSza) >> 1][(LzValues[Index] - MinLza) >> 1][TmpIndex2] = Coefficients[Index];
+			  ++TmpIndex2; 		       
+			}
+		      ++Index;
+		    }
+
+		  for (int j = MaxSza; j >= 0; j -= 2)
+		    {
+		      for (int i = MaxLza; i >= ((MaxLza & 1) + 1); i -= 2)
+			{
+			  double* Spectrum1  = SzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  int NbrValues1 = NbrSzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  for (int k = 0; k < NbrValues1; ++k)
+			    {
+			      double TmpValue = Spectrum1[k];
+			      if (TmpValue >= 0.0)
+				{
+				  for (int i2 = i - 2; i2 >= (MaxLza & 1); i2 -= 2)
+				    {
+				      double* Spectrum2  = SzLzSortedSpectrum[(j - MinSza) >> 1][(i2 - MinLza) >> 1];
+				      int NbrValues2 = NbrSzLzSortedSpectrum[(j - MinSza) >> 1][(i2 - MinLza) >> 1];
+				      double MinError = 1.0;
+				      int TmpPosition = -1;
+				      for (int l = 0; l < NbrValues2; ++l)
+					{
+					  if ((Spectrum2[l] >= 0.0) && (fabs(Spectrum2[l] - TmpValue) < MinError))
+					    {
+					      MinError = fabs(Spectrum2[l] - TmpValue);
+					      TmpPosition = l;
+					    }
+					}		
+				      if (TmpPosition >= 0)	
+					Spectrum2[TmpPosition] = -1.0;
+				    }
+				}
+			    }
+			}
+		    }
+
+		  for (int i = MaxLza; i >= 0; i -= 2)
+		    {
+		      for (int j = MaxSza; j >= ((MaxSza & 1) + 1); j -= 2)
+			{
+			  double* Spectrum1  = SzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  int NbrValues1 = NbrSzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  for (int k = 0; k < NbrValues1; ++k)
+			    {
+			      double TmpValue = Spectrum1[k];
+			      if (TmpValue >= 0.0)
+				{
+				  for (int j2 = j - 2; j2 >= (MaxSza & 1); j2 -= 2)
+				    {
+				      double* Spectrum2  = SzLzSortedSpectrum[(j2 - MinSza) >> 1][(i - MinLza) >> 1];
+				      int NbrValues2 = NbrSzLzSortedSpectrum[(j2 - MinSza) >> 1][(i - MinLza) >> 1];
+				      double MinError = 1.0;
+				      int TmpPosition = -1;
+				      for (int l = 0; l < NbrValues2; ++l)
+					{
+					  if ((Spectrum2[l] >= 0.0) && (fabs(Spectrum2[l] - TmpValue) < MinError))
+					    {
+					      MinError = fabs(Spectrum2[l] - TmpValue);
+					      TmpPosition = l;
+					    }
+					}		
+				      if (TmpPosition >= 0)	
+					Spectrum2[TmpPosition] = -1.0;
+				    }
+				}
+			    }
+			}
+		    }
+
 		  SzaLzaValueArray = new int* [NbrParticlesInPartition + 1];
 		  for (int TmpSza = 0; TmpSza <= NbrParticlesInPartition; ++TmpSza)
 		    {
@@ -549,34 +614,44 @@ int main(int argc, char** argv)
 		      for (int i = MinLza; i <= MaxLza; i += 2)
 			SzaLzaValueArray[TmpSza][(i - MinLza) >> 1] = 0; 
 		    }
-		  for (int i = 0; i < LargestSectorNbrIndices; ++i)
+
+		  for (int j = MaxSza; j >= 0; j -= 2)
 		    {
-		      double Tmp = Coefficients[i + LargestSectorStartingIndex];
-		      if (Tmp > Error)
+		      for (int i = MaxLza; i >= (MaxLza & 1); i -= 2)
 			{
-			  SzaLzaValueArray[SSector[i]][(LSector[i] - MinLza) >> 1]++;
-			  File << NbrParticlesInPartition << " " << (0.5 * SSector[i]) << " " << (0.5 * LSector[i]) << " " << Tmp << " " << (-log(Tmp));
-			  File << endl;
+			  double* Spectrum  = SzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  int NbrValues = NbrSzLzSortedSpectrum[(j - MinSza) >> 1][(i - MinLza) >> 1];
+			  for (int k = 0; k < NbrValues; ++k)
+			    {
+			      double Tmp = Spectrum[k];
+			      if (Tmp >= 0.0)
+				{
+				  SzaLzaValueArray[(j - MinSza) >> 1][(i - MinLza) >> 1]++;
+				  File << NbrParticlesInPartition << " " << (0.5 * j) << " " << (0.5 * i) << " " << Tmp << " " << (-log(Tmp));
+				  File << endl;
+				}
+			    }
 			}
 		    }
-		}
-	      if (Manager.GetBoolean("show-minmaxlza"))
-		{
-		  cout << "min Lza = " << MinLza << endl;
-		  cout << "max Lza = " << MaxLza << endl;
-		}
-	      
-	      if ((Manager.GetBoolean("show-counting")) && (SzaLzaValueArray != 0))
-		{
-		  cout << "degeneracy counting (Sa La NbrStates) : " << endl;
-		  for (int j = (NbrParticlesInPartition & 1); j <= NbrParticlesInPartition; j += 2)
+		
+		  if (Manager.GetBoolean("show-minmaxlza"))
 		    {
-		      for (int i = MinLza; i <= MaxLza; i += 2)
-			{
-			  if (SzaLzaValueArray[j][(i - MinLza) >> 1] > 0)
-			    cout << (j * 0.5) << " " << (0.5 * i) << " " << SzaLzaValueArray[j][(i - MinLza) >> 1] << endl; 
-			}
+		      cout << "min Lza = " << MinLza << endl;
+		      cout << "max Lza = " << MaxLza << endl;
 		    }
+		  
+		  if ((Manager.GetBoolean("show-counting")) && (SzaLzaValueArray != 0))
+		    {
+		      cout << "degeneracy counting (Sa La NbrStates) : " << endl;
+		      for (int j = MaxSza; j >= 0; j -= 2)
+			{
+			  for (int i = MaxLza; i >= 0; i -= 2)
+			    {
+			      if (SzaLzaValueArray[(j - MinSza) >> 1][(i - MinLza) >> 1] > 0)
+				cout << (j * 0.5) << " " << (0.5 * i) << " " << SzaLzaValueArray[(j - MinSza) >> 1][(i - MinLza) >> 1] << endl; 
+			    }
+			}
+		    }		  
 		}
 	      File.close();	      
 
