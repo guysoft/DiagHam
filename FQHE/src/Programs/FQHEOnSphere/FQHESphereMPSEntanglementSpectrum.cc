@@ -9,6 +9,7 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Tools/FQHEMPS/FQHEMPSMatrixManager.h"
 #include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
@@ -652,6 +653,7 @@ int main(int argc, char** argv)
   int MinQValue = 0;
   int MaxQValue = 0;
   MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
+  cout << "MinQValue = " << MinQValue << " MaxQValue= " << MaxQValue << endl;
   for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
     {
       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
@@ -661,7 +663,7 @@ int main(int argc, char** argv)
 
 	  if ((TmpOverlapBlock.ComputeNbrNonZeroMatrixElements() != 0) && (RhoABlock.ComputeNbrNonZeroMatrixElements()))
 	    {
- 	      cout << "QValue=" << QValue << "  PLevel=" << PLevel << " : "<< endl;
+ 	      //cout << "QValue=" << QValue << "  PLevel=" << PLevel << " : "<< endl;
 	      // 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
 	      int TmpSectorDim = TmpOverlapBlock.GetNbrRow();
 	      
@@ -676,6 +678,8 @@ int main(int argc, char** argv)
 		  if (fabs(TmpDiag[j]) > CutOff)
 		    {
 		      ++NbrNonZeroVectors;
+                      if (TmpDiag[j] < 0)
+                        cout << "******* Negative j = " << j << " " << TmpDiag[j] << " ******* "<< endl;
 		    }
 		}
 	      if (NbrNonZeroVectors > 0)
@@ -710,7 +714,7 @@ int main(int argc, char** argv)
 		  RealDiagonalMatrix TmpDiagRho (NbrNonZeroVectors);
 		  HRepRho.LapackDiagonalize(TmpDiagRho);
 		  
-		  cout<<"------------sector P = "<<PLevel<<" N = "<<((EntCut - (QValue - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex << "---------------"<<endl;
+		  cout<<"------------sector P = "<<PLevel<<" Q = "<< QValue << "---------------"<<endl;
 		  
 		  
 		  double Sum = 0.0;
@@ -721,8 +725,6 @@ int main(int argc, char** argv)
 		      RhoQSector[NbrEigenvalues] = QValue;
 		      RhoPSector[NbrEigenvalues] = PLevel; 
 		      NbrEigenvalues++;
-// 		      if (TmpDiagRho[j] > 0.0)
-// 			File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TmpDiagRho[j] <<  " " << (-log(TmpDiagRho[j])) <<endl;
 		    }
 		}
 	    }
@@ -731,14 +733,62 @@ int main(int argc, char** argv)
   
   cout<<"Trace rho = "<<TraceRho<<endl;
 
-  File << "# l_a    N    Lz    lambda" << endl;
-  for (int i = 0; i < MatDim; ++i)
-    if (((fabs(RhoEigenvalues[i]) > CutOff)) && ((((EntCut - (RhoQSector[i] - (2 * LambdaMax + LaughlinIndex - 1)/2)))/LaughlinIndex) == Na))
-      {
-        cout<< "Na= " << Na << " P= " << RhoPSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
-        File << EntCut << " " << Na << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
-      }
 
+  int p = 0;
+  int q = 0;
+  if (Manager.GetBoolean("k-2") == true) 
+    {
+       p = 2;
+       q = 2 + Manager.GetInteger("r-index");
+    }
+  else
+   {
+    if (Manager.GetBoolean("rr-3") == true)
+      {
+        p = 3;
+        q = 5;
+      }
+     else
+      {
+        p = 1;
+        q = Manager.GetInteger("laughlin-index");
+      }  
+   } 
+  cout << "Filling factor nu = p/q = "<<p<<"/"<<q<<endl;
+  int gcd = FindGCD(p, q);
+  if (gcd > 1)
+    {
+      p /= gcd;
+      q /= gcd;
+      cout << "Filling factor nu* = p/q = "<<p<<"/"<<q<<endl;
+    }
+
+  int TmpNa;
+  File << "# l_a    Na    Lz    lambda" << endl;
+  for (int i = 0; i < MatDim; ++i)
+   { 
+    if (((fabs(RhoEigenvalues[i]) > CutOff))) 
+      {
+        TmpNa = RhoQSector[i];
+        if ((p == 2) && (q == 4)) //Moore-Read
+          TmpNa -= (MaxQValue - 1)/2;
+        else
+          TmpNa -= MaxQValue/2;
+
+        if (Manager.GetBoolean("use-padding") == false)
+          TmpNa -= p;
+
+        TmpNa =  (p * EntCut - TmpNa)/q; 
+
+        if (TmpNa == Na)
+          {
+            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
+            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
+          }
+        //else
+        // cout << "Na = " << TmpNa << " " << RhoEigenvalues[i]/TraceRho<<endl;
+      }
+   }
   delete[] TmpMatrixElements;
   delete[] TmpColumnIndices;
   delete[] RhoEigenvalues;

@@ -9,6 +9,7 @@
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "Tools/FQHEMPS/FQHEMPSMatrixManager.h"
 #include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
@@ -710,12 +711,46 @@ int main(int argc, char** argv)
   //   cout<<"i= "<<i<<" P= "<<TmpP<<" N= "<<TmpN<<endl;
   // }
 
-  cout<<"Entanglement levels with quantum numbers La,Na,P: "<<endl;
+  int p = 0;
+  int q = 0;
+  if (Manager.GetBoolean("k-2") == true) 
+    {
+       p = 2;
+       q = 2 + Manager.GetInteger("r-index");
+    }
+  else
+   {
+    if (Manager.GetBoolean("rr-3") == true)
+      {
+        p = 3;
+        q = 5;
+      }
+     else
+      {
+        p = 1;
+        q = Manager.GetInteger("laughlin-index");
+      }  
+   } 
+  cout << "Filling factor nu = p/q = "<<p<<"/"<<q<<endl;
+  int gcd = FindGCD(p, q);
+  if (gcd > 1)
+    {
+      p /= gcd;
+      q /= gcd;
+      cout << "Filling factor nu* = p/q = "<<p<<"/"<<q<<endl;
+    }
+
+  int MinQValue = 0;
+  int MaxQValue = 0;
+  MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
+  cout<<"MinQvalue = "<<MinQValue << " MaxQValue= "<<MaxQValue << endl;
 
   bool* RowIndicator = new bool[UMatrix->GetNbrRow()];
   for (int i = 0; i < UMatrix->GetNbrRow(); ++i)
     RowIndicator[i] = false;
   int TmpParticlesA, TmpP, TmpN;
+
+  cout<<"Entanglement levels with quantum numbers La,Na,P: "<<endl;
 
   for (int i = 0; i < SingularDimension; i++)
     {
@@ -727,11 +762,21 @@ int main(int argc, char** argv)
                RowIndicator[i] = true; 
                //MPSMatrix->GetPNFromMatrixIndex (IndexMat[i], TmpN, TmpP);
                MPSMatrix->GetChargeAndPLevelFromMatrixIndex(IndexMat[i], TmpP, TmpN);
-               TmpParticlesA = (EntCut - (TmpN - (2 * LambdaMax + LaughlinIndex - 1)/2))/LaughlinIndex;
-               if (TmpParticlesA == Na)
+
+               if ((p == 2) && (q == 4)) //Moore-Read
+                 TmpN -= (MaxQValue - 1)/2;
+               else
+                 TmpN -= MaxQValue/2;
+
+               if (Manager.GetBoolean("use-padding") == false)
+                  TmpN -= p;
+
+               TmpN =  (p * EntCut - TmpN)/q; 
+
+               if (TmpN == Na)
                  {
-                  cout << "Na= " << TmpParticlesA << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
-                  File << TmpParticlesA << " " << TmpP << " " << SingularValues[i]/Trace << endl;
+                  cout << "Na= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
+                  File << TmpN << " " << TmpP << " " << SingularValues[i]/Trace << endl;
                  }
                //cout << "N= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
             }
@@ -749,11 +794,20 @@ int main(int argc, char** argv)
                           RowIndicator[j] = true;
                           //MPSMatrix->GetPNFromMatrixIndex (IndexMat[j], TmpN, TmpP);
                           MPSMatrix->GetChargeAndPLevelFromMatrixIndex(IndexMat[j], TmpP, TmpN);
-                          TmpParticlesA = (EntCut - (TmpN - (2 * LambdaMax + LaughlinIndex - 1)/2))/LaughlinIndex;
-                          if (TmpParticlesA == Na)
+                          if ((p == 2) && (q == 4)) //Moore-Read
+                             TmpN -= (MaxQValue - 1)/2;
+                          else
+                             TmpN -= MaxQValue/2;
+
+                          if (Manager.GetBoolean("use-padding") == false)
+                             TmpN -= p;
+
+                          TmpN =  (p * EntCut - TmpN)/q; 
+
+                          if (TmpN == Na)
                            { 
-                            cout << "Na= " << TmpParticlesA << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
-                            File << TmpParticlesA << " " << TmpP << " " << SingularValues[i]/Trace << endl;
+                              cout << "Na= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
+                              File << TmpN << " " << TmpP << " " << SingularValues[i]/Trace << endl;
                            }
                           //cout << "N= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
                        }
