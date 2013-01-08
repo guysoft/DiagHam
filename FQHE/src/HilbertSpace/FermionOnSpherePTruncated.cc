@@ -550,6 +550,7 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
 
 RealVector FermionOnSpherePTruncated::ConvertToHaldaneBasis(RealVector& state, FermionOnSphereHaldaneBasis& haldaneBasis)
 {
+  cout<<"Convert to Haldane basis "<<this->HilbertSpaceDimension<<" "<<haldaneBasis.GetHilbertSpaceDimension()<<endl;
   RealVector TmpVector (haldaneBasis.GetHilbertSpaceDimension(), true);
   for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     TmpVector[haldaneBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];

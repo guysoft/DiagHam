@@ -854,5 +854,3 @@ inline ostream& FermionOnSphere::PrintCompactState (ostream& Str, long state)
 }
 
 #endif
-
-

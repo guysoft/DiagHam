@@ -53,6 +53,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "input state file name");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "definition of the reference state");
+  (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full squeezed basis");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-flux", "number of flux quanta (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
@@ -63,7 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "target-haldane", "target space is also a Haldane squeezed basis instead of the full n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "target-referencefile", "definition of the target reference state");
   (*SystemGroup) += new BooleanOption  ('\n', "target-ptruncated", "target space is also a p-truncated basis instead of the full n-body basis");
-  (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the target basis (if --target-ptruncated is used)", 0);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "target-ptruncation", "p-truncation for the target basis (if --target-ptruncated is used)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support (only available when both the source and target spaces are squeezed basis)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-hilbert", "save Hilbert space description in the indicated file and exit (only available for the non-symmetric Haldane basis)",0);
@@ -322,29 +324,35 @@ int main(int argc, char** argv)
 	  int* ReferenceState = 0;
 	  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
 	    return -1;
-	  FermionOnSphereHaldaneBasis* InitialSpace;
+	  FermionOnSphere* InitialSpace;
 	  if (Manager.GetString("load-hilbert") != 0)
 	    InitialSpace = new FermionOnSphereHaldaneBasis(Manager.GetString("load-hilbert"));
 	  else
-	    {
-	      InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
-	      if (Manager.GetString("save-hilbert") != 0)
-		{
-		  InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		  return 0;
-		}
-	    }
+            if (Manager.GetBoolean("p-truncated") == false)
+	      {
+	        InitialSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState);
+	        if (Manager.GetString("save-hilbert") != 0)
+		  {
+		    InitialSpace->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+		    return 0;
+		  }
+	      }
+             else
+              {
+                InitialSpace = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+              }
+ 
 	  FermionOnSphere* TargetSpace = 0;
-	  if (Manager.GetBoolean("target-haldane") == false)
+          if (Manager.GetBoolean("target-haldane") == false)
 	    {
 	      if (Manager.GetBoolean("target-ptruncated") == false)
-		TargetSpace = new FermionOnSphere (NbrParticles, TotalLz, NbrFluxQuanta);
+	        TargetSpace = new FermionOnSphere (NbrParticles, TotalLz, NbrFluxQuanta);
 	      else
 		{
 		  int* TargetReferenceState = 0;
 		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
 		    return -1;
-		  TargetSpace = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), TargetReferenceState);
+		  TargetSpace = new FermionOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("target-ptruncation"), TargetReferenceState);
 		}
 	    }
 	  else
@@ -378,15 +386,28 @@ int main(int argc, char** argv)
 		  return -1;      
 		}	    
 	      RealVector OutputState;
-	      if (ReverseFlag == false)
-		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
-	      else
-		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
-	      if (OutputState.WriteVector(OutputFileName) == false)
-		{
-		  cout << "error while writing output state " << OutputFileName << endl;
-		  return -1;
-		}
+              if (Manager.GetBoolean("p-truncated") == false)
+                {  
+	          if (ReverseFlag == false)
+		    OutputState = ((FermionOnSphereHaldaneBasis*)InitialSpace)->ConvertToNbodyBasis(State, *TargetSpace);
+	          else
+		    OutputState = ((FermionOnSphereHaldaneBasis*)InitialSpace)->ConvertFromNbodyBasis(State, *TargetSpace);
+	          if (OutputState.WriteVector(OutputFileName) == false)
+		    {
+		      cout << "error while writing output state " << OutputFileName << endl;
+		      return -1;
+		    }
+                }
+              else
+                {
+		    OutputState = ((FermionOnSpherePTruncated*)InitialSpace)->ConvertToHaldaneBasis(State, *((FermionOnSphereHaldaneBasis*) TargetSpace));
+
+  	            if (OutputState.WriteVector(OutputFileName) == false)
+		      {
+		        cout << "error while writing output state " << OutputFileName << endl;
+		        return -1;
+		      }
+                }
 	    }
 	  else
 	    {
@@ -408,9 +429,9 @@ int main(int argc, char** argv)
 		}	    
 	      LongRationalVector OutputState;
 	      if (ReverseFlag == false)
-		OutputState = InitialSpace->ConvertToNbodyBasis(State, *TargetSpace);
+		OutputState = ((FermionOnSphereHaldaneBasis*)InitialSpace)->ConvertToNbodyBasis(State, *TargetSpace);
 	      else
-		OutputState = InitialSpace->ConvertFromNbodyBasis(State, *TargetSpace);
+		OutputState =((FermionOnSphereHaldaneBasis*)InitialSpace)->ConvertFromNbodyBasis(State, *TargetSpace);
 	      if (OutputState.WriteVector(OutputFileName) == false)
 		{
 		  cout << "error while writing output state " << OutputFileName << endl;
@@ -454,7 +475,7 @@ int main(int argc, char** argv)
 		  int* TargetReferenceState = 0;
 		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, TargetReferenceState) == false)
 		    return -1;
-		  TargetSpace = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), TargetReferenceState);
+		  TargetSpace = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("target-ptruncation"), TargetReferenceState);
 		}
 	     }
 	   else
