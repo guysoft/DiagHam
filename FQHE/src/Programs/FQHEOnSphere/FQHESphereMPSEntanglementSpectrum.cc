@@ -22,6 +22,7 @@
 #include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+#include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
 
 #include "Matrix/SparseRealMatrix.h"
 
@@ -37,6 +38,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <sys/time.h>
 
 using std::cout;
 using std::endl;
@@ -46,8 +48,8 @@ using std::ofstream;
 
 
 
-void MPSDiagonalizeEMatrix(AbstractHamiltonian* hamiltonian, int nbrEigenstates, Complex*& eigenvalues, ComplexVector*& eigenstates, 
-			   AbstractArchitecture* architecture, int fullDIagonalizationLimit, double error, bool leftFlag);
+void MPSDiagonalizeEMatrix(OptionManager* manager, AbstractHamiltonian* hamiltonian, int nbrEigenstates, Complex*& eigenvalues, ComplexVector*& eigenstates, 
+			   AbstractArchitecture* architecture, double error, bool leftFlag);
 
 
 int main(int argc, char** argv)
@@ -64,7 +66,9 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
   OptionGroup* OutputGroup = Manager.GetOptionGroup("output options");
   OptionGroup* PrecalculationGroup = Manager.GetOptionGroup("precalculation options");
+  OptionGroup* ArnoldiGroup  = new OptionGroup ("Arnoldi options");
   Architecture.AddOptionGroup(&Manager);
+  Manager += ArnoldiGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
@@ -74,6 +78,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate the entnaglement spectrum on the infinite cylinder");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
+  (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
+					       "maximum Hilbert space dimension for which full diagonalization is applied", 1000);
+  (*ArnoldiGroup) += new BooleanOption  ('\n', "disk", "enable disk storage for the Arnoldi algorithm", false);
+  (*ArnoldiGroup) += new BooleanOption  ('\n', "resume", "resume from disk datas", false);
+  (*ArnoldiGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Arnoldi iteration", false); 
+  (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "arnoldi-memory", "amount of memory when using the Arnoldi algorithm (in Mb)", 500); 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -234,7 +244,6 @@ int main(int argc, char** argv)
     {
       int NbrBMatrices = 2;
       double Error = 1e-13;
-      int FullDiagonalizationLimit = 1000;
 
       SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
       SparseRealMatrix* SparseTransposeBMatrices = new SparseRealMatrix[NbrBMatrices];
@@ -250,14 +259,14 @@ int main(int argc, char** argv)
       ComplexVector* LeftEigenstates = 0;
       Complex* LeftEigenvalues = 0;
       cout << "computing left eigenstates : " << endl;
-      MPSDiagonalizeEMatrix(&ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), FullDiagonalizationLimit, 1e-10, true);
+      MPSDiagonalizeEMatrix(&Manager, &ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), 1e-10, true);
 
 
       TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients);
       ComplexVector* RightEigenstates = 0;
       Complex* RightEigenvalues = 0;
       cout << "computing right eigenstates : " << endl;
-      MPSDiagonalizeEMatrix(&EHamiltonian, NbrEigenstates, RightEigenvalues, RightEigenstates, Architecture.GetArchitecture(), FullDiagonalizationLimit, 1e-10, false);
+      MPSDiagonalizeEMatrix(&Manager, &EHamiltonian, NbrEigenstates, RightEigenvalues, RightEigenstates, Architecture.GetArchitecture(), 1e-10, false);
 
       cout << "eigenvalues : " << endl;
       for (int i = 0; i < NbrEigenstates; ++i)
@@ -358,7 +367,6 @@ int main(int argc, char** argv)
 
       LeftEigenvalueError = Error;
       RightEigenvalueError = Error;
-
 
       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	{
@@ -798,8 +806,8 @@ int main(int argc, char** argv)
 }
 
 
-void MPSDiagonalizeEMatrix(AbstractHamiltonian* hamiltonian, int nbrEigenstates, Complex*& eigenvalues, ComplexVector*& eigenstates, 
-			   AbstractArchitecture* architecture, int fullDiagonalizationLimit, double error, bool leftFlag)
+void MPSDiagonalizeEMatrix(OptionManager* manager, AbstractHamiltonian* hamiltonian, int nbrEigenstates, Complex*& eigenvalues, ComplexVector*& eigenstates, 
+			   AbstractArchitecture* architecture, double error, bool leftFlag)
 {
   eigenstates = new ComplexVector[nbrEigenstates];
   eigenvalues = new Complex[nbrEigenstates];
@@ -808,7 +816,7 @@ void MPSDiagonalizeEMatrix(AbstractHamiltonian* hamiltonian, int nbrEigenstates,
   Complex* TmpEigenvalues = 0;
   ComplexVector* TmpEigenstates = 0;
 
-  if (hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension() < fullDiagonalizationLimit)
+  if (hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension() < manager->GetInteger("full-diag"))
     {	  
       RealMatrix HRepresentation (hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension(), 
 				  hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension());
@@ -828,16 +836,41 @@ void MPSDiagonalizeEMatrix(AbstractHamiltonian* hamiltonian, int nbrEigenstates,
     }
   else
     {	 
-      BasicArnoldiAlgorithm Arnoldi(architecture, nbrEigenstates, 3000, true, false, false);
-      Arnoldi.SetHamiltonian(hamiltonian);
-      Arnoldi.InitializeLanczosAlgorithm();
-      Arnoldi.RunLanczosAlgorithm(nbrEigenstates);
-      while (Arnoldi.TestConvergence() == false)
+      BasicArnoldiAlgorithm* Arnoldi = 0;
+      if (manager->GetBoolean("disk"))
 	{
-	  Arnoldi.RunLanczosAlgorithm(1);
+	  long TmpMemory = (((long) manager->GetInteger("arnoldi-memory")) << 17) / hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();
+	  if (TmpMemory == 0)
+	    TmpMemory = 1;
+	  Arnoldi = new BasicArnoldiAlgorithmWithDiskStorage (architecture, nbrEigenstates, 3000, true, false, manager->GetBoolean("resume"), TmpMemory, false);
 	}
-      TmpEigenstates = (ComplexVector*) Arnoldi.GetEigenstates(nbrEigenstates);  
-      Arnoldi.GetEigenvalues(TmpEigenvalues, nbrEigenstates);
+      else
+	{
+	  Arnoldi = new BasicArnoldiAlgorithm (architecture, nbrEigenstates, 3000, true, false, false);
+	}
+      Arnoldi->SetHamiltonian(hamiltonian);
+      Arnoldi->InitializeLanczosAlgorithm();
+      Arnoldi->RunLanczosAlgorithm(nbrEigenstates);
+      bool ShowTimeFlag = manager->GetBoolean("show-itertime");
+      while (Arnoldi->TestConvergence() == false)
+	{
+	  timeval TotalStartingTime;
+	  timeval TotalEndingTime;
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalStartingTime), 0);
+	    }
+	  Arnoldi->RunLanczosAlgorithm(1);
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+	      cout << "iteration done in " << Dt << "s" << endl;
+	    }
+	}
+      TmpEigenstates = (ComplexVector*) Arnoldi->GetEigenstates(nbrEigenstates);  
+      Arnoldi->GetEigenvalues(TmpEigenvalues, nbrEigenstates);
      }
 
   for (int i = 0; i < nbrEigenstates; ++i)

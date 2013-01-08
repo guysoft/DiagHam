@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //                      class of basic  Arnoldi algorithm                     //
-//                         for non symmetric matrices                         //
+//                 for non symmetric matrices using disk storage              //
 //                                                                            //
-//                        last modification : 17/11/2012                      //
+//                        last modification : 07/01/2013                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+#include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -40,21 +40,18 @@
 #include "Architecture/ArchitectureOperation/MultipleRealScalarProductOperation.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexDiagonalMatrix.h"
+#include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
 #include <iostream>
 
 
+using std::ofstream;
+using std::ifstream;
+using std::ios;
 using std::cout;
 using std::endl;
 
-
-// default constructor
-//
-
-BasicArnoldiAlgorithm::BasicArnoldiAlgorithm()
-{ 
-}
 
 // default constructor
 //
@@ -63,16 +60,19 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm()
 // maxIter = an approximation of maximal number of iteration
 // highEnergy = true if the higher energy part of the spectrum has to be computed instead of the lower energy part
 // leftFlag= compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
+// resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+// nbrTemporaryVectors = number of temporary that can be stored in memory
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
-BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
-					     bool highEnergy, bool leftFlag, bool strongConvergence) 
+BasicArnoldiAlgorithmWithDiskStorage::BasicArnoldiAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
+									   bool highEnergy, bool leftFlag, bool resumeDiskFlag, int nbrTemporaryVectors, bool strongConvergence) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
   this->MaximumNumberIteration = maxIter;
   this->NbrEigenvalue = nbrEigenvalue;
-  this->ArnoldiVectors = new RealVector [this->MaximumNumberIteration];
+  this->NbrTemporaryVectors = nbrTemporaryVectors;
+  this->ArnoldiVectors = new RealVector [this->NbrTemporaryVectors + 3];
   this->TemporaryCoefficients = new double [this->MaximumNumberIteration];
   if (maxIter > 0)
     {
@@ -86,6 +86,7 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
       this->ComplexDiagonalizedMatrix = ComplexDiagonalMatrix();
       this->ReducedMatrix = RealUpperHessenbergMatrix();
    }
+  this->ResumeDiskFlag = resumeDiskFlag;
   this->Architecture = architecture;
   this->Flag.Initialize();
   this->StrongConvergenceFlag = strongConvergence;
@@ -103,12 +104,14 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
 //
 // algorithm = algorithm from which new one will be created
 
-BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algorithm) 
+BasicArnoldiAlgorithmWithDiskStorage::BasicArnoldiAlgorithmWithDiskStorage(const BasicArnoldiAlgorithmWithDiskStorage& algorithm) 
 {
   this->Index = algorithm.Index;
   this->MaximumNumberIteration = algorithm.MaximumNumberIteration;
   this->Hamiltonian = algorithm.Hamiltonian;
-  this->ArnoldiVectors = new RealVector [this->MaximumNumberIteration];
+  this->NbrTemporaryVectors = algorithm.NbrTemporaryVectors;
+  this->ArnoldiVectors = new RealVector [3 + this->NbrTemporaryVectors];
+  this->ResumeDiskFlag = algorithm.ResumeDiskFlag;
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;
   this->Flag = algorithm.Flag;
   this->Architecture = algorithm.Architecture;
@@ -130,55 +133,63 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algori
 // destructor
 //
 
-BasicArnoldiAlgorithm::~BasicArnoldiAlgorithm() 
+BasicArnoldiAlgorithmWithDiskStorage::~BasicArnoldiAlgorithmWithDiskStorage() 
 {
-  if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->ArnoldiVectors;
-      delete[]  this->TemporaryCoefficients;
-    }
-  delete[] this->ComplexPreviousWantedEigenvalues;
 }
 
 // initialize Lanczos algorithm with a random vector
 //
 
-void BasicArnoldiAlgorithm::InitializeLanczosAlgorithm() 
+void BasicArnoldiAlgorithmWithDiskStorage::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->ArnoldiVectors[0] = RealVector (Dimension);
   this->ArnoldiVectors[1] = RealVector (Dimension);
   this->ArnoldiVectors[2] = RealVector (Dimension);
-  for (int i = 0; i < Dimension; i++)
+  if (this->ResumeDiskFlag == false)
     {
-//       this->ArnoldiVectors[0].Re(i) = (rand() - 32767) * 0.5;
-//       this->ArnoldiVectors[0].Im(i) = (rand() - 32767) * 0.5;
-      this->ArnoldiVectors[0][i] = (rand() - 32767) * 0.5;
+      for (int i = 0; i < Dimension; i++)
+	{
+	  this->ArnoldiVectors[0][i] = (rand() - 32767) * 0.5;
+	}
+      this->ArnoldiVectors[0] /= this->ArnoldiVectors[0].Norm();
+      this->Index = 0;
+      this->TridiagonalizedMatrix.Resize(0, 0);
+      this->ArnoldiVectors[0].WriteVector("vector.0"); 
     }
-  this->ArnoldiVectors[0] /= this->ArnoldiVectors[0].Norm();
-  this->Index = 0;
-  this->TridiagonalizedMatrix.Resize(0, 0);
+  else
+    {
+      this->ReadState();
+    }
 }
   
 // initialize Lanczos algorithm with a given vector
 //
 // vector = reference to the vector used as first step vector
 
-void BasicArnoldiAlgorithm::InitializeLanczosAlgorithm(const Vector& vector) 
+void BasicArnoldiAlgorithmWithDiskStorage::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->ArnoldiVectors[0] = vector;
-  this->ArnoldiVectors[1] = RealVector (Dimension);
-  this->ArnoldiVectors[2] = RealVector (Dimension);
-  this->Index = 0;
-  this->TridiagonalizedMatrix.Resize(0, 0);
+  if (this->ResumeDiskFlag == false)
+    {
+      this->ArnoldiVectors[0] = vector;
+      this->ArnoldiVectors[1] = RealVector (Dimension);
+      this->ArnoldiVectors[2] = RealVector (Dimension);
+      this->Index = 0;
+      this->TridiagonalizedMatrix.Resize(0, 0);
+      this->ArnoldiVectors[0].WriteVector("vector.0"); 
+    }
+  else
+    {
+      this->ReadState();
+    }
 }
 
 // get last produced vector
 //
 // return value = reference on lest produced vector
 
-Vector& BasicArnoldiAlgorithm::GetGroundState()
+Vector& BasicArnoldiAlgorithmWithDiskStorage::GetGroundState()
 {
   this->GroundState = ComplexVector(this->ArnoldiVectors[0].GetLargeVectorDimension(), true);
   ComplexMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
@@ -192,7 +203,7 @@ Vector& BasicArnoldiAlgorithm::GetGroundState()
   for (int i = 0; i < SortedDiagonalizedMatrix.GetNbrColumn(); ++i)
     SortedDiagonalizedMatrix[i] = TmpDiag[i];
 #else
-  cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
+  cout << "lapack is required for BasicArnoldiAlgorithmWithDiskStorage" << endl;
 #endif
   if (this->HighEnergyFlag == false)
     SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true);
@@ -202,8 +213,16 @@ Vector& BasicArnoldiAlgorithm::GetGroundState()
   Complex* TmpCoefficents = new Complex [SortedDiagonalizedMatrix.GetNbrColumn()];
   for (int j = 0; j < SortedDiagonalizedMatrix.GetNbrColumn(); ++j)
     TmpCoefficents[j] = TmpEigenvector[0][j];
-  AddComplexLinearCombinationOperation Operation (&(this->GroundState), this->ArnoldiVectors, 
-						  SortedDiagonalizedMatrix.GetNbrColumn(),  TmpCoefficents);
+  int TmpTotalNbrReadVectors = 0;
+  int TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, SortedDiagonalizedMatrix.GetNbrColumn());
+  while (TmpNbrReadVectors > 0)
+    {
+      AddComplexLinearCombinationOperation Operation (&(this->GroundState), &(this->ArnoldiVectors[3]), 
+						      TmpNbrReadVectors,  &(TmpCoefficents[TmpTotalNbrReadVectors]));
+      Operation.ApplyOperation(this->Architecture);
+      TmpTotalNbrReadVectors += TmpNbrReadVectors;
+      TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, SortedDiagonalizedMatrix.GetNbrColumn());
+    }
   delete[] TmpCoefficents;
   return this->GroundState;
 }
@@ -213,7 +232,7 @@ Vector& BasicArnoldiAlgorithm::GetGroundState()
 // nbrEigenstates = number of needed eigenstates
 // return value = array containing the eigenstates
 
-Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
+Vector* BasicArnoldiAlgorithmWithDiskStorage::GetEigenstates(int nbrEigenstates)
 {
   ComplexVector* Eigenstates = new ComplexVector [nbrEigenstates];
   ComplexMatrix TmpEigenvector (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow(), true);
@@ -229,7 +248,7 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
       SortedDiagonalizedMatrix[i] = TmpDiag[i];
     }
 #else
-  cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
+  cout << "lapack is required for BasicArnoldiAlgorithmWithDiskStorage" << endl;
 #endif
   if (this->HighEnergyFlag == false)
     SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true);
@@ -243,9 +262,16 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
       for (int j = 0; j < SortedDiagonalizedMatrix.GetNbrColumn(); ++j)
 	TmpCoefficents[j] = TmpEigenvector[i][j] * TmpNorm;
       Eigenstates[i] = ComplexVector(this->ArnoldiVectors[0].GetVectorDimension(), true);
-      AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), this->ArnoldiVectors, 
-						      SortedDiagonalizedMatrix.GetNbrColumn(),  TmpCoefficents);
-      Operation.ApplyOperation(this->Architecture);
+      int TmpTotalNbrReadVectors = 0;
+      int TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, SortedDiagonalizedMatrix.GetNbrColumn());
+      while (TmpNbrReadVectors > 0)
+	{
+	  AddComplexLinearCombinationOperation Operation (&(Eigenstates[i]), &(this->ArnoldiVectors[3]), 
+							  TmpNbrReadVectors,  &(TmpCoefficents[TmpTotalNbrReadVectors]));
+	  Operation.ApplyOperation(this->Architecture);
+	  TmpTotalNbrReadVectors += TmpNbrReadVectors;
+	  TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, SortedDiagonalizedMatrix.GetNbrColumn());
+	}
     }
   delete[] TmpCoefficents;
   return Eigenstates;
@@ -255,7 +281,7 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
 //
 // nbrIter = number of iteration to do 
 
-void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter) 
+void BasicArnoldiAlgorithmWithDiskStorage::RunLanczosAlgorithm (int nbrIter) 
 {
   int Dimension;
   if (this->Index == 0)
@@ -274,6 +300,7 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
       this->ReducedMatrix.SetMatrixElement(1, 0, this->ArnoldiVectors[1].Norm()); 
       this->ReducedMatrix.GetMatrixElement(1, 0, Tmp);
       this->ArnoldiVectors[1] /=  Tmp; 
+      this->ArnoldiVectors[1].WriteVector("vector.1");
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->ArnoldiVectors[1]), &(this->ArnoldiVectors[2]));
       Operation2.ApplyOperation(this->Architecture);
       this->ReducedMatrix.SetMatrixElement(0, 1, (this->ArnoldiVectors[0] * this->ArnoldiVectors[2]));
@@ -282,31 +309,63 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
   else
     {
       Dimension = this->ReducedMatrix.GetNbrRow() + nbrIter;
-      this->ReducedMatrix.Resize(Dimension, Dimension);
+      this->ReducedMatrix.ResizeAndClean(Dimension, Dimension);
     }
   for (int i = this->Index + 2; i < Dimension; ++i)
     {
-      for (int k = 0; k < i; ++k)
+      if (this->ResumeDiskFlag == false)
 	{
-	  this->ReducedMatrix.GetMatrixElement(k, i - 1, this->TemporaryCoefficients[k]);
-	  this->TemporaryCoefficients[k] *= -1.0;
+	  for (int k = 0; k < i; ++k)
+	    {
+	      this->ReducedMatrix.GetMatrixElement(k, i - 1, this->TemporaryCoefficients[k]);
+	      this->TemporaryCoefficients[k] *= -1.0;
+	    }
+	  int TmpTotalNbrReadVectors = 0;
+	  int TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, i);
+	  while (TmpNbrReadVectors > 0)
+	    {
+	      AddRealLinearCombinationOperation Operation (&(this->ArnoldiVectors[2]), &(this->ArnoldiVectors[3]), 
+							   TmpNbrReadVectors, &(this->TemporaryCoefficients[TmpTotalNbrReadVectors]));
+	      Operation.ApplyOperation(this->Architecture);
+	      TmpTotalNbrReadVectors += TmpNbrReadVectors;
+	      TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, i);
+	    }
+	  double VectorNorm = this->ArnoldiVectors[2].Norm();
+	  this->ReducedMatrix.SetMatrixElement(i, i - 1, VectorNorm);
+	  if (VectorNorm < 1e-5)
+	    {
+	      cout << "subspace !!! " << i << endl;
+	    }
+	  this->ArnoldiVectors[2] /= VectorNorm;
+	  char* TmpVectorName = new char [256];
+	  sprintf(TmpVectorName, "vector.%d", i);
+	  this->ArnoldiVectors[2].WriteVector(TmpVectorName);
+	  delete[] TmpVectorName;
+	  this->WriteState();
 	}
-      AddRealLinearCombinationOperation Operation2 (&(this->ArnoldiVectors[i]), this->ArnoldiVectors, i, this->TemporaryCoefficients);	  
-      Operation2.ApplyOperation(this->Architecture);
-      double VectorNorm = this->ArnoldiVectors[i].Norm();
-      this->ReducedMatrix.SetMatrixElement(i, i - 1, VectorNorm);
-      if (VectorNorm < 1e-5)
+      else
 	{
-	  cout << "subspace !!! " << i << endl;
+	  this->ResumeDiskFlag = false;
 	}
-      this->ArnoldiVectors[i] /= VectorNorm;
+
+      RealVector TmpVector = this->ArnoldiVectors[0];
+      this->ArnoldiVectors[0] = this->ArnoldiVectors[1];
+      this->ArnoldiVectors[1] = this->ArnoldiVectors[2];
+      this->ArnoldiVectors[2] = TmpVector;
+
       this->Index++;
-      this->ArnoldiVectors[i + 1] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
-      VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->ArnoldiVectors[i]), &(this->ArnoldiVectors[i + 1]));
+      VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->ArnoldiVectors[1]), &(this->ArnoldiVectors[2]));
       Operation.ApplyOperation(this->Architecture);
-      MultipleRealScalarProductOperation Operation3 (&(this->ArnoldiVectors[i + 1]), this->ArnoldiVectors,
-						     i + 1, this->TemporaryCoefficients);
-      Operation3.ApplyOperation(this->Architecture);
+      int TmpTotalNbrReadVectors = 0;
+      int TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, i + 1);
+      while (TmpNbrReadVectors > 0)
+	{
+	  MultipleRealScalarProductOperation Operation2 (&(this->ArnoldiVectors[2]), &(this->ArnoldiVectors[3]), 
+							 TmpNbrReadVectors,  &(this->TemporaryCoefficients[TmpTotalNbrReadVectors]));
+	  Operation2.ApplyOperation(this->Architecture);
+	  TmpTotalNbrReadVectors += TmpNbrReadVectors;
+	  TmpNbrReadVectors = this->ReadTemporaryVectors(TmpTotalNbrReadVectors, i + 1);
+	}
       for (int j = 0; j <= i; ++j)
 	{
 	  this->ReducedMatrix.SetMatrixElement(j, i, this->TemporaryCoefficients[j]);
@@ -337,93 +396,75 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 }
 
   
-// test if convergence has been reached
+// write current Lanczos state on disk
 //
-// return value = true if convergence has been reached
+// return value = true if no error occurs
 
-bool BasicArnoldiAlgorithm::TestConvergence ()
+bool BasicArnoldiAlgorithmWithDiskStorage::WriteState()
 {
-  if (this->ReducedMatrix.GetNbrRow() > this->NbrEigenvalue)
-    {
-      cout << this->Index << " : ";
-      for (int i = 0; i < this->NbrEigenvalue; ++i)
-	cout << this->ComplexPreviousWantedEigenvalues[i] << " ";
-      cout << Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1] - this->ComplexPreviousWantedEigenvalues[this->NbrEigenvalue - 1]) << endl;
-      if (this->StrongConvergenceFlag == true)
-	{
-	  for (int i = this->NbrEigenvalue - 1; i >= 0; --i)
-	    {
-	      if (Norm(this->ComplexDiagonalizedMatrix[i] - this->ComplexPreviousWantedEigenvalues[i]) > 
-		  (this->EigenvaluePrecision * Norm(this->ComplexDiagonalizedMatrix[i])))
-		{ 
-		  if (Norm(ComplexDiagonalizedMatrix[i]) > MACHINE_PRECISION)
-		    return false;
-		  else
-		    if (Norm(this->ComplexPreviousWantedEigenvalues[i]) > MACHINE_PRECISION)
-		      return false;
-		}
-	    }
-	  return true;
-	}
-      else
-	if (Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1] - this->ComplexPreviousWantedEigenvalues[this->NbrEigenvalue - 1]) < 
-	    (this->EigenvaluePrecision * Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1])))
-	  {
-	    return true;
-	  }
-	else
-	  return false;
+  ofstream File;
+  File.open("lanczos.dat", ios::binary | ios::out);
+  WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->NbrEigenvalue);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue.Re);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue.Im);
+  for (int i = 0; i < this->NbrEigenvalue; ++i)    
+    {    
+      WriteLittleEndian(File, this->ComplexPreviousWantedEigenvalues[i].Re);
+      WriteLittleEndian(File, this->ComplexPreviousWantedEigenvalues[i].Im);
     }
-  return false;
+  this->ReducedMatrix.WriteMatrix(File);
+  File.close();  
+  return true;
 }
 
-// get the n first eigenvalues
+// read current Lanczos state from disk
 //
-// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
-// nbrEigenstates = number of needed eigenvalues
-void BasicArnoldiAlgorithm::GetEigenvalues (double*& eigenvalues, int nbrEigenvalues)
+// return value = true if no error occurs
+
+bool BasicArnoldiAlgorithmWithDiskStorage::ReadState()
 {
-  eigenvalues = new double [nbrEigenvalues];
-  for (int i = 0; i < nbrEigenvalues; ++i)
-    {
-      eigenvalues[i] = this->ComplexDiagonalizedMatrix[i].Re;
+  ifstream File;
+  File.open("lanczos.dat", ios::binary | ios::in);
+  ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->NbrEigenvalue);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue.Re);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue.Im);
+  for (int i = 0; i < this->NbrEigenvalue; ++i)    
+    {    
+      ReadLittleEndian(File, this->ComplexPreviousWantedEigenvalues[i].Re);
+      ReadLittleEndian(File, this->ComplexPreviousWantedEigenvalues[i].Im);
     }
+  this->ReducedMatrix.ReadMatrix(File);
+  File.close();  
+  char* TmpVectorName = new char [256];
+  sprintf(TmpVectorName, "vector.%d", this->Index);
+  this->ArnoldiVectors[0].ReadVector(TmpVectorName);
+  sprintf(TmpVectorName, "vector.%d", (this->Index + 1));
+  this->ArnoldiVectors[1].ReadVector(TmpVectorName);
+  sprintf(TmpVectorName, "vector.%d", (this->Index + 2));
+  this->ArnoldiVectors[2].ReadVector(TmpVectorName);
+  delete[] TmpVectorName;
+  return true;
 }
 
-// get the n first eigenvalues
+// read several temporary vectors stored o disk
 //
-// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
-// nbrEigenstates = number of needed eigenvalues
+// firstVector = index of the first vector to read
+// totalNbrVectors = total number of temporary vectors
+// return value = number of vectors that have been read
 
-void BasicArnoldiAlgorithm::GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues)
+int BasicArnoldiAlgorithmWithDiskStorage::ReadTemporaryVectors(int firstVector, int totalNbrVectors)
 {
-  eigenvalues = new Complex [nbrEigenvalues];
-  for (int i = 0; i < nbrEigenvalues; ++i)
+  char* TmpVectorName = new char [256];
+  int TmpNbrVector = (totalNbrVectors - firstVector);
+  if (TmpNbrVector > this->NbrTemporaryVectors)
+    TmpNbrVector = this->NbrTemporaryVectors;
+  for (int i = 0; i < TmpNbrVector; ++i)
     {
-      eigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
+      sprintf(TmpVectorName, "vector.%d", (firstVector + i));
+      this->ArnoldiVectors[3 + i].ReadVector(TmpVectorName);
     }
+  delete[] TmpVectorName;
+  return TmpNbrVector;
 }
-
-// diagonalize tridiagonalized matrix and find ground state energy
-//
-
-void BasicArnoldiAlgorithm::Diagonalize () 
-{
-  int Dimension = this->ReducedMatrix.GetNbrRow();
-  this->TemporaryReducedMatrix.Copy(this->ReducedMatrix);
-#ifdef __LAPACK__
-  ComplexDiagonalMatrix TmpDiag (this->TemporaryReducedMatrix.GetNbrColumn());
-  this->TemporaryReducedMatrix.LapackDiagonalize(TmpDiag);
-  this->ComplexDiagonalizedMatrix.Resize(this->TemporaryReducedMatrix.GetNbrColumn(), this->TemporaryReducedMatrix.GetNbrColumn());
-  for (int i = 0; i < this->TemporaryReducedMatrix.GetNbrColumn(); ++i)
-    this->ComplexDiagonalizedMatrix[i] = TmpDiag[i];
-#else
-  cout << "error, LAPACK is required for BasicArnoldiAlgorithm" << endl;
-#endif
-  this->GroundStateEnergy = Norm(this->ComplexDiagonalizedMatrix[0]);
-  for (int DiagPos = 1; DiagPos < Dimension; DiagPos++)
-    if (Norm(this->ComplexDiagonalizedMatrix[DiagPos]) < this->GroundStateEnergy)
-      this->GroundStateEnergy = Norm(this->ComplexDiagonalizedMatrix[DiagPos]);  
-  return;
-}
-

@@ -28,6 +28,7 @@ ComplexBasicBlockLanczosAlgorithm.cc \
 FullReorthogonalizedComplexBlockLanczosAlgorithm.cc \
 BasicArnoldiAlgorithm.cc \
 BasicBlockArnoldiAlgorithm.cc \
-BasicComplexArnoldiAlgorithm.cc
+BasicComplexArnoldiAlgorithm.cc \
+BasicArnoldiAlgorithmWithDiskStorage.cc
 
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 

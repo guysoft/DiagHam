@@ -34,6 +34,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/Complex.h"
+#include "GeneralTools/Endian.h"
 
 #include <stdlib.h>
 #include <fstream>
@@ -1091,6 +1092,56 @@ MathematicaOutput& operator << (MathematicaOutput& Str, const RealUpperHessenber
     }
   Str << "}";
   return Str;
+}
+
+// write matrix in a file 
+//
+// file = reference on the output file stream
+// return value = true if no error occurs
+
+bool RealUpperHessenbergMatrix::WriteMatrix (ofstream& file)
+{
+  WriteLittleEndian(file, this->MatrixType);
+  WriteLittleEndian(file, this->NbrRow);
+  WriteLittleEndian(file, this->NbrColumn);
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      WriteLittleEndian(file, this->LowerDiagonalElements[i]);
+      WriteLittleEndian(file, this->DiagonalElements[i]);
+    }
+  long TmpNbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
+  for (long i = 0l; i < TmpNbrOffDiagonalElements; ++i)
+    WriteLittleEndian(file, this->UpperOffDiagonalElements[i]);
+  return true;
+}
+
+// read matrix from a file 
+//
+// file = reference  on the input file stream
+// return value = true if no error occurs
+
+bool RealUpperHessenbergMatrix::ReadMatrix (ifstream& file)
+{
+  int TmpType = Matrix::RealElements;
+  ReadLittleEndian(file, TmpType);
+  if (TmpType != (Matrix::RealElements | Matrix::Hessenberg | Matrix::Upper))
+    {
+      return false;
+    }
+  int TmpNbrRow;
+  int TmpNbrColumn;
+  ReadLittleEndian(file, TmpNbrRow);
+  ReadLittleEndian(file, TmpNbrColumn);
+  this->Resize(TmpNbrRow, TmpNbrColumn);
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      ReadLittleEndian(file, this->LowerDiagonalElements[i]);
+      ReadLittleEndian(file, this->DiagonalElements[i]);
+    }
+  long TmpNbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
+  for (long i = 0l; i < TmpNbrOffDiagonalElements; ++i)
+    ReadLittleEndian(file, this->UpperOffDiagonalElements[i]);
+  return true;
 }
 
 #endif

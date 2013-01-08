@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //                      class of basic  Arnoldi algorithm                     //
-//                         for non symmetric matrices                         //
+//                 for non symmetric matrices using disk storage              //
 //                                                                            //
-//                        last modification : 17/11/2012                      //
+//                        last modification : 07/01/2013                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,12 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BASICARNOLDIALGORITHM_H
-#define BASICARNOLDIALGORITHM_H
+#ifndef BASICARNOLDIALGORITHMWITHDISKSTORAGE_H
+#define BASICARNOLDIALGORITHMWITHDISKSTORAGE_H
 
 
 #include "config.h"
-#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
+#include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -44,53 +44,18 @@
 #include "Matrix/RealUpperHessenbergMatrix.h"
 
 
-class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
+class BasicArnoldiAlgorithmWithDiskStorage : public BasicArnoldiAlgorithm
 {
 
  protected:
 
-  // array where the vectors of the Krylov subspace
-  RealVector* ArnoldiVectors;
+  // flag to indicate that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  bool ResumeDiskFlag;
 
-  // maximum  number of iterations
-  int MaximumNumberIteration;
-  // current iteration index
-  int Index;
-
-  // garbage flag to avoid duplicating memory area
-  GarbageFlag Flag;
-
-  // Hessenberg matrix of the Hamiltonian in the Krylov subspace
-  RealUpperHessenbergMatrix ReducedMatrix;
-  // temporary matrix used to duplicated ReducedMatrix before diagonalize it
-  RealUpperHessenbergMatrix TemporaryReducedMatrix;
-
-  ComplexDiagonalMatrix ComplexDiagonalizedMatrix;
-
-  // number of wanted eigenvalues
-  int NbrEigenvalue;
-  // value of the last wanted eigenvalue at previous Arnoldi iteration
-  Complex PreviousLastWantedEigenvalue;
-  // value of the wanted eigenvalue at previous Arnoldi iteration
-  Complex* ComplexPreviousWantedEigenvalues;
-  // ground state 
-  ComplexVector GroundState;
-
-  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  bool StrongConvergenceFlag;
-  //true if the higher energy part of the spectrum has to be computed instead of the lower energy part
-  bool HighEnergyFlag;
-  // flag to compute the left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
-  bool LeftFlag;
-
-  // array used to store temporary scalar products
-  double* TemporaryCoefficients;
+  // maximum number of vectors that can be stored
+  int NbrTemporaryVectors;
 
  public:
-
-  // default constructor
-  //
-  BasicArnoldiAlgorithm();
 
   // default constructor
   //
@@ -99,18 +64,20 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // maxIter = an approximation of maximal number of iteration
   // highEnergy = true if the higher energy part of the spectrum has to be computed instead of the lower energy part
   // leftFlag= compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
+  // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  // nbrTemporaryVectors = number of temporary that can be stored in memory
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  BasicArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100,
-			bool highEnergy = false, bool leftFlag = false, bool strongConvergence = false);
+  BasicArnoldiAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100,
+				       bool highEnergy = false, bool leftFlag = false, bool resumeDiskFlag = false, int nbrTemporaryVectors = 1, bool strongConvergence = false);
 
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
-  BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algorithm);
+  BasicArnoldiAlgorithmWithDiskStorage(const BasicArnoldiAlgorithmWithDiskStorage& algorithm);
 
   // destructor
   //
-  ~BasicArnoldiAlgorithm();
+  ~BasicArnoldiAlgorithmWithDiskStorage();
 
   // initialize Arnoldi algorithm with a random vector
   //
@@ -132,33 +99,30 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // return value = array containing the eigenstates
   Vector* GetEigenstates(int nbrEigenstates);
 
-  // get the n first eigenvalues
-  //
-  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
-  // nbrEigenstates = number of needed eigenvalues
-  virtual void GetEigenvalues (double*& eigenvalues, int nbrEigenvalues);
-
-  // get the n first eigenvalues
-  //
-  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
-  // nbrEigenstates = number of needed eigenvalues
-  virtual void GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues);
-
   // run current Arnoldi algorithm (continue from previous results if Arnoldi algorithm has already been run)
   //
   // nbrIter = number of iteration to do 
   void RunLanczosAlgorithm (int nbrIter);
   
-  // test if convergence has been reached
-  //
-  // return value = true if convergence has been reached
-  bool TestConvergence ();
-
  protected:
 
-  // diagonalize tridiagonalized matrix and find ground state energy
+  // read several temporary vectors stored o disk
   //
-  virtual void Diagonalize();
+  // firstVector = index of the first vector to read
+  // totalNbrVectors = total number of temporary vectors
+  // return value = number of vectors that have been read
+  int ReadTemporaryVectors(int firstVector, int totalNbrVectors);
+
+  // read current Lanczos state from disk
+  //
+  // return value = true if no error occurs
+  bool ReadState();
+
+  // write current Lanczos state on disk
+  //
+  // return value = true if no error occurs
+  bool WriteState();
+
 
 };
 
