@@ -60,6 +60,7 @@ class SparseRealMatrix : public Matrix
   friend class RealVector;
   friend class SparseMatrixMatrixMultiplyOperation;
   friend class TensorProductSparseMatrixHamiltonian;
+  friend class TensorProductSparseMatrixSelectedBlockHamiltonian;
   friend class SparseComplexMatrix;
 
  protected:

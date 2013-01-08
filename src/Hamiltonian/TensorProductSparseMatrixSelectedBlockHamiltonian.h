@@ -7,8 +7,9 @@
 //                                                                            //
 //                                                                            //
 //  class of hamiltonian defined as a linear combination of tensor products   //
+//               focusing on a single block of  tensor product                //
 //                                                                            //
-//                        last modification : 08/11/2012                      //
+//                        last modification : 07/01/2013                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,13 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TENSORPRODUCTSPARSEMATRIXHAMILTONIAN_H
-#define TENSORPRODUCTSPARSEMATRIXHAMILTONIAN_H
+#ifndef TENSORPRODUCTSPARSEMATRIXSELECTEDBLOCKHAMILTONIAN_H
+#define TENSORPRODUCTSPARSEMATRIXSELECTEDBLOCKHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "Hamiltonian/AbstractHamiltonian.h"
+#include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
 #include "Matrix/SparseRealMatrix.h"
 
 
@@ -43,31 +44,18 @@ class MathematicaOutput;
 class Matrix;
 
 
-class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
+class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSparseMatrixHamiltonian
 {
 
  protected:
 
-  // Hilbert space assocaited to the Hamiltonian 
-  AbstractHilbertSpace* HilbertSpace;
-  
-  // number of tensor products whose linear combination defined the Hamiltonian 
-  int NbrTensorProducts;
-  // left matrices of each tensor product
-  SparseRealMatrix* LeftMatrices;  
-  // right matrices of each tensor product
-  SparseRealMatrix* RightMatrices;
-  // coefficients of the ensor product linear combination
-  double* Coefficients;
+  // linearized indices that define the selected block 
+  int* BlockIndices;
+  // selected block size
+  int BlockSize;
 
-  // global shift to apply to the diagonal matrix elements
-  double HamiltonianShift;
 
  public:
-
-  // default contructor 
-  //
-  TensorProductSparseMatrixHamiltonian();
 
   // contructor 
   //
@@ -75,45 +63,14 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // leftMatrices = left matrices of each tensor product
   // rightMatrices = right matrices of each tensor product
   // coefficients = coefficients of the ensor product linear combination
-  TensorProductSparseMatrixHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients);
+  // blockSize = number of indices in the selected block
+  // blockIndices = pairs of indices (for resp. the left and right matrix) that define the selected block 
+  TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients,
+						    long blockSize, int* blockIndices);
 
   // destructor
   //
-  ~TensorProductSparseMatrixHamiltonian();
-
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
-
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  virtual Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
+  ~TensorProductSparseMatrixSelectedBlockHamiltonian();
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

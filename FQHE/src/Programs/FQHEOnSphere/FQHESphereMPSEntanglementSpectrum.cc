@@ -20,6 +20,7 @@
 #include "Vector/LongRationalVector.h"
 
 #include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
+#include "Hamiltonian/TensorProductSparseMatrixSelectedBlockHamiltonian.h"
 
 #include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
 #include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
@@ -254,15 +255,53 @@ int main(int argc, char** argv)
 	  SparseTransposeBMatrices[i] = SparseBMatrices[i].Transpose();
 	}
       
+      int MinQValue = 0;
+      int MaxQValue = 0;
+      MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
+
+      long EffectiveDimension = 0l;
+      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	{
+	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	    {
+	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
+	      EffectiveDimension += Tmp * Tmp;
+	    }
+	}
+      int* EffectiveBlockIndices = new int [EffectiveDimension];
+      int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
+      EffectiveDimension = 0;
+      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	{
+	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	    {
+	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
+	      for (int i = 0; i < Tmp; ++i)
+		{
+		  int Tmp2 = MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue) * TmpBMatrixDimension;
+		  for (int j = 0; j < Tmp; ++j)
+		    {
+		      EffectiveBlockIndices[EffectiveDimension] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
+		      ++EffectiveDimension;
+		    }
+		}
+	    }
+	}
+      SortArrayUpOrdering(EffectiveBlockIndices, EffectiveDimension);
+      cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
       
-      TensorProductSparseMatrixHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);
+//      TensorProductSparseMatrixHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);
+      TensorProductSparseMatrixSelectedBlockHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
+									      EffectiveDimension, EffectiveBlockIndices);
       ComplexVector* LeftEigenstates = 0;
       Complex* LeftEigenvalues = 0;
       cout << "computing left eigenstates : " << endl;
       MPSDiagonalizeEMatrix(&Manager, &ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), 1e-10, true);
 
 
-      TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients);
+//      TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients);
+      TensorProductSparseMatrixSelectedBlockHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
+								     EffectiveDimension, EffectiveBlockIndices);
       ComplexVector* RightEigenstates = 0;
       Complex* RightEigenvalues = 0;
       cout << "computing right eigenstates : " << endl;
@@ -284,18 +323,18 @@ int main(int argc, char** argv)
 	    cout << "< " << i << " | " << j << " > = " << EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[j]) << " " << Test << endl;
 	  }
       
-      int MinQValue = 0;
-      int MaxQValue = 0;
-      MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
-      int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
       Complex* TmpRightFactors = new Complex [NbrEigenstates];
+      int ReducedBoundaryIndex = SearchInArray<int>(MPSRowIndex * TmpBMatrixDimension + MPSRowIndex, 
+						    EffectiveBlockIndices, EffectiveDimension);
       for (int i = 0; i < NbrEigenstates; ++i)
-	TmpLeftFactors[i] = RightEigenstates[i][MPSRowIndex * TmpBMatrixDimension + MPSRowIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+	TmpLeftFactors[i] = RightEigenstates[i][ReducedBoundaryIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+      ReducedBoundaryIndex = SearchInArray<int>(MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex, 
+						EffectiveBlockIndices, EffectiveDimension);
       for (int i = 0; i < NbrEigenstates; ++i)
-	TmpRightFactors[i] = LeftEigenstates[i][MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
+	TmpRightFactors[i] = LeftEigenstates[i][ReducedBoundaryIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
 
       double LeftEigenvalueError = 0.0;
       double RightEigenvalueError = 0.0;
@@ -382,8 +421,10 @@ int main(int argc, char** argv)
 			LeftMDaggerM[j][i] = 0.0;
 			for (int k = 0; k < NbrEigenstates; ++k)
 			  {
-			    LeftMDaggerM[j][i] += (LeftEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-								      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpLeftFactors[k]);
+			    int TmpIndex = SearchInArray<int>(MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
+							      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
+							      EffectiveBlockIndices, EffectiveDimension);
+			    LeftMDaggerM[j][i] += (LeftEigenstates[k][TmpIndex] * TmpLeftFactors[k]);
 			  }
 		      }
 		  
@@ -395,8 +436,10 @@ int main(int argc, char** argv)
 			RightMDaggerM[j][i] = 0.0;
 			for (int k = 0; k < NbrEigenstates; ++k)
 			  {
-			    RightMDaggerM[j][i] += (RightEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-									+ MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpRightFactors[k]);
+			    int TmpIndex = SearchInArray<int>(MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
+							      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
+							      EffectiveBlockIndices, EffectiveDimension);
+			    RightMDaggerM[j][i] += (RightEigenstates[k][TmpIndex] * TmpRightFactors[k]);
 			  }
 		      }
 		  
@@ -821,6 +864,7 @@ void MPSDiagonalizeEMatrix(OptionManager* manager, AbstractHamiltonian* hamilton
       RealMatrix HRepresentation (hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension(), 
 				  hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension());
       hamiltonian->GetHamiltonian(HRepresentation);
+//      cout << HRepresentation << endl;
       ComplexDiagonalMatrix TmpDiag (HRepresentation.GetNbrRow(), true);  
       ComplexMatrix TmpEigenstateMatrix (HRepresentation.GetNbrRow(), HRepresentation.GetNbrRow());  
       HRepresentation.LapackDiagonalize(TmpDiag, TmpEigenstateMatrix, true);

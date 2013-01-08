@@ -1282,6 +1282,38 @@ void SortArrayDownOrdering(ClassName* array,unsigned long* ulArray, long nbrValu
   return;
 }
 
+
+// find an element in a sorted array
+//
+// element = element to find
+// array = sorted array where to search 
+// nbrValue = number of values in array
+// return value = element position (negative if not in the array)
+
+template <class ClassName>
+int SearchInArray(const ClassName& element, ClassName* array, int nbrValue)
+{
+
+  int StartIndex = 0;
+  int EndIndex = nbrValue - 1;
+  int MidIndex;
+   
+  while((EndIndex - StartIndex) > 1)
+    {       
+      MidIndex = (StartIndex + EndIndex) >> 1;       
+      if(array[MidIndex] > element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+   
+  if (array[StartIndex] == element)
+    return StartIndex;
+  if (array[EndIndex] == element)
+    return EndIndex;
+  return -1;
+}
+
 // find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
 //
 // element = element to find
