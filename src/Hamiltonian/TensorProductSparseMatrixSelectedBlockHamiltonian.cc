@@ -296,14 +296,21 @@ ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMul
 		  Complex Tmp= 0.0;
 		  for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
 		    {
-		      double Tmp2 = TmpLeftMatrix.MatrixElements[k] * this->Coefficients[i];
-		      int TmpIndex = TmpLeftMatrix.ColumnIndices[k] * IndexStep;
-		      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
+		      int TmpLeftMatrixColumnIndex = TmpLeftMatrix.ColumnIndices[k];
+		      int LocalBlockSize = this->BlockIndexProductTableNbrElements[TmpLeftMatrixColumnIndex];
+		      if (LocalBlockSize > 0)
 			{
-			  int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-// 			  int TmpIndex3 = SearchInArray<int>((TmpIndex + TmpRightMatrix.ColumnIndices[l]), this->BlockIndices, this->BlockSize);
-// 			  if (TmpIndex3 >= 0)
-// 			    Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[TmpIndex3];
+			  double Tmp2 = TmpLeftMatrix.MatrixElements[k] * this->Coefficients[i];
+			  long TmpIndex = ((long) TmpLeftMatrixColumnIndex) * IndexStep;
+			  long* LocalBlockIndices = this->BlockIndexProductTable[TmpLeftMatrixColumnIndex];
+			  int LocalShift = this->BlockIndexProductTableShift[TmpLeftMatrixColumnIndex];
+			  for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
+			    {
+			      int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
+			      int TmpIndex3 = SearchInArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
+			      if (TmpIndex3 >= 0)
+				Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[LocalShift + TmpIndex3];
+			    }
 			}
 		    }
 		  vDestination[j] += Tmp;
