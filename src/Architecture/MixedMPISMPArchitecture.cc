@@ -132,7 +132,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 				DefaultPerNodePerformance *= TmpClusterPerformanceArray[j];
 			      if (TmpClusterMemoryArray != 0)
 				DefaultPerNodeMemory = (TmpClusterMemoryArray[j]) << 20;
-			      cout << "Default node configuration: "<<DefaultCPUPerNode<<" CPUs, Performance: "
+			      cout << "Default node configuration: " << DefaultCPUPerNode <<" CPUs, Performance: "
 				   <<DefaultPerNodePerformance<<", Memory: "<<DefaultPerNodeMemory<<endl;
 			      j = ClusterFile.GetNbrLines();
 			    }
@@ -150,10 +150,10 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 			      if (TmpClusterPerformanceArray !=0)
 				DefaultMasterPerformance *= TmpClusterPerformanceArray[j];
 			      DefaultMasterMemory = (TmpClusterMemoryArray[j]) << 20;
-			  cout << "Master node configuration: "<<DefaultMasterCPUs<<" CPUs, Performance: "
-			       <<DefaultMasterPerformance<<", Memory: "<<DefaultMasterMemory<<endl;
+			      cout << "Master node configuration: "<<DefaultMasterCPUs<<" CPUs, Performance: "
+				   <<DefaultMasterPerformance<<", Memory: "<<DefaultMasterMemory<<endl;
 
-			      OverrideMaster=true;
+			      OverrideMaster = true;
 			      j = ClusterFile.GetNbrLines();
 			    }
 			}
@@ -165,7 +165,10 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 			  for (int j = 0; j < ClusterFile.GetNbrLines(); ++j)
 			    {
 			      if ((strcmp(this->NodeHostnames[i], ClusterFile(0,j)) == 0) || 
-				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j))) == 0) && (this->NodeHostnames[i][strlen(ClusterFile(0,j))] == '.')))
+				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j))) == 0) && 
+				   (this->NodeHostnames[i][strlen(ClusterFile(0,j))] == '.')) ||
+				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j) - 1)) == 0) && 
+				   (ClusterFile(0,j)[strlen(ClusterFile(0,j)) - 1] == '*')))
 				{
 				  this->NbrCPUPerNode[i] = TmpNbrCPUNode[j];
 				  this->ClusterPerformanceArray[i] = (double) this->NbrCPUPerNode[i];

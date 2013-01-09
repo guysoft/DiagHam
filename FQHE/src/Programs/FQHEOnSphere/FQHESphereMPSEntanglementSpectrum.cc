@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 	      Test += LeftEigenstates[i][k] * RightEigenstates[j][k];
 	    cout << "< " << i << " | " << j << " > = " << EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[j]) << " " << Test << endl;
 	  }
-      
+
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
@@ -407,6 +407,8 @@ int main(int argc, char** argv)
       LeftEigenvalueError = Error;
       RightEigenvalueError = Error;
 
+      double TotalTraceThoA = 0;
+
       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	{
 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
@@ -490,7 +492,7 @@ int main(int argc, char** argv)
 			  if (fabs(TmpLeftDiag(i, i)) > LeftEigenvalueError)
 			    {
 			      TruncatedLeftBasis[NbrZeroLeftEigenvalues].Copy(TmpLeftBasis[i]);
-			      TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(TmpLeftDiag(i, i));
+			      TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(sqrt(TmpLeftDiag(i, i)));
 			      ++NbrZeroLeftEigenvalues;
 			    }
 			}
@@ -503,7 +505,7 @@ int main(int argc, char** argv)
 			  if (fabs(TmpRightDiag(i, i)) > RightEigenvalueError)
 			    {
 			      TruncatedRightBasis[NbrZeroRightEigenvalues].Copy(TmpRightBasis[i]);
-			      TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(TmpRightDiag(i, i));
+			      TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(sqrt(TmpRightDiag(i, i)));
 			      ++NbrZeroRightEigenvalues;
 			    }
 			}
@@ -544,10 +546,12 @@ int main(int argc, char** argv)
 			    }
 			}
 		      cout << "P=" << PLevel << " " << " Q=" << QValue << " NbrStates=" << NbrNonZeroEigenvalues << " Tr(rho_A)=" << Sum << endl;
+		      TotalTraceThoA += Sum;
 		    }
 		}
 	    }
 	}
+      cout << "Tr(rho_A)=" << TotalTraceThoA << endl;
       delete[] TmpLeftFactors;
       delete[] TmpRightFactors;
       File.close();
