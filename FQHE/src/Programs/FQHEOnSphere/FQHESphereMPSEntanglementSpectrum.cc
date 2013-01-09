@@ -325,6 +325,7 @@ int main(int argc, char** argv)
 
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
+      
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
       Complex* TmpRightFactors = new Complex [NbrEigenstates];
       int ReducedBoundaryIndex = SearchInArray<int>(MPSRowIndex * TmpBMatrixDimension + MPSRowIndex, 
@@ -409,6 +410,25 @@ int main(int argc, char** argv)
 
       double TotalTraceThoA = 0;
 
+      double*** EntanglementSpectrum = new double**[MaxQValue - MinQValue + 1];
+      int** EntanglementSpectrumDimension = new int*[MaxQValue - MinQValue + 1];
+      
+      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	{
+	  EntanglementSpectrum[QValue - MinQValue]  = new double* [Manager.GetInteger("p-truncation") + 1];
+	  EntanglementSpectrumDimension[QValue - MinQValue]  = new int [Manager.GetInteger("p-truncation") + 1];
+	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	    {
+	      int IndexRange = MPSMatrix->GetBondIndexRange(PLevel, QValue);
+	      if (IndexRange >= 0)
+		{
+		  EntanglementSpectrumDimension[QValue - MinQValue][PLevel] = 0;
+		  EntanglementSpectrum[QValue - MinQValue][PLevel] = new double[IndexRange];
+		}	      
+	    }
+	}
+
+
       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	{
 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
@@ -488,11 +508,10 @@ int main(int argc, char** argv)
 		      NbrZeroLeftEigenvalues = 0;
 		      for (int i = 0; i < TmpLeftBasis.GetNbrColumn(); ++i)
 			{
-//			  cout << "Q=" << QValue << " P=" << PLevel << " : " << i << " " << TmpLeftDiag(i, i) << endl;
 			  if (fabs(TmpLeftDiag(i, i)) > LeftEigenvalueError)
 			    {
 			      TruncatedLeftBasis[NbrZeroLeftEigenvalues].Copy(TmpLeftBasis[i]);
-			      TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(sqrt(TmpLeftDiag(i, i)));
+			      TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(TmpLeftDiag(i, i));
 			      ++NbrZeroLeftEigenvalues;
 			    }
 			}
@@ -501,11 +520,10 @@ int main(int argc, char** argv)
 		      NbrZeroRightEigenvalues = 0;
 		      for (int i = 0; i < TmpRightBasis.GetNbrColumn(); ++i)
 			{
-//			  cout << "Q=" << QValue << " P=" << PLevel << " r : " << i << " " << TmpRightDiag(i, i) << endl;
 			  if (fabs(TmpRightDiag(i, i)) > RightEigenvalueError)
 			    {
 			      TruncatedRightBasis[NbrZeroRightEigenvalues].Copy(TmpRightBasis[i]);
-			      TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(sqrt(TmpRightDiag(i, i)));
+			      TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(TmpRightDiag(i, i));
 			      ++NbrZeroRightEigenvalues;
 			    }
 			}
@@ -518,8 +536,6 @@ int main(int argc, char** argv)
 		      TranposedTruncatedLeftBasis.Multiply(TruncatedLeftBasis);
 		      
 		      RealSymmetricMatrix ReducedDensityMatrix ((Matrix&) TranposedTruncatedLeftBasis);
-
-//		      cout <<TranposedTruncatedLeftBasis .GetNbrColumn() << " " << TranposedTruncatedLeftBasis.GetNbrRow() << endl;
 
 		      RealDiagonalMatrix TmpRhoADiag;
 		      if (ReducedDensityMatrix.IsDiagonal() == true)
@@ -540,7 +556,8 @@ int main(int argc, char** argv)
 			{
 			  if (TmpRhoADiag[i] > 0.0)
 			    {
-			      File << "0 " << QValue << " " << PLevel << " " << PLevel << " " << TmpRhoADiag[i] <<  " " << (-log(TmpRhoADiag[i])) <<endl;
+			      EntanglementSpectrum[QValue - MinQValue][PLevel][EntanglementSpectrumDimension[QValue - MinQValue][PLevel]] = TmpRhoADiag[i];
+			      ++EntanglementSpectrumDimension[QValue - MinQValue][PLevel];
 			      Sum += TmpRhoADiag(i, i);
 			      ++NbrNonZeroEigenvalues;
 			    }
@@ -551,6 +568,18 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
+
+      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	{
+	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	    {
+	      for (int i = 0; i < EntanglementSpectrumDimension[QValue - MinQValue][PLevel]; ++i)
+		File << "0 " << QValue << " " << PLevel << " " << PLevel << " " 
+		     <<  (EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)  
+		     <<  " " << (-log(EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)) <<endl;
+	    }
+	}
+
       cout << "Tr(rho_A)=" << TotalTraceThoA << endl;
       delete[] TmpLeftFactors;
       delete[] TmpRightFactors;
