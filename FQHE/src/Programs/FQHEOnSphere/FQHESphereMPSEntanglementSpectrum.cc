@@ -268,7 +268,7 @@ int main(int argc, char** argv)
 	      EffectiveDimension += Tmp * Tmp;
 	    }
 	}
-      int* EffectiveBlockIndices = new int [EffectiveDimension];
+      long* EffectiveBlockIndices = new long [EffectiveDimension];
       int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
       EffectiveDimension = 0;
       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
@@ -278,7 +278,7 @@ int main(int argc, char** argv)
 	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
 	      for (int i = 0; i < Tmp; ++i)
 		{
-		  int Tmp2 = MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue) * TmpBMatrixDimension;
+		  long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)) * TmpBMatrixDimension;
 		  for (int j = 0; j < Tmp; ++j)
 		    {
 		      EffectiveBlockIndices[EffectiveDimension] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
@@ -328,11 +328,11 @@ int main(int argc, char** argv)
       
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
       Complex* TmpRightFactors = new Complex [NbrEigenstates];
-      int ReducedBoundaryIndex = SearchInArray<int>(MPSRowIndex * TmpBMatrixDimension + MPSRowIndex, 
+      int ReducedBoundaryIndex = SearchInArray<long>((((long) MPSRowIndex) * TmpBMatrixDimension) + MPSRowIndex, 
 						    EffectiveBlockIndices, EffectiveDimension);
       for (int i = 0; i < NbrEigenstates; ++i)
 	TmpLeftFactors[i] = RightEigenstates[i][ReducedBoundaryIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
-      ReducedBoundaryIndex = SearchInArray<int>(MPSColumnIndex * TmpBMatrixDimension + MPSColumnIndex, 
+      ReducedBoundaryIndex = SearchInArray<long>((((long) MPSColumnIndex) * TmpBMatrixDimension) + MPSColumnIndex, 
 						EffectiveBlockIndices, EffectiveDimension);
       for (int i = 0; i < NbrEigenstates; ++i)
 	TmpRightFactors[i] = LeftEigenstates[i][ReducedBoundaryIndex] / EuclidianScalarProduct(LeftEigenstates[i], RightEigenstates[i]);
@@ -443,9 +443,9 @@ int main(int argc, char** argv)
 			LeftMDaggerM[j][i] = 0.0;
 			for (int k = 0; k < NbrEigenstates; ++k)
 			  {
-			    int TmpIndex = SearchInArray<int>(MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-							      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
-							      EffectiveBlockIndices, EffectiveDimension);
+			    int TmpIndex = SearchInArray<long>((((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue)) * TmpBMatrixDimension) 
+							       + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
+							       EffectiveBlockIndices, EffectiveDimension);
 			    LeftMDaggerM[j][i] += (LeftEigenstates[k][TmpIndex] * TmpLeftFactors[k]);
 			  }
 		      }
@@ -458,9 +458,9 @@ int main(int argc, char** argv)
 			RightMDaggerM[j][i] = 0.0;
 			for (int k = 0; k < NbrEigenstates; ++k)
 			  {
-			    int TmpIndex = SearchInArray<int>(MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-							      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
-							      EffectiveBlockIndices, EffectiveDimension);
+			    int TmpIndex = SearchInArray<long>((((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue)) * TmpBMatrixDimension) 
+							       + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
+							       EffectiveBlockIndices, EffectiveDimension);
 			    RightMDaggerM[j][i] += (RightEigenstates[k][TmpIndex] * TmpRightFactors[k]);
 			  }
 		      }

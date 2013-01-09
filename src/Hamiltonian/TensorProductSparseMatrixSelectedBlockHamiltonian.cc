@@ -55,7 +55,7 @@ using std::endl;
 
 TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  
 												     SparseRealMatrix* rightMatrices, double* coefficients,
-												     long blockSize, int* blockIndices)
+												     int blockSize, long* blockIndices)
 {
   this->NbrTensorProducts = nbrTensorProducts;
   this->LeftMatrices = new SparseRealMatrix[this->NbrTensorProducts];
@@ -68,10 +68,35 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
       this->Coefficients[i] = coefficients[i];
     }
   this->HamiltonianShift = 0.0;
-  long HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();
   this->HilbertSpace = new UndescribedHilbertSpace(blockSize);
   this->LeftHamiltonianVectorMultiplicationFlag = true;
   this->BlockIndices = blockIndices;
+  long TmpMatrixSize = this->LeftMatrices[0].GetNbrRow();
+  this->BlockIndexProductTable = new long* [TmpMatrixSize];
+  this->BlockIndexProductTableNbrElements = new int [TmpMatrixSize];
+  this->BlockIndexProductTableShift = new int [TmpMatrixSize];
+  long* TmpBlockIndices = new long [TmpMatrixSize];
+  for (long i = 0; i < TmpMatrixSize; ++i)
+    {
+      this->BlockIndexProductTableNbrElements[i] = 0;
+      this->BlockIndexProductTableShift[i] = -1;
+      for (int j = 0; j < blockSize; ++j)
+	{
+	  if ((this->BlockIndices[j] / TmpMatrixSize) == i)
+	    {
+	      if (this->BlockIndexProductTableShift[i] < 0)
+		this->BlockIndexProductTableShift[i] = j;
+	      TmpBlockIndices[this->BlockIndexProductTableNbrElements[i]] = this->BlockIndices[j];
+	      ++this->BlockIndexProductTableNbrElements[i];
+	    }
+	}
+      this->BlockIndexProductTable[i] = new long[this->BlockIndexProductTableNbrElements[i]];
+      for (int j = 0; j < this->BlockIndexProductTableNbrElements[i]; ++j)
+	{
+	  this->BlockIndexProductTable[i][j] = TmpBlockIndices[j];
+	}
+    }
+  delete[] TmpBlockIndices;
   this->BlockSize = blockSize;
 }
 
@@ -80,6 +105,12 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
 
 TensorProductSparseMatrixSelectedBlockHamiltonian::~TensorProductSparseMatrixSelectedBlockHamiltonian() 
 {
+  long TmpMatrixSize = this->LeftMatrices[0].GetNbrRow();
+  for (long i = 0; i < TmpMatrixSize; ++i)
+    delete[] this->BlockIndexProductTable[i];
+  delete[] this->BlockIndexProductTable;
+  delete[] this->BlockIndexProductTableNbrElements;
+  delete[] this->BlockIndexProductTableShift;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -119,14 +150,21 @@ RealVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultip
 		  double Tmp= 0.0;
 		  for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
 		    {
-		      double Tmp2 = TmpLeftMatrix.MatrixElements[k] * this->Coefficients[i];
-		      int TmpIndex = TmpLeftMatrix.ColumnIndices[k] * IndexStep;
-		      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
+		      int TmpLeftMatrixColumnIndex = TmpLeftMatrix.ColumnIndices[k];
+		      int LocalBlockSize = this->BlockIndexProductTableNbrElements[TmpLeftMatrixColumnIndex];
+		      if (LocalBlockSize > 0)
 			{
-			  int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-			  int TmpIndex3 = SearchInArray<int>((TmpIndex + TmpRightMatrix.ColumnIndices[l]), this->BlockIndices, this->BlockSize);
-			  if (TmpIndex3 >= 0)
-			    Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[TmpIndex3];
+			  double Tmp2 = TmpLeftMatrix.MatrixElements[k] * this->Coefficients[i];
+			  long TmpIndex = ((long) TmpLeftMatrixColumnIndex) * IndexStep;
+			  long* LocalBlockIndices = this->BlockIndexProductTable[TmpLeftMatrixColumnIndex];
+			  int LocalShift = this->BlockIndexProductTableShift[TmpLeftMatrixColumnIndex];
+			  for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
+			    {
+			      int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
+			      int TmpIndex3 = SearchInArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
+			      if (TmpIndex3 >= 0)
+				Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[LocalShift + TmpIndex3];
+			    }
 			}
 		    }
 		  vDestination[j] += Tmp;
@@ -231,7 +269,7 @@ RealVector* TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelMultipleA
 // return value = reference on vector where result has been stored
 
 ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-								      int firstComponent, int nbrComponent)
+										      int firstComponent, int nbrComponent)
 {
   int IndexStep = this->LeftMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent;
@@ -263,9 +301,9 @@ ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMul
 		      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
 			{
 			  int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-			  int TmpIndex3 = SearchInArray<int>((TmpIndex + TmpRightMatrix.ColumnIndices[l]), this->BlockIndices, this->BlockSize);
-			  if (TmpIndex3 >= 0)
-			    Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[TmpIndex3];
+// 			  int TmpIndex3 = SearchInArray<int>((TmpIndex + TmpRightMatrix.ColumnIndices[l]), this->BlockIndices, this->BlockSize);
+// 			  if (TmpIndex3 >= 0)
+// 			    Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[TmpIndex3];
 			}
 		    }
 		  vDestination[j] += Tmp;
@@ -291,7 +329,8 @@ ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMul
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
+ComplexVector* TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, 
+											      int nbrVectors, int firstComponent, int nbrComponent)
 {
   int IndexStep = this->LeftMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent;

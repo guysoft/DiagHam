@@ -50,10 +50,16 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
  protected:
 
   // linearized indices that define the selected block 
-  int* BlockIndices;
+  long* BlockIndices;
   // selected block size
   int BlockSize;
 
+  // table that contains all the linearized indices attached to one left matrix index
+  long** BlockIndexProductTable;
+  // number of  linearized indices attached to one left matrix index
+  int* BlockIndexProductTableNbrElements;
+  // first index in the hilbert space where a given left matrix index occurs
+  int* BlockIndexProductTableShift;
 
  public:
 
@@ -66,7 +72,7 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   // blockSize = number of indices in the selected block
   // blockIndices = pairs of indices (for resp. the left and right matrix) that define the selected block 
   TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients,
-						    long blockSize, int* blockIndices);
+						    int blockSize, long* blockIndices);
 
   // destructor
   //
