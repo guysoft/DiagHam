@@ -762,7 +762,7 @@ double ParticleOnTorusCoulombWithSpinHamiltonian::PartialMisraFunction (double n
 //
 // return value = amount of memory needed
 
-int ParticleOnTorusCoulombWithSpinHamiltonian::FastMultiplicationMemory()
+long ParticleOnTorusCoulombWithSpinHamiltonian::FastMultiplicationMemory()
 {
   int Index;
   double Coefficient;

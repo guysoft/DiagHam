@@ -2747,3 +2747,44 @@ Vector* AbstractHamiltonian::HermitianMultipleAddMultiply(Vector* vSources, Vect
       return this->HermitianLowLevelMultipleAddMultiply((ComplexVector*) vSources, (ComplexVector*) vDestinations, nbrVectors, firstComponent, nbrComponent);
     }
 }
+
+// test the amount of memory needed for fast multiplication algorithm
+//
+// return value = amount of memory needed
+
+long AbstractHamiltonian::FastMultiplicationMemory()
+{
+  cout << "warning, this Hamiltonian does not support FastMultiplicationMemory" << endl;
+  return 0l;
+}
+
+// test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = number of components that has to be precalcualted
+// return value = number of non-zero matrix elements that have to be stored
+
+long AbstractHamiltonian::PartialFastMultiplicationMemory(int firstComponent, int nbrComponent)
+{
+  cout << "warning, this Hamiltonian does not support FastMultiplicationMemory" << endl;
+  return 0l;
+}
+
+// enable fast multiplication algorithm
+//
+
+void AbstractHamiltonian::EnableFastMultiplication()
+{
+  cout << "warning, this Hamiltonian does not support EnableFastMultiplication" << endl;
+}
+
+// enable fast multiplication algorithm (partial evaluation)
+//
+// firstComponent = index of the first component that has to be precalcualted
+// nbrComponent  = number of components that has to be precalcualted
+
+void AbstractHamiltonian::PartialEnableFastMultiplication(int firstComponent, int nbrComponent)
+{
+  cout << "warning, this Hamiltonian does not support EnableFastMultiplication" << endl;
+}
+  

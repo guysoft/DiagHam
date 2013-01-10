@@ -672,7 +672,7 @@ double ApproximateFermionOnTorusCoulombHamiltonian::PartialMisraFunction (double
 //
 // return value = amount of memory needed
 
-int ApproximateFermionOnTorusCoulombHamiltonian::FastMultiplicationMemory()
+long ApproximateFermionOnTorusCoulombHamiltonian::FastMultiplicationMemory()
 {
   int Index;
   int ReducedMaxMomentum = this->MaxMomentum - 1;

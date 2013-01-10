@@ -54,6 +54,8 @@ class AbstractBitmapPicture;
 class AbstractHamiltonian
 {
 
+  friend class GenericHamiltonianPrecalculationOperation;
+
  protected:
   
   GarbageFlag Flag;
@@ -1357,7 +1359,31 @@ class AbstractHamiltonian
   virtual Vector* HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
 					       int firstComponent, int nbrComponent);
 
+ protected:
+
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory();
+
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that has to be precalcualted
+  // return value = number of non-zero matrix elements that have to be stored
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
+
+  // enable fast multiplication algorithm
+  //
+  virtual void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
   
+
   
 };
 

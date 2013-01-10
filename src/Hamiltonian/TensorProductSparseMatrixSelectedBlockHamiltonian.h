@@ -40,8 +40,11 @@
 
 
 using std::ostream;
+
 class MathematicaOutput;
 class Matrix;
+class AbstractArchitecture;
+class AbstractArchitecture;
 
 
 class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSparseMatrixHamiltonian
@@ -61,6 +64,18 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   // first index in the hilbert space where a given left matrix index occurs
   int* BlockIndexProductTableShift;
 
+  // flag for fast multiplication algorithm
+  bool FastMultiplicationFlag;
+  
+  //pointer to the architecture
+  AbstractArchitecture* Architecture;
+
+  // temporary arrays used to store the full tensor product sparse matrix
+  long* TemporaryRowPointers;
+  long* TemporaryRowLastPointers;
+  double* TemporaryMatrixElements;
+  int* TemporaryMatrixColumnIndices;
+
  public:
 
   // contructor 
@@ -71,8 +86,10 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   // coefficients = coefficients of the ensor product linear combination
   // blockSize = number of indices in the selected block
   // blockIndices = pairs of indices (for resp. the left and right matrix) that define the selected block 
+  // architecture = architecture to use for precalculation
+  // memory = amount of memory that can be used for precalculations (in bytes)
   TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients,
-						    int blockSize, long* blockIndices);
+						    int blockSize, long* blockIndices, AbstractArchitecture* architecture, long memory);
 
   // destructor
   //
@@ -124,6 +141,30 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						     int firstComponent, int nbrComponent);
 
+ protected:
+
+  // test the amount of memory needed for fast multiplication algorithm
+  //
+  // return value = amount of memory needed
+  virtual long FastMultiplicationMemory();
+
+  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that has to be precalcualted
+  // return value = number of non-zero matrix elements that have to be stored
+  virtual long PartialFastMultiplicationMemory(int firstComponent, int nbrComponent);
+
+  // enable fast multiplication algorithm
+  //
+  virtual void EnableFastMultiplication();
+
+  // enable fast multiplication algorithm (partial evaluation)
+  //
+  // firstComponent = index of the first component that has to be precalcualted
+  // nbrComponent  = number of components that has to be precalcualted
+  virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
+  
 };
 
 #endif

@@ -211,7 +211,7 @@ class ParticleOnTorusCoulombWithSpinHamiltonian : public AbstractHamiltonian
   // test the amount of memory needed for fast multiplication algorithm
   //
   // return value = amount of memory needed
-  int FastMultiplicationMemory();
+  long FastMultiplicationMemory();
 
   // enable fast multiplication algorithm
   //

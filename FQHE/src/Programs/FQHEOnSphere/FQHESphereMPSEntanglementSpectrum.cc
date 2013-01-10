@@ -78,6 +78,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles in subsystem A", 0);
   (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate the entnaglement spectrum on the infinite cylinder");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
   (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
 					       "maximum Hilbert space dimension for which full diagonalization is applied", 1000);
@@ -290,18 +291,18 @@ int main(int argc, char** argv)
       SortArrayUpOrdering(EffectiveBlockIndices, EffectiveDimension);
       cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
       
-//      TensorProductSparseMatrixHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);
       TensorProductSparseMatrixSelectedBlockHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
-									      EffectiveDimension, EffectiveBlockIndices);
+									      EffectiveDimension, EffectiveBlockIndices, 
+									      Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       ComplexVector* LeftEigenstates = 0;
       Complex* LeftEigenvalues = 0;
       cout << "computing left eigenstates : " << endl;
       MPSDiagonalizeEMatrix(&Manager, &ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), 1e-10, true);
 
 
-//      TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients);
       TensorProductSparseMatrixSelectedBlockHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
-								     EffectiveDimension, EffectiveBlockIndices);
+								     EffectiveDimension, EffectiveBlockIndices, 
+								     Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       ComplexVector* RightEigenstates = 0;
       Complex* RightEigenvalues = 0;
       cout << "computing right eigenstates : " << endl;

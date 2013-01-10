@@ -62,6 +62,7 @@ class AbstractArchitectureOperation
       HamiltonianFullDiagonalize = 0x41,
       Generic = 0x100,
       HamiltonianPrecalculation = 0x200,
+      GenericHamiltonianParticlePrecalculation = 0x300,
       QHEOperation = 0x10000,
       SpinOperation = 0x20000,
       FTIOperation = 0x30000,

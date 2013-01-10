@@ -771,7 +771,7 @@ double ParticleOnTorusCoulombDMRGReadyHamiltonian::PartialMisraFunction (double 
 //
 // return value = amount of memory needed
 
-int ParticleOnTorusCoulombDMRGReadyHamiltonian::FastMultiplicationMemory()
+long ParticleOnTorusCoulombDMRGReadyHamiltonian::FastMultiplicationMemory()
 {
   int Index;
   double Coefficient;

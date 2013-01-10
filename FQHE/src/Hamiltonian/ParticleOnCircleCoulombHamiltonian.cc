@@ -601,7 +601,7 @@ double ParticleOnCircleCoulombHamiltonian::PartialMisraFunction (double n, doubl
 //
 // return value = amount of memory needed
 
-int ParticleOnCircleCoulombHamiltonian::FastMultiplicationMemory()
+long ParticleOnCircleCoulombHamiltonian::FastMultiplicationMemory()
 {
   int Index;
   double Coefficient;
