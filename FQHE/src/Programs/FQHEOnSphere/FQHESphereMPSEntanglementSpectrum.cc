@@ -261,9 +261,9 @@ int main(int argc, char** argv)
       MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
 
       long EffectiveDimension = 0l;
-      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
-	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	    {
 	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
 	      EffectiveDimension += Tmp * Tmp;
@@ -271,13 +271,13 @@ int main(int argc, char** argv)
 	}
       long* EffectiveBlockIndices = new long [EffectiveDimension];
       int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
-      EffectiveDimension = 0;
-      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+      EffectiveDimension = 0l;
+      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
-	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+	  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue);
+	  for (int i = 0; i < Tmp; ++i)
 	    {
-	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
-	      for (int i = 0; i < Tmp; ++i)
+	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 		{
 		  long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)) * TmpBMatrixDimension;
 		  for (int j = 0; j < Tmp; ++j)
@@ -288,7 +288,10 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
-      SortArrayUpOrdering(EffectiveBlockIndices, EffectiveDimension);
+      for (long i = 1l; i < EffectiveDimension; ++i)
+	if (EffectiveBlockIndices[i] < EffectiveBlockIndices[i - 1l])
+	  cout << "error, unsorted indices" << endl;
+      //      SortArrayUpOrdering(EffectiveBlockIndices, EffectiveDimension);
       cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
       
       TensorProductSparseMatrixSelectedBlockHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
