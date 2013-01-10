@@ -149,6 +149,92 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
     }
 }
 
+// contructor providing an efficient block index scheme
+//
+// nbrTensorProducts = number of tensor products whose linear combination defined the Hamiltonian 
+// leftMatrices = left matrices of each tensor product
+// rightMatrices = right matrices of each tensor product
+// coefficients = coefficients of the ensor product linear combination
+// blockSize = number of indices in the selected block
+// blockIndices = pairs of indices (for resp. the left and right matrix) that define the selected block 
+// blockIndexProductTable = table that contains all the linearized indices attached to one left matrix index
+// blockIndexProductTableNbrElements = number of  linearized indices attached to one left matrix index
+// blockIndexProductTableShift = first index in the hilbert space where a given left matrix index occurs
+// architecture = architecture to use for precalculation
+// memory = amount of memory that can be used for precalculations (in bytes)
+
+TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  
+												     SparseRealMatrix* rightMatrices, double* coefficients,
+												     int blockSize, long* blockIndices, 
+												     long** blockIndexProductTable, int* blockIndexProductTableNbrElements,
+												     int* blockIndexProductTableShift,
+												     AbstractArchitecture* architecture, long memory)
+{
+  this->NbrTensorProducts = nbrTensorProducts;
+  this->LeftMatrices = new SparseRealMatrix[this->NbrTensorProducts];
+  this->RightMatrices = new SparseRealMatrix[this->NbrTensorProducts];
+  this->Coefficients = new double[this->NbrTensorProducts];
+  for (int i = 0; i < this->NbrTensorProducts; ++i)
+    {
+      this->LeftMatrices[i] = leftMatrices[i];
+      this->RightMatrices[i] = rightMatrices[i];
+      this->Coefficients[i] = coefficients[i];
+    }
+  this->HamiltonianShift = 0.0;
+  this->HilbertSpace = new UndescribedHilbertSpace(blockSize);
+  this->LeftHamiltonianVectorMultiplicationFlag = true;
+  this->BlockIndices = blockIndices;
+  long TmpMatrixSize = this->LeftMatrices[0].GetNbrRow();
+  this->BlockIndexProductTable = blockIndexProductTable;
+  this->BlockIndexProductTableNbrElements = blockIndexProductTableNbrElements;
+  this->BlockIndexProductTableShift = blockIndexProductTableShift;
+  this->BlockSize = blockSize;
+  this->Architecture = architecture;
+  if (memory > 0l)
+    {
+      this->TemporaryRowPointers = new long[this->HilbertSpace->GetHilbertSpaceDimension()];
+      long NbrNonZeroMatrixElements = this->FastMultiplicationMemory() >> 3;
+      cout << "nbr non-zero matrix elements = " << NbrNonZeroMatrixElements << endl;
+      if (memory > (NbrNonZeroMatrixElements << 3))
+	{
+	  this->TemporaryRowLastPointers = new long[this->HilbertSpace->GetHilbertSpaceDimension()];
+	  this->FastMultiplicationFlag = true;
+	  long TmpPointer = 0;
+	  for (int i = 0; i < this->HilbertSpace->GetHilbertSpaceDimension(); ++i)
+	    {
+	      long Tmp = this->TemporaryRowPointers[i]; 
+	      if (this->TemporaryRowPointers[i] > 0l)
+		{     
+		  this->TemporaryRowPointers[i] = TmpPointer;
+		  this->TemporaryRowLastPointers[i] = TmpPointer + Tmp - 1l;
+		}
+	      else
+		{
+		  this->TemporaryRowPointers[i] = -1l;
+		  this->TemporaryRowLastPointers[i] = -1l;
+		}
+	      TmpPointer += Tmp;
+	    }
+	  this->TemporaryMatrixElements = new double[NbrNonZeroMatrixElements];
+	  this->TemporaryMatrixColumnIndices = new int[NbrNonZeroMatrixElements];
+	  this->EnableFastMultiplication(); 
+	  cout << "using ";
+	  PrintMemorySize(cout, (NbrNonZeroMatrixElements << 3)) << " for hamiltonian precalculations" << endl;
+	}
+      else
+	{
+	  cout << "cannot use hamiltonian precalculations, ";
+	  PrintMemorySize(cout, (NbrNonZeroMatrixElements << 3)) << " are required" << endl;
+	  this->FastMultiplicationFlag = false;
+	  delete[] this->TemporaryRowPointers;
+	}
+    }
+  else
+    {
+      this->FastMultiplicationFlag = false;
+    }
+}
+
 // destructor
 //
 

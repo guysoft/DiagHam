@@ -259,6 +259,7 @@ int main(int argc, char** argv)
       int MinQValue = 0;
       int MaxQValue = 0;
       MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
+      int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
 
       long EffectiveDimension = 0l;
       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
@@ -269,20 +270,36 @@ int main(int argc, char** argv)
 	      EffectiveDimension += Tmp * Tmp;
 	    }
 	}
+
+      cout << "computing effective E matrix indices " << endl;
+      long** BlockIndexProductTable = new long* [TmpBMatrixDimension];
+      int* BlockIndexProductTableNbrElements = new int [TmpBMatrixDimension];
+      int* BlockIndexProductTableShift = new int [TmpBMatrixDimension];
+      for (long i = 0; i < TmpBMatrixDimension; ++i)
+	{
+	  BlockIndexProductTableNbrElements[i] = 0;
+	  BlockIndexProductTableShift[i] = -1;	  
+	}
+
       long* EffectiveBlockIndices = new long [EffectiveDimension];
-      int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
       EffectiveDimension = 0l;
-      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
 	  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue);
 	  for (int i = 0; i < Tmp; ++i)
 	    {
 	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 		{
-		  long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)) * TmpBMatrixDimension;
+		  long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue));
+		  BlockIndexProductTableNbrElements[Tmp2] = Tmp;
+		  BlockIndexProductTableShift[Tmp2] = EffectiveDimension;
+		  BlockIndexProductTable[Tmp2] = new long[Tmp];
+		  long* TmpBlockIndexProductTable = BlockIndexProductTable[Tmp2];
+		  Tmp2 *= TmpBMatrixDimension;
 		  for (int j = 0; j < Tmp; ++j)
 		    {
-		      EffectiveBlockIndices[EffectiveDimension] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
+		      TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
+		      EffectiveBlockIndices[EffectiveDimension] = TmpBlockIndexProductTable[j];		      
 		      ++EffectiveDimension;
 		    }
 		}
@@ -296,6 +313,7 @@ int main(int argc, char** argv)
       
       TensorProductSparseMatrixSelectedBlockHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
 									      EffectiveDimension, EffectiveBlockIndices, 
+									      BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
 									      Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       ComplexVector* LeftEigenstates = 0;
       Complex* LeftEigenvalues = 0;
@@ -305,6 +323,7 @@ int main(int argc, char** argv)
 
       TensorProductSparseMatrixSelectedBlockHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
 								     EffectiveDimension, EffectiveBlockIndices, 
+								     BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
 								     Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       ComplexVector* RightEigenstates = 0;
       Complex* RightEigenvalues = 0;

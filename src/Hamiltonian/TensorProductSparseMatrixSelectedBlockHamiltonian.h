@@ -91,6 +91,25 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients,
 						    int blockSize, long* blockIndices, AbstractArchitecture* architecture, long memory);
 
+  // contructor providing an efficient block index scheme
+  //
+  // nbrTensorProducts = number of tensor products whose linear combination defined the Hamiltonian 
+  // leftMatrices = left matrices of each tensor product
+  // rightMatrices = right matrices of each tensor product
+  // coefficients = coefficients of the ensor product linear combination
+  // blockSize = number of indices in the selected block
+  // blockIndices = pairs of indices (for resp. the left and right matrix) that define the selected block 
+  // blockIndexProductTable = table that contains all the linearized indices attached to one left matrix index
+  // blockIndexProductTableNbrElements = number of  linearized indices attached to one left matrix index
+  // blockIndexProductTableShift = first index in the hilbert space where a given left matrix index occurs
+  // architecture = architecture to use for precalculation
+  // memory = amount of memory that can be used for precalculations (in bytes)  
+  TensorProductSparseMatrixSelectedBlockHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  
+						    SparseRealMatrix* rightMatrices, double* coefficients,
+						    int blockSize, long* blockIndices, 
+						    long** blockIndexProductTable, int* blockIndexProductTableNbrElements,
+						    int* blockIndexProductTableShift,
+						    AbstractArchitecture* architecture, long memory);
   // destructor
   //
   ~TensorProductSparseMatrixSelectedBlockHamiltonian();
