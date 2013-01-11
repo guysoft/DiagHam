@@ -30,7 +30,7 @@
 
 
 #include "Polynomial/ComplexPolynomial.h"
-#include <math.h>
+#include <cmath>
 
 
 #define EPSILON 1E-6
