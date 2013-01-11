@@ -63,6 +63,8 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   int* BlockIndexProductTableNbrElements;
   // first index in the hilbert space where a given left matrix index occurs
   int* BlockIndexProductTableShift;
+  // true if the BlockIndexProductTable* arrays have been provided to the hamiltonian and not computed locally
+  bool ExternalBlockIndexProductTable;
 
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
