@@ -227,7 +227,7 @@ int main(int argc, char** argv)
 	  sprintf (ContentPrefix, "%d %d", i, j);
 	  char* EigenstateOutputFile = new char [512];
 
-	  sprintf (EigenstateOutputFile,"%s_kx_%d_ky_%d.dat",FilePrefix, i, j);
+	  sprintf (EigenstateOutputFile,"%s_kx_%d_ky_%d",FilePrefix, i, j);
 	    
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	  FirstRunFlag = false;
