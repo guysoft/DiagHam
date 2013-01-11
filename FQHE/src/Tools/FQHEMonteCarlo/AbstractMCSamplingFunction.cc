@@ -43,8 +43,9 @@ AbstractMCSamplingFunction::~AbstractMCSamplingFunction()
 // register basic system of particles
 void AbstractMCSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
 {
-  this->System=system;
+  cout << "Attention: AbstractMCSamplingFunction::RegisterSystem - should be overridden in derived classes!"<<endl;
 }
+
 
 
 // set function value to one for present particle positions
@@ -79,32 +80,32 @@ void AbstractMCSamplingFunction::AdaptAverageMCNorm(int thermalize, int average)
   // do some MC moves: accept or reject move according to probability |Psi_new|^2  / |Psi_old|^2
   for (int i = 0; i < thermalize; ++i)
     {
-      System->Move();
+      this->GetSystem()->Move();
       acceptanceProbability = this->GetTransitionRatio();
-      if ((acceptanceProbability > 1.0) ||  (System->GetRandomNumber() < acceptanceProbability))
+      if ((acceptanceProbability > 1.0) ||  (this->GetSystem()->GetRandomNumber() < acceptanceProbability))
 	{
 	  // nothing to do for now...
 	  this->AcceptedMove();
 	}
       else
 	{
-	  System->RestoreMove();
+	  this->GetSystem()->RestoreMove();
 	}
     }
   this->AdaptNorm();
   double SumSamplingValues=0.0;
   for (int i = 0; i < average; ++i)
     {
-      System->Move();
+      this->GetSystem()->Move();
       acceptanceProbability = this->GetTransitionRatio();
-      if ((acceptanceProbability > 1.0) ||  (System->GetRandomNumber() < acceptanceProbability))
+      if ((acceptanceProbability > 1.0) ||  (this->GetSystem()->GetRandomNumber() < acceptanceProbability))
 	{
 	  // nothing to do for now...
 	  this->AcceptedMove();
 	}
       else
 	{
-	  System->RestoreMove();
+	  this->GetSystem()->RestoreMove();
 	}            
       SumSamplingValues+=Norm(this->GetFunctionValue());
     }

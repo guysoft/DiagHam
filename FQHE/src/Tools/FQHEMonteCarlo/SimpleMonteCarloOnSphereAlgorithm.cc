@@ -31,7 +31,7 @@
 #include "SimpleMonteCarloOnSphereAlgorithm.h"
 #include "TrivialSamplingFunction.h"
 #include "Options/Options.h"
-
+#include "ParticleOnSphereCollection.h"
 #include <iostream>
 using std::cout;
 using std::endl;

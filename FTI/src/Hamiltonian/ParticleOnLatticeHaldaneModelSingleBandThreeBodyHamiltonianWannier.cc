@@ -1645,9 +1645,9 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 	  // Complex B2 = - this->NextNextNNHoping * Complex(cos(kxl+kyl)+2*cos(kxl-kyl),-sin(kxl+kyl) );
 	  // double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl-kyl));
 	  // double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) - sin(kyl) - sin(kxl-kyl)) + this->MuS;
-
+	  
 	  Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
-	  Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
+	  Complex B2 = - this->NextNextNNHoping * Complex(2.0 * cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
 	  double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
 	  double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
 

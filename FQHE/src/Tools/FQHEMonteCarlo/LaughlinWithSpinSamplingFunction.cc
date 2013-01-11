@@ -29,7 +29,7 @@
 
 
 #include "LaughlinWithSpinSamplingFunction.h"
-#include "ParticleOnSphereCollection.h"
+#include "AbstractParticleCollectionOnSphere.h"
 #include <cmath>
 
 #include <iostream>
@@ -60,16 +60,16 @@ LaughlinWithSpinSamplingFunction::~LaughlinWithSpinSamplingFunction()
 
 // register basic system of particles
 // this function needs to be called before any of the other routines are functional
-void LaughlinWithSpinSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
+void LaughlinWithSpinSamplingFunction::RegisterSystem(AbstractParticleCollectionOnSphere *system)
 {
   this->System=system;
-  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != 2*this->NbrPerLayer)
+  if (System->GetNbrParticles() != 2*this->NbrPerLayer)
     {
       cout << "Number of particles in system not compatible in sampling function";
       exit(1);
     }
   // pointers to spinor coordinates (external)
-  ((ParticleOnSphereCollection*)System)->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
 
 
@@ -80,7 +80,7 @@ double LaughlinWithSpinSamplingFunction::GetTransitionRatio()
 {
   double ratio=1.0;
   int tomove = System->GetMovedNbr();
-  ((ParticleOnSphereCollection*)System)->GetPreviousPos(LastU,LastV);
+  System->GetPreviousPos(LastU,LastV);
   if (tomove<this->NbrPerLayer)
     {
       for (int i=0;i<tomove;i++)

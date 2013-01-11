@@ -122,6 +122,20 @@ class AbstractTightBindingModel
   // band2 = index of the upper band (-1 if it has to be set to band1 + 1)
   // return value =  direct band gap
   virtual double ComputeDirectBandGap(int band1, int band2 = -1);
+  
+  // compute the indirect gap between two bands
+  // 
+  // band1 = index of the lower band 
+  // band2 = index of the upper band (-1 if it has to be set to band1 + 1)
+  // return value =  direct band gap
+  virtual double ComputeIndirectBandGap(int band1, int band2 = -1);
+  
+  // compute the ground state energy for a number of fermions filling the band 
+  // 
+  // nbrFermions = number of particles in the band structure
+  // bands = number of bands used in groundstate configuration
+  // return value =  total groundstate energy
+  virtual double ComputeGroundstateEnergy(int nbrFermions, int &bands, bool verbose = false);
 
  protected:
 
@@ -130,7 +144,7 @@ class AbstractTightBindingModel
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ofstream& WriteHeader(ofstream& output);
-
+  
   // write an ASCII header that describes the tight binding model
   // 
   // output = reference on the output stream

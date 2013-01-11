@@ -22,4 +22,5 @@ TightBindingModelPyrochloreLattice.cc \
 TightBindingModel3DAtomicLimitLattice.cc \
 TightBindingModelEffectiveBilayerHaldaneLattice.cc \
 TightBindingModelFuKaneMeleLattice.cc \
-TightBindingModel3DSimpleTILattice.cc
+TightBindingModel3DSimpleTILattice.cc \
+TightBindingModelThirringOnKagome.cc

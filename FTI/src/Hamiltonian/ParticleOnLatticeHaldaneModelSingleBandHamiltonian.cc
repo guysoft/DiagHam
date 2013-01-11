@@ -149,10 +149,10 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 < Index2)
-		  ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
+		  ++this->NbrSectorIndicesPerSum[this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1+kx2, ky1+ky2)];
 	      }
       this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -168,11 +168,11 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 < Index2)
 		  {
-		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
+		    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1+kx2, ky1+ky2);
 		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
@@ -181,7 +181,8 @@ void ParticleOnLatticeHaldaneModelSingleBandHamiltonian::EvaluateInteractionFact
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       if (this->FlatBand == false)
 	FactorU *= this->UPotential;
-      double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorV = this->VPotential*0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
+	    
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{

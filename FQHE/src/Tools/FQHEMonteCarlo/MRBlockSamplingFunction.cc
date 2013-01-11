@@ -46,11 +46,14 @@ using std::endl;
 
 
 // constructor
-MRBlockSamplingFunction::MRBlockSamplingFunction(int nbrParticlesPerBlock, double sqrCriticalDistance)
+// nbrParticlesPerBlock = number of particles in each of the two blocks
+// jastrowExponent = exponent of jastrow factor multiplying state
+// sqrCriticalDistance = tuning parameter for recalculation of blocks
+MRBlockSamplingFunction::MRBlockSamplingFunction(int nbrParticlesPerBlock, int jastrowExponent, double sqrCriticalDistance)
 {
   this->NbrParticlesPerBlock=nbrParticlesPerBlock;
   this->NbrParticles=2*NbrParticlesPerBlock;
-  this->JastrowExponent=1;
+  this->JastrowExponent=jastrowExponent;
   this->System=NULL;
   this->ElementNorm=1.0;
 
@@ -109,16 +112,16 @@ MRBlockSamplingFunction::~MRBlockSamplingFunction()
 
 // register basic system of particles
 // this function needs to be called before any of the other routines are functional
-void MRBlockSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
+void MRBlockSamplingFunction::RegisterSystem(AbstractParticleCollectionOnSphere *system)
 {
   this->System=system;
-  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != this->NbrParticles)
+  if (System->GetNbrParticles() != this->NbrParticles)
     {
       cout << "Number of particles in system not compatible in sampling function";
       exit(1);
     }
   // pointers to spinor coordinates (external)
-  ((ParticleOnSphereCollection*)System)->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
 
 
@@ -129,7 +132,7 @@ double MRBlockSamplingFunction::GetTransitionRatio()
 {
   double ratio=1.0;
   int tomove = System->GetMovedNbr();
-  ((ParticleOnSphereCollection*)System)->GetPreviousPos(LastU,LastV);
+  System->GetPreviousPos(LastU,LastV);
   // block containing moved particle
   int LowerLimit=0;
   int UpperLimit=NbrParticles;

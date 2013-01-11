@@ -102,8 +102,8 @@ void ParticleOnSphereCollection::Move(int nbrParticle)
   // make a random move with gaussian distribution around the initial position
   double theta = this->Theta0*fabs(Generator->GetGaussianRandomNumber());
   double phi = 2.0*M_PI*Generator->GetRealRandomNumber();
-  Complex move_v = sin(theta/2.0)*Polar(1.0, phi/2.0);
-  Complex move_u = cos(theta/2.0)*Polar(1.0,-phi/2.0);  
+  Complex move_v = sin(theta/2.0)*Polar( phi/2.0);
+  Complex move_u = cos(theta/2.0)*Polar(-phi/2.0);  
   SpinorUCoordinates[nbrParticle] =LastU*move_u-Conj(LastV)*move_v;
   SpinorVCoordinates[nbrParticle] =LastV*move_u+Conj(LastU)*move_v;
   this->ThetaPhi[nbrParticle<<1] = (2.0*acos(Norm(SpinorUCoordinates[nbrParticle])));
@@ -132,8 +132,8 @@ void ParticleOnSphereCollection::RotateAll()
 // moves all particles by angles theta and phi
 void ParticleOnSphereCollection::RotateAll(double theta, double phi)
 {
-  Complex move_v = sin(theta/2.0)*Polar(1.0, phi/2.0);
-  Complex move_u = cos(theta/2.0)*Polar(1.0,-phi/2.0);
+  Complex move_v = sin(theta/2.0)*Polar( phi/2.0);
+  Complex move_u = cos(theta/2.0)*Polar(-phi/2.0);
   Complex lastU, lastV;
   for (int nbrParticle=0; nbrParticle<NbrParticles; ++nbrParticle)
     {

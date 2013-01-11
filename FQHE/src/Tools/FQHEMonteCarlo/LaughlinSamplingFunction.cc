@@ -29,7 +29,7 @@
 
 
 #include "LaughlinSamplingFunction.h"
-#include "ParticleOnSphereCollection.h"
+#include "AbstractParticleCollectionOnSphere.h"
 #include <cmath>
 #include <iostream>
 using std::cout;
@@ -54,16 +54,16 @@ LaughlinSamplingFunction::~LaughlinSamplingFunction()
 
 // register basic system of particles
 // this function needs to be called before any of the other routines are functional
-void LaughlinSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
+void LaughlinSamplingFunction::RegisterSystem(AbstractParticleCollectionOnSphere *system)
 {
   this->System=system;
-  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != this->NbrParticles)
+  if (System->GetNbrParticles() != this->NbrParticles)
     {
       cout << "Number of particles in system not compatible in sampling function";
       exit(1);
     }
   // pointers to spinor coordinates (external)
-  ((ParticleOnSphereCollection*)System)->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
 
 
@@ -74,7 +74,7 @@ double LaughlinSamplingFunction::GetTransitionRatio()
 {
   double ratio=1.0;
   int tomove = System->GetMovedNbr();
-  ((ParticleOnSphereCollection*)System)->GetPreviousPos(LastU,LastV);
+  System->GetPreviousPos(LastU,LastV);
   for (int i=0;i<tomove;i++)
     {
       ratio *= SqrNorm(SpinorUCoordinates[i]*SpinorVCoordinates[tomove]-SpinorUCoordinates[tomove]*SpinorVCoordinates[i])/

@@ -134,6 +134,7 @@ void SphereBlockCoulombEnergy::PrintStatus(std::ostream &output, bool all)
 	  else
 	    output << this->RealValues[NbrBlocks-1].Average()<<"+I*"<<this->RealValues[2*NbrBlocks-1].Average()
 	     <<"\t"<<this->RealValues[NbrBlocks-1].ErrorEstimate()<<"+I*"<<this->RealValues[2*NbrBlocks-1].ErrorEstimate();
+	  cout << endl;
 	}
       else
 	{
@@ -145,6 +146,7 @@ void SphereBlockCoulombEnergy::PrintStatus(std::ostream &output, bool all)
 	  else
 	    output << this->RealValues[NbrBlocks-1].Average()<<"+I*"<<this->RealValues[2*NbrBlocks-1].Average()
 		   <<"\t"<<this->RealValues[NbrBlocks-1].ErrorEstimate()<<"+I*"<<this->RealValues[2*NbrBlocks-1].ErrorEstimate();
+	  cout << endl;
 	  output.precision(tmp);
 	}
     }
@@ -187,6 +189,7 @@ void SphereBlockCoulombEnergy::SetParticleCollection(AbstractParticleCollection 
   this->System = (ParticleOnSphereCollection*) system;
   this->NbrParticles = System->GetNbrParticles();
   this->System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  cout << "Set particle collection for Energy observable with N="<<this->NbrParticles<<endl;
 }
 
 // additional routines for energy observables:

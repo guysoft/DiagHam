@@ -44,6 +44,7 @@ class OptionManager;
 class Abstract1DComplexFunction;
 class AbstractMCSamplingFunction;
 class AbstractMCBlockSamplingFunction;
+class AbstractMCBlockSamplingFunctionOnSphere;
 
 class QHESamplingFunctionManager
 {
@@ -112,10 +113,16 @@ class QHESamplingFunctionManager
   // return value = pointer to the wave function (null if an error occurs)
   AbstractMCBlockSamplingFunction* GetBlockSamplingFunction();
 
+  // get the wave function corresponding to the option constraints
+  //
+  // return value = pointer to the wave function (null if an error occurs)
+  AbstractMCBlockSamplingFunctionOnSphere* GetBlockSamplingFunctionOnSphere();
+
   // get a description of the returned wave function
   //
   char* GetDescription();
 
+  
   // get type of WaveFunction
 
   int GetWaveFunctionType();

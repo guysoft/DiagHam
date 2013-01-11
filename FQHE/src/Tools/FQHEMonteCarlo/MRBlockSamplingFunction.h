@@ -33,9 +33,11 @@
 
 #define TESTING_MRBLOCKSAMPLINGFUNCTION
 
-#include "AbstractMCBlockSamplingFunction.h"
+#include "config.h"
+#include "AbstractMCBlockSamplingFunctionOnSphere.h"
+#include "AbstractParticleCollectionOnSphere.h"
 
-class MRBlockSamplingFunction : public AbstractMCBlockSamplingFunction
+class MRBlockSamplingFunction : public AbstractMCBlockSamplingFunctionOnSphere
 {
  protected:
   // total number of particles
@@ -81,13 +83,14 @@ class MRBlockSamplingFunction : public AbstractMCBlockSamplingFunction
  public:
   // constructor
   // nbrParticlesPerBlock = N/2
+  // jastrowExponent = exponent of jastrow factor multiplying state
   // sqrCriticalDistance = tuning parameter for recalculation of blocks
-  MRBlockSamplingFunction(int nbrParticlesPerBlock, double sqrCriticalDistance = 1e-20);
+  MRBlockSamplingFunction(int nbrParticlesPerBlock, int jastrowExponent, double sqrCriticalDistance = 1e-20);
   // virtual destructor
   virtual ~MRBlockSamplingFunction();
 
   // register basic system of particles
-  virtual void RegisterSystem(AbstractParticleCollection *system);
+  virtual void RegisterSystem(AbstractParticleCollectionOnSphere *system);
 
   // method for ratio of probabilities with respect to the last configuration
   // allows for more rapid calculation due to cancellation of factors

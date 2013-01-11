@@ -32,7 +32,6 @@
 #define ABSTRACTMCBLOCKSAMPLINGFUNCTION_H
 
 #include "MathTools/Complex.h"
-#include "AbstractParticleCollection.h"
 #include "AbstractMCSamplingFunction.h"
 
 class AbstractMCBlockSamplingFunction : public AbstractMCSamplingFunction

@@ -80,6 +80,8 @@ public:
   friend double Arg(const Complex& z);
   //return complex conjugate
   friend Complex Conj(const Complex& z);
+  // return complex corresponding to the polar definition with norm r=1
+  friend Complex Polar(double theta);
   // return complex corresponding to the polar definition
   friend Complex Polar(double r,double theta);
   // return complex corresponding to a phase factor
@@ -283,6 +285,13 @@ inline double Arg(const Complex& z)
 inline Complex Conj(const Complex& z)
 {
   return Complex (z.Re, -z.Im);
+}
+
+// return complex corresponding to the polar definition
+
+inline Complex Polar(double theta)
+{
+  return Complex (cos(theta),sin(theta));
 }
 
 // return complex corresponding to the polar definition

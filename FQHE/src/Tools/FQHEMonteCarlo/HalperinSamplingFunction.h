@@ -31,9 +31,10 @@
 #ifndef HALPERINSAMPLINGFUNCTION_H
 #define HALPERINSAMPLINGFUNCTION_H
 
-#include "AbstractMCSamplingFunction.h"
+#include "config.h"
+#include "AbstractMCSamplingFunctionOnSphere.h"
 
-class HalperinSamplingFunction : public AbstractMCSamplingFunction
+class HalperinSamplingFunction : public AbstractMCSamplingFunctionOnSphere
 {
  protected:
   // number of particles: total and with spin up
@@ -69,7 +70,7 @@ class HalperinSamplingFunction : public AbstractMCSamplingFunction
   virtual ~HalperinSamplingFunction();
 
   // register basic system of particles
-  virtual void RegisterSystem(AbstractParticleCollection *system);
+  virtual void RegisterSystem(AbstractParticleCollectionOnSphere *system);
 
   // method for ratio of probabilities with respect to the last configuration
   // allows for more rapid calculation due to cancellation of factors

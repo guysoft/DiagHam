@@ -70,16 +70,16 @@ HalperinSamplingFunction::~HalperinSamplingFunction()
 
 // register basic system of particles
 // this function needs to be called before any of the other routines are functional
-void HalperinSamplingFunction::RegisterSystem(AbstractParticleCollection *system)
+void HalperinSamplingFunction::RegisterSystem(AbstractParticleCollectionOnSphere *system)
 {
   this->System=system;
-  if (((ParticleOnSphereCollection*)System)->GetNbrParticles() != this->NbrParticles)
+  if (System->GetNbrParticles() != this->NbrParticles)
     {
       cout << "Number of particles in system not compatible in sampling function";
       exit(1);
     }
   // pointers to spinor coordinates (external)
-  ((ParticleOnSphereCollection*)System)->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
+  System->GetSpinorCoordinates(SpinorUCoordinates, SpinorVCoordinates);
 }
 
 
@@ -90,7 +90,7 @@ double HalperinSamplingFunction::GetTransitionRatio()
 {
   double ratio1=1.0, ratio2=1.0;
   int tomove = System->GetMovedNbr();
-  ((ParticleOnSphereCollection*)System)->GetPreviousPos(LastU,LastV);
+  System->GetPreviousPos(LastU,LastV);
   if (tomove<this->NbrUp)
     {
       // intra-spin terms:

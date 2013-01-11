@@ -31,9 +31,9 @@
 #ifndef LAUGHLINWITHSPINSAMPLINGFUNCTION_H
 #define LAUGHLINWITHSPINSAMPLINGFUNCTION_H
 
-#include "AbstractMCSamplingFunction.h"
+#include "AbstractMCSamplingFunctionOnSphere.h"
 
-class LaughlinWithSpinSamplingFunction : public AbstractMCSamplingFunction
+class LaughlinWithSpinSamplingFunction : public AbstractMCSamplingFunctionOnSphere
 {
  protected:
   // number of particles in each layer
@@ -60,7 +60,7 @@ class LaughlinWithSpinSamplingFunction : public AbstractMCSamplingFunction
   virtual ~LaughlinWithSpinSamplingFunction();
 
   // register basic system of particles
-  virtual void RegisterSystem(AbstractParticleCollection *system);
+  virtual void RegisterSystem(AbstractParticleCollectionOnSphere *system);
 
   // method for ratio of probabilities with respect to the last configuration
   // allows for more rapid calculation due to cancellation of factors

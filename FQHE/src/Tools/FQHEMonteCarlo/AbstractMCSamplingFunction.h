@@ -38,8 +38,6 @@
 class AbstractMCSamplingFunction
 {
  protected:
-  // pointer to the ensemble of particles that shall be examined in MonteCarlo
-  AbstractParticleCollection *System;
   
  public:
   // virtual destructor
@@ -67,6 +65,10 @@ class AbstractMCSamplingFunction
 
   // call this method to scale the sampling function (needed to normalize the function)
   virtual void ScaleByFactor(double scale)=0;
+
+ protected:
+  // register basic system of particles
+  virtual AbstractParticleCollection * GetSystem() = 0;
   
 };
 

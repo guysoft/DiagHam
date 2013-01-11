@@ -21,5 +21,10 @@ SphereTwoBodyCorrelator.cc \
 SphereBilayerTwoBodyCorrelator.cc \
 BlockMonteCarloOnSphereAlgorithm.cc \
 AbstractMCBlockSamplingFunction.cc \
+AbstractMCBlockSamplingFunctionOnSphere.cc \
 MRBlockSamplingFunction.cc \
-SphereBlockCoulombEnergy.cc
+SphereBlockCoulombEnergy.cc \
+ParticleOnSphereCollectionSouthPole.cc \
+ParticleOnSphereCollectionGauged.cc \
+AbstractParticleCollectionOnSphere.cc \
+AbstractMCSamplingFunctionOnSphere.cc

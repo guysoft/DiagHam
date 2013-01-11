@@ -61,6 +61,9 @@ class AbstractParticleCollection
 
   // get number of last particle that was moved
   int GetMovedNbr() { return LastMoved; }
+
+  // get number of particles
+  virtual int GetNbrParticles() = 0;
  
   // restore last move
   virtual void RestoreMove() = 0;

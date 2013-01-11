@@ -38,6 +38,9 @@
 class TrivialSamplingFunction : public AbstractMCSamplingFunction
 {
  protected:
+    // pointer to the ensemble of particles that shall be examined in MonteCarlo
+  AbstractParticleCollection *System;
+  
   // wavefunction that is being simulated
   Abstract1DComplexFunction *WaveFunction;
 
@@ -74,6 +77,10 @@ class TrivialSamplingFunction : public AbstractMCSamplingFunction
   // call this method to scale the sampling function (needed to normalize the function)
   // scale = total scaling factor
   virtual void ScaleByFactor(double scale);
+
+ protected:
+  // register basic system of particles
+  virtual AbstractParticleCollection * GetSystem();  
   
 };
 

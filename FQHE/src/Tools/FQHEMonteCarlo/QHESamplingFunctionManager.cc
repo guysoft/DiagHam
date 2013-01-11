@@ -80,7 +80,7 @@ void QHESamplingFunctionManager::AddOptionGroup(OptionManager* manager)
     {
       if (this->GeometryID & QHESamplingFunctionManager::SphereGeometry)
 	{
-	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "power to which the jastrow factors in sampling function are raised",2);
+	  (*SamplingFunctionGroup) += new SingleIntegerOption  ('\n', "jastrow-exponent", "power to which the jastrow factor in sampling function is raised",1);
 	  //(*SamplingFunctionGroup) += new SingleStringOption  ('\n', "xxx", "description",0);
 	}
     }
@@ -155,6 +155,17 @@ AbstractMCBlockSamplingFunction* QHESamplingFunctionManager::GetBlockSamplingFun
   else
     return 0;
 }
+
+// get the wave function corresponding to the option constraints
+//
+// return value = pointer to the wave function (null if an error occurs)
+AbstractMCBlockSamplingFunctionOnSphere* QHESamplingFunctionManager::GetBlockSamplingFunctionOnSphere()
+{
+  if ((this->BlockAlgorithm)&&(this->GeometryID & QHESamplingFunctionManager::SphereGeometry))
+    return (AbstractMCBlockSamplingFunctionOnSphere*)(this->GetSamplingFunction());
+  else
+    return 0;
+}
   
 // get the wave function corresponding to the option constraints
 //
@@ -175,14 +186,14 @@ AbstractMCSamplingFunction* QHESamplingFunctionManager::GetSamplingFunction()
 	{
 	  if ((strcmp (this->Options->GetString("sampler"), "MR") == 0))
 	    {
-	      int N = this->Options->GetInteger("nbr-particles");	      
-	      //	      int m = this->Options->GetInteger("laughlin-exponent");
+	      int N = this->Options->GetInteger("nbr-particles");
+	      int J = this->Options->GetInteger("jastrow-exponent");
 	      if (N&1)
 		{
 		  cout << "Require even number of particles in MR wavefunction"<<endl;
 		  exit(1);
 		}
-	      AbstractMCSamplingFunction* rst  = new MRBlockSamplingFunction(N/2 /*, sqrCriticalDistance*/);
+	      AbstractMCSamplingFunction* rst  = new MRBlockSamplingFunction(N/2, J /*, sqrCriticalDistance*/);
 	      return rst;
 	    }
 	  return 0;

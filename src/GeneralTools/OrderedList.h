@@ -245,7 +245,7 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
     {
       int i = 0;
       ListElement<ClassName> *Tmp = this->FirstElement;
-      while ((Tmp->Element<Element) && (Tmp->NextPointer != 0))
+      while (((Tmp->Element<Element)||((!this->EliminateDuplicates)&&(Tmp->Element==Element))) && (Tmp->NextPointer != 0))
 	{
 	  ++i;
 #ifdef TEST_ORDEREDLIST
@@ -255,7 +255,7 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	  Tmp = Tmp->NextPointer;
 	}
 #ifdef TEST_ORDEREDLIST
-      cout<< "2 - Inserting near " << Tmp->Element << endl;
+      cout<< "2 - Positioning new element "<<Element<<" near " << Tmp->Element << endl;
       if (Tmp->Element<Element)
 	{
 	  cout << "3 - " << Tmp->Element<<" < " << Element << endl;
@@ -276,17 +276,19 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	  if (Tmp->Element<Element) // insert after Tmp
 	    {
 #ifdef TEST_ORDEREDLIST
-	      cout << "5 - Next=0 && " << Tmp->Element<<" < " << Element << endl;
+	      cout << "5a - Next=0 && " << Tmp->Element<<" < " << Element << endl;
+	      cout<< "5b - Insert new element "<<Element<<" after existing "<<Tmp->Element<<endl;
 #endif
-	      Tmp->NextPointer = new ListElement<ClassName>(Element, this->CurrentElement); 	      
+	      Tmp->NextPointer = new ListElement<ClassName>(Element, Tmp); 	      
 	      Duplicate = NULL;
-	      Pos = i+1;	      
+	      Pos = i+1;
 	      
 	    }
 	  else // insert before tmp
 	    {
 #ifdef TEST_ORDEREDLIST
-	      cout << "6 - Next=0 && " << Tmp->Element<<" >= " << endl; //Element << endl;
+	      cout << "6a - Next=0 && " << Tmp->Element<<" >= " << endl; //Element << endl;
+	      cout << "6b - Insert new element "<<Element<<" before existing "<<Tmp->Element<<endl;
 #endif
 	      Tmp->PreviousPointer = new ListElement<ClassName>(Element, Tmp, Tmp->PreviousPointer);
 	      if (Tmp->PreviousPointer->PreviousPointer==0)
@@ -302,10 +304,10 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	}
       else
 	{
-	  if (Tmp->Element<Element) // insert after Tmp
+	  if ((Tmp->Element<Element)||(Tmp->Element==Element)) // insert after Tmp
 	    {
 #ifdef TEST_ORDEREDLIST
-	      cout<< "8 - NonZero NextPointer, insert after Tmp"<<endl;
+	      cout<< "8 - NonZero NextPointer, insert new element "<<Element<<" after existing "<<Tmp->Element<<endl;
 #endif
 	      Tmp->NextPointer = new ListElement<ClassName>(Element, Tmp->NextPointer, Tmp->PreviousPointer);
 	      Duplicate = NULL;
@@ -314,7 +316,8 @@ OrderedList<ClassName>& OrderedList<ClassName>::Insert (const ClassName& Element
 	  else // insert before tmp
 	    {
 #ifdef TEST_ORDEREDLIST
- 	      cout << "9 - NonZero NextPointer, " << Tmp->Element<<" >= " << Element << endl;
+ 	      cout << "9a - NonZero NextPointer, " << Tmp->Element<<" >= " << Element << endl;
+	      cout<< "9b - NonZero NextPointer, insert new element "<<Element<<" before existing "<<Tmp->Element<<endl;
 #endif
 	      Tmp->PreviousPointer = new ListElement<ClassName>(Element, Tmp, Tmp->PreviousPointer);
 	      if (Tmp->PreviousPointer->PreviousPointer==0)

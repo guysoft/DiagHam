@@ -35,8 +35,8 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "AbstractObservable.h"
 #include "AbstractBlockObservable.h"
-#include "AbstractMCBlockSamplingFunction.h"
-#include "ParticleOnSphereCollection.h"
+#include "AbstractMCBlockSamplingFunctionOnSphere.h"
+#include "AbstractParticleCollectionOnSphere.h"
 
 #include <iostream>
 using std::ostream;
@@ -54,10 +54,10 @@ class BlockMonteCarloOnSphereAlgorithm
   int NbrBlocks;
 
   // sampling function
-  AbstractMCBlockSamplingFunction *TargetFunction;  
+  AbstractMCBlockSamplingFunctionOnSphere *TargetFunction;  
   
   // class holding the particle coordinates
-  ParticleOnSphereCollection *System;
+  AbstractParticleCollectionOnSphere *System;
 
   // pointer to the option manager
   OptionManager* Options;
@@ -105,7 +105,7 @@ class BlockMonteCarloOnSphereAlgorithm
   // samplingFunction = function to be used to generate samples
   // manager = pointer to option manager
   // maxNbrObservables = maximum number of observables to be assigned
-  BlockMonteCarloOnSphereAlgorithm(int nbrParticles, AbstractMCBlockSamplingFunction *targetFunction,
+  BlockMonteCarloOnSphereAlgorithm(int nbrParticles, AbstractMCBlockSamplingFunctionOnSphere *targetFunction,
 				    OptionManager *manager, int maxNbrObservables = 10);
 
   

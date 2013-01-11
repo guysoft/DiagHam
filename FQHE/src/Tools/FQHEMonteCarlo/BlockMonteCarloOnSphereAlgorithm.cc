@@ -30,7 +30,11 @@
 
 #include "BlockMonteCarloOnSphereAlgorithm.h"
 #include "TrivialSamplingFunction.h"
+#include "ParticleOnSphereCollection.h"
+#include "ParticleOnSphereCollectionSouthPole.h"
+#include "ParticleOnSphereCollectionGauged.h"
 #include "Options/Options.h"
+
 
 #include <iostream>
 using std::cout;
@@ -48,7 +52,7 @@ BlockMonteCarloOnSphereAlgorithm::BlockMonteCarloOnSphereAlgorithm()
 // manager = pointer to option manager
 // maxNbrObservables = maximum number of observables to be assigned
 BlockMonteCarloOnSphereAlgorithm::BlockMonteCarloOnSphereAlgorithm(int nbrParticles,
-		    AbstractMCBlockSamplingFunction *targetFunction,
+		    AbstractMCBlockSamplingFunctionOnSphere *targetFunction,
 		    OptionManager *manager, int maxNbrObservables)
 {
   if (targetFunction==0)
@@ -62,7 +66,16 @@ BlockMonteCarloOnSphereAlgorithm::BlockMonteCarloOnSphereAlgorithm(int nbrPartic
 
   this->Options=manager;  
   long Seed = Options->GetInteger("randomSeed");
-  this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
+  if (manager->GetBoolean("no-southpole"))
+    this->System=new ParticleOnSphereCollection(this->NbrParticles, Seed);
+  else
+    {
+      if (manager->GetBoolean("gauged"))
+	this->System=new ParticleOnSphereCollectionGauged(this->NbrParticles, Seed);
+      else
+	this->System=new ParticleOnSphereCollectionSouthPole(this->NbrParticles, Seed);
+    }
+
   this->TargetFunction->RegisterSystem(this->System);
   this->TargetFunction->AdaptAverageMCNorm(Options->GetInteger("thermalize")); // this also relaxes the particle positions in System
   // renormalize wavefunction, as this has led to problems
@@ -196,7 +209,7 @@ void BlockMonteCarloOnSphereAlgorithm::Simulate(ostream &Output)
     }
   Output << endl;
   int s=0;
-  cout << "NbrBlocks="<<NbrBlocks<<endl;
+  //cout << "NbrBlocks="<<NbrBlocks<<endl;
   for (int d=0; d<NbrDisplay; ++d)
     {
       for (/* s */; s<(d+1)*DisplaySteps; ++s)

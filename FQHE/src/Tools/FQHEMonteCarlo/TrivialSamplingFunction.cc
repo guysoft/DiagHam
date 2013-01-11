@@ -102,3 +102,10 @@ Complex TrivialSamplingFunction::GetFunctionValue()
 void TrivialSamplingFunction::ScaleByFactor(double scale)
 {
 }
+
+
+// register basic system of particles
+AbstractParticleCollection * TrivialSamplingFunction::GetSystem()
+{
+  return this->System;
+}

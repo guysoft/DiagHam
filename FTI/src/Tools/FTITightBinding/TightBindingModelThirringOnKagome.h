@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2008 Gunnar Moeller                    //
+//                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//      class for a basic Monte Carlo algorith for particles on a sphere      //
+//            class of tight binding model for the Checkerboard lattice       //
 //                                                                            //
-//                        last modification : 23/01/2008                      //
+//                        last modification : 08/05/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,50 +28,58 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef LAUGHLINSAMPLINGFUNCTION_H
-#define LAUGHLINSAMPLINGFUNCTION_H
+#ifndef TIGHTBINDINGMODELCHECKERBOARDLATTICE_H
+#define TIGHTBINDINGMODELCHECKERBOARDLATTICE_H
 
-#include "AbstractMCSamplingFunctionOnSphere.h"
 
-class LaughlinSamplingFunction : public AbstractMCSamplingFunctionOnSphere
+#include "config.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
+
+
+class TightBindingModelThirringOnKagome : public Abstract2DTightBindingModel
 {
+
  protected:
-  // number of particles in each layer
-  int NbrParticles;
-  // exponent of Jastrow Factors
-  int Exponent;
 
-  // pointers to spinor coordinates (external)
-  Complex *SpinorUCoordinates;
-  Complex *SpinorVCoordinates;
-
-  // for access to ParticleCollection
-  Complex LastU;
-  Complex LastV;
-
-  // norm for total function value
-  double ElementNorm;
+  // hopping amplitude between neareast neighbor sites
+  double NNHopping;
+  // hopping amplitude between next neareast neighbor sites on A sublattice
+  double NextNNHoppingA;
+  // hopping amplitude between next neareast neighbor sites on B sublattice
+  double NextNNHoppingB;
+  // phase of hopping A
+  double NextNNHoppingPhase;
   
  public:
-  // constructor
-  LaughlinSamplingFunction(int nbrParticles, int exponent);
-  // virtual destructor
-  virtual ~LaughlinSamplingFunction();
 
-  // register basic system of particles
-  virtual void RegisterSystem(AbstractParticleCollectionOnSphere *system);
+  // default constructor
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // tNN = hopping amplitude between neareast neighbor sites
+  // tNNNa = hopping amplitude between next neareast neighbor sites on A sublattice
+  // tNNNb = hopping amplitude between next neareast neighbor sites on B sublattice
+  // gammaX = boundary condition twisting angle along x
+  // gammaY = boundary condition twisting angle along y
+  // architecture = pointer to the architecture
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelThirringOnKagome(int nbrSiteX, int nbrSiteY, double tNN, double tNNNa, double tNNNb, double theta, 
+				       double gammaX, double gammaY, 
+				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
-  // method for ratio of probabilities with respect to the last configuration
-  // allows for more rapid calculation due to cancellation of factors
-  virtual double GetTransitionRatio();
+  // destructor
+  //
+  ~TightBindingModelThirringOnKagome();
 
-  // get the full function value for a system of particles
-  virtual Complex GetFunctionValue();
+ protected :
 
-  // call this method to scale the sampling function (needed to normalize the function)
-  // scale = total scaling factor
-  virtual void ScaleByFactor(double scale);
-  
+  // core part that compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+
 };
 
-#endif 
+
+#endif

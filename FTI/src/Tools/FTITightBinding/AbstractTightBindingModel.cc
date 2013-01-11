@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FTITightBinding/AbstractTightBindingModel.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/OrderedList.h"
 
 #include <fstream>
 
@@ -152,6 +153,141 @@ double AbstractTightBindingModel::ComputeDirectBandGap(int band1, int band2)
     }
   return Gap;
 }
+
+// compute the direct gap between two bands
+// 
+// band1 = index of the lower band 
+// band2 = index of the upper band (-1 if it has to be set to band1 + 1)
+// return value =  direct band gap
+
+double AbstractTightBindingModel::ComputeIndirectBandGap(int band1, int band2)
+{
+  if ((band1 < 0) || (band1 > this->NbrBands))
+    {
+      return -1.0;
+    }
+  if (band2 < 0)
+    band2 = band1 + 1;
+  if ((band2 < 0) || (band2 > this->NbrBands) || (band2 <= band1))
+    {
+      return -1.0;
+    }
+  double Max1=this->GetEnergy(band1, 0);
+  double Min2=this->GetEnergy(band2, 0);
+  for (int i = 1; i < this->NbrStatePerBand; ++i)
+    {
+      double Tmp1 = this->GetEnergy(band1, i);
+      double Tmp2 = this->GetEnergy(band2, i);
+      if (Tmp1 > Max1)
+	Max1 = Tmp1;
+      if (Tmp2 < Min2)
+	Min2 = Tmp2;
+    }
+  return Min2-Max1;
+}
+
+
+class SingleParticleStateData
+{
+public:
+  SingleParticleStateData();
+  SingleParticleStateData(double e, double b, double i);
+  ~SingleParticleStateData(){};
+  double Energy;
+  double BandIndex;
+  double StateIndex;
+
+  friend bool operator<(const SingleParticleStateData &d1, const SingleParticleStateData &d2);
+  friend bool operator>(const SingleParticleStateData &d1, const SingleParticleStateData &d2);
+  friend bool operator==(const SingleParticleStateData &d1, const SingleParticleStateData &d2);
+
+  friend ostream& operator<<(ostream &str, const SingleParticleStateData &d);
+  
+
+};
+
+SingleParticleStateData::SingleParticleStateData()
+{
+  this->Energy = 0.0;
+  this->BandIndex = -1;
+  this->StateIndex = -1;
+}
+
+SingleParticleStateData::SingleParticleStateData(double e, double b, double i)
+{
+  this->Energy = e;
+  this->BandIndex = b;
+  this->StateIndex = i;
+}
+
+bool operator<(const SingleParticleStateData &d1, const  SingleParticleStateData &d2)
+{
+  return (d1.Energy < d2.Energy);
+}
+
+bool operator>(const SingleParticleStateData &d1, const SingleParticleStateData &d2)
+{
+  return (d1.Energy > d2.Energy);
+}
+
+bool operator==(const SingleParticleStateData &d1, const SingleParticleStateData &d2)
+{
+  return (d1.Energy == d2.Energy);
+}
+
+ostream &operator<<(ostream &str, const SingleParticleStateData &d)
+{
+  str <<d.BandIndex<<"_"<<d.StateIndex<<" ("<<d.Energy<<")";
+  return str;
+}
+
+
+
+// compute the ground state energy for a number of fermions filling the band 
+// 
+// nbrFermions = number of particles in the band structure
+// bands = number of bands used in groundstate configuration
+// return value =  total groundstate energy
+double AbstractTightBindingModel::ComputeGroundstateEnergy(int nbrFermions, int &bands, bool verbose)
+{
+  bands = -1;
+  if (nbrFermions<1) return 0.0;
+
+  if (nbrFermions>this->NbrBands*this->NbrStatePerBand) return 0.0;
+  OrderedList<SingleParticleStateData> AllStates(false); // ordered list, which does not eliminate duplicates
+
+  for (int b=0; b<this->NbrBands; ++b)
+    for (int i=0; i<this->NbrStatePerBand; ++i)
+      AllStates += SingleParticleStateData(this->GetEnergy(b, i),b,i);
+
+  bands = 0;
+  double Energy=0.0;
+
+  if ((verbose)&&(false))
+    {
+      cout << "Total number of states: "<<AllStates.GetNbrElement()<<endl;
+      for (int n=0; n<AllStates.GetNbrElement(); ++n)
+	{
+	  SingleParticleStateData D=AllStates[n];
+	  cout << "State "<<n<<": "<<D.BandIndex<<"_"<<D.StateIndex<<" (E="<<D.Energy<<")\n";
+	}
+    }
+
+  for (int n=0; n<nbrFermions; ++n)
+    {
+      SingleParticleStateData D=AllStates[n];
+      if (verbose) cout << n+1 <<"th occupied state: "<<D.BandIndex<<"_"<<D.StateIndex<<" (E="<<D.Energy<<")\n";
+      Energy+=D.Energy;
+      if (D.BandIndex>bands)
+	bands=D.BandIndex;
+    }
+  
+  ++bands;
+  return Energy;
+}
+
+  
+
 
 // write the full band structure information in a binary file
 //

@@ -35,7 +35,7 @@
 #include "MathTools/NumericalAnalysis/Abstract1DComplexFunction.h"
 #include "AbstractObservable.h"
 #include "AbstractMCSamplingFunction.h"
-#include "ParticleOnSphereCollection.h"
+#include "AbstractParticleCollectionOnSphere.h"
 
 #include <iostream>
 using std::ostream;
@@ -56,7 +56,7 @@ class SimpleMonteCarloOnSphereAlgorithm
   AbstractMCSamplingFunction *SamplingFunction;  
   
   // class holding the particle coordinates
-  ParticleOnSphereCollection *System;
+  AbstractParticleCollectionOnSphere *System;
 
   // pointer to the option manager
   OptionManager* Options;
