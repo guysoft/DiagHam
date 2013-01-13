@@ -311,24 +311,25 @@ int main(int argc, char** argv)
       //      SortArrayUpOrdering(EffectiveBlockIndices, EffectiveDimension);
       cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
       
-      TensorProductSparseMatrixSelectedBlockHamiltonian ETransposeHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
-									      EffectiveDimension, EffectiveBlockIndices, 
-									      BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-									      Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
+      TensorProductSparseMatrixSelectedBlockHamiltonian* ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
+																       EffectiveDimension, EffectiveBlockIndices, 
+																       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+																       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       ComplexVector* LeftEigenstates = 0;
       Complex* LeftEigenvalues = 0;
       cout << "computing left eigenstates : " << endl;
-      MPSDiagonalizeEMatrix(&Manager, &ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), 1e-10, true);
+      MPSDiagonalizeEMatrix(&Manager, ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), 1e-10, true);
+      delete ETransposeHamiltonian;
 
-
-      TensorProductSparseMatrixSelectedBlockHamiltonian EHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
-								     EffectiveDimension, EffectiveBlockIndices, 
-								     BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-								     Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
+      TensorProductSparseMatrixSelectedBlockHamiltonian* EHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
+															       EffectiveDimension, EffectiveBlockIndices, 
+															       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+															       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       ComplexVector* RightEigenstates = 0;
       Complex* RightEigenvalues = 0;
       cout << "computing right eigenstates : " << endl;
-      MPSDiagonalizeEMatrix(&Manager, &EHamiltonian, NbrEigenstates, RightEigenvalues, RightEigenstates, Architecture.GetArchitecture(), 1e-10, false);
+      MPSDiagonalizeEMatrix(&Manager, EHamiltonian, NbrEigenstates, RightEigenvalues, RightEigenstates, Architecture.GetArchitecture(), 1e-10, false);
+      delete EHamiltonian;
 
       cout << "eigenvalues : " << endl;
       for (int i = 0; i < NbrEigenstates; ++i)

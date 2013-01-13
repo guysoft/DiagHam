@@ -833,20 +833,7 @@ void TensorProductSparseMatrixSelectedBlockHamiltonian::PartialEnableFastMultipl
 	{
 	  this->TemporaryRowPointers[j] = 0;
 	}
-//        long Tmp = 0;
-//        long Shift = this->TemporaryRowPointers[j];
-//        for (int i = 0; i < TmpDimension; ++i)
-// 	 {
-// 	   if (TmpNonZeroMatrixElements[i] != 0.0)
-// 	     {
-// 	       this->TemporaryMatrixElements[Shift] = TmpNonZeroMatrixElements[i];
-// 	       this->TemporaryMatrixColumnIndices[Shift] = i;
-// 	       ++Shift;
-// 	     }
-// 	 }     
-//        NbrNonZeroMatrixElements += Shift - this->TemporaryRowPointers[j];
     }
-  cout << "v2 = " << NbrNonZeroMatrixElements << endl;
   delete[] TmpNonZeroMatrixElements;
   delete[] TmpNonZeroMatrixIndices;
 }
