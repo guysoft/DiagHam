@@ -130,6 +130,7 @@ BosonOnSquareLatticeWannierSpace.cc \
 ParticleOnSquareLatticeWannierInterface.cc \
 BosonOnCubicLatticeWithSU2SpinMomentumSpace.cc \
 BosonOnCubicLatticeWithSU4SpinMomentumSpace.cc \
+BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong.cc \
 HardCoreBosonLong.cc \
 BosonOnLatticeLong.cc \
 BosonOnTorusWithSpin.cc \
