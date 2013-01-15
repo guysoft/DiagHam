@@ -122,6 +122,8 @@ int main(int argc, char** argv)
       {
 	int MinS = 0;
 	int MaxS = NbrFluxQuanta*NbrBosons - r;
+	if (MaxS > r)
+	  MaxS = r;
 	for (int s = MinS; s <= MaxS ; ++s)
 	{
 	  int tz = r - s;
