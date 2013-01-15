@@ -7,7 +7,6 @@
 #include "HilbertSpace/BosonOnCP2.h"
 
 
-#include "Hamiltonian/ParticleOnCP2ThreeBodyDeltaHamiltonian.h"
 #include "Hamiltonian/ParticleOnCP2DeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -147,7 +146,11 @@ int main(int argc, char** argv)
 	if (ThreeBodyFlag == false)
 	  Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, Architecture.GetArchitecture(), Memory);
 	else
-	  Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
+	{
+	  cout << "three body Hamiltonian not yet implemented" << endl;
+	  return -1;
+	}
+	
       
 //        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
 //        Hamiltonian->ShiftHamiltonian(Shift);
@@ -157,8 +160,8 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [64];
 	  if (ThreeBodyFlag == false)
 	    sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
-	  else
-	    sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+// 	  else
+// 	    sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
 	}
 	
 	char* ContentPrefix = new char[256];
@@ -208,8 +211,8 @@ int main(int argc, char** argv)
     AbstractQHEHamiltonian* Hamiltonian = 0;
     if (ThreeBodyFlag == false)
 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, Architecture.GetArchitecture(), Memory);
-    else
-	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
+//     else
+// 	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
       
 //        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
 //        Hamiltonian->ShiftHamiltonian(Shift);
@@ -219,8 +222,8 @@ int main(int argc, char** argv)
 	EigenvectorName = new char [64];
 	if (ThreeBodyFlag == false)
 	   sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
-	else
-	   sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+// 	else
+// 	   sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
       }
     char* ContentPrefix = new char[256];
     sprintf (ContentPrefix, "%d %d", tz, y);
