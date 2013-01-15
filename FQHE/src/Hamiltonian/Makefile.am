@@ -112,4 +112,5 @@ AbstractQHEOnSphereFullHamiltonian.cc \
 ParticleOn4DSphereDeltaHamiltonian.cc \
 ParticleOnDiskWithSpinGenericHamiltonian.cc \
 ParticleOn4DSphereThreeBodyDeltaHamiltonian.cc \
-ParticleOnCylinderFluctuatingMetricHamiltonian.cc
+ParticleOnCylinderFluctuatingMetricHamiltonian.cc \
+ParticleOnCP2DeltaHamiltonian.cc

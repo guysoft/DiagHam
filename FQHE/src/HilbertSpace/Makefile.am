@@ -150,5 +150,4 @@ FermionOnCylinderMPSWrapper.cc \
 BosonOnSpherePTruncated.cc \
 BosonOn4DSphere.cc \
 BosonOn4DSphereLong.cc \
-BosonOnSphereWithSU4SpinLong.cc \
-BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong.cc
+BosonOnCP2.cc
