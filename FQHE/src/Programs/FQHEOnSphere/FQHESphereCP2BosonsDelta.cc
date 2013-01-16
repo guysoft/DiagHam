@@ -189,9 +189,9 @@ int main(int argc, char** argv)
     {
      int tz = Manager.GetInteger("only-tz");
      int y = Manager.GetInteger("only-y");
-     if ((y + 3*tz + 2*NbrBosons*NbrFluxQuanta % 6 != 0) || (y - 3*tz + 2*NbrBosons*NbrFluxQuanta % 6 != 0))
+     if (((y + 3*tz + 2*NbrBosons*NbrFluxQuanta) % 6 != 0) || ((y - 3*tz + 2*NbrBosons*NbrFluxQuanta) % 6 != 0))
      {
-       cout << "Y + 3Tz + 2N*Nphi and Y - 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
+       cout << "Y + 3Tz + 2N*Nphi and Y - 3Tz + 2N*Nphi should multiple of 6" << endl;
        return -1;
      }
      cout << "(tz,y) = (" << tz << "," << y << ")" << endl; 
