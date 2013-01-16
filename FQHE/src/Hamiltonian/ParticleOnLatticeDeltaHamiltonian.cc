@@ -42,7 +42,7 @@ using std::endl;
 using std::ostream;
 
 // switch for debugging output:
-//#define DEBUG_OUTPUT
+#define DEBUG_OUTPUT
 
 
 
@@ -243,10 +243,10 @@ void ParticleOnLatticeDeltaHamiltonian::EvaluateInteractionFactors()
       break;
     }
     case 'x': {
-      for (int j=0; j<Lx; ++j)
+      for (int j=0; j<Ly; ++j)
 	{
 	  Complex Phase=Polar(1.0,-2.0*M_PI*this->FluxDensity*(double)j);
-	  for (int i=0; i<Ly; ++i)
+	  for (int i=0; i<Lx; ++i)
 	    {
 	      KineticQi[TmpNumberTerms] = Particles->EncodeQuantumNumber(i, j, 0, TranslationPhase);
 	      KineticQf[TmpNumberTerms] = Particles->EncodeQuantumNumber(i+1, j, 0, TranslationPhase);

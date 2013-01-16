@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TIGHTBINDINGMODELCHECKERBOARDLATTICE_H
-#define TIGHTBINDINGMODELCHECKERBOARDLATTICE_H
+#ifndef TIGHTBINDINGMODELTHIRRINGONKAGOME_H
+#define TIGHTBINDINGMODELTHIRRINGONKAGOME_H
 
 
 #include "config.h"

@@ -439,6 +439,7 @@ INCLUDES="${INCLUDES} -I\$(top_srcdir)/FQHE/src"
 
 AC_ARG_ENABLE(fti, [AC_HELP_STRING([--enable-fti],[enable the fractional topological insulator package])], [HAVE_FTI=yes
 INCLUDES="${INCLUDES} -I\$(top_srcdir)/FTI/src"
+AC_DEFINE(HAVE_FTI, [], [have fractional topological order package])
 ], [HAVE_FTI=no])
 
 AC_ARG_ENABLE(spin, [AC_HELP_STRING([--enable-spin],[enable the spin system package])], [HAVE_SPIN=yes

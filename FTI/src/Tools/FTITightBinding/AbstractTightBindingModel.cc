@@ -286,6 +286,21 @@ double AbstractTightBindingModel::ComputeGroundstateEnergy(int nbrFermions, int 
   return Energy;
 }
 
+
+// return the energy of the lowest energy single-particle state
+// 
+double AbstractTightBindingModel::SingleParticleGroundstateEnergy()
+{
+  double Minimum = this->GetEnergy(0,0);
+  for (int b=0; b<this->NbrBands; ++b)
+    for (int i=0; i<this->NbrStatePerBand; ++i)
+      if (this->GetEnergy(b, i) < Minimum)
+	Minimum = this->GetEnergy(b, i);
+  return Minimum;
+}
+
+
+  
   
 
 

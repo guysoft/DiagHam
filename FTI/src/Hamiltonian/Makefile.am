@@ -54,4 +54,5 @@ ParticleOnCubicLatticeFourBandPyrochloreHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFullFourBandHamiltonian.cc \
 ParticleOnLatticeEffectiveBilayerHaldaneLatticeSingleBandHamiltonian.cc \
 ParticleOnCubicLatticeFullFourBandSimpleTIHamiltonian.cc \
+ParticleOnLatticeHofstadterSingleBandHamiltonian.cc \
 ParticleOnLatticeTwoBandThirringHamiltonian.cc

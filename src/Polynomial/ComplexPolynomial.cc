@@ -33,9 +33,9 @@
 #include <cmath>
 
 
-#define EPSILON 1E-6
+#define MY_EPSILON 1E-6
 
-
+#include <iostream>
 using std::cout;
 using std::endl;
 
@@ -545,7 +545,7 @@ ComplexPolynomial& ComplexPolynomial::operator += (const ComplexPolynomial& P)
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] += P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (Norm(TmpCoef[i]) < EPSILON) && (Norm(TmpCoef[i]) > -EPSILON))
+      while ((i > 0) && (Norm(TmpCoef[i]) < MY_EPSILON) && (Norm(TmpCoef[i]) > -MY_EPSILON))
 	i--;
       if (i != this->Degree)
 	{
@@ -591,7 +591,7 @@ ComplexPolynomial& ComplexPolynomial::operator -= (const ComplexPolynomial& P)
       for (int i = 0; i <= this->Degree; i++)
 	this->Coefficient[i] -= P.Coefficient[i];
       int i = this->Degree;
-      while ((i > 0) && (Norm(TmpCoef[i]) < EPSILON) && (Norm(TmpCoef[i]) > -EPSILON))
+      while ((i > 0) && (Norm(TmpCoef[i]) < MY_EPSILON) && (Norm(TmpCoef[i]) > -MY_EPSILON))
 	i--;
       if (i != this->Degree)
 	{

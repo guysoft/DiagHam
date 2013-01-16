@@ -137,6 +137,11 @@ class AbstractTightBindingModel
   // return value =  total groundstate energy
   virtual double ComputeGroundstateEnergy(int nbrFermions, int &bands, bool verbose = false);
 
+  
+  // return the energy of the lowest energy single-particle state
+  // 
+  virtual double SingleParticleGroundstateEnergy();
+  
  protected:
 
   // write an header that describes the tight binding model

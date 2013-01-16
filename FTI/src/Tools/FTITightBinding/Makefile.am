@@ -23,4 +23,5 @@ TightBindingModel3DAtomicLimitLattice.cc \
 TightBindingModelEffectiveBilayerHaldaneLattice.cc \
 TightBindingModelFuKaneMeleLattice.cc \
 TightBindingModel3DSimpleTILattice.cc \
+TightBindingModelHofstadterSquare.cc \
 TightBindingModelThirringOnKagome.cc

@@ -1,10 +1,12 @@
 #include "Options/Options.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceTruncated.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
-#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+
+// #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+// #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+// #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeTwoBandThirringHamiltonian.h"
 
@@ -66,6 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "theta", "additional phase of 2nd NN hopping (units of pi)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "truncation", "energy cut-off with respect to groundstate, in units of U", -1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the chern number (only in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
@@ -92,7 +95,10 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-
+  double TruncationEnergy = Manager.GetDouble("truncation");
+  if (Manager.GetDouble("u-potential")!=0)
+    TruncationEnergy*=Manager.GetDouble("u-potential");
+  
   char* StatisticPrefix = new char [16];
   sprintf (StatisticPrefix, "fermions");
   /*
@@ -134,6 +140,9 @@ int main(int argc, char** argv)
 	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_theta_%g",Manager.GetDouble("theta"));
 	
       lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_gx_%g_gy_%g", Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+
+      if (Manager.GetDouble("truncation")>0.0)
+	lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_trunc_%g", Manager.GetDouble("truncation"));
       
       sprintf (EigenvalueOutputFile,"%s.dat",FilePrefix);
     }
@@ -189,12 +198,12 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   TightBindingModelThirringOnKagome TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2a"), Manager.GetDouble("t2b"),
-							 Manager.GetDouble("theta"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+						      Manager.GetDouble("theta"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
 
 
   int FilledNbrBands=-1;
 
-  double E=TightBindingModel.ComputeGroundstateEnergy(NbrSitesX*NbrSitesY,FilledNbrBands, true);
+  double E=TightBindingModel.ComputeGroundstateEnergy(NbrSitesX*NbrSitesY, FilledNbrBands, true);
 
   cout << "Total energy of groundstate: "<<E<<" ("<<FilledNbrBands<<" filled bands)"<<endl;
 
@@ -207,13 +216,31 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 
 	  ParticleOnSphereWithSpin* Space = 0;
-	  if ((NbrSitesX * NbrSitesY) <= 31)
+	  if (TruncationEnergy>0)
 	    {
-	      Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      if ((NbrSitesX * NbrSitesY) <= 31)
+		{
+		  if (Manager.GetBoolean("flat-band"))
+		    Space = new FermionOnSquareLatticeWithSpinMomentumSpaceTruncated (NbrParticles, NbrSitesX, NbrSitesY, i, j, (Abstract2DTightBindingModel*)NULL, TruncationEnergy);
+		  else
+		    Space = new FermionOnSquareLatticeWithSpinMomentumSpaceTruncated (NbrParticles, NbrSitesX, NbrSitesY, i, j, &TightBindingModel, TruncationEnergy);
+		}
+	      else
+		{
+		  cout << "Error: long truncated space is not defined, yet."<<endl;
+		  exit(1);
+		}
 	    }
 	  else
 	    {
-	      Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      if ((NbrSitesX * NbrSitesY) <= 31)
+		{
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
 	    }
 	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

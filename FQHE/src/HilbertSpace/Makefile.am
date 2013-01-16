@@ -101,6 +101,7 @@ BosonOnSphereHaldaneSymmetricBasisShort.cc \
 BosonOnDiskHaldaneHugeBasisShort.cc \
 FermionOnSquareLatticeMomentumSpace.cc \
 FermionOnSquareLatticeWithSpinMomentumSpace.cc \
+FermionOnSquareLatticeWithSpinMomentumSpaceTruncated.cc \
 FermionOnSquareLatticeNonPeriodicMomentumSpace.cc \
 BosonOnSphereFusedBasis.cc \
 BosonOnSphereTensorProductState.cc \
