@@ -82,17 +82,10 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   SparseRealMatrix* BMatrices;
   SparseRealMatrix* ConjugateBMatrices;
 
-  // array of normalized tensor product B_1 x B_1^+ (one per orbital)
-  SparseRealMatrix* NormalizedB1B1;
-  // array of normalized tensor product B_0 x B_1^+ (one per orbital)
-  SparseRealMatrix* NormalizedB0B1;
-  // array of normalized tensor product B_1 x B_0^+ (one per orbital)
-  SparseRealMatrix* NormalizedB1B0;
-  // array of normalized tensor product B_0 x B_0^+ + B_1 x B_1^+ (one per orbital)
-  SparseRealMatrix* NormalizedB0B0B1B1;
-
   // state normalization
   double StateNormalization;
+  // state normalization when quasiholes are present
+  Complex ComplexStateNormalization;
   
   // temporary arrays needed for the sparse matrix multiplications
   double* TmpMatrixElements ;
@@ -237,6 +230,14 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
 
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual long AdA (long index, int m, int n, Complex& coefficient);
   
   // print a given State
   //

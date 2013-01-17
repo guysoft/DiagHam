@@ -1,0 +1,150 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//                                                                            //
+//                            DiagHam  version 0.01                           //
+//                                                                            //
+//                  Copyright (C) 2001-2004 Nicolas Regnault                  //
+//                                                                            //
+//                                                                            //
+//              class of main task to compute the E matrix properties         //
+//                                                                            //
+//                        last modification : 16/01/2013                      //
+//                                                                            //
+//                                                                            //
+//    This program is free software; you can redistribute it and/or modify    //
+//    it under the terms of the GNU General Public License as published by    //
+//    the Free Software Foundation; either version 2 of the License, or       //
+//    (at your option) any later version.                                     //
+//                                                                            //
+//    This program is distributed in the hope that it will be useful,         //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           //
+//    GNU General Public License for more details.                            //
+//                                                                            //
+//    You should have received a copy of the GNU General Public License       //
+//    along with this program; if not, write to the Free Software             //
+//    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+
+#ifndef FQHEMPSEMATRIXMAINTASK_H
+#define FQHEMPSEMATRIXMAINTASK_H
+
+
+#include "config.h"
+
+#include "MainTask/AbstractMainTask.h"
+#include "Vector/ComplexVector.h"
+
+#include <iostream>
+using std::ofstream;
+
+class AbstractHamiltonian;
+class OptionManager;
+
+
+class FQHEMPSEMatrixMainTask: public AbstractMainTask
+{
+
+ protected:
+
+  // pointer to the current Hamiltonian
+  AbstractHamiltonian* Hamiltonian;
+
+  // number of eigenvalues to compute
+  int NbrEigenvalues;
+  // array where the eigenvalues are stored
+  Complex* Eigenvalues;
+  // true if the eigenstates have to be computed
+  bool ComputeEigenstates;
+  // array where the eigenstates are stored
+  ComplexVector* Eigenstates;
+  // Compute the left eigenstates if true 
+  bool LeftFlag;
+    
+  // numerical error when sorting real numbers
+  double SortingError;
+
+  // show time spent for each Lanczos iteration
+  bool ShowIterationTime;
+  // enable Arnoldi disk resume capabilities
+  bool DiskFlag;
+  // resume from disk datas
+  bool ResumeFlag;
+  // maximum Hilbert space dimension for which full diagonalization is applied
+  int FullDiagonalizationLimit;
+  // maximum number of Arnoldi iteration
+  int MaxNbrIterArnoldi;
+  // amount of memory (in Mbytes) that can be used for the Arnoldi algorithm with disk storage
+  long ArnoldiMemory;
+
+  // if non zero, store the E matrix spectrum in this file
+  char* EigenstateFileName;
+  // prefix to add to the name of each file that will contain an eigenvector
+  char* EigenvectorFileName;
+  // an optional header that can be added to EigenvectorFileName
+  char* EigenstateFileHeader;
+
+ public:
+
+  // constructor
+  //  
+  // options = pointer to the options managers containing all running options
+  // hamiltonian = pointer to the current Hamiltonian
+  // nbrEigenvalues = number of eigenvalues to compute
+  // computeEigenstates = true if the eigenstates have to be computed
+  // leftFlag = compute the left eigenstates if true 
+  // sortingError = numerical error when sorting real numbers
+  // eigenstateFileName = if non zero, store the E matrix spectrum in this file
+  // eigenstateFileHeader = an optional header that can be added to EigenvectorFileName
+  // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector 
+  //                       (eigenvectors are stored only if eigenvectorFileName is non zero)
+  FQHEMPSEMatrixMainTask(OptionManager* options, AbstractHamiltonian* hamiltonian, 
+			 int nbrEigenvalues, bool computeEigenstates, bool leftFlag, double sortingError,
+			 char* eigenstateFileName = 0, char* eigenstateFileHeader = 0, char* eigenvectorFileName = 0);
+  
+  // destructor
+  //  
+  ~FQHEMPSEMatrixMainTask();
+  
+  // execute the main task
+  // 
+  // return value = 0 if no error occurs, else return error code
+  int ExecuteMainTask();
+
+  // get the E matrix eigenvalues
+  //
+  // return value = pointer to the eigenvalue array
+  Complex* GetEigenvalues();
+
+  // get the E matrix eigenstates
+  //
+  // return value = pointer to the eigenstate array
+  ComplexVector* GetEigenstates();
+
+
+
+ protected:
+  
+};
+
+// get the E matrix eigenvalues
+//
+// return value = pointer to the eigenvalue array
+
+inline Complex* FQHEMPSEMatrixMainTask::GetEigenvalues()
+{
+  return this->Eigenvalues;
+}
+
+// get the E matrix eigenstates
+//
+// return value = pointer to the eigenstate array
+
+inline ComplexVector* FQHEMPSEMatrixMainTask::GetEigenstates()
+{
+  return this->Eigenstates;
+}
+
+#endif

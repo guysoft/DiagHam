@@ -238,6 +238,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual long AdA (long index, int m, int n, double& coefficient);
 
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual long AdA (long index, int m, int n, Complex& coefficient);
+
   // apply creation operator to a word, using the conventions
   // for state-coding and quantum numbers of this space
   // state = word to be acted upon

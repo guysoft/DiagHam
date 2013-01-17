@@ -74,103 +74,9 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper()
 // memory = amount of memory granted for precalculations
 
 FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
-						      int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, AbstractArchitecture* architecture,
-						      unsigned long memory)
+							  int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, AbstractArchitecture* architecture,
+							  unsigned long memory)
 {
-/*
-  this->NbrFermions = nbrFermions;
-  this->IncNbrFermions = this->NbrFermions + 1;
-  this->TotalLz = totalLz;
-  this->LzMax = lzMax;
-  this->NbrLzValue = this->LzMax + 1;
-  this->TotalLz = 0;
-  this->StateDescription = 0x0ul;
-  int TmpIndex = 0;
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-      this->StateDescription |= ((unsigned long) (referenceState[i] & 1)) << i;
-      if (referenceState[i] == 1)
-	{
-	  this->TotalLz += i;
-	  this->StateLzMax = i;
-	}
-    }
-  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
-  totalLz = this->TotalLz;
-  this->LargeHilbertSpaceDimension = 1l;
-  this->HilbertSpaceDimension = 1;
-  this->Flag.Initialize();
-  this->StateDescription = 0l;
-  this->MaximumSignLookUp = 16;
-  this->GenerateLookUpTable(10000000);
-  this->MPSRowIndex = rowIndex;
-  this->MPSColumnIndex = columnIndex;
-
-  int NbrBMatrices = 2;
-  SparseRealMatrix* SparseConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
-  for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      SparseConjugateBMatrices[i] = bMatrices[i].Transpose();
-    }
-  SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
-  for (int i = 0; i < NbrBMatrices; ++i)
-    {
-      SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
-      for (int j = 0; j < NbrBMatrices; ++j)
-	{
-	  SparseTensorProductBMatrices[i][j] = TensorProduct(bMatrices[i], SparseConjugateBMatrices[j]);
-	}
-    }
-  delete[]SparseConjugateBMatrices;
-
-
-  this-> NbrPrecalculatedMatrixProducts = this->LzMax + 1;
-
-  this->NormalizedB1B1 = new SparseRealMatrix [1];
-  this->NormalizedB0B1 = new SparseRealMatrix [1];
-  this->NormalizedB1B0 = new SparseRealMatrix [1];
-  this->NormalizedB0B0B1B1 = new SparseRealMatrix [NbrPrecalculatedMatrixProducts];
-  
-  long TmpMemory = (((long) SparseTensorProductBMatrices[1][1].GetNbrRow()) * 
-		    ((long) SparseTensorProductBMatrices[1][1].GetNbrColumn())) / 100l;
-  cout << "Requested memory for sparse matrix multiplications = " << ((TmpMemory * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
-  this->TmpMatrixElements = new double [TmpMemory];
-  this->TmpColumnIndices = new int [TmpMemory];
-  this->TmpElements = new double [SparseTensorProductBMatrices[1][1].GetNbrRow()];
-
-  this->NormalizedB0B0B1B1[0] = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
-  this->NormalizedB1B1[0].Copy(SparseTensorProductBMatrices[1][1]);
-  this->NormalizedB0B1[0].Copy(SparseTensorProductBMatrices[0][1]);
-  this->NormalizedB1B0[0].Copy(SparseTensorProductBMatrices[1][0]);
-
-  unsigned long PrecalculationMemory = this->NormalizedB0B0B1B1[0].GetAllocatedMemory();
-  this->NbrPrecalculatedMatrixProducts = 0;
-  for (int i = 1; (i <= this->LzMax) && (PrecalculationMemory < memory); ++i)
-    {
-      this->NormalizedB0B0B1B1[i].Copy(this->NormalizedB0B0B1B1[i - 1]);
-      this->NormalizedB0B0B1B1[i].Multiply(this->NormalizedB0B0B1B1[0], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-      PrecalculationMemory += this->NormalizedB0B0B1B1[0].GetAllocatedMemory();
-      ++this->NbrPrecalculatedMatrixProducts;
-    }
-  cout << "Requested memory for precalculations = " << (PrecalculationMemory >> 20) << "Mb" << endl;
-  SparseRealMatrix TmpMatrixNorm;
-  TmpMatrixNorm.Copy(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1]);
-  int NbrSteps = (this->LzMax + 1) / this->NbrPrecalculatedMatrixProducts;
-  for (int i = 1; i < NbrSteps; ++i)
-    TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-  NbrSteps = (this->LzMax + 1) % this->NbrPrecalculatedMatrixProducts;
-  if (NbrSteps > 0)
-    TmpMatrixNorm.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-    
-  double Tmp;
-  TmpMatrixNorm.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
-  this->StateNormalization = Tmp;
-
-  for (int i = 0; i < NbrBMatrices; ++i)
-    delete[] SparseTensorProductBMatrices[i];
-  delete[] SparseTensorProductBMatrices;
-*/
-
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = totalLz;
@@ -209,11 +115,6 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& 
       this->ConjugateBMatrices[i] = bMatrices[i].Transpose();
     }
 
-  this->NormalizedB1B1 = new SparseRealMatrix [this->LzMax + 1];
-  this->NormalizedB0B1 = new SparseRealMatrix [this->LzMax + 1];
-  this->NormalizedB1B0 = new SparseRealMatrix [this->LzMax + 1];
-  this->NormalizedB0B0B1B1 = new SparseRealMatrix [this->LzMax + 1];
-  
   this->MaxTmpMatrixElements = (((long) this->BMatrices[0].GetNbrRow()) * 
 				((long) this->BMatrices[0].GetNbrRow() / 1l));
   cout << "Requested memory for sparse matrix multiplications = " << ((this->MaxTmpMatrixElements * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
@@ -275,7 +176,6 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& 
 
 FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper(const FermionOnCylinderMPSWrapper& fermions)
 {
-/*
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->TotalLz = fermions.TotalLz;
@@ -292,38 +192,6 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper(const FermionOnCylinder
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->MPSRowIndex = fermions.MPSRowIndex;
   this->MPSColumnIndex = fermions.MPSColumnIndex;
-  this->NormalizedB0B0B1B1 = fermions.NormalizedB0B0B1B1;
-  this->NormalizedB1B1 = fermions.NormalizedB1B1;
-  this->NormalizedB0B1 = fermions.NormalizedB0B1;
-  this->NormalizedB1B0 = fermions.NormalizedB1B0;
-  this->StateNormalization = fermions.StateNormalization;
-  this->NbrPrecalculatedMatrixProducts = fermions.NbrPrecalculatedMatrixProducts;
-  long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
-		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
-  this->TmpMatrixElements = new double [TmpMemory];
-  this->TmpColumnIndices = new int [TmpMemory];
-  this->TmpElements = new double [this->NormalizedB0B0B1B1[0].GetNbrRow()];
-*/
-  this->NbrFermions = fermions.NbrFermions;
-  this->IncNbrFermions = fermions.IncNbrFermions;
-  this->TotalLz = fermions.TotalLz;
-  this->ShiftedTotalLz = fermions.ShiftedTotalLz;
-  this->LzMax = fermions.LzMax;
-  this->NbrLzValue = fermions.NbrLzValue;
-  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
-  this->Flag = fermions.Flag;
-  this->SignLookUpTable = fermions.SignLookUpTable;
-  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
-  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->MPSRowIndex = fermions.MPSRowIndex;
-  this->MPSColumnIndex = fermions.MPSColumnIndex;
-  this->NormalizedB0B0B1B1 = fermions.NormalizedB0B0B1B1;
-  this->NormalizedB1B1 = fermions.NormalizedB1B1;
-  this->NormalizedB0B1 = fermions.NormalizedB0B1;
-  this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->BMatrices = fermions.BMatrices;
   this->ConjugateBMatrices = fermions.ConjugateBMatrices;
   this->StateNormalization = fermions.StateNormalization;
@@ -348,48 +216,6 @@ FermionOnCylinderMPSWrapper::~FermionOnCylinderMPSWrapper ()
 
 FermionOnCylinderMPSWrapper& FermionOnCylinderMPSWrapper::operator = (const FermionOnCylinderMPSWrapper& fermions)
 {
-/*
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->SignLookUpTable;
-      delete[] this->SignLookUpTableMask;
-      delete[] this->NormalizedB0B0B1B1;
-      delete[] this->NormalizedB1B1;
-      delete[] this->NormalizedB0B1;
-      delete[] this->NormalizedB1B0;
-    }
-  delete[] this->TmpMatrixElements;
-  delete[] this->TmpColumnIndices;
-  delete[] this->TmpElements;
-  this->NbrFermions = fermions.NbrFermions;
-  this->IncNbrFermions = fermions.IncNbrFermions;
-  this->TotalLz = fermions.TotalLz;
-  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
-  this->LzMax = fermions.LzMax;
-  this->NbrLzValue = fermions.NbrLzValue;
-  this->Flag = fermions.Flag;
-  this->SignLookUpTable = fermions.SignLookUpTable;
-  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
-  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  this->MPSRowIndex = fermions.MPSRowIndex;
-  this->MPSColumnIndex = fermions.MPSColumnIndex;
-  this->NormalizedB0B0B1B1 = fermions.NormalizedB0B0B1B1;
-  this->NormalizedB1B1 = fermions.NormalizedB1B1;
-  this->NormalizedB0B1 = fermions.NormalizedB0B1;
-  this->NormalizedB1B0 = fermions.NormalizedB1B0;
-  this->StateNormalization = fermions.StateNormalization;
-  this->NbrPrecalculatedMatrixProducts = fermions.NbrPrecalculatedMatrixProducts;
-  long TmpMemory = (((long) this->NormalizedB0B0B1B1[0].GetNbrRow()) * 
-		    ((long)  this->NormalizedB0B0B1B1[0].GetNbrColumn())) / 100l;
-  this->TmpMatrixElements = new double [TmpMemory];
-  this->TmpColumnIndices = new int [TmpMemory];
-  this->TmpElements = new double [this->NormalizedB0B0B1B1[0].GetNbrRow()];
-  return *this;
-*/
-
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->SignLookUpTable;
@@ -415,10 +241,6 @@ FermionOnCylinderMPSWrapper& FermionOnCylinderMPSWrapper::operator = (const Ferm
   this->MaximumSignLookUp = fermions.MaximumSignLookUp;
   this->MPSRowIndex = fermions.MPSRowIndex;
   this->MPSColumnIndex = fermions.MPSColumnIndex;
-  this->NormalizedB0B0B1B1 = fermions.NormalizedB0B0B1B1;
-  this->NormalizedB1B1 = fermions.NormalizedB1B1;
-  this->NormalizedB0B1 = fermions.NormalizedB0B1;
-  this->NormalizedB1B0 = fermions.NormalizedB1B0;
   this->StateNormalization = fermions.StateNormalization;
   this->MaxTmpMatrixElements = fermions.MaxTmpMatrixElements;
   this->TmpMatrixElements = new double [this->MaxTmpMatrixElements];
@@ -449,106 +271,6 @@ AbstractHilbertSpace* FermionOnCylinderMPSWrapper::Clone()
 
 int FermionOnCylinderMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-/*
-  if ((m1 == m2) || (n1 == n2))
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  unsigned long TmpState = this->StateDescription;
-  coefficient = this->SignLookUpTable[(TmpState >> n2) & this->SignLookUpTableMask[n2]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
-#endif
-  TmpState &= ~(0x1ul << n2);
-  coefficient *= this->SignLookUpTable[(TmpState >> n1) & this->SignLookUpTableMask[n1]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
-#endif
-  TmpState &= ~(0x1ul << n1);
-  coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
-#endif
-  TmpState |= (0x1ul << m2);
-  coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
-#endif
-  TmpState |= (0x1ul << m1);
-  SparseRealMatrix TmpMatrix;
-  if (m1 == 0)
-    {
-      if ((m1 == n1) || (m1 == n2))
-	TmpMatrix.Copy(this->NormalizedB1B1[0]);
-      else
-	TmpMatrix.Copy(this->NormalizedB0B1[0]);
-    }
-  else
-    {
-      if (m2 == 0)
-	{
-	  if ((m2 == n1) || (m2 == n2))
-	    TmpMatrix.Copy(this->NormalizedB1B1[0]);
-	  else
-	    TmpMatrix.Copy(this->NormalizedB0B1[0]);
-	}
-      else
-	{
-	  if ((0 == n1) || (0 == n2))
-	    {
-	      TmpMatrix.Copy(this->NormalizedB1B0[0]);
-	    }
-	  else
-	    {
-	      TmpMatrix.Copy(this->NormalizedB0B0B1B1[0]);
-	    }
-	}
-    }
-  for (int j = 1; j <= this->LzMax; ++j)
-    {
-      if (j == m1)
-	{
-	  if ((m1 == n1) || (m1 == n2))
-	    TmpMatrix.Multiply(this->NormalizedB1B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
-	  else
-	    TmpMatrix.Multiply(this->NormalizedB0B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
-	}
-      else
-	{
-	  if (j == m2)
-	    {
-	      if ((m2 == n1) || (m2 == n2))
-		TmpMatrix.Multiply(this->NormalizedB1B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
-	      else
-		TmpMatrix.Multiply(this->NormalizedB0B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
-	    }
-	  else
-	    {
-	      if ((j == n1) || (j == n2))
-		{
-		  TmpMatrix.Multiply(this->NormalizedB1B0[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
-		}
-	      else
-		{
-		  TmpMatrix.Multiply(this->NormalizedB0B0B1B1[0], this->TmpMatrixElements, this->TmpColumnIndices,  this->TmpElements);
-		}
-	    }
-	}
-    }
-  double Tmp = 0.0;
-  TmpMatrix.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
-  coefficient *= Tmp / this->StateNormalization;
-  return 0;
-*/
   if ((m1 == m2) || (n1 == n2))
     {
       coefficient = 0.0;
@@ -702,7 +424,6 @@ int FermionOnCylinderMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int 
 		  SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[1]), &TmpMatrix, &(this->BMatrices[0]),  
 							  this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
 #endif
-
 		  Sign = 1.0;
 		  if (m1 > i)
 		    Sign *= -1.0;
@@ -819,73 +540,6 @@ int FermionOnCylinderMPSWrapper::AdAdAA (int index, int m1, int m2, int n1, int 
 
 int FermionOnCylinderMPSWrapper::ProdAdProdA (int index, int* m, int* n, int nbrIndices, double& coefficient)
 {
-/*
-  --nbrIndices;
-  for (int i = 0; i < nbrIndices; ++i)
-    {
-      if ((n[i] > this->StateLzMax) || ((this->StateDescription & (((unsigned long) (0x1)) << n[i])) == 0))
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      for (int j = i + 1; j <= nbrIndices; ++j)
-	if ((n[i] == n[j]) || (m[i] == m[j]))
-	  {
-	    coefficient = 0.0;
-	    return this->HilbertSpaceDimension; 	    
-	  }
-    }
-  if (n[nbrIndices] > this->StateLzMax)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-
-  int NewLzMax = this->StateLzMax;
-  unsigned long TmpState = this->StateDescription;
-
-  int Index;
-  coefficient = 1.0;
-  for (int i = nbrIndices; i >= 0; --i)
-    {
-      Index = n[i];
-      coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-      TmpState &= ~(((unsigned long) (0x1)) << Index);
-      if (NewLzMax == Index)
-	while ((TmpState >> NewLzMax) == 0)
-	  --NewLzMax;
-    }
-  for (int i = nbrIndices; i >= 0; --i)
-    {
-      Index = m[i];
-      if ((TmpState & (((unsigned long) (0x1)) << Index))!= 0)
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      if (Index > NewLzMax)
-	{
-	  NewLzMax = Index;
-	}
-      else
-	{
-	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
-#ifdef  __64_BITS__
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-	}
-      TmpState |= (((unsigned long) (0x1)) << Index);
-    }
-  return this->FindStateIndex(TmpState, NewLzMax);
-*/
-
   cout<<"Unimplemented"<<endl;
 }
 
@@ -898,39 +552,7 @@ int FermionOnCylinderMPSWrapper::ProdAdProdA (int index, int* m, int* n, int nbr
 
 double FermionOnCylinderMPSWrapper::ProdA (int index, int* n, int nbrIndices)
 {
-/*
-  this->ProdALzMax = this->StateLzMax;
-  this->ProdATemporaryState = this->StateDescription;
-  int Index;
-  double Coefficient = 1.0;
-  for (int i = nbrIndices - 1; i >= 0; --i)
-    {
-      Index = n[i];
-      if ((this->ProdATemporaryState & (0x1l << Index)) == 0)
-	{
-	  return 0.0;
-	}
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
-#ifdef  __64_BITS__
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-      this->ProdATemporaryState &= ~(0x1l << Index);
-    }
-  if (this->ProdATemporaryState == 0x0ul)
-    {
-      this->ProdALzMax = 0;
-      return Coefficient;      
-    }
-  while (((this->ProdATemporaryState >> this->ProdALzMax) == 0) && (this->ProdALzMax > 0))
-    --this->ProdALzMax;
-
-  return Coefficient;
-*/
-
-  cout<<"Unimplemented"<<endl;
-
+  cout<<"ProdA not implemented"<<endl;
 }
 
 // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next AdAd call
@@ -942,41 +564,7 @@ double FermionOnCylinderMPSWrapper::ProdA (int index, int* n, int nbrIndices)
 
 double FermionOnCylinderMPSWrapper::AA (int index, int n1, int n2)
 {
-/*
-  this->ProdATemporaryState = this->StateDescription;
-
-  if (((ProdATemporaryState & (((unsigned long) (0x1)) << n1)) == 0) 
-      || ((ProdATemporaryState & (((unsigned long) (0x1)) << n2)) == 0) || (n1 == n2))
-    return 0.0;
-
-  this->ProdALzMax = this->StateLzMax;
-
-  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
-#ifdef  __64_BITS__
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
-#endif
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n2);
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
-#ifdef  __64_BITS__
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
-  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
-#endif
-  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n1);
-
-  if (this->ProdATemporaryState == 0x0ul)
-    {
-      this->ProdALzMax = 0;
-      return Coefficient;      
-    }
-  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
-    --this->ProdALzMax;
-  return Coefficient;
-*/
-
-  cout<<"Unimplemented"<<endl;
+  cout<<"AA not implemented"<<endl;
 
 }
 
@@ -989,38 +577,7 @@ double FermionOnCylinderMPSWrapper::AA (int index, int n1, int n2)
 
 int FermionOnCylinderMPSWrapper::ProdAd (int* m, int nbrIndices, double& coefficient)
 {
-/*
-  coefficient = 1.0;
-  unsigned long TmpState = this->ProdATemporaryState;
-  int NewLzMax = this->ProdALzMax;
-  int Index;
-  for (int i = nbrIndices - 1; i >= 0; --i)
-    {
-      Index = m[i];
-      if ((TmpState & (0x1l << Index)) != 0)
-	{
-	  coefficient = 0.0;
-	  return this->HilbertSpaceDimension;
-	}
-      if (Index > NewLzMax)
-	{
-	  NewLzMax = Index;
-	}
-      else
-	{
-	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
-#ifdef  __64_BITS__
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
-	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
-#endif
-	}
-      TmpState |= (0x1l << Index);
-    }
-  return this->FindStateIndex(TmpState, NewLzMax);
-*/
-
-  cout<<"Unimplemented"<<endl;
+  cout<<"ProdAd not implemented"<<endl;
 
 }
 
@@ -1033,50 +590,7 @@ int FermionOnCylinderMPSWrapper::ProdAd (int* m, int nbrIndices, double& coeffic
 
 int FermionOnCylinderMPSWrapper::AdAd (int m1, int m2, double& coefficient)
 {
-
-/*
-  unsigned long TmpState = this->ProdATemporaryState;
-  if ((TmpState & (((unsigned long) (0x1)) << m2))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  int NewLzMax = this->ProdALzMax;
-  coefficient = 1.0;
-  if (m2 > NewLzMax)
-    NewLzMax = m2;
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
-#endif
-    }
-  TmpState |= (((unsigned long) (0x1)) << m2);
-  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  if (m1 > NewLzMax)
-    NewLzMax = m1;
-  else
-    {      
-      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
-#endif
-    }
-  TmpState |= (((unsigned long) (0x1)) << m1);
-  return this->FindStateIndex(TmpState, NewLzMax);
-*/
-
-  cout<<"Unimplemented"<<endl;
-
+  cout<<"AdAd not implemented"<<endl;
 }
 
 // apply a^+_m a_m operator to a given state 
@@ -1087,54 +601,6 @@ int FermionOnCylinderMPSWrapper::AdAd (int m1, int m2, double& coefficient)
 
 double FermionOnCylinderMPSWrapper::AdA (int index, int m)
 {
-/*
-  SparseRealMatrix TmpMatrix;
-  if (m == 0)
-    {
-      TmpMatrix.Copy(this->NormalizedB1B1[0]);
-      int NbrSteps = this->LzMax / this->NbrPrecalculatedMatrixProducts;
-      for (int j = 0; j < NbrSteps; ++j)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-      NbrSteps = this->LzMax % this->NbrPrecalculatedMatrixProducts;
-      if (NbrSteps > 0)
-	TmpMatrix.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-    }
-  else
-    {
-      int NbrSteps = m / this->NbrPrecalculatedMatrixProducts;
-      if (NbrSteps == 0)
-	TmpMatrix.Copy(this->NormalizedB0B0B1B1[m - 1]);
-      else
-	{
-	  TmpMatrix.Copy(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1]);
-	  for (int j = 1; j < NbrSteps; ++j)
-	    {
-	      TmpMatrix.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-	    }
-	  NbrSteps = m % this->NbrPrecalculatedMatrixProducts;
-	  if (NbrSteps > 0)
-	    {
-	      TmpMatrix.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-	    }
-	}
-      TmpMatrix.Multiply(NormalizedB1B1[0], TmpMatrixElements, TmpColumnIndices, TmpElements);
-      if (m < this->LzMax)
-	{
-	  NbrSteps = (this->LzMax - m) / this->NbrPrecalculatedMatrixProducts;
-	  for (int j = 0; j < NbrSteps; ++j)
-	    TmpMatrix.Multiply(this->NormalizedB0B0B1B1[this->NbrPrecalculatedMatrixProducts - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-	  NbrSteps = (this->LzMax - m) % this->NbrPrecalculatedMatrixProducts;
-	  if (NbrSteps > 0)
-	    TmpMatrix.Multiply(this->NormalizedB0B0B1B1[NbrSteps - 1], this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements);
-	}
-    }
-  double Tmp = 0.0;
-  TmpMatrix.GetMatrixElement(this->MPSRowIndex, this->MPSColumnIndex, Tmp);
-  return Tmp / this->StateNormalization;
-*/
-
-
-
    SparseRealMatrix TmpMatrix (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
    TmpMatrix.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
 
@@ -1164,7 +630,6 @@ double FermionOnCylinderMPSWrapper::AdA (int index, int m)
   double Tmp = 0.0;
   TmpMatrix.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
   return Tmp / this->StateNormalization;
-
 }
 
 
@@ -1176,53 +641,180 @@ double FermionOnCylinderMPSWrapper::AdA (int index, int m)
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 
-// attention: check sign returned by this function!
-/*
 int FermionOnCylinderMPSWrapper::AdA (int index, int m, int n, double& coefficient)
 {
-  int StateLzMax = this->StateLzMax;
-  unsigned long State = this->StateDescription;
-  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+  SparseRealMatrix TmpMatrix (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
+  TmpMatrix.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
+  double Sign = 1.0;
+  for (int i = 0; i <= this->LzMax; ++i)
     {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  int NewLzMax = StateLzMax;
-  unsigned long TmpState = State;
-  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
-#ifdef  __64_BITS__
-  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
-  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+      if (i == m)
+	{
+	  if (m == n)
+	    {
+#ifdef MPSWRAPPER_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
 #endif
-  TmpState &= ~(((unsigned long) (0x1)) << n);
-  if ((TmpState != 0x0ul))
-    {
-      while ((TmpState >> NewLzMax) == 0)
-	--NewLzMax;
-    }
-  else
-    NewLzMax = 0;
-  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  if (m > NewLzMax)
-    {
-      NewLzMax = m;
-    }
-  else
-    {
-      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
-#ifdef  __64_BITS__
-      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
-      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+
+#ifdef MPSWRAPPER_SMP_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
 #endif
+
+#ifdef MPSWRAPPER_CONJ	      
+	      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[1],  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+
+#ifdef MPSWRAPPER_SMP_CONJ	      
+	      SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[1]), &TmpMatrix, &(this->BMatrices[1]),  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+
+	      Sign = 1.0;
+	      if (m > i)
+		Sign *= -1.0;
+	      if (n > i)
+		Sign *= -1.0;
+	      TmpMatrix2 *= Sign;
+	      TmpMatrix = TmpMatrix2;
+	    }
+	  else
+	    {
+#ifdef MPSWRAPPER_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+
+#ifdef MPSWRAPPER_SMP_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+
+#ifdef MPSWRAPPER_CONJ	      
+	      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[0],  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+
+#ifdef MPSWRAPPER_SMP_CONJ	      
+	      SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[1]), &TmpMatrix, &(this->BMatrices[0]),  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+
+	      Sign = 1.0;
+	      if (m > i)
+		Sign *= -1.0;
+	      TmpMatrix2 *= Sign;
+	      TmpMatrix = TmpMatrix2;
+	    }
+	}
+      else
+	{
+	  if (i == n)
+	    {
+#ifdef MPSWRAPPER_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[1],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+	      
+#ifdef MPSWRAPPER_SMP_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+	      
+#ifdef MPSWRAPPER_CONJ
+	      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrix, this->BMatrices[1],  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+	      
+#ifdef MPSWRAPPER_SMP_CONJ	      
+	      SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[0]), &TmpMatrix, &(this->BMatrices[1]),  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+	      
+	      Sign = 1.0;
+	      if (n > i)
+		Sign *= -1.0;
+	      TmpMatrix2 *= Sign;
+	      TmpMatrix = TmpMatrix2;
+	    }
+	  else
+	    {
+#ifdef MPSWRAPPER_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrix, 
+				    this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+ 							 this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+	      
+#ifdef MPSWRAPPER_SMP_MULT
+	      SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrix, 
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrix, 
+				    this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+						     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+	      
+#ifdef MPSWRAPPER_CONJ
+	      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrix, this->BMatrices[0],  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+	      SparseRealMatrix TmpMatrix3 = Conjugate(this->ConjugateBMatrices[1], TmpMatrix, this->BMatrices[1],  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+	      
+#ifdef MPSWRAPPER_SMP_CONJ	      
+	      SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[0]), &TmpMatrix, &(this->BMatrices[0]),  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+	      SparseRealMatrix TmpMatrix3 = Conjugate(&(this->ConjugateBMatrices[1]), &TmpMatrix, &(this->BMatrices[1]),  
+						      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+	      
+	      Sign = 1.0;
+	      if (m > i)
+		Sign *= -1.0;
+	      if (n > i)
+		Sign *= -1.0;
+	      TmpMatrix3 *= Sign;
+	      TmpMatrix = TmpMatrix2 + TmpMatrix3;
+	    }
+	}
     }
-  TmpState |= (((unsigned long) (0x1)) << m);
-  return this->FindStateIndex(TmpState, NewLzMax);
+  double Tmp = 0.0;
+  TmpMatrix.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
+  coefficient = -Tmp / this->StateNormalization;
+  return 0;
 }
 
-*/
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+long FermionOnCylinderMPSWrapper::AdA (long index, int m, int n, Complex& coefficient)
+{
+  return 0;
+}
+  

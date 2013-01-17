@@ -36,6 +36,8 @@
 
 #include "Options/Options.h"
 
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
@@ -111,6 +113,20 @@ int main(int argc, char** argv)
        cout<< "Cylinder geometry, kappa= " << Kappa << endl;
     }
 
+  int NbrQuasiholes = 0;
+  Complex* QuasiholePositions = 0;
+  if (Manager.GetString("with-quasiholes") != 0)
+    {
+      MultiColumnASCIIFile InputQuasiholePosition;
+      if (InputQuasiholePosition.Parse(Manager.GetString("with-quasiholes")) == false)
+	{
+	  InputQuasiholePosition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      QuasiholePositions = InputQuasiholePosition.GetAsComplexArray(0);
+      NbrQuasiholes = InputQuasiholePosition.GetNbrLines();
+   }
+
 
   RealVector State;
   FermionOnSpherePTruncated* Space = 0;
@@ -181,7 +197,10 @@ int main(int argc, char** argv)
     }
 
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
-
+  SparseComplexMatrix* SparseQuasiholeBMatrices = 0;
+  if (NbrQuasiholes > 0)
+    SparseQuasiholeBMatrices = MPSMatrix->GetQuasiholeMatrices(NbrQuasiholes, QuasiholePositions);
+ 
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
   int MPSRowIndex = 0;
@@ -240,181 +259,6 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("infinite-cylinder"))
     {
-      int NbrBMatrices = 2;
-      SparseRealMatrix* SparseConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
-      double* Coefficients = new double[NbrBMatrices];
-      for (int i = 0; i < NbrBMatrices; ++i)
-	{
-	  Coefficients[i] = 1.0;
-	  SparseConjugateBMatrices[i] = SparseBMatrices[i].Transpose();
-	}
-
-       TensorProductSparseMatrixHamiltonian EHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);
-       int NbrEigenstates = 3;
-       BasicArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);
-//       BasicComplexArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, 3000, true, false, false);
-//       BasicBlockArnoldiAlgorithm Arnoldi(Architecture.GetArchitecture(), NbrEigenstates, NbrEigenstates, 3000, true, false, false);
-       Arnoldi.SetHamiltonian(&EHamiltonian);
-       Arnoldi.InitializeLanczosAlgorithm();
-       Arnoldi.RunLanczosAlgorithm(3);
-       while (Arnoldi.TestConvergence() == false)
- 	 {
- 	   Arnoldi.RunLanczosAlgorithm(1);
- 	 }
-        ComplexVector* Test = (ComplexVector*) Arnoldi.GetEigenstates(NbrEigenstates);  
-	for (int i = 0; i < NbrEigenstates; ++i)
-	  {
-	    cout << (Test[i] * Test[i]) << endl;
-	    ComplexVector TestE (Test[i].GetVectorDimension());
-	    EHamiltonian.Multiply(Test[i], TestE);
-	    cout << (TestE * Test[i]) << endl;
-	  }
-
-//       RealMatrix NormalizedB0B0B1B1Full2(NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow());
-//       EHamiltonian.GetHamiltonian(NormalizedB0B0B1B1Full2);
-//       cout << SparseBMatrices[0] << endl;
-//       cout << SparseConjugateBMatrices[0] << endl;
-//       cout << NormalizedB0B0B1B1Full2 << endl;
-//       cout << NormalizedB0B0B1B1Full << endl;
-//       for (int i = 0; i < NormalizedB0B0B1B1Full2.GetNbrRow(); ++i)
-// 	for (int j = 0; j < NormalizedB0B0B1B1Full2.GetNbrColumn(); ++j)
-// 	  {					
-// 	    if (NormalizedB0B0B1B1Full2[j][i] != NormalizedB0B0B1B1Full[i][j])
-// 	      cout << "error " << i << " " << j << " : " 
-// 		   << NormalizedB0B0B1B1Full2[j][i] << " " << NormalizedB0B0B1B1Full[i][j] << endl;
-// 	  }
-
-      return 0;
-
-      SparseRealMatrix** SparseTensorProductBMatrices = new SparseRealMatrix*[NbrBMatrices];
-      for (int i = 0; i < NbrBMatrices; ++i)
-	{
-	  SparseTensorProductBMatrices[i] = new SparseRealMatrix[NbrBMatrices];
-	  for (int j = 0; j < NbrBMatrices; ++j)
-	    {
-	      SparseTensorProductBMatrices[i][j] = TensorProduct(SparseBMatrices[i], SparseConjugateBMatrices[j]);
-	    }
-	}
-      //      delete[]SparseConjugateBMatrices;
-      SparseRealMatrix NormalizedB0B0B1B1 = SparseRealMatrixLinearCombination(1.0, SparseTensorProductBMatrices[0][0], 1.0, SparseTensorProductBMatrices[1][1]);
-      
-      RealMatrix NormalizedB0B0B1B1Full (NormalizedB0B0B1B1);
-      ComplexMatrix NormalizedB0B0B1B1FullC (NormalizedB0B0B1B1Full);
-
-
-      ComplexDiagonalMatrix TmpDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
-      ComplexMatrix Eigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
-      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpDiag, Eigenstates, false);
-      int LargestEigenvalueIndex = -1;
-      int LargestEigenvalueIndex2 = -1;
-      int LargestEigenvalueIndex3 = -1;
-      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	if (Norm(TmpDiag[i]) > 1e-10)
-	  {
-	    if (LargestEigenvalueIndex < 0)
-	      {
-		LargestEigenvalueIndex = i;
-	      }
-	    else
-	      {
-		if (LargestEigenvalueIndex2 < 0)
-		  {
-		    LargestEigenvalueIndex2 = i;
-		  }
-		else
-		  {
-		    if (LargestEigenvalueIndex3 < 0)
-		      {
-			LargestEigenvalueIndex3 = i;
-		      }
-		  }
-	      }
-	    cout << TmpDiag[i] << " " << Norm(TmpDiag[i]) << endl;
-	  }
-      cout << endl;
-
-      ComplexDiagonalMatrix TmpDiag2 (NormalizedB0B0B1B1FullC.GetNbrRow(), true);  
-      NormalizedB0B0B1B1FullC.LapackDiagonalize(TmpDiag2);
-      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-       if (Norm(TmpDiag2[i]) > 1e-10)
-	  {
-	    cout << TmpDiag2[i] << " " << Norm(TmpDiag2[i]) << endl;
-	  }
-      cout << endl;
-
-      return 0;
-//       cout << (Eigenstates[LargestEigenvalueIndex] * Test[0]) << endl;
-//       cout << (Eigenstates[LargestEigenvalueIndex2] * Test[0]) << endl;
-//       cout << (Eigenstates[LargestEigenvalueIndex3] * Test[0]) << endl;
-
-      ComplexDiagonalMatrix TmpLeftDiag (NormalizedB0B0B1B1Full.GetNbrRow(), true);  
-      ComplexMatrix LeftEigenstates (NormalizedB0B0B1B1Full.GetNbrRow(), NormalizedB0B0B1B1Full.GetNbrRow(), true);  
-      NormalizedB0B0B1B1Full.LapackDiagonalize(TmpLeftDiag, LeftEigenstates, true);
-      int LargestLeftEigenvalueIndex = -1;
-      int LargestLeftEigenvalueIndex2 = -1;
-      int LargestLeftEigenvalueIndex3 = -1;
-      for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
-	if (Norm(TmpLeftDiag[i]) > 1e-10)
-	  {
-	    if (LargestLeftEigenvalueIndex < 0)
-	      {
-		LargestLeftEigenvalueIndex = i;
-	      }
-	    else
-	      {
-		if (LargestLeftEigenvalueIndex2 < 0)
-		  {
-		    LargestLeftEigenvalueIndex2 = i;
-		  }
-		else
-		  {
-		    if (LargestLeftEigenvalueIndex3 < 0)
-		      {
-			LargestLeftEigenvalueIndex3 = i;
-		      }
-		  }
-	      }
-//	    cout << Norm(TmpLeftDiag[i]) << " ";
-	  }
-
-//       cout << endl;
-//       cout << "right : " << LargestEigenvalueIndex << " : " << TmpDiag[LargestEigenvalueIndex]
-// 	   << " " << TmpDiag[LargestEigenvalueIndex2] << " " << TmpDiag[LargestEigenvalueIndex3] << endl;
-//       cout << "left : " << LargestLeftEigenvalueIndex << " : " << TmpLeftDiag[LargestLeftEigenvalueIndex]
-// 	   << " " << TmpLeftDiag[LargestLeftEigenvalueIndex2] << " " << TmpLeftDiag[LargestLeftEigenvalueIndex3] << endl;
-//       cout << "right overlaps = ";
-//       cout << (Eigenstates[LargestEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex]) << " " 
-// 	   << (Eigenstates[LargestEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex2]) << " " 
-// 	   << (Eigenstates[LargestEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex3]) << " " 
-// 	   << (Eigenstates[LargestEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2]) << " " 
-// 	   << (Eigenstates[LargestEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex3]) << " " 
-// 	   << (Eigenstates[LargestEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]) << endl;
-//       cout << "left/right overlaps = ";
-//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex]) << " " 
-// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex2]) << " " 
-// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex3]) << " " 
-// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2]) << " " 
-// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex3]) << " " 
-// 	   << (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]) << endl;
-
-//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex] * Test[0]) << endl;
-//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex2] * Test[0]) << endl;
-//       cout << (LeftEigenstates[LargestLeftEigenvalueIndex3] * Test[0]) << endl;
-
-      RealMatrix NormalizedB1B1Full (SparseTensorProductBMatrices[1][1]);
-      ComplexVector Test2(NormalizedB0B0B1B1Full.GetNbrRow());
-      Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex]);
-      cout << ((LeftEigenstates[LargestLeftEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex] / (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex])) << endl;
-      Complex Density = (LeftEigenstates[LargestLeftEigenvalueIndex] * Test2) / TmpDiag[LargestEigenvalueIndex] / (LeftEigenstates[LargestLeftEigenvalueIndex] * Eigenstates[LargestEigenvalueIndex]);
-      Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex2]);
-      cout << ((LeftEigenstates[LargestLeftEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2] / (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2])) << endl;
-      Density += (LeftEigenstates[LargestLeftEigenvalueIndex2] * Test2) / TmpDiag[LargestEigenvalueIndex2] / (LeftEigenstates[LargestLeftEigenvalueIndex2] * Eigenstates[LargestEigenvalueIndex2]);
-      Test2.Multiply(NormalizedB1B1Full, Eigenstates[LargestEigenvalueIndex3]);
-      cout << ((LeftEigenstates[LargestLeftEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3] / (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3])) << endl;
-      Density += (LeftEigenstates[LargestLeftEigenvalueIndex3] * Test2) / TmpDiag[LargestEigenvalueIndex3] / (LeftEigenstates[LargestLeftEigenvalueIndex3] * Eigenstates[LargestEigenvalueIndex3]);
-      Density /= 3.0;      
-//      Density *= Kappa;
-      cout << Density << endl;
       return 0;
     }
   
@@ -468,14 +312,30 @@ int main(int argc, char** argv)
     {
       cout<<"density precalculate ";
       Complex CheckSum (0.0,0.0);
-      for (int i = 0; i <= NbrFluxQuanta; ++i)
+      if (NbrQuasiholes > 0)
 	{
-	  ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
-	  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
-          CheckSum += PrecalculatedValues[i];
-          cout<< i <<" " << PrecalculatedValues[i] << endl;
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+	    {
+	      for (int j = 0; j <= NbrFluxQuanta; ++j)
+		{
+		  ParticleOnSphereDensityOperator Operator (SpaceWrapper, i, j);
+		  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
+		  CheckSum += PrecalculatedValues[i];
+		  cout<< i <<" " << PrecalculatedValues[i] << endl;
+		}
+	    }
 	}
-      cout<<"done. Checksum="<<CheckSum<<endl;
+      else
+	{
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+	    {
+	      ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
+	      PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
+	      CheckSum += PrecalculatedValues[i];
+	      cout<< i <<" " << PrecalculatedValues[i] << endl;
+	    }
+	}
+      cout<<"done. CheckSum=" << CheckSum <<endl;
     }
   
   ofstream File;

@@ -29,6 +29,9 @@
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+
+#include "MainTask/FQHEMPSEMatrixMainTask.h"
 
 #include "GeneralTools/ArrayTools.h"
 
@@ -47,10 +50,6 @@ using std::ios;
 using std::ofstream;
 
 
-
-
-void MPSDiagonalizeEMatrix(OptionManager* manager, AbstractHamiltonian* hamiltonian, int nbrEigenstates, Complex*& eigenvalues, ComplexVector*& eigenstates, 
-			   AbstractArchitecture* architecture, double error, bool leftFlag);
 
 
 int main(int argc, char** argv)
@@ -315,20 +314,24 @@ int main(int argc, char** argv)
 																       EffectiveDimension, EffectiveBlockIndices, 
 																       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
 																       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
-      ComplexVector* LeftEigenstates = 0;
-      Complex* LeftEigenvalues = 0;
       cout << "computing left eigenstates : " << endl;
-      MPSDiagonalizeEMatrix(&Manager, ETransposeHamiltonian, NbrEigenstates, LeftEigenvalues, LeftEigenstates, Architecture.GetArchitecture(), 1e-10, true);
+      FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, true, true, 1e-10);
+      MainTaskOperation TaskOperationLeft (&TaskLeft);
+      TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+      ComplexVector* LeftEigenstates = TaskLeft.GetEigenstates();
+      Complex* LeftEigenvalues = TaskLeft.GetEigenvalues();
       delete ETransposeHamiltonian;
 
       TensorProductSparseMatrixSelectedBlockHamiltonian* EHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
-															       EffectiveDimension, EffectiveBlockIndices, 
-															       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-															       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
-      ComplexVector* RightEigenstates = 0;
-      Complex* RightEigenvalues = 0;
+															      EffectiveDimension, EffectiveBlockIndices, 
+															      BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+															      Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       cout << "computing right eigenstates : " << endl;
-      MPSDiagonalizeEMatrix(&Manager, EHamiltonian, NbrEigenstates, RightEigenvalues, RightEigenstates, Architecture.GetArchitecture(), 1e-10, false);
+      FQHEMPSEMatrixMainTask TaskRight(&Manager, EHamiltonian, NbrEigenstates, true, false, 1e-10);
+      MainTaskOperation TaskOperationRight (&TaskRight);
+      TaskOperationRight.ApplyOperation(Architecture.GetArchitecture());
+      ComplexVector* RightEigenstates = TaskRight.GetEigenstates();
+      Complex* RightEigenvalues = TaskRight.GetEigenvalues();
       delete EHamiltonian;
 
       cout << "eigenvalues : " << endl;
@@ -349,7 +352,7 @@ int main(int argc, char** argv)
 
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
-      
+      int NbrEigenstatesLinearSuperposition = 1;
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
       Complex* TmpRightFactors = new Complex [NbrEigenstates];
       int ReducedBoundaryIndex = SearchInArray<long>((((long) MPSRowIndex) * TmpBMatrixDimension) + MPSRowIndex, 
@@ -363,72 +366,6 @@ int main(int argc, char** argv)
 
       double LeftEigenvalueError = 0.0;
       double RightEigenvalueError = 0.0;
-
-//       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
-// 	{
-// 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
-// 	    {
-// 	      int IndexRange = MPSMatrix->GetBondIndexRange(PLevel, QValue);
-// 	      if (IndexRange >= 0)
-// 		{
-// 		  ComplexMatrix LeftMDaggerM (IndexRange, IndexRange);		    
-// 		  for (int i = 0; i < IndexRange; ++i)
-// 		    for (int j = 0; j < IndexRange; ++j)
-// 		      {
-// 			LeftMDaggerM[j][i] = 0.0;
-// 			for (int k = 0; k < NbrEigenstates; ++k)
-// 			  {
-// 			    LeftMDaggerM[j][i] += (LeftEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-// 								      + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpLeftFactors[k]);
-// 			  }
-// 		      }
-		  
-		  
-// 		  ComplexMatrix RightMDaggerM (IndexRange, IndexRange);
-// 		  for (int i = 0; i < IndexRange; ++i)
-// 		    for (int j = 0; j < IndexRange; ++j)
-// 		      {
-// 			RightMDaggerM[j][i] = 0.0;
-// 			for (int k = 0; k < NbrEigenstates; ++k)
-// 			  {
-// 			    RightMDaggerM[j][i] += (RightEigenstates[k][MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue) * TmpBMatrixDimension 
-// 									+ MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] * TmpRightFactors[k]);
-// 			  }
-// 		      }
-		  
-		  
-// 		  RealSymmetricMatrix SymLeftMDaggerM (LeftMDaggerM);
-// 		  RealDiagonalMatrix TmpLeftDiag;
-// #ifdef __LAPACK__
-// 		  SymLeftMDaggerM.LapackDiagonalize(TmpLeftDiag);
-// #else
-// 		  SymLeftMDaggerM.Diagonalize(TmpLeftDiag,);
-// #endif
-// 		  for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
-// 		    {
-// 		      if (fabs(TmpLeftDiag(i, i)) > LeftEigenvalueError)
-// 			{
-// 			  LeftEigenvalueError = fabs(TmpLeftDiag(i, i));	    
-// 			}
-// 		    }
-// 		  RealSymmetricMatrix SymRightMDaggerM (RightMDaggerM);
-// 		  RealDiagonalMatrix TmpRightDiag;
-// #ifdef __LAPACK__
-// 		  SymRightMDaggerM.LapackDiagonalize(TmpRightDiag);
-// #else
-// 		  SymRightMDaggerM.Diagonalize(TmpRightDiag);
-// #endif
-// 		  for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
-// 		    {
-// 		      if (fabs(TmpRightDiag(i, i)) > RightEigenvalueError)
-// 			{
-// 			  RightEigenvalueError = fabs(TmpRightDiag(i, i));	    
-// 			}
-// 		    }
-// 		}
-// 	    }
-// 	}
-
       LeftEigenvalueError = Error;
       RightEigenvalueError = Error;
 
@@ -465,12 +402,12 @@ int main(int argc, char** argv)
 		    for (int j = 0; j < IndexRange; ++j)
 		      {
 			LeftMDaggerM[j][i] = 0.0;
-			for (int k = 0; k < NbrEigenstates; ++k)
+			for (int k = 0; k < NbrEigenstatesLinearSuperposition; ++k)
 			  {
 			    int TmpIndex = SearchInArray<long>((((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue)) * TmpBMatrixDimension) 
 							       + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
 							       EffectiveBlockIndices, EffectiveDimension);
-			    LeftMDaggerM[j][i] += (LeftEigenstates[k][TmpIndex] * TmpLeftFactors[k]);
+			    LeftMDaggerM[j][i] += LeftEigenstates[k][TmpIndex] * TmpLeftFactors[k];
 			  }
 		      }
 		  
@@ -480,12 +417,12 @@ int main(int argc, char** argv)
 		    for (int j = 0; j < IndexRange; ++j)
 		      {
 			RightMDaggerM[j][i] = 0.0;
-			for (int k = 0; k < NbrEigenstates; ++k)
+			for (int k = 0; k < NbrEigenstatesLinearSuperposition; ++k)
 			  {
 			    int TmpIndex = SearchInArray<long>((((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue)) * TmpBMatrixDimension) 
 							       + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue), 
 							       EffectiveBlockIndices, EffectiveDimension);
-			    RightMDaggerM[j][i] += (RightEigenstates[k][TmpIndex] * TmpRightFactors[k]);
+			    RightMDaggerM[j][i] += RightEigenstates[k][TmpIndex] * TmpRightFactors[k];
 			  }
 		      }
 		  
@@ -525,7 +462,7 @@ int main(int argc, char** argv)
 			  ++NbrZeroRightEigenvalues;	    
 			}
 		    }
-		 
+
 		  if ((NbrZeroLeftEigenvalues < SymLeftMDaggerM.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightMDaggerM.GetNbrRow()))
 		    {
 		      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(), TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
@@ -905,104 +842,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-
-void MPSDiagonalizeEMatrix(OptionManager* manager, AbstractHamiltonian* hamiltonian, int nbrEigenstates, Complex*& eigenvalues, ComplexVector*& eigenstates, 
-			   AbstractArchitecture* architecture, double error, bool leftFlag)
-{
-  eigenstates = new ComplexVector[nbrEigenstates];
-  eigenvalues = new Complex[nbrEigenstates];
-  double* TmpRealPart = new double [nbrEigenstates];
-  int* TmpIndices = new int[nbrEigenstates];
-  Complex* TmpEigenvalues = 0;
-  ComplexVector* TmpEigenstates = 0;
-
-  if (hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension() < manager->GetInteger("full-diag"))
-    {	  
-      RealMatrix HRepresentation (hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension(), 
-				  hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension());
-      hamiltonian->GetHamiltonian(HRepresentation);
-//      cout << HRepresentation << endl;
-      ComplexDiagonalMatrix TmpDiag (HRepresentation.GetNbrRow(), true);  
-      ComplexMatrix TmpEigenstateMatrix (HRepresentation.GetNbrRow(), HRepresentation.GetNbrRow());  
-      HRepresentation.LapackDiagonalize(TmpDiag, TmpEigenstateMatrix, true);
-      TmpDiag.SortMatrixDownOrder(TmpEigenstateMatrix, true);
-      
-      TmpEigenvalues = new Complex [nbrEigenstates];
-      TmpEigenstates = new ComplexVector [nbrEigenstates];
-      for (int i = 0; i < nbrEigenstates; ++i)
-	{
-	  TmpEigenvalues[i] = TmpDiag[i];
-	  TmpEigenstates[i] = TmpEigenstateMatrix[i];
-	}
-    }
-  else
-    {	 
-      BasicArnoldiAlgorithm* Arnoldi = 0;
-      if (manager->GetBoolean("disk"))
-	{
-	  long TmpMemory = (((long) manager->GetInteger("arnoldi-memory")) << 17) / hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();
-	  if (TmpMemory == 0)
-	    TmpMemory = 1;
-	  Arnoldi = new BasicArnoldiAlgorithmWithDiskStorage (architecture, nbrEigenstates, 3000, true, false, manager->GetBoolean("resume"), TmpMemory, false);
-	}
-      else
-	{
-	  Arnoldi = new BasicArnoldiAlgorithm (architecture, nbrEigenstates, 3000, true, false, false);
-	}
-      Arnoldi->SetHamiltonian(hamiltonian);
-      Arnoldi->InitializeLanczosAlgorithm();
-      Arnoldi->RunLanczosAlgorithm(nbrEigenstates);
-      bool ShowTimeFlag = manager->GetBoolean("show-itertime");
-      while (Arnoldi->TestConvergence() == false)
-	{
-	  timeval TotalStartingTime;
-	  timeval TotalEndingTime;
-	  if (ShowTimeFlag == true)
-	    {
-	      gettimeofday (&(TotalStartingTime), 0);
-	    }
-	  Arnoldi->RunLanczosAlgorithm(1);
-	  if (ShowTimeFlag == true)
-	    {
-	      gettimeofday (&(TotalEndingTime), 0);
-	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-	      cout << "iteration done in " << Dt << "s" << endl;
-	    }
-	}
-      TmpEigenstates = (ComplexVector*) Arnoldi->GetEigenstates(nbrEigenstates);  
-      Arnoldi->GetEigenvalues(TmpEigenvalues, nbrEigenstates);
-     }
-
-  for (int i = 0; i < nbrEigenstates; ++i)
-    {
-      TmpRealPart[i] = TmpEigenvalues[i].Re;
-      TmpIndices[i] = i;
-    }
-  SortArrayDownOrdering<int>(TmpRealPart, TmpIndices, nbrEigenstates);
-  for (int i = 1; i < nbrEigenstates; ++i)
-    {
-      if ((fabs(TmpEigenvalues[TmpIndices[i - 1]].Re - TmpEigenvalues[TmpIndices[i]].Re) < error) && 
-	  (TmpEigenvalues[TmpIndices[i - 1]].Im < TmpEigenvalues[TmpIndices[i]].Im))
-	{
-	  int Tmp = TmpIndices[i - 1];
-	  TmpIndices[i - 1] = TmpIndices[i];
-	  TmpIndices[i] = Tmp;
-	}
-    }
-  for (int i = 0; i < nbrEigenstates; ++i)
-    {
-      eigenstates[i] = TmpEigenstates[TmpIndices[i]];
-      eigenvalues[i] = TmpEigenvalues[TmpIndices[i]];
-    }
-  for (int i = 0; i < nbrEigenstates; ++i)
-    {
-      ComplexVector TestE (eigenstates[i].GetVectorDimension());
-      hamiltonian->Multiply(eigenstates[i], TestE);
-      cout << (TestE * eigenstates[i]) << " " << eigenvalues[i] << endl;
-    }
-  delete[] TmpRealPart;
-  delete[] TmpIndices;
-  delete[] TmpEigenstates;
-  delete[] TmpEigenvalues;
-}
