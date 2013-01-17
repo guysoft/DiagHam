@@ -785,8 +785,13 @@ int FermionOnSquareLatticeWithSpinMomentumSpaceTruncated::FindStateIndex(unsigne
 //   PosMax = this->LookUpTable[lzmax][PosMax + 1];
 
   // skip look-up table for now:
-  long PosMax = this->HilbertSpaceDimension - 1;
-  long PosMin = 0;  
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    {
+      return this->HilbertSpaceDimension;
+    }
+  
+  long PosMax = 0;
+  long PosMin = this->HilbertSpaceDimension - 1;  
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
   while ((PosMax != PosMid) && (CurrentState != stateDescription))
