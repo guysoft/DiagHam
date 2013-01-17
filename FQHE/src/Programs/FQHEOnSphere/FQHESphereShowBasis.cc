@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 		    }
 		    else
 		      Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
-		  }
+		    }
 		  else
 		  {
 		    if (NbrOrbitals + NbrParticles < 65)

@@ -55,7 +55,6 @@ using std::ofstream;
 using std::ifstream;
 using std::ios;
 
-
 // basic constructor
 // 
 // nbrBosons = number of bosons

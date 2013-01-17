@@ -64,6 +64,7 @@ class BosonOnCP2 : public BosonOnSphereShort
   int* quantumNumberR;
   // array that gives the value of s for one particle corresponding to the linearized index
   int* quantumNumberS;
+  
 
  public:
 
@@ -184,8 +185,11 @@ class BosonOnCP2 : public BosonOnSphereShort
   // return value = position from which new states have to be stored
   virtual long GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentR, int currentS, int currentTotalR, int currentTotalS, int currentFermionicPosition, long pos);
 
- 
-  
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
   
 };
 
