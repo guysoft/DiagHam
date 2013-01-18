@@ -75,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "number of orbitals in subsystem A", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles in subsystem A", 0);
+  (*SystemGroup) += new BooleanOption ('\n', "all-na", "print all charge sectors");
   (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate the entnaglement spectrum on the infinite cylinder");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
@@ -775,6 +776,12 @@ int main(int argc, char** argv)
   
   cout<<"Trace rho = "<<TraceRho<<endl;
 
+  //Sort eigenvalues according to P and store reordering map
+  int *ReorderingMap = new int [MatDim]; 
+  for (int k = 0; k < MatDim; ++k) 
+     ReorderingMap[k] = k;
+  SortArrayUpOrdering(RhoPSector, ReorderingMap, MatDim);
+
 
   int p = 0;
   int q = 0;
@@ -809,9 +816,9 @@ int main(int argc, char** argv)
   File << "# l_a    Na    Lz    lambda" << endl;
   for (int i = 0; i < MatDim; ++i)
    { 
-    if (((fabs(RhoEigenvalues[i]) > CutOff))) 
+    if (((fabs(RhoEigenvalues[ReorderingMap[i]]) > CutOff))) 
       {
-        TmpNa = RhoQSector[i];
+        TmpNa = RhoQSector[ReorderingMap[i]];
         if ((p == 2) && (q == 4)) //Moore-Read
           TmpNa -= (MaxQValue - 1)/2;
         else
@@ -822,13 +829,16 @@ int main(int argc, char** argv)
 
         TmpNa =  (p * EntCut - TmpNa)/q; 
 
-        if (TmpNa == Na)
+        if (Manager.GetBoolean("all-na"))
           {
-            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[i]/TraceRho << endl;  
-            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << (RhoEigenvalues[i] / TraceRho) << endl;
+            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]]/TraceRho << endl;  
+            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << (RhoEigenvalues[ReorderingMap[i]] / TraceRho) << endl;
           }
-        //else
-        // cout << "Na = " << TmpNa << " " << RhoEigenvalues[i]/TraceRho<<endl;
+        else if (TmpNa == Na)
+          {
+            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]]/TraceRho << endl;  
+            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << (RhoEigenvalues[ReorderingMap[i]] / TraceRho) << endl;
+          }
       }
    }
   delete[] TmpMatrixElements;
@@ -836,6 +846,7 @@ int main(int argc, char** argv)
   delete[] RhoEigenvalues;
   delete[] RhoPSector;
   delete[] RhoQSector;
+  delete[] ReorderingMap;
 
   File.close();
  

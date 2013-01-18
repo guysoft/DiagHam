@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "number of orbitals in subsystem A", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles in subsystem A", 0);
+  (*SystemGroup) += new BooleanOption ('\n', "all-na", "print all charge sectors");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -773,7 +774,12 @@ int main(int argc, char** argv)
 
                TmpN =  (p * EntCut - TmpN)/q; 
 
-               if (TmpN == Na)
+               if (Manager.GetBoolean("all-na"))
+                 {
+                    cout << "Na= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
+                    File << TmpN << " " << TmpP << " " << SingularValues[i]/Trace << endl;
+                 }
+               else if (TmpN == Na)
                  {
                   cout << "Na= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
                   File << TmpN << " " << TmpP << " " << SingularValues[i]/Trace << endl;
@@ -804,7 +810,12 @@ int main(int argc, char** argv)
 
                           TmpN =  (p * EntCut - TmpN)/q; 
 
-                          if (TmpN == Na)
+                          if (Manager.GetBoolean("all-na"))
+                           {
+                             cout << "Na= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
+                             File << TmpN << " " << TmpP << " " << SingularValues[i]/Trace << endl;
+                           }
+                          else if (TmpN == Na)
                            { 
                               cout << "Na= " << TmpN << " P= " << TmpP << " " << SingularValues[i]/Trace << endl;
                               File << TmpN << " " << TmpP << " " << SingularValues[i]/Trace << endl;
