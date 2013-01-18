@@ -127,13 +127,19 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
   bool CylinderFlag = this->Options->GetBoolean("normalize-cylinder");
   double AspectRatio = this->Options->GetDouble("aspect-ratio");
   double Kappa = 0.0;
+  double Perimeter = 0.0;
   if (CylinderFlag)
     {
       if (this->Options->GetDouble("cylinder-perimeter") > 0.0)
-	Kappa = (2.0 * M_PI) / this->Options->GetDouble("cylinder-perimeter");
+	{
+	  Perimeter = this->Options->GetDouble("cylinder-perimeter");
+	}
       else
-	Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
-       cout<<"Cylinder geometry, kappa= " << Kappa << endl;
+	{
+	  Perimeter = sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
+	}
+      Kappa = (2.0 * M_PI) / Perimeter;
+      cout<<"Cylinder geometry, perimeter = " << Perimeter << " , kappa= " << Kappa << endl;
     }
 
   AbstractFQHEMPSMatrix* MPSMatrix = 0; 
@@ -160,7 +166,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 	    }
 	  else
 	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_clustered_k_2_r_%ld_q_2_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_clustered_k_2_r_%ld_q_2_p_%ld_n_%d_perimeter_%.6f.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
 	    }
 	}
       else
@@ -184,7 +190,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 		}
 	      else
 		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_readrezayi3_q_2_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_readrezayi3_q_2_p_%ld_n_%d_perimeter_%.6f.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
 		}
 	    }
 	  else
@@ -207,8 +213,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 		}
 	      else
 		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_laughlin_q_%ld_p_%ld_n_%d_kappa_%.6f.dat", this->Options->GetInteger("laughlin-index"), 
-			  this->Options->GetInteger("p-truncation"), NbrBMatrices, Kappa);
+		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_laughlin_q_%ld_p_%ld_n_%d_perimeter_%.6f.dat", this->Options->GetInteger("laughlin-index"), 
+			  this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
 		}
 	    }
 	}
