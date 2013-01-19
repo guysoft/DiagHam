@@ -160,7 +160,66 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // return value = pointer to the array of vectors where result has been stored
   virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 						     int firstComponent, int nbrComponent);
+  
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and add result to another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& ConjugateLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+						   int firstComponent, int nbrComponent);
+
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and store result in another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors where result has to be stored
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual RealVector* ConjugateLowLevelMultipleMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+							int firstComponent, int nbrComponent);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and store result in another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual ComplexVector& ConjugateLowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+						   int firstComponent, int nbrComponent);
+
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and store result in another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors where result has to be stored
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* ConjugateLowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+							   int firstComponent, int nbrComponent);
+
+  // ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
+  //
+  virtual bool IsConjugate();
+
 
 };
+
+// ask if Hamiltonian implements methods applying the conjugate of the Hamiltonian
+//
+
+inline bool TensorProductSparseMatrixHamiltonian::IsConjugate()
+{
+  return true;
+}
 
 #endif

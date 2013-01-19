@@ -232,9 +232,9 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
   cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
 #endif
   if (this->HighEnergyFlag == false)
-    SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true);
+    SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true, 1e-10);
   else
-    SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, true);
+    SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, true, 1e-10);
 
   Complex* TmpCoefficents = new Complex [SortedDiagonalizedMatrix.GetNbrColumn()];
   for (int i = 0; i < nbrEigenstates; ++i)
@@ -319,9 +319,9 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	this->ComplexPreviousWantedEigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
       this->Diagonalize();
       if (this->HighEnergyFlag == false)
-	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true);
+	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true, 1e-10);
       else
-	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true);
+	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true, 1e-10);
     }
   else
     {
@@ -381,6 +381,7 @@ bool BasicArnoldiAlgorithm::TestConvergence ()
 //
 // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
 // nbrEigenstates = number of needed eigenvalues
+
 void BasicArnoldiAlgorithm::GetEigenvalues (double*& eigenvalues, int nbrEigenvalues)
 {
   eigenvalues = new double [nbrEigenvalues];

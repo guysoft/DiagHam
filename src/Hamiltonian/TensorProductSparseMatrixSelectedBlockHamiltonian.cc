@@ -106,9 +106,14 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
   delete[] TmpBlockIndices;
   this->BlockSize = blockSize;
   this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (memory > 0l)
     {
-      this->TemporaryRowPointers = new long[this->HilbertSpace->GetHilbertSpaceDimension()];
+      this->EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      this->TemporaryRowPointers = new long[this->EffectiveHilbertSpaceDimension];
       timeval TotalStartingTime;
       timeval TotalEndingTime;
       gettimeofday (&(TotalStartingTime), 0);
@@ -119,10 +124,10 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
       cout << "nbr non-zero matrix elements = " << NbrNonZeroMatrixElements << " (done in " << DTime << "s)" <<  endl;
       if (memory > (NbrNonZeroMatrixElements << 3))
 	{
-	  this->TemporaryRowLastPointers = new long[this->HilbertSpace->GetHilbertSpaceDimension()];
+	  this->TemporaryRowLastPointers = new long[this->EffectiveHilbertSpaceDimension];
 	  this->FastMultiplicationFlag = true;
 	  long TmpPointer = 0;
-	  for (int i = 0; i < this->HilbertSpace->GetHilbertSpaceDimension(); ++i)
+	  for (int i = 0; i < this->EffectiveHilbertSpaceDimension; ++i)
 	    {
 	      long Tmp = this->TemporaryRowPointers[i]; 
 	      if (this->TemporaryRowPointers[i] > 0l)
@@ -203,9 +208,14 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
   this->BlockIndexProductTableShift = blockIndexProductTableShift;
   this->BlockSize = blockSize;
   this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
   if (memory > 0l)
     {
-      this->TemporaryRowPointers = new long[this->HilbertSpace->GetHilbertSpaceDimension()];
+      this->EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      this->TemporaryRowPointers = new long[this->EffectiveHilbertSpaceDimension];
       timeval TotalStartingTime;
       timeval TotalEndingTime;
       gettimeofday (&(TotalStartingTime), 0);
@@ -216,10 +226,10 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
       cout << "nbr non-zero matrix elements = " << NbrNonZeroMatrixElements << " (done in " << DTime << "s)" <<  endl;
       if (memory > (NbrNonZeroMatrixElements << 3))
 	{
-	  this->TemporaryRowLastPointers = new long[this->HilbertSpace->GetHilbertSpaceDimension()];
+	  this->TemporaryRowLastPointers = new long[this->EffectiveHilbertSpaceDimension];
 	  this->FastMultiplicationFlag = true;
 	  long TmpPointer = 0;
-	  for (int i = 0; i < this->HilbertSpace->GetHilbertSpaceDimension(); ++i)
+	  for (int i = 0; i < this->EffectiveHilbertSpaceDimension; ++i)
 	    {
 	      long Tmp = this->TemporaryRowPointers[i]; 
 	      if (this->TemporaryRowPointers[i] > 0l)
@@ -299,10 +309,11 @@ RealVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultip
     {
       for (int j = firstComponent; j < LastComponent; ++j)
 	{
-	  long TmpRowPointer = this->TemporaryRowPointers[j];
+	  cout << (j - this->PrecalculationShift) << firstComponent << " " <<  LastComponent << endl;
+	  long TmpRowPointer = this->TemporaryRowPointers[j - this->PrecalculationShift];
 	  if (TmpRowPointer >= 0l)
 	    {
-	      long TmpRowLastPointer = this->TemporaryRowLastPointers[j];
+	      long TmpRowLastPointer = this->TemporaryRowLastPointers[j - this->PrecalculationShift];
 	      double Tmp = 0.0;
 	      for (; TmpRowPointer <= TmpRowLastPointer; ++TmpRowPointer)
 		{
@@ -622,7 +633,7 @@ long TensorProductSparseMatrixSelectedBlockHamiltonian::FastMultiplicationMemory
   GenericHamiltonianPrecalculationOperation Operation(this);
   Operation.ApplyOperation(this->Architecture);
   long NbrNonZeroMatrixElements = 0l;
-  for (int i = 0; i < this->HilbertSpace->GetHilbertSpaceDimension(); ++i)
+  for (int i = 0; i < this->EffectiveHilbertSpaceDimension; ++i)
     {
       NbrNonZeroMatrixElements += this->TemporaryRowPointers[i];
     }
@@ -715,12 +726,12 @@ long TensorProductSparseMatrixSelectedBlockHamiltonian::PartialFastMultiplicatio
 		}
 	      ++i;
 	    }
-	  this->TemporaryRowPointers[j] = Tmp;
+	  this->TemporaryRowPointers[j - this->PrecalculationShift] = Tmp;
 	  NbrNonZeroMatrixElements += Tmp;
 	}
       else
 	{
-	  this->TemporaryRowPointers[j] = 0;
+	  this->TemporaryRowPointers[j - this->PrecalculationShift] = 0;
 	}
     }
 //  delete[] TmpNonZeroMatrixElements;
@@ -811,7 +822,7 @@ void TensorProductSparseMatrixSelectedBlockHamiltonian::PartialEnableFastMultipl
       if (TmpNbrNonZeroMatrixElements > 0)
 	{
 	  SortArrayUpOrdering<double>(TmpNonZeroMatrixIndices, TmpNonZeroMatrixElements, TmpNbrNonZeroMatrixElements);
-	  long Shift = this->TemporaryRowPointers[j];
+	  long Shift = this->TemporaryRowPointers[j - this->PrecalculationShift];
 	  this->TemporaryMatrixElements[Shift] = TmpNonZeroMatrixElements[0];
 	  this->TemporaryMatrixColumnIndices[Shift] = TmpNonZeroMatrixIndices[0];
 	  ++Shift;
@@ -827,11 +838,11 @@ void TensorProductSparseMatrixSelectedBlockHamiltonian::PartialEnableFastMultipl
 		}
 	      ++i;
 	    }
-	  NbrNonZeroMatrixElements += Shift - this->TemporaryRowPointers[j];
+	  NbrNonZeroMatrixElements += Shift - this->TemporaryRowPointers[j - this->PrecalculationShift];
 	}
       else
 	{
-	  this->TemporaryRowPointers[j] = 0;
+	  this->TemporaryRowPointers[j - this->PrecalculationShift] = 0;
 	}
     }
   delete[] TmpNonZeroMatrixElements;

@@ -32,6 +32,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "GeneralTools/ArrayTools.h"
 #ifdef USE_HILBERT_SPACE
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #endif
@@ -699,9 +700,11 @@ Complex ComplexDiagonalMatrix::Determinant ()
 // Sort Matrix such that diagnonal elements are sort in decreasing order
 //
 // normSort = sort with respect to the norm instead of the real part
+// normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+//             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(bool normSort)
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(bool normSort, double normError)
 {
   int ReducedDim = this->NbrColumn - 2;
   Complex tmp;
@@ -745,6 +748,22 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(bool normSort)
 	  this->DiagonalElements[i] = this->DiagonalElements[MinPos];
 	  this->DiagonalElements[MinPos] = tmp;
 	}
+      if (normError > 0.0)
+	{
+	  int i = 0;
+	  ++ReducedDim;
+	  while (i < ReducedDim)
+	    {
+	      int j = i + 1;
+	      while ((j <= ReducedDim) && (fabs(Norm(this->DiagonalElements[j]) - Norm(this->DiagonalElements[i])) < normError))
+		++j;
+	      if ((j - i) > 1)
+		{
+		  SortArrayDownOrdering<Complex>(this->DiagonalElements + i, j - i);
+		}      
+	      i = j;
+	    }
+	}
     }
   return *this;
 }
@@ -753,9 +772,11 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(bool normSort)
 // and apply corresponding transformation to column of a given complex matrix 
 //
 // matrix = matrix on which transformation has to be applied
+// normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+//             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix& matrix, bool normSort)
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix& matrix, bool normSort, double normError)
 {
   int ReducedDim = this->NbrColumn - 2;
   ComplexVector TmpV;
@@ -802,6 +823,22 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix&
 	  matrix[i] = matrix[MinPos];
 	  matrix[MinPos] = TmpV;
 	}
+      if (normError > 0.0)
+	{
+	  int i = 0;
+	  ++ReducedDim;
+	  while (i < ReducedDim)
+	    {
+	      int j = i + 1;
+	      while ((j <= ReducedDim) && (fabs(Norm(this->DiagonalElements[j]) - Norm(this->DiagonalElements[i])) < normError))
+		++j;
+	      if ((j - i) > 1)
+		{
+		  SortArrayDownOrdering<ComplexVector>(this->DiagonalElements + i, matrix.Columns + i, j - i);
+		}      
+	      i = j;
+	    }
+	}
     }
   return *this;
 }
@@ -809,9 +846,11 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix&
 // Sort Matrix such that diagnonal elements are sort in increasing order
 //
 // normSort = sort with respect to the norm instead of the real part
+// normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+//             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(bool normSort)
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(bool normSort, double normError)
 {
   int ReducedDim = this->NbrColumn - 2;
   Complex tmp;
@@ -851,6 +890,22 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(bool normSort)
 	  this->DiagonalElements[i] = this->DiagonalElements[MinPos];
 	  this->DiagonalElements[MinPos] = tmp;
 	}
+      if (normError > 0.0)
+	{
+	  int i = 0;
+	  ++ReducedDim;
+	  while (i < ReducedDim)
+	    {
+	      int j = i + 1;
+	      while ((j <= ReducedDim) && (fabs(Norm(this->DiagonalElements[j]) - Norm(this->DiagonalElements[i])) < normError))
+		++j;
+	      if ((j - i) > 1)
+		{
+		  SortArrayUpOrdering<Complex>(this->DiagonalElements + i, j - i);
+		}      
+	      i = j;
+	    }
+	}
     }
   return *this;
 }
@@ -860,9 +915,12 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(bool normSort)
 // and apply corresponding transformation to column of a given complex matrix 
 //
 // matrix = matrix on which transformation has to be applied
+// normSort = sort with respect to the norm instead of the real part
+// normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+//             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
 // return value = reference on current Matrix
 
-ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& matrix, bool normSort)
+ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& matrix, bool normSort, double normError)
 {
   int ReducedDim = this->NbrColumn - 2;
   ComplexVector TmpV;
@@ -908,6 +966,22 @@ ComplexDiagonalMatrix& ComplexDiagonalMatrix::SortMatrixUpOrder(ComplexMatrix& m
 	  TmpV = matrix[i];
 	  matrix[i] = matrix[MinPos];
 	  matrix[MinPos] = TmpV;
+	}
+      if (normError > 0.0)
+	{
+	  int i = 0;
+	  ++ReducedDim;
+	  while (i < ReducedDim)
+	    {
+	      int j = i + 1;
+	      while ((j <= ReducedDim) && (fabs(Norm(this->DiagonalElements[j]) - Norm(this->DiagonalElements[i])) < normError))
+		++j;
+	      if ((j - i) > 1)
+		{
+		  SortArrayUpOrdering<ComplexVector>(this->DiagonalElements + i, matrix.Columns + i, j - i);
+		}      
+	      i = j;
+	    }
 	}
     }
   return *this;

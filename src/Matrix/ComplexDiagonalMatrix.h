@@ -308,30 +308,38 @@ class ComplexDiagonalMatrix : public Matrix
   // Sort Matrix such that diagnonal elements are sort in decreasing order
   //
   // normSort = sort with respect to the norm instead of the real part
+  // normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+  //             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixDownOrder(bool normSort = false);
+  ComplexDiagonalMatrix& SortMatrixDownOrder(bool normSort = false, double normError = 0.0);
   
   // Sort Matrix such that diagnonal elements are sort in decreasing order
   // and apply corresponding transformation to column of a given complex matrix 
   //
   // matrix = matrix on which transformation has to be applied
   // normSort = sort with respect to the norm instead of the real part
+  // normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+  //             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix, bool normSort = false);
+  ComplexDiagonalMatrix& SortMatrixDownOrder(ComplexMatrix& matrix, bool normSort = false, double normError = 0.0);
 
   // Sort Matrix such that diagnonal elements are sort in increasing order
   //
   // normSort = sort with respect to the norm instead of the real part
+  // normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+  //             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixUpOrder(bool normSort = false);
+  ComplexDiagonalMatrix& SortMatrixUpOrder(bool normSort = false, double normError = 0.0);
   
   // Sort Matrix such that diagnonal elements are sort in increasing order
   // and apply corresponding transformation to column of a given complex matrix 
   //
   // matrix = matrix on which transformation has to be applied
   // normSort = sort with respect to the norm instead of the real part
+  // normError = when sort with respect to the norm, consider two norms to be identical when their difference is lower than normError, 
+  //             then sort values with the same norm with respect to their phase (0 if no sort has to be applied on the phase)
   // return value = reference on current Matrix
-  ComplexDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix, bool normSort = false);
+  ComplexDiagonalMatrix& SortMatrixUpOrder(ComplexMatrix& matrix, bool normSort = false, double normError = 0.0);
 
   // Output Stream overload
   //

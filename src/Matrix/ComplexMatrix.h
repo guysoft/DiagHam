@@ -56,6 +56,7 @@ class ComplexMatrix : public Matrix
 
   friend class ComplexSkewSymmetricMatrix;
   friend class ComplexUpperTriangularMatrix;
+  friend class ComplexDiagonalMatrix;
   friend class HermitianMatrix;
   friend class RealVector;
   friend class ComplexVector;

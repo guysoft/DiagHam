@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "GeneralTools/List.h"
+#include "MathTools/Complex.h"
 #include "MathTools/LongRational.h"
 #include "MathTools/FactorialCoefficient.h"
 
@@ -806,6 +807,268 @@ void SortArrayDownOrdering(ClassName* array, double* doubleArray, long nbrValue)
 	doubleArray[i] = Pivot2;
 	SortArrayDownOrdering(array, doubleArray, i);
 	SortArrayDownOrdering(&(array[i + 1]), &(doubleArray[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
+// sort in down ordering an array of complex numbers and apply the same sort on another array (using quick sort)
+//
+// complexArray = pointer to the array of complex numbers
+// array = pointer to the second array to sort in the same way as complexArray
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortArrayDownOrdering(Complex* complexArray, ClassName* array, long nbrValue)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (complexArray[0] < complexArray[1])
+	  {
+	    Complex TmpElement = complexArray[0];
+	    complexArray[0] = complexArray[1];
+	    complexArray[1] = TmpElement;
+	    ClassName TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	Complex TmpElement;
+	ClassName TmpElement2;
+	if (complexArray[0] < complexArray[1])
+	  {
+	    TmpElement = complexArray[0];
+	    complexArray[0] = complexArray[1];
+	    complexArray[1] = TmpElement;
+	    TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }
+	if (complexArray[1] < complexArray[2])
+	  {
+	    TmpElement = complexArray[1];
+	    complexArray[1] = complexArray[2];
+	    complexArray[2] = TmpElement;
+	    TmpElement2 = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement2;
+	  }	
+	if (complexArray[0] < complexArray[1])
+	  {
+	    TmpElement = complexArray[0];
+	    complexArray[0] = complexArray[1];
+	    complexArray[1] = TmpElement;
+	    TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }	
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	Complex TmpElement;
+	ClassName TmpElement2;
+	if (complexArray[0] <  complexArray[i])
+	  {
+	    TmpElement = complexArray[i];
+	    complexArray[i] = complexArray[0];
+	    complexArray[0] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement2;
+	  }
+	if (complexArray[i] <  complexArray[j])
+	  {
+	    TmpElement = complexArray[i];
+	    complexArray[i] = complexArray[j];
+	    complexArray[j] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement2;
+	  }
+	if (complexArray[0] <  complexArray[i])
+	  {
+	    TmpElement = complexArray[i];
+	    complexArray[i] = complexArray[0];
+	    complexArray[0] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement2;
+	  }
+	--j;
+	Complex Pivot = complexArray[i];
+	ClassName Pivot2 = array[i];
+	complexArray[i] = complexArray[j];
+	complexArray[j] = Pivot;
+	array[i] = array[j];
+	array[j] = Pivot2;
+	i = 0;
+	while (true)
+	  {
+	    while (complexArray[++i] > Pivot);
+	    while (complexArray[--j] < Pivot);
+	    if (i < j)
+	      {
+		TmpElement = complexArray[i];
+		complexArray[i] = complexArray[j];
+		complexArray[j] = TmpElement;	    
+		TmpElement2 = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement2;	    
+	      }
+	    else
+	      break;
+	  }	
+	complexArray[nbrValue - 2] = complexArray[i];
+	complexArray[i] = Pivot;
+	array[nbrValue - 2] = array[i];
+	array[i] = Pivot2;
+	SortArrayDownOrdering(complexArray, array, i);
+	SortArrayDownOrdering(&(complexArray[i + 1]), &(array[i + 1]), nbrValue - i - 1);	
+      }
+    }
+  return;
+}
+
+// sort in up ordering an array of complex numbers and apply the same sort on another array (using quick sort)
+//
+// complexArray = pointer to the array of complex numbers
+// array = pointer to the second array to sort in the same way as complexArray
+// nbrValue = nbr of value in the array
+
+template <class ClassName>
+void SortArrayUpOrdering(Complex* complexArray, ClassName* array, long nbrValue)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (complexArray[0] > complexArray[1])
+	  {
+	    Complex TmpElement = complexArray[0];
+	    complexArray[0] = complexArray[1];
+	    complexArray[1] = TmpElement;
+	    ClassName TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	Complex TmpElement;
+	ClassName TmpElement2;
+	if (complexArray[0] > complexArray[1])
+	  {
+	    TmpElement = complexArray[0];
+	    complexArray[0] = complexArray[1];
+	    complexArray[1] = TmpElement;
+	    TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }
+	if (complexArray[1] > complexArray[2])
+	  {
+	    TmpElement = complexArray[1];
+	    complexArray[1] = complexArray[2];
+	    complexArray[2] = TmpElement;
+	    TmpElement2 = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement2;
+	  }	
+	if (complexArray[0] > complexArray[1])
+	  {
+	    TmpElement = complexArray[0];
+	    complexArray[0] = complexArray[1];
+	    complexArray[1] = TmpElement;
+	    TmpElement2 = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement2;
+	  }	
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	Complex TmpElement;
+	ClassName TmpElement2;
+	if (complexArray[0] >  complexArray[i])
+	  {
+	    TmpElement = complexArray[i];
+	    complexArray[i] = complexArray[0];
+	    complexArray[0] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement2;
+	  }
+	if (complexArray[i] >  complexArray[j])
+	  {
+	    TmpElement = complexArray[i];
+	    complexArray[i] = complexArray[j];
+	    complexArray[j] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement2;
+	  }
+	if (complexArray[0] >  complexArray[i])
+	  {
+	    TmpElement = complexArray[i];
+	    complexArray[i] = complexArray[0];
+	    complexArray[0] = TmpElement;
+	    TmpElement2 = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement2;
+	  }
+	--j;
+	Complex Pivot = complexArray[i];
+	ClassName Pivot2 = array[i];
+	complexArray[i] = complexArray[j];
+	complexArray[j] = Pivot;
+	array[i] = array[j];
+	array[j] = Pivot2;
+	i = 0;
+	while (true)
+	  {
+	    while (complexArray[++i] < Pivot);
+	    while (complexArray[--j] > Pivot);
+	    if (i < j)
+	      {
+		TmpElement = complexArray[i];
+		complexArray[i] = complexArray[j];
+		complexArray[j] = TmpElement;	    
+		TmpElement2 = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement2;	    
+	      }
+	    else
+	      break;
+	  }	
+	complexArray[nbrValue - 2] = complexArray[i];
+	complexArray[i] = Pivot;
+	array[nbrValue - 2] = array[i];
+	array[i] = Pivot2;
+	SortArrayDownOrdering(complexArray, array, i);
+	SortArrayDownOrdering(&(complexArray[i + 1]), &(array[i + 1]), nbrValue - i - 1);	
       }
     }
   return;

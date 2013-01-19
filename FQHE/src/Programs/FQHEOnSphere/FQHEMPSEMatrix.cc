@@ -154,13 +154,29 @@ int main(int argc, char** argv)
       OutputFileName  = new char [512];
       if (CylinderFlag == true)
 	{
-	  sprintf(OutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld.dat", StateName,
-		  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+	  if (Manager.GetBoolean("diagonal-block"))
+	    {
+	      sprintf(OutputFileName, "ematrix_diagblock_cylinder_%s_perimeter_%f_plevel_%ld.dat", StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+	    }
+	  else
+	    {
+	      sprintf(OutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld.dat", StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+	    }
 	}
       else
 	{
-	  sprintf(OutputFileName, "ematrix_%s_plevel_%ld.dat", StateName,
-		  Manager.GetInteger("p-truncation"));
+	  if (Manager.GetBoolean("diagonal-block"))
+	    {
+	      sprintf(OutputFileName, "ematrix_diagblock_%s_plevel_%ld.dat", StateName,
+		      Manager.GetInteger("p-truncation"));
+	    }
+	  else
+	    {
+	      sprintf(OutputFileName, "ematrix_%s_plevel_%ld.dat", StateName,
+		      Manager.GetInteger("p-truncation"));
+	    }
 	}
    }
 
@@ -232,6 +248,7 @@ int main(int argc, char** argv)
 	if (EffectiveBlockIndices[i] < EffectiveBlockIndices[i - 1l])
 	  cout << "error, unsorted indices" << endl;
       cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
+      Architecture.GetArchitecture()->SetDimension(EffectiveDimension);
       ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
 										    EffectiveDimension, EffectiveBlockIndices, 
 										    BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
@@ -239,10 +256,10 @@ int main(int argc, char** argv)
     }
   else
     {
+      Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpBMatrixDimension));
       ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);    
-   }
+    }
   
-  cout << "computing left eigenstates : " << endl;
   FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, OutputFileName);
   MainTaskOperation TaskOperationLeft (&TaskLeft);
   TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());

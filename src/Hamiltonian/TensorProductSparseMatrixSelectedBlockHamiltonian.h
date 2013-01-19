@@ -77,6 +77,12 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   long* TemporaryRowLastPointers;
   double* TemporaryMatrixElements;
   int* TemporaryMatrixColumnIndices;
+  // effective dimension of TemporaryRowPointers and TemporaryRowLastPointers
+  int EffectiveHilbertSpaceDimension;
+
+  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
+  int PrecalculationShift;
+
 
  public:
 

@@ -353,7 +353,7 @@ int main(int argc, char** argv)
 
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
-      int NbrEigenstatesLinearSuperposition = 1;
+      int NbrEigenstatesLinearSuperposition = NbrEigenstates;
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
       Complex* TmpRightFactors = new Complex [NbrEigenstates];
       int ReducedBoundaryIndex = SearchInArray<long>((((long) MPSRowIndex) * TmpBMatrixDimension) + MPSRowIndex, 

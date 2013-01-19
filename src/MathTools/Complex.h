@@ -113,6 +113,12 @@ public:
   friend Complex operator + (const Complex& z);
   friend Complex operator - (const Complex& z);
 
+  // compare two complex numbers, sort them with respect to their real part first 
+  friend bool operator < (const Complex& z1,const Complex& z2);
+  friend bool operator <= (const Complex& z1,const Complex& z2);
+  friend bool operator > (const Complex& z1,const Complex& z2);
+  friend bool operator >= (const Complex& z1,const Complex& z2);
+
   // multiply the current complex number by the conjugate of another complex number 
   // 
   // z = reference on the complex number to use for the multiplication
@@ -459,6 +465,29 @@ inline bool operator == (const Complex& z1,  const Complex& z2)
 inline bool operator != (const Complex& z1,  const Complex& z2)
 {
   return ((z1.Re != z2.Re) || (z1.Im != z2.Im));
+}
+
+// compare two complex numbers, sort them with respect to their real part first
+//
+
+inline bool operator < (const Complex& z1,const Complex& z2)
+{
+  return ((z1.Re < z2.Re) || ((z1.Re == z2.Re) && (z1.Im < z2.Im)));
+}
+
+inline bool operator <= (const Complex& z1,const Complex& z2)
+{
+  return ((z1.Re < z2.Re) || ((z1.Re == z2.Re) && (z1.Im <= z2.Im)));
+}
+
+inline bool operator > (const Complex& z1,const Complex& z2)
+{
+  return ((z1.Re > z2.Re) || ((z1.Re == z2.Re) && (z1.Im > z2.Im)));
+}
+
+inline bool operator >= (const Complex& z1,const Complex& z2)
+{
+  return ((z1.Re > z2.Re) || ((z1.Re == z2.Re) && (z1.Im >= z2.Im)));
 }
 
 // multiply the current complex number by the conjugate of another complex number 
