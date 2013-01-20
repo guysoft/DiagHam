@@ -14,6 +14,7 @@
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "FunctionBasis/ParticleOnCylinderFunctionBasis.h"
 #include "Hamiltonian/ParticleOnCylinderStructureFactor.h"
+#include "Hamiltonian/ParticleOnCylinderDensityDensity.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -41,6 +42,9 @@ using std::cout;
 using std::endl;
 using std::ofstream;
 
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+
+//Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int MaxMomentum, double kappa, double x, double y);
 
 int main(int argc, char** argv)
 {
@@ -67,10 +71,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "total-y", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
-  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
+  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of points to evaluate", 50);
   (*SystemGroup) += new BooleanOption  ('\n', "rho-rho","evaluate rho-rho correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "structure-factor","evaluate the guiding center structure factor", false);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "x-points", "number of points along the cylinder", 50);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "x-points", "number of points along the cylinder", 100);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with rhorho extension");
@@ -228,8 +232,8 @@ int main(int argc, char** argv)
   ParticleOnCylinderFunctionBasis Basis (KyMax, LandauLevel, Ratio);
 
   double H = sqrt(2.0 * M_PI * (KyMax + 1.0))/sqrt(Ratio);
-  double Step = (H/(double)NbrPoints);
-  Complex DensityIntegral (0.0,0.0);
+  double Length = sqrt(2.0 * M_PI * Ratio * (KyMax + 1));
+  cout << "Cylinder L= " << Length<<" H= "<<H<<endl;
 
   Complex* Occupations= new Complex [KyMax+1];
       
@@ -245,68 +249,154 @@ int main(int argc, char** argv)
   cout<<endl;
   cout<<"Sum of all occupations: "<<CheckOccupations<<endl;
 
-  if (EvaluateRhoRho)
-   {
-     Complex TmpValue;
-     RealVector Value(2, true);
-     Complex* PrecalculatedValues = new Complex [KyMax + 1];	  
-
-      cout<<"density-density precalculate ";
-      for (int i = 0; i <= KyMax; ++i)
-	{
-             TmpValue = Basis.GetFunctionValue(-0.5*H, 0.0, -0.5*KyMax);
-	    ParticleOnSphereDensityDensityOperator Operator (Space, i, 0, i, 0);
-	    PrecalculatedValues[i] = Operator.MatrixElement(State, State) * TmpValue * Conj(TmpValue);
-             cout<< i <<" " << PrecalculatedValues[i] << " "<<TmpValue * Conj(TmpValue)<<endl;
-	}
-      cout<<"done."<<endl;
-  
-    File << "# pair correlation coefficients " << endl;
-    File << "#" << endl << "# (l+S)    n_l" << endl;
-      for (int i = 0; i <= KyMax; ++i)
-	File << "# " << i << " " << PrecalculatedValues[i].Re << endl;
-    double XInc = (H + 4.0)/ ((double) NbrPoints);
-
-        for (int k = 0; k <= NbrPoints; ++k)
-	  {
-            double X = -0.5*(H + 4.0) + (double)k * XInc;
-	    Complex Sum (0.0, 0.0);
-	    for (int i = 0; i <= KyMax; ++i)
-	      {
-	        Complex TmpValue = Basis.GetFunctionValue(X, 0.0, (double)i - 0.5 * KyMax);
-	        Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
-	      }
-            File << X << " " << Norm(Sum) << endl;
-	  }
-       
-
-   File.close();
- 
-  delete[] PrecalculatedValues;
-
-  return 0;
-
-  }
-
-
-  double XPosition = -0.5*H;
-  while (XPosition <= 0.5*H)
+  double Offset = 10.0;
+  Complex DensityIntegral (0.0,0.0);
+  double XPosition = -0.5*(H + Offset);
+  double Step = (H + Offset)/1000.0;
+  while (XPosition <= 0.5*(H + Offset))
     {
       Complex Density (0.0, 0.0);        
       for (int i = 0; i <= KyMax; ++i)
         {
-          ParticleOnSphereDensityOperator Operator (Space, i);
-          Density += Conj(Basis.GetFunctionValue(XPosition, 0.0, (double)i-0.5*KyMax)) * Basis.GetFunctionValue(XPosition, 0.0, (double)i-0.5*KyMax) * Occupations[i]/((double)NbrParticles);
+          Density += Conj(Basis.GetFunctionValue(XPosition, 0.0, (double)i-0.5*KyMax)) * Basis.GetFunctionValue(XPosition, 0.0, (double)i-0.5*KyMax) * Occupations[i];
 	  //cout<<"i= "<<i<<" "<<DensityMatEl[i]<<" ";
         }
 
-      DensityIntegral += Density * Step * Ratio * H;
-      File << XPosition <<" "<< Density.Re << " " << Density.Im << endl;
-      //cout << XPosition <<" "<< Density << endl;
+      DensityIntegral += Density * Step * Length;
+      if (EvaluateRhoRho == false)
+         File << XPosition <<" "<< Density.Re << " " << Density.Im << endl;
       XPosition += Step;
     }
 
   cout << "Integrated density along the cylinder: "<<DensityIntegral <<endl;
+
+
+
+
+  if (EvaluateRhoRho)
+   {
+
+/*
+        long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+        double XInc = 0.8*H/(double)NbrPoints;
+        double X0 = 0.0;
+        double X; 
+        Complex RhoRho; 
+
+        int m4;
+        int NbrIndices = 0;
+        for (int m1 = 0; m1 <= KyMax; ++m1)
+  	  for (int m2 = 0; m2 < m1; ++m2)
+	    for (int m3 = 0; m3 <= KyMax; ++m3)
+ 	      {
+	        m4 = m1 + m2 - m3;
+	        if ((m4 >= 0) && (m4 <= KyMax))
+                  if (m3 > m4)
+  		    {
+                       NbrIndices++;
+                    }
+               }
+         cout << "nbr j1,j2,j3,j4 = " << NbrIndices << endl; 
+
+         int* M1Values = new int [NbrIndices];
+         int* M2Values = new int [NbrIndices];
+         int* M3Values = new int [NbrIndices];
+         int* M4Values = new int [NbrIndices];
+         Complex* CoeffValues = new Complex [NbrIndices];
+
+        NbrIndices = 0;
+        for (int m1 = 0; m1 <= KyMax; ++m1)
+  	  for (int m2 = 0; m2 < m1; ++m2)
+	    for (int m3 = 0; m3 <= KyMax; ++m3)
+	      {
+	        m4 = m1 + m2 - m3;
+	        if ((m4 >= 0) && (m4 <= KyMax))
+                  if (m3 > m4)
+  		    {
+                       M1Values[NbrIndices] = m1;
+                       M2Values[NbrIndices] = m2;
+                       M3Values[NbrIndices] = m3;
+                       M4Values[NbrIndices] = m4;
+                       ParticleOnSphereDensityDensityOperator Operator (Space, m1, m2, m3, m4);
+                       CoeffValues[NbrIndices] = Operator.MatrixElement(State, State);
+                       NbrIndices++;
+                    }
+               }
+         cout << "Finished precalculation." << endl;       
+
+        Complex RhoRhoIntegrated(0,0);
+        double kappa = 2.0 * M_PI/Length;
+        for (int k = 0; k < NbrPoints; ++k)
+	  {
+            X = X0 + k * XInc;
+
+            RhoRho.Re = 0.0;
+            RhoRho.Im = 0.0;
+            for (int i = 0; i < NbrIndices; i++)
+              {
+                RhoRho += CoeffValues[i] * (EvaluateInteractionCoefficient(M1Values[i], M2Values[i], M3Values[i], M4Values[i], KyMax, kappa, X, 0.0)
+                                            -EvaluateInteractionCoefficient(M2Values[i], M1Values[i], M3Values[i], M4Values[i], KyMax, kappa, X, 0.0)
+                                            -EvaluateInteractionCoefficient(M1Values[i], M2Values[i], M4Values[i], M3Values[i], KyMax, kappa, X, 0.0)
+                                            +EvaluateInteractionCoefficient(M2Values[i], M1Values[i], M4Values[i], M3Values[i], KyMax, kappa, X, 0.0)  
+                                            );
+              }
+
+           //RhoRho /= (NbrParticles * (NbrParticles - 1)); 
+           RhoRhoIntegrated += Length * RhoRho * XInc;
+
+           File << X << " " << RhoRho.Re << " " << RhoRho.Im << endl;
+           cout << X << " " << RhoRho.Re << " " << RhoRho.Im << endl;
+	  }
+           
+      cout<<"Integral of rho rho = " << RhoRhoIntegrated << endl;
+
+      delete[] M1Values;
+      delete[] M2Values;
+      delete[] M3Values;
+      delete[] M4Values;
+      delete[] CoeffValues;
+*/
+        long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+        double XInc = 0.99*H/(double)NbrPoints;
+        double X0 = -0.49 * H;
+        double X; 
+        Complex RhoRho; 
+
+        Complex Density0 (0.0, 0.0);        
+        for (int i = 0; i <= KyMax; ++i)
+          {
+            Density0 += Conj(Basis.GetFunctionValue(X0, 0.0, (double)i-0.5*KyMax)) * Basis.GetFunctionValue(X0, 0.0, (double)i-0.5*KyMax) * Occupations[i];
+	  //cout<<"i= "<<i<<" "<<DensityMatEl[i]<<" ";
+          }
+
+        double kappa = 2.0 * M_PI/Length;
+        for (int k = 0; k < NbrPoints; ++k)
+	  {
+            X = X0 + k * XInc;
+
+            AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderDensityDensity (Space, NbrParticles, KyMax, Ratio, LandauLevel, X0, 0.0, X, 0.0, Architecture.GetArchitecture(), Memory);
+
+           ComplexVector TmpState(Space->GetHilbertSpaceDimension(), true);
+           VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+           Operation.ApplyOperation(Architecture.GetArchitecture());
+           RhoRho = State*TmpState;
+
+           Complex Density (0.0, 0.0);        
+           for (int i = 0; i <= KyMax; ++i)
+             {
+                Density += Conj(Basis.GetFunctionValue(X, 0.0, (double)i-0.5*KyMax)) * Basis.GetFunctionValue(X, 0.0, (double)i-0.5*KyMax) * Occupations[i];
+	        //cout<<"i= "<<i<<" "<<DensityMatEl[i]<<" ";
+             }
+           
+           //RhoRho *= 1.0 /(NbrParticles * Density0);
+           RhoRho /= (Density0 * Density);
+
+           File << X << " " << RhoRho.Re << " " << RhoRho.Im << endl;
+           cout << X << " " << RhoRho.Re << " " << RhoRho.Im << endl;
+         }
+
+  }
+
 
   delete[] Occupations;
 
@@ -314,3 +404,26 @@ int main(int argc, char** argv)
  
   return 0;
 }
+
+/*
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+
+Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int MaxMomentum, double kappa, double x, double y)
+{
+  double Xm1 = kappa * m1;
+  double Xm2 = kappa * m2;
+  double Xm3 = kappa * m3;
+  double Xm4 = kappa * m4;  
+
+  Complex Phase;
+  Phase.Re = cos(y * (Xm1 - Xm4));
+  Phase.Im = sin(y * (Xm1 - Xm4));
+
+  Complex Res;
+  Res.Re = exp(-0.5*pow(Xm1-Xm4,2.0));
+  Res.Im = 0.0;
+  Res *= exp(-0.5*pow(x - (Xm1-Xm3),2.0));
+
+  return (Res * Phase);
+}
+*/

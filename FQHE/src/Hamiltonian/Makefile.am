@@ -113,4 +113,5 @@ ParticleOn4DSphereDeltaHamiltonian.cc \
 ParticleOnDiskWithSpinGenericHamiltonian.cc \
 ParticleOn4DSphereThreeBodyDeltaHamiltonian.cc \
 ParticleOnCylinderFluctuatingMetricHamiltonian.cc \
-ParticleOnCP2DeltaHamiltonian.cc
+ParticleOnCP2DeltaHamiltonian.cc \
+ParticleOnCylinderDensityDensity.cc 

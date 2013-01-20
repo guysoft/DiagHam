@@ -71,9 +71,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
-  (*SystemGroup) += new BooleanOption ('\n', "cylinder", "evaluate density on the cylinder");
+  //(*SystemGroup) += new BooleanOption ('\n', "cylinder", "evaluate density on the cylinder");
   (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate density on the infinite cylinder");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1);
+  //(*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*SystemGroup) += new SingleStringOption  ('\n', "state", "provide an external state for comparison purposes");
@@ -109,8 +109,11 @@ int main(int argc, char** argv)
   double Kappa = 0.0;
   if (CylinderFlag)
     {
-       Kappa = (2.0 * M_PI) / sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
-       cout<< "Cylinder geometry, kappa= " << Kappa << endl;
+      if (Manager.GetDouble("cylinder-perimeter") > 0.0)
+	Kappa = (2.0 * M_PI) / Manager.GetDouble("cylinder-perimeter");
+      else
+	Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
+       cout<<"Cylinder geometry, kappa= " << Kappa << endl;
     }
 
   int NbrQuasiholes = 0;
