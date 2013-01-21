@@ -99,6 +99,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-berrycurvature", "compute the Berry curvature number of the fully filled band (only available in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
@@ -268,13 +269,17 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true) || (Manager.GetBoolean("singleparticle-berrycurvature") == true))
 	ExportOneBody = true;
       TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
 					   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)
 	{
 	  cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
+	}
+      if (Manager.GetBoolean("singleparticle-berrycurvature") == true)
+	{
+	  cout << "Chern number = " << TightBindingModel.ComputeBerryCurvature(0, ReplaceExtensionToFileName(EigenvalueOutputFile, "dat", "berrycurvature.dat")) << endl;
 	}
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);

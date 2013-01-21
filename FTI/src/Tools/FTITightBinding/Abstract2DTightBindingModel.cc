@@ -237,3 +237,115 @@ double Abstract2DTightBindingModel::ComputeChernNumber(int band)
   return TmpChernNumber.Im;
 }
 
+// compute the Berry curvature  of a given band
+//
+// band = band index
+// fileName = name of the output file 
+// return value = Chern number
+
+double Abstract2DTightBindingModel::ComputeBerryCurvature(int band, char* fileName)
+{
+  if (this->HaveOneBodyBasis() == false)
+    {
+      cout << "error, the tight binding model does not provide the one body basis" << endl;
+      return 0.0;
+    }
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+  Complex TmpChernNumber = 0.0;
+  Complex Tmp1[4];
+  Complex Tmp2[8];
+  ofstream File;
+  File.open(fileName);
+  this->WriteASCIIHeader(File, '#');
+  File << "# kx    ky    Berry_curvature";
+  double Fluctations = 0.0;
+  for (long LinearizedMomentumIndex = 0l; LinearizedMomentumIndex < this->NbrStatePerBand; ++LinearizedMomentumIndex)
+    {
+      int Kx;
+      int Ky;
+      this->GetLinearizedMomentumIndex(LinearizedMomentumIndex, Kx, Ky);
+      int LinearizedMomentumIndexIncX = this->GetLinearizedMomentumIndex((Kx + 1) % this->NbrSiteX, Ky);
+      int LinearizedMomentumIndexDecX;
+      if (Kx > 0)
+	LinearizedMomentumIndexDecX = this->GetLinearizedMomentumIndex((Kx - 1) % this->NbrSiteX, Ky);
+      else
+	LinearizedMomentumIndexDecX = this->GetLinearizedMomentumIndex(this->NbrSiteX - 1, Ky);
+      int LinearizedMomentumIndexIncY = this->GetLinearizedMomentumIndex(Kx, (Ky + 1) % this->NbrSiteY);
+      int LinearizedMomentumIndexDecY;
+      if (Ky > 0)
+	LinearizedMomentumIndexDecY = this->GetLinearizedMomentumIndex(Kx, (Ky - 1) % this->NbrSiteY);
+      else
+	LinearizedMomentumIndexDecY = this->GetLinearizedMomentumIndex(Kx, this->NbrSiteY - 1);
+
+      ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex];
+      ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndexIncX];
+      ComplexMatrix& LocalBasisDecX = this->OneBodyBasis[LinearizedMomentumIndexDecX];
+      ComplexMatrix& LocalBasisIncY = this->OneBodyBasis[LinearizedMomentumIndexIncY];
+      ComplexMatrix& LocalBasisDecY = this->OneBodyBasis[LinearizedMomentumIndexDecY];  
+      Tmp1[0] = 0.0;
+      Tmp1[1] = 0.0;
+      Tmp1[2] = 0.0;
+      Tmp1[3] = 0.0;
+
+      Tmp2[0] = 0.0;
+      Tmp2[1] = 0.0;
+      Tmp2[2] = 0.0;
+      Tmp2[3] = 0.0;
+      Tmp2[4] = 0.0;
+      Tmp2[5] = 0.0;
+      Tmp2[6] = 0.0;
+      Tmp2[7] = 0.0;
+
+      for (int i = 0; i < this->NbrBands; ++i)
+	{
+	  Tmp1[0] += LocalBasis[band][i] * Conj(LocalBasisIncX[band][i]);
+	  Tmp1[1] += LocalBasis[band][i] * Conj(LocalBasisDecX[band][i]);
+	  Tmp1[2] += LocalBasis[band][i] * Conj(LocalBasisIncY[band][i]);
+	  Tmp1[3] += LocalBasis[band][i] * Conj(LocalBasisDecY[band][i]);
+
+	  Tmp2[0] += Conj(LocalBasisIncX[band][i]) * LocalBasisIncY[band][i];
+	  Tmp2[1] += Conj(LocalBasisDecX[band][i]) * LocalBasisIncY[band][i];
+	  Tmp2[2] += Conj(LocalBasisIncX[band][i]) * LocalBasisDecY[band][i];
+	  Tmp2[3] += Conj(LocalBasisDecX[band][i]) * LocalBasisDecY[band][i];
+	  Tmp2[4] += Conj(LocalBasisIncY[band][i]) * LocalBasisIncX[band][i];
+	  Tmp2[5] += Conj(LocalBasisDecY[band][i]) * LocalBasisIncX[band][i];
+	  Tmp2[6] += Conj(LocalBasisIncY[band][i]) * LocalBasisDecX[band][i];
+	  Tmp2[7] += Conj(LocalBasisDecY[band][i]) * LocalBasisDecX[band][i];
+	}
+
+      Complex TmpCurvature = 0.0;
+      TmpCurvature += (Tmp1[2] * Conj(Tmp1[0]) * Tmp2[0]);
+      TmpCurvature -= (Tmp1[2] * Conj(Tmp1[1]) * Tmp2[1]);
+      TmpCurvature -= (Tmp1[3] * Conj(Tmp1[0]) * Tmp2[2]);
+      TmpCurvature += (Tmp1[3] * Conj(Tmp1[1]) * Tmp2[3]);
+	  
+      TmpCurvature -= (Tmp1[0] * Conj(Tmp1[2]) * Tmp2[4]);
+      TmpCurvature += (Tmp1[0] * Conj(Tmp1[3]) * Tmp2[5]);
+      TmpCurvature += (Tmp1[1] * Conj(Tmp1[2]) * Tmp2[6]);
+      TmpCurvature -= (Tmp1[1] * Conj(Tmp1[3]) * Tmp2[7]);
+
+      TmpCurvature *= 0.25;
+
+      Fluctations += (TmpCurvature.Im - (2.0 * M_PI / ((double) this->NbrStatePerBand))) * (TmpCurvature.Im - (2.0 * M_PI / ((double) this->NbrStatePerBand)));
+
+      File << Kx << " " << Ky << " " << TmpCurvature.Im << endl;
+
+      TmpChernNumber += TmpCurvature;
+    }
+//  Fluctations *= ((double) this->NbrStatePerBand) ;
+  cout << "Berry curvature fluctuations = " << Fluctations << " " <<  sqrt(Fluctations) << " " << (TmpChernNumber.Im * TmpChernNumber.Im) << " " << sqrt(Fluctations - (TmpChernNumber.Im * TmpChernNumber.Im)) 
+       << "( " << (sqrt(Fluctations - (TmpChernNumber.Im * TmpChernNumber.Im)) / (2.0 * M_PI) )<< ") in 2 pi units" << endl;
+  TmpChernNumber /= 2.0 * M_PI;
+  gettimeofday (&(TotalEndingTime), 0);
+  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+  cout << "Chern number computed in  " << Dt << "s" << endl;
+//  cout << "Berry curvature fluctuations = " << sqrt ()<< endl;
+
+  File.close();
+
+  return TmpChernNumber.Im;
+}
+

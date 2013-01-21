@@ -249,7 +249,10 @@ int main(int argc, char** argv)
 	  cout << "error, unsorted indices" << endl;
       cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
       Architecture.GetArchitecture()->SetDimension(EffectiveDimension);
-      ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
+      long Memory = Manager.GetInteger("ematrix-memory") << 20;
+       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
+     ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
 										    EffectiveDimension, EffectiveBlockIndices, 
 										    BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
 										    Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    

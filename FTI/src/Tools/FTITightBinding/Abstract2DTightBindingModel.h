@@ -113,6 +113,13 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = Chern number
   virtual double ComputeChernNumber(int band);
 
+  // compute the Berry curvature  of a given band
+  //
+  // band = band index
+  // fileName = name of the output file 
+  // return value = Chern number
+  virtual double ComputeBerryCurvature(int band, char* fileName);
+
  protected:
 
   // write an header that describes the tight binding model

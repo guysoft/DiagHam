@@ -37,8 +37,14 @@
 #include "MainTask/AbstractMainTask.h"
 #include "Vector/ComplexVector.h"
 
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/ArchitectureBaseOperationManager.h"
+
 #include <iostream>
+
+
 using std::ofstream;
+
 
 class AbstractHamiltonian;
 class OptionManager;
@@ -108,22 +114,25 @@ class FQHEMPSEMatrixMainTask: public AbstractMainTask
   //  
   ~FQHEMPSEMatrixMainTask();
   
+  // set architecture binded to the task
+  // 
+  // architecture = pointer to the architecture to use
+  virtual void SetArchitecture(AbstractArchitecture* architecture);
+
   // execute the main task
   // 
   // return value = 0 if no error occurs, else return error code
-  int ExecuteMainTask();
+  virtual int ExecuteMainTask();
 
   // get the E matrix eigenvalues
   //
   // return value = pointer to the eigenvalue array
-  Complex* GetEigenvalues();
+  virtual Complex* GetEigenvalues();
 
   // get the E matrix eigenstates
   //
   // return value = pointer to the eigenstate array
-  ComplexVector* GetEigenstates();
-
-
+  virtual ComplexVector* GetEigenstates();
 
  protected:
   

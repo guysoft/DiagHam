@@ -309,7 +309,7 @@ RealVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultip
     {
       for (int j = firstComponent; j < LastComponent; ++j)
 	{
-	  cout << (j - this->PrecalculationShift) << firstComponent << " " <<  LastComponent << endl;
+//	  cout << (j - this->PrecalculationShift) << " " <<  firstComponent << " " <<  LastComponent << endl;
 	  long TmpRowPointer = this->TemporaryRowPointers[j - this->PrecalculationShift];
 	  if (TmpRowPointer >= 0l)
 	    {
