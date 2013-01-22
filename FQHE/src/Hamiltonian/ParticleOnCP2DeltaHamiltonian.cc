@@ -236,8 +236,12 @@ double ParticleOnCP2DeltaHamiltonian::ComputeTwoBodyMatrixElement(int r1, int s1
   Coef.FactorialMultiply(t1 + t2);
   Coef.FactorialDivide(t3);
   Coef.FactorialDivide(t4);
-//   Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
-//   Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
+  Coef.FactorialDivide(2*this->NbrFluxQuanta + 2);
+  Coef.FactorialDivide(2*this->NbrFluxQuanta + 2);
+  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
+  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
+  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
+  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
     
   double Tmp = sqrt (Coef.GetNumericalValue());
   
