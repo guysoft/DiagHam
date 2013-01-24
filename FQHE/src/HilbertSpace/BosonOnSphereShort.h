@@ -80,6 +80,8 @@ class BosonOnSphereShort :  public ParticleOnSphere
   friend class BosonOnSphereWithSU3Spin;
   friend class BosonOnSphereWithSU4Spin;
   friend class BosonOnSphereWithSU4SpinAllEntanglement;
+  
+  friend class BosonOnCP2TzSymmetry;
 
  protected:
 

@@ -5,6 +5,7 @@
 #include "HilbertSpace/BosonOnSphereLong.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/BosonOnCP2TzSymmetry.h"
 
 
 #include "Hamiltonian/ParticleOnCP2DeltaHamiltonian.h"
@@ -71,7 +72,8 @@ int main(int argc, char** argv)
 //   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-tz", " only evaluate one jz sector (negative if all sectors have to be computed) ", 1000);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-y", "only evaluate one kz sector (negative if all sectors have to be computed)", 1000);
-
+  (*SystemGroup) += new BooleanOption  ('\n', "tzsymmetrized-basis", "use Tz <-> -Tz symmetrized version of the basis (only valid if total-tz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -104,6 +106,8 @@ int main(int argc, char** argv)
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
   bool ThreeBodyFlag = Manager.GetBoolean("three-body");
+  bool TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
+  bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
   
 
   char* OutputName = new char [256];
@@ -128,10 +132,27 @@ int main(int argc, char** argv)
 	  int tz = r - s;
 	  int y = 3*(r + s) - 2*NbrBosons*NbrFluxQuanta;
 	  cout << "(tz,y) = (" << tz << "," << y << ")" << endl; 
+	  if (TzSymmetrizedBasis == true)
+	      {
+		cout << "  Tz symmetrized basis ";
+		if (TzMinusParity == true)
+		  cout << "(minus parity) " << endl;
+		else
+		  cout << "(plus parity) " << endl;
+	      }
 	  ParticleOnSphere* Space = 0;
 	  if (NbrOrbitals + NbrBosons < 65)
 	  {
-	    Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
+	    if (TzSymmetrizedBasis == false)
+	      Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
+	    else
+	    {
+	     if (tz != 0)
+	       Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
+	     else
+	      Space = new BosonOnCP2TzSymmetry(NbrBosons, NbrFluxQuanta, tz, y, TzMinusParity);
+	    }
+	    
 	  }
 	  else
 	    cout << " Warning : number of orbitals too big " << endl;
@@ -195,11 +216,28 @@ int main(int argc, char** argv)
        return -1;
      }
      cout << "(tz,y) = (" << tz << "," << y << ")" << endl; 
+     if (TzSymmetrizedBasis == true)
+      {
+	cout << "  Tz symmetrized basis ";
+	if (TzMinusParity == true)
+	  cout << "(minus parity) ";
+	else
+	  cout << "(plus parity) ";
+      }
      ParticleOnSphere* Space = 0;
      if (NbrOrbitals + NbrBosons < 65)
 	{
-	  Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
-	}
+	    if (TzSymmetrizedBasis == false)
+	      Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
+	    else
+	    {
+	     if (tz != 0)
+	       Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
+	     else
+	      Space = new BosonOnCP2TzSymmetry(NbrBosons, NbrFluxQuanta, tz, y, TzMinusParity);
+	    }
+	    
+	  }
      else
 	cout << " Warning : number of orbitals too big " << endl;
      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
