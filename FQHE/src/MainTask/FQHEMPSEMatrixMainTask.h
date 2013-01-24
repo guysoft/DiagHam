@@ -72,6 +72,12 @@ class FQHEMPSEMatrixMainTask: public AbstractMainTask
   // numerical error when sorting real numbers
   double SortingError;
 
+  // use the power method instead of Arnoldi
+  bool PowerMethodFlag;
+
+  // energy shift that has been applied to the Hamiltonian
+  double EnergyShift;
+
   // show time spent for each Lanczos iteration
   bool ShowIterationTime;
   // enable Arnoldi disk resume capabilities
@@ -102,12 +108,13 @@ class FQHEMPSEMatrixMainTask: public AbstractMainTask
   // computeEigenstates = true if the eigenstates have to be computed
   // leftFlag = compute the left eigenstates if true 
   // sortingError = numerical error when sorting real numbers
+  // energyShift = energy shift that has been applied to the Hamiltonian
   // eigenstateFileName = if non zero, store the E matrix spectrum in this file
   // eigenstateFileHeader = an optional header that can be added to EigenvectorFileName
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector 
   //                       (eigenvectors are stored only if eigenvectorFileName is non zero)
   FQHEMPSEMatrixMainTask(OptionManager* options, AbstractHamiltonian* hamiltonian, 
-			 int nbrEigenvalues, bool computeEigenstates, bool leftFlag, double sortingError,
+			 int nbrEigenvalues, bool computeEigenstates, bool leftFlag, double sortingError, double energyShift = 0.0,
 			 char* eigenstateFileName = 0, char* eigenstateFileHeader = 0, char* eigenvectorFileName = 0);
   
   // destructor

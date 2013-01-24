@@ -63,10 +63,30 @@ class FermionOnCylinderMPSWrapper :  public FermionOnSphereMPSWrapper
   // rowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
   // columnIndex = column index of the MPS element that has to be evaluated
   // bMatrices = array that gives the B matrices 
+  // architecture = pointer to the archiecture
   // memory = amount of memory granted for precalculations
   FermionOnCylinderMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
 			     int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, AbstractArchitecture* architecture, 
 			     unsigned long memory = 10000000);
+
+  // constructor in presence of quasiholes
+  // 
+  // nbrFermions = number of fermions
+  // totalLz = twice the momentum total value
+  // lzMax = twice the maximum Lz value reached by a fermion
+  // referenceState = array that describes the root configuration
+  // rowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+  // columnIndex = column index of the MPS element that has to be evaluated
+  // bMatrices = array that gives the B matrices 
+  // quasiholeBMatrices = array that contains the quasihole B matrices
+  // nbrQuasiholes = number of quasihole B matrices
+  // architecture = pointer to the archiecture
+  // memory = amount of memory granted for precalculations  
+  FermionOnCylinderMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
+			       int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, 
+			       SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholes,
+			       AbstractArchitecture* architecture, unsigned long memory = 10000000);
+
 
   // copy constructor (without duplicating datas)
   //
@@ -168,7 +188,18 @@ class FermionOnCylinderMPSWrapper :  public FermionOnSphereMPSWrapper
     
 
  protected:
-
+  
+  // core part of the  a^+_m a_n operator calculation
+  //
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // return value = matrix that results from the a^+_m a_n operator calculation
+  virtual SparseRealMatrix AdACore (int m, int n);
+    
+  // compute the B matrix contribution to the state normalization
+  //
+  // return value = matrix that provides the B matrix contribution
+  virtual SparseRealMatrix ComputeBMatrixNormalization();
 
 };
 

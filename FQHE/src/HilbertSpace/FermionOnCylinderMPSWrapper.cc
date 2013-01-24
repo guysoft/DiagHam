@@ -121,53 +121,89 @@ FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& 
   this->TmpMatrixElements = new double [this->MaxTmpMatrixElements];
   this->TmpColumnIndices = new int [this->MaxTmpMatrixElements];
   this->TmpElements = new double [this->BMatrices[0].GetNbrRow()];
-  SparseRealMatrix TmpMatrixNorm (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
-  TmpMatrixNorm.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
-
-  for (int i = 0; i <= this->LzMax; ++i)
-    {
-#ifdef MPSWRAPPER_MULT
-       SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrixNorm, 
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-       SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-       TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrixNorm, 
-			     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-       SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-#endif
-
-#ifdef MPSWRAPPER_SMP_MULT
-       SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrixNorm, 
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-       SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-       TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrixNorm, 
-			     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-       SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-#endif
-
-#ifdef MPSWRAPPER_CONJ
-      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrixNorm, this->BMatrices[0], 
-						this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-      SparseRealMatrix TmpMatrix3 = Conjugate(this->ConjugateBMatrices[1], TmpMatrixNorm, this->BMatrices[1], 
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
-#endif
-
-#ifdef MPSWRAPPER_SMP_CONJ
-      SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[0]), &TmpMatrixNorm, &(this->BMatrices[0]), 
-						this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-      SparseRealMatrix TmpMatrix3 = Conjugate(&(this->ConjugateBMatrices[1]), &TmpMatrixNorm, &(this->BMatrices[1]), 
-					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
-#endif
-      
-       TmpMatrixNorm = TmpMatrix2 + TmpMatrix3;
-     }
+  SparseRealMatrix TmpMatrixNorm (this->ComputeBMatrixNormalization());
   double Tmp;
   TmpMatrixNorm.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
   this->StateNormalization = Tmp;
   cout<<"Cylinder normalization "<<this->StateNormalization<<endl;
+}
+
+// constructor in presence of quasiholes
+// 
+// nbrFermions = number of fermions
+// totalLz = twice the momentum total value
+// lzMax = twice the maximum Lz value reached by a fermion
+// referenceState = array that describes the root configuration
+// rowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
+// columnIndex = column index of the MPS element that has to be evaluated
+// bMatrices = array that gives the B matrices 
+// quasiholeBMatrices = array that contains the quasihole B matrices
+// nbrQuasiholes = number of quasihole B matrices
+// architecture = pointer to the archiecture
+// memory = amount of memory granted for precalculations
+
+FermionOnCylinderMPSWrapper::FermionOnCylinderMPSWrapper (int nbrFermions, int& totalLz, int lzMax, int* referenceState,  
+							  int rowIndex, int columnIndex, SparseRealMatrix* bMatrices, 
+							  SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholes,
+							  AbstractArchitecture* architecture, unsigned long memory)
+{
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->TotalLz = totalLz;
+  this->LzMax = lzMax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->TotalLz = 0;
+  this->StateDescription = 0x0ul;
+  int TmpIndex = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      this->StateDescription |= ((unsigned long) (referenceState[i] & 1)) << i;
+      if (referenceState[i] == 1)
+	{
+	  this->TotalLz += i;
+	  this->StateLzMax = i;
+	}
+    }
+  this->TotalLz = ((this->TotalLz << 1) - (this->LzMax * this->NbrFermions));
+  totalLz = this->TotalLz;
+  this->LargeHilbertSpaceDimension = 1l;
+  this->HilbertSpaceDimension = 1;
+  this->Flag.Initialize();
+  this->StateDescription = 0l;
+  this->MaximumSignLookUp = 16;
+  this->GenerateLookUpTable(memory);
+  this->MPSRowIndex = rowIndex;
+  this->MPSColumnIndex = columnIndex;
+  this->Architecture = architecture;
+
+  int NbrBMatrices = 2;
+  this->BMatrices = new SparseRealMatrix[NbrBMatrices];
+  this->ConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
+  for (int i = 0; i < NbrBMatrices; ++i)
+    {
+      this->BMatrices[i] = bMatrices[i];
+      this->ConjugateBMatrices[i] = bMatrices[i].Transpose();
+    }
+
+  this->MaxTmpMatrixElements = (((long) this->BMatrices[0].GetNbrRow()) * 
+				((long) this->BMatrices[0].GetNbrRow() / 1l));
+  cout << "Requested memory for sparse matrix multiplications = " << ((this->MaxTmpMatrixElements * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
+  this->TmpMatrixElements = new double [this->MaxTmpMatrixElements];
+  this->TmpColumnIndices = new int [this->MaxTmpMatrixElements];
+  this->TmpElements = new double [this->BMatrices[0].GetNbrRow()];
+  this->QuasiholeBMatrixContribution.Copy(quasiholeBMatrices[0]);
+  for (int i = 1; i < nbrQuasiholes; ++i)
+    {
+      this->QuasiholeBMatrixContribution.Multiply(quasiholeBMatrices[i]);
+    }
+  this->ConjugateQuasiholeBMatrixContribution = this->QuasiholeBMatrixContribution.HermitianTranspose();
+  SparseRealMatrix TmpMatrixNorm (this->ComputeBMatrixNormalization());
+  SparseComplexMatrix TmpMatrixNorm2 = Conjugate(this->ConjugateQuasiholeBMatrixContribution, TmpMatrixNorm, this->QuasiholeBMatrixContribution);
+  Complex Tmp;
+  TmpMatrixNorm2.PrintNonZero(cout) << endl;
+  TmpMatrixNorm2.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
+  this->ComplexStateNormalization = Tmp;
+  cout << "Cylinder normalization " << this->ComplexStateNormalization << endl;
 }
 
 // copy constructor (without duplicating datas)
@@ -643,6 +679,21 @@ double FermionOnCylinderMPSWrapper::AdA (int index, int m)
 
 int FermionOnCylinderMPSWrapper::AdA (int index, int m, int n, double& coefficient)
 {
+  SparseRealMatrix TmpMatrix (this->AdACore(m ,n));
+  double Tmp = 0.0;
+  TmpMatrix.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
+  coefficient = Tmp / this->StateNormalization;
+  return 0;
+}
+
+// core part of the  a^+_m a_n operator calculation
+//
+// m = index of the creation operator
+// n = index of the annihilation operator
+// return value = matrix that results from the a^+_m a_n operator calculation
+
+SparseRealMatrix FermionOnCylinderMPSWrapper::AdACore (int m, int n)
+{
   SparseRealMatrix TmpMatrix (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
   TmpMatrix.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
   double Sign = 1.0;
@@ -799,10 +850,7 @@ int FermionOnCylinderMPSWrapper::AdA (int index, int m, int n, double& coefficie
 	    }
 	}
     }
-  double Tmp = 0.0;
-  TmpMatrix.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
-  coefficient = -Tmp / this->StateNormalization;
-  return 0;
+  return TmpMatrix;
 }
 
 // apply a^+_m a_n operator to a given state 
@@ -815,6 +863,62 @@ int FermionOnCylinderMPSWrapper::AdA (int index, int m, int n, double& coefficie
 
 long FermionOnCylinderMPSWrapper::AdA (long index, int m, int n, Complex& coefficient)
 {
+  SparseRealMatrix TmpMatrix (this->AdACore(m ,n));
+  SparseComplexMatrix TmpMatrix2 = Conjugate(this->ConjugateQuasiholeBMatrixContribution, TmpMatrix, this->QuasiholeBMatrixContribution);
+  Complex Tmp;
+  TmpMatrix2.GetMatrixElement(this->MPSColumnIndex, this->MPSColumnIndex, Tmp);
+  coefficient = Tmp / this->ComplexStateNormalization;
   return 0;
 }
   
+// compute the B matrix contribution to the state normalization
+//
+// return value = matrix that provides the B matrix contribution
+
+SparseRealMatrix FermionOnCylinderMPSWrapper::ComputeBMatrixNormalization()
+{
+  SparseRealMatrix TmpMatrixNorm (this->BMatrices[0].GetNbrRow(), this->BMatrices[0].GetNbrRow());
+  TmpMatrixNorm.SetMatrixElement(this->MPSRowIndex, this->MPSRowIndex, 1.0);
+
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+#ifdef MPSWRAPPER_MULT
+       SparseRealMatrix TmpMatrix1 = Multiply(this->ConjugateBMatrices[0], TmpMatrixNorm, 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       SparseRealMatrix TmpMatrix2 = Multiply(TmpMatrix1, this->BMatrices[0],  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       TmpMatrix1 = Multiply(this->ConjugateBMatrices[1], TmpMatrixNorm, 
+			     this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+       SparseRealMatrix TmpMatrix3 = Multiply(TmpMatrix1, this->BMatrices[1],  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+
+#ifdef MPSWRAPPER_SMP_MULT
+       SparseRealMatrix TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[0]), &TmpMatrixNorm, 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+       SparseRealMatrix TmpMatrix2 = Multiply(&TmpMatrix1, &(this->BMatrices[0]),  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+       TmpMatrix1 = Multiply(&(this->ConjugateBMatrices[1]), &TmpMatrixNorm, 
+			     this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+       SparseRealMatrix TmpMatrix3 = Multiply(&TmpMatrix1, &(this->BMatrices[1]),  
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+
+#ifdef MPSWRAPPER_CONJ
+      SparseRealMatrix TmpMatrix2 = Conjugate(this->ConjugateBMatrices[0], TmpMatrixNorm, this->BMatrices[0], 
+						this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+      SparseRealMatrix TmpMatrix3 = Conjugate(this->ConjugateBMatrices[1], TmpMatrixNorm, this->BMatrices[1], 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->TmpElements); 
+#endif
+
+#ifdef MPSWRAPPER_SMP_CONJ
+      SparseRealMatrix TmpMatrix2 = Conjugate(&(this->ConjugateBMatrices[0]), &TmpMatrixNorm, &(this->BMatrices[0]), 
+						this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+      SparseRealMatrix TmpMatrix3 = Conjugate(&(this->ConjugateBMatrices[1]), &TmpMatrixNorm, &(this->BMatrices[1]), 
+					      this->TmpMatrixElements, this->TmpColumnIndices, this->MaxTmpMatrixElements, this->Architecture); 
+#endif
+      
+       TmpMatrixNorm = TmpMatrix2 + TmpMatrix3;
+     }
+  return TmpMatrixNorm;
+}

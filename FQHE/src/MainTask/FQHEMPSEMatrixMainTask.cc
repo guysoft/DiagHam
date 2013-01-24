@@ -40,6 +40,7 @@
 
 #include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
 #include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
+#include "LanczosAlgorithm/PowerMethodAlgorithm.h"
 
 #include "GeneralTools/ArrayTools.h"
 
@@ -63,6 +64,7 @@ using std::ios;
 // computeEigenstates = true if the eigenstates have to be computed
 // leftFlag = compute the left eigenstates if true 
 // sortingError = numerical error when sorting real numbers
+// energyShift = energy shift that has been applied to the Hamiltonian
 // eigenstateFileName = if non zero, store the E matrix spectrum in this file
 // eigenstateFileHeader = an optional header that can be added to EigenvectorFileName
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector 
@@ -70,7 +72,7 @@ using std::ios;
 
 FQHEMPSEMatrixMainTask::FQHEMPSEMatrixMainTask(OptionManager* options, AbstractHamiltonian* hamiltonian, 
 					       int nbrEigenvalues, bool computeEigenstates, bool leftFlag, double sortingError,
-					       char* eigenstateFileName, char* eigenstateFileHeader, char* eigenvectorFileName)
+					       double energyShift, char* eigenstateFileName, char* eigenstateFileHeader, char* eigenvectorFileName)
 {
   this->Hamiltonian = hamiltonian;
   this->NbrEigenvalues = nbrEigenvalues;
@@ -149,6 +151,13 @@ FQHEMPSEMatrixMainTask::FQHEMPSEMatrixMainTask(OptionManager* options, AbstractH
     {
       this->ArnoldiMemory = options->GetInteger("arnoldi-memory");
     }
+
+  this->EnergyShift = energyShift;
+  this->PowerMethodFlag = false;
+  if ((*options)["power-method"] != 0)
+    {
+      this->PowerMethodFlag = options->GetBoolean("power-method");
+    }
 }
 
 // destructor
@@ -225,44 +234,76 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
     }
   else
     {	 
-      BasicArnoldiAlgorithm* Arnoldi = 0;
-      if (this->DiskFlag)
+      if (this->PowerMethodFlag == false)
 	{
-	  long TmpMemory = (ArnoldiMemory << 17) / this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();
-	  if (TmpMemory == 0)
-	    TmpMemory = 1;
-	  Arnoldi = new BasicArnoldiAlgorithmWithDiskStorage (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, 
-							      this->ResumeFlag, TmpMemory, false);
+	  BasicArnoldiAlgorithm* Arnoldi = 0;
+	  if (this->DiskFlag)
+	    {
+	      long TmpMemory = (ArnoldiMemory << 17) / this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();
+	      if (TmpMemory == 0)
+		TmpMemory = 1;
+	      Arnoldi = new BasicArnoldiAlgorithmWithDiskStorage (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, 
+								  this->ResumeFlag, TmpMemory, false);
+	    }
+	  else
+	    {
+	      Arnoldi = new BasicArnoldiAlgorithm (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
+	    }
+	  Arnoldi->SetHamiltonian(this->Hamiltonian);
+	  Arnoldi->InitializeLanczosAlgorithm();
+	  Arnoldi->RunLanczosAlgorithm(this->NbrEigenvalues);
+	  while (Arnoldi->TestConvergence() == false)
+	    {
+	      timeval TotalStartingTime;
+	      timeval TotalEndingTime;
+	      if (this->ShowIterationTime == true)
+		{
+		  gettimeofday (&(TotalStartingTime), 0);
+		}
+	      Arnoldi->RunLanczosAlgorithm(1);
+	      if (this->ShowIterationTime == true)
+		{
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << "iteration done in " << Dt << "s" << endl;
+		}
+	    }
+	  if (this->ComputeEigenstates)
+	    TmpEigenstates = (ComplexVector*) Arnoldi->GetEigenstates(this->NbrEigenvalues);  
+	  Arnoldi->GetEigenvalues(TmpEigenvalues, this->NbrEigenvalues);
 	}
       else
 	{
-	  Arnoldi = new BasicArnoldiAlgorithm (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
-	}
-      Arnoldi->SetHamiltonian(this->Hamiltonian);
-      Arnoldi->InitializeLanczosAlgorithm();
-      Arnoldi->RunLanczosAlgorithm(this->NbrEigenvalues);
-      while (Arnoldi->TestConvergence() == false)
-	{
-	  timeval TotalStartingTime;
-	  timeval TotalEndingTime;
-	  if (this->ShowIterationTime == true)
+	  this->NbrEigenvalues = 1;
+	  
+	  PowerMethodAlgorithm* PowerMethod = new PowerMethodAlgorithm (Architecture, this->MaxNbrIterArnoldi);
+	  
+	  PowerMethod->SetHamiltonian(this->Hamiltonian);
+	  PowerMethod->InitializeLanczosAlgorithm();
+	  PowerMethod->RunLanczosAlgorithm(this->NbrEigenvalues);
+	  while (PowerMethod->TestConvergence() == false)
 	    {
-	      gettimeofday (&(TotalStartingTime), 0);
+	      timeval TotalStartingTime;
+	      timeval TotalEndingTime;
+	      if (this->ShowIterationTime == true)
+		{
+		  gettimeofday (&(TotalStartingTime), 0);
+		}
+	      PowerMethod->RunLanczosAlgorithm(1);
+	      if (this->ShowIterationTime == true)
+		{
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << "iteration done in " << Dt << "s" << endl;
+		}
 	    }
-	  Arnoldi->RunLanczosAlgorithm(1);
-	  if (this->ShowIterationTime == true)
-	    {
-	      gettimeofday (&(TotalEndingTime), 0);
-	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-	      cout << "iteration done in " << Dt << "s" << endl;
-	    }
+	  if (this->ComputeEigenstates)
+	    TmpEigenstates = (ComplexVector*) PowerMethod->GetEigenstates(this->NbrEigenvalues);  
+	  PowerMethod->GetEigenvalues(TmpEigenvalues, this->NbrEigenvalues);
 	}
-      if (this->ComputeEigenstates)
-	TmpEigenstates = (ComplexVector*) Arnoldi->GetEigenstates(this->NbrEigenvalues);  
-      Arnoldi->GetEigenvalues(TmpEigenvalues, this->NbrEigenvalues);
-     }
-
+    }
   for (int i = 0; i < this->NbrEigenvalues; ++i)
     {
       TmpRealPart[i] = TmpEigenvalues[i].Re;
@@ -283,7 +324,7 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
     {
       if (this->ComputeEigenstates)
 	this->Eigenstates[i] = TmpEigenstates[TmpIndices[i]];
-      this->Eigenvalues[i] = TmpEigenvalues[TmpIndices[i]];
+      this->Eigenvalues[i] = TmpEigenvalues[TmpIndices[i]] - this->EnergyShift;
     }
   if (this->ComputeEigenstates)
     {
@@ -291,7 +332,7 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
 	{
 	  ComplexVector TestE (this->Eigenstates[i].GetVectorDimension());
 	  this->Hamiltonian->Multiply(this->Eigenstates[i], TestE);
-	  cout << (TestE * this->Eigenstates[i]) << " " << this->Eigenvalues[i] << endl;
+	  cout << ((TestE * this->Eigenstates[i]) - this->EnergyShift) << " " << this->Eigenvalues[i] << endl;
 	}
       if (this->EigenvectorFileName != 0)
 	{

@@ -35,6 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 
 
 #include <iostream>
@@ -79,8 +80,14 @@ class FermionOnSphereMPSWrapper :  public ParticleOnSphere
   // column index of the MPS element that has to be evaluated
   int MPSColumnIndex;
 
+  // array where the B matrice are stored
   SparseRealMatrix* BMatrices;
   SparseRealMatrix* ConjugateBMatrices;
+
+  // array where the optional contribution from the quasihole matrices is stored
+  SparseComplexMatrix QuasiholeBMatrixContribution;
+  SparseComplexMatrix ConjugateQuasiholeBMatrixContribution;
+
 
   // state normalization
   double StateNormalization;

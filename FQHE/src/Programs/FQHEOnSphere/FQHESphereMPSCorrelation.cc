@@ -71,9 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
-  //(*SystemGroup) += new BooleanOption ('\n', "cylinder", "evaluate density on the cylinder");
   (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate density on the infinite cylinder");
-  //(*SystemGroup) += new SingleDoubleOption  ('\n', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "density", "plot density insted of density-density correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one or two body coefficients that are requested to evaluate the density-density correlation", false);
   (*SystemGroup) += new SingleStringOption  ('\n', "state", "provide an external state for comparison purposes");
@@ -107,13 +105,20 @@ int main(int argc, char** argv)
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
   double AspectRatio = Manager.GetDouble("aspect-ratio");
   double Kappa = 0.0;
+  double Perimeter = 0.0;
   if (CylinderFlag)
     {
       if (Manager.GetDouble("cylinder-perimeter") > 0.0)
-	Kappa = (2.0 * M_PI) / Manager.GetDouble("cylinder-perimeter");
+	{
+	  Kappa = (2.0 * M_PI) / Manager.GetDouble("cylinder-perimeter");
+	  Perimeter = Manager.GetDouble("cylinder-perimeter");
+	}
       else
-	Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
-       cout<<"Cylinder geometry, kappa= " << Kappa << endl;
+	{
+	  Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
+	  Perimeter = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio); 
+	}
+      cout << "Cylinder geometry : perimeter = " << Perimeter << ", kappa= " << Kappa << endl;
     }
 
   int NbrQuasiholes = 0;
@@ -270,11 +275,21 @@ int main(int argc, char** argv)
   FermionOnSphereMPSWrapper* SpaceWrapper = 0;
   if (CylinderFlag == false)
     {
-      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices, Architecture.GetArchitecture());
+      SpaceWrapper = new FermionOnSphereMPSWrapper  (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
+						     SparseBMatrices, Architecture.GetArchitecture());
     }
   else
     {
-      SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, SparseBMatrices, Architecture.GetArchitecture());
+      if (NbrQuasiholes > 0)
+	{
+	  SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex + 1, MPSColumnIndex + 1, 
+							  SparseBMatrices, SparseQuasiholeBMatrices, NbrQuasiholes, Architecture.GetArchitecture());
+	}
+      else
+	{
+	  SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
+							  SparseBMatrices, Architecture.GetArchitecture());
+	}
     }
   RealVector DummyState (1);
   DummyState[0] = 1.0;
@@ -290,6 +305,10 @@ int main(int argc, char** argv)
   Complex TmpValue;
   RealVector Value(2, true);
   Complex* PrecalculatedValues = new Complex [NbrFluxQuanta + 1];	  
+  Complex** PrecalculatedValuesFullDensity = new Complex* [NbrFluxQuanta + 1];	  
+  for (int i = 0; i <= NbrFluxQuanta; ++i)
+    PrecalculatedValuesFullDensity[i] = new Complex [NbrFluxQuanta + 1];
+  NbrQuasiholes = 1;
   if (DensityFlag == false)
     {
       cout<<"density-density precalculate ";
@@ -321,10 +340,11 @@ int main(int argc, char** argv)
 	    {
 	      for (int j = 0; j <= NbrFluxQuanta; ++j)
 		{
-		  ParticleOnSphereDensityOperator Operator (SpaceWrapper, i, j);
-		  PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
-		  CheckSum += PrecalculatedValues[i];
-		  cout<< i <<" " << PrecalculatedValues[i] << endl;
+		  Complex TmpCoef;
+		  SpaceWrapper->AdA (0, i, j, TmpCoef);
+		  PrecalculatedValuesFullDensity[i][j] = TmpCoef;
+		  CheckSum += PrecalculatedValuesFullDensity[i][j];
+		  cout << i << " " << j << " : " << PrecalculatedValuesFullDensity[i][j] << endl;
 		}
 	    }
 	}
@@ -426,21 +446,47 @@ int main(int argc, char** argv)
  else //cylinder
   {
     double XInc = (H + 4.0) / ((double) NbrPoints);
-
+    double YInc = Perimeter  / ((double) NbrPoints);
     if (CoefficientOnlyFlag == false)
       {
-        for (int k = 0; k <= NbrPoints; ++k)
-	  {
-            double X = -0.5 * (H + 4.0) + (double)k * XInc;
-	    Complex Sum (0.0, 0.0);
-	    for (int i = 0; i <= NbrFluxQuanta; ++i)
-	      {
-	        Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i - 0.5 * NbrFluxQuanta);
-	        Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
-	      }
-            File << X << " " << Norm(Sum) << endl; //* pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
-	  }
-       }
+      if (NbrQuasiholes > 0)
+	{
+	  for (int k = 0; k <= NbrPoints; ++k)
+	    {
+	      double X = -0.5 * (H + 4.0) + (double)k * XInc;
+	      for (int l = 0; l <= NbrPoints; ++l)
+		{
+		  double Y = ((double) l) * YInc;
+		  Complex Sum (0.0, 0.0);
+		  for (int i = 0; i <= NbrFluxQuanta; ++i)
+		    {
+		      Complex TmpValue1 = Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, ((double) i) - 0.5 * NbrFluxQuanta));	  
+		      for (int j = 0; j <= NbrFluxQuanta; ++j)
+			{
+			  Complex TmpValue2 = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, ((double) j) - 0.5 * NbrFluxQuanta);
+			  Sum += PrecalculatedValuesFullDensity[i][j] * TmpValue1 * TmpValue2;
+			}
+		    }
+		  File << X << " " << Y << " " << Norm(Sum) << endl; //* pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
+		}
+	      File << endl;
+	    }
+	}
+      else
+	{
+	  for (int k = 0; k <= NbrPoints; ++k)
+	    {
+	      double X = -0.5 * (H + 4.0) + (double)k * XInc;
+	      Complex Sum (0.0, 0.0);
+	      for (int i = 0; i <= NbrFluxQuanta; ++i)
+		{
+		  Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i - 0.5 * NbrFluxQuanta);
+		  Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
+		}
+	      File << X << " " << Norm(Sum) << endl; //* pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
+	    }
+	}
+      }
 
    }
 

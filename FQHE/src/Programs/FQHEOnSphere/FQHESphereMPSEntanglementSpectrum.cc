@@ -311,6 +311,7 @@ int main(int argc, char** argv)
       //      SortArrayUpOrdering(EffectiveBlockIndices, EffectiveDimension);
       cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
       
+      Architecture.GetArchitecture()->SetDimension(EffectiveDimension);
       TensorProductSparseMatrixSelectedBlockHamiltonian* ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
 																       EffectiveDimension, EffectiveBlockIndices, 
 																       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
@@ -323,6 +324,7 @@ int main(int argc, char** argv)
       Complex* LeftEigenvalues = TaskLeft.GetEigenvalues();
       delete ETransposeHamiltonian;
 
+      Architecture.GetArchitecture()->SetDimension(EffectiveDimension);
       TensorProductSparseMatrixSelectedBlockHamiltonian* EHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
 															      EffectiveDimension, EffectiveBlockIndices, 
 															      BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 

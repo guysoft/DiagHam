@@ -214,6 +214,8 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
   this->PrecalculationShift = (int) MinIndex;  
   if (memory > 0l)
     {
+      cout << MinIndex << endl;
+      cout << MaxIndex << endl;
       this->EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
       this->TemporaryRowPointers = new long[this->EffectiveHilbertSpaceDimension];
       timeval TotalStartingTime;
@@ -309,7 +311,6 @@ RealVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultip
     {
       for (int j = firstComponent; j < LastComponent; ++j)
 	{
-//	  cout << (j - this->PrecalculationShift) << " " <<  firstComponent << " " <<  LastComponent << endl;
 	  long TmpRowPointer = this->TemporaryRowPointers[j - this->PrecalculationShift];
 	  if (TmpRowPointer >= 0l)
 	    {

@@ -81,6 +81,7 @@ int main(int argc, char** argv)
   (*ArnoldiGroup) += new BooleanOption  ('\n', "disk", "enable disk storage for the Arnoldi algorithm", false);
   (*ArnoldiGroup) += new BooleanOption  ('\n', "resume", "resume from disk datas", false);
   (*ArnoldiGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Arnoldi iteration", false); 
+  (*ArnoldiGroup) += new BooleanOption  ('\n', "power-method", "use the power method instead of the Arnoldi algorithm. A single eigenvalue is computed (the one with the largest real part)", false); 
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "arnoldi-memory", "amount of memory when using the Arnoldi algorithm (in Mb)", 500); 
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "nbr-excited", "number of eigenvalues to compute above the groundstate", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -142,6 +143,12 @@ int main(int argc, char** argv)
 	}
     }      
   NbrEigenstates += Manager.GetInteger("nbr-excited");
+  double EnergyShift = 0.0;
+  if (Manager.GetBoolean("power-method") == true)
+    {
+      EnergyShift = 10.0;
+      NbrEigenstates = 1;
+    }
 
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
@@ -260,10 +267,13 @@ int main(int argc, char** argv)
   else
     {
       Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpBMatrixDimension));
-      ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients);    
+      ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients); 
     }
+  if (Manager.GetBoolean("power-method") == true)
+    ETransposeHamiltonian->ShiftHamiltonian(EnergyShift);
   
-  FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, OutputFileName);
+
+  FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
   MainTaskOperation TaskOperationLeft (&TaskLeft);
   TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
   delete ETransposeHamiltonian;
