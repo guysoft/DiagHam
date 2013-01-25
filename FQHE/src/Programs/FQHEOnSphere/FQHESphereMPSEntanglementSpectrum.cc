@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
+  (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
 					       "maximum Hilbert space dimension for which full diagonalization is applied", 1000);
   (*ArnoldiGroup) += new BooleanOption  ('\n', "disk", "enable disk storage for the Arnoldi algorithm", false);
@@ -708,6 +709,8 @@ int main(int argc, char** argv)
 
 	  if ((TmpOverlapBlock.ComputeNbrNonZeroMatrixElements() != 0) && (RhoABlock.ComputeNbrNonZeroMatrixElements()))
 	    {
+              cout<<"------------sector P = "<<PLevel<<" Q = "<< QValue << "---------------"<<endl;
+
  	      //cout << "QValue=" << QValue << "  PLevel=" << PLevel << " : "<< endl;
 	      // 	      TmpOverlapBlock.PrintNonZero(cout) << endl;
 	      int TmpSectorDim = TmpOverlapBlock.GetNbrRow();
@@ -727,6 +730,7 @@ int main(int argc, char** argv)
                         cout << "******* Negative j = " << j << " " << TmpDiag[j] << " ******* "<< endl;
 		    }
 		}
+
 	      if (NbrNonZeroVectors > 0)
 		{
 		  RealMatrix BlockBasisLeftMatrix (TmpSectorDim, NbrNonZeroVectors);
@@ -758,11 +762,7 @@ int main(int argc, char** argv)
 
 		  RealDiagonalMatrix TmpDiagRho (NbrNonZeroVectors);
 		  HRepRho.LapackDiagonalize(TmpDiagRho);
-		  
-		  cout<<"------------sector P = "<<PLevel<<" Q = "<< QValue << "---------------"<<endl;
-		  
-		  
-		  double Sum = 0.0;
+
 		  for (int j = 0; j < NbrNonZeroVectors; ++j)
 		    {
 		      TraceRho += TmpDiagRho[j];
@@ -777,6 +777,14 @@ int main(int argc, char** argv)
     }
   
   cout<<"Trace rho = "<<TraceRho<<endl;
+  if (TraceRho > 1e-200)
+    for (int i = 0; i < MatDim; ++i)
+      RhoEigenvalues[i] /= TraceRho;
+  else
+    {
+      cout << "Very small trace... exiting!" << endl;
+      exit(1);
+    }  
 
   //Sort eigenvalues according to P and store reordering map
   int *ReorderingMap = new int [MatDim]; 
@@ -833,13 +841,13 @@ int main(int argc, char** argv)
 
         if (Manager.GetBoolean("all-na"))
           {
-            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]]/TraceRho << endl;  
-            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << (RhoEigenvalues[ReorderingMap[i]] / TraceRho) << endl;
+            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;  
+            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;
           }
         else if (TmpNa == Na)
           {
-            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]]/TraceRho << endl;  
-            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << (RhoEigenvalues[ReorderingMap[i]] / TraceRho) << endl;
+            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;  
+            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;
           }
       }
    }
