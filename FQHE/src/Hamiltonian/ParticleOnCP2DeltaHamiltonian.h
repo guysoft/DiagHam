@@ -65,6 +65,8 @@ class ParticleOnCP2DeltaHamiltonian : public AbstractQHEOnSphereFullHamiltonian
   int* quantumNumberR;
   // array that gives the value of s for one particle corresponding to the linearized index
   int* quantumNumberS;
+  //Hilbert Space CP2
+  BosonOnCP2* Particles2;
   
  public:
 

@@ -68,12 +68,12 @@ ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* p
   this->NbrFluxQuanta = nbrFluxQuanta;
   this->NbrLzValue = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2;
   this->LzMax = this->NbrLzValue - 1;
-  BosonOnCP2* TmpHilbertSpace = (BosonOnCP2*) this->Particles;
+  this->Particles2 = (BosonOnCP2*) this->Particles;
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
   this->quantumNumberS = new int [this->NbrLzValue];
-  TmpHilbertSpace->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
+  this->Particles2->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
 //   for (int i = 0; i<NbrLzValue; i++)
 //   {
 //    cout << i << " " << this->quantumNumberR[i] << " " << this->quantumNumberS[i] << endl; 
@@ -125,10 +125,14 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
       for (int s1 = 0; s1 <= this->NbrFluxQuanta - r1; ++s1)
 	for (int s2 = 0; s2 <= this->NbrFluxQuanta - r2; ++s2) 
 	   {
-	      int Index1 = (this->NbrFluxQuanta + 1)*r1 - (r1 - 1)*r1/2 + s1;
-	      int Index2 = (this->NbrFluxQuanta + 1)*r2 - (r2 - 1)*r2/2 + s2;
+	      int tz1 = r1 - s1;
+	      int y1 = 3*(r1+s1) - 2*this->NbrFluxQuanta;
+	      int tz2 = r2 - s2;
+	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
+	      int Index1 = this->Particles2->GetLinearizedIndex(tz1, y1, 1);
+	      int Index2 = this->Particles2->GetLinearizedIndex(tz2, y2, 1);
 	      if (Index1 <= Index2)
-		++this->NbrSectorIndicesPerSum[(2*this->NbrFluxQuanta + 1)*(r1 + r2) - (r1 + r2 - 1)*(r1 + r2)/2 + s1 + s2];    
+		++this->NbrSectorIndicesPerSum[this->Particles2->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2)];    
 	    }
 		
   this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
@@ -145,11 +149,15 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
       for (int s1 = 0; s1 <= this->NbrFluxQuanta - r1; ++s1)
 	for (int s2 = 0; s2 <= this->NbrFluxQuanta - r2; ++s2) 
 	  {
-	    int Index1 = (this->NbrFluxQuanta + 1)*r1 - (r1 - 1)*r1/2 + s1;
-	    int Index2 = (this->NbrFluxQuanta + 1)*r2 - (r2 - 1)*r2/2 + s2;
+	      int tz1 = r1 - s1;
+	      int y1 = 3*(r1+s1) - 2*this->NbrFluxQuanta;
+	      int tz2 = r2 - s2;
+	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
+	      int Index1 = this->Particles2->GetLinearizedIndex(tz1, y1, 1);
+	      int Index2 = this->Particles2->GetLinearizedIndex(tz2, y2, 1);
 	    if (Index1 <= Index2)
 	      {
-		int TmpSum = (2*this->NbrFluxQuanta + 1)*(r1 + r2) - (r1 + r2 - 1)*(r1 + r2)/2 + s1 + s2;
+		int TmpSum = this->Particles2->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2);
 		this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		++this->NbrSectorIndicesPerSum[TmpSum];    

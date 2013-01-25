@@ -146,7 +146,8 @@ inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalState (int initialState, 
   {
    if (this->TemporaryState[index] > 0)
     {
-      int indexFinalState = (this->NbrFluxQuanta + 1)*this->quantumNumberS[index] - (this->quantumNumberS[index] - 1)*this->quantumNumberS[index]/2 + this->quantumNumberR[index];
+      int indexFinalState = this->GetLinearizedIndex(-this->quantumNumberTz[index], this->quantumNumberY[index], 1);
+//       cout << index << "  " << indexFinalState << "  ;  " << this->quantumNumberTz[index] << "," << this->quantumNumberY[index] << endl;
       finalStateBosonic[indexFinalState] = this->TemporaryState[index];
       if ( indexFinalState > finalStateBosonicLzMax)
 	finalStateBosonicLzMax = indexFinalState;
@@ -177,7 +178,8 @@ inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromTemporaryBosonic
   {
    if (this->TemporaryState[index] > 0)
     {
-      int indexFinalState = (this->NbrFluxQuanta + 1)*this->quantumNumberS[index] - (this->quantumNumberS[index] - 1)*this->quantumNumberS[index]/2 + this->quantumNumberR[index];
+      int indexFinalState = this->GetLinearizedIndex(-this->quantumNumberTz[index], this->quantumNumberY[index], 1);
+//       cout << index << "  " << indexFinalState << "  ;  " << this->quantumNumberTz[index] << "," << this->quantumNumberY[index] << endl;
       finalStateBosonic[indexFinalState] = this->TemporaryState[index];
       if ( indexFinalState > finalStateBosonicLzMax)
 	finalStateBosonicLzMax = indexFinalState;

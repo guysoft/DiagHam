@@ -91,7 +91,7 @@ BosonOnCP2TzSymmetry::BosonOnCP2TzSymmetry (int nbrBosons, int nbrFluxQuanta, in
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrFluxQuanta, 0, 0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
@@ -105,7 +105,7 @@ BosonOnCP2TzSymmetry::BosonOnCP2TzSymmetry (int nbrBosons, int nbrFluxQuanta, in
       this->Flag.Initialize();
       this->TargetSpace = this;
       unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrFluxQuanta, 0, 0, 0, this->NbrLzValue + this->NbrBosons, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0, this->NbrLzValue + this->NbrBosons, 0l);
       this->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
       if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
 	{

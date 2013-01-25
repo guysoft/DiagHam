@@ -88,7 +88,7 @@ BosonOnCP2::BosonOnCP2 (int nbrBosons, int nbrFluxQuanta, int totalTz, int total
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrFluxQuanta, 0, 0, 0);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
@@ -103,7 +103,7 @@ BosonOnCP2::BosonOnCP2 (int nbrBosons, int nbrFluxQuanta, int totalTz, int total
       this->Flag.Initialize();
       this->TargetSpace = this;
       unsigned long* TmpStateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrFluxQuanta, 0, 0, 0, this->NbrLzValue + this->NbrBosons, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(TmpStateDescription, this->NbrBosons, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0, this->NbrLzValue + this->NbrBosons, 0l);
       this->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
       if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
 	{
@@ -300,30 +300,27 @@ ostream& BosonOnCP2::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
   
-long BosonOnCP2::GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentR, int currentS, int currentTotalR, int currentTotalS, int currentFermionicPosition, long pos)
+long BosonOnCP2::GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentTz, int currentTzMax, int currentY, int currentTotalTz, int currentTotalY, int currentFermionicPosition, long pos)
 {
 
   if (nbrBosons < 0)
     return pos;
-  if (currentTotalR > this->TotalR)
+  if (currentTotalTz + currentTzMax*nbrBosons < this->TotalTz)
     return pos;
-  if (currentTotalS > this->TotalS)
-    return pos;
-  if (currentTotalR + nbrBosons*currentR < this->TotalR)
-    return pos;
-  if (currentTotalS + nbrBosons*this->NbrFluxQuanta < this->TotalS)
+  if (currentTotalY + currentY*nbrBosons < this->TotalY)
     return pos;
   
-  if (currentS < 0)
+  if (currentTz < -currentTzMax)
    {
-     currentS = this->NbrFluxQuanta - currentR + 1;
-     currentR--;
+     --currentTzMax;
+     currentTz = currentTzMax;
+     currentY = currentY - 3;
    }
     
   
   if (nbrBosons == 0)
     {
-      if ((currentTotalR == this->TotalR) && (currentTotalS == this->TotalS))
+      if ((currentTotalTz == this->TotalTz) && (currentTotalY == this->TotalY))
 	{
 	  stateDescription[pos] = 0x0ul;	  
 	  return (pos + 1l);
@@ -332,17 +329,17 @@ long BosonOnCP2::GenerateStates(unsigned long* stateDescription, int nbrBosons, 
 	return pos;
     }
 
-  if (currentR < 0)
+  if (currentY < -2*this->NbrFluxQuanta)
     return pos;
 
   for (int k = nbrBosons; k > 0; --k)
     {
-      long TmpPos = this->GenerateStates(stateDescription, nbrBosons - k, currentR, currentS - 1, currentTotalR + k * currentR, currentTotalS + k * currentS, currentFermionicPosition - k - 1, pos);
+      long TmpPos = this->GenerateStates(stateDescription, nbrBosons - k, currentTz - 2, currentTzMax, currentY, currentTotalTz + k * currentTz, currentTotalY + k * currentY, currentFermionicPosition - k - 1, pos);
       unsigned long Mask = ((0x1ul << k) - 0x1ul) << (currentFermionicPosition - k - 1);
       for (; pos < TmpPos; ++pos)
 	stateDescription[pos] |= Mask;
     }
-  return this->GenerateStates(stateDescription, nbrBosons, currentR, currentS - 1, currentTotalR, currentTotalS, currentFermionicPosition - 1, pos);
+  return this->GenerateStates(stateDescription, nbrBosons, currentTz - 2, currentTzMax, currentY, currentTotalTz, currentTotalY, currentFermionicPosition - 1, pos);
 };
 
 
@@ -355,28 +352,25 @@ long BosonOnCP2::GenerateStates(unsigned long* stateDescription, int nbrBosons, 
 // currentTotalY = current total value of Kz
 // return value = Hilbert space dimension
 
-long BosonOnCP2::EvaluateHilbertSpaceDimension(int nbrBosons, int currentR, int currentS, int currentTotalR, int currentTotalS)
+long BosonOnCP2::EvaluateHilbertSpaceDimension(int nbrBosons, int currentTz, int currentTzMax, int currentY, int currentTotalTz, int currentTotalY)
 {
   if (nbrBosons < 0)
     return 0l;
-  if (currentTotalR > this->TotalR)
+  if (currentTotalTz + currentTzMax*nbrBosons < this->TotalTz)
     return 0l;
-  if (currentTotalS > this->TotalS)
-    return 0l;
-  if (currentTotalR + nbrBosons*currentR < this->TotalR)
-    return 0l;
-  if (currentTotalS + nbrBosons*this->NbrFluxQuanta < this->TotalS)
+  if (currentTotalY + currentY*nbrBosons < this->TotalY)
     return 0l;
   
-  if (currentS < 0)
+  if (currentTz < -currentTzMax)
    {
-     currentS = this->NbrFluxQuanta - currentR + 1;
-     currentR--;
+     --currentTzMax;
+     currentTz = currentTzMax;
+     currentY = currentY - 3;
    }
     
   if (nbrBosons == 0)
     {
-      if ((currentTotalR == this->TotalR) && (currentTotalS == this->TotalS))
+      if ((currentTotalTz == this->TotalTz) && (currentTotalY == this->TotalY))
       {
 	return 1l;
       }
@@ -384,12 +378,12 @@ long BosonOnCP2::EvaluateHilbertSpaceDimension(int nbrBosons, int currentR, int 
 	return 0l;
     }
     
-  if (currentR < 0)
+  if (currentY < -2*this->NbrFluxQuanta)
     return 0l;
   
   long Count = 0;
   for (int k = nbrBosons; k >= 0; --k)
-    Count += this->EvaluateHilbertSpaceDimension(nbrBosons - k, currentR, currentS - 1, currentTotalR + k * currentR, currentTotalS + k * currentS);
+    Count += this->EvaluateHilbertSpaceDimension(nbrBosons - k, currentTz - 2, currentTzMax, currentY, currentTotalTz + k * currentTz, currentTotalY + k * currentY);
   return Count;
 }
 

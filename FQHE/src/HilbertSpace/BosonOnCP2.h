@@ -41,8 +41,6 @@
 
 class BosonOnCP2 : public BosonOnSphereShort
 {
-
-  friend class FQHESquareLatticeSymmetrizeU1U1StateOperation;
   
  protected:
 
@@ -136,40 +134,48 @@ class BosonOnCP2 : public BosonOnSphereShort
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  RealVector& groundState, RealSymmetricMatrix* densityMatrix);
   
-  // get the quantum numbers j, jz, kz of a one particle state 
+  // get the quantum numbers tz, y of a one particle state 
   //
-  //quantumNumberJ = array that gives the quantum number j for a single particle state
-  //quantumNumberJz = array that gives the quantum number j for a single particle stateDescription
-  //quantumNumberKz = array that gives the quantum number j for a single particle state
+  //quantumNumberTz = array that gives the quantum number tz for a single particle stateDescription
+  //quantumNumberY = array that gives the quantum number y for a single particle state
   inline void GetQuantumNumbersFromLinearizedIndex(int* quantumNumberTz, int* quantumNumberY, int* quantumNumberR, int* quantumNumberS)
   {
-    for (int r = 0; r <= this->NbrFluxQuanta; ++r)
+    for (int tzMax = 0; tzMax <= this->NbrFluxQuanta; ++tzMax)
+    {
+      for (int shiftedTz = 0; shiftedTz <= tzMax; ++shiftedTz)
 	{
-	  for (int s = 0; s <= this->NbrFluxQuanta - r ; ++s)
-	  {
-	    int index = (this->NbrFluxQuanta + 1)*r - (r - 1)*r/2 + s;
-	    int t = this->NbrFluxQuanta - r - s;
-	    quantumNumberR[index] = r;
-	    quantumNumberS[index] = s;
-	    quantumNumberTz[index] = r - s;
-	    quantumNumberY[index] = r + s - 2*t;
-	    
-	  }
+	  int tz = 2*shiftedTz - tzMax;
+	  int y = 3*tzMax - 2*this->NbrFluxQuanta;
+	  int index = this->GetLinearizedIndex(tz, y, 1);
+	  quantumNumberTz[index] = tz;
+	  quantumNumberY[index] = y;
+	  quantumNumberR[index] = (y + 3*tz + 2*this->NbrFluxQuanta)/6;
+	  quantumNumberS[index] = (y - 3*tz + 2*this->NbrFluxQuanta)/6;
+// 	  cout << tz << " " << y << " " << quantumNumberR[index] << " " << quantumNumberS[index] << endl;
 	}
+    }
   }
 
+  
+  //compute the linearized index for the single particles quantum numbers (tz,y)
+  //
+  //tz = integer with the value of quantum number tz
+  //y = integer with the value of quantum number y
+  //nbrParticles = number of particles involved (1 for HilbertSpace, 2 for two-body interaction...)
+  virtual int GetLinearizedIndex(int tz, int y, int nbrParticles);
+  
  protected:
 
   // evaluate Hilbert space dimension
   //
   // nbrBosons = number of bosons
-  // currentJ = current value of j for a single particle
-  // currentJz = current value of jz for a single particle
-  // currentKz = current value of kz for a single particle
-  // currentTotalJz = current total value of Jz
-  // currentTotalKz = current total value of Kz
+  // currentTz = current value of Tz for a single particle
+  //currentTzMax = maximum value of Tz for a given value of y
+  // currentY = current value of y for a single particle
+  // currentTotalTz = current total value of tz
+  // currentTotalY = current total value of y
   // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentR,  int currentS, int currentTotalR, int currentTotalS);
+  virtual long EvaluateHilbertSpaceDimension(int nbrBosons, int currentTz, int currentTzMax,  int currentY, int currentTotalTz, int currentTotalY);
 
   // generate all states corresponding to the constraints
   // 
@@ -183,7 +189,7 @@ class BosonOnCP2 : public BosonOnSphereShort
   // currentFermionicPosition = current fermionic position within the state description
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentR, int currentS, int currentTotalR, int currentTotalS, int currentFermionicPosition, long pos);
+  virtual long GenerateStates(unsigned long* stateDescription, int nbrBosons, int currentTz, int currentTzMax, int currentY, int currentTotalTz, int currentTotalY, int currentFermionicPosition, long pos);
 
   // request whether state with given index satisfies a general Pauli exclusion principle
   // index = state index
@@ -191,8 +197,23 @@ class BosonOnCP2 : public BosonOnSphereShort
   // pauliR = number of consecutive orbitals
   virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
   
+  
 };
 
+
+//compute the linearized index for the single particles quantum numbers (tz,y)
+  //
+  //tz = integer with the value of quantum number tz
+  //y = integer with the value of quantum number y
+  //nbrParticles = number of particles involved (1 for HilbertSpace, 2 for two-body interaction...)
+inline int BosonOnCP2::GetLinearizedIndex(int tz, int y, int nbrParticles)
+  {
+    int tzMax = (y + 2*nbrParticles*this->NbrFluxQuanta)/3;
+    int index = tzMax*(tzMax + 1)/2 + (tz + tzMax)/2 ;
+//     cout <<index << endl;
+//     int index = this->LzMax - (tzMax*(tzMax + 1)/2 + (tz + tzMax)/2) ;
+    return index;
+  }
 
 #endif
 
