@@ -38,8 +38,6 @@
 #include <iostream>
 
 
-#define FERMION_SPHERE_SU3_TZ_SYMMETRIC_BIT    0x1ul
-
 class BosonOnCP2TzSymmetry : public BosonOnCP2
 {
 

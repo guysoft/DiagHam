@@ -112,6 +112,7 @@ class FermionOnSphere :  public ParticleOnSphere
   friend class BosonOn4DSphere;
   friend class BosonOnCP2;
   friend class BosonOnCP2TzSymmetry;
+  friend class BosonOnCP2TzZ3Symmetry;
 
   friend class BosonOnDiskHaldaneBasisShort;
   friend class FermionOnDiskHaldaneBasis;
