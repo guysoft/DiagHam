@@ -476,8 +476,9 @@ RealSymmetricMatrix  BosonOnCP2::EvaluatePartialDensityMatrixParticlePartition(i
     }
 
   int ComplementaryNbrBosonSector = this->NbrBosons - nbrBosonSector;
-
-  if ((abs(this->TotalTz - tzSector) + abs(this->TotalY - ySector)) > (ComplementaryNbrBosonSector * this->NbrFluxQuanta))
+  int ComplementaryRSector = (this->TotalY - ySector + 3*(this->TotalTz - tzSector) + 2*ComplementaryNbrBosonSector*this->NbrFluxQuanta);
+  int ComplementarySSector = (this->TotalY - ySector - 3*(this->TotalTz - tzSector) + 2*ComplementaryNbrBosonSector*this->NbrFluxQuanta);
+  if ((ComplementaryRSector < 0) || (ComplementarySSector < 0) || ((ComplementaryRSector % 6) != 0) || ((ComplementarySSector % 6) != 0) || (ComplementaryRSector + ComplementarySSector > 6*this->NbrFluxQuanta*ComplementaryNbrBosonSector))
     {
       RealSymmetricMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;

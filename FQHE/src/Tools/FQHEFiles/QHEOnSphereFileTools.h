@@ -143,16 +143,18 @@ bool FQHEOn4DSphereFindSystemInfoFromVectorFileName(char* filename, int& nbrPart
 // return value = true if no error occured
 bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& nbrFluxQuanta, int& jz, int& kz, bool& statistics);
 
-// try to guess system information from PES vector file name for a system of bosons on the 4D sphere
+// try to guess system information from file name for a system of bosons on the CP2
 //
 // filename = vector file name
-// nbrParticles = reference to the total number of particles (grab it only if initial value is 0)
-// lzMax = reference to twice the maximum momentum for a single particle (grab it only if initial value is 0)
+// nbrParticles = reference to the number of particles (grab it only if initial value is 0)
+// nbrFluxQuanta = reference to the number of flux of quanta
 // tz = reference to twice the z projection of the  tz angular momentum (grab it only if initial value is 0)
 // y = reference to three times the z projection of the  y angular momentum (grab it only if initial value is 0)
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // return value = true if no error occured
-bool FQHEOnCP2FindSystemInfoFromPESVectorFileName(char* filename, int& nbrParticles, int& nbrParticlesA, int& nbrFluxQuanta, int& tz, int& y, bool& statistics);
+
+bool FQHEOnCP2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta, int& tz, int& y, bool& statistics);
+
 // try to guess system information from PES file name
 //
 // filename = file name
