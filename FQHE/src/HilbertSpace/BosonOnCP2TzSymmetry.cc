@@ -91,6 +91,7 @@ BosonOnCP2TzSymmetry::BosonOnCP2TzSymmetry (int nbrBosons, int nbrFluxQuanta, in
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->TzStateBosonic = new unsigned long[this->NbrLzValue];
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
@@ -204,6 +205,7 @@ BosonOnCP2TzSymmetry::BosonOnCP2TzSymmetry(const BosonOnCP2TzSymmetry& bosons)
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->TzStateBosonic = new unsigned long [this->NbrLzValue];
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
@@ -220,6 +222,7 @@ BosonOnCP2TzSymmetry::BosonOnCP2TzSymmetry(const BosonOnCP2TzSymmetry& bosons)
 
 BosonOnCP2TzSymmetry::~BosonOnCP2TzSymmetry ()
 {
+  delete[] this->TzStateBosonic;
 }
 
 // assignement (without duplicating datas)
@@ -252,6 +255,7 @@ BosonOnCP2TzSymmetry& BosonOnCP2TzSymmetry::operator = (const BosonOnCP2TzSymmet
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->TzStateBosonic = new unsigned long [this->NbrLzValue];
   this->quantumNumberTz = bosons.quantumNumberTz;
   this->quantumNumberY = bosons.quantumNumberY;  
   this->quantumNumberR = bosons.quantumNumberR;

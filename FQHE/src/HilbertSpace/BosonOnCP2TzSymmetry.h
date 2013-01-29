@@ -46,6 +46,8 @@ class BosonOnCP2TzSymmetry : public BosonOnCP2
   double TzParitySign;  
 // symmetry of the temporary state
   int ProdASignature;
+  // Tz<->-Tz conjugate (bosonic representation) of a state
+  unsigned long* TzStateBosonic;
  public:
 
   // default constructor
@@ -131,27 +133,26 @@ class BosonOnCP2TzSymmetry : public BosonOnCP2
 
 inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalState (int initialState, int& tzSymmetry)
 {
+  
   this->FermionToBoson(this->FermionBasis->StateDescription[initialState], this->FermionBasis->StateLzMax[initialState], this->TemporaryState, this->TemporaryStateLzMax);
-  unsigned long* finalStateBosonic;
   unsigned long finalState;
-  finalStateBosonic = new unsigned long[this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
   {
-   finalStateBosonic[i] = 0x0ul; 
+   this->TzStateBosonic[i] = 0x0ul; 
   }
-  int finalStateBosonicLzMax = 0;
+  int TzStateBosonicLzMax = 0;
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
   {
    if (this->TemporaryState[index] > 0)
     {
       int indexFinalState = this->GetLinearizedIndex(-this->quantumNumberTz[index], this->quantumNumberY[index], 1);
 //       cout << index << "  " << indexFinalState << "  ;  " << this->quantumNumberTz[index] << "," << this->quantumNumberY[index] << endl;
-      finalStateBosonic[indexFinalState] = this->TemporaryState[index];
-      if ( indexFinalState > finalStateBosonicLzMax)
-	finalStateBosonicLzMax = indexFinalState;
+      this->TzStateBosonic[indexFinalState] = this->TemporaryState[index];
+      if ( indexFinalState > TzStateBosonicLzMax)
+	TzStateBosonicLzMax = indexFinalState;
     }
   }
-  finalState = this->BosonToFermion(finalStateBosonic, finalStateBosonicLzMax);
+  finalState = this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax);
   tzSymmetry = 0;
   if (finalState == this->FermionBasis->StateDescription[initialState])
     tzSymmetry = 1;
@@ -163,40 +164,38 @@ inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalState (int initialState, 
 
 inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromTemporaryBosonicPartition (int& tzSymmetry, int& canonicalFlag)
 {
-  unsigned long* finalStateBosonic;
-  unsigned long finalStateFermionic;
-  finalStateBosonic = new unsigned long[this->NbrLzValue];
+  unsigned long TzStateFermionic;
   unsigned long initialStateFermionic = this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax);
   for (int i = 0; i < this->NbrLzValue; ++i)
   {
-   finalStateBosonic[i] = 0x0ul; 
+   this->TzStateBosonic[i] = 0x0ul; 
   }
-  int finalStateBosonicLzMax = 0;
+  int TzStateBosonicLzMax = 0;
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
   {
    if (this->TemporaryState[index] > 0)
     {
       int indexFinalState = this->GetLinearizedIndex(-this->quantumNumberTz[index], this->quantumNumberY[index], 1);
 //       cout << index << "  " << indexFinalState << "  ;  " << this->quantumNumberTz[index] << "," << this->quantumNumberY[index] << endl;
-      finalStateBosonic[indexFinalState] = this->TemporaryState[index];
-      if ( indexFinalState > finalStateBosonicLzMax)
-	finalStateBosonicLzMax = indexFinalState;
+      this->TzStateBosonic[indexFinalState] = this->TemporaryState[index];
+      if ( indexFinalState > TzStateBosonicLzMax)
+	TzStateBosonicLzMax = indexFinalState;
     }
   }
-  finalStateFermionic = this->BosonToFermion(finalStateBosonic, finalStateBosonicLzMax);
+  TzStateFermionic = this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax);
   tzSymmetry = 0;
   canonicalFlag = 0;
-  if (finalStateFermionic == initialStateFermionic)
+  if (TzStateFermionic == initialStateFermionic)
     tzSymmetry = 1;
-  if (finalStateFermionic > initialStateFermionic)
+  if (TzStateFermionic > initialStateFermionic)
   {
     for (int i = 0; i <= this->LzMax; ++i)
     {
-      this->TemporaryState[i] = finalStateBosonic[i];
+      this->TemporaryState[i] = this->TzStateBosonic[i];
     }
     
     canonicalFlag = 1;
-    return finalStateFermionic;
+    return TzStateFermionic;
   }
   else
     return initialStateFermionic;

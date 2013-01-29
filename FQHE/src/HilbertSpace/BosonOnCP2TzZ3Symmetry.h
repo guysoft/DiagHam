@@ -44,6 +44,16 @@
 
 class BosonOnCP2TzZ3Symmetry : public BosonOnCP2TzSymmetry
 {
+  protected:
+  // conjugate of a given state by a rotation of 2Pi/3 in momentum space (bosonic representation)
+  unsigned long* Rot1StateBosonic;
+  // conjugate of a given state by a rotation of 2Pi/3 followed by a Tz<->-Tz symmetry in momentum space (bosonic representation)
+  unsigned long* TzRot1StateBosonic;
+  // conjugate of a given state by a rotation of 4Pi/3 in momentum space (bosonic representation)
+  unsigned long* Rot2StateBosonic;
+  // conjugate of a given state by a rotation of 4Pi/3 followed by a Tz<->-Tz symmetry in momentum space (bosonic representation)
+  unsigned long* TzRot2StateBosonic;
+  
 
   public:
 
@@ -114,23 +124,13 @@ class BosonOnCP2TzZ3Symmetry : public BosonOnCP2TzSymmetry
 
 inline unsigned long BosonOnCP2TzZ3Symmetry::GetCanonicalState (int initialState, int& symmetrySignature)
 {
-  this->FermionToBoson(this->FermionBasis->StateDescription[initialState], this->FermionBasis->StateLzMax[initialState], this->TemporaryState, this->TemporaryStateLzMax);
   unsigned long canonicalState = this->FermionBasis->StateDescription[initialState];
+  this->FermionToBoson(canonicalState, this->FermionBasis->StateLzMax[initialState], this->TemporaryState, this->TemporaryStateLzMax);
   int TzStateBosonicLzMax = 0;
   int Rot1StateBosonicLzMax = 0;
   int TzRot1StateBosonicLzMax = 0;
   int Rot2StateBosonicLzMax = 0;
   int TzRot2StateBosonicLzMax = 0;
-  unsigned long* TzStateBosonic;
-  unsigned long* Rot1StateBosonic;
-  unsigned long* TzRot1StateBosonic;
-  unsigned long* Rot2StateBosonic;
-  unsigned long* TzRot2StateBosonic;
-  TzStateBosonic = new unsigned long[this->NbrLzValue];
-  Rot1StateBosonic = new unsigned long[this->NbrLzValue];
-  TzRot1StateBosonic = new unsigned long[this->NbrLzValue];
-  Rot2StateBosonic = new unsigned long[this->NbrLzValue];
-  TzRot2StateBosonic = new unsigned long[this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
   {
    TzStateBosonic[i] = 0x0ul; 
@@ -149,11 +149,11 @@ inline unsigned long BosonOnCP2TzZ3Symmetry::GetCanonicalState (int initialState
       int indexRot2State = this->GetLinearizedIndex(2*this->quantumNumberS[index] + this->quantumNumberR[index] - this->NbrFluxQuanta, this->NbrFluxQuanta - 3*this->quantumNumberR[index], 1);
       int indexTzRot2State = this->GetLinearizedIndex(-(2*this->quantumNumberS[index] + this->quantumNumberR[index] - this->NbrFluxQuanta), this->NbrFluxQuanta - 3*this->quantumNumberR[index], 1);
       
-      TzStateBosonic[indexTzState] = this->TemporaryState[index];
-      Rot1StateBosonic[indexRot1State] = this->TemporaryState[index];
-      TzRot1StateBosonic[indexTzRot1State] = this->TemporaryState[index];
-      Rot2StateBosonic[indexRot2State] = this->TemporaryState[index];
-      TzRot2StateBosonic[indexTzRot2State] = this->TemporaryState[index];
+      this->TzStateBosonic[indexTzState] = this->TemporaryState[index];
+      this->Rot1StateBosonic[indexRot1State] = this->TemporaryState[index];
+      this->TzRot1StateBosonic[indexTzRot1State] = this->TemporaryState[index];
+      this->Rot2StateBosonic[indexRot2State] = this->TemporaryState[index];
+      this->TzRot2StateBosonic[indexTzRot2State] = this->TemporaryState[index];
       
       if ( indexTzState > TzStateBosonicLzMax)
 	TzStateBosonicLzMax = indexTzState;
@@ -168,31 +168,31 @@ inline unsigned long BosonOnCP2TzZ3Symmetry::GetCanonicalState (int initialState
     }
   }
   
-  if (this->BosonToFermion(TzStateBosonic, TzStateBosonicLzMax) > canonicalState)
-    canonicalState = this->BosonToFermion(TzStateBosonic, TzStateBosonicLzMax);
-  if (this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax) > canonicalState)
-    canonicalState = this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax);
-  if (this->BosonToFermion(TzRot1StateBosonic, TzRot1StateBosonicLzMax) > canonicalState)
-    canonicalState = this->BosonToFermion(TzRot1StateBosonic, TzRot1StateBosonicLzMax);
-  if (this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax) > canonicalState)
-    canonicalState = this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax);
-  if (this->BosonToFermion(TzRot2StateBosonic, TzRot2StateBosonicLzMax) > canonicalState)
-    canonicalState = this->BosonToFermion(TzRot2StateBosonic, TzRot2StateBosonicLzMax);
+  if (this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax) > canonicalState)
+    canonicalState = this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax);
+  if (this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax) > canonicalState)
+    canonicalState = this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax);
+  if (this->BosonToFermion(this->TzRot1StateBosonic, TzRot1StateBosonicLzMax) > canonicalState)
+    canonicalState = this->BosonToFermion(this->TzRot1StateBosonic, TzRot1StateBosonicLzMax);
+  if (this->BosonToFermion(this->Rot2StateBosonic, Rot2StateBosonicLzMax) > canonicalState)
+    canonicalState = this->BosonToFermion(this->Rot2StateBosonic, Rot2StateBosonicLzMax);
+  if (this->BosonToFermion(this->TzRot2StateBosonic, TzRot2StateBosonicLzMax) > canonicalState)
+    canonicalState = this->BosonToFermion(this->TzRot2StateBosonic, TzRot2StateBosonicLzMax);
     
   symmetrySignature = 0;
-  if (this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax) == this->FermionBasis->StateDescription[initialState])
+  if (this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax) == this->FermionBasis->StateDescription[initialState])
     symmetrySignature = 2;
-  if (this->BosonToFermion(TzStateBosonic, TzStateBosonicLzMax) == this->FermionBasis->StateDescription[initialState])
+  if (this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax) == this->FermionBasis->StateDescription[initialState])
   {
     symmetrySignature += 1;
     return canonicalState;
   }
-  if (this->BosonToFermion(TzRot1StateBosonic, TzRot1StateBosonicLzMax) == this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax))
+  if (this->BosonToFermion(this->TzRot1StateBosonic, TzRot1StateBosonicLzMax) == this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax))
   {
     symmetrySignature += 1;
     return canonicalState;
   }
-  if (this->BosonToFermion(TzRot2StateBosonic, TzRot2StateBosonicLzMax) == this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax))
+  if (this->BosonToFermion(this->TzRot2StateBosonic, TzRot2StateBosonicLzMax) == this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax))
   {
     symmetrySignature += 1;
     return canonicalState;
@@ -210,23 +210,13 @@ inline unsigned long BosonOnCP2TzZ3Symmetry::GetCanonicalStateFromTemporaryBoson
   int TzRot1StateBosonicLzMax = 0;
   int Rot2StateBosonicLzMax = 0;
   int TzRot2StateBosonicLzMax = 0;
-  unsigned long* TzStateBosonic;
-  unsigned long* Rot1StateBosonic;
-  unsigned long* TzRot1StateBosonic;
-  unsigned long* Rot2StateBosonic;
-  unsigned long* TzRot2StateBosonic;
-  TzStateBosonic = new unsigned long[this->NbrLzValue];
-  Rot1StateBosonic = new unsigned long[this->NbrLzValue];
-  TzRot1StateBosonic = new unsigned long[this->NbrLzValue];
-  Rot2StateBosonic = new unsigned long[this->NbrLzValue];
-  TzRot2StateBosonic = new unsigned long[this->NbrLzValue];
   for (int i = 0; i < this->NbrLzValue; ++i)
   {
-   TzStateBosonic[i] = 0x0ul; 
-   Rot1StateBosonic[i] = 0x0ul; 
-   TzRot1StateBosonic[i] = 0x0ul; 
-   Rot2StateBosonic[i] = 0x0ul; 
-   TzRot2StateBosonic[i] = 0x0ul; 
+   this->TzStateBosonic[i] = 0x0ul; 
+   this->Rot1StateBosonic[i] = 0x0ul; 
+   this->TzRot1StateBosonic[i] = 0x0ul; 
+   this->Rot2StateBosonic[i] = 0x0ul; 
+   this->TzRot2StateBosonic[i] = 0x0ul; 
   }
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
   {
@@ -240,11 +230,11 @@ inline unsigned long BosonOnCP2TzZ3Symmetry::GetCanonicalStateFromTemporaryBoson
       
 //       cout << index << " " << indexTzState << " " << indexRot1State << " " << indexTzRot1State << " " << indexRot2State << " " << indexTzRot2State << endl;
       
-      TzStateBosonic[indexTzState] = this->TemporaryState[index];
-      Rot1StateBosonic[indexRot1State] = this->TemporaryState[index];
-      TzRot1StateBosonic[indexTzRot1State] = this->TemporaryState[index];
-      Rot2StateBosonic[indexRot2State] = this->TemporaryState[index];
-      TzRot2StateBosonic[indexTzRot2State] = this->TemporaryState[index];
+      this->TzStateBosonic[indexTzState] = this->TemporaryState[index];
+      this->Rot1StateBosonic[indexRot1State] = this->TemporaryState[index];
+      this->TzRot1StateBosonic[indexTzRot1State] = this->TemporaryState[index];
+      this->Rot2StateBosonic[indexRot2State] = this->TemporaryState[index];
+      this->TzRot2StateBosonic[indexTzRot2State] = this->TemporaryState[index];
       
       if ( indexTzState > TzStateBosonicLzMax)
 	TzStateBosonicLzMax = indexTzState;
@@ -262,45 +252,45 @@ inline unsigned long BosonOnCP2TzZ3Symmetry::GetCanonicalStateFromTemporaryBoson
   symmetrySignature = 0;
 //   int TmpTzSymmetry = 0;
   
-  if (this->BosonToFermion(TzStateBosonic, TzStateBosonicLzMax) > canonicalState)
+  if (this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax) > canonicalState)
   {
-    canonicalState = this->BosonToFermion(TzStateBosonic, TzStateBosonicLzMax);
+    canonicalState = this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax);
     tzCanonicalFlag = 1;
   }
-  if (this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax) > canonicalState)
+  if (this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax) > canonicalState)
   {
-    canonicalState = this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax);
+    canonicalState = this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax);
     tzCanonicalFlag = 0;
   }
-  if (this->BosonToFermion(TzRot1StateBosonic, TzRot1StateBosonicLzMax) > canonicalState)
+  if (this->BosonToFermion(this->TzRot1StateBosonic, TzRot1StateBosonicLzMax) > canonicalState)
   {
-    canonicalState = this->BosonToFermion(TzRot1StateBosonic, TzRot1StateBosonicLzMax);
+    canonicalState = this->BosonToFermion(this->TzRot1StateBosonic, TzRot1StateBosonicLzMax);
     tzCanonicalFlag = 1;
   }
-  if (this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax) > canonicalState)
+  if (this->BosonToFermion(this->Rot2StateBosonic, Rot2StateBosonicLzMax) > canonicalState)
   {
-    canonicalState = this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax);
+    canonicalState = this->BosonToFermion(this->Rot2StateBosonic, Rot2StateBosonicLzMax);
     tzCanonicalFlag = 0;
   }
-  if (this->BosonToFermion(TzRot2StateBosonic, TzRot2StateBosonicLzMax) > canonicalState)
+  if (this->BosonToFermion(this->TzRot2StateBosonic, TzRot2StateBosonicLzMax) > canonicalState)
   {
-    canonicalState = this->BosonToFermion(TzRot2StateBosonic, TzRot2StateBosonicLzMax);
+    canonicalState = this->BosonToFermion(this->TzRot2StateBosonic, TzRot2StateBosonicLzMax);
     tzCanonicalFlag = 1;
   }
  //   cout << symmetrySignature << endl;
- if (this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax) == initialState)
+ if (this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax) == initialState)
    symmetrySignature = 2;
- if (this->BosonToFermion(TzStateBosonic, TzStateBosonicLzMax) == initialState)
+ if (this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax) == initialState)
  {
    symmetrySignature += 1;
    return canonicalState;
  }
- if (this->BosonToFermion(TzRot1StateBosonic, TzRot1StateBosonicLzMax) == this->BosonToFermion(Rot1StateBosonic, Rot1StateBosonicLzMax))
+ if (this->BosonToFermion(this->TzRot1StateBosonic, TzRot1StateBosonicLzMax) == this->BosonToFermion(this->Rot1StateBosonic, Rot1StateBosonicLzMax))
  {
    symmetrySignature += 1;
    return canonicalState;
  }
- if (this->BosonToFermion(TzRot2StateBosonic, TzRot2StateBosonicLzMax) == this->BosonToFermion(Rot2StateBosonic, Rot2StateBosonicLzMax))
+ if (this->BosonToFermion(this->TzRot2StateBosonic, TzRot2StateBosonicLzMax) == this->BosonToFermion(this->Rot2StateBosonic, Rot2StateBosonicLzMax))
  {
    symmetrySignature += 1;
    return canonicalState;

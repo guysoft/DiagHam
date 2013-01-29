@@ -90,6 +90,11 @@ BosonOnCP2TzZ3Symmetry::BosonOnCP2TzZ3Symmetry (int nbrBosons, int nbrFluxQuanta
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->TzStateBosonic = new unsigned long[this->NbrLzValue];
+  this->TzRot1StateBosonic = new unsigned long[this->NbrLzValue];
+  this->Rot2StateBosonic = new unsigned long[this->NbrLzValue];
+  this->Rot1StateBosonic = new unsigned long[this->NbrLzValue];
+  this->TzRot2StateBosonic = new unsigned long[this->NbrLzValue];
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->NbrFluxQuanta, this->NbrFluxQuanta, this->NbrFluxQuanta, 0, 0);
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
@@ -203,6 +208,11 @@ BosonOnCP2TzZ3Symmetry::BosonOnCP2TzZ3Symmetry(const BosonOnCP2TzZ3Symmetry& bos
   this->KeptCoordinates = 0;
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->TzStateBosonic = new unsigned long[this->NbrLzValue];
+  this->Rot1StateBosonic = new unsigned long[this->NbrLzValue];
+  this->TzRot1StateBosonic = new unsigned long[this->NbrLzValue];
+  this->Rot2StateBosonic = new unsigned long[this->NbrLzValue];
+  this->TzRot2StateBosonic = new unsigned long[this->NbrLzValue];
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   if (bosons.TargetSpace != &bosons)
     this->TargetSpace = bosons.TargetSpace;
@@ -219,6 +229,10 @@ BosonOnCP2TzZ3Symmetry::BosonOnCP2TzZ3Symmetry(const BosonOnCP2TzZ3Symmetry& bos
 
 BosonOnCP2TzZ3Symmetry::~BosonOnCP2TzZ3Symmetry ()
 {
+  delete[] this->Rot1StateBosonic;
+  delete[] this->TzRot1StateBosonic;
+  delete[] this->Rot2StateBosonic;
+  delete[] this->TzRot2StateBosonic;
 }
 
 // assignement (without duplicating datas)
@@ -251,6 +265,11 @@ BosonOnCP2TzZ3Symmetry& BosonOnCP2TzZ3Symmetry::operator = (const BosonOnCP2TzZ3
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  this->TzStateBosonic = new unsigned long[this->NbrLzValue];
+  this->Rot1StateBosonic = new unsigned long[this->NbrLzValue];
+  this->TzRot1StateBosonic = new unsigned long[this->NbrLzValue];
+  this->Rot2StateBosonic = new unsigned long[this->NbrLzValue];
+  this->TzRot2StateBosonic = new unsigned long[this->NbrLzValue];
   this->quantumNumberTz = bosons.quantumNumberTz;
   this->quantumNumberY = bosons.quantumNumberY;  
   this->quantumNumberR = bosons.quantumNumberR;
