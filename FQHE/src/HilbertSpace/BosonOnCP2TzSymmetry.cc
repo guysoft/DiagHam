@@ -357,3 +357,42 @@ int BosonOnCP2TzSymmetry::AdAd (int m1, int m2, double& coefficient)
 //   cout << this->ProdASignature << endl;
   return SymmetrizeAdAdResult(coefficient);
 }
+
+// convert a given state from symmetric basis to the usual n-body basis
+//
+// state = reference on the vector to convert
+// nbodyBasis = reference on the nbody-basis to use
+// return value = converted vector  
+
+RealVector BosonOnCP2TzSymmetry::ConvertToNbodyBasis(RealVector& state, BosonOnCP2& nbodyBasis)
+{
+  RealVector TmpVector (nbodyBasis.GetHilbertSpaceDimension(), true);
+  unsigned long TmpState;
+  unsigned long TmpState2;
+  int Signature;  
+  int NewLzMax;
+  int TmpState2LzMax;
+  for (int i = 0; i < nbodyBasis.GetHilbertSpaceDimension(); ++i)
+    {
+      TmpState2 = nbodyBasis.FermionBasis->StateDescription[i];
+      TmpState = this->GetCanonicalStateFromFermionicPartition(TmpState2, Signature);
+      NewLzMax = this->LzMax;
+      while ((TmpState >> NewLzMax) == 0x0ul)
+	--NewLzMax;	 
+      if (Signature != 0)
+	{
+	  if (this->TzParitySign > 0.0)
+	    {
+	      TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)];
+	    }
+	}
+      else
+	{
+	  if (TmpState2 != TmpState)	    
+	    TmpVector[i] = this->TzParitySign * M_SQRT1_2 * state[this->FindStateIndex(TmpState, NewLzMax)];
+	  else
+	    TmpVector[i] = state[this->FindStateIndex(TmpState, NewLzMax)] * M_SQRT1_2;
+	}
+    }
+  return TmpVector;  
+}

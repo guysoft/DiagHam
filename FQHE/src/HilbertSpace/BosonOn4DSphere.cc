@@ -172,9 +172,6 @@ BosonOn4DSphere::BosonOn4DSphere(const BosonOn4DSphere& bosons)
 
 BosonOn4DSphere::~BosonOn4DSphere ()
 {
-  delete[] this->quantumNumberJ;
-  delete[] this->quantumNumberJz;
-  delete[] this->quantumNumberKz;
 }
 
 // assignement (without duplicating datas)

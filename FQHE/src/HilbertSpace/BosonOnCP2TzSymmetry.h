@@ -105,6 +105,13 @@ class BosonOnCP2TzSymmetry : public BosonOnCP2
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient);
+  
+  // convert a given state from symmetric basis to the usual n-body basis
+  //
+  // state = reference on the vector to convert
+  // nbodyBasis = reference on the nbody-basis to use
+  // return value = converted vector  
+  virtual RealVector ConvertToNbodyBasis(RealVector& state, BosonOnCP2& nbodyBasis);
 
 
  protected:
@@ -122,6 +129,12 @@ class BosonOnCP2TzSymmetry : public BosonOnCP2
   // canonicalFlag = reference on an integer that says if the state was canonical (0) or not (1)
   // return value = corresponding canonical state
   virtual unsigned long GetCanonicalStateFromTemporaryBosonicPartition (int& tzSymmetry, int& canonicalFlag);
+  
+  // get canonical expression of a given state and its symmetry
+  //
+  // tzSymmetry = reference to an integer that describes the symmetry of the state: 1 if the state is symmetric, 0 if not
+  // return value = corresponding canonical state
+  virtual unsigned long GetCanonicalStateFromFermionicPartition (unsigned long initialStateFermionic, int& tzSymmetry);
   
   // factorized code that is used to symmetrize result of the AdxAdy operations
   //
@@ -201,6 +214,44 @@ inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromTemporaryBosonic
     return initialStateFermionic;
 }
 
+inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromFermionicPartition (unsigned long initialStateFermionic, int& tzSymmetry)
+{
+  int initialStateFermionicLzMax = this->LzMax;
+  while ((initialStateFermionic >> initialStateFermionicLzMax) == 0x0ul)
+	--initialStateFermionicLzMax;
+  this->FermionToBoson(initialStateFermionic, initialStateFermionicLzMax, this->TemporaryState, this->TemporaryStateLzMax);
+  unsigned long TzStateFermionic;
+  for (int i = 0; i < this->NbrLzValue; ++i)
+  {
+   this->TzStateBosonic[i] = 0x0ul; 
+  }
+  int TzStateBosonicLzMax = 0;
+  for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
+  {
+   if (this->TemporaryState[index] > 0)
+    {
+      int indexFinalState = this->GetLinearizedIndex(-this->quantumNumberTz[index], this->quantumNumberY[index], 1);
+//       cout << index << "  " << indexFinalState << "  ;  " << this->quantumNumberTz[index] << "," << this->quantumNumberY[index] << endl;
+      this->TzStateBosonic[indexFinalState] = this->TemporaryState[index];
+      if ( indexFinalState > TzStateBosonicLzMax)
+	TzStateBosonicLzMax = indexFinalState;
+    }
+  }
+  TzStateFermionic = this->BosonToFermion(this->TzStateBosonic, TzStateBosonicLzMax);
+  tzSymmetry = 0;
+  if (TzStateFermionic == initialStateFermionic)
+    tzSymmetry = 1;
+  if (TzStateFermionic > initialStateFermionic)
+  {
+    for (int i = 0; i <= this->LzMax; ++i)
+    {
+      this->TemporaryState[i] = this->TzStateBosonic[i];
+    }
+    return TzStateFermionic;
+  }
+  else
+    return initialStateFermionic;
+}
 
 // factorized code that is used to symmetrize result of the AdxAdy operations
 //
