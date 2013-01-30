@@ -162,9 +162,9 @@ BosonOn4DSphere::BosonOn4DSphere(const BosonOn4DSphere& bosons)
     this->TargetSpace = bosons.TargetSpace;
   else
     this->TargetSpace = this;
-  this->quantumNumberJ = bosons.quantumNumberJ;
-  this->quantumNumberJz = bosons.quantumNumberJz;
-  this->quantumNumberKz = bosons.quantumNumberKz;  
+  this->quantumNumberJ = new int [this->NbrLzValue];
+  this->quantumNumberJz = new int [this->NbrLzValue];
+  this->quantumNumberKz = new int [this->NbrLzValue];
 }
 
 // destructor
@@ -172,6 +172,9 @@ BosonOn4DSphere::BosonOn4DSphere(const BosonOn4DSphere& bosons)
 
 BosonOn4DSphere::~BosonOn4DSphere ()
 {
+  delete[] this->quantumNumberJ;
+  delete[] this->quantumNumberJz;
+  delete[] this->quantumNumberKz;
 }
 
 // assignement (without duplicating datas)
@@ -202,9 +205,9 @@ BosonOn4DSphere& BosonOn4DSphere::operator = (const BosonOn4DSphere& bosons)
   this->FermionBasis = (FermionOnSphere*) bosons.FermionBasis->Clone();
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
-  this->quantumNumberJ = bosons.quantumNumberJ;
-  this->quantumNumberJz = bosons.quantumNumberJz;
-  this->quantumNumberKz = bosons.quantumNumberKz;  
+  this->quantumNumberJ = new int [this->NbrLzValue];
+  this->quantumNumberJz = new int [this->NbrLzValue];
+  this->quantumNumberKz = new int [this->NbrLzValue];
   return *this;
 }
 
