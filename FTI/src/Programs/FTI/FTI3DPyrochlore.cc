@@ -185,11 +185,11 @@ int main(int argc, char** argv)
       MinKz = Manager.GetInteger("only-kz");
       MaxKz = MinKz;
     }
-//    TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-//    						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+   TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
+   						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
   
-  TightBindingModelPyrochloreLattice TightBindingModel2(NbrSitesY, NbrSitesX, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-							Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+//   TightBindingModelPyrochloreLattice TightBindingModel2(NbrSitesY, NbrSitesX, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
+// 							Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
   
 //   TightBindingModel3DSimpleTILattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 0.5,
 // 						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 
@@ -198,19 +198,19 @@ int main(int argc, char** argv)
   
   
 
-    double* TmpChem = new double[8];
-    TmpChem[0] = -1.0;
-    TmpChem[1] = -1.0;
-    TmpChem[2] = 1.0;
-    TmpChem[3] = 1.0;
-    TmpChem[4] = -1.0;
-    TmpChem[5] = -1.0;
-    TmpChem[6] = 1.0;
-    TmpChem[7] = 1.0;
-    TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
-							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
-  ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
-  ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
+//     double* TmpChem = new double[8];
+//     TmpChem[0] = -1.0;
+//     TmpChem[1] = -1.0;
+//     TmpChem[2] = 1.0;
+//     TmpChem[3] = 1.0;
+//     TmpChem[4] = -1.0;
+//     TmpChem[5] = -1.0;
+//     TmpChem[6] = 1.0;
+//     TmpChem[7] = 1.0;
+//     TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
+// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+//   ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
+//   ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
 //   for (int i = 0; i < 8; ++i)
 //     {
 //       double Sum = 0.0;
