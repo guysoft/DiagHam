@@ -139,6 +139,12 @@ class SparseComplexMatrix : public Matrix
   // return value = reference on current matrix
   SparseComplexMatrix& Copy (SparseComplexMatrix& matrix);
 
+  // copy a matrix into another (duplicating data)
+  //
+  // matrix = matrix to copy
+  // return value = reference on current matrix
+  SparseComplexMatrix& Copy (SparseRealMatrix& matrix);
+
   // set a matrix element
   //
   // i = line position

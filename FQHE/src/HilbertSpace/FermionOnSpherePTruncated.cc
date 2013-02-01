@@ -473,6 +473,7 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
 	  if (((i - initialIndex) % 10000) == 0)
 	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
 	  unsigned long TmpStateDescription = this->StateDescription[i];
+
 	  TmpMatrix.Copy(bMatrices[TmpStateDescription & 0x1ul]);
 	  TmpStateDescription >>= 1;
 	  for (int j = 1; j <= this->LzMax; ++j)
@@ -480,10 +481,10 @@ void FermionOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix*
 	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
 	      TmpStateDescription >>= 1;
 	    } 
-    	  cout << " final matrix real " << i << " : ";
-  	  TmpMatrix2.PrintNonZero(cout) << endl;
-	  TmpMatrix3.Copy(TmpMatrix2);
-	  TmpMatrix3.Multiply(TmpMatrix);
+  	  TmpMatrix3.Copy(TmpMatrix2);
+  	  TmpMatrix3.Multiply(TmpMatrix);
+ 
+
     	  cout << " final matrix " << i << " : ";
   	  TmpMatrix3.PrintNonZero(cout) << endl;
   	  cout << "--------------------------------" << endl;

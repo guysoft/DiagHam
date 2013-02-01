@@ -76,7 +76,7 @@ class FQHEMPSLaughlinQuasiholeMatrix : public FQHEMPSLaughlinMatrix
   // get the B matrices corresponding to localized quasiholes
   //
   // nbrQuasiholes = number of quasiholes
-  // quasiholePositions = quasihole positions
+  // quasiholePositions = quasihole positions (for cylinder, positions have to be expressed in perimeter units)
   // return value = array of nbrQuasiholes matrices corresponding to each quasihole
   virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
 

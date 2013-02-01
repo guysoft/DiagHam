@@ -43,12 +43,29 @@ using std::endl;
 // maxMomentum = maximum momentum reached by a particle
 // landauLevel = Landau level index
 // ratio = aspect ratio of the cylinder
+
 ParticleOnCylinderFunctionBasis::ParticleOnCylinderFunctionBasis(int maxMomentum, int landauLevel, double ratio)
 {
   this->MaxMomentum = maxMomentum;
   this->LandauLevel = landauLevel;
   this->Ratio = ratio;
   this->HilbertSpaceDimension = this->MaxMomentum + 1;
+  this->Perimeter = sqrt(2.0 * M_PI * (this->MaxMomentum + 1.0) * this->Ratio);
+  this->Kappa = 2.0 * M_PI / this->Perimeter;
+  this->Normalization = 1.0 / sqrt(this->Perimeter * sqrt(M_PI));
+  if (this->LandauLevel == 1)
+    {
+      this->Normalization /= sqrt(2.0);
+    }
+  else 
+    {
+      if (this->LandauLevel > 1)
+	{
+	  cout << "LL >= 2 " << endl;
+	  exit(1);
+	}
+    }   
+  this->IndexShift = 0.5 * ((double) this->MaxMomentum);
 }
 
 // get value of the i-th function at a given point (for functions which take values in C)
@@ -58,28 +75,34 @@ ParticleOnCylinderFunctionBasis::ParticleOnCylinderFunctionBasis(int maxMomentum
 // returns value of the wavefunction
 
 Complex ParticleOnCylinderFunctionBasis::GetFunctionValue(double x, double y, double index)
-{
-  double L = sqrt(2.0 * M_PI * (this->MaxMomentum + 1.0) * this->Ratio);
-  double kappa = 2.0 * M_PI/L;
-  
+{  
   Complex Phase;
-  Phase.Re = cos(kappa * index * y);
-  Phase.Im = sin(kappa * index * y);
+  Phase.Re = cos(this->Kappa * index * y);
+  Phase.Im = sin(this->Kappa * index * y);
 
-  double Normalization = 1.0/sqrt(L * sqrt(M_PI));
-   
-  Complex Result = Phase * exp(-0.5 * pow(x - kappa * index,2.0));
+  Complex Result = Phase * exp(-0.5 * pow(x - this->Kappa * index, 2.0));
 
   if (this->LandauLevel == 1)
     {
-      Result *= (2.0 * (x - kappa * index));    
-      Normalization /= sqrt(2.0);
+      Result *= (2.0 * (x - this->Kappa * index));    
     }
-  else if (this->LandauLevel > 1)
-   {
-     cout << "LL >= 2 " << endl;
-     exit(1);
-   }
  
-  return (Result * Normalization);
+  return (Result * this->Normalization);
+}
+
+// get value of the i-th function at a given point (for functions which take values in C)
+//
+// x, y = coordinates where the function should be evaluated
+// index = the function index 
+// returns value of the wavefunction
+
+Complex ParticleOnCylinderFunctionBasis::GetFunctionValue(double x, double y, int index)
+{  
+  double Tmp = this->Kappa * (((double) index) - this->IndexShift); 
+  Complex Result = Phase(Tmp * y) * exp(-0.5 * pow(x - Tmp, 2.0));
+  if (this->LandauLevel == 1)
+    {
+      Result *= (2.0 * (x - Tmp));    
+    } 
+  return (Result * this->Normalization);
 }

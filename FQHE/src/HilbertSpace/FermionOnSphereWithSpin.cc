@@ -2175,6 +2175,21 @@ RealVector FermionOnSphereWithSpin::ForgeU1FromSU2(RealVector& state, FermionOnS
   return FinalState;  
 }
 
+// convert a given state from a generic basis to the current Sz subspace basis
+//
+// state = reference on the vector to convert
+// basis = reference on the basis associated to state
+// return value = converted vector
+
+RealVector FermionOnSphereWithSpin::ConvertFromNbodyBasis(RealVector& state, FermionOnSphereWithSpin& basis)
+{
+  RealVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[i] = state[basis.FindStateIndex(this->StateDescription[i], this->StateHighestBit[i])];
+  return TmpVector;
+}
+
+
 // convert a state such that its components are now expressed in the unnormalized basis
 //
 // state = reference to the state to convert

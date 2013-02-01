@@ -49,6 +49,16 @@ class ParticleOnCylinderFunctionBasis: public AbstractFunctionBasis
 
   //ratio between the length and circuference of a cylinder  
   double Ratio;
+  // cylinder perimeter
+  double Perimeter;
+  // kappa factor (i.e. 2 PI / Perimeter)
+  double Kappa;
+
+  // wavefunction normalization factor
+  double Normalization;
+
+  // shift that is applied to the wavefunction index when evaluting position
+  double IndexShift;
 
  public:
 
@@ -63,6 +73,13 @@ class ParticleOnCylinderFunctionBasis: public AbstractFunctionBasis
   // index = the function index 
   // returns value of the wavefunction
   Complex GetFunctionValue(double x, double y, double index);
+
+  // get value of the i-th function at a given point (for functions which take values in C)
+  //
+  // x, y = coordinates where the function should be evaluated
+  // index = the function index 
+  // returns value of the wavefunction
+  Complex GetFunctionValue(double x, double y, int index);
 
 };
 

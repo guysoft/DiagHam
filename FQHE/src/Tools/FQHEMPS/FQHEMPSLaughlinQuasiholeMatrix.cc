@@ -103,7 +103,7 @@ FQHEMPSLaughlinQuasiholeMatrix::~FQHEMPSLaughlinQuasiholeMatrix()
 // get the B matrices corresponding to localized quasiholes
 //
 // nbrQuasiholes = number of quasiholes
-// quasiholePositions = quasihole positions
+// quasiholePositions = quasihole positions (for cylinder, positions have to be expressed in perimeter units)
 // return value = array of nbrQuasiholes matrices corresponding to each quasihole
 
 SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions)
@@ -123,19 +123,26 @@ SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeMatrices(int nb
 	      int N1 = N2 + 1;
 	      for (int i = 0; i < nbrQuasiholes; ++i)
 		{
-		  if (Norm(quasiholePositions[i]) > MACHINE_PRECISION)
-		    TmpCoefficient[i] = pow (quasiholePositions[i], ((double) (2 * N1 - this->NbrNValue + 2)) / (20 * ((double) this->LaughlinIndex)) + ((double) (p - q)));
-		  else
+		  if (this->CylinderFlag == false)
 		    {
-		      cout << N1 << " " << this->NbrNValue << " " << (2 * N1 - this->NbrNValue + 2) << endl;
-		      if ((2 * N1 - this->NbrNValue - 1) == (2 * this->LaughlinIndex * (q - p)))
-			{
-			  TmpCoefficient[i] = 1.0;
-			}
+		      if (Norm(quasiholePositions[i]) > MACHINE_PRECISION)
+			TmpCoefficient[i] = pow (quasiholePositions[i], (double) (this->PLevel + p - q));//((double) (2 * N1 - this->NbrNValue + 2)) / (2 * ((double) this->LaughlinIndex)) + ((double) (p - q)));
 		      else
 			{
-			  TmpCoefficient[i] = 0.0;
+			  if ((2 * N1 - this->NbrNValue - 1) == (2 * this->LaughlinIndex * (q - p)))
+			    {
+			      TmpCoefficient[i] = 1.0;
+			    }
+			  else
+			    {
+			      TmpCoefficient[i] = 0.0;
+			    }
 			}
+		    }
+ 		  else
+		    {
+ 		      TmpCoefficient[i] = exp(I() * 2.0 * M_PI * quasiholePositions[i] * (((double) (2 * N1 - this->NbrNValue + 2)) / (2 * ((double) this->LaughlinIndex)) + ((double) (p - q))));
+//fabs((double) (p - q)));
 		    }
 		}
 	      for (int k1 = 0; k1 < NbrParitions1; ++k1)
@@ -235,16 +242,16 @@ void FQHEMPSLaughlinQuasiholeMatrix::CreateBMatrices ()
 								   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift)  / (2.0 * this->LaughlinIndex))
 								   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift))  / (2.0 * this->LaughlinIndex))));
 		  this->RealBMatrices[1].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
-						this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp);
+							  this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp);
 		  Tmp = this->CreateLaughlinAMatrixElement(1, this->LaughlinIndex, Partition1, Partition2, i, j, Coef);
 		  for (int N2 = 0; N2 < (this->NbrNValue - 1); ++N2)
 		    {
 		      int N1 = N2 + 1;
 		      double Tmp2 = Tmp;
-		      if (this->CylinderFlag)
-			Tmp2 *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
-									+ ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift)  / (2.0 * this->LaughlinIndex))
-									+ (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift))  / (2.0 * this->LaughlinIndex))));
+//		      if (this->CylinderFlag)
+// 			Tmp2 *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
+// 									+ ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) / (2.0 * this->LaughlinIndex))
+// 									+ (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) / (2.0 * this->LaughlinIndex))));
 		      this->QuasiholeBMatrices[0].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
 								   this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp2);
 		    }		    

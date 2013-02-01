@@ -346,6 +346,46 @@ SparseComplexMatrix& SparseComplexMatrix::Copy (SparseComplexMatrix& matrix)
   return *this;
 }
 
+// copy a matrix into another (duplicating data)
+//
+// matrix = matrix to copy
+// return value = reference on current matrix
+
+SparseComplexMatrix& SparseComplexMatrix::Copy (SparseRealMatrix& matrix)
+{
+  if ((this->MatrixElements != 0) && (this->Flag.Used() == true))
+    if (this->Flag.Shared() == false)
+      {
+	delete[] this->MatrixElements;
+	delete[] this->ColumnIndices;
+	delete[] this->RowPointers;
+	delete[] this->RowLastPointers;
+      }
+  this->Flag.Initialize();
+  this->NbrMatrixElements = matrix.NbrMatrixElements;
+  this->NbrRow = matrix.NbrRow;
+  this->NbrColumn = matrix.NbrColumn;
+  this->TrueNbrRow = matrix.TrueNbrRow;
+  this->TrueNbrColumn = matrix.TrueNbrColumn;  
+  this->MaximumNbrMatrixElements = matrix.MaximumNbrMatrixElements;
+  this->NbrMatrixElementPacketSize = matrix.NbrMatrixElementPacketSize;
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  this->MatrixElements = new Complex[this->NbrMatrixElements];
+  this->ColumnIndices = new int[this->NbrMatrixElements];
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      this->RowPointers[j] = matrix.RowPointers[j];
+      this->RowLastPointers[j] = matrix.RowLastPointers[j];
+    }
+  for (long j = 0l; j < this->NbrMatrixElements; ++j)
+    {
+      this->MatrixElements[j] = matrix.MatrixElements[j];
+      this->ColumnIndices[j] = matrix.ColumnIndices[j];
+    }
+  return *this;
+}
+
 // set a matrix element
 //
 // i = line position

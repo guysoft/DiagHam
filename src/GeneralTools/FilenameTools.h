@@ -99,27 +99,27 @@ char* ReplaceExtensionToFileName(char* fileName, const char* oldExtension, const
 // fileName = string corresponding to the file name (with optional relative path)
 // oldExtension = extension to remove (with initial dot)
 // return value = corresponding string (0 if the old extension was not found)
-
 char* RemoveExtensionFromFileName(char* fileName, const char* oldExtension);
 
 
 // get unique filename by appending a counter to a requested name, if necessary
+//
 // baseName = main part of the file name (initial part, excluding a final dot)
 // optExtension = optional extension to add after the counter (including the initial dot)
 // minCounter = optional minimum value of the counter
 // return value = unique file name formed as baseName.[Count]optExtension
-//
 char* GetUniqueFileName(const char* baseName, const char* optExtension = NULL, int minCounter = 0);
 
 // get unique filename by appending a counter to a requested name, if necessary
+//
 // baseName = main part of the file name (initial part, excluding a final dot)
 // minCounter = provide minimum value of the counter and return the actual counter used in filename
 // optExtension = optional extension to add after the counter (including the initial dot)
 // return value = unique file name formed as baseName.[Count]optExtension
-//
 char* GetUniqueFileName(const char* baseName, int & minCounter, const char* optExtension = NULL);
 
 // test if file with given filename already exists, and if so, back it up
+//
 // fileName = filename to save
 // optExtension = optional extension to add to backups (with leading dot, augmented by counter)
 // return = number of existing backup files (-1 if no backup required)
@@ -138,12 +138,12 @@ long GetFileNbrLines (char* fileName);
 char* GetLineFromFile (char* fileName, int nbrLine);
 
 // get unique filename by appending a counter to a requested name, if necessary
+//
 // inputName = previous file name
 // insertion = string to insert after element
 // element = segment to be searched for
 // HaveIntValue = element has optional integer argument
 // return value = file name with inserted string
-//
 char* AddSegmentInFileName(char* inputName, const char* insertion, const char* element, bool HaveIntValue=false);
 
 

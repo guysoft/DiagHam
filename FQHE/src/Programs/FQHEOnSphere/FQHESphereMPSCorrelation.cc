@@ -133,6 +133,11 @@ int main(int argc, char** argv)
 	}
       QuasiholePositions = InputQuasiholePosition.GetAsComplexArray(0);
       NbrQuasiholes = InputQuasiholePosition.GetNbrLines();
+      if (CylinderFlag)
+	{
+	  for (int i = 0; i < NbrQuasiholes; ++i)
+	    QuasiholePositions[i] /= Perimeter;
+	}
    }
 
 
@@ -460,10 +465,10 @@ int main(int argc, char** argv)
 		  Complex Sum (0.0, 0.0);
 		  for (int i = 0; i <= NbrFluxQuanta; ++i)
 		    {
-		      Complex TmpValue1 = Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, ((double) i) - 0.5 * NbrFluxQuanta));	  
+		      Complex TmpValue1 = Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, i));	  
 		      for (int j = 0; j <= NbrFluxQuanta; ++j)
 			{
-			  Complex TmpValue2 = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, ((double) j) - 0.5 * NbrFluxQuanta);
+			  Complex TmpValue2 = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, j);
 			  Sum += PrecalculatedValuesFullDensity[i][j] * TmpValue1 * TmpValue2;
 			}
 		    }
@@ -480,7 +485,7 @@ int main(int argc, char** argv)
 	      Complex Sum (0.0, 0.0);
 	      for (int i = 0; i <= NbrFluxQuanta; ++i)
 		{
-		  Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i - 0.5 * NbrFluxQuanta);
+		  Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, i);
 		  Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
 		}
 	      File << X << " " << Norm(Sum) << endl; //* pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
