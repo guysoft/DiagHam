@@ -150,10 +150,13 @@ bool FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(char* filename, int& nbrP
 // nbrFluxQuanta = reference to the number of flux of quanta
 // tz = reference to twice the z projection of the  tz angular momentum (grab it only if initial value is 0)
 // y = reference to three times the z projection of the  y angular momentum (grab it only if initial value is 0)
+// tzSymmetry = reference on the flag for the Tz<->-Tz symmetry
+// tzSymmetryMinusParity = reference on the flag for the minus parity sector of the Tz<->-Tz symmetry
+//tzZ3Symmetry = reference on the flag of the permutation symmetry 
 // statistics = reference to flag for fermionic statistics (true for fermion, false for bosons, grab it only if initial value is true)
 // return value = true if no error occured
 
-bool FQHEOnCP2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta, int& tz, int& y, bool& statistics);
+bool FQHEOnCP2FindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrFluxQuanta, int& tz, int& y, bool& tzSymmetry, bool& tzSymmetryMinusParity, bool& tzZ3Symmetry, bool& statistics);
 
 // try to guess system information from PES file name
 //

@@ -216,7 +216,7 @@ inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromTemporaryBosonic
 
 inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromFermionicPartition (unsigned long initialStateFermionic, int& tzSymmetry)
 {
-  int initialStateFermionicLzMax = this->LzMax;
+  int initialStateFermionicLzMax = this->LzMax + this->NbrBosons - 1;
   while ((initialStateFermionic >> initialStateFermionicLzMax) == 0x0ul)
 	--initialStateFermionicLzMax;
   this->FermionToBoson(initialStateFermionic, initialStateFermionicLzMax, this->TemporaryState, this->TemporaryStateLzMax);
@@ -230,6 +230,7 @@ inline unsigned long BosonOnCP2TzSymmetry::GetCanonicalStateFromFermionicPartiti
   {
    if (this->TemporaryState[index] > 0)
     {
+//       cout << this->TemporaryStateLzMax << " " << this->quantumNumberTz[index] << " " << this->quantumNumberY[index] << " " << endl;
       int indexFinalState = this->GetLinearizedIndex(-this->quantumNumberTz[index], this->quantumNumberY[index], 1);
 //       cout << index << "  " << indexFinalState << "  ;  " << this->quantumNumberTz[index] << "," << this->quantumNumberY[index] << endl;
       this->TzStateBosonic[indexFinalState] = this->TemporaryState[index];

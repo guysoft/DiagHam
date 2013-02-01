@@ -117,7 +117,16 @@ int main(int argc, char** argv)
   if (ThreeBodyFlag == false)
     sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
   else
-    sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
+  {
+    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
+      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
+    if (TzSymmetrizedBasis == true && TzMinusParity == false)
+      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.tzpsym.dat", NbrBosons, NbrFluxQuanta);
+    if (TzSymmetrizedBasis == true && TzMinusParity == true)
+      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.tzmsym.dat", NbrBosons, NbrFluxQuanta);
+    if (TzZ3SymmetrizedBasis == true)
+      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.tzZ3sym.dat", NbrBosons, NbrFluxQuanta);
+  }
   
   if ((Manager.GetInteger("only-tz") == 1000) && (Manager.GetInteger("only-y") == 1000))
   {
@@ -183,7 +192,17 @@ int main(int argc, char** argv)
 	{
 	  EigenvectorName = new char [64];
 	  if (ThreeBodyFlag == false)
-	    sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+	    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
+	      sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+	    else
+	    {
+	      if(TzSymmetrizedBasis == true && TzMinusParity == false)
+		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzpsym", NbrBosons, NbrFluxQuanta, tz, y);
+	      if(TzSymmetrizedBasis == true && TzMinusParity == true)
+		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzmsym", NbrBosons, NbrFluxQuanta, tz, y);
+	      if (TzZ3SymmetrizedBasis == true)
+		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzZ3sym", NbrBosons, NbrFluxQuanta, tz, y);
+	    }
 // 	  else
 // 	    sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
 	}
@@ -284,8 +303,18 @@ int main(int argc, char** argv)
     if (Manager.GetBoolean("eigenstate") == true)	
       {
 	EigenvectorName = new char [64];
-	if (ThreeBodyFlag == false)
-	   sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+	  if (ThreeBodyFlag == false)
+	    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
+	      sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+	    else
+	    {
+	      if(TzSymmetrizedBasis == true && TzMinusParity == false)
+		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzpsym", NbrBosons, NbrFluxQuanta, tz, y);
+	      if(TzSymmetrizedBasis == true && TzMinusParity == true)
+		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzmsym", NbrBosons, NbrFluxQuanta, tz, y);
+	      if (TzZ3SymmetrizedBasis == true)
+		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzZ3sym", NbrBosons, NbrFluxQuanta, tz, y);
+	    }
 // 	else
 // 	   sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
       }

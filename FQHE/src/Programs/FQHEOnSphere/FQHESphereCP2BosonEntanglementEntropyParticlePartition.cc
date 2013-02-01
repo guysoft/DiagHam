@@ -165,6 +165,9 @@ int main(int argc, char** argv)
   BosonOnCP2** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
+  bool TzSymmetry = false;
+  bool MinusTzSymmetry = false;
+  bool TzZ3Symmetry = false;
 //   int MaxLzA = Manager.GetInteger("max-lza");
 //   int MinLzA = Manager.GetInteger("min-lza");
 //   if ((ComputeLValueFlag == true) && (DensityMatrixFileName == 0))
@@ -218,7 +221,7 @@ int main(int argc, char** argv)
       TotalTz[i] = 0;
       TotalY[i] = 0;
       if (FQHEOnCP2FindSystemInfoFromVectorFileName(GroundStateFiles[i],
-						       NbrParticles, NbrFluxQuanta, TotalTz[i], TotalY[i], Statistics) == false)
+						       NbrParticles, NbrFluxQuanta, TotalTz[i], TotalY[i], TzSymmetry, MinusTzSymmetry, TzZ3Symmetry, Statistics) == false)
 	{
 	  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	  return -1;
@@ -242,6 +245,11 @@ int main(int argc, char** argv)
 	{
 	  cout << "Y - 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
 	  return -1;
+	}
+      if ( TzSymmetry == true || MinusTzSymmetry == true || TzZ3Symmetry == true)
+	{
+	  cout << "Reduced density matrix cannot be computed on a Tz symmetrized vector - Convert to Nbody basis first" << endl;
+	  return 0;
 	}
       }
   

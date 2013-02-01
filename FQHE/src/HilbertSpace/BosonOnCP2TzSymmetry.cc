@@ -376,9 +376,9 @@ RealVector BosonOnCP2TzSymmetry::ConvertToNbodyBasis(RealVector& state, BosonOnC
     {
       TmpState2 = nbodyBasis.FermionBasis->StateDescription[i];
       TmpState = this->GetCanonicalStateFromFermionicPartition(TmpState2, Signature);
-      NewLzMax = this->LzMax;
-      while ((TmpState >> NewLzMax) == 0x0ul)
-	--NewLzMax;	 
+      NewLzMax = this->LzMax + this->NbrBosons - 1;
+      while (TmpState >> NewLzMax == 0x0ul)
+     	--NewLzMax;	
       if (Signature != 0)
 	{
 	  if (this->TzParitySign > 0.0)
