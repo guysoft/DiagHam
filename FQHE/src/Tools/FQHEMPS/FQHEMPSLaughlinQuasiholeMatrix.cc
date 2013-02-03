@@ -161,12 +161,12 @@ SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeMatrices(int nb
 	}
     }
   delete[] TmpCoefficient;
-//   for (int i = 0; i < nbrQuasiholes; ++i)
-//     {
-//       cout << " final matrix " << i << " : ";
-//       TmpQuasiholeBMatrices[i].PrintNonZero(cout) << endl;
-//       cout << "--------------------------------" << endl;
-//     }
+  for (int i = 0; i < nbrQuasiholes; ++i)
+     {
+       cout << " final matrix  " << i << " : ";
+       TmpQuasiholeBMatrices[i].PrintNonZero(cout) << endl;
+       cout << "--------------------------------" << endl;
+     }
   return TmpQuasiholeBMatrices;
 }
 
@@ -209,7 +209,7 @@ void FQHEMPSLaughlinQuasiholeMatrix::CreateBMatrices ()
 							 + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) / (4.0 * this->LaughlinIndex))
 							 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) / (4.0 * this->LaughlinIndex))));
 	      this->RealBMatrices[0].SetMatrixElement(this->GetMatrixIndex(j - 1, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]),
-					    this->GetMatrixIndex(j, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), Tmp);
+						      this->GetMatrixIndex(j, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), Tmp);
 	    }
 	}
     }
@@ -259,6 +259,12 @@ void FQHEMPSLaughlinQuasiholeMatrix::CreateBMatrices ()
 	    }
 	}
     }
+
+  cout << " final B matrices  : ";
+  this->RealBMatrices[0].PrintNonZero(cout) << endl;
+  this->RealBMatrices[1].PrintNonZero(cout) << endl;
+  this->QuasiholeBMatrices[0].PrintNonZero(cout) << endl;
+
 
   delete[] Partition1;
   delete[] Partition2;
