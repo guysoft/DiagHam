@@ -33,6 +33,8 @@
 #include <cmath>
 
 
+#pragma optimize("", off)
+
 #define MY_EPSILON 1E-6
 
 #include <iostream>
@@ -140,6 +142,12 @@ ComplexPolynomial& ComplexPolynomial::operator = (const ComplexPolynomial& P)
   return *this;
 }
 
+
+// screen PolynomialEvaluate from compilation problems in optimization step by intel compilers
+#ifdef __INTEL_COMPILER
+#pragma optimize("", off)
+#endif
+
 // Return polynomial value at a given point
 //
 // x = point where to evaluate polynomial
@@ -179,7 +187,11 @@ Complex ComplexPolynomial::PolynomialEvaluate (Complex x)
     }
   return Complex();
 }
-  
+
+#ifdef __INTEL_COMPILER
+#pragma optimize("", on)
+#endif
+
 // Evaluate polynomial derivative 
 //
 // x = position where to evaluate polynomial derivative
@@ -770,3 +782,5 @@ void ComplexPolynomial::SortRoots ()
   return;
 }
 
+
+#pragma optimize("", on)
