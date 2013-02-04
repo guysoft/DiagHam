@@ -263,10 +263,10 @@ RealMatrix::RealMatrix(Matrix& M)
       this->TrueNbrColumn = this->NbrColumn;
       this->Columns = new RealVector [this->NbrColumn];
       double Tmp;
-      for (int i = 0; i < this->NbrColumn; i++)
+      for (int i = 0; i < this->NbrColumn; ++i)
 	{
 	  this->Columns[i] = RealVector (this->NbrRow);
-	  for (int j = 0; j < this->NbrColumn; ++j)
+	  for (int j = 0; j < this->NbrRow; ++j)
 	    {
 	      M.GetMatrixElement(j, i, Tmp);
 	      this->Columns[i][j] = Tmp;
@@ -1478,9 +1478,9 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
 
 ostream& operator << (ostream& Str, const RealMatrix& P) 
 {
-  for (int i = 0; i < (P.NbrRow - 1); i++)
+  for (int i = 0; i < (P.NbrRow - 1); ++i)
     {
-      for (int j = 0; j < (P.NbrColumn - 1); j ++)
+      for (int j = 0; j < (P.NbrColumn - 1); ++j)
 	Str << P.Columns[j].Components[i] << "    ";      
       Str << P.Columns[P.NbrColumn - 1].Components[i] << endl;      
     }

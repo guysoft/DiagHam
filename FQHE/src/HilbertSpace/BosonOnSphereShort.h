@@ -634,6 +634,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(unsigned long int stateDescription, int lzMax);
 
+  // find state index from its occupation number description
+  //
+  // stateDescription = array that describes the state in the occupation number basis
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndexFromOccupationNumber(unsigned long* stateDescription);
+
   // get Lz component of a component
   //
   // j = index of the component in Hilbert space

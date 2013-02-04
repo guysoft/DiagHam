@@ -37,6 +37,10 @@
 #include "Vector/LongRationalVector.h"
 
 
+class LongRationalMatrix;
+class BosonOnDiskShort;
+
+
 class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 {
 
@@ -54,6 +58,9 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   int* PsiBasisDimension;
   // number of U(1) mode at a given level 
   int* U1BasisDimension;		  
+
+  // a temporary array to store a partition in the occupation number basis
+  unsigned long* TemporaryOccupationNumber;
 
  public:
   
@@ -136,8 +143,23 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // centralCharge12 = reference on the value of the central charge divided by 12
   // weight = weight of the primary field that is considered
   // return value = scalar product
-  LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight);
+  virtual LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, LongRational& centralCharge12, LongRational& weight);
   
+  // compute the scalar product matrices of the Virasoro descendant, using information from previous levels
+  // 
+  // partition = partition that desribes the product of Virasoro generators involved in the scalar product
+  // partitionLength = partition length
+  // position = position in partition starting from which all the indices are negative
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // weight = weight of the primary field that is considered
+  // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
+  // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
+  // basis = basis that related the partitions to their index
+  // return value = scalar product  
+  virtual LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+							       LongRational& centralCharge12, LongRational& weight,
+							       LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
+							       BosonOnDiskShort** basis);
 
   // compute the matrix elements of any primary field in the Virasoro descendant basis
   // 
@@ -150,9 +172,31 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // weight2 = weight of the primary field that is considered for the right state
   // weight = weight of the primary field whose matrix elements are computed
   // return value = matrix element
-  LongRational ComputeDescendantMatrixElement (long* partition, int partitionLength, int descendantPosition, int position, 
-					       LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
-					       LongRational& weight);
+  virtual LongRational ComputeDescendantMatrixElement (long* partition, int partitionLength, int descendantPosition, int position, 
+						       LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
+						       LongRational& weight);
+  
+  // compute the matrix elements of any primary field in the Virasoro descendant basis
+  // 
+  // partition = partition that desribes the product of Virasoro generators involved in the scalar product
+  // partitionLength = partition length
+  // descendantPosition = location of the primary field
+  // position = position in partition starting from which all the indices are negative
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // weight1 = weight of the primary field that is considered for the left state
+  // weight2 = weight of the primary field that is considered for the right state
+  // weight = weight of the primary field whose matrix elements are computed
+  // precomputedDescendantMatrixElement = matrices where matrix elements computed for previous levels are stored
+  // precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
+  // precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
+  // basis = basis that related the partitions to their index
+  // return value = matrix element
+  virtual LongRational ComputeDescendantMatrixElement (long* partition, int partitionLength, int descendantPosition, int position, 
+						       LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
+						       LongRational& weight, LongRationalMatrix** precomputedDescendantMatrixElement,
+						       int precomputedDescendantMatrixElementMaxLeftPLevel, 
+						       int precomputedDescendantMatrixElementMaxRightPLevel, 
+						       BosonOnDiskShort** basis);
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states
   //

@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/LongRationalMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 
 #include "GeneralTools/Endian.h"
@@ -113,12 +114,17 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
   double WeightPsiNumerical = WeightPsi.GetNumericalValue();
   long* Partition = new long[2 * (this->PLevel + 1)];
   unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
+  this->TemporaryOccupationNumber = new unsigned long [this->PLevel + 2];
 
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductIdentity = new LongRationalMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductPsi = new LongRationalMatrix[this->PLevel + 1];
   RealMatrix** MatrixPsi01 = new RealMatrix*[this->PLevel + 1];
   RealMatrix** MatrixPsi10 = new RealMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi01 = new LongRationalMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi10 = new LongRationalMatrix*[this->PLevel + 1];
   RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[this->PLevel + 1];
   RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevel + 1];
   RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[this->PLevel + 1];
@@ -129,13 +135,15 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
       U1BosonBasis[i] = new BosonOnDiskShort (i, i, this->PLevel + 1);
       MatrixPsi01[i] = new RealMatrix[this->PLevel + 1];
       MatrixPsi10[i] = new RealMatrix[this->PLevel + 1];
+      RationalMatrixPsi01[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMatrixPsi10[i] = new LongRationalMatrix[this->PLevel + 1];
     }
   
   for (int i = 0; i <= this->PLevel; ++i)
     {
       cout << "Level = " <<  i << endl;
-      ScalarProductIdentity[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
-      ScalarProductPsi[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      RationalScalarProductIdentity[i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      RationalScalarProductPsi[i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
 	for (int m = n; m < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
 	  {
@@ -161,11 +169,23 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 		  Partition[PartitionLength] = -(long) k;
 		  ++PartitionLength;		  
 		}
-	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity);
-	    ScalarProductIdentity[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
-	    Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi);
-	    ScalarProductPsi[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
-	  }
+ 	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity,
+ 									     RationalScalarProductIdentity, i - 1, U1BosonBasis);
+	    RationalScalarProductIdentity[i].SetMatrixElement(m, n, Tmp);
+	    if (n != m)
+	      {
+		RationalScalarProductIdentity[i].SetMatrixElement(n, m, Tmp);	      
+	      }
+	    Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi,
+								RationalScalarProductPsi, i - 1, U1BosonBasis);
+	    RationalScalarProductPsi[i].SetMatrixElement(m, n, Tmp);
+	    if (n != m)
+	      {
+		RationalScalarProductPsi[i].SetMatrixElement(n, m, Tmp);	      
+	      }
+	  }      
+      ScalarProductIdentity[i] = RationalScalarProductIdentity[i];
+      ScalarProductPsi[i] = RationalScalarProductPsi[i];
       
       RealSymmetricMatrix TmpMatrix;
       TmpMatrix.Copy(ScalarProductIdentity[i]);
@@ -274,8 +294,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
     {
       for (int j = 0; j <= this->PLevel; ++j)
 	{
-	  MatrixPsi01[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	  MatrixPsi10[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	  cout << "Levels = " <<  i << " " << j << endl;
 	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
 	    for (int m = 0; m < U1BosonBasis[j]->GetHilbertSpaceDimension(); ++m)
@@ -302,11 +322,15 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 		      Partition[PartitionLength] = -(long) k;
 		      ++PartitionLength;		  
 		    }
-		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight);
-		MatrixPsi01[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
-		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight);
-		MatrixPsi10[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
+		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight,
+									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis);
+		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
+		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight,
+							    RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis);
+		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 	      }
+	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
+	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
 	}
     }
 
@@ -705,6 +729,154 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
   return Tmp;
 }
 
+// compute the scalar product matrices of the Virasoro descendant, using information from previous levels
+// 
+// partition = partition that desribes the product of Virasoro generators involved in the scalar product
+// partitionLength = partition length
+// position = position in partition starting from which all the indices are negative
+// centralCharge12 = reference on the value of the central charge divided by 12
+// weight = weight of the primary field that is considered
+// precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
+// precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
+// basis = basis that related the partitions to their index
+// return value = scalar product
+
+LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+									       LongRational& centralCharge12, LongRational& weight,
+									       LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
+									       BosonOnDiskShort** basis)
+{
+  if (partitionLength == 0)
+    {
+      return 1l;
+    }
+  while ((position > 0) && (partition[position - 1] < 0l))
+    --position;
+  if ((position == partitionLength) || (position == 0))
+    return 0l;
+  if (partitionLength == 2)
+    {
+      if (partition[0] != -partition[1])
+	{
+	  return 0l;
+	}
+      else
+	{
+	  LongRational Tmp1 (centralCharge12);
+	  Tmp1 *= partition[0] * (partition[0] * partition[0] - 1l);
+	  LongRational Tmp2 (weight);
+	  Tmp2 *= 2l * partition[0];
+	  Tmp1 += Tmp2;
+	  return Tmp1;
+	}
+    }
+  int TmpPosition = 0;
+  while ((TmpPosition < position) && (partition[TmpPosition] >= 0))
+    ++TmpPosition;
+  if (TmpPosition == position)
+    {
+      TmpPosition = 1;
+      int TmpPLevel1 = partition[0];
+      bool FlagSorted = true;
+      while ((TmpPosition < position) && (FlagSorted == true))
+	{
+	  TmpPLevel1 += partition[TmpPosition];
+	  if (partition[TmpPosition - 1] < partition[TmpPosition])
+	    FlagSorted = false;
+	  ++TmpPosition;
+	}
+      if ((TmpPLevel1 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
+	{     
+	  int TmpPLevel2 = -partition[TmpPosition];	  
+	  FlagSorted = true;
+	  ++TmpPosition;
+	  while (TmpPosition < partitionLength)
+	    {
+	      TmpPLevel2 -= partition[TmpPosition];
+	      if (partition[TmpPosition - 1] < partition[TmpPosition])
+		FlagSorted = false;
+	      ++TmpPosition;
+	    }
+	  if ((TmpPLevel2 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
+	    {
+	      for (int k = 0; k <= (this->PLevel + 1); ++k)
+		this->TemporaryOccupationNumber[k] = 0x0ul;	  
+	      for (TmpPosition = 0; TmpPosition < position; ++TmpPosition)
+		{
+		  this->TemporaryOccupationNumber[partition[TmpPosition]]++;	      
+		}
+	      this->TemporaryOccupationNumber[0] = TmpPLevel1 - position;
+	      int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+	      for (int k = 0; k <= (this->PLevel + 1); ++k)
+		this->TemporaryOccupationNumber[k] = 0x0ul;	  
+	      for (TmpPosition = position; TmpPosition < partitionLength; ++TmpPosition)
+		{
+		  this->TemporaryOccupationNumber[-partition[TmpPosition]]++;	      
+		}
+	      this->TemporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+	      int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+	      LongRational Tmp;
+	      precomputedScalarProduct[TmpPLevel1].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
+	      return Tmp;
+	    }
+	}
+    }
+  LongRational Tmp(0l);
+  if ((partition[position - 1] + partition[position]) == 0)
+    {
+      long TmpLength = 0l;
+      long Store = partition[position - 1];
+      for (int i = position + 1; i < partitionLength; ++i)
+	TmpLength += partition[i];
+      for (int i = position + 1; i < partitionLength; ++i)
+	partition[i - 2] = partition[i];
+      Tmp += ((((Store * (Store * Store - 1l)) * centralCharge12)
+	       + (2l * Store) * (weight - TmpLength)) * 
+	      this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, weight,
+							   precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+      for (int i = partitionLength - 1; i > position; --i)
+	partition[i] = partition[i - 2];
+      partition[position - 1] = Store;
+      partition[position] = -Store;
+    }
+  else
+    {
+      long Store1 = partition[position - 1];
+      long Store2 = partition[position];
+      partition[position - 1] += partition[position];
+      for (int i = position + 1; i < partitionLength; ++i)
+	partition[i - 1] = partition[i];
+      if ((Store1 + Store2) > 0)
+	{
+	  Tmp += ((Store1 - Store2) 
+		  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+								 position, centralCharge12, weight,
+								 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+	}
+      else
+	{
+	  Tmp += ((Store1 - Store2) 
+		  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+								 position - 1, centralCharge12, weight,
+								 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+	}
+      for (int i = partitionLength - 1; i > position; --i)
+	partition[i] = partition[i - 1];
+      partition[position] = Store2;
+      partition[position - 1] = Store1;
+    }
+
+  long Store1 = partition[position - 1];
+  partition[position - 1] = partition[position];
+  partition[position] = Store1;
+  Tmp += this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, weight,
+						      precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis);
+  Store1 = partition[position - 1];
+  partition[position - 1] = partition[position];
+  partition[position] = Store1;
+  return Tmp;
+}
+
 // compute the matrix elements of any primary field in the Virasoro descendant basis
 // 
 // partition = partition that desribes the product of Virasoro generators involved in the scalar product
@@ -851,117 +1023,225 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
   return Tmp1;
 }
 
-// extract a block with fixed quantum numbers of a given matrix written the MPS basis
-//
-// matrix = reference on the matrix
-// pLevel1 = tuncation level of the block left indices
-// q1 = charge index of the block left indices
-// pLevel1 = tuncation level of the block right indices
-// q2 = charge index of the block left indices
-// return value = block corresponding to the quantum numbers
+// compute the matrix elements of any primary field in the Virasoro descendant basis
+// 
+// partition = partition that desribes the product of Virasoro generators involved in the scalar product
+// partitionLength = partition length
+// descendantPosition = location of the primary field
+// position = position in partition starting from which all the indices are negative
+// centralCharge12 = reference on the value of the central charge divided by 12
+// weight1 = weight of the primary field that is considered for the left state
+// weight2 = weight of the primary field that is considered for the right state
+// weight = weight of the primary field whose matrix elements are computed
+// precomputedDescendantMatrixElement = matrices where matrix elements computed for previous levels are stored
+// precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
+// precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
+// basis = basis that related the partitions to their index
+// return value = matrix element
+  
+LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* partition, int partitionLength, 
+								       int descendantPosition, int position, 
+								       LongRational& centralCharge12, LongRational& weight1, 
+								       LongRational& weight2, LongRational& weight,
+								       LongRationalMatrix** precomputedDescendantMatrixElement, 
+								       int precomputedDescendantMatrixElementMaxLeftPLevel, 
+								       int precomputedDescendantMatrixElementMaxRightPLevel, 
+								       BosonOnDiskShort** basis)
+{
+  if (partitionLength == 0)
+    {
+      return 1l;
+    }
+  if ((descendantPosition < partitionLength) && (partition[partitionLength - 1] > 0))
+    {
+      return 0l;
+    }
+  while ((position > 0) && (partition[position - 1] < 0l))
+    --position;
+  if (descendantPosition == partitionLength) 
+    {
+      LongRational Tmp(1l);
+      LongRational TmpSum = weight1;
+      TmpSum -= weight2;
+      LongRational Tmp2;
+      for (int i = partitionLength - 1; i >= 0; --i)
+	{
+	  Tmp2 = weight;
+	  Tmp2 *= partition[i];
+	  long Tmp3 = 0l;
+	  for (int j = 0; j < i; ++j)
+	    Tmp3 += partition[j];
+	  Tmp2 += TmpSum;
+	  Tmp2 += Tmp3;	  
+	  Tmp *= Tmp2;
+	}
+      return Tmp;
+    }
+  if (position == 0)
+    {
+      LongRational Tmp(1l);
+      LongRational TmpSum = weight1;
+      TmpSum -= weight2;
+      LongRational Tmp2;
+      for (int i = 0; i < partitionLength ; ++i)
+	{
+	  Tmp2 = weight;
+	  Tmp2 *= partition[i];
+	  long Tmp3 = 0l;
+	  for (int j = i + 1; j < partitionLength; ++j)
+	    Tmp3 -= partition[j];
+	  Tmp2 += TmpSum;
+	  Tmp2 -= Tmp3;
+	  Tmp *= Tmp2;
+	}
+      Tmp *= 1l - (2l * (partitionLength & 1l));
+      return Tmp;
+    }
+  if (descendantPosition == position)
+    {
+      int TmpPosition = 0;
+      while ((TmpPosition < position) && (partition[TmpPosition] >= 0))
+	++TmpPosition;
+      if (TmpPosition == position)
+	{
+	  TmpPosition = 1;
+	  int TmpPLevel1 = partition[0];
+	  bool FlagSorted = true;
+	  while (TmpPosition < position)
+	    {
+	      TmpPLevel1 += partition[TmpPosition];
+	      if (partition[TmpPosition - 1] < partition[TmpPosition])
+		FlagSorted = false;
+	      ++TmpPosition;
+	    }
+	  if ((TmpPLevel1 <= precomputedDescendantMatrixElementMaxLeftPLevel) && (FlagSorted == true))
+	    {
+	      int TmpPLevel2 = -partition[TmpPosition];	  
+	      FlagSorted = true;
+	      ++TmpPosition;
+	      while (TmpPosition < partitionLength)
+		{
+		  TmpPLevel2 -= partition[TmpPosition];
+		  if (partition[TmpPosition - 1] < partition[TmpPosition])
+		    FlagSorted = false;
+		  ++TmpPosition;
+		}
+	      if ((TmpPLevel2 <= precomputedDescendantMatrixElementMaxRightPLevel) && (FlagSorted == true))
+		{
+		  for (int k = 0; k <= (this->PLevel + 1); ++k)
+		    this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		  for (TmpPosition = 0; TmpPosition < position; ++TmpPosition)
+		    {
+		      this->TemporaryOccupationNumber[partition[TmpPosition]]++;	      
+		    }
+		  this->TemporaryOccupationNumber[0] = TmpPLevel1 - position;
+		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+		  for (int k = 0; k <= (this->PLevel + 1); ++k)
+		    this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		  for (TmpPosition = position; TmpPosition < partitionLength; ++TmpPosition)
+		    {
+		      this->TemporaryOccupationNumber[-partition[TmpPosition]]++;	      
+		    }
+		  this->TemporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+		  int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+		  LongRational Tmp;
+		  precomputedDescendantMatrixElement[TmpPLevel1][TmpPLevel2].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
+		  return Tmp;
+		}
+	    }
+	}
+    }
+  if (descendantPosition < position)
+    {
+      LongRational Tmp(0l);
+      if ((partition[position - 1] + partition[position]) == 0)
+	{
+	  long TmpLength = 0l;
+	  long Store = partition[position - 1];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    TmpLength += partition[i];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 2] = partition[i];
+	  Tmp += ((((Store * (Store * Store - 1l)) * centralCharge12)
+		   + (2l * Store) * (weight2 - TmpLength)) * 
+		  this->ComputeDescendantMatrixElement(partition, partitionLength - 2, descendantPosition, 
+						       position - 1, centralCharge12, weight1, weight2, weight,
+						       precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+						       precomputedDescendantMatrixElementMaxRightPLevel, basis));
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 2];
+	  partition[position - 1] = Store;
+	  partition[position] = -Store;
+	}
+      else
+	{
+ 	  long Store1 = partition[position - 1];
+	  long Store2 = partition[position];
+	  partition[position - 1] += partition[position];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 1] = partition[i];
+	  if ((Store1 + Store2) > 0)
+	    {
+	      Tmp += ((Store1 - Store2) 
+		      * this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition, 
+							     position, centralCharge12, weight1, weight2, weight,
+							     precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+							     precomputedDescendantMatrixElementMaxRightPLevel, basis));
+	    }
+	  else
+	    {
+	      Tmp += ((Store1 - Store2) 
+		      * this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition, 
+							     position - 1, centralCharge12, weight1, weight2, weight,
+							     precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+							     precomputedDescendantMatrixElementMaxRightPLevel, basis));
+	    }
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 1];
+	  partition[position] = Store2;
+	  partition[position - 1] = Store1;
+	}
+      
+      long Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      Tmp += this->ComputeDescendantMatrixElement(partition, partitionLength, descendantPosition, position + 1, 
+						  centralCharge12, weight1, weight2, weight,
+						  precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+						  precomputedDescendantMatrixElementMaxRightPLevel, basis);
+      Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      return Tmp;  
+    }
 
-// SparseRealMatrix FQHEMPSClustered2RMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2)
-// {
-//   double Tmp;
-//   int TmpNbrRow = 0;
-//   for (int p = 0; p <= pLevel1; ++p)
-//     TmpNbrRow += (this->IdentityBasisDimension[pLevel1 - p] + this->PsiBasisDimension[pLevel1 - p]) * this->U1BasisDimension[p];
-//   int TmpNbrColumn = 0;
-//   for (int p = 0; p <= pLevel2; ++p)
-//     TmpNbrColumn += (this->IdentityBasisDimension[pLevel2 - p] + this->PsiBasisDimension[pLevel2 - p]) * this->U1BasisDimension[p];
-
-//   SparseRealMatrix TmpMatrix(TmpNbrRow, TmpNbrColumn);
-//   int CurrentShift1 = 0;
-//   for (int p = 0; p <= pLevel1; ++p)
-//     {
-//       int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
-//       int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
-//       int TmpU1BasisDimension1 = this->U1BasisDimension[p];
-//       for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
-// 	{
-// 	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
-// 	    {
-// 	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
-// 									   NeutralIndex1, TmpIdentityBasisDimension1, 
-// 									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
-// 	    }
-// 	  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
-// 	    {
-// 	      cout << "level=" << pLevel1 << " " << this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
-// 									   NeutralIndex1, TmpIdentityBasisDimension1, 
-// 									   this->StartingIndexPerPLevel[pLevel1][p]) << endl;
-// 	    }
-// 	}
-//     }
-//   for (int p = 0; p <= pLevel1; ++p)
-//     {
-//       int TmpIdentityBasisDimension1 = this->IdentityBasisDimension[pLevel1 - p];
-//       int TmpPsiBasisDimension1 = this->PsiBasisDimension[pLevel1 - p];
-//       int TmpU1BasisDimension1 = this->U1BasisDimension[p];
-//       int CurrentShift2 = 0;
-//       for (int q = 0; q <= pLevel2; ++q)
-// 	{
-// 	  int TmpIdentityBasisDimension2 = this->IdentityBasisDimension[pLevel2 - q];
-// 	  int TmpPsiBasisDimension2 = this->PsiBasisDimension[pLevel2 - q];
-// 	  int TmpU1BasisDimension2 = this->U1BasisDimension[q];		  
-//  	  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpU1BasisDimension1; ++ChargedIndex1)
-// 	    {
-// 	      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpU1BasisDimension2; ++ChargedIndex2)
-// 		{
-// 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpIdentityBasisDimension1; ++NeutralIndex1)
-// 		    {
-// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
-// 			{
-// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-// 			  if (Tmp != 0.0)
-// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-// 			}
-// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
-// 			{
-// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 0, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-// 			  if (Tmp != 0.0)
-// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 0, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-// 			}
-// 		    }
-// 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpPsiBasisDimension1; ++NeutralIndex1)
-// 		    {
-// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpIdentityBasisDimension2; ++NeutralIndex2)
-// 			{
-// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 0, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-// 			  if (Tmp != 0.0)
-// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 0, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-// 			}
-// 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpPsiBasisDimension2; ++NeutralIndex2)
-// 			{
-// 			  matrix.GetMatrixElement(this->Get2RMatrixIndex(q1, ChargedIndex1, this->NbrNValue, TmpU1BasisDimension1, 1, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension1, this->StartingIndexPerPLevel[pLevel1][p]),
-// 						  this->Get2RMatrixIndex(q2, ChargedIndex2, this->NbrNValue, TmpU1BasisDimension2, 1, 
-// 									 NeutralIndex1, TmpIdentityBasisDimension2, this->StartingIndexPerPLevel[pLevel2][q]), Tmp);
-// 			  if (Tmp != 0.0)
-// 			    TmpMatrix.SetMatrixElement(this->Get2RReducedMatrixIndex(ChargedIndex1, TmpU1BasisDimension1, 1, NeutralIndex1, TmpIdentityBasisDimension1, CurrentShift1), 
-// 						       this->Get2RReducedMatrixIndex(ChargedIndex2, TmpU1BasisDimension2, 1, NeutralIndex2, TmpIdentityBasisDimension2, CurrentShift2), Tmp);
-// 			}
-// 		    }
-// 		}
-// 	    }
-// 	  CurrentShift2 += (TmpIdentityBasisDimension2 + TmpPsiBasisDimension2) * TmpU1BasisDimension2;
-// 	}
-//       CurrentShift1 += (TmpIdentityBasisDimension1 + TmpPsiBasisDimension1) * TmpU1BasisDimension1;
-//     }
-//   return TmpMatrix;
-// }
+  LongRational Tmp1 = this->ComputeDescendantMatrixElement(partition, partitionLength, descendantPosition - 1, position, 
+							   centralCharge12, weight1, weight2, weight,
+							   precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+							   precomputedDescendantMatrixElementMaxRightPLevel, basis);
+  LongRational Tmp2 = weight;
+  Tmp2 *= partition[position - 1];
+  Tmp2 += weight1;
+  Tmp2 -= weight2;
+  long TmpLength = 0l;
+  for (int i = position; i < partitionLength; ++i)
+    TmpLength += partition[i];
+  for (int i = 0; i < (position - 1); ++i)
+    TmpLength += partition[i];
+  Tmp2 += TmpLength;
+  long Store = partition[position - 1];
+  for (int i = position; i < partitionLength; ++i)
+    partition[i - 1] = partition[i];
+  Tmp2 *= this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition - 1, position - 1, 
+					       centralCharge12, weight1, weight2, weight,
+					       precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+					       precomputedDescendantMatrixElementMaxRightPLevel, basis);
+  for (int i = partitionLength - 1; i >= position; --i)
+    partition[i] = partition[i - 1];
+  partition[position - 1] = Store;
+  Tmp1 += Tmp2;
+  return Tmp1;
+}
 
 // get the range for the bond index when fixing the tuncation level and the charge index
 //

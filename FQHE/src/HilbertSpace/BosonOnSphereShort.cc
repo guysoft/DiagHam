@@ -644,6 +644,19 @@ int BosonOnSphereShort::FindStateIndex(unsigned long int stateDescription, int l
   return this->FermionBasis->FindStateIndex(stateDescription, lzMax);
 }
 
+// find state index from its occupation number description
+//
+// stateDescription = array that describes the state in the occupation number basis
+// return value = corresponding index, -1 if an error occured
+
+int BosonOnSphereShort::FindStateIndexFromOccupationNumber(unsigned long* stateDescription)
+{
+  int NewLzMax =  this->LzMax;
+  while ((NewLzMax > 0) && (stateDescription[NewLzMax] == 0x0ul))
+    --NewLzMax;
+  return this->FermionBasis->FindStateIndex(this->BosonToFermion(stateDescription, NewLzMax), NewLzMax + this->NbrBosons - 1);  
+}
+
 // evaluate wave function in real space using a given basis and only for a given range of components
 //
 // state = vector corresponding to the state in the Fock basis

@@ -99,6 +99,16 @@ FermionOnSphere::FermionOnSphere (int nbrFermions, int totalLz, int lzMax, unsig
   if (this->NbrFermions > 0)
     {
       this->GenerateStates(this->NbrFermions, this->LzMax, this->LzMax, (this->TotalLz + this->NbrFermions * this->LzMax) >> 1, 0);
+      if ((this->StateDescription[0l] >> this->LzMax) == 0x0ul)
+	{
+	  int TmpLzMax = this->LzMax;
+	  for  (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	    {
+	      while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      this->StateLzMax[i] = TmpLzMax;
+	    }
+	}
     }
   else
     {
