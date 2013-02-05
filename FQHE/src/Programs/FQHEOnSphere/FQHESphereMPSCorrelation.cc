@@ -287,7 +287,8 @@ int main(int argc, char** argv)
     {
       if (NbrQuasiholes > 0)
 	{
-	  SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex + 1, MPSColumnIndex + 1, 
+	  cout << "index " << (MPSRowIndex) << " " << (MPSColumnIndex) << endl;
+	  SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
 							  SparseBMatrices, SparseQuasiholeBMatrices, NbrQuasiholes, Architecture.GetArchitecture());
 	}
       else

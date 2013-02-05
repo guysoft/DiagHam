@@ -288,55 +288,6 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
       cout << "---------------------------------" << endl;
     }
 
-  cout << "computing Psi matrix elements" << endl;
-  LongRational Weight (WeightPsi);
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      for (int j = 0; j <= this->PLevel; ++j)
-	{
-	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	  RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	  cout << "Levels = " <<  i << " " << j << endl;
-	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	    for (int m = 0; m < U1BosonBasis[j]->GetHilbertSpaceDimension(); ++m)
-	      {
-		int PartitionLength = 0;
-		U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
-		for (int k = 1; k <= i; ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      ++PartitionLength;
-		    }
-		int Position = PartitionLength;
-		PartitionLength = 0;
-		for (int k = 1; k <= i; ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      Partition[Position - PartitionLength - 1] = (long) k;
-		      ++PartitionLength;
-		    }
-		U1BosonBasis[j]->GetOccupationNumber(m, TmpPartition);	    
-		for (int k = 1; k <= j; ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      Partition[PartitionLength] = -(long) k;
-		      ++PartitionLength;		  
-		    }
-		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight,
-									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis);
-		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
-		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight,
-							    RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis);
-		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
-	      }
-	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
-	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
-	}
-    }
-
-
-  SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
-
   this->StartingIndexPerPLevel = new int* [this->PLevel + 1];
   this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
   this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
@@ -395,6 +346,56 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
   
   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
   cout << "B matrix size = " << MatrixSize << endl;
+
+  cout << "computing Psi matrix elements" << endl;
+  LongRational Weight (WeightPsi);
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      for (int j = 0; j <= this->PLevel; ++j)
+	{
+	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  cout << "Levels = " <<  i << " " << j << endl;
+	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+	    for (int m = 0; m < U1BosonBasis[j]->GetHilbertSpaceDimension(); ++m)
+	      {
+		int PartitionLength = 0;
+		U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
+		for (int k = 1; k <= i; ++k)
+		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		    {
+		      ++PartitionLength;
+		    }
+		int Position = PartitionLength;
+		PartitionLength = 0;
+		for (int k = 1; k <= i; ++k)
+		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		    {
+		      Partition[Position - PartitionLength - 1] = (long) k;
+		      ++PartitionLength;
+		    }
+		U1BosonBasis[j]->GetOccupationNumber(m, TmpPartition);	    
+		for (int k = 1; k <= j; ++k)
+		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		    {
+		      Partition[PartitionLength] = -(long) k;
+		      ++PartitionLength;		  
+		    }
+		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight,
+									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis);
+		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
+		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight,
+							    RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis);
+		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
+	      }
+	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
+	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
+	}
+    }
+  cout << "building B matrices" << endl;
+
+
+  SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
   BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
   for (int i = 0; i <= this->PLevel; ++i)
     {

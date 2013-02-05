@@ -330,6 +330,13 @@ int GenericRealMainTask::ExecuteMainTask()
   cout.precision(14);
   cout << "----------------------------------------------------------------" << endl;
   cout << " Hilbert space dimension = " << this->Space->GetHilbertSpaceDimension() << endl;
+  if (this->ReducedHilbertSpaceDescription != 0)
+    {
+      this->DiagonalizeInHilbertSubspace(this->ReducedHilbertSpaceDescription, File);
+      cout << "----------------------------------------------------------------" << endl;
+      File.close(); 
+      return 0;
+    }
   if (this->SavePrecalculationFileName != 0)
     {
       this->Hamiltonian->SavePrecalculation(this->SavePrecalculationFileName);
@@ -830,3 +837,138 @@ void GenericRealMainTask::WriteResult(ofstream& file, double value, bool termina
   if (terminate)
     file << endl;
 }
+
+// do the Hamiltonian diagonalization in a given Hilbert subspace
+//
+// subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+// file = reference on the output file stream where eigenvalues have to be stored
+
+void GenericRealMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file)
+{
+  ConfigurationParser ReducedBasis;
+  if (ReducedBasis.Parse(subspaceDescription) == false)
+    {
+      ReducedBasis.DumpErrors(cout) << endl;
+      return;
+    }
+  int TmpHilbertSpaceDimension;
+  char** VectorFileNames;
+  if (ReducedBasis.GetAsStringArray("Basis", ' ', VectorFileNames, TmpHilbertSpaceDimension) == false)
+    {
+      cout << "Vectors are not defined or have a wrong value in " << subspaceDescription << endl;
+      return;
+    }
+  int SpaceDimension = this->Space->GetHilbertSpaceDimension();
+  RealMatrix Basis (this->Space->GetHilbertSpaceDimension(), TmpHilbertSpaceDimension);
+  char* DirectoryName = ReducedBasis["Directory"];
+  char* TmpName;
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      TmpName = VectorFileNames[i];
+      if (DirectoryName != 0)
+	{
+	  TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
+	}
+      cout << TmpName << endl;
+      if (Basis[i].ReadVector(TmpName) == false)
+	{
+	  cout << "error while reading " << TmpName << endl;
+	  if (DirectoryName != 0)
+	    delete[] TmpName;
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    delete[] VectorFileNames[j];
+	  delete[] VectorFileNames;
+	  return;
+	}
+      if (Basis[i].GetVectorDimension() != SpaceDimension)
+	{
+	  cout << "Error: basis vector '" << TmpName << "' does not match the dimension of the Hilbert space."<<endl;
+	  exit(1);
+	}
+      if (DirectoryName != 0)
+	delete[] TmpName;
+    }
+  RealSymmetricMatrix HRep (TmpHilbertSpaceDimension);
+  RealVector* TmpVectors = new RealVector[TmpHilbertSpaceDimension];
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      RealVector TmpVector (Basis[0].GetVectorDimension(), true);
+      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Basis[i]), &TmpVector);
+      Operation1.ApplyOperation(this->Architecture);
+      TmpVectors[i] = TmpVector;
+    }
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
+    {
+      for (int j = i; j < TmpHilbertSpaceDimension; ++j)
+	{
+	  double Tmp = Basis[j] * TmpVectors[i];
+	  HRep.SetMatrixElement(i ,j, Tmp);
+	}
+    }
+  delete[] TmpVectors;
+  if (TmpHilbertSpaceDimension > 1)
+    {
+#ifdef __LAPACK__
+      if (this->LapackFlag == true)
+	{
+	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+	  if (this->EvaluateEigenvectors == false)
+	    {
+	      HRep.LapackDiagonalize(TmpDiag);
+	    }
+	  else
+	    {
+	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		TmpEigenvector(l, l) = 1.0;
+	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	      Basis.Multiply(TmpEigenvector);
+	    }
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    {
+	      WriteResult(file, (TmpDiag[j] - this->EnergyShift));
+	    }
+	}
+      else
+	{
+#endif
+	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+	  if (this->EvaluateEigenvectors == false)
+	    {
+	      HRep.Diagonalize(TmpDiag);
+	    }
+	  else
+	    {
+	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		TmpEigenvector(l, l) = 1.0;
+	      HRep.Diagonalize(TmpDiag, TmpEigenvector);
+	      Basis.Multiply(TmpEigenvector);
+	    }
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    {
+	      WriteResult(file, (TmpDiag[j] - this->EnergyShift));
+	    }
+#ifdef __LAPACK__
+	}
+#endif
+      if (this->EvaluateEigenvectors == true)
+	{
+	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+	    {
+	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+	      Basis[j].WriteVector(TmpVectorName);
+	    }
+	  delete [] TmpVectorName;
+	}
+    }
+  else
+    {
+      WriteResult(file, (HRep(0, 0)  - this->EnergyShift));
+    }
+  for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
+    delete[] VectorFileNames[j];
+  delete[] VectorFileNames;
+}
+
