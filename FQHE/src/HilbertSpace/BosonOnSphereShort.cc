@@ -673,7 +673,7 @@ Complex BosonOnSphereShort::EvaluateWaveFunction (RealVector& state, RealVector&
   Complex Tmp;
   ComplexMatrix Perm(this->NbrBosons, this->NbrBosons);
   ComplexMatrix Functions(this->LzMax + 1, this->NbrBosons);
-  int NbrComponentPerParticles = position.GetVectorDimension() / this->NbrBosons
+  int NbrComponentPerParticles = position.GetVectorDimension() / this->NbrBosons;
   RealVector TmpCoordinates(NbrComponentPerParticles);
   int* Indices = new int [this->NbrBosons];
   int Pos;

@@ -259,6 +259,19 @@ class RealUpperHessenbergMatrix : public Matrix
   // return value = matrix determinant 
   double Det ();
 
+  // shift all diagonal elements 
+  //
+  // shift = shift to apply
+  // return value = reference on current matrix
+  RealUpperHessenbergMatrix& ShiftDiagonal(double shift);
+
+  // conjugate matrix with an unitary matrix (Ut M U), assuming the Hessenberg from will be preserved
+  //
+  // unitaryM = unitary matrix to use
+  // conjugatedMatrix = reference on the matrix where conjugate matrix will be stored
+  // return value = pointer to conjugated matrix
+  RealUpperHessenbergMatrix& Conjugate(RealMatrix& unitaryM, RealUpperHessenbergMatrix& conjugatedMatrix);
+
   // Diagonalize a real matrix using the LAPACK library
   //
   // M = reference on complex diagonal matrix where result has to be stored

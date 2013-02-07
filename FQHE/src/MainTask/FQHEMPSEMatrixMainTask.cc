@@ -155,7 +155,7 @@ FQHEMPSEMatrixMainTask::FQHEMPSEMatrixMainTask(OptionManager* options, AbstractH
   this->ImplicitlyRestartedFlag = false;
   if ((*options)["implicitly-restarted"] != 0)
     {
-      this->ImplicitlyRestartedFlag = true;
+      this->ImplicitlyRestartedFlag = options->GetBoolean("implicitly-restarted");
     }
 
   this->EnergyShift = energyShift;

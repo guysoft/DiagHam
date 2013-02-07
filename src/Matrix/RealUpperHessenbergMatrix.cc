@@ -794,7 +794,10 @@ double RealUpperHessenbergMatrix::MatrixElement (RealVector& V1, RealVector& V2)
 
 double RealUpperHessenbergMatrix::Tr () 
 {
-  return 0.0;
+  double Trace = 0.0;
+  for (int i = 0; i <  this->NbrRow; ++i)
+    Trace += this->DiagonalElements[i];
+  return Trace;
 }
 
 // evaluate matrix determinant
@@ -804,6 +807,53 @@ double RealUpperHessenbergMatrix::Tr ()
 double RealUpperHessenbergMatrix::Det () 
 {
   return 0.0;
+}
+
+// shift all diagonal elements 
+//
+// shift = shift to apply
+// return value = reference on current matrix
+
+RealUpperHessenbergMatrix& RealUpperHessenbergMatrix::ShiftDiagonal(double shift)
+{
+  for (int i = 0; i <  this->NbrRow; ++i)
+    this->DiagonalElements[i] += shift;
+  return *this;
+}
+
+// conjugate matrix with an unitary matrix (Ut M U), assuming the Hessenberg from will be preserved
+//
+// unitaryM = unitary matrix to use
+// conjugatedMatrix = reference on the matrix where conjugate matrix will be stored
+// return value = pointer to conjugated matrix
+
+RealUpperHessenbergMatrix& RealUpperHessenbergMatrix::Conjugate(RealMatrix& unitaryM, RealUpperHessenbergMatrix& conjugatedMatrix)
+{
+  if ((unitaryM.GetNbrRow() != this->NbrColumn) || (conjugatedMatrix.NbrColumn != this->NbrColumn))
+    return conjugatedMatrix;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      int j = i - 1;
+      if (j < 0)
+	j = 0;
+      for (; j < this->NbrRow; ++j)
+	{
+	  double Tmp = 0.0;
+	  for (int k = 0; k < this->NbrRow; ++k)
+	    {
+	      double Tmp2 = unitaryM[j][k] * this->DiagonalElements[k];
+	      if (k > 0)
+		Tmp2 += unitaryM[j][k - 1] * this->LowerDiagonalElements[k];	      
+	      for (int l = k + 1; l < this->NbrColumn; ++l)
+		{
+		  Tmp2 += unitaryM[j][l] * this->UpperOffDiagonalElements[k + (l * (l - 1l)) / 2l];
+		}
+	      Tmp += Tmp2 * unitaryM[i][k];
+	    }
+	  conjugatedMatrix.SetMatrixElement(i, j , Tmp);
+	}
+    }    
+  return conjugatedMatrix;
 }
 
 // Diagonalize a real matrix using the LAPACK library
@@ -1088,24 +1138,13 @@ RealUpperTriangularMatrix& RealUpperHessenbergMatrix::LapackQRFactorization (Rea
   TotalIndex = 0l;
   for (int i = 0; i < this->NbrColumn; ++i)
     {
-      for (int j = 0; j <  i; ++j)
+      for (int j = 0; j < i; ++j)
 	{
-	  cout  << TmpMatrix[TotalIndex] << " ";
-	  ++TotalIndex;	  
-	}
-      R.SetMatrixElement(i, i, TmpMatrix[TotalIndex]);
-      cout  << TmpMatrix[TotalIndex] << " ";
-//      TmpMatrix[TotalIndex] = 1.0;
-      ++TotalIndex;	  
-      for (int j = i + 1; j < this->NbrColumn; ++j)
-	{
-	  R.SetMatrixElement(i, j, TmpMatrix[TotalIndex]);
-	  cout  << TmpMatrix[TotalIndex] << " ";
-//	  TmpMatrix[TotalIndex] = 0.0;
+	  R.SetMatrixElement(j, i, TmpMatrix[TotalIndex]);
 	  ++TotalIndex;
 	}      
-      cout << endl;
-      //TotalIndex += (long) (this->NbrRow - i);
+      R.SetMatrixElement(i, i, TmpMatrix[TotalIndex]);
+      TotalIndex += (long) (this->NbrRow - i);
    }
   WorkingAreaSize = -1;
   FORTRAN_NAME(dorgqr)(&this->NbrRow, &this->NbrColumn, &this->NbrColumn, TmpMatrix, &this->NbrColumn,

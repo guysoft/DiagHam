@@ -82,7 +82,7 @@ ImplicitlyRestartedArnoldiAlgorithm::ImplicitlyRestartedArnoldiAlgorithm(Abstrac
   if (this->NbrKeptVectors < 2)
     this->NbrKeptVectors = 2;
   this->TemporaryCoefficients = new double [this->MaximumNumberIteration];
-  this->ArnoldiVectors = new RealVector[this->MaxNbrVectors];
+  this->ArnoldiVectors = new RealVector[this->MaxNbrVectors + 1];
   this->ArnoldiVectorMatrix = RealMatrix();
   if (maxIter > 0)
     {
@@ -155,8 +155,8 @@ ImplicitlyRestartedArnoldiAlgorithm::~ImplicitlyRestartedArnoldiAlgorithm()
 void ImplicitlyRestartedArnoldiAlgorithm::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->ArnoldiVectorMatrix = RealMatrix (Dimension, this->MaxNbrVectors);
-  for (int i = 0; i < this->MaxNbrVectors; ++i)
+  this->ArnoldiVectorMatrix = RealMatrix (Dimension, this->MaxNbrVectors + 1);
+  for (int i = 0; i <= this->MaxNbrVectors; ++i)
     this->ArnoldiVectors[i] = this->ArnoldiVectorMatrix[i];
   for (int i = 0; i < Dimension; i++)
     {
@@ -174,8 +174,8 @@ void ImplicitlyRestartedArnoldiAlgorithm::InitializeLanczosAlgorithm()
 void ImplicitlyRestartedArnoldiAlgorithm::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->ArnoldiVectorMatrix = RealMatrix (Dimension, this->MaxNbrVectors);
-  for (int i = 0; i < this->MaxNbrVectors; ++i)
+  this->ArnoldiVectorMatrix = RealMatrix (Dimension, this->MaxNbrVectors + 1);
+  for (int i = 0; i <= this->MaxNbrVectors; ++i)
     this->ArnoldiVectors[i] = this->ArnoldiVectorMatrix[i];
   this->ArnoldiVectorMatrix[0] = vector;
   this->Index = 0;
@@ -187,36 +187,40 @@ void ImplicitlyRestartedArnoldiAlgorithm::InitializeLanczosAlgorithm(const Vecto
 
 void ImplicitlyRestartedArnoldiAlgorithm::RestartAlgorithm()
 {
-  if (this->Index == 2)
+  cout << this->ReducedMatrix.GetNbrRow() << " " << this->MaxNbrVectors << endl;
+  if (this->ReducedMatrix.GetNbrRow() == this->MaxNbrVectors)
     {
 #ifdef __LAPACK__
       cout << "restarting Arnoldi algorithm" << endl;
       RealUpperTriangularMatrix TmpR(this->ReducedMatrix.GetNbrRow());
       RealMatrix TmpQ (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrColumn());
-      Complex Determinant = 1.0;
-      for (int i = 0; i < this->ComplexDiagonalizedMatrix.GetNbrColumn(); ++i)
-	Determinant *= this->ComplexDiagonalizedMatrix[i];
-      this->ReducedMatrix.LapackQRFactorization(TmpR, TmpQ);
-      double Determinant2 = 1.0;
-      for (int i = 0; i < TmpR.GetNbrColumn(); ++i)
+      RealMatrix TmpTotalQ (this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrColumn());
+      TmpTotalQ.SetToIdentity();
+      int NbrRemovedVectors = this->ReducedMatrix.GetNbrRow() - this->NbrKeptVectors;
+      RealUpperHessenbergMatrix TmpReducedMatrix (this->ReducedMatrix.GetNbrRow(), true);
+      for (int i = 0; i < NbrRemovedVectors; ++i)
 	{
-	  double Tmp;
-	  TmpR.GetMatrixElement(i, i, Tmp); 
-	  cout << i << " " << Tmp << endl;
-	  Determinant2 *= Tmp;
+//	  this->ReducedMatrix.ShiftDiagonal(-this->ComplexDiagonalizedMatrix[i + this->NbrKeptVectors]);
+	  this->ReducedMatrix.LapackQRFactorization(TmpR, TmpQ);
+	  this->ReducedMatrix.Conjugate(TmpQ, TmpReducedMatrix);
+	  RealUpperHessenbergMatrix TmpMatrix = TmpReducedMatrix;
+	  TmpReducedMatrix = this->ReducedMatrix;
+	  this->ReducedMatrix = TmpMatrix;
+	  TmpTotalQ.Multiply(TmpQ);
 	}
-      cout << "det " << Determinant << " " << Determinant2 << endl;
-      RealMatrix Tmp (TmpR);
-      RealMatrix Tmp2 = TmpQ * Tmp;
-      cout <<  this->ReducedMatrix << endl;
-      cout << "R" << endl; 
-      cout << TmpR << endl;
-      cout << "Q" << endl;
-      cout << TmpQ << endl;
-      cout << "QR" << endl;
-      cout << Tmp2 << endl;
-      exit(0);
-      this->Index = this->NbrKeptVectors;
+      TmpTotalQ.Resize(this->ReducedMatrix.GetNbrRow(), this->NbrKeptVectors);      
+      this->ArnoldiVectorMatrix.Multiply(TmpTotalQ);
+      this->ArnoldiVectorMatrix.Resize(this->ReducedMatrix.GetNbrRow(), this->ReducedMatrix.GetNbrRow());      
+      this->ReducedMatrix.Resize(this->NbrKeptVectors, this->NbrKeptVectors);
+      this->Index = this->NbrKeptVectors - 2;
+      this->Diagonalize();
+      if (this->HighEnergyFlag == false)
+	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder();
+      else
+	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder();
+      this->PreviousLastWantedEigenvalue = 2.0 * Norm(this->ComplexDiagonalizedMatrix[this->NbrEigenvalue - 1]);
+      for (int i = 0; i < this->NbrEigenvalue; ++i)
+	this->ComplexPreviousWantedEigenvalues[i] = 2.0 * this->ComplexDiagonalizedMatrix[i];
 #else
   cout << "error, LAPACK is required for ImplicitlyRestartedArnoldiAlgorithm" << endl;
 #endif
