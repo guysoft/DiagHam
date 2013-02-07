@@ -78,7 +78,7 @@ AbstractQHEOnSphereFullHamiltonian::~AbstractQHEOnSphereFullHamiltonian()
      delete[] this->NbrSectorIndicesPerSum;
      delete[] this->SectorIndicesPerSum;
    }
-  if (this->OneBodyInteractionFactors != 0)
+  if (this->OneBodyTermFlag == true)
     delete[] this->OneBodyInteractionFactors;
   if (this->FastMultiplicationFlag == true)
     {

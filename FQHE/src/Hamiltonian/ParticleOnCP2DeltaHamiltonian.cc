@@ -73,6 +73,7 @@ ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* p
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
   this->quantumNumberS = new int [this->NbrLzValue];
+  this->OneBodyTermFlag = false;
   this->Particles2->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
 //   for (int i = 0; i<NbrLzValue; i++)
 //   {
@@ -99,6 +100,55 @@ ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* p
      }
 }
 
+// constructor with one body terms
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, double*  oneBodyPotentials, AbstractArchitecture* architecture, long memory)
+{
+  this->Particles = particles;
+  this->NbrParticles = nbrParticles;
+  this->NbrFluxQuanta = nbrFluxQuanta;
+  this->NbrLzValue = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2;
+  this->LzMax = this->NbrLzValue - 1;
+  this->Particles2 = (BosonOnCP2*) this->Particles;
+  this->quantumNumberTz = new int [this->NbrLzValue];
+  this->quantumNumberY = new int [this->NbrLzValue];
+  this->quantumNumberR = new int [this->NbrLzValue];
+  this->quantumNumberS = new int [this->NbrLzValue];
+  this->Particles2->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
+//   for (int i = 0; i<NbrLzValue; i++)
+//   {
+//    cout << i << " " << this->quantumNumberR[i] << " " << this->quantumNumberS[i] << endl; 
+//   }
+  this->HamiltonianShift = 0.0;
+  
+  this->Architecture = architecture;
+  this->Memory = memory;
+  this->OneBodyTermFlag = true;
+  this->OneBodyPotentials = new double [this->NbrLzValue];
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    this->OneBodyPotentials[i] = oneBodyPotentials[i];
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->EvaluateInteractionFactors();
+  cout << "done" << endl;
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      cout << "fast = ";
+      PrintMemorySize(cout, TmpMemory)<< endl;
+      this->EnableFastMultiplication();
+     }
+}
 
 // destructor
 //
@@ -193,6 +243,7 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
 // 		  cout << kz1 + kz2 << "=" << kz3 + kz4 << endl;
 		  
  		  this->InteractionFactors[i][Index] =  this->ComputeTwoBodyMatrixElement(r1,  s1, r2, s2, r3,  s3, r4, s4, Coef);
+// 		  this->InteractionFactors[i][Index] =  0;
 		  if (Index3 == Index4)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  if (Index1 == Index2)
@@ -205,6 +256,37 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
 		}
 	    }
 	}
+  if (this->OneBodyTermFlag == true)
+    {
+      this->NbrOneBodyInteractionFactors = 0;
+      for (int i = 0; i <= this->LzMax; ++i)
+	if (this->OneBodyPotentials[i] != 0)
+	  ++this->NbrOneBodyInteractionFactors;
+      if (this->NbrOneBodyInteractionFactors != 0)
+	{
+	  this->OneBodyMValues = new int[this->NbrOneBodyInteractionFactors];
+	  this->OneBodyNValues = new int[this->NbrOneBodyInteractionFactors];
+	  this->OneBodyInteractionFactors = new double[this->NbrLzValue];
+	  this->NbrOneBodyInteractionFactors = 0;
+	  int TmpNbrOrbitals = 0;
+	  for (int i = 0; i <= this->LzMax; ++i)
+	  {
+	    this->OneBodyInteractionFactors[TmpNbrOrbitals] = 0.5*this->OneBodyPotentials[i];
+	    if (this->OneBodyPotentials[i] != 0)
+	      {
+		this->OneBodyMValues[this->NbrOneBodyInteractionFactors] = i;
+		this->OneBodyNValues[this->NbrOneBodyInteractionFactors] = i;
+		++this->NbrOneBodyInteractionFactors;
+	      }	 
+	    ++ TmpNbrOrbitals;
+	  }
+	}
+      else
+	{
+	  delete[] this->OneBodyPotentials;
+	  this->OneBodyTermFlag = false;
+	}
+    } 
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }

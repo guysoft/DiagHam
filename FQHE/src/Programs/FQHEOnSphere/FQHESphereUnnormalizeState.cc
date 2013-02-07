@@ -12,6 +12,7 @@
 #include "HilbertSpace/FermionOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnSpherePTruncated.h"
+#include "HilbertSpace/BosonOnCP2.h"
 
 #include "Options/Options.h"
 
@@ -84,12 +85,15 @@ int main(int argc, char** argv)
   char* OutputTxtFileName = Manager.GetString("txt-output");
   bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
   bool SU2Flag = false;
+  bool CP2Flag = false;
+  int TotalTz = 0;
+  int TotalY = 0;
   int TotalSz = 0;
   double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
   bool SymmetryFactor = !(Manager.GetBoolean("symmetry-factor"));
 	   
   bool Statistics = true;
-  if (strstr(Manager.GetString("input-state"), "su2") == 0)
+  if ((strstr(Manager.GetString("input-state"), "su2") == 0) && (strstr(Manager.GetString("input-state"), "cp2") == 0))
     {
       if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
 						       NbrParticles, LzMax, TotalLz, Statistics) == false)
@@ -100,18 +104,32 @@ int main(int argc, char** argv)
     }
   else
     {
-      SU2Flag = true;
-      bool SymFlagLz = false;
-      bool SymFlagSz = false;
-      bool SymFlagLzParity = false;
-      bool SymFlagSzParity = false;
-      if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
+      if (strstr(Manager.GetString("input-state"), "cp2") == 0)
+      {
+	SU2Flag = true;
+	bool SymFlagLz = false;
+	bool SymFlagSz = false;
+	bool SymFlagLzParity = false;
+	bool SymFlagSzParity = false;
+	if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
 							       NbrParticles, LzMax, TotalLz, TotalSz, SymFlagLz, SymFlagSz, SymFlagLzParity, SymFlagSzParity, Statistics) == false)
+	  {
+	    cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
+	    return -1;
+	  }
+      }
+      else
+      {
+	CP2Flag = true;
+	bool SymFlagTz = false;
+	bool SymFlagTzMinusParity = false;
+	bool SymFlagTzZ3 = false;
+	if (FQHEOnCP2FindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalTz, TotalY,SymFlagTz, SymFlagTzMinusParity, SymFlagTzZ3, Statistics) == false)
 	{
 	  cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
-	  return -1;
+	   return -1;
 	}
-
+      }
     }
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
@@ -131,10 +149,15 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (Manager.GetBoolean("normalize"))	
-	    sprintf (OutputFileName, "bosons_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	  if (CP2Flag == false)
+	  {
+	    if (Manager.GetBoolean("normalize"))	
+	      sprintf (OutputFileName, "bosons_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	    else
+	      sprintf (OutputFileName, "bosons_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	  }
 	  else
-	    sprintf (OutputFileName, "bosons_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	    sprintf(OutputFileName, "bosons_unnormalized_cp2_n_%d_2s_%d_tz_%d_y_%d.0.vec", NbrParticles, LzMax, TotalTz, TotalY);
 	}
     }
 
@@ -249,7 +272,12 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("p-truncated") == false)
 		{
-		  OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+		  if (CP2Flag == false)
+		  {
+		    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
+		  }
+		  else
+		    OutputBasis = new BosonOnCP2(NbrParticles, LzMax, TotalTz, TotalY);
 		}
 	      else
 		{

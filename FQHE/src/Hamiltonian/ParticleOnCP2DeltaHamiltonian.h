@@ -67,6 +67,8 @@ class ParticleOnCP2DeltaHamiltonian : public AbstractQHEOnSphereFullHamiltonian
   int* quantumNumberS;
   //Hilbert Space CP2
   BosonOnCP2* Particles2;
+   // array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  double* OneBodyPotentials;
   
  public:
 
@@ -78,6 +80,17 @@ class ParticleOnCP2DeltaHamiltonian : public AbstractQHEOnSphereFullHamiltonian
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, 
+						    AbstractArchitecture* architecture, long memory = -1);
+
+  // constructor with one body terms
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrFluxQuanta = number of flux quanta
+  // oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, double* oneBodyPotentials, 
 						    AbstractArchitecture* architecture, long memory = -1);
 
   // destructor

@@ -66,8 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption ('\n', "three-body", "use three body delta interaction instead of two-body interaction");
-  /*
-  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");*/
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 //   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
 //   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
 //   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -76,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "tzsymmetrized-basis", "use Tz <-> -Tz symmetrized version of the basis (only valid if total-tz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use Tz <-> -Tz and Z3 permutations symmetrized version of the basis (only valid if total-tz=0 and total-y = 0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
+  (*SystemGroup) += new  SingleStringOption ('\n', "onebody-file", "file describing the one body potential in terms of pseudopotentials",0);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -111,8 +111,26 @@ int main(int argc, char** argv)
   bool TzSymmetrizedBasis = Manager.GetBoolean("tzsymmetrized-basis");
   bool TzZ3SymmetrizedBasis = Manager.GetBoolean("tzZ3symmetrized-basis");
   bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
-  
-
+  double* OneBodyPotentials = 0;
+  cout << Manager.GetString("use-hilbert") << endl;
+  if (Manager.GetString("onebody-file") != 0)
+  {
+  ConfigurationParser InteractionDefinition;
+  if (InteractionDefinition.Parse(Manager.GetString("onebody-file")) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return -1;
+     }
+  int TmpNbrPseudoPotentials;
+  if (InteractionDefinition.GetAsDoubleArray("Onebodypotentials", ' ', OneBodyPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != (NbrOrbitals))
+	{
+	   cout << "Invalid number of pseudo-potentials" << endl;
+	   return -1;	  
+	}
+    }
+  }
   char* OutputName = new char [256];
   if (ThreeBodyFlag == false)
     sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
@@ -177,7 +195,12 @@ int main(int argc, char** argv)
        
 	AbstractQHEHamiltonian* Hamiltonian = 0;
 	if (ThreeBodyFlag == false)
-	  Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, Architecture.GetArchitecture(), Memory);
+	{
+	  if (OneBodyPotentials == 0)
+	    Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, Architecture.GetArchitecture(), Memory);
+	  else
+	    Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
+	}
 	else
 	{
 	  cout << "three body Hamiltonian not yet implemented" << endl;
@@ -293,7 +316,10 @@ int main(int argc, char** argv)
        
     AbstractQHEHamiltonian* Hamiltonian = 0;
     if (ThreeBodyFlag == false)
+      if (OneBodyPotentials == 0)
 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, Architecture.GetArchitecture(), Memory);
+      else
+	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
 //     else
 // 	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
       

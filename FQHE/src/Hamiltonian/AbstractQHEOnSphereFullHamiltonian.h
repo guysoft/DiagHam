@@ -84,9 +84,16 @@ class AbstractQHEOnSphereFullHamiltonian : public AbstractQHEHamiltonian
   // arrays containing all interaction factors, the first index correspond correspond to index sum for the creation (or annhilation) operators
   // the second index is a linearized index (m1,m2) + (n1,n2) * (nbr element in current index sum) (m for creation operators, n for annhilation operators)
   double** InteractionFactors;
-
-  // array that contains all one-body interaction factors for particles with spin up
+  
+  // flag to indicate if there is any one body terms in the Hamiltonian
+  bool OneBodyTermFlag;
+  // array containing all factors for the one body terms
   double* OneBodyInteractionFactors;
+  // number of one body terms
+  int NbrOneBodyInteractionFactors;
+  // arrays for indices attached to each one body term
+  int* OneBodyMValues;
+  int* OneBodyNValues;
   
   // flag for fast multiplication algorithm
   bool FastMultiplicationFlag;
@@ -693,7 +700,7 @@ inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyAddMultiplyComp
 inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 														     int* indexArray, double* coefficientArray, long& position)
 {
-  if (this->OneBodyInteractionFactors != 0)
+  if (this->OneBodyTermFlag == true)
     {
       double TmpDiagonal = 0.0;
       for (int j = 0; j <= this->LzMax; ++j)
@@ -753,7 +760,7 @@ inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNTwoBodyFastMultiplicat
 
 inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
-  if (this->OneBodyInteractionFactors != 0)
+  if (this->OneBodyTermFlag == true)
     {
       for (int i = firstComponent; i < lastComponent; ++i)
 	{
