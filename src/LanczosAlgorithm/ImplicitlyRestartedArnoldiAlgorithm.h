@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                      class of basic  Arnoldi algorithm                     //
+//               class of implicetly restarted Arnoldi algorithm              //
 //                         for non symmetric matrices                         //
 //                                                                            //
-//                        last modification : 17/11/2012                      //
+//                        last modification : 06/02/2013                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,12 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef BASICARNOLDIALGORITHM_H
-#define BASICARNOLDIALGORITHM_H
+#ifndef IMPLICITLYRESTARTEDARNOLDIALGORITHM_H
+#define IMPLICITLYRESTARTEDARNOLDIALGORITHM_H
 
 
 #include "config.h"
-#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
+#include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
@@ -44,73 +44,46 @@
 #include "Matrix/RealUpperHessenbergMatrix.h"
 
 
-class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
+class ImplicitlyRestartedArnoldiAlgorithm : public BasicArnoldiAlgorithm
 {
 
  protected:
 
-  // array where the vectors of the Krylov subspace
-  RealVector* ArnoldiVectors;
+  // maximum number of vectors that can be stored in memory before restarting the Arnoldi algorithm
+  int MaxNbrVectors;
+  // number of vectors that are kept when restarting the Arnoldi algorithm
+  int NbrKeptVectors;
 
-  // maximum  number of iterations
-  int MaximumNumberIteration;
-  // current iteration index
-  int Index;
-
-  // garbage flag to avoid duplicating memory area
-  GarbageFlag Flag;
-
-  // Hessenberg matrix of the Hamiltonian in the Krylov subspace
-  RealUpperHessenbergMatrix ReducedMatrix;
-  // temporary matrix used to duplicated ReducedMatrix before diagonalize it
-  RealUpperHessenbergMatrix TemporaryReducedMatrix;
-
-  ComplexDiagonalMatrix ComplexDiagonalizedMatrix;
-
-  // number of wanted eigenvalues
-  int NbrEigenvalue;
-  // value of the last wanted eigenvalue at previous Arnoldi iteration
-  Complex PreviousLastWantedEigenvalue;
-  // value of the wanted eigenvalue at previous Arnoldi iteration
-  Complex* ComplexPreviousWantedEigenvalues;
-  // ground state 
-  ComplexVector GroundState;
-
-  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  bool StrongConvergenceFlag;
-  //true if the higher energy part of the spectrum has to be computed instead of the lower energy part
-  bool HighEnergyFlag;
-  // flag to compute the left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
-  bool LeftFlag;
-
-  // array used to store temporary scalar products
-  double* TemporaryCoefficients;
+  // matrix where the Arnoldi vectors are stored (wrapper to ArnoldiVectors)
+  RealMatrix ArnoldiVectorMatrix;
 
  public:
 
   // default constructor
   //
-  BasicArnoldiAlgorithm();
+  ImplicitlyRestartedArnoldiAlgorithm();
 
   // default constructor
   //
   // architecture = architecture to use for matrix operations
   // nbrEigenvalue = number of wanted eigenvalues
+  // maxNbrVectors = maximum number of vectors that can be stored in memory before restarting the Arnoldi algorithm
+  // nbrKeptVectors = number of vectors that are kept when restarting the Arnoldi algorithm (can't be lower than nbrEigenvalue)
   // maxIter = an approximation of maximal number of iteration
   // highEnergy = true if the higher energy part of the spectrum has to be computed instead of the lower energy part
   // leftFlag= compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  BasicArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100,
-			bool highEnergy = false, bool leftFlag = false, bool strongConvergence = false);
+  ImplicitlyRestartedArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxNbrVectors, int nbrKeptVectors,
+				      int maxIter = 100, bool highEnergy = false, bool leftFlag = false, bool strongConvergence = false);
 
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
-  BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algorithm);
+  ImplicitlyRestartedArnoldiAlgorithm(const ImplicitlyRestartedArnoldiAlgorithm& algorithm);
 
   // destructor
   //
-  ~BasicArnoldiAlgorithm();
+  ~ImplicitlyRestartedArnoldiAlgorithm();
 
   // initialize Arnoldi algorithm with a random vector
   //
@@ -121,48 +94,12 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // vector = reference to the vector used as first step vector
   void InitializeLanczosAlgorithm(const Vector& vector);
 
-  // get last produced vector
-  //
-  // return value = reference on last produced vector
-  Vector& GetGroundState();
-
-  // get the n first eigenstates
-  //
-  // nbrEigenstates = number of needed eigenstates
-  // return value = array containing the eigenstates
-  Vector* GetEigenstates(int nbrEigenstates);
-
-  // get the n first eigenvalues
-  //
-  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
-  // nbrEigenstates = number of needed eigenvalues
-  virtual void GetEigenvalues (double*& eigenvalues, int nbrEigenvalues);
-
-  // get the n first eigenvalues
-  //
-  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
-  // nbrEigenstates = number of needed eigenvalues
-  virtual void GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues);
-
-  // run current Arnoldi algorithm (continue from previous results if Arnoldi algorithm has already been run)
-  //
-  // nbrIter = number of iteration to do 
-  void RunLanczosAlgorithm (int nbrIter);
-  
-  // test if convergence has been reached
-  //
-  // return value = true if convergence has been reached
-  bool TestConvergence ();
-
  protected:
-
-  // diagonalize tridiagonalized matrix and find ground state energy
-  //
-  virtual void Diagonalize();
 
   // restart the Arnoldi algorithm if needed
   //
   virtual void RestartAlgorithm();
+
 
 };
 

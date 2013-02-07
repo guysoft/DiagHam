@@ -135,6 +135,20 @@ class RealUpperTriangularMatrix : public Matrix
   // x = new value for matrix element
   void SetMatrixElement(int i, int j, const Complex& x);
 
+  // get a matrix element (real part if complex)
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  virtual void GetMatrixElement(int i, int j, double& x) const;
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  virtual void GetMatrixElement(int i, int j, Complex& x) const;
+
   // add a value to a matrix element
   //
   // i = line position

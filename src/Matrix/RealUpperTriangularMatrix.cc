@@ -251,6 +251,58 @@ void RealUpperTriangularMatrix::SetMatrixElement(int i, int j, const Complex& x)
   return;
 }
 
+// get a matrix element (real part if complex)
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void RealUpperTriangularMatrix::GetMatrixElement(int i, int j, double& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i] ;
+    }
+  else
+    if (i < j)
+      {
+	i += (j * (j - 1)) / 2;
+	x = this->OffDiagonalElements[i];
+      }
+    else
+      {
+	x = 0.0;
+      }
+}
+
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+
+void RealUpperTriangularMatrix::GetMatrixElement(int i, int j, Complex& x) const
+{
+  if ((i >= this->NbrRow) || (j >= this->NbrColumn))
+    return;
+  if (i == j)
+    {
+      x = this->DiagonalElements[i] ;
+    }
+  else
+    if (i < j)
+      {
+	i += (j * (j - 1)) / 2;
+	x = this->OffDiagonalElements[i];
+      }
+    else
+      {
+	x = 0.0;
+      }
+}
+
 // add a value to a matrix element
 //
 // i = line position

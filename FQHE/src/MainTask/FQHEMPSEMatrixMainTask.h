@@ -90,6 +90,8 @@ class FQHEMPSEMatrixMainTask: public AbstractMainTask
   int MaxNbrIterArnoldi;
   // amount of memory (in Mbytes) that can be used for the Arnoldi algorithm with disk storage
   long ArnoldiMemory;
+  // use the implicitly restarted Arnoldi algorithm
+  bool ImplicitlyRestartedFlag;
 
   // if non zero, store the E matrix spectrum in this file
   char* EigenstateFileName;

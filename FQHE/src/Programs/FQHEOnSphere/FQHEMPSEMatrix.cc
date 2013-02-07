@@ -83,6 +83,7 @@ int main(int argc, char** argv)
   (*ArnoldiGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Arnoldi iteration", false); 
   (*ArnoldiGroup) += new BooleanOption  ('\n', "power-method", "use the power method instead of the Arnoldi algorithm. A single eigenvalue is computed (the one with the largest real part)", false); 
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "arnoldi-memory", "amount of memory when using the Arnoldi algorithm (in Mb)", 500); 
+  (*ArnoldiGroup) += new BooleanOption  ('\n', "implicitly-restarted", "use the implicitly restarted Arnoldi algorithm", false); 
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "nbr-excited", "number of eigenvalues to compute above the groundstate", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -276,27 +277,6 @@ int main(int argc, char** argv)
   FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
   MainTaskOperation TaskOperationLeft (&TaskLeft);
   TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
-  delete ETransposeHamiltonian;
-  
-//   TensorProductSparseMatrixSelectedBlockHamiltonian* EHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
-// 															  EffectiveDimension, EffectiveBlockIndices, 
-// 															  BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-// 															  Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
-//   cout << "computing right eigenstates : " << endl;
-//   FQHEMPSEMatrixMainTask TaskRight(&Manager, EHamiltonian, NbrEigenstates, true, false, 1e-10);
-//   MainTaskOperation TaskOperationRight (&TaskRight);
-//   TaskOperationRight.ApplyOperation(Architecture.GetArchitecture());
-//   ComplexVector* RightEigenstates = TaskRight.GetEigenstates();
-//   Complex* RightEigenvalues = TaskRight.GetEigenvalues();
-//   delete EHamiltonian;
-  
-//   cout << "eigenvalues : " << endl;
-//   for (int i = 0; i < NbrEigenstates; ++i)
-//     cout << LeftEigenvalues[i] << " " << RightEigenvalues[i] 
-// 	 << "   moduli : " << Norm(LeftEigenvalues[i]) << " " << Norm(RightEigenvalues[i]) <<endl;
-//   cout << endl;
-  
- 
   return 0;
 }
 

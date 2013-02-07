@@ -29,6 +29,7 @@
 
 
 #include "Matrix/RealUpperHessenbergMatrix.h"
+#include "Matrix/RealUpperTriangularMatrix.h"
 #include "Matrix/BlockDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "Matrix/ComplexMatrix.h"
@@ -63,6 +64,16 @@ extern "C" void FORTRAN_NAME(dhsein)(const char* side, const char* eigenstateSou
 				     const double* eigenvectorRightMatrix, const int* leadingDimensionEigenvectorRightMatrix,
 				     const int* nbrColumEigenvectorMatrix, const int* nbrUsedColumEigenvectorMatrix,
 				     const double* workingArea, const int* failedLeftEigenvectors, const int* failedRightEigenvectors,
+				     const int* information);
+
+// binding to the LAPACK function DGEQRF
+extern "C" void FORTRAN_NAME(dgeqrf)(const int* nbrRow, const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				     const double* tau, const double* workingArea, const int* workingAreaSize,
+				     const int* information);
+
+// binding to the LAPACK function DORGQR
+extern "C" void FORTRAN_NAME(dorgqr)(const int* nbrRow, const int* nbrColumn, const int* nbrReflectors, const double* matrix, const int* leadingDimension,
+				     const double* tau, const double* workingArea, const int* workingAreaSize,
 				     const int* information);
 
 #endif
@@ -1028,6 +1039,98 @@ ComplexDiagonalMatrix& RealUpperHessenbergMatrix::LapackDiagonalize (ComplexDiag
   delete[] TmpLeftEigenstates;
 #endif
   return M;
+}
+
+// find QR factorization using the LAPACK library
+//
+// R = reference on the triangular matrix
+// Q = reference on the transformation matrix
+// return value = reference on upper triangular matrix
+
+RealUpperTriangularMatrix& RealUpperHessenbergMatrix::LapackQRFactorization (RealUpperTriangularMatrix& R, RealMatrix& Q)
+{
+#ifdef HAVE_LAPACK
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  double* TmpMatrix = new double [((long) this->NbrColumn) * this->NbrRow];
+  double* TmpTau = new double [this->NbrColumn];
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+ 	{
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)];
+ 	  ++TotalIndex;
+ 	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j];
+      ++TotalIndex;
+      if ((j + 1) < this->NbrColumn)
+	{
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1];
+	  ++TotalIndex;
+	}      
+      for (int i = j + 2; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+    }
+  double TmpWorkingArea;
+  FORTRAN_NAME(dgeqrf)(&this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, &TmpWorkingArea, &WorkingAreaSize,
+		       &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [WorkingAreaSize];
+  FORTRAN_NAME(dgeqrf)(&this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, WorkingArea, &WorkingAreaSize,
+		       &Information);
+  delete[] WorkingArea;
+  TotalIndex = 0l;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      for (int j = 0; j <  i; ++j)
+	{
+	  cout  << TmpMatrix[TotalIndex] << " ";
+	  ++TotalIndex;	  
+	}
+      R.SetMatrixElement(i, i, TmpMatrix[TotalIndex]);
+      cout  << TmpMatrix[TotalIndex] << " ";
+//      TmpMatrix[TotalIndex] = 1.0;
+      ++TotalIndex;	  
+      for (int j = i + 1; j < this->NbrColumn; ++j)
+	{
+	  R.SetMatrixElement(i, j, TmpMatrix[TotalIndex]);
+	  cout  << TmpMatrix[TotalIndex] << " ";
+//	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}      
+      cout << endl;
+      //TotalIndex += (long) (this->NbrRow - i);
+   }
+  WorkingAreaSize = -1;
+  FORTRAN_NAME(dorgqr)(&this->NbrRow, &this->NbrColumn, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, &TmpWorkingArea, &WorkingAreaSize,
+		       &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  WorkingArea = new double [WorkingAreaSize];
+  FORTRAN_NAME(dorgqr)(&this->NbrRow, &this->NbrColumn, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, WorkingArea, &WorkingAreaSize,
+		       &Information);
+
+  TotalIndex = 0l;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  Q.SetMatrixElement(j, i, TmpMatrix[TotalIndex]);
+	  ++TotalIndex;
+	}      
+    }
+  delete[] WorkingArea;
+  delete[] TmpMatrix;
+  delete[] TmpTau;
+#endif
+  return R;
 }
 
 // Output Stream overload

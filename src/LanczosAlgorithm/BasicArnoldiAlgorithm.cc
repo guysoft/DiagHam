@@ -134,7 +134,8 @@ BasicArnoldiAlgorithm::~BasicArnoldiAlgorithm()
 {
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
-      delete[] this->ArnoldiVectors;
+      if (this->ArnoldiVectors != 0)
+	delete[] this->ArnoldiVectors;
       delete[]  this->TemporaryCoefficients;
     }
   delete[] this->ComplexPreviousWantedEigenvalues;
@@ -301,7 +302,8 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	}
       this->ArnoldiVectors[i] /= VectorNorm;
       this->Index++;
-      this->ArnoldiVectors[i + 1] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
+      if (this->ArnoldiVectors[i + 1].GetVectorDimension() != this->Hamiltonian->GetHilbertSpaceDimension())
+	this->ArnoldiVectors[i + 1] = RealVector(this->Hamiltonian->GetHilbertSpaceDimension());
       VectorHamiltonianMultiplyOperation Operation (this->Hamiltonian, &(this->ArnoldiVectors[i]), &(this->ArnoldiVectors[i + 1]));
       Operation.ApplyOperation(this->Architecture);
       MultipleRealScalarProductOperation Operation3 (&(this->ArnoldiVectors[i + 1]), this->ArnoldiVectors,
@@ -334,6 +336,7 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	this->ComplexPreviousWantedEigenvalues[i] = 2.0 * this->ComplexDiagonalizedMatrix[i];
     }
+  this->RestartAlgorithm();
 }
 
   
@@ -428,3 +431,9 @@ void BasicArnoldiAlgorithm::Diagonalize ()
   return;
 }
 
+// restart the Arnoldi algorithm if needed
+//
+
+void BasicArnoldiAlgorithm::RestartAlgorithm()
+{
+}

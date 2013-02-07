@@ -41,6 +41,7 @@
 #include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
 #include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/PowerMethodAlgorithm.h"
+#include "LanczosAlgorithm/ImplicitlyRestartedArnoldiAlgorithm.h"
 
 #include "GeneralTools/ArrayTools.h"
 
@@ -151,6 +152,11 @@ FQHEMPSEMatrixMainTask::FQHEMPSEMatrixMainTask(OptionManager* options, AbstractH
     {
       this->ArnoldiMemory = options->GetInteger("arnoldi-memory");
     }
+  this->ImplicitlyRestartedFlag = false;
+  if ((*options)["implicitly-restarted"] != 0)
+    {
+      this->ImplicitlyRestartedFlag = true;
+    }
 
   this->EnergyShift = energyShift;
   this->PowerMethodFlag = false;
@@ -247,7 +253,19 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
 	    }
 	  else
 	    {
-	      Arnoldi = new BasicArnoldiAlgorithm (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
+	      if (this->ImplicitlyRestartedFlag == false)
+		{
+		  Arnoldi = new BasicArnoldiAlgorithm (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
+		}
+	      else
+		{
+		  int TmpMemory = (int) ((ArnoldiMemory << 17) / this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension());
+		  if (TmpMemory < (this->NbrEigenvalues + 3))
+		    {
+		      TmpMemory =  this->NbrEigenvalues + 3;
+		    }
+		  Arnoldi = new ImplicitlyRestartedArnoldiAlgorithm (Architecture, this->NbrEigenvalues, TmpMemory, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
+		}
 	    }
 	  Arnoldi->SetHamiltonian(this->Hamiltonian);
 	  Arnoldi->InitializeLanczosAlgorithm();

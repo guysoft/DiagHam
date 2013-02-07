@@ -274,6 +274,13 @@ class RealUpperHessenbergMatrix : public Matrix
   // return value = reference on complex diagonal matrix
   ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag = false);
 
+  // find QR factorization using the LAPACK library
+  //
+  // R = reference on the triangular matrix
+  // Q = reference on the transformation matrix
+  // return value = reference on upper triangular matrix
+  RealUpperTriangularMatrix& LapackQRFactorization (RealUpperTriangularMatrix& R, RealMatrix& Q);
+
   // write matrix in a file 
   //
   // file = reference on the output file stream
