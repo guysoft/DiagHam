@@ -40,6 +40,7 @@
 #endif
 #include "GeneralTools/GarbageFlag.h"
 #include "Matrix/ComplexDiagonalMatrix.h"
+#include "Matrix/ComplexUpperTriangularMatrix.h"
 #include "MathTools/Complex.h"
 
 #include <iostream>
@@ -121,6 +122,12 @@ class ComplexUpperHessenbergMatrix : public Matrix
   //
   // retrun value = pointer on new matrix 
   Matrix* Clone ();
+
+  // copy a matrix into another (duplicating data)
+  //
+  // matrix = matrix to copy
+  // return value = reference on current matrix
+  ComplexUpperHessenbergMatrix& Copy (ComplexUpperHessenbergMatrix& matrix);
 
   // get a matrix element (real part if complex)
   //
@@ -254,6 +261,19 @@ class ComplexUpperHessenbergMatrix : public Matrix
   // return value = matrix determinant 
   double Det ();
 
+  // shift all diagonal elements 
+  //
+  // shift = shift to apply
+  // return value = reference on current matrix
+  ComplexUpperHessenbergMatrix& ShiftDiagonal(const Complex& shift);
+
+  // conjugate matrix with an unitary matrix (Uh M U), assuming the Hessenberg from will be preserved
+  //
+  // unitaryM = unitary matrix to use
+  // conjugatedMatrix = reference on the matrix where conjugate matrix will be stored
+  // return value = pointer to conjugated matrix
+  ComplexUpperHessenbergMatrix& Conjugate(ComplexMatrix& unitaryM, ComplexUpperHessenbergMatrix& conjugatedMatrix);
+
   // Diagonalize a real matrix using the LAPACK library
   //
   // M = reference on complex diagonal matrix where result has to be stored
@@ -268,6 +288,13 @@ class ComplexUpperHessenbergMatrix : public Matrix
   // leftFlag = compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // return value = reference on complex diagonal matrix
   ComplexDiagonalMatrix& LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag = false);
+
+  // find QR factorization using the LAPACK library
+  //
+  // R = reference on the triangular matrix
+  // Q = reference on the transformation matrix
+  // return value = reference on upper triangular matrix
+  ComplexUpperTriangularMatrix& LapackQRFactorization (ComplexUpperTriangularMatrix& R, ComplexMatrix& Q);
 
   // Output Stream overload
   //

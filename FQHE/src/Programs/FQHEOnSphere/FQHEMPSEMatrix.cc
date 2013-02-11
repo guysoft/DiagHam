@@ -116,7 +116,9 @@ int main(int argc, char** argv)
   SparseRealMatrix* BMatrices = MPSMatrix->GetMatrices();
   SparseRealMatrix* ConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
   for (int i = 0; i < NbrBMatrices; ++i)
-    ConjugateBMatrices[i] = BMatrices[i].Transpose();
+    {
+      ConjugateBMatrices[i] = BMatrices[i].Transpose();
+    }
 
   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
   
@@ -127,8 +129,16 @@ int main(int argc, char** argv)
   char* StateName = new char [256];
   if (Manager.GetBoolean("k-2") == true)
     {
-      sprintf (StateName, "clustered_k_2_r_%ld", Manager.GetInteger("r-index"));
-      NbrEigenstates = Manager.GetInteger("r-index") + 2;
+      if (Manager.GetBoolean("quasihole-sector") == false)
+	{
+	  sprintf (StateName, "clustered_k_2_r_%ld", Manager.GetInteger("r-index"));
+	  NbrEigenstates = Manager.GetInteger("r-index") + 2;
+	}
+      else
+	{
+	  sprintf (StateName, "clustered_k_2_qh_r_%ld", Manager.GetInteger("r-index"));
+	  NbrEigenstates = ((Manager.GetInteger("r-index") + 2) * (Manager.GetInteger("r-index") - 1)) / 2;
+	}
     }
   else
     {

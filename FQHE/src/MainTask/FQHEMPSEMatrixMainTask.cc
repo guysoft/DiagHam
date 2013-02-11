@@ -39,6 +39,7 @@
 #include "Options/Options.h"
 
 #include "LanczosAlgorithm/BasicArnoldiAlgorithm.h"
+#include "LanczosAlgorithm/BasicComplexArnoldiAlgorithm.h"
 #include "LanczosAlgorithm/BasicArnoldiAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/PowerMethodAlgorithm.h"
 #include "LanczosAlgorithm/ImplicitlyRestartedArnoldiAlgorithm.h"
@@ -242,7 +243,7 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
     {	 
       if (this->PowerMethodFlag == false)
 	{
-	  BasicArnoldiAlgorithm* Arnoldi = 0;
+	  AbstractLanczosAlgorithm* Arnoldi = 0;
 	  if (this->DiskFlag)
 	    {
 	      long TmpMemory = (ArnoldiMemory << 17) / this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();

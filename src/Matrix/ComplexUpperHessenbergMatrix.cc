@@ -38,18 +38,41 @@
 #include <fstream>
 
 
+using std::cout;
 using std::endl;
 
 
 #ifdef HAVE_LAPACK
 
-// binding to the LAPACK function
-//
-// extern "C" void FORTRAN_NAME(zgeev)(const char* jobVL, const char* jobVR, const int* nbrColumn, const double* matrix, const int* leadingDimension,
-// 				    const double* eigenvaluesRealPart, const double* eigenvaluesImaginaryPart, 
-// 				    const double* eigenvectorLeftMatrix, const int* leadingDimensionEigenvectorLeftMatrix,
-// 				    const double* eigenvectorRightMatrix, const int* leadingDimensionEigenvectorRightMatrix,
-// 				    const double* workingArea, const int* workingAreaSize, const int* information);
+// binding to the LAPACK function ZHSEQR
+
+extern "C" void FORTRAN_NAME(zhseqr)(const char* job, const char* computeZFlag, const int* nbrColumn, 
+				     const int* triangularLowerIndex, const int* triangularHigherIndex, 
+				     const double* matrix, const int* leadingDimension,
+				     const double* eigenvalues, 
+				     const double* zMatrix, const int* leadingDimensionZMatrix,
+				     const double* workingArea, const int* workingAreaSize, const int* information);
+
+
+// binding to the LAPACK function ZHSEIN
+extern "C" void FORTRAN_NAME(zhsein)(const char* side, const char* eigenstateSource, const char* initalVectors, const int* selectEigenstates,
+				     const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				     const double* eigenvalues, 
+				     const double* eigenvectorLeftMatrix, const int* leadingDimensionEigenvectorLeftMatrix,
+				     const double* eigenvectorRightMatrix, const int* leadingDimensionEigenvectorRightMatrix,
+				     const int* nbrColumEigenvectorMatrix, const int* nbrUsedColumEigenvectorMatrix,
+				     const double* workingArea, const int* failedLeftEigenvectors, const int* failedRightEigenvectors,
+				     const int* information);
+
+// binding to the LAPACK function ZGEQRF
+extern "C" void FORTRAN_NAME(zgeqrf)(const int* nbrRow, const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				     const double* tau, const double* workingArea, const int* workingAreaSize,
+				     const int* information);
+
+// binding to the LAPACK function ZUNGQR
+extern "C" void FORTRAN_NAME(zungqr)(const int* nbrRow, const int* nbrColumn, const int* nbrReflectors, const double* matrix, const int* leadingDimension,
+				     const double* tau, const double* workingArea, const int* workingAreaSize,
+				     const int* information);
 
 #endif
 
@@ -251,6 +274,68 @@ ComplexUpperHessenbergMatrix& ComplexUpperHessenbergMatrix::operator = (const Co
 Matrix* ComplexUpperHessenbergMatrix::Clone ()
 {
   return ((Matrix*) new ComplexUpperHessenbergMatrix (*this));
+}
+
+// copy a matrix into another (duplicating data)
+//
+// matrix = matrix to copy
+// return value = reference on current matrix
+
+ComplexUpperHessenbergMatrix& ComplexUpperHessenbergMatrix::Copy (ComplexUpperHessenbergMatrix& matrix)
+{
+  if ((this->Flag.Used() == true) && (this->Flag.Shared() == false))
+    {
+      if (this->DiagonalElements != 0)
+	{
+	  delete[] this->DiagonalElements;
+	}
+      if (this->LowerDiagonalElements != 0)
+	{
+	  delete[] this->LowerDiagonalElements;
+	}
+      if (this->UpperOffDiagonalElements != 0)
+	{
+	  delete[] this->UpperOffDiagonalElements;
+	}
+    }
+  if (matrix.Flag.Used() == true)
+    {
+      this->Flag = matrix.Flag;
+      this->NbrRow = matrix.NbrRow;
+      this->NbrColumn = matrix.NbrColumn;
+      this->TrueNbrRow = matrix.TrueNbrRow;
+      this->TrueNbrColumn = matrix.TrueNbrColumn;
+      this->MatrixType = Matrix::ComplexElements | Matrix::Hessenberg | Matrix::Upper;
+      this->Dummy = 0.0;
+      this->DiagonalElements = new Complex[this->NbrRow];
+      this->LowerDiagonalElements = new Complex[this->NbrRow];
+      long TmpNbrOffDiagonalElements = (((long) this->NbrRow) * (((long) this->NbrRow) - 1l)) / 2l;
+      this->UpperOffDiagonalElements = new Complex[TmpNbrOffDiagonalElements];
+      long pos = 0;
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  this->DiagonalElements[i] = matrix.DiagonalElements[i];
+	  this->LowerDiagonalElements[i] = matrix.LowerDiagonalElements[i];
+	  for (int j = i + 1; j < this->NbrRow; j++)
+	    {
+	      this->UpperOffDiagonalElements[pos] = matrix.UpperOffDiagonalElements[pos];
+	      pos++;
+	    }
+	}
+    }
+  else
+    {
+      this->UpperOffDiagonalElements = 0;
+      this->DiagonalElements = 0;
+      this->LowerDiagonalElements = 0;
+      this->NbrRow = 0;
+      this->NbrColumn = 0;
+      this->TrueNbrRow = this->NbrRow;
+      this->TrueNbrColumn = this->NbrColumn;
+      this->MatrixType = Matrix::ComplexElements | Matrix::Hessenberg | Matrix::Upper;
+      this->Dummy = 0.0;
+   }
+  return *this;
 }
 
 // set a matrix element
@@ -703,6 +788,53 @@ Complex ComplexUpperHessenbergMatrix::MatrixElement (ComplexVector& V1, ComplexV
   return x;
 }
 
+// shift all diagonal elements 
+//
+// shift = shift to apply
+// return value = reference on current matrix
+
+ComplexUpperHessenbergMatrix& ComplexUpperHessenbergMatrix::ShiftDiagonal(const Complex& shift)
+{
+  for (int i = 0; i <  this->NbrRow; ++i)
+    this->DiagonalElements[i] += shift;
+  return *this;
+}
+
+// conjugate matrix with an unitary matrix (Ut M U), assuming the Hessenberg from will be preserved
+//
+// unitaryM = unitary matrix to use
+// conjugatedMatrix = reference on the matrix where conjugate matrix will be stored
+// return value = pointer to conjugated matrix
+
+ComplexUpperHessenbergMatrix& ComplexUpperHessenbergMatrix::Conjugate(ComplexMatrix& unitaryM, ComplexUpperHessenbergMatrix& conjugatedMatrix)
+{
+  if ((unitaryM.GetNbrRow() != this->NbrColumn) || (conjugatedMatrix.NbrColumn != this->NbrColumn))
+    return conjugatedMatrix;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      int j = i - 1;
+      if (j < 0)
+	j = 0;
+      for (; j < this->NbrRow; ++j)
+	{
+	  Complex Tmp = 0.0;
+	  for (int k = 0; k < this->NbrRow; ++k)
+	    {
+	      Complex Tmp2 = unitaryM[j][k] * this->DiagonalElements[k];
+	      if (k > 0)
+		Tmp2 += unitaryM[j][k - 1] * this->LowerDiagonalElements[k];	      
+	      for (int l = k + 1; l < this->NbrColumn; ++l)
+		{
+		  Tmp2 += unitaryM[j][l] * this->UpperOffDiagonalElements[k + (l * (l - 1l)) / 2l];
+		}
+	      Tmp += Tmp2 * unitaryM[i][k];
+	    }
+	  conjugatedMatrix.SetMatrixElement(i, j , Tmp);
+	}
+    }    
+  return conjugatedMatrix;
+}
+
 // evaluate matrix trace
 //
 // return value = matrix trace 
@@ -730,54 +862,69 @@ double ComplexUpperHessenbergMatrix::Det ()
 ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, bool leftFlag)
 {
 #ifdef HAVE_LAPACK
-//   int Information = 0;
-//   int WorkingAreaSize = -1;
-//   char JobVL;
-//   char JobVR;
-//   if (leftFlag == true)
-//     {
-//       JobVL = 'V';
-//       JobVR = 'N';
-//     }
-//   else
-//     {
-//       JobVL = 'N';
-//       JobVR = 'V';
-//     }
-//   double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
-//   long TotalIndex = 0l;
-//   for (int j = 0; j < this->NbrColumn; ++j)
-//     {
-//       for (int i = 0; i < this->NbrRow; ++i)
-// 	{
-// 	  TmpMatrix[TotalIndex] = this->Columns[j][i];
-// 	  ++TotalIndex;
-// 	}
-//     }
-//   double* TmpEigenvalueReal = new double[this->NbrColumn];
-//   double* TmpEigenvalueImaginary = new double[this->NbrColumn];
-//   int TmpLeadingDimension = 1;
-//   double* Dummy = 0;
-//   double TmpWorkingArea;
-//   FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-// 		      TmpEigenvalueReal, TmpEigenvalueImaginary,
-// 		      Dummy, &TmpLeadingDimension, Dummy, &TmpLeadingDimension,
-// 		      &TmpWorkingArea, &WorkingAreaSize, &Information);
-//   WorkingAreaSize = (int) TmpWorkingArea;
-//   double* WorkingArea = new double [WorkingAreaSize];
-//   FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-// 		      TmpEigenvalueReal, TmpEigenvalueImaginary,
-// 		      Dummy, &TmpLeadingDimension, Dummy, &TmpLeadingDimension,
-// 		      WorkingArea, &WorkingAreaSize, &Information);
-//   for (int i = 0; i < this->NbrRow; ++i)
-//     {
-//       M[i].Re = TmpEigenvalueReal[i];
-//       M[i].Im = TmpEigenvalueImaginary[i];
-//     }
-//   delete[] WorkingArea;
-//   delete[] TmpEigenvalueReal;
-//   delete[] TmpEigenvalueImaginary;
-//   delete[] TmpMatrix;
+   int Information = 0;
+   int WorkingAreaSize = -1;
+   char Job = 'E';
+   char computeZFlag = 'N';
+   int TriangularLowerIndex = 1;
+   int TriangularHigherIndex = this->NbrColumn;
+   double* TmpMatrix = new double [2l * ((long) this->NbrColumn) * this->NbrRow];
+   long TotalIndex = 0l;
+   for (int j = 0; j < this->NbrColumn; ++j)
+     {
+       for (int i = 0; i < j; ++i)
+ 	{
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Re;
+ 	  ++TotalIndex;
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Im;
+ 	  ++TotalIndex;
+ 	}
+       TmpMatrix[TotalIndex] = this->DiagonalElements[j].Re;
+       ++TotalIndex;
+       TmpMatrix[TotalIndex] = this->DiagonalElements[j].Im;
+       ++TotalIndex;
+       if ((j + 1) < this->NbrColumn)
+	 {
+	   TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Re;
+	   ++TotalIndex;
+	   TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Im;
+	   ++TotalIndex;
+	 }      
+       for (int i = j + 2; i < this->NbrRow; ++i)
+	 {
+	   TmpMatrix[TotalIndex] = 0.0;
+	   ++TotalIndex;
+	   TmpMatrix[TotalIndex] = 0.0;
+	   ++TotalIndex;
+	 }
+     }
+   double* TmpEigenvalues = new double[2 * this->NbrColumn];
+   int TmpLeadingDimension = 1;
+   double* Dummy = 0;
+   double TmpWorkingArea;
+   cout << "check1" << endl;
+   cout << TriangularLowerIndex << endl;
+   cout << TriangularHigherIndex << endl;
+   cout << this->NbrRow << endl;
+   
+   FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, 
+			TmpMatrix, &this->NbrRow, TmpEigenvalues,
+			Dummy, &TmpLeadingDimension, &TmpWorkingArea, &WorkingAreaSize, &Information);
+   WorkingAreaSize = (int) TmpWorkingArea;
+   double* WorkingArea = new double [2 * WorkingAreaSize];
+   cout << "check2" << endl;
+   FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, TmpMatrix, &this->NbrRow, 
+			TmpEigenvalues,
+			Dummy, &TmpLeadingDimension, WorkingArea, &WorkingAreaSize, &Information);
+   cout << "check3" << endl;
+   for (int i = 0; i < this->NbrRow; ++i)
+     {
+       M[i].Re = TmpEigenvalues[2 * i];
+       M[i].Im = TmpEigenvalues[2 * i + 1];
+     }
+   delete[] WorkingArea;
+   delete[] TmpEigenvalues;
+   delete[] TmpMatrix;
 #endif
   return M;
 }
@@ -792,126 +939,256 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
 ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q, bool leftFlag)
 {
 #ifdef HAVE_LAPACK
-//   int Information = 0;
-//   int WorkingAreaSize = -1;
-//   char JobVL;
-//   char JobVR;
-//   if (leftFlag == true)
-//     {
-//       JobVL = 'V';
-//       JobVR = 'N';
-//     }
-//   else
-//     {
-//       JobVL = 'N';
-//       JobVR = 'V';
-//     }
-//   double* TmpMatrix = new double [this->NbrColumn * this->NbrRow];
-//   double* TmpLeftEigenstates = new double [this->NbrColumn * this->NbrRow];
-//   long TotalIndex = 0l;
-//   for (int j = 0; j < this->NbrColumn; ++j)
-//     {
-//       for (int i = 0; i < this->NbrRow; ++i)
-// 	{
-// 	  TmpMatrix[TotalIndex] = this->Columns[j][i];
-// 	  ++TotalIndex;
-// 	}
-//     }
-//   double* TmpEigenvalueReal = new double[this->NbrColumn];
-//   double* TmpEigenvalueImaginary = new double[this->NbrColumn];
-//   int TmpLeadingLeftDimension;
-//   int TmpLeadingRightDimension;
-//   if (leftFlag == true)
-//     {
-//       TmpLeadingLeftDimension = this->NbrColumn;
-//       TmpLeadingRightDimension = 1;
-//     }
-//   else
-//     {
-//       TmpLeadingRightDimension = this->NbrColumn;
-//       TmpLeadingLeftDimension = 1;
-//     }
-//   double* Dummy = 0;
-//   double TmpWorkingArea;
-//   if (leftFlag == true)
-//     {
-//       FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-// 			  TmpEigenvalueReal, TmpEigenvalueImaginary,
-// 			  TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
-// 			  &TmpWorkingArea, &WorkingAreaSize, &Information);
-//     }
-//   else
-//     {
-//       FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-// 			  TmpEigenvalueReal, TmpEigenvalueImaginary,
-// 			  Dummy, &TmpLeadingLeftDimension, TmpLeftEigenstates, &TmpLeadingRightDimension, 
-// 			  &TmpWorkingArea, &WorkingAreaSize, &Information);
-//     }
-//   WorkingAreaSize = (int) TmpWorkingArea;
-//   double* WorkingArea = new double [WorkingAreaSize];
-//   if (leftFlag == true)
-//     {
-//       FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-// 			  TmpEigenvalueReal, TmpEigenvalueImaginary,
-// 			  TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
-// 			  WorkingArea, &WorkingAreaSize, &Information);
-//     }
-//   else
-//     {
-//       FORTRAN_NAME(dgeev)(&JobVL, &JobVR, &this->NbrRow, TmpMatrix, &this->NbrRow, 
-// 			  TmpEigenvalueReal, TmpEigenvalueImaginary,
-// 			  Dummy, &TmpLeadingLeftDimension, TmpLeftEigenstates, &TmpLeadingRightDimension, 
-// 			  WorkingArea, &WorkingAreaSize, &Information);
-//     }
-//   for (int i = 0; i < this->NbrRow; ++i)
-//     {
-//       M[i].Re = TmpEigenvalueReal[i];
-//       M[i].Im = TmpEigenvalueImaginary[i];
-//     }
-//   TotalIndex = 0l;
-//   for (int i = 0; i < this->NbrRow;)
-//     {
-//       if ((i == (this->NbrRow - 1)) || (TmpEigenvalueImaginary[i] != -TmpEigenvalueImaginary[i + 1]) 
-// 	  || (TmpEigenvalueImaginary[i] == 0.0))
-// 	{
-// 	  Complex Tmp;
-// 	  for (int j = 0; j < this->NbrRow; ++j)
-// 	    {
-// 	      Tmp.Re = TmpLeftEigenstates[TotalIndex];
-// 	      Q.SetMatrixElement(j, i, Tmp);
-// 	      ++TotalIndex;
-// 	    }
-// 	  ++i;
-// 	}
-//       else
-// 	{
-// 	  Complex Tmp;
-// 	  for (int j = 0; j < this->NbrRow; ++j)
-// 	    {
-// 	      Tmp.Re = TmpLeftEigenstates[TotalIndex];
-// 	      Q.SetMatrixElement(j, i, Tmp);
-// 	      Q.SetMatrixElement(j, i + 1, Tmp);
-// 	      ++TotalIndex;
-// 	    }
-// 	  for (int j = 0; j < this->NbrRow; ++j)
-// 	    {
-// 	      Q.GetMatrixElement(j, i, Tmp);
-// 	      Tmp.Im = TmpLeftEigenstates[TotalIndex];
-// 	      Q.SetMatrixElement(j, i, Tmp);
-// 	      Tmp.Im = -TmpLeftEigenstates[TotalIndex];
-// 	      Q.SetMatrixElement(j, i + 1, Tmp);
-// 	      ++TotalIndex;
-// 	    }
-// 	  i += 2;
-// 	}
-//     }
-//   delete[] TmpLeftEigenstates;
-//   delete[] WorkingArea;
-//   delete[] TmpEigenvalueReal;
-//   delete[] TmpEigenvalueImaginary;
-//   delete[] TmpMatrix;
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  char Job = 'E';
+  char computeZFlag = 'N';
+  int TriangularLowerIndex = 1;
+  int TriangularHigherIndex = this->NbrColumn;
+  double* TmpMatrix = new double [2l * ((long) this->NbrColumn) * this->NbrRow];
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+ 	{
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Re;
+ 	  ++TotalIndex;
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Im;
+ 	  ++TotalIndex;
+ 	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j].Re;
+      ++TotalIndex;
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j].Im;
+      ++TotalIndex;
+      if ((j + 1) < this->NbrColumn)
+	{
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Re;
+	  ++TotalIndex;
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Im;
+	  ++TotalIndex;
+	}      
+      for (int i = j + 2; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+    }
+  double* TmpEigenvalues = new double[2 * this->NbrColumn];
+  int TmpLeadingDimension = 1;
+  double* Dummy = 0;
+  double TmpWorkingArea;
+  FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, TmpMatrix, &this->NbrRow, 
+		       TmpEigenvalues,
+		       Dummy, &TmpLeadingDimension, &TmpWorkingArea, &WorkingAreaSize, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [2 * WorkingAreaSize];
+  FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, TmpMatrix, &this->NbrRow, 
+		       TmpEigenvalues,
+		       Dummy, &TmpLeadingDimension, WorkingArea, &WorkingAreaSize, &Information);
+  delete[] WorkingArea;
+  
+  
+  char Side = 'R';
+  if (leftFlag == true)
+    Side = 'L';
+  char EigenvalueSource = 'Q';
+  char InitialEigenvectors = 'N';
+  int* SelectEigenvectors = new int[this->NbrColumn];
+  int* FailedLeftEigenvectors = new int [this->NbrColumn];
+  double* TmpLeftEigenstates = new double [2l * ((long) this->NbrColumn) * this->NbrRow];
+  WorkingArea = new double [this->NbrColumn * (this->NbrColumn + 2l)];
+  for (int j = 0; j < this->NbrColumn; ++j)
+    SelectEigenvectors[j] = 1;
+  int TmpLeadingLeftDimension;
+  int TmpLeadingRightDimension;
+  int NbrRequiredColumns = 0;
+  if (leftFlag == true)
+    {
+      TmpLeadingLeftDimension = this->NbrColumn;
+      TmpLeadingRightDimension = 1;
+    }
+  else
+    {
+      TmpLeadingRightDimension = this->NbrColumn;
+      TmpLeadingLeftDimension = 1;
+    }
+  
+  TotalIndex = 0l;
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+ 	{
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Re;
+ 	  ++TotalIndex;
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Im;
+ 	  ++TotalIndex;
+ 	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j].Re;
+      ++TotalIndex;
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j].Im;
+      ++TotalIndex;
+      if ((j + 1) < this->NbrColumn)
+	{
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Re;
+	  ++TotalIndex;
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Im;
+	  ++TotalIndex;
+	}      
+      for (int i = j + 2; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+    }
+  
+  if (leftFlag == true)
+    {
+      FORTRAN_NAME(zhsein)(&Side, &EigenvalueSource, &InitialEigenvectors, SelectEigenvectors,
+			   &this->NbrRow, TmpMatrix, &this->NbrColumn, 
+			   TmpEigenvalues,
+			   TmpLeftEigenstates, &TmpLeadingLeftDimension, Dummy, &TmpLeadingRightDimension, 
+			   &this->NbrRow, &NbrRequiredColumns, WorkingArea,
+			   FailedLeftEigenvectors, FailedLeftEigenvectors, &Information);
+    }
+  else
+    {
+      FORTRAN_NAME(zhsein)(&Side, &EigenvalueSource, &InitialEigenvectors, SelectEigenvectors,
+			   &this->NbrRow, TmpMatrix, &this->NbrColumn, 
+			   TmpEigenvalues,
+			   Dummy, &TmpLeadingLeftDimension, TmpLeftEigenstates, &TmpLeadingRightDimension, 
+			   &this->NbrRow, &NbrRequiredColumns, WorkingArea,
+			   FailedLeftEigenvectors, FailedLeftEigenvectors, &Information);
+    }
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      M[i].Re = TmpEigenvalues[2 * i];
+      M[i].Im = TmpEigenvalues[2 * i + 1];
+    }
+  TotalIndex = 0l;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      Complex Tmp;
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  Tmp.Re = TmpLeftEigenstates[TotalIndex];
+	  ++TotalIndex;
+	  Tmp.Im = TmpLeftEigenstates[TotalIndex];
+	  ++TotalIndex;
+	  Q.SetMatrixElement(j, i, Tmp);
+	}
+    }
+
+  delete[] TmpEigenvalues;
+  delete[] TmpMatrix;
+  delete[] SelectEigenvectors;
+  delete[] FailedLeftEigenvectors;
+  delete[] TmpLeftEigenstates;
 #endif
   return M;
+}
+
+// find QR factorization using the LAPACK library
+//
+// R = reference on the triangular matrix
+// Q = reference on the transformation matrix
+// return value = reference on upper triangular matrix
+
+ComplexUpperTriangularMatrix& ComplexUpperHessenbergMatrix::LapackQRFactorization (ComplexUpperTriangularMatrix& R, ComplexMatrix& Q)
+{
+#ifdef HAVE_LAPACK
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  double* TmpMatrix = new double [2l * ((long) this->NbrColumn) * this->NbrRow];
+  double* TmpTau = new double [2 * this->NbrColumn];
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+ 	{
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Re;
+ 	  ++TotalIndex;
+ 	  TmpMatrix[TotalIndex] = this->UpperOffDiagonalElements[i + ((j * (j - 1l)) >> 1)].Im;
+ 	  ++TotalIndex;
+ 	}
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j].Re;
+      ++TotalIndex;
+      TmpMatrix[TotalIndex] = this->DiagonalElements[j].Im;
+      ++TotalIndex;
+      if ((j + 1) < this->NbrColumn)
+	{
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Re;
+	  ++TotalIndex;
+	  TmpMatrix[TotalIndex] = this->LowerDiagonalElements[j + 1].Im;
+	  ++TotalIndex;
+	}      
+      for (int i = j + 2; i < this->NbrRow; ++i)
+	{
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	  TmpMatrix[TotalIndex] = 0.0;
+	  ++TotalIndex;
+	}
+    }
+  double TmpWorkingArea;
+  FORTRAN_NAME(zgeqrf)(&this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, &TmpWorkingArea, &WorkingAreaSize,
+		       &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  double* WorkingArea = new double [2 * WorkingAreaSize];
+  FORTRAN_NAME(zgeqrf)(&this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, WorkingArea, &WorkingAreaSize,
+		       &Information);
+  delete[] WorkingArea;
+  TotalIndex = 0l;
+  Complex Tmp;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      for (int j = 0; j < i; ++j)
+	{
+	  Tmp.Re = TmpMatrix[TotalIndex];
+	  ++TotalIndex;
+	  Tmp.Im = TmpMatrix[TotalIndex];
+	  ++TotalIndex;
+	  R.SetMatrixElement(j, i, Tmp);
+	}      
+      Tmp.Re = TmpMatrix[TotalIndex];
+      ++TotalIndex;
+      Tmp.Im = TmpMatrix[TotalIndex];
+      ++TotalIndex;
+      R.SetMatrixElement(i, i, Tmp);
+      TotalIndex += 2l * ((long) (this->NbrRow - i - 1));
+   }
+  WorkingAreaSize = -1;
+  FORTRAN_NAME(zungqr)(&this->NbrRow, &this->NbrColumn, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, &TmpWorkingArea, &WorkingAreaSize,
+		       &Information);
+  WorkingAreaSize = (int) TmpWorkingArea;
+  WorkingArea = new double [2l * WorkingAreaSize];
+  FORTRAN_NAME(zungqr)(&this->NbrRow, &this->NbrColumn, &this->NbrColumn, TmpMatrix, &this->NbrColumn,
+		       TmpTau, WorkingArea, &WorkingAreaSize,
+		       &Information);
+
+  TotalIndex = 0l;
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      for (int j = 0; j < this->NbrRow; ++j)
+	{
+	  Tmp.Re = TmpMatrix[TotalIndex];
+	  ++TotalIndex;
+	  Tmp.Im = TmpMatrix[TotalIndex];
+	  ++TotalIndex;
+	  Q.SetMatrixElement(j, i, Tmp);
+	}      
+    }
+  delete[] WorkingArea;
+  delete[] TmpMatrix;
+  delete[] TmpTau;
+#endif
+  return R;
 }
 
 // Output Stream overload

@@ -59,7 +59,7 @@ using std::endl;
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
 
 BasicComplexArnoldiAlgorithm::BasicComplexArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
-					     bool highEnergy, bool leftFlag, bool strongConvergence) 
+							   bool highEnergy, bool leftFlag, bool strongConvergence) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -71,13 +71,13 @@ BasicComplexArnoldiAlgorithm::BasicComplexArnoldiAlgorithm(AbstractArchitecture*
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->MaximumNumberIteration, true);
       this->ComplexDiagonalizedMatrix = ComplexDiagonalMatrix(this->MaximumNumberIteration, true);
-      this->ReducedMatrix = ComplexMatrix(this->MaximumNumberIteration, this->MaximumNumberIteration, true);
+      this->ReducedMatrix = ComplexUpperHessenbergMatrix(this->MaximumNumberIteration, true);
     }
   else
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
       this->ComplexDiagonalizedMatrix = ComplexDiagonalMatrix();
-      this->ReducedMatrix = ComplexMatrix();
+      this->ReducedMatrix = ComplexUpperHessenbergMatrix();
    }
   this->Architecture = architecture;
   this->Flag.Initialize();
@@ -255,14 +255,17 @@ void BasicComplexArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->ArnoldiVectors[0]), &(this->ArnoldiVectors[1]));
       Operation1.ApplyOperation(this->Architecture);
-      this->ReducedMatrix[0][0] = (this->ArnoldiVectors[0] * this->ArnoldiVectors[1]);
-      this->ArnoldiVectors[1].AddLinearCombination(-this->ReducedMatrix[0][0], this->ArnoldiVectors[0]);
-      this->ReducedMatrix[0][1] = this->ArnoldiVectors[1].Norm(); 
-      this->ArnoldiVectors[1] /= this->ReducedMatrix[0][1]; 
+      this->ReducedMatrix.SetMatrixElement(0, 0, (this->ArnoldiVectors[0] * this->ArnoldiVectors[1]));
+      Complex Tmp;
+      this->ReducedMatrix.GetMatrixElement(0, 0, Tmp);
+      this->ArnoldiVectors[1].AddLinearCombination(-Tmp, this->ArnoldiVectors[0]);
+      this->ReducedMatrix.SetMatrixElement(1, 0, this->ArnoldiVectors[1].Norm()); 
+      this->ReducedMatrix.GetMatrixElement(1, 0, Tmp);
+      this->ArnoldiVectors[1] /=  Tmp; 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &(this->ArnoldiVectors[1]), &(this->ArnoldiVectors[2]));
       Operation2.ApplyOperation(this->Architecture);
-      this->ReducedMatrix[1][0] = (this->ArnoldiVectors[0] * this->ArnoldiVectors[2]);
-      this->ReducedMatrix[1][1] = (this->ArnoldiVectors[1] * this->ArnoldiVectors[2]);
+      this->ReducedMatrix.SetMatrixElement(0, 1, (this->ArnoldiVectors[0] * this->ArnoldiVectors[2]));
+      this->ReducedMatrix.SetMatrixElement(1, 1, (this->ArnoldiVectors[1] * this->ArnoldiVectors[2]));
     }
   else
     {
@@ -304,9 +307,9 @@ void BasicComplexArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
 	this->ComplexPreviousWantedEigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
       this->Diagonalize();
       if (this->HighEnergyFlag == false)
-	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true);
+	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true, 1e-10);
       else
-	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true);
+	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true, 1e-10);
     }
   else
     {
@@ -362,6 +365,34 @@ bool BasicComplexArnoldiAlgorithm::TestConvergence ()
   return false;
 }
 
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+
+void BasicComplexArnoldiAlgorithm::GetEigenvalues (double*& eigenvalues, int nbrEigenvalues)
+{
+  eigenvalues = new double [nbrEigenvalues];
+  for (int i = 0; i < nbrEigenvalues; ++i)
+    {
+      eigenvalues[i] = this->ComplexDiagonalizedMatrix[i].Re;
+    }
+}
+
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+
+void BasicComplexArnoldiAlgorithm::GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues)
+{
+  eigenvalues = new Complex [nbrEigenvalues];
+  for (int i = 0; i < nbrEigenvalues; ++i)
+    {
+      eigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
+    }
+}
+
 // diagonalize tridiagonalized matrix and find ground state energy
 //
 
@@ -385,3 +416,9 @@ void BasicComplexArnoldiAlgorithm::Diagonalize ()
   return;
 }
 
+// restart the Arnoldi algorithm if needed
+//
+
+void BasicComplexArnoldiAlgorithm::RestartAlgorithm()
+{
+}

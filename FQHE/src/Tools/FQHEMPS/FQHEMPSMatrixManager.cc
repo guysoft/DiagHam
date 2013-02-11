@@ -37,6 +37,7 @@
 #include "Tools/FQHEMPS/AbstractFQHEMPSMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
 
@@ -106,6 +107,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new BooleanOption  ('\n', "rr-3", "consider the k= 3 Read-Rezayi state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "quasihole-sector", "look at the quasihole sector for the (k=2,r) series of clustered states");
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*PrecalculationGroup) += new SingleStringOption('\n', "import-bmatrices", "import the B matrices from a given binary file instead of computing them");
   (*PrecalculationGroup) += new BooleanOption ('\n', "export-bmatrices", "export the B matrices in a binary file");
@@ -149,16 +151,32 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
     {
       if (this->Options->GetBoolean("k-2") == true)
 	{
-	  if (this->Options->GetString("import-bmatrices") != 0)
+	  if (this->Options->GetBoolean("quasihole-sector") == false)
 	    {
-	      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-						       this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+	      if (this->Options->GetString("import-bmatrices") != 0)
+		{
+		  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
+							   this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+		}
+	      else
+		{
+		  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							   CylinderFlag, Kappa);
+		}
 	    }
 	  else
 	    {
-	      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-						       CylinderFlag, Kappa);
-	    }
+	      if (this->Options->GetString("import-bmatrices") != 0)
+		{
+		  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
+									  this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+		}
+	      else
+		{
+		  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+									  CylinderFlag, Kappa);
+		}
+	    }	  
 	  ExportFileName = new char [512];
 	  if (CylinderFlag == false)
 	    {

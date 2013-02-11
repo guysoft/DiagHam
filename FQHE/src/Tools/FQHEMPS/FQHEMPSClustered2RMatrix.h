@@ -62,6 +62,19 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // a temporary array to store a partition in the occupation number basis
   unsigned long* TemporaryOccupationNumber;
 
+  // flag to compute quasihole sector instead of the vacuum sector
+  bool QuasiholeSectorFlag;
+
+  // conformal weight of the identity (or the sigma field for the quasihole sector)
+  LongRational WeightIdentity;
+  // conformal weight of the psi field (or the phi field for the quasihole sector)
+  LongRational WeightPsi;
+
+  // matrix element of <Psi|Psi(1)|0> (or <phi|Psi(1)|sigma>  for the quasihole sector)
+  double MatrixElementNormalization;
+  // conformal weight of the primary field used in the matrix element
+  LongRational WeightPrimaryFieldMatrixElement;
+
  public:
   
   // default constructor 
@@ -209,8 +222,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // nbrIdentityDescendant = number of linearly independent descendant of the identity at the current level
   // globalIndexShift = index of the first state at the considered level
   // return value = linearized index
-  int Get2RMatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, 
-		       int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
+  virtual int Get2RMatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, 
+			       int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
 
   // compute the linearized index of a block of the matrices with fixed charge and p-level values
   //
@@ -222,8 +235,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // nbrIdentityDescendant = number of linearly independent descendant of the identity at the current level
   // globalIndexShift = index of the first state at the considered level 
   // return value = linearized index
-  int Get2RReducedMatrixIndex(int chargedPartitionIndex, int chargeSectorDimension, 
-			      int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
+  virtual int Get2RReducedMatrixIndex(int chargedPartitionIndex, int chargeSectorDimension, 
+				      int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
 
 };
 

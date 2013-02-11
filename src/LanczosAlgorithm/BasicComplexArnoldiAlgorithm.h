@@ -38,6 +38,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexUpperHessenbergMatrix.h"
 #include "Vector/ComplexVector.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/GarbageFlag.h"
@@ -60,9 +61,9 @@ class BasicComplexArnoldiAlgorithm : public AbstractLanczosAlgorithm
   GarbageFlag Flag;
 
   // Hessenberg matrix of the Hamiltonian in the Krylov subspace
-  ComplexMatrix ReducedMatrix;
+  ComplexUpperHessenbergMatrix ReducedMatrix;
   // temporary matrix used to duplicated ReducedMatrix before diagonalize it
-  ComplexMatrix TemporaryReducedMatrix;
+  ComplexUpperHessenbergMatrix TemporaryReducedMatrix;
 
   ComplexDiagonalMatrix ComplexDiagonalizedMatrix;
 
@@ -127,6 +128,18 @@ class BasicComplexArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // return value = array containing the eigenstates
   Vector* GetEigenstates(int nbrEigenstates);
 
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (double*& eigenvalues, int nbrEigenvalues);
+
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (Complex*& eigenvalues, int nbrEigenvalues);
+
   // run current Arnoldi algorithm (continue from previous results if Arnoldi algorithm has already been run)
   //
   // nbrIter = number of iteration to do 
@@ -142,6 +155,10 @@ class BasicComplexArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // diagonalize tridiagonalized matrix and find ground state energy
   //
   virtual void Diagonalize();
+
+  // restart the Arnoldi algorithm if needed
+  //
+  virtual void RestartAlgorithm();
 
 };
 
