@@ -66,4 +66,5 @@ GrossPitaevskiiOnLatticeState.cc \
 MaximallyCondensedStateOnLattice.cc \
 NASSOnSphereWaveFunction.cc \
 PfaffianTimesPfaffianState.cc \
-PolarizedProductWavefunction.cc
+PolarizedProductWavefunction.cc \
+FQHECP2GeneralizedLaughlinWaveFunction.cc

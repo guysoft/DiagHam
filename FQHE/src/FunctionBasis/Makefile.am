@@ -7,4 +7,5 @@ ParticleOnDiskFunctionBasis.cc \
 ParticleOnSphereGenericLLFunctionBasis.cc \
 ParticleOnChernInsulatorSingleBandFunctionBasis.cc \
 ParticleOnCheckerboardLatticeFunctionBasis.cc \
-ParticleOnCylinderFunctionBasis.cc
+ParticleOnCylinderFunctionBasis.cc \
+ParticleOnCP2FunctionBasis.cc

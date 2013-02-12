@@ -3,8 +3,8 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                    Copyright (C) 2001-2011 Cecile Repellin                 //
-//                                                                            //
+//                    Copyright (C) 2001-2011 Nicolas Regnault                //
+//                             Class author Cecile Repellin                   //
 //                                                                            //
 //                          class of bosons on CP2                            //
 //                                                                            //
