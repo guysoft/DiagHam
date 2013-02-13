@@ -151,13 +151,15 @@ int main(int argc, char** argv)
 	return -1;      
       }
     
+    FQHECP2GeneralizedLaughlinWaveFunction* BaseFunction = 0;
     BosonOnSphereShort* ReferenceSpace = 0;
     ComplexLapackDeterminant* ExactDeterminant = 0;
     if ((NbrFluxQuanta % 2 == 0))
        ExactDeterminant = new ComplexLapackDeterminant(NbrBosons);
     else
       ExactDeterminant = new ComplexLapackDeterminant(3);
-    FQHECP2GeneralizedLaughlinWaveFunction* BaseFunction = new FQHECP2GeneralizedLaughlinWaveFunction(ExactDeterminant, NbrBosons, NbrFluxQuanta);
+    if (RecordWaveFunctions == 0)
+      BaseFunction = new FQHECP2GeneralizedLaughlinWaveFunction(ExactDeterminant, NbrBosons, NbrFluxQuanta);
     ReferenceSpace = new BosonOnCP2(NbrBosons, NbrFluxQuanta, TotalTz, TotalY);
    
     AbstractRandomNumberGenerator* RandomNumber = 0;
@@ -241,5 +243,6 @@ int main(int argc, char** argv)
 //     NormalizationExact = NormReference / NormExact;
 //     cout << ValueExact << " " << ValueReference << endl;
 //     cout << "ratio between reference and test wave function : " << NormalizationExact << endl;
-    
+
+    return 0;
 }
