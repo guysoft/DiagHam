@@ -10,6 +10,7 @@
 
 
 #include "Hamiltonian/ParticleOnCP2DeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCP2ThreeBodyDeltaHamiltonian.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -112,7 +113,6 @@ int main(int argc, char** argv)
   bool TzZ3SymmetrizedBasis = Manager.GetBoolean("tzZ3symmetrized-basis");
   bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
   double* OneBodyPotentials = 0;
-  cout << Manager.GetString("use-hilbert") << endl;
   if (Manager.GetString("onebody-file") != 0)
   {
   ConfigurationParser InteractionDefinition;
@@ -132,18 +132,23 @@ int main(int argc, char** argv)
     }
   }
   char* OutputName = new char [256];
-  if (ThreeBodyFlag == false)
+  if ((ThreeBodyFlag == false) && (TzSymmetrizedBasis == false) && (TzZ3SymmetrizedBasis == false))
     sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
   else
   {
-    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
+    if (ThreeBodyFlag == false)
+    {
+      if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
+	sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
+      if (TzSymmetrizedBasis == true && TzMinusParity == false)
+	sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.tzpsym.dat", NbrBosons, NbrFluxQuanta);
+      if (TzSymmetrizedBasis == true && TzMinusParity == true)
+	sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.tzmsym.dat", NbrBosons, NbrFluxQuanta);
+      if (TzZ3SymmetrizedBasis == true)
+	sprintf (OutputName, "bosons_cp2_delta_n_%d_2s_%d.tzZ3sym.dat", NbrBosons, NbrFluxQuanta);
+    }
+    else
       sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.dat", NbrBosons, NbrFluxQuanta);
-    if (TzSymmetrizedBasis == true && TzMinusParity == false)
-      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.tzpsym.dat", NbrBosons, NbrFluxQuanta);
-    if (TzSymmetrizedBasis == true && TzMinusParity == true)
-      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.tzmsym.dat", NbrBosons, NbrFluxQuanta);
-    if (TzZ3SymmetrizedBasis == true)
-      sprintf (OutputName, "bosons_cp2_threebody_delta_n_%d_2s_%d.tzZ3sym.dat", NbrBosons, NbrFluxQuanta);
   }
   
   if ((Manager.GetInteger("only-tz") == 1000) && (Manager.GetInteger("only-y") == 1000))
@@ -203,8 +208,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-	  cout << "three body Hamiltonian not yet implemented" << endl;
-	  return -1;
+	  Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(), Memory, DiskCacheFlag, LoadPrecalculationFileName);
 	}
 	
       
@@ -226,8 +230,8 @@ int main(int argc, char** argv)
 	      if (TzZ3SymmetrizedBasis == true)
 		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzZ3sym", NbrBosons, NbrFluxQuanta, tz, y);
 	    }
-// 	  else
-// 	    sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+	  else
+	    sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
 	}
 	
 	char* ContentPrefix = new char[256];
@@ -316,12 +320,14 @@ int main(int argc, char** argv)
        
     AbstractQHEHamiltonian* Hamiltonian = 0;
     if (ThreeBodyFlag == false)
+    {
       if (OneBodyPotentials == 0)
 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, Architecture.GetArchitecture(), Memory);
       else
 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
-//     else
-// 	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
+    }
+    else
+	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
       
 //        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
 //        Hamiltonian->ShiftHamiltonian(Shift);
@@ -341,8 +347,8 @@ int main(int argc, char** argv)
 	      if (TzZ3SymmetrizedBasis == true)
 		sprintf (EigenvectorName, "bosons_cp2_delta_n_%d_2s_%d_tz_%d_y_%d.tzZ3sym", NbrBosons, NbrFluxQuanta, tz, y);
 	    }
-// 	else
-// 	   sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
+	else
+	   sprintf (EigenvectorName, "bosons_cp2_threebody_delta_n_%d_2s_%d_tz_%d_y_%d", NbrBosons, NbrFluxQuanta, tz, y);
       }
     char* ContentPrefix = new char[256];
     sprintf (ContentPrefix, "%d %d", tz, y);
