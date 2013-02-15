@@ -154,6 +154,7 @@ int main(int argc, char** argv)
 	}
     }      
   NbrEigenstates += Manager.GetInteger("nbr-excited");
+  NbrEigenstates = 2;
   double EnergyShift = 0.0;
   if (Manager.GetBoolean("power-method") == true)
     {

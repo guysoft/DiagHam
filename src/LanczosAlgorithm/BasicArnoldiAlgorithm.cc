@@ -261,8 +261,8 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
   int Dimension;
   if (this->Index == 0)
     {
-      if (nbrIter < 2)
-	nbrIter = 2;
+      if (nbrIter < 3)
+	nbrIter = 3;
       Dimension = nbrIter;
       this->ReducedMatrix.Resize(Dimension, Dimension);
 

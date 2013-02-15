@@ -44,6 +44,12 @@ using std::endl;
 
 #ifdef HAVE_LAPACK
 
+// binding to the LAPACK function ZGEBAL
+
+extern "C" void FORTRAN_NAME(zgebal)(const char* job, const int* nbrColumn, const double* matrix, const int* leadingDimension,
+				     const int* triangularLowerIndex, const int* triangularHigherIndex, 
+				     const double* scale, const int* information);
+
 // binding to the LAPACK function ZHSEQR
 
 extern "C" void FORTRAN_NAME(zhseqr)(const char* job, const char* computeZFlag, const int* nbrColumn, 
@@ -906,10 +912,21 @@ ComplexDiagonalMatrix& ComplexUpperHessenbergMatrix::LapackDiagonalize (ComplexD
    cout << TriangularLowerIndex << endl;
    cout << TriangularHigherIndex << endl;
    cout << this->NbrRow << endl;
-   
+
+   char JobBal = 'P';
+   double* Scale = new double [this->NbrRow];
+   FORTRAN_NAME(zgebal)(&JobBal, &this->NbrRow, TmpMatrix, &this->NbrColumn, &TriangularLowerIndex, &TriangularHigherIndex, 
+			Scale, &Information);
+
+   cout << "check1bis" << endl;
+   cout << TriangularLowerIndex << endl;
+   cout << TriangularHigherIndex << endl;
+   cout << this->NbrRow << endl;
+
    FORTRAN_NAME(zhseqr)(&Job, &computeZFlag, &this->NbrRow, &TriangularLowerIndex, &TriangularHigherIndex, 
-			TmpMatrix, &this->NbrRow, TmpEigenvalues,
+			TmpMatrix, &this->NbrColumn, TmpEigenvalues,
 			Dummy, &TmpLeadingDimension, &TmpWorkingArea, &WorkingAreaSize, &Information);
+   cout << Information << endl;
    WorkingAreaSize = (int) TmpWorkingArea;
    double* WorkingArea = new double [2 * WorkingAreaSize];
    cout << "check2" << endl;

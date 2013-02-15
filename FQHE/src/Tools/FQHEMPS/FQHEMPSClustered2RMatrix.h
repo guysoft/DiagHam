@@ -62,9 +62,6 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // a temporary array to store a partition in the occupation number basis
   unsigned long* TemporaryOccupationNumber;
 
-  // flag to compute quasihole sector instead of the vacuum sector
-  bool QuasiholeSectorFlag;
-
   // conformal weight of the identity (or the sigma field for the quasihole sector)
   LongRational WeightIdentity;
   // conformal weight of the psi field (or the phi field for the quasihole sector)

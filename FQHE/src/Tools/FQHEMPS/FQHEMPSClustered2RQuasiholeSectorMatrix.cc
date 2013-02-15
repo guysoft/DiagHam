@@ -358,7 +358,14 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
     }
 
      
-  this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[0].GetNbrColumn() + OrthogonalBasisPhiLeft[0].GetNbrColumn())) * this->NbrNValue;
+  if (SelfDualFlag == false)
+    {
+      this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * OrthogonalBasisSigmaLeft[0].GetNbrColumn()) * this->NbrNValue;
+    }
+  else
+    {
+      this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[0].GetNbrColumn() + OrthogonalBasisPhiLeft[0].GetNbrColumn())) * this->NbrNValue;
+    }
   for (int i = 1; i <= this->PLevel; ++i)
     {
       this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];

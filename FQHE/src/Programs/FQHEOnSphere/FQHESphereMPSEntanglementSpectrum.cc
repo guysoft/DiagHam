@@ -76,7 +76,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "la", "number of orbitals in subsystem A", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "na", "number of particles in subsystem A", 0);
   (*SystemGroup) += new BooleanOption ('\n', "all-na", "print all charge sectors");
-  (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate the entnaglement spectrum on the infinite cylinder");
+  (*SystemGroup) += new BooleanOption ('\n', "infinite-cylinder", "evaluate the entanglement spectrum on the infinite cylinder");
+  (*SystemGroup) += new BooleanOption ('\n', "use-singlestate", "use a single real eigenstate of the E matrix  when evaluating the infinite entanglement spectrum");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
@@ -87,7 +88,7 @@ int main(int argc, char** argv)
   (*ArnoldiGroup) += new BooleanOption  ('\n', "resume", "resume from disk datas", false);
   (*ArnoldiGroup) += new BooleanOption  ('\n', "show-itertime", "show time spent for each Arnoldi iteration", false); 
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "arnoldi-memory", "amount of memory when using the Arnoldi algorithm (in Mb)", 500); 
-  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");  
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
@@ -357,6 +358,8 @@ int main(int argc, char** argv)
       File << "# la na lz shifted_lz lambda -log(lambda)" << endl;
 
       int NbrEigenstatesLinearSuperposition = NbrEigenstates;
+      if (Manager.GetBoolean("use-singlestate"))
+	NbrEigenstatesLinearSuperposition = 1;
       Complex* TmpLeftFactors = new Complex [NbrEigenstates];
       Complex* TmpRightFactors = new Complex [NbrEigenstates];
       int ReducedBoundaryIndex = SearchInArray<long>((((long) MPSRowIndex) * TmpBMatrixDimension) + MPSRowIndex, 
@@ -401,6 +404,8 @@ int main(int argc, char** argv)
 	      int IndexRange = MPSMatrix->GetBondIndexRange(PLevel, QValue);
 	      if (IndexRange >= 0)
 		{
+		  cout << "----------------------------------------------------" << endl;
+		  cout << "P=" << PLevel << " " << " Q=" << QValue << endl;
 		  ComplexMatrix LeftMDaggerM (IndexRange, IndexRange);		    
 		  for (int i = 0; i < IndexRange; ++i)
 		    for (int j = 0; j < IndexRange; ++j)
@@ -435,38 +440,51 @@ int main(int argc, char** argv)
 		  RealMatrix TmpLeftBasis(SymLeftMDaggerM.GetNbrRow(), SymLeftMDaggerM.GetNbrRow());
 		  TmpLeftBasis.SetToIdentity();
 		  RealDiagonalMatrix TmpLeftDiag;
+// 		  if (PLevel == 3)		    
+// 		    cout << SymLeftMDaggerM << endl;
 #ifdef __LAPACK__
 		  SymLeftMDaggerM.LapackDiagonalize(TmpLeftDiag, TmpLeftBasis);
 #else
 		  SymLeftMDaggerM.Diagonalize(TmpLeftDiag, TmpLeftBasis);
 #endif
 		  int NbrZeroLeftEigenvalues = 0;
+		  cout << "scalar product matrix for the left state : " << endl;
 		  for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
 		    {
 		      if (fabs(TmpLeftDiag(i, i)) < LeftEigenvalueError)
 			{
 			  ++NbrZeroLeftEigenvalues;	    
 			}
+//		      cout << TmpLeftDiag(i, i) << endl;
 		    }
+		  cout << "nbr non zero eigenvalues = " << (TmpLeftDiag.GetNbrRow() - NbrZeroLeftEigenvalues) << " (full dim = " << TmpLeftDiag.GetNbrRow() << ")" << endl;
 
 		  RealSymmetricMatrix SymRightMDaggerM (RightMDaggerM);
 		  RealMatrix TmpRightBasis(SymRightMDaggerM.GetNbrRow(), SymRightMDaggerM.GetNbrRow());
 		  RealDiagonalMatrix TmpRightDiag;
 		  TmpRightBasis.SetToIdentity();
+// 		  if (PLevel == 3)		    
+// 		    cout << SymRightMDaggerM << endl;
 #ifdef __LAPACK__
 		  SymRightMDaggerM.LapackDiagonalize(TmpRightDiag, TmpRightBasis);
 #else
 		  SymRightMDaggerM.Diagonalize(TmpRightDiag, TmpRightBasis);
 #endif
 		  int NbrZeroRightEigenvalues = 0;
+		  cout << "scalar product matrix for the right state : " << endl;
 		  for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
 		    {
 		      if (fabs(TmpRightDiag(i, i)) < RightEigenvalueError)
 			{
 			  ++NbrZeroRightEigenvalues;	    
 			}
+//		      cout << TmpRightDiag(i, i) << endl;
 		    }
-
+		  cout << "nbr non zero eigenvalues = " << (TmpRightDiag.GetNbrRow() - NbrZeroRightEigenvalues) << " (full dim = " << TmpRightDiag.GetNbrRow() << ")"  << endl;
+		  if (NbrZeroRightEigenvalues != NbrZeroLeftEigenvalues)
+		    {
+		      cout << "left and right scalar product matrices have different ranks" << endl;
+		    }
 		  if ((NbrZeroLeftEigenvalues < SymLeftMDaggerM.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightMDaggerM.GetNbrRow()))
 		    {
 		      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(), TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
@@ -521,6 +539,7 @@ int main(int argc, char** argv)
 			{
 			  if (TmpRhoADiag[i] > 0.0)
 			    {
+			      cout << "xi = " << TmpRhoADiag[i] << endl;
 			      EntanglementSpectrum[QValue - MinQValue][PLevel][EntanglementSpectrumDimension[QValue - MinQValue][PLevel]] = TmpRhoADiag[i];
 			      ++EntanglementSpectrumDimension[QValue - MinQValue][PLevel];
 			      Sum += TmpRhoADiag(i, i);
