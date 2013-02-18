@@ -408,6 +408,13 @@ class SparseComplexMatrix : public Matrix
   // return value = hermitian transposed matrix
   SparseComplexMatrix HermitianTranspose ();
 
+  // create a block diagonal matrix from two matrices 
+  //
+  // matrix1 = first matrix (i.e. the one at starting from the first row, first column)
+  // matrix2 = second matrix
+  // return value = sparse block diagonal matrix
+//  friend SparseComplexMatrix CreateBlockDiagonalMatrix(const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
+  
   // output the matrix in a sparse display (column formatted output)
   //
   // str = reference on output stream

@@ -85,6 +85,11 @@ class AbstractFQHEMPSMatrix
   // return value = true if no error occurred  
   virtual bool LoadMatrices (char* fileName);
 
+  // get the number of B matrices
+  //
+  // return value = number of B matrices
+  virtual int GetNbrMatrices();
+
   // get the array where the matrices are stored
   //
   // return value = pointer to the array
@@ -157,6 +162,15 @@ class AbstractFQHEMPSMatrix
   virtual bool SaveHeader (ofstream& file);
 
 };
+
+// get the number of B matrices
+//
+// return value = number of B matrices
+
+inline int AbstractFQHEMPSMatrix::GetNbrMatrices()
+{
+  return this->NbrBMatrices;
+}
 
 // get the array where the matrices are stored
 //

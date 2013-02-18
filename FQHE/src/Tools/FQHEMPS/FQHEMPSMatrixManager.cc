@@ -38,8 +38,10 @@
 #include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorTestMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSBlockMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 
@@ -169,12 +171,19 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 	      if (this->Options->GetString("import-bmatrices") != 0)
 		{
 		  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-									  this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+									      this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
 		}
 	      else
 		{
 		  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
 									  CylinderFlag, Kappa);
+// 		  AbstractFQHEMPSMatrix* MPSMatrix1 = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+// 										   CylinderFlag, Kappa);
+// 		  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+// 												  CylinderFlag, Kappa);
+// 		  MPSMatrix = new FQHEMPSBlockMatrix(MPSMatrix1, MPSMatrix2);
+// 		  delete MPSMatrix1;
+// 		  delete MPSMatrix2;
 		}
 	    }	  
 	  ExportFileName = new char [512];

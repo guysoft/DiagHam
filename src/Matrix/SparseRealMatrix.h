@@ -417,6 +417,13 @@ class SparseRealMatrix : public Matrix
   // return value = hermitian transposed matrix
   SparseRealMatrix Transpose ();
 
+  // create a block diagonal matrix from two matrices 
+  //
+  // matrix1 = first matrix (i.e. the one at starting from the first row, first column)
+  // matrix2 = second matrix
+  // return value = sparse block diagonal matrix
+  friend SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2);
+  
   // read matrix from a file 
   //
   // file = reference  on the input file stream
