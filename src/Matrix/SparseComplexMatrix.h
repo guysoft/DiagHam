@@ -413,7 +413,7 @@ class SparseComplexMatrix : public Matrix
   // matrix1 = first matrix (i.e. the one at starting from the first row, first column)
   // matrix2 = second matrix
   // return value = sparse block diagonal matrix
-//  friend SparseComplexMatrix CreateBlockDiagonalMatrix(const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
+  friend SparseComplexMatrix CreateBlockDiagonalMatrix(const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
   
   // output the matrix in a sparse display (column formatted output)
   //

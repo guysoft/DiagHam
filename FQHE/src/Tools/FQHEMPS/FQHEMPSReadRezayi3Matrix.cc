@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/LongRationalMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 
 
@@ -97,16 +98,25 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
   double WeightWNumerical = WeightW.GetNumericalValue();
   long* Partition = new long[2 * (this->PLevel + 1)];
   unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
+  this->TemporaryOccupationNumber = new unsigned long [this->PLevel + 2];
 
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductW = new RealSymmetricMatrix[this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductIdentity = new LongRationalMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductPsi = new LongRationalMatrix[this->PLevel + 1];
+  LongRationalMatrix* RationalScalarProductW = new LongRationalMatrix[this->PLevel + 1];
   RealMatrix** MatrixPsi01 = new RealMatrix*[this->PLevel + 1];
   RealMatrix** MatrixPsi10 = new RealMatrix*[this->PLevel + 1];
   RealMatrix** MatrixPsi11 = new RealMatrix*[this->PLevel + 1];
   RealMatrix** MatrixPsi12 = new RealMatrix*[this->PLevel + 1];
   RealMatrix** MatrixPsi21 = new RealMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi01 = new LongRationalMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi10 = new LongRationalMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi11 = new LongRationalMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi12 = new LongRationalMatrix*[this->PLevel + 1];
+  LongRationalMatrix** RationalMatrixPsi21 = new LongRationalMatrix*[this->PLevel + 1];
   RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[this->PLevel + 1];
   RealMatrix* OrthogonalBasisWLeft = new RealMatrix[this->PLevel + 1];
   RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevel + 1];
@@ -122,17 +132,22 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
       MatrixPsi11[i] = new RealMatrix[this->PLevel + 1];
       MatrixPsi21[i] = new RealMatrix[this->PLevel + 1];
       MatrixPsi12[i] = new RealMatrix[this->PLevel + 1];
+      RationalMatrixPsi01[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMatrixPsi10[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMatrixPsi11[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMatrixPsi21[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMatrixPsi12[i] = new LongRationalMatrix[this->PLevel + 1];
     }
   
   for (int i = 0; i <= this->PLevel; ++i)
     {
       cout << "Level = " <<  i << endl;
-      ScalarProductIdentity[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      RationalScalarProductIdentity[i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+      RationalScalarProductPsi[i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       if ((3 + i) <= this->PLevel)
-	ScalarProductW[3 + i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+	RationalScalarProductW[3 + i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       if (i < 3)
-	ScalarProductW[i] = RealSymmetricMatrix();
-      ScalarProductPsi[i] = RealSymmetricMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
+	RationalScalarProductW[i] = LongRationalMatrix();
       for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
 	for (int m = n; m < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
 	  {
@@ -158,17 +173,36 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 		  Partition[PartitionLength] = -(long) k;
 		  ++PartitionLength;		  
 		}
-	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity);
-	    ScalarProductIdentity[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
+	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightIdentity,
+									     RationalScalarProductIdentity, i - 1, U1BosonBasis);
+	    RationalScalarProductIdentity[i].SetMatrixElement(m, n, Tmp);
+	    if (n != m)
+	      {
+		RationalScalarProductIdentity[i].SetMatrixElement(n, m, Tmp);	      
+	      }
 	    if ((3 + i) <= this->PLevel)
 	      {
 		Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightW);
-		ScalarProductW[3 + i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
+		RationalScalarProductW[3 + i].SetMatrixElement(m, n, Tmp);
+		if (n != m)
+		  {
+		    RationalScalarProductW[3 + i].SetMatrixElement(n, m, Tmp);	      
+		  }
 	      }
-	    Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi);
-	    ScalarProductPsi[i].SetMatrixElement(m, n, Tmp.GetNumericalValue());
+	    Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightPsi,
+								RationalScalarProductPsi, i - 1, U1BosonBasis);
+	    RationalScalarProductPsi[i].SetMatrixElement(m, n, Tmp);
+	    if (n != m)
+	      {
+		RationalScalarProductPsi[i].SetMatrixElement(n, m, Tmp);	      
+	      }
 	  }
-      
+      ScalarProductIdentity[i] = RationalScalarProductIdentity[i];      
+      ScalarProductPsi[i] = RationalScalarProductPsi[i];
+      if ((3 + i) <= this->PLevel)
+	ScalarProductW[3 + i] = RationalScalarProductW[3 + i];
+      if (i < 3)
+	ScalarProductW[i] = RealSymmetricMatrix();
       RealSymmetricMatrix TmpMatrix;
       TmpMatrix.Copy(ScalarProductIdentity[i]);
       RealMatrix TmpBasis(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension());
@@ -331,24 +365,16 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
     {
       for (int j = 0; j <= this->PLevel; ++j)
 	{
-	  MatrixPsi01[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	  MatrixPsi10[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	  MatrixPsi11[i][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
+	  RationalMatrixPsi11[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	  if ((3 + j) <= this->PLevel)
 	    {	  
-	      MatrixPsi12[i][3 + j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	    }
-	  if (j < 3)
-	    {
-	      MatrixPsi12[i][j] = RealMatrix();
+	      RationalMatrixPsi12[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	    }
 	  if ((3 + i) <= this->PLevel)
 	    {	  
-	      MatrixPsi21[i + 3][j] = RealMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
-	    }
-	  if (i < 3)
-	    {
-	      MatrixPsi21[i][j] = RealMatrix();
+	      RationalMatrixPsi21[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	    }
 	  cout << "Levels = " <<  i << " " << j << endl;
 	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
@@ -376,23 +402,41 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 		      Partition[PartitionLength] = -(long) k;
 		      ++PartitionLength;		  
 		    }
-		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight);
-		MatrixPsi01[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
-		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight);
-		MatrixPsi10[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
-		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightPsi, Weight);
-		MatrixPsi11[i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue());
+		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight,
+									 RationalMatrixPsi01, i, j - 1, U1BosonBasis);
+		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
+		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight,
+							    RationalMatrixPsi10, i, j - 1, U1BosonBasis);
+		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
+		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightPsi, Weight,
+							    RationalMatrixPsi11, i, j - 1, U1BosonBasis);
+		RationalMatrixPsi11[i][j].SetMatrixElement(n, m, Tmp);
 		if ((3 + j) <= this->PLevel)
 		  {	  
-		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightW, Weight);
-		    MatrixPsi12[i][3 + j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * -sqrt(26.0) / 9.0);
+		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightW, Weight,
+								RationalMatrixPsi12, i - 1, j - 1, U1BosonBasis);
+		    RationalMatrixPsi12[i][j].SetMatrixElement(n, m, Tmp);
 		  }
 		if ((3 + i) <= this->PLevel)
 		  {	  
-		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightPsi, Weight);
-		    MatrixPsi21[3 + i][j].SetMatrixElement(n, m, Tmp.GetNumericalValue() * sqrt(26.0) / 9.0);
+		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightPsi, Weight,
+								RationalMatrixPsi21, i - 1, j - 1, U1BosonBasis);
+		    RationalMatrixPsi21[i][j].SetMatrixElement(n, m, Tmp);
 		  }
 	      }
+	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
+	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
+	  MatrixPsi11[i][j] = RationalMatrixPsi11[i][j];	  
+	  if ((3 + j) <= this->PLevel)
+	    {	
+	      MatrixPsi12[i][3 + j] = RationalMatrixPsi12[i][j];
+	      MatrixPsi12[i][3 + j] *= -sqrt(26.0) / 9.0;
+	    }
+	  if ((3 + i) <= this->PLevel)
+	    {	  
+	      MatrixPsi21[3 + i][j] = RationalMatrixPsi21[i][j];
+	      MatrixPsi21[3 + i][j] *= sqrt(26.0) / 9.0;
+	    }
 	}
     }
 
@@ -803,6 +847,9 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
   delete[] ScalarProductIdentity;
   delete[] ScalarProductPsi;
   delete[] ScalarProductW;
+  delete[] RationalScalarProductIdentity;
+  delete[] RationalScalarProductPsi;
+  delete[] RationalScalarProductW;
   for (int i = 0; i <= this->PLevel; ++i)
     {
       delete[] MatrixPsi01[i];
@@ -810,6 +857,11 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
       delete[] MatrixPsi21[i];
       delete[] MatrixPsi12[i];
       delete[] MatrixPsi11[i];
+      delete[] RationalMatrixPsi01[i];
+      delete[] RationalMatrixPsi10[i];
+      delete[] RationalMatrixPsi21[i];
+      delete[] RationalMatrixPsi12[i];
+      delete[] RationalMatrixPsi11[i];
       delete U1BosonBasis[i];
     }
   delete[] U1BosonBasis;
@@ -818,6 +870,11 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
   delete[] MatrixPsi21;
   delete[] MatrixPsi12;
   delete[] MatrixPsi11;
+  delete[] RationalMatrixPsi01;
+  delete[] RationalMatrixPsi10;
+  delete[] RationalMatrixPsi21;
+  delete[] RationalMatrixPsi12;
+  delete[] RationalMatrixPsi11;
   delete[] OrthogonalBasisIdentityLeft;
   delete[] OrthogonalBasisPsiLeft;
   delete[] OrthogonalBasisWLeft;

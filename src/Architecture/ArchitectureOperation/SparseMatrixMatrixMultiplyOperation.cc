@@ -56,7 +56,7 @@ SparseMatrixMatrixMultiplyOperation::SparseMatrixMatrixMultiplyOperation (Sparse
   this->LocalTmpColumnIndices = tmpColumnIndices;
   this->MaxTmpMatrixElements = nbrTmpMatrixElements;
   this->LocalNbrMatrixElements = 0l;
-  this->DestinationMatrix = SparseRealMatrix (this->LeftMatrix->NbrRow, this->RightMatrix->NbrColumn, 0);
+  this->DestinationMatrix = SparseRealMatrix (this->LeftMatrix->NbrRow, this->RightMatrix->NbrColumn, 0l);
   this->OperationType = AbstractArchitectureOperation::SparseMatrixMatrixMultiply;
 }
 
@@ -82,7 +82,7 @@ SparseMatrixMatrixMultiplyOperation::SparseMatrixMatrixMultiplyOperation (Sparse
   this->LocalTmpColumnIndices = tmpColumnIndices;
   this->MaxTmpMatrixElements = nbrTmpMatrixElements;
   this->LocalNbrMatrixElements = 0l;
-  this->DestinationMatrix = SparseRealMatrix (this->LeftMatrix->NbrRow, this->RightMatrix->NbrColumn, 0);
+  this->DestinationMatrix = SparseRealMatrix (this->LeftMatrix->NbrRow, this->RightMatrix->NbrColumn, 0l);
   this->OperationType = AbstractArchitectureOperation::SparseMatrixMatrixMultiply;
 }
 

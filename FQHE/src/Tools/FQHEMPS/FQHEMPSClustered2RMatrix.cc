@@ -389,10 +389,10 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 		      ++PartitionLength;		  
 		    }
 		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightIdentity, this->WeightPsi, this->WeightPrimaryFieldMatrixElement,
-									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis);
+									 RationalMatrixPsi01, i, j - 1, U1BosonBasis);
 		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
 		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightPsi, this->WeightIdentity, this->WeightPrimaryFieldMatrixElement,
-							    RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis);
+							    RationalMatrixPsi10, i, j - 1, U1BosonBasis);
 		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 	      }
 	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];

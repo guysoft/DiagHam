@@ -107,6 +107,13 @@ class SparseRealMatrix : public Matrix
   // zero = true if matrix elements have to be set to zero
   SparseRealMatrix(int nbrRow, int nbrColumn, long nbrMatrixElements, bool zero = false);
 
+  // constructor for a sparse matrix knowing how many non-zero elements per row will be required
+  //
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  // nbrElementPerRow = number of non-zero matrix elements per row
+  SparseRealMatrix(int nbrRow, int nbrColumn, int* nbrElementPerRow);
+
   // copy constructor from a real matrix
   //
   // M = matrix to copy

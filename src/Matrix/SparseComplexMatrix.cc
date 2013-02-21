@@ -1929,6 +1929,44 @@ SparseComplexMatrix SparseComplexMatrix::HermitianTranspose ()
   return TmpMatrix;
 }
 
+// create a block diagonal matrix from two matrices 
+//
+// matrix1 = first matrix (i.e. the one at starting from the first row, first column)
+// matrix2 = second matrix
+// return value = sparse block diagonal matrix
+
+SparseComplexMatrix CreateBlockDiagonalMatrix(const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2)
+{
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow + matrix2.NbrRow, matrix1.NbrColumn + matrix2.NbrColumn, matrix1.NbrMatrixElements + matrix2.NbrMatrixElements);
+  for (long i = 0; i < matrix1.NbrMatrixElements; ++i)
+    TmpMatrix.MatrixElements[i] = matrix1.MatrixElements[i];
+  for (long i = 0; i < matrix2.NbrMatrixElements; ++i)
+    TmpMatrix.MatrixElements[i + matrix1.NbrMatrixElements] = matrix2.MatrixElements[i];
+  for (long i = 0; i < matrix1.NbrMatrixElements; ++i)
+    TmpMatrix.ColumnIndices[i] = matrix1.ColumnIndices[i];
+  for (long i = 0; i < matrix2.NbrMatrixElements; ++i)
+    TmpMatrix.ColumnIndices[i + matrix1.NbrMatrixElements] = matrix1.NbrColumn + matrix2.ColumnIndices[i];
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      TmpMatrix.RowPointers[i] = matrix1.RowPointers[i];
+      TmpMatrix.RowLastPointers[i] = matrix1.RowLastPointers[i];
+    }
+  for (int i = 0; i < matrix2.NbrRow; ++i)
+    {
+      if (matrix2.RowPointers[i] >= 0l)
+	{
+	  TmpMatrix.RowPointers[matrix1.NbrRow + i] = matrix1.NbrMatrixElements + matrix2.RowPointers[i];
+	  TmpMatrix.RowLastPointers[matrix1.NbrRow + i] = matrix1.NbrMatrixElements + matrix2.RowLastPointers[i];
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[matrix1.NbrRow + i] = -1l;
+	  TmpMatrix.RowLastPointers[matrix1.NbrRow + i] = -1l;
+	}
+    }
+  return  TmpMatrix;
+}
+  
 // compute the number of non-zero matrix elements (zero having strictly zero square norm)
 //
 // return value = number of non-zero matrix elements

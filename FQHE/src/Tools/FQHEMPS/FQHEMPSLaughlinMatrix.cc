@@ -121,7 +121,19 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
     }
   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
   cout << "B matrix size = " << MatrixSize << endl;
-  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
+  int* TmpNbrElementPerRow = new int[MatrixSize];
+  for (int i = 0; i < MatrixSize; ++i)
+    TmpNbrElementPerRow[i] = 0;
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
+      for (int j = 1; j < this->NbrNValue; ++j)
+	{
+	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
+	    ++TmpNbrElementPerRow[this->GetMatrixIndex(j - 1, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i])];
+	}
+    }
+  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
   for (int i = 0; i <= this->PLevel; ++i)
     {
       BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
@@ -139,30 +151,49 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	    }
 	}
     }
-   
-  for (int m = 1; m < this->NbrBMatrices; ++m)
-    BMatrices[m] = SparseRealMatrix(MatrixSize, MatrixSize);
 
   unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
   unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
   FactorialCoefficient Coef;
 
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int m = 1; m < this->NbrBMatrices; ++m)
     {
-      BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
-      for (int j = 0; j <= this->PLevel; ++j)
+      for (int i = 0; i < MatrixSize; ++i)
+	TmpNbrElementPerRow[i] = 0;
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
-	  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	  int N2 = (2 * (j - i) - this->LaughlinIndex + 1 + NValueShift) / 2;
-	  int N1 = N2 + (this->LaughlinIndex - 1);
-	  for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
+	  BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
+	  for (int j = 0; j <= this->PLevel; ++j)
 	    {
-	      TmpSpace1->GetOccupationNumber(k1, Partition1);
-	      for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
+	      BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
+	      int N2 = (2 * (j - i) - this->LaughlinIndex + 1 + NValueShift) / 2;
+	      int N1 = N2 + (this->LaughlinIndex - 1);
+	      for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
 		{
-		  TmpSpace2->GetOccupationNumber(k2, Partition2);
-		  for (int m = 1; m < this->NbrBMatrices; ++m)
+		  for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
 		    {
+		      ++TmpNbrElementPerRow[this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i])];
+		    }
+		}
+	    }
+	}
+
+      BMatrices[m] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
+	  for (int j = 0; j <= this->PLevel; ++j)
+	    {
+	      BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
+	      int N2 = (2 * (j - i) - this->LaughlinIndex + 1 + NValueShift) / 2;
+	      int N1 = N2 + (this->LaughlinIndex - 1);
+	      for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
+		{
+		  TmpSpace1->GetOccupationNumber(k1, Partition1);
+		  for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
+		    {
+		      TmpSpace2->GetOccupationNumber(k2, Partition2);
 		      double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex * m * m, 1, Partition1, Partition2, i, j, Coef);
 		      if (this->CylinderFlag)
 			Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
@@ -175,7 +206,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	    }
 	}
     }
-
+  
   delete[] Partition1;
   delete[] Partition2;
 
