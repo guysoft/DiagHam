@@ -242,6 +242,9 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 			{
 // 			  cout << qIndex << " " << Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex) << endl;
 			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
 			}
 		      TmpInteractionFactor *= PseudoPotential[j];
 // 		      cout << TmpInteractionFactor << endl;
@@ -255,7 +258,7 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 		this->InteractionFactors[i][Index] *= 0.5;
 	      if (Index1 == Index2)
 		this->InteractionFactors[i][Index] *= 0.5;
-	      this->InteractionFactors[i][Index] *= 2.0;
+	      this->InteractionFactors[i][Index] *= 0.5;
 
 	      TotalNbrInteractionFactors++;
 	      ++Index;
