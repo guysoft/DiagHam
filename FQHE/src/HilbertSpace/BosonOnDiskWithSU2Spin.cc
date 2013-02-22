@@ -72,8 +72,12 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
   this->Flag.Initialize();
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
   this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
 
   this->NbrBosonsUp = 0;
   this->NbrBosonsDown = 0;
@@ -89,6 +93,8 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
     {
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+      this->StateDescriptionSigma[1] = this->StateDescriptionDown;
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->TotalLz, 
 								this->FermionicLzMax + 2 , this->FermionicLzMax + 2, 0l);
       
@@ -151,8 +157,12 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
   this->Flag.Initialize();
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
   this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
 
   this->NbrBosonsUp = this->NbrBosons + this->TotalSpin;
   this->NbrBosonsDown = this->NbrBosons - this->TotalSpin;
@@ -178,6 +188,8 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
     {
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescriptionDown = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+      this->StateDescriptionSigma[1] = this->StateDescriptionDown;
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->TotalLz, 
 								this->NbrBosonsUp, this->NbrBosonsDown, 0l);
       if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
@@ -227,10 +239,16 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin(const BosonOnDiskWithSU2Spin& bos
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
   this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
   this->StateDescriptionUp = bosons.StateDescriptionUp;
   this->StateDescriptionDown = bosons.StateDescriptionDown;
+  this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+  this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
@@ -279,10 +297,16 @@ BosonOnDiskWithSU2Spin& BosonOnDiskWithSU2Spin::operator = (const BosonOnDiskWit
   this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->TemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->TemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryStateUp;
+  this->TemporaryStateSigma[1] = this->TemporaryStateDown;
   this->ProdATemporaryStateUp = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryStateDown = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryStateUp;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryStateDown;
   this->StateDescriptionUp = bosons.StateDescriptionUp;
   this->StateDescriptionDown = bosons.StateDescriptionDown;
+  this->StateDescriptionSigma[0] = this->StateDescriptionUp;
+  this->StateDescriptionSigma[1] = this->StateDescriptionDown;
   this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;

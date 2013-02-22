@@ -70,6 +70,9 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // largest lzmax value for the fermionic states among N1LzMax, N2LzMax and N3LzMax
   int FermionicLzMax;
 
+  // array that contains the state description, the first entry being StateDescription1, the second entry being StateDescription2, the third entry StateDescription3
+  unsigned long* StateDescriptionSigma[3];
+
   // temporay array describing the type 1 particle occupation number of each state, only used during the Hilbert space generation
   unsigned long* StateDescription1;
   // temporay array describing the type 2 particle occupation number of each state, only used during the Hilbert space generation
@@ -98,6 +101,8 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   unsigned long* TemporaryState2;
   // temporary state used when applying operators for type 3 particles
   unsigned long* TemporaryState3;
+  // array that contains the temporary state, the first entry being TemporaryState1, the second entry being TemporaryState2 and the third entry TemporaryState3
+  unsigned long* TemporaryStateSigma[3];
 
   // temporary state used when applying ProdA operator for type 1 particles
   unsigned long* ProdATemporaryState1;
@@ -105,6 +110,8 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   unsigned long* ProdATemporaryState2;
   // temporary state used when applying ProdA operator for type 3 particles
   unsigned long* ProdATemporaryState3;
+  // array that contains the temporary state used when applying ProdA operator, the first entry being ProdATemporaryState1, the second entry being ProdATemporaryState2 and the third entry ProdATemporaryState3
+  unsigned long* ProdATemporaryStateSigma[3];
 
  public:
 
@@ -268,6 +275,16 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // return value = index of the destination state 
   virtual int Ad3A3 (int index, int m, int n, double& coefficient);
 
+  // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // sigma1 = SU(3) index for the first annihilation operator
+  // sigma2 = SU(3) index for the second annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2);
+
   // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
@@ -315,6 +332,16 @@ class BosonOnSphereWithSU3Spin :  public ParticleOnSphereWithSU3Spin
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
   virtual double A3A3 (int index, int n1, int n2);
+
+  // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0, 1 or 2
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // sigma1 = SU(3) index for the first creation operator
+  // sigma2 = SU(3) index for the second creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient);
 
   // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
   //
@@ -745,6 +772,56 @@ inline int BosonOnSphereWithSU3Spin::AdiAdj (int m1, int m2, unsigned long*& tem
   coefficient *= temporaryStatei[m1];
   coefficient = sqrt(coefficient);
   return this->FindStateIndex(this->TemporaryState1, this->TemporaryState2, this->TemporaryState3);
+}
+
+// apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// sigma1 = SU(3) index for the first annihilation operator
+// sigma2 = SU(3) index for the second annihilation operator
+// return value =  multiplicative factor 
+
+inline double BosonOnSphereWithSU3Spin::AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2)
+{
+  this->FermionToBoson(this->StateDescription1[index], this->N1LzMax, this->ProdATemporaryState1);
+  this->FermionToBoson(this->StateDescription2[index], this->N2LzMax, this->ProdATemporaryState2);
+  this->FermionToBoson(this->StateDescription3[index], this->N3LzMax, this->ProdATemporaryState3);
+  if ((this->ProdATemporaryStateSigma[sigma1][n1] == 0) || (this->ProdATemporaryStateSigma[sigma2][n2] == 0) || 
+      ((n1 == n2) && (sigma1 == sigma2) && (this->ProdATemporaryStateSigma[sigma1][n1] == 1)))
+    {
+      return 0.0;
+    }
+  double Coefficient = this->ProdATemporaryStateSigma[sigma2][n2];
+  --this->ProdATemporaryStateSigma[sigma2][n2];
+  Coefficient *= this->ProdATemporaryStateSigma[sigma1][n1];
+  --this->ProdATemporaryStateSigma[sigma1][n1];
+  return sqrt(Coefficient);
+}
+
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// sigma1 = SU(3) index for the first creation operator
+// sigma2 = SU(3) index for the second creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+inline int BosonOnSphereWithSU3Spin::AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient)
+{
+  for (int i = 0; i < this->NbrLzValue; ++i)
+    {
+      this->TemporaryState1[i] = this->ProdATemporaryState1[i];
+      this->TemporaryState2[i] = this->ProdATemporaryState2[i];
+      this->TemporaryState3[i] = this->ProdATemporaryState3[i];
+    }
+  ++this->TemporaryStateSigma[sigma2][m2];
+  coefficient = this->TemporaryStateSigma[sigma2][m2];
+  ++this->TemporaryStateSigma[sigma1][m1];
+  coefficient *= this->TemporaryStateSigma[sigma1][m1];
+  coefficient = sqrt(coefficient);
+  return this->FindStateIndex(this->TemporaryState1, this->TemporaryState2, 
+			      this->TemporaryState3);
 }
 
 // find state index

@@ -321,7 +321,17 @@ class FermionOnTorusWithSpinNew :  public ParticleOnTorusWithSpin
   // return value = coefficient obtained when applying a^+_m a_m
   double AduAu (int index, int m);
 
-    // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+  // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // sigma1 = SU(2) index for the first annihilation operator
+  // sigma2 = SU(2) index for the second annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2);
+
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator (spin up)
@@ -355,6 +365,16 @@ class FermionOnTorusWithSpinNew :  public ParticleOnTorusWithSpin
   double AdAu (int index, int n1, int n2);
 
   
+  // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is is 0 for up and 1 for down
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // sigma1 = SU(2) index for the first creation operator
+  // sigma2 = SU(2) index for the second creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient);
+
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
@@ -451,6 +471,36 @@ inline int FermionOnTorusWithSpinNew::GetParticleStatistic()
   return ParticleOnTorusWithSpin::FermionicStatistic;
 }
 
+
+// apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// sigma1 = SU(2) index for the first annihilation operator
+// sigma2 = SU(2) index for the second annihilation operator
+// return value =  multiplicative factor 
+
+inline double FermionOnTorusWithSpinNew::AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2)
+{
+  cout << "warning : AsigmaAsigma not defined in FermionOnTorusWithSpinNew" << endl;
+  return 0.0;
+}
+
+// apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is is 0 for up and 1 for down
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// sigma1 = SU(3) index for the first creation operator
+// sigma2 = SU(3) index for the second creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+inline int FermionOnTorusWithSpinNew::AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient)
+{
+  cout << "warning : AdsigmaAdsigma not defined in FermionOnTorusWithSpinNew" << endl;
+  return this->HilbertSpaceDimension;
+}
 
 #endif // FERMIONONTORUSWITHSPINANDMAGNETICTRANSLATIONS_H
 

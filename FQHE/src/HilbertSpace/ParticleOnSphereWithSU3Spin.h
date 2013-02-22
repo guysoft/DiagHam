@@ -177,6 +177,16 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int Ad3A3 (int index, int m, int n, double& coefficient);
 
+  // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // sigma1 = SU(3) index for the first annihilation operator
+  // sigma2 = SU(3) index for the second annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2) = 0;
+
   // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
   // index = index of the state on which the operator has to be applied
@@ -224,6 +234,16 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
   virtual double A3A3 (int index, int n1, int n2) = 0;
+
+  // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0, 1 or 2
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // sigma1 = SU(3) index for the first creation operator
+  // sigma2 = SU(3) index for the second creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient) = 0;
 
   // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
   //

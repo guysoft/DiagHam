@@ -38,7 +38,6 @@
 #include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorMatrix.h"
-#include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorTestMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSBlockMatrix.h"

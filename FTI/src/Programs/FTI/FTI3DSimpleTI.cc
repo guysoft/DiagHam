@@ -8,6 +8,7 @@
 
 
 #include "Hamiltonian/ParticleOnCubicLatticeTwoBandSimpleTIHamiltonian.h"
+#include "Hamiltonian/ParticleOnCubicLatticeFullTwoBandSimpleTIHamiltonian.h"
 #include "Hamiltonian/ParticleOnCubicLatticeFourBandSimpleTIHamiltonian.h"
 #include "Hamiltonian/ExplicitHamiltonian.h"
 

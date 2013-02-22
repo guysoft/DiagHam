@@ -72,9 +72,15 @@ BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin (int nbrBosons, int maxMomentum
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
   this->TemporaryState2 = new unsigned long[this->NbrLzValue];
   this->TemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryState1;
+  this->TemporaryStateSigma[1] = this->TemporaryState2;
+  this->TemporaryStateSigma[2] = this->TemporaryState3;
   this->ProdATemporaryState1 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState2 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryState1;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryState2;
+  this->ProdATemporaryStateSigma[2] = this->ProdATemporaryState3;
 
   this->N1LzMax = this->LzMax + this->NbrBosons;
   this->N2LzMax = this->LzMax + this->NbrBosons;
@@ -91,6 +97,9 @@ BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin (int nbrBosons, int maxMomentum
       this->StateDescription1 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescription2 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescriptionSigma[0] = this->StateDescription1;
+      this->StateDescriptionSigma[1] = this->StateDescription2;
+      this->StateDescriptionSigma[2] = this->StateDescription3;
       this->Flag.Initialize();
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, 0, 
 								this->LzMax + this->NbrBosons + 1, this->LzMax + this->NbrBosons + 1, 
@@ -158,9 +167,15 @@ BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin (int nbrBosons, int totalTz, in
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
   this->TemporaryState2 = new unsigned long[this->NbrLzValue];
   this->TemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryState1;
+  this->TemporaryStateSigma[1] = this->TemporaryState2;
+  this->TemporaryStateSigma[2] = this->TemporaryState3;
   this->ProdATemporaryState1 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState2 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryState1;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryState2;
+  this->ProdATemporaryStateSigma[2] = this->ProdATemporaryState3;
 
   int N1 = (2 * nbrBosons) + totalY + (3 * totalTz);
   int N2 = (2 * nbrBosons) + totalY - (3 * totalTz);
@@ -191,6 +206,9 @@ BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin (int nbrBosons, int totalTz, in
       this->StateDescription1 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescription2 = new unsigned long [this->LargeHilbertSpaceDimension];
       this->StateDescription3 = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->StateDescriptionSigma[0] = this->StateDescription1;
+      this->StateDescriptionSigma[1] = this->StateDescription2;
+      this->StateDescriptionSigma[2] = this->StateDescription3;
       this->Flag.Initialize();
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->LzMax, this->LzMax, this->LzMax, 0, 
 								N1, N2, N3, 0l);
@@ -240,12 +258,21 @@ BosonOnTorusWithSU3Spin::BosonOnTorusWithSU3Spin(const BosonOnTorusWithSU3Spin& 
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
   this->TemporaryState2 = new unsigned long[this->NbrLzValue];
   this->TemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryState1;
+  this->TemporaryStateSigma[1] = this->TemporaryState2;
+  this->TemporaryStateSigma[2] = this->TemporaryState3;
   this->ProdATemporaryState1 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState2 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryState1;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryState2;
+  this->ProdATemporaryStateSigma[2] = this->ProdATemporaryState3;
   this->StateDescription1 = bosons.StateDescription1;
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
+  this->StateDescriptionSigma[0] = this->StateDescription1;
+  this->StateDescriptionSigma[1] = this->StateDescription2;
+  this->StateDescriptionSigma[2] = this->StateDescription3;
   this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
@@ -311,12 +338,21 @@ BosonOnTorusWithSU3Spin& BosonOnTorusWithSU3Spin::operator = (const BosonOnTorus
   this->TemporaryState1 = new unsigned long[this->NbrLzValue];
   this->TemporaryState2 = new unsigned long[this->NbrLzValue];
   this->TemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->TemporaryStateSigma[0] = this->TemporaryState1;
+  this->TemporaryStateSigma[1] = this->TemporaryState2;
+  this->TemporaryStateSigma[2] = this->TemporaryState3;
   this->ProdATemporaryState1 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState2 = new unsigned long[this->NbrLzValue];
   this->ProdATemporaryState3 = new unsigned long[this->NbrLzValue];
+  this->ProdATemporaryStateSigma[0] = this->ProdATemporaryState1;
+  this->ProdATemporaryStateSigma[1] = this->ProdATemporaryState2;
+  this->ProdATemporaryStateSigma[2] = this->ProdATemporaryState3;
   this->StateDescription1 = bosons.StateDescription1;
   this->StateDescription2 = bosons.StateDescription2;
   this->StateDescription3 = bosons.StateDescription3;
+  this->StateDescriptionSigma[0] = this->StateDescription1;
+  this->StateDescriptionSigma[1] = this->StateDescription2;
+  this->StateDescriptionSigma[2] = this->StateDescription3;
   this->NbrUniqueStateDescription1 = bosons.NbrUniqueStateDescription1;
   this->UniqueStateDescription1 = bosons.UniqueStateDescription1;
   this->UniqueStateDescriptionSubArraySize1 = bosons.UniqueStateDescriptionSubArraySize1;
