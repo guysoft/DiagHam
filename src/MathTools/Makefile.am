@@ -21,7 +21,9 @@ MonopoleHarmonics.cc \
 NSphereParameters.cc \
 Rational.cc \
 LongRational.cc \
-JacobiThetaDerivativeFunction.cc
+JacobiThetaDerivativeFunction.cc \
+SU3ClebschGordanCoefficients.cc \
+SU3IrreducibleRepresentations.cc
 
 
 # LaguerreFunction.cc
