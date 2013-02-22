@@ -7,10 +7,10 @@
 //                                                                            //
 //                        class author: Cecile Repellin                       //
 //                                                                            //
-//           class of bosons on the CP2 with delta interaction                //
+//     class of bosons on the CP2 with generic two body interaction           //
 //                                                                            // 
 //                                                                            //
-//                        last modification : 24/10/2012                      //
+//                        last modification : 14/02/2013                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,14 +31,15 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnCP2DeltaHamiltonian.h"
+#include "Hamiltonian/ParticleOnCP2GenericTwoBodyHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "GeneralTools/StringTools.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
-#include "MathTools/FactorialCoefficient.h"
+#include "MathTools/SU3ClebschGordanCoefficients.h"
+#include "MathTools/SU3IrreducibleRepresentations.h"
 
 #include <iostream>
 #include <cmath>
@@ -58,16 +59,26 @@ using std::cos;
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // nbrFluxQuanta = number of flux quanta
+// pseudoPotential = pointer to an array containing the SU(3) pseudopotentials describing the interaction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, AbstractArchitecture* architecture, long memory)
+ParticleOnCP2GenericTwoBodyHamiltonian::ParticleOnCP2GenericTwoBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, double* pseudoPotential, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
   this->NbrFluxQuanta = nbrFluxQuanta;
   this->NbrLzValue = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2;
   this->LzMax = this->NbrLzValue - 1;
+  this->PseudoPotentialIndexMax = 0;
+  this->PseudoPotential = new double[this->NbrFluxQuanta + 1];
+  for (int i = 0; i <= this->NbrFluxQuanta; ++i)
+  {
+    this->PseudoPotential[i] = pseudoPotential[i];
+    if (this->PseudoPotential[i] != 0)
+      this->PseudoPotentialIndexMax = i;
+  }
+  
   this->Particles2 = (BosonOnCP2*) this->Particles;
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
@@ -100,71 +111,43 @@ ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* p
      }
 }
 
-// constructor with one body terms
-//
-// particles = Hilbert space associated to the system
-// nbrParticles = number of particles
-// nbrFluxQuanta = number of flux quanta
-// oneBodyPotentials = array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
-// architecture = architecture to use for precalculation
-// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-
-ParticleOnCP2DeltaHamiltonian::ParticleOnCP2DeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrFluxQuanta, double*  oneBodyPotentials, AbstractArchitecture* architecture, long memory)
-{
-  this->Particles = particles;
-  this->NbrParticles = nbrParticles;
-  this->NbrFluxQuanta = nbrFluxQuanta;
-  this->NbrLzValue = (this->NbrFluxQuanta + 1)*(this->NbrFluxQuanta + 2)/2;
-  this->LzMax = this->NbrLzValue - 1;
-  this->Particles2 = (BosonOnCP2*) this->Particles;
-  this->quantumNumberTz = new int [this->NbrLzValue];
-  this->quantumNumberY = new int [this->NbrLzValue];
-  this->quantumNumberR = new int [this->NbrLzValue];
-  this->quantumNumberS = new int [this->NbrLzValue];
-  this->Particles2->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
-//   for (int i = 0; i<NbrLzValue; i++)
-//   {
-//    cout << i << " " << this->quantumNumberR[i] << " " << this->quantumNumberS[i] << endl; 
-//   }
-  this->HamiltonianShift = 0.0;
-  
-  this->Architecture = architecture;
-  this->Memory = memory;
-  this->OneBodyTermFlag = true;
-  this->OneBodyPotentials = new double [this->NbrLzValue];
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    this->OneBodyPotentials[i] = oneBodyPotentials[i];
-  this->FastMultiplicationFlag = false;
-  long MinIndex;
-  long MaxIndex;
-  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  this->PrecalculationShift = (int) MinIndex;  
-  this->EvaluateInteractionFactors();
-  cout << "done" << endl;
-  if (memory > 0)
-    {
-      long TmpMemory = this->FastMultiplicationMemory(memory);
-      cout << "fast = ";
-      PrintMemorySize(cout, TmpMemory)<< endl;
-      this->EnableFastMultiplication();
-     }
-}
 
 // destructor
 //
 
-ParticleOnCP2DeltaHamiltonian::~ParticleOnCP2DeltaHamiltonian()
+ParticleOnCP2GenericTwoBodyHamiltonian::~ParticleOnCP2GenericTwoBodyHamiltonian()
 {
+  delete[] this->PseudoPotential;
+  delete[] this->quantumNumberR;
+  delete[] this->quantumNumberS;
+  delete[] this->quantumNumberTz;
+  delete[] this->quantumNumberY;
 }
 
 // evaluate all interaction factors
 //   
 
-void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
+void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  FactorialCoefficient Coef;
-   
+  
+  SU3ClebschGordanCoefficients Clebsch(this->NbrFluxQuanta, 0, this->NbrFluxQuanta, 0);
+  SU3IrreducibleRepresentations Representation(this->NbrFluxQuanta, 0);
+  
+//   for (int j = 0; j < Clebsch.GetNbrPQRepresentations(); ++j)
+//     {
+//       cout << PseudoPotential[j] << endl;
+//       for (int i = 0; i < Representation.GetDimension(); ++i)
+//       {
+// 	for (int k = 0; k < Representation.GetDimension(); ++k)
+//       {
+// 	for (int l = 0; l < Clebsch.GetRepresentationDimension(j) ; ++l)
+// 	  cout << i << " " << k << " " << l << " " << Clebsch.GetClebschGordanCoefficient(j, i, k, l) << endl;
+//       }
+//       }	    
+//     }
+		  
+  
   this->NbrSectorSums = (2*this->NbrFluxQuanta + 1)*(2*this->NbrFluxQuanta + 2)/2;
   this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
   for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -205,10 +188,10 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
 	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
 	      int Index1 = this->Particles2->GetLinearizedIndex(tz1, y1, 1);
 	      int Index2 = this->Particles2->GetLinearizedIndex(tz2, y2, 1);
-	    if (Index1 <= Index2)
-	      {
-		int TmpSum = this->Particles2->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2);
-		this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+	      if (Index1 <= Index2)
+		{
+		   int TmpSum = this->Particles2->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2);
+		   this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		++this->NbrSectorIndicesPerSum[TmpSum];    
 	      }
@@ -216,6 +199,7 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
       
       
       this->InteractionFactors = new double* [this->NbrSectorSums];
+      
       //cout << this->NbrSectorSums << endl;
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -225,37 +209,62 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
 	    {
 	      int Index1 = this->SectorIndicesPerSum[i][l1 << 1];
 	      int Index2 = this->SectorIndicesPerSum[i][(l1 << 1) + 1];
-	      int r1 = this->quantumNumberR[Index1];
-	      int s1 = this->quantumNumberS[Index1];
-	      int r2 = this->quantumNumberR[Index2];
-	      int s2 = this->quantumNumberS[Index2];
+	      int tz1 = this->quantumNumberTz[Index1];
+	      int y1 = this->quantumNumberY[Index1];
+	      int tz2 = this->quantumNumberTz[Index2];
+	      int y2 = this->quantumNumberY[Index2];
+	      int qIndice1 = Representation.GetQIndices(tz1, y1, 0);
+	      int qIndice2 = Representation.GetQIndices(tz2, y2, 0);
 	      for (int l2 = 0; l2 < this->NbrSectorIndicesPerSum[i]; ++l2)
 		{
 		  int Index3 = this->SectorIndicesPerSum[i][l2 << 1];
 		  int Index4 = this->SectorIndicesPerSum[i][(l2 << 1) + 1];
-		  int r3 = this->quantumNumberR[Index3];
-		  int s3 = this->quantumNumberS[Index3];
-		  int r4 = this->quantumNumberR[Index4];
-		  int s4 = this->quantumNumberS[Index4];
+		  int tz3 = this->quantumNumberTz[Index3];
+		  int y3 = this->quantumNumberY[Index3];
+		  int tz4 = this->quantumNumberTz[Index4];
+		  int y4 = this->quantumNumberY[Index4];
+		  int qIndice3 = Representation.GetQIndices(tz3, y3, 0);
+		  int qIndice4 = Representation.GetQIndices(tz4, y4, 0);
 		  
-// 		  cout << j1 + j2 << "=" << j3 + j4 << endl;
-// 		  cout << jz1 + jz2 << "=" << jz3 + jz4 << endl;
-// 		  cout << kz1 + kz2 << "=" << kz3 + kz4 << endl;
+// 		  cout << tz1 << " " << y1 << " " << qIndice1 << " ; " << tz2 << " " << y2 << " " << qIndice2 << " ; " << tz3 << " " << y3 << " " << qIndice3 << " ; " << tz4 << " " << y4 << " " << qIndice4 << endl;
+		 
+		  double TmpInteractionFactor;
+		  double TmpFactor = 0;
 		  
- 		  this->InteractionFactors[i][Index] =  this->ComputeTwoBodyMatrixElement(r1,  s1, r2, s2, r3,  s3, r4, s4, Coef);
-// 		  this->InteractionFactors[i][Index] =  0;
-		  if (Index3 == Index4)
-		    this->InteractionFactors[i][Index] *= 0.5;
-		  if (Index1 == Index2)
-		    this->InteractionFactors[i][Index] *= 0.5;
-		  this->InteractionFactors[i][Index] *= 2.0;
+		  for (int j = 0; j < Clebsch.GetNbrPQRepresentations(); ++j)
+		  {
+		    TmpInteractionFactor = 0;
+		    if ((this->PseudoPotential[j] != 0) && (Clebsch.GetDegeneracy(j, qIndice1, qIndice2) != 0))
+		      {
+// 			cout << j << " " << Clebsch.GetDegeneracy(j, qIndice1, qIndice2) << " " << Clebsch.GetRepresentationDimension(j) << endl;
+		      
+		      for (int qIndex = 0; qIndex < Clebsch.GetRepresentationDimension(j); ++qIndex)
+			{
+// 			  cout << qIndex << " " << Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex) << endl;
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
+			}
+		      TmpInteractionFactor *= PseudoPotential[j];
+// 		      cout << TmpInteractionFactor << endl;
+		      }
+		    
+		    TmpFactor += TmpInteractionFactor;
+// 		    cout << j << " " << i << " " << Index << " = " << TmpInteractionFactor << endl;
+		  }
+	      this->InteractionFactors[i][Index] =  TmpFactor;
+	      if (Index3 == Index4)
+		this->InteractionFactors[i][Index] *= 0.5;
+	      if (Index1 == Index2)
+		this->InteractionFactors[i][Index] *= 0.5;
+	      this->InteractionFactors[i][Index] *= 2.0;
 
-		  TotalNbrInteractionFactors++;
-		  ++Index;
-
-		}
+	      TotalNbrInteractionFactors++;
+	      ++Index;
 	    }
-	}
+	   }
+	  }
   if (this->OneBodyTermFlag == true)
     {
       this->NbrOneBodyInteractionFactors = 0;
@@ -289,51 +298,4 @@ void ParticleOnCP2DeltaHamiltonian::EvaluateInteractionFactors()
     } 
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
-}
-
-// compute the matrix element for the two body delta interaction between two particles 
-  //
-  // r1 = creation r
-  // s1 = creation s
-  // r2 = annihilation r
-  // s2 = annihilation s
-  // return value = corresponding matrix element
-
-double ParticleOnCP2DeltaHamiltonian::ComputeTwoBodyMatrixElement(int r1, int s1, int r2, int s2, int r3, int s3, int r4, int s4, FactorialCoefficient &Coef)
-{
-  int t1 = this->NbrFluxQuanta - r1 - s1;
-  int t2 = this->NbrFluxQuanta - r2 - s2;
-  int t3 = this->NbrFluxQuanta - r3 - s3;
-  int t4 = this->NbrFluxQuanta - r4 - s4;
-  
-  Coef.SetToOne();
-    
-  Coef.FactorialMultiply(r1 + r2);
-  Coef.FactorialDivide(r1);
-  Coef.FactorialDivide(r2);
-  Coef.FactorialMultiply(r1 + r2);
-  Coef.FactorialDivide(r3);
-  Coef.FactorialDivide(r4);
-  Coef.FactorialMultiply(s1 + s2);
-  Coef.FactorialDivide(s1);
-  Coef.FactorialDivide(s2);
-  Coef.FactorialMultiply(s1 + s2);
-  Coef.FactorialDivide(s3);
-  Coef.FactorialDivide(s4);
-  Coef.FactorialMultiply(t1 + t2);
-  Coef.FactorialDivide(t1);
-  Coef.FactorialDivide(t2);
-  Coef.FactorialMultiply(t1 + t2);
-  Coef.FactorialDivide(t3);
-  Coef.FactorialDivide(t4);
-  Coef.FactorialDivide(2*this->NbrFluxQuanta + 2);
-  Coef.FactorialDivide(2*this->NbrFluxQuanta + 2);
-  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
-  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
-  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
-  Coef.FactorialMultiply(this->NbrFluxQuanta + 2);
-    
-  double Tmp = sqrt (Coef.GetNumericalValue());
-  
-  return Tmp;
 }

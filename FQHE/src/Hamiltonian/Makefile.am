@@ -115,4 +115,5 @@ ParticleOn4DSphereThreeBodyDeltaHamiltonian.cc \
 ParticleOnCylinderFluctuatingMetricHamiltonian.cc \
 ParticleOnCP2DeltaHamiltonian.cc \
 ParticleOnCylinderDensityDensity.cc \
-ParticleOnCP2ThreeBodyDeltaHamiltonian.cc
+ParticleOnCP2ThreeBodyDeltaHamiltonian.cc \
+ParticleOnCP2GenericTwoBodyHamiltonian.cc

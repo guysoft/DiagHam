@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2007 Cecile Repellin                   //
+//                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
 //                        class author: Cecile Repellin                       //
 //                                                                            //
