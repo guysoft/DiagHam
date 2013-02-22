@@ -35,6 +35,13 @@
 #include "HilbertSpace/BosonOnDiskShort.h"
 
 
+// default constructor 
+//
+
+FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix()
+{
+}
+
 // constructor 
 //
 // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic MR at nu=1/2)  

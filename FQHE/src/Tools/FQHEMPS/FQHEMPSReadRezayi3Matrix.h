@@ -44,6 +44,10 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
 
  public:
   
+  // default constructor 
+  //
+  FQHEMPSReadRezayi3Matrix();
+
   // constructor 
   //
   // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  

@@ -39,6 +39,7 @@
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
+#include "Tools/FQHEMPS/FQHEMPSReadRezayi3QuasiholeSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSBlockMatrix.h"
 
@@ -199,15 +200,31 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 	{
 	  if (this->Options->GetBoolean("rr-3") == true)
 	    {
-	      if (this->Options->GetString("import-bmatrices") != 0)
+	      if (this->Options->GetBoolean("quasihole-sector") == false)
 		{
-		  MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"), 
-							   CylinderFlag, Kappa);
+		  if (this->Options->GetString("import-bmatrices") != 0)
+		    {
+		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"), 
+							       CylinderFlag, Kappa);
+		    }
+		  else
+		    {
+		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							       CylinderFlag, Kappa);
+		    }
 		}
 	      else
 		{
-		  MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							   CylinderFlag, Kappa);
+		  if (this->Options->GetString("import-bmatrices") != 0)
+		    {
+		      MPSMatrix = new FQHEMPSReadRezayi3QuasiholeSectorMatrix(2, this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"), 
+									      CylinderFlag, Kappa);
+		    }
+		  else
+		    {
+		      MPSMatrix = new FQHEMPSReadRezayi3QuasiholeSectorMatrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+									      CylinderFlag, Kappa);
+		    }
 		}
 	      ExportFileName = new char [512];
 	      if (CylinderFlag == false)

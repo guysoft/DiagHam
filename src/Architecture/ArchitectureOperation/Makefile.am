@@ -19,4 +19,5 @@ ArchitectureBaseOperationManager.cc \
 OperatorMatrixElementOperation.cc \
 HamiltonianFullDiagonalizeOperation.cc \
 SparseMatrixMatrixMultiplyOperation.cc \
-GenericHamiltonianPrecalculationOperation.cc
+GenericHamiltonianPrecalculationOperation.cc \
+MultipleOperatorMatrixElementOperation.cc

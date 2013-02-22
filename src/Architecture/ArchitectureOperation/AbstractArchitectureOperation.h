@@ -70,6 +70,7 @@ class AbstractArchitectureOperation
       NDMAPPrecalculation = 0x400,
       ScalarSum = 0x800,
       OperatorMatrixElement = 0x801,
+      MultipleOperatorMatrixElement = 0x802,
       QHEParticleWaveFunction = 0x10800,
       MainTask = 0x1000,
       VectorOperatorMultiply=0x2000,

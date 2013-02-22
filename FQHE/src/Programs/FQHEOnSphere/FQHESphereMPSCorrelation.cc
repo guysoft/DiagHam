@@ -37,6 +37,8 @@
 #include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
+#include "Architecture/ArchitectureOperation/MultipleOperatorMatrixElementOperation.h"
+
 #include "Options/Options.h"
 
 #include "GeneralTools/MultiColumnASCIIFile.h"
@@ -322,7 +324,6 @@ int main(int argc, char** argv)
   Complex** PrecalculatedValuesFullDensity = new Complex* [NbrFluxQuanta + 1];	  
   for (int i = 0; i <= NbrFluxQuanta; ++i)
     PrecalculatedValuesFullDensity[i] = new Complex [NbrFluxQuanta + 1];
-
   if (DensityFlag == false)
     {
       cout<<"density-density precalculate ";
@@ -347,7 +348,7 @@ int main(int argc, char** argv)
     }
   else //density
     {
-      cout<<"density precalculate ";
+      cout<<"density precalculate " << endl;
       Complex CheckSum (0.0,0.0);
       if (NbrQuasiholes > 0)
 	{
@@ -365,12 +366,25 @@ int main(int argc, char** argv)
 	}
       else
 	{
+// 	  AbstractOperator** Operators = new AbstractOperator*[NbrFluxQuanta + 1];
+// 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+// 	    {
+// 	      Operators[i] = new ParticleOnSphereDensityOperator(SpaceWrapper, i);
+// 	    }
+// 	  MultipleOperatorMatrixElementOperation Operation(Operators, NbrFluxQuanta + 1, DummyState, DummyState);
+// 	  Operation.ApplyOperation(Architecture.GetArchitecture());
+// 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+// 	    {
+// 	      PrecalculatedValues[i] = Operation.GetMatrixElement(i);
+// 	      CheckSum += PrecalculatedValues[i];
+// 	      cout << i <<" " << PrecalculatedValues[i] << endl;
+// 	    }
 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
 	    {
               ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
 	      PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
 	      CheckSum += PrecalculatedValues[i];
-	      cout<< i <<" " << PrecalculatedValues[i] << endl;
+	      cout << i <<" " << PrecalculatedValues[i] << endl;
 	    }
 	}
       cout<<"done. CheckSum=" << CheckSum <<endl;
