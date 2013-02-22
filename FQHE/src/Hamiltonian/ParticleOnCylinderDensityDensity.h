@@ -63,6 +63,8 @@ class ParticleOnCylinderDensityDensity : public AbstractQHEOnCylinderHamiltonian
  double XValue;
  double YValue;
 
+ int HoppingCutoff;
+
  //one body basis
  ParticleOnCylinderFunctionBasis* Basis;
 
@@ -80,7 +82,7 @@ class ParticleOnCylinderDensityDensity : public AbstractQHEOnCylinderHamiltonian
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderDensityDensity(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, int landauLevel, double x0, double y0, double x, double y, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
+  ParticleOnCylinderDensityDensity(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, int landauLevel, double x0, double y0, double x, double y, int hoppingCutoff, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //

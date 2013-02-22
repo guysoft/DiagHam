@@ -13,6 +13,7 @@
 
 #include "Operator/ParticleOnSphereDensityOperator.h"
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
+#include "Hamiltonian/ParticleOnCylinderDensityDensity.h"
 
 #include "FunctionBasis/ParticleOnSphereFunctionBasis.h"
 #include "FunctionBasis/ParticleOnSphereGenericLLFunctionBasis.h"
@@ -33,6 +34,8 @@
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "Options/Options.h"
 
@@ -68,6 +71,11 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "hopping-cutoff", "cutoff on the hopping processes (=|m1-m3|)", -1);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-x", "x coordinate of the origin (for pair correlation)", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-y", "y coordinate of the origin (for pair correlation)", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "final-x", "x coordinate of the final point (for pair correlation)", 10);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "final-y", "y coordinate of the final point (for pair correlation)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
   (*SystemGroup) += new BooleanOption  ('r', "radians", "set units to radians instead of magnetic lengths", false);
   (*SystemGroup) += new BooleanOption  ('c', "chord", "use chord distance instead of distance on the sphere", false);
@@ -314,7 +322,7 @@ int main(int argc, char** argv)
   Complex** PrecalculatedValuesFullDensity = new Complex* [NbrFluxQuanta + 1];	  
   for (int i = 0; i <= NbrFluxQuanta; ++i)
     PrecalculatedValuesFullDensity[i] = new Complex [NbrFluxQuanta + 1];
-  NbrQuasiholes = 1;
+
   if (DensityFlag == false)
     {
       cout<<"density-density precalculate ";
@@ -325,18 +333,19 @@ int main(int argc, char** argv)
  	     Basis->GetFunctionValue(Value, TmpValue, NbrFluxQuanta);
 	     ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, NbrFluxQuanta, i, NbrFluxQuanta);
  	     PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
+             cout<< i <<" " << PrecalculatedValues[i] << " "<<TmpValue * Conj(TmpValue)<<endl;
            }
           else
            { 
-             TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(-0.5 * H, 0.0, -0.5 * NbrFluxQuanta);
-     	     ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, 0, i, 0);
-	     PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
+              //no need to precalculate anything on a cylinder
+//             TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(-0.5 * H, 0.0, -0.5 * NbrFluxQuanta);
+//     	     ParticleOnSphereDensityDensityOperator Operator (SpaceWrapper, i, 0, i, 0);
+//	     PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState) * TmpValue * Conj(TmpValue);
            }
-          cout<< i <<" " << PrecalculatedValues[i] << " "<<TmpValue * Conj(TmpValue)<<endl;
 	}
       cout<<"done."<<endl;
     }
-  else
+  else //density
     {
       cout<<"density precalculate ";
       Complex CheckSum (0.0,0.0);
@@ -358,7 +367,7 @@ int main(int argc, char** argv)
 	{
 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
 	    {
-	      ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
+              ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
 	      PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
 	      CheckSum += PrecalculatedValues[i];
 	      cout<< i <<" " << PrecalculatedValues[i] << endl;
@@ -449,7 +458,7 @@ int main(int argc, char** argv)
 	  }
        }
      } 
- else //cylinder
+ else //cylinder density-density
   {
     double XInc = (H + 4.0) / ((double) NbrPoints);
     double YInc = Perimeter  / ((double) NbrPoints);
@@ -478,20 +487,128 @@ int main(int argc, char** argv)
 	      File << endl;
 	    }
 	}
-      else
+      else //cylinder GS correlation function
 	{
-	  for (int k = 0; k <= NbrPoints; ++k)
+          double H, Length;
+
+          if (Manager.GetDouble("cylinder-perimeter") > 0.0)
+            {
+               Length = Manager.GetDouble("cylinder-perimeter");
+               H =  2.0 * M_PI * (NbrFluxQuanta + 1.0)/Length;
+               AspectRatio = Length/H;
+            }
+          else 
+            {
+               H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
+               Length = sqrt(2.0 * M_PI * AspectRatio * (NbrFluxQuanta + 1));
+            }
+
+          cout << "Cylinder L= " << Length<<" H= "<<H<<endl;
+
+
+          int HoppingCutoff = Manager.GetInteger("hopping-cutoff");
+
+          double X0 = Manager.GetDouble("initial-x");
+          double Y0 = Manager.GetDouble("initial-y");
+          double Xf = Manager.GetDouble("final-x");
+          double Yf = Manager.GetDouble("final-y");
+
+          //run some checks to make sure X0,Y0 and X,Y are well-defined
+          //if not, set X0=Y0=0, X=H/2,Y=0 
+
+          if (X0 < (-0.5 * H))
+             X0 = 0;   
+          if (X0 > (0.5 * H))
+             X0 = 0;   
+
+          if (Y0 < 0.0)
+             Y0 = 0;   
+          if (Y0 > Length)
+             Y0 = 0;   
+
+          if (Xf < (-0.5 * H))
+             Xf = 0.5 * H;   
+          if (Xf > (0.5 * H))
+             Xf = 0.5 * H;   
+
+          if (Yf < 0.0)
+             Yf = 0;   
+          if (Yf > Length)
+             Yf = 0;   
+
+          if (Xf < X0)
+            {
+              double Tmp = Xf;
+              Xf = X0;
+              X0 = Tmp;
+            }
+
+          double XInc = (Xf - X0)/(double)NbrPoints;
+          
+          //Precompute orbital occupations
+          //will be needed for normalization by density(X0,Y0)*density(X,Y)
+
+          Complex* Occupations = new Complex[NbrFluxQuanta + 1];
+          Complex CheckSum(0, 0);
+	  for (int i = 0; i <= NbrFluxQuanta; ++i)
 	    {
-	      double X = -0.5 * (H + 4.0) + (double)k * XInc;
-	      Complex Sum (0.0, 0.0);
-	      for (int i = 0; i <= NbrFluxQuanta; ++i)
-		{
-		  Complex TmpValue = ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, i);
-		  Sum += PrecalculatedValues[i] * (Conj(TmpValue) * TmpValue);
-		}
-	      File << X << " " << Norm(Sum) << endl; //* pow((2.0 * M_PI * (NbrFluxQuanta + 1)/NbrParticles), 2.0) << endl;
+              ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
+	      Occupations[i] = Operator.MatrixElement(DummyState, DummyState);
+	      CheckSum += Occupations[i];
+	      cout<< i <<" " << Occupations[i] << endl;
 	    }
-	}
+          cout<<"Checksum = " << CheckSum << endl; 
+
+          long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+             
+          Complex RhoRho; 
+          double X;
+
+          //Compute density at X0,Y0 -- needed for normalization of the pair correlation
+          Complex Density0 (0.0, 0.0);        
+          for (int i = 0; i <= NbrFluxQuanta; ++i)
+            {
+              Density0 += Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X0, 0.0, (double)i-0.5*NbrFluxQuanta)) * ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X0, 0.0, (double)i-0.5*NbrFluxQuanta) * Occupations[i];
+            }
+
+          //Loop over all points between X0 and X
+          double kappa = 2.0 * M_PI/Length;
+          for (int k = 0; k < NbrPoints; ++k)
+	    {
+              X = X0 + k * XInc;
+
+              AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderDensityDensity (SpaceWrapper, NbrParticles, NbrFluxQuanta, AspectRatio, LandauLevel, X0, 0.0, X, 0.0, HoppingCutoff, Architecture.GetArchitecture(), Memory);
+
+              ComplexVector TmpDummyState1(1, true);
+              TmpDummyState1[0].Re = 1.0;
+              TmpDummyState1[0].Im = 0.0;
+
+              ComplexVector TmpDummyState2(1, true);
+              TmpDummyState2[0].Re = 1.0;
+              TmpDummyState2[0].Im = 0.0;
+
+              VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &TmpDummyState1, &TmpDummyState2);
+              Operation.ApplyOperation(Architecture.GetArchitecture());
+              RhoRho = TmpDummyState1 * TmpDummyState2;
+              
+              //Compute density at X,Y -- needed for normalization
+              Complex Density (0.0, 0.0);        
+              for (int i = 0; i <= NbrFluxQuanta; ++i)
+                {
+                  Density += Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i-0.5*NbrFluxQuanta)) * ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, 0.0, (double)i-0.5*NbrFluxQuanta) * Occupations[i];
+	        }
+           
+              RhoRho /= (Density0 * Density);
+
+              File << X << " " << RhoRho.Re << " " << RhoRho.Im << endl;
+              cout << X << " " << RhoRho.Re << " " << RhoRho.Im << endl;
+            } // k
+
+           if (HoppingCutoff >= 0)
+             cout << "Hopping was truncated at |m1-m3|<= " << HoppingCutoff << endl;
+
+           delete[] Occupations;
+	} //end cylinder GS correlation function
       }
 
    }

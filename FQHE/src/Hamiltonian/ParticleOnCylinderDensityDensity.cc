@@ -69,7 +69,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderDensityDensity::ParticleOnCylinderDensityDensity(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, int landauLevel, double x0, double y0, double x, double y, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, int landauLevel, double x0, double y0, double x, double y, int hoppingCutoff, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -88,6 +88,8 @@ ParticleOnCylinderDensityDensity::ParticleOnCylinderDensityDensity(ParticleOnSph
   this->XValue = x;
   this->YValue = y;
 
+  this->HoppingCutoff = hoppingCutoff;
+
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
   this->EnergyShift = 0.0;
@@ -96,6 +98,7 @@ ParticleOnCylinderDensityDensity::ParticleOnCylinderDensityDensity(ParticleOnSph
 
   if (precalculationFileName == 0)
     {
+      /*
       if (memory > 0)
 	{
 	  long TmpMemory = this->FastMultiplicationMemory(memory);
@@ -114,6 +117,7 @@ ParticleOnCylinderDensityDensity::ParticleOnCylinderDensityDensity(ParticleOnSph
 	      this->EnableFastMultiplication();
 	    }
 	}
+      */
     }
   else
     this->LoadPrecalculation(precalculationFileName);
@@ -194,53 +198,129 @@ void ParticleOnCylinderDensityDensity::EvaluateInteractionFactors()
 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-                if (m3 > m4)
-		  {
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-                                          -this->EvaluateInteractionCoefficient(m2, m1, m3, m4)
-                                          -this->EvaluateInteractionCoefficient(m1, m2, m4, m3) 
-                                          +this->EvaluateInteractionCoefficient(m2, m1, m4, m3));
 
-		    if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
-		      MaxCoefficient = Norm(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
-	    }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new Complex [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-              if ((m4 >= 0) && (m4 <= this->MaxMomentum))
-                if (m3 > m4)
-		  {
-		    if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
-		      {
-		        this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		        this->M1Value[this->NbrInteractionFactors] = m1;
-		        this->M2Value[this->NbrInteractionFactors] = m2;
-		        this->M3Value[this->NbrInteractionFactors] = m3;
-		        this->M4Value[this->NbrInteractionFactors] = m4;
-		        ++this->NbrInteractionFactors;
-		      }
-		    ++Pos;
-		  }
-	    }
+     if (this->HoppingCutoff < 0)
+       {
+         for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	   for (int m2 = 0; m2 < m1; ++m2)
+	     for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+	      {
+	        m4 = m1 + m2 - m3;
+	        if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+                  if (m3 > m4) 
+		    {
+		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
+                                            -this->EvaluateInteractionCoefficient(m2, m1, m3, m4)
+                                            -this->EvaluateInteractionCoefficient(m1, m2, m4, m3) 
+                                            +this->EvaluateInteractionCoefficient(m2, m1, m4, m3));
+
+		      if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		        MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		      ++Pos;
+		    }
+	      }
+        this->NbrInteractionFactors = 0;
+        this->M1Value = new int [Pos];
+        this->M2Value = new int [Pos];
+        this->M3Value = new int [Pos];
+        this->M4Value = new int [Pos];
+        this->InteractionFactors = new Complex [Pos];
+        cout << "nbr interaction = " << Pos << endl;
+        Pos = 0;
+        MaxCoefficient *= MACHINE_PRECISION;
+        for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	  for (int m2 = 0; m2 < m1; ++m2)
+	    for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+	      {
+	        m4 = m1 + m2 - m3;
+                if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+                  if (m3 > m4)
+		    {
+		      if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		        {
+		          this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+		          this->M1Value[this->NbrInteractionFactors] = m1;
+		          this->M2Value[this->NbrInteractionFactors] = m2;
+		          this->M3Value[this->NbrInteractionFactors] = m3;
+		          this->M4Value[this->NbrInteractionFactors] = m4;
+		          ++this->NbrInteractionFactors;
+		        }
+		      ++Pos;
+		    }
+	       }
+
+        } 
+     else //hopping truncated
+       {
+          double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
+          double H = sqrt(2.0 * M_PI * (this->NbrLzValue + 1.0))/sqrt(this->Ratio);
+          double kappa = 2.0 * M_PI/Length;
+          
+          double Tmp = (this->X0Value + this->XValue + H)/kappa;
+          int TwiceRefPValue = int(Tmp);
+
+          Tmp = fabs(this->X0Value - this->XValue)/kappa;
+          int TwiceRefRValue = int(Tmp);
+          int TwiceRefRpValue = int(Tmp);
+
+          cout<<"Hopping ref 2p = " << TwiceRefPValue << " 2r = " << TwiceRefRValue << endl;
+
+         for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	   for (int m2 = 0; m2 < m1; ++m2)
+	     for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+	      {
+	        m4 = m1 + m2 - m3;
+	        if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+                  if ((m3 > m4) && (fabs(m1 + m2 - TwiceRefPValue) <= this->HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= this->HoppingCutoff) && (fabs(m3 - m4 - TwiceRefRpValue) <= this->HoppingCutoff))
+		    {
+		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
+                                            -this->EvaluateInteractionCoefficient(m2, m1, m3, m4)
+                                            -this->EvaluateInteractionCoefficient(m1, m2, m4, m3) 
+                                            +this->EvaluateInteractionCoefficient(m2, m1, m4, m3));
+
+		      if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		        MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		      ++Pos;
+		    }
+	      }
+ 
+        if (Pos > 0)
+         {
+           this->NbrInteractionFactors = 0;
+           this->M1Value = new int [Pos];
+           this->M2Value = new int [Pos];
+           this->M3Value = new int [Pos];
+           this->M4Value = new int [Pos];
+           this->InteractionFactors = new Complex [Pos];
+           cout << "nbr interaction = " << Pos << endl;
+           Pos = 0;
+           MaxCoefficient *= MACHINE_PRECISION;
+           for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	     for (int m2 = 0; m2 < m1; ++m2)
+	       for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+	         {
+	           m4 = m1 + m2 - m3;
+                   if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+                     if ((m3 > m4) && (fabs(m1 + m2 - TwiceRefPValue) <= this->HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= this->HoppingCutoff) && (fabs(m3 - m4 - TwiceRefRpValue) <= this->HoppingCutoff))
+		       {
+		         if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		           {
+		             this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
+		             this->M1Value[this->NbrInteractionFactors] = m1;
+		             this->M2Value[this->NbrInteractionFactors] = m2;
+		             this->M3Value[this->NbrInteractionFactors] = m3;
+		             this->M4Value[this->NbrInteractionFactors] = m4;
+		             ++this->NbrInteractionFactors;
+		           }
+		         ++Pos;
+		       }
+	          }
+
+          }
+         else
+          this->NbrInteractionFactors = 0; 
+           
+       }
     }
   else //bosons
     {

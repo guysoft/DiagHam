@@ -19,6 +19,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -70,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "ky-max", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "total-y", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "landau-level", "index of the Landau level (0 being the LLL)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "hopping-cutoff", "cutoff on the hopping processes (=|m1-m3|)", -1);
   (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of points to evaluate", 50);
   (*SystemGroup) += new BooleanOption  ('\n', "rho-rho","evaluate rho-rho correlation", false);
@@ -102,6 +104,7 @@ int main(int argc, char** argv)
   double Ratio = Manager.GetDouble("ratio");
   bool EvaluateS0Q = Manager.GetBoolean("structure-factor");
   bool EvaluateRhoRho = Manager.GetBoolean("rho-rho");
+  int HoppingCutoff = Manager.GetInteger("hopping-cutoff");
 
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   bool Statistics = true;
@@ -225,7 +228,6 @@ int main(int argc, char** argv)
       return 0;
     }
 
-
   cout << "NbrParticles "<<NbrParticles<<" "<<KyMax<<" "<<LandauLevel<<" "<<Ratio<<endl;
   cout << "NbrPoints "<<NbrPoints<<endl;
   
@@ -241,6 +243,15 @@ int main(int argc, char** argv)
   Complex CheckOccupations(0,0);
   for (int i = 0; i <= KyMax; ++i)
    {
+//     AbstractOperator* Operator = new ParticleOnSphereDensityOperator(Space, i);
+//     ComplexVector TmpState(Space->GetHilbertSpaceDimension(), true);
+//     VectorOperatorMultiplyOperation Operation (Operator, &State, &TmpState);
+//     Operation.ApplyOperation(Architecture.GetArchitecture());
+//     Occupations[i] = State*TmpState;
+//     delete Operator;
+//     CheckOccupations += Occupations[i];
+//     cout << i << " " << Occupations[i].Re << " " << Occupations[i].Im << endl;
+
      ParticleOnSphereDensityOperator Operator (Space, i);
      Occupations[i] = Operator.MatrixElement(State, State);
      CheckOccupations += Occupations[i];
@@ -374,7 +385,7 @@ int main(int argc, char** argv)
 	  {
             X = X0 + k * XInc;
 
-            AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderDensityDensity (Space, NbrParticles, KyMax, Ratio, LandauLevel, X0, 0.0, X, 0.0, Architecture.GetArchitecture(), Memory);
+            AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderDensityDensity (Space, NbrParticles, KyMax, Ratio, LandauLevel, X0, 0.0, X, 0.0, HoppingCutoff, Architecture.GetArchitecture(), Memory);
 
            ComplexVector TmpState(Space->GetHilbertSpaceDimension(), true);
            VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
@@ -397,6 +408,8 @@ int main(int argc, char** argv)
 
   }
 
+  if (HoppingCutoff >= 0)
+    cout << "Hopping was truncated at |m1-m3|<= " << HoppingCutoff << endl;
 
   delete[] Occupations;
 

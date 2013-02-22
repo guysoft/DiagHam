@@ -335,6 +335,10 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Shift = this->EnergyShift;
   double Coefficient;
+  if (this->NbrInteractionFactors == 0)
+    return vDestination;
+  else
+  {
   if (this->FastMultiplicationFlag == false)
     {
       //cout<<"Flagfalse"<<endl;
@@ -505,6 +509,7 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 	}
    }
   return vDestination;
+ }
 }
 
 
