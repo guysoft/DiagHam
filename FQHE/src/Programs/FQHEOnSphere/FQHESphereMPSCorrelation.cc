@@ -54,6 +54,9 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
+void EvaluateInteractionFactors(AbstractFunctionBasis* Basis, FermionOnSphereMPSWrapper* SpaceWrapper, int MaxMomentum, double Length, double H, double kappa, int HoppingCutoff, double X0, double Y0, double X, double Y, int& NbrInteractionFactors, Complex*& InteractionFactors, AbstractOperator**& Operators);
+
+Complex EvaluateInteractionCoefficient(AbstractFunctionBasis* Basis, int m1, int m2, int m3, int m4, int MaxMomentum, double X0, double Y0, double X, double Y);
 
 int main(int argc, char** argv)
 {
@@ -116,20 +119,25 @@ int main(int argc, char** argv)
   double AspectRatio = Manager.GetDouble("aspect-ratio");
   double Kappa = 0.0;
   double Perimeter = 0.0;
+  double H;
   if (CylinderFlag)
     {
       if (Manager.GetDouble("cylinder-perimeter") > 0.0)
 	{
 	  Kappa = (2.0 * M_PI) / Manager.GetDouble("cylinder-perimeter");
 	  Perimeter = Manager.GetDouble("cylinder-perimeter");
+          H =  2.0 * M_PI * (NbrFluxQuanta + 1.0)/Perimeter;
+          AspectRatio = Perimeter/H;
 	}
       else
 	{
 	  Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
 	  Perimeter = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio); 
+          H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
 	}
-      cout << "Cylinder geometry : perimeter = " << Perimeter << ", kappa= " << Kappa << endl;
+      cout << "Cylinder geometry : perimeter = " << Perimeter << " H= " << H << ", kappa= " << Kappa << endl;
     }
+
 
   int NbrQuasiholes = 0;
   Complex* QuasiholePositions = 0;
@@ -303,20 +311,16 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
+          if (DensityFlag == true)
+    	     SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
 							  SparseBMatrices, Architecture.GetArchitecture());
+          else
+             SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
+							  SparseBMatrices, 0);
 	}
     }
   RealVector DummyState (1);
   DummyState[0] = 1.0;
-
-
-  double H;
-  if (CylinderFlag) 
-    {
-      H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
-      cout<<"Cylinder H= "<<H<<endl;
-    }
 
   Complex TmpValue;
   RealVector Value(2, true);
@@ -366,26 +370,19 @@ int main(int argc, char** argv)
 	}
       else
 	{
-// 	  AbstractOperator** Operators = new AbstractOperator*[NbrFluxQuanta + 1];
-// 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
-// 	    {
-// 	      Operators[i] = new ParticleOnSphereDensityOperator(SpaceWrapper, i);
-// 	    }
-// 	  MultipleOperatorMatrixElementOperation Operation(Operators, NbrFluxQuanta + 1, DummyState, DummyState);
-// 	  Operation.ApplyOperation(Architecture.GetArchitecture());
-// 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
-// 	    {
-// 	      PrecalculatedValues[i] = Operation.GetMatrixElement(i);
-// 	      CheckSum += PrecalculatedValues[i];
-// 	      cout << i <<" " << PrecalculatedValues[i] << endl;
-// 	    }
-	  for (int i = 0; i <= NbrFluxQuanta; ++i)
-	    {
-              ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
-	      PrecalculatedValues[i] = Operator.MatrixElement(DummyState, DummyState);
-	      CheckSum += PrecalculatedValues[i];
-	      cout << i <<" " << PrecalculatedValues[i] << endl;
-	    }
+ 	  AbstractOperator** Operators = new AbstractOperator*[NbrFluxQuanta + 1];
+          for (int k = 0; k <= NbrFluxQuanta; k++)
+             Operators[k] = new ParticleOnSphereDensityOperator (SpaceWrapper, k);
+
+          MultipleOperatorMatrixElementOperation Operation(Operators, NbrFluxQuanta + 1, DummyState, DummyState);
+          Operation.ApplyOperation(Architecture.GetArchitecture());
+     
+          for (int k = 0; k <= NbrFluxQuanta; ++k)
+           {
+             PrecalculatedValues[k] = Operation.GetMatrixElement(k);
+             CheckSum += PrecalculatedValues[k];
+             cout<<"Occupation of orbital "<<k<<" "<<PrecalculatedValues[k]<<endl;
+           }
 	}
       cout<<"done. CheckSum=" << CheckSum <<endl;
     }
@@ -437,7 +434,6 @@ int main(int argc, char** argv)
       for (int i = 0; i <= NbrFluxQuanta; ++i)
 	File << i << " " << PrecalculatedValues[i].Re << endl;
     }
-
 
   if (CylinderFlag == false)
   {
@@ -503,23 +499,6 @@ int main(int argc, char** argv)
 	}
       else //cylinder GS correlation function
 	{
-          double H, Length;
-
-          if (Manager.GetDouble("cylinder-perimeter") > 0.0)
-            {
-               Length = Manager.GetDouble("cylinder-perimeter");
-               H =  2.0 * M_PI * (NbrFluxQuanta + 1.0)/Length;
-               AspectRatio = Length/H;
-            }
-          else 
-            {
-               H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
-               Length = sqrt(2.0 * M_PI * AspectRatio * (NbrFluxQuanta + 1));
-            }
-
-          cout << "Cylinder L= " << Length<<" H= "<<H<<endl;
-
-
           int HoppingCutoff = Manager.GetInteger("hopping-cutoff");
 
           double X0 = Manager.GetDouble("initial-x");
@@ -537,7 +516,7 @@ int main(int argc, char** argv)
 
           if (Y0 < 0.0)
              Y0 = 0;   
-          if (Y0 > Length)
+          if (Y0 > Perimeter)
              Y0 = 0;   
 
           if (Xf < (-0.5 * H))
@@ -547,7 +526,7 @@ int main(int argc, char** argv)
 
           if (Yf < 0.0)
              Yf = 0;   
-          if (Yf > Length)
+          if (Yf > Perimeter)
              Yf = 0;   
 
           if (Xf < X0)
@@ -564,13 +543,30 @@ int main(int argc, char** argv)
 
           Complex* Occupations = new Complex[NbrFluxQuanta + 1];
           Complex CheckSum(0, 0);
-	  for (int i = 0; i <= NbrFluxQuanta; ++i)
-	    {
-              ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
-	      Occupations[i] = Operator.MatrixElement(DummyState, DummyState);
-	      CheckSum += Occupations[i];
-	      cout<< i <<" " << Occupations[i] << endl;
-	    }
+
+	  //for (int i = 0; i <= NbrFluxQuanta; ++i)
+	  //  {
+              //ParticleOnSphereDensityOperator Operator (SpaceWrapper, i);
+	      //Occupations[i] = Operator.MatrixElement(DummyState, DummyState);
+	      //CheckSum += Occupations[i];
+	      //cout<< i <<" " << Occupations[i] << endl;           
+	  //  }
+
+                
+ 	  AbstractOperator** Operators = new AbstractOperator*[NbrFluxQuanta + 1];
+          for (int k = 0; k <= NbrFluxQuanta; k++)
+             Operators[k] = new ParticleOnSphereDensityOperator (SpaceWrapper, k);
+
+          MultipleOperatorMatrixElementOperation Operation(Operators, NbrFluxQuanta + 1, DummyState, DummyState);
+          Operation.ApplyOperation(Architecture.GetArchitecture());
+     
+          for (int k = 0; k <= NbrFluxQuanta; ++k)
+           {
+             Occupations[k] = Operation.GetMatrixElement(k);
+             CheckSum += Occupations[k];
+             cout<<"Occupation of orbital "<<k<<" "<<Occupations[k]<<endl;
+           }
+
           cout<<"Checksum = " << CheckSum << endl; 
 
           long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
@@ -586,11 +582,45 @@ int main(int argc, char** argv)
             }
 
           //Loop over all points between X0 and X
-          double kappa = 2.0 * M_PI/Length;
           for (int k = 0; k < NbrPoints; ++k)
 	    {
               X = X0 + k * XInc;
 
+
+   	      AbstractOperator** Operators;
+              Complex* InteractionFactors;
+              int NbrInteractionFactors;
+
+              EvaluateInteractionFactors(Basis, SpaceWrapper, NbrFluxQuanta, Perimeter, H, Kappa, HoppingCutoff, X0, Y0, X, 0, NbrInteractionFactors, InteractionFactors, Operators);
+
+              if (NbrInteractionFactors == 0)
+                {
+                  RhoRho.Re = 0.0;
+                  RhoRho.Im = 0.0;
+                }
+              else
+               {
+                  //cout<<NbrInteractionFactors<<endl;
+                  //for (int j = 0; j < NbrInteractionFactors; j++)
+                  //  cout<<"j= "<<j<<" "<<InteractionFactors[j]<<endl;
+  	          MultipleOperatorMatrixElementOperation Operation(Operators, NbrInteractionFactors, DummyState, DummyState);
+ 	          Operation.ApplyOperation(Architecture.GetArchitecture());
+                  RhoRho.Re = 0.0; 
+                  RhoRho.Im = 0.0;
+ 	          for (int i = 0; i < NbrInteractionFactors; ++i)
+ 	            {
+ 	              RhoRho += Operation.GetMatrixElement(i) * InteractionFactors[i];
+ 	            }
+               }         
+
+ 	      //for (int i = 0; i < NbrInteractionFactors; ++i)
+ 	      // {
+ 	      //   delete[] Operators[i];
+ 	      // }
+              //delete[] Operators;
+              delete[] InteractionFactors;
+
+              /*
               AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderDensityDensity (SpaceWrapper, NbrParticles, NbrFluxQuanta, AspectRatio, LandauLevel, X0, 0.0, X, 0.0, HoppingCutoff, Architecture.GetArchitecture(), Memory);
 
               ComplexVector TmpDummyState1(1, true);
@@ -604,7 +634,8 @@ int main(int argc, char** argv)
               VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &TmpDummyState1, &TmpDummyState2);
               Operation.ApplyOperation(Architecture.GetArchitecture());
               RhoRho = TmpDummyState1 * TmpDummyState2;
-              
+              */
+
               //Compute density at X,Y -- needed for normalization
               Complex Density (0.0, 0.0);        
               for (int i = 0; i <= NbrFluxQuanta; ++i)
@@ -686,3 +717,120 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// Evaluate all sets of operators c_m1^+ c_m2^+ c_m3 c_m4 for given point (X,Y)
+//
+// Basis = one body function basis
+// SpaceWrapper = MPS Hilbert space wrapper
+// MaxMomentum = maximum momentum on a cylinder
+// Length = cylinder perimeter
+// H = height of a cylinder
+// kappa = 2pi/perimeter
+// HoppingCutoff = cut off for the number of hopping terms in evaluating pair correlation function
+// (X0,Y0) = coordinates of the origin
+// (X,Y) = coordinates of the point where to evaluate the pair correlation
+// NbrInteractionFactors = number of various c_m1^+ c_m2^+ c_m3 c_m4 for given point (X,Y) (return value)
+// InteractionFactors = prefactors in front of c_m1^+ c_m2^+ c_m3 c_m4 for given point (X,Y) (return value)
+// Operators = all possible sets of c_m1^+ c_m2^+ c_m3 c_m4 for given point (X,Y) (return value)
+
+void EvaluateInteractionFactors(AbstractFunctionBasis* Basis, FermionOnSphereMPSWrapper* SpaceWrapper, int MaxMomentum, double Length, double H, double kappa, int HoppingCutoff, double X0, double Y0, double X, double Y, int& NbrInteractionFactors, Complex*& InteractionFactors, AbstractOperator**& Operators)
+{
+  int Pos = 0;
+  int m4;
+  int NbrLzValue = MaxMomentum + 1;
+  Complex* TmpCoefficient = new Complex [(NbrLzValue * (NbrLzValue - 1)/2) * NbrLzValue];
+  double MaxCoefficient = 0.0;
+
+  double Tmp = (X0 + X + H)/kappa;
+  int TwiceRefPValue = int(Tmp);
+
+  Tmp = fabs(X0 - X)/kappa;
+  int TwiceRefRValue = int(Tmp);
+  int TwiceRefRpValue = int(Tmp);
+
+  cout<<"Hopping ref 2p = " << TwiceRefPValue << " 2r = " << TwiceRefRValue << endl;
+
+  for (int m1 = 0; m1 <= MaxMomentum; ++m1)
+    for (int m2 = 0; m2 < m1; ++m2)
+      if ((fabs(m1 + m2 - TwiceRefPValue) <= HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= HoppingCutoff))
+        {
+           for (int m3 = 0; m3 <= MaxMomentum; ++m3)
+             {
+	       m4 = m1 + m2 - m3;
+	       if ((m4 >= 0) && (m4 <= MaxMomentum))
+                 if ((m3 > m4) && (fabs(m3 - m4 - TwiceRefRpValue) <= HoppingCutoff))
+		      {
+		        TmpCoefficient[Pos] = (EvaluateInteractionCoefficient(Basis, m1, m2, m3, m4, MaxMomentum, X0, Y0, X, Y)
+                                            -EvaluateInteractionCoefficient(Basis, m2, m1, m3, m4, MaxMomentum, X0, Y0, X, Y)
+                                            -EvaluateInteractionCoefficient(Basis, m1, m2, m4, m3, MaxMomentum, X0, Y0, X, Y) 
+                                            +EvaluateInteractionCoefficient(Basis, m2, m1, m4, m3, MaxMomentum, X0, Y0, X, Y));
+
+		        if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		          MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		        ++Pos;
+		      }
+	      }
+       }
+ 
+  if (Pos > 0)
+   {
+
+     Operators = new AbstractOperator*[Pos];
+     InteractionFactors = new Complex [Pos]; 
+     NbrInteractionFactors = 0;
+     cout << "nbr interaction = " << Pos << endl;
+     Pos = 0;
+     MaxCoefficient *= MACHINE_PRECISION;
+
+     for (int m1 = 0; m1 <= MaxMomentum; ++m1)
+       for (int m2 = 0; m2 < m1; ++m2)
+        if ((fabs(m1 + m2 - TwiceRefPValue) <= HoppingCutoff) && (fabs(m1 - m2 - TwiceRefRValue) <= HoppingCutoff))
+         {
+            for (int m3 = 0; m3 <= MaxMomentum; ++m3)
+              {
+	        m4 = m1 + m2 - m3;
+	        if ((m4 >= 0) && (m4 <= MaxMomentum))
+                  if ((m3 > m4) && (fabs(m3 - m4 - TwiceRefRpValue) <= HoppingCutoff))
+                    {
+		      if  (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		        {
+		          Operators[NbrInteractionFactors] = new ParticleOnSphereDensityDensityOperator (SpaceWrapper, m1, m2, m3, m4);
+                          InteractionFactors[NbrInteractionFactors] = TmpCoefficient[Pos];
+                          //cout<<"coeff= "<<InteractionFactors[NbrInteractionFactors]<<endl;
+		          ++NbrInteractionFactors;
+		        }
+		      ++Pos;
+		    }
+	      }
+          }
+   }
+  else
+   NbrInteractionFactors = 0; 
+
+  cout << "nbr interaction = " << NbrInteractionFactors << endl;
+  cout << "====================================" << endl;
+  delete[] TmpCoefficient;
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// Basis = one body function basis
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// MaxMomentum = maximum momentum on a cylinder
+// X0,Y0 = coordinates of the origin
+// X,Y = coordinates of the point where to evaluate the pair correlation
+// return value = numerical coefficient
+
+Complex EvaluateInteractionCoefficient(AbstractFunctionBasis* Basis, int m1, int m2, int m3, int m4, int MaxMomentum, double X0, double Y0, double X, double Y)
+{
+
+   Complex Tmp;
+   Tmp = Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X0, Y0, (double)m1 - 0.5 * MaxMomentum)); 
+   Tmp *= Conj(((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, (double)m2 - 0.5 * MaxMomentum)); 
+   Tmp *= ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X, Y, (double)m3 - 0.5 * MaxMomentum); 
+   Tmp *= ((ParticleOnCylinderFunctionBasis*)Basis)->GetFunctionValue(X0, Y0, (double)m4 - 0.5 * MaxMomentum); 
+
+   return Tmp;
+}
