@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-flux", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption ('\n', "three-body", "use three body delta interaction instead of two-body interaction");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics", 0);
 //   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
 //   (*SystemGroup) += new BooleanOption  ('\n', "get-lvalue", "compute mean l value from <L^2> for each eigenvalue");
 //   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -101,7 +102,7 @@ int main(int argc, char** argv)
 
 
   
-  int NbrBosons = Manager.GetInteger("nbr-particles");
+  int NbrParticles = Manager.GetInteger("nbr-particles");
   int NbrFluxQuanta = Manager.GetInteger("nbr-flux");
   int NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/ 2;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
@@ -116,7 +117,17 @@ int main(int argc, char** argv)
   double* OneBodyPotentials = 0;
   double* PseudoPotentials = 0;
   
-    
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
+    {
+      sprintf (StatisticPrefix, "fermions");
+    }
+  else
+    {
+      sprintf (StatisticPrefix, "bosons");
+    }
+
+  
   if (Manager.GetString("onebody-file") != 0)
   {
   ConfigurationParser OneBodyDefinition;
@@ -158,46 +169,46 @@ int main(int argc, char** argv)
     
   char* OutputName = new char [256];
   if ((ThreeBodyFlag == false) && (TzSymmetrizedBasis == false) && (TzZ3SymmetrizedBasis == false))
-    sprintf (OutputName, "bosons_cp2_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+    sprintf (OutputName, "%s_cp2_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
   else
   {
     if (ThreeBodyFlag == false)
     {
       if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	sprintf (OutputName, "bosons_cp2_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
       if (TzSymmetrizedBasis == true && TzMinusParity == false)
-	sprintf (OutputName, "bosons_cp2_tzpsym_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_tzpsym_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
       if (TzSymmetrizedBasis == true && TzMinusParity == true)
-	sprintf (OutputName, "bosons_cp2_tzmsym_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_tzmsym_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
       if (TzZ3SymmetrizedBasis == true)
-	sprintf (OutputName, "bosons_cp2_tzZ3sym_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_tzZ3sym_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
     }
     else
       if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	sprintf (OutputName, "bosons_cp2_threebody_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"),NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_threebody_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"),NbrParticles, NbrFluxQuanta);
       if (TzSymmetrizedBasis == true && TzMinusParity == false)
-	sprintf (OutputName, "bosons_cp2_tzpsym_threebody_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_tzpsym_threebody_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
       if (TzSymmetrizedBasis == true && TzMinusParity == true)
-	sprintf (OutputName, "bosons_cp2_tzmsym_threebody_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_tzmsym_threebody_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
       if (TzZ3SymmetrizedBasis == true)
-	sprintf (OutputName, "bosons_cp2_tzZ3sym_threebody_%s_n_%d_2s_%d.dat", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta);
+	sprintf (OutputName, "%s_cp2_tzZ3sym_threebody_%s_n_%d_2s_%d.dat", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta);
   }
   
   if ((Manager.GetInteger("only-tz") == 1000) && (Manager.GetInteger("only-y") == 1000))
   {
     int MinR = 0;
-    int MaxR = NbrFluxQuanta*NbrBosons;
+    int MaxR = NbrFluxQuanta*NbrParticles;
   
     for (int r = MinR; r <= MaxR; ++r)
       {
 	int MinS = 0;
-	int MaxS = NbrFluxQuanta*NbrBosons - r;
+	int MaxS = NbrFluxQuanta*NbrParticles - r;
 	if (MaxS > r)
 	  MaxS = r;
 	for (int s = MinS; s <= MaxS ; ++s)
 	{
 	  int tz = r - s;
-	  int y = 3*(r + s) - 2*NbrBosons*NbrFluxQuanta;
+	  int y = 3*(r + s) - 2*NbrParticles*NbrFluxQuanta;
 	  cout << "(tz,y) = (" << tz << "," << y << ")" << endl; 
 	  if (TzSymmetrizedBasis == true)
 	      {
@@ -208,22 +219,34 @@ int main(int argc, char** argv)
 		  cout << "(plus parity) " << endl;
 	      }
 	  ParticleOnSphere* Space = 0;
-	  if (NbrOrbitals + NbrBosons < 65)
+	  if (Manager.GetBoolean("boson") == true)
 	  {
-	    if (TzSymmetrizedBasis == false)
-	      Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
-	    else
+	    if (NbrOrbitals + NbrParticles < 65)
 	    {
-	     if (tz != 0)
-	       Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
-	     else
-	      Space = new BosonOnCP2TzSymmetry(NbrBosons, NbrFluxQuanta, tz, y, TzMinusParity);
+	      if (TzSymmetrizedBasis == false)
+		Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
+	      else
+	      {
+		if (tz != 0)
+		  Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
+		else
+		  Space = new BosonOnCP2TzSymmetry(NbrParticles, NbrFluxQuanta, tz, y, TzMinusParity);
+	      }
 	    }
-	    
-	  }
 	  else
 	    cout << " Warning : number of orbitals too big " << endl;
-     
+	  }
+	  else
+	  {
+	    if (NbrOrbitals < 65)
+	    {
+	      Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
+	    }
+	    else
+	      cout << " Warning : number of orbitals too big " << endl;
+	  }
+	  if (Space->GetHilbertSpaceDimension() > 0)
+	  {
 	Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	  Memory = Architecture.GetArchitecture()->GetLocalMemory();
@@ -234,19 +257,19 @@ int main(int argc, char** argv)
 	if (ThreeBodyFlag == false)
 	{
 	  if (OneBodyPotentials == 0)
-	    Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrBosons, NbrFluxQuanta, PseudoPotentials, Architecture.GetArchitecture(), Memory);
+	    Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrParticles, NbrFluxQuanta, PseudoPotentials, Architecture.GetArchitecture(), Memory);
 // 	  else
-// 	    Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
+// 	    Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrParticles, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
 	}
 	else
 	{
 	  cout << "three-body interaction not implemented yet" << endl;
 	  return -1;
-// 	  Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(), Memory, DiskCacheFlag, LoadPrecalculationFileName);
+// 	  Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrParticles, NbrFluxQuanta, 0, Architecture.GetArchitecture(), Memory, DiskCacheFlag, LoadPrecalculationFileName);
 	}
 	
       
-//        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
+//        double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) NbrFluxQuanta));
 //        Hamiltonian->ShiftHamiltonian(Shift);
 	char* EigenvectorName = 0;
 	if (Manager.GetBoolean("eigenstate") == true)	
@@ -254,27 +277,27 @@ int main(int argc, char** argv)
 	  EigenvectorName = new char [64];
 	  if (ThreeBodyFlag == false)
 	    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	      sprintf (EigenvectorName, "bosons_cp2_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+	      sprintf (EigenvectorName, "%s_cp2_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	    else
 	    {
 	      if(TzSymmetrizedBasis == true && TzMinusParity == false)
-		sprintf (EigenvectorName, "bosons_cp2_tzpsym_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzpsym_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if(TzSymmetrizedBasis == true && TzMinusParity == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzmsym_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzmsym_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if (TzZ3SymmetrizedBasis == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzZ3sym_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzZ3sym_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	    }
 	  else
 	    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	    sprintf (EigenvectorName, "bosons_cp2_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+	    sprintf (EigenvectorName, "%s_cp2_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	  else
 	    {
 	      if(TzSymmetrizedBasis == true && TzMinusParity == false)
-		sprintf (EigenvectorName, "bosons_cp2_tzpsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzpsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if(TzSymmetrizedBasis == true && TzMinusParity == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzmsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzmsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if (TzZ3SymmetrizedBasis == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzZ3sym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzZ3sym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	    }
 	}
 	
@@ -295,14 +318,14 @@ int main(int argc, char** argv)
 	if (FirstRun == true)
 	  FirstRun = false;
 	} 
-	
+	}
       }
     }
     else
     {
      int tz = Manager.GetInteger("only-tz");
      int y = Manager.GetInteger("only-y");
-     if (((y + 3*tz + 2*NbrBosons*NbrFluxQuanta) % 6 != 0) || ((y - 3*tz + 2*NbrBosons*NbrFluxQuanta) % 6 != 0))
+     if (((y + 3*tz + 2*NbrParticles*NbrFluxQuanta) % 6 != 0) || ((y - 3*tz + 2*NbrParticles*NbrFluxQuanta) % 6 != 0))
      {
        cout << "Y + 3Tz + 2N*Nphi and Y - 3Tz + 2N*Nphi should multiple of 6" << endl;
        return -1;
@@ -325,36 +348,48 @@ int main(int argc, char** argv)
 	  cout << "(plus parity) ";
       }
      ParticleOnSphere* Space = 0;
-     if (NbrOrbitals + NbrBosons < 65)
-	{
-	  if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	    Space = new BosonOnCP2(NbrBosons, NbrFluxQuanta, tz, y);
-	  else
+     if (Manager.GetBoolean("boson") == true)
+     {
+      if (NbrOrbitals + NbrParticles < 65)
 	  {
-	    if (TzSymmetrizedBasis == true)
-	    {
-	      if (tz != 0)
+	    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
+	      Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
+	    else
 	      {
-		cout << "tzsymmetrized-basis mode only valid for tz = 0" << endl;
-		return 0;
-	      }
-	      else
-		Space = new BosonOnCP2TzSymmetry(NbrBosons, NbrFluxQuanta, tz, y, TzMinusParity);
-	      }
-	    if (TzZ3SymmetrizedBasis == true)
-	    {
-	      if ( tz == 0 && y ==0)
-		Space = new BosonOnCP2TzZ3Symmetry(NbrBosons, NbrFluxQuanta, tz, y, TzMinusParity);
-	      else
-	      {
-		cout << "tzZ3symmetrized-basis mode only valid for tz = 0" << endl;
-		return 0;
-	      }
+		if (TzSymmetrizedBasis == true)
+		  {
+		    if (tz != 0)
+		      {
+			cout << "tzsymmetrized-basis mode only valid for tz = 0" << endl;
+			return 0;
+		      }
+		    else
+		      Space = new BosonOnCP2TzSymmetry(NbrParticles, NbrFluxQuanta, tz, y, TzMinusParity);
+		   }
+		if (TzZ3SymmetrizedBasis == true)
+		  {
+		    if ( tz == 0 && y ==0)
+		      Space = new BosonOnCP2TzZ3Symmetry(NbrParticles, NbrFluxQuanta, tz, y, TzMinusParity);
+		    else
+		      {
+			cout << "tzZ3symmetrized-basis mode only valid for tz = 0" << endl;
+			return 0;
+		      }
+		   }
+		}  
 	    }
-	  }  
-	 }
-     else
-	cout << " Warning : number of orbitals too big " << endl;
+	else
+	    cout << " Warning : number of orbitals too big " << endl;
+     }
+	else
+	  {
+	    if (NbrOrbitals < 65)
+	    {
+	      Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
+	    }
+	    else
+	      cout << " Warning : number of orbitals too big " << endl;
+	  }
      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
     if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
@@ -365,18 +400,18 @@ int main(int argc, char** argv)
     if (ThreeBodyFlag == false)
     {
       if (OneBodyPotentials == 0)
-	Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrBosons, NbrFluxQuanta, PseudoPotentials, Architecture.GetArchitecture(), Memory);
+	Hamiltonian = new ParticleOnCP2GenericTwoBodyHamiltonian(Space, NbrParticles, NbrFluxQuanta, PseudoPotentials, Architecture.GetArchitecture(), Memory);
 //       else
-// 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
+// 	Hamiltonian = new ParticleOnCP2DeltaHamiltonian(Space, NbrParticles, NbrFluxQuanta, OneBodyPotentials, Architecture.GetArchitecture(), Memory);
     }
     else
     {
       cout << "three-body interaction not implemented yet" << endl;
       return -1;
-// 	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrBosons, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
+// 	Hamiltonian = new ParticleOnCP2ThreeBodyDeltaHamiltonian(Space, NbrParticles, NbrFluxQuanta, 0, Architecture.GetArchitecture(),  Memory, DiskCacheFlag, LoadPrecalculationFileName);
     }
       
-//        double Shift = - 0.5 * ((double) (NbrBosons * NbrBosons)) / (0.5 * ((double) NbrFluxQuanta));
+//        double Shift = - 0.5 * ((double) (NbrParticles * NbrParticles)) / (0.5 * ((double) NbrFluxQuanta));
 //        Hamiltonian->ShiftHamiltonian(Shift);
     char* EigenvectorName = 0;
     if (Manager.GetBoolean("eigenstate") == true)	
@@ -384,27 +419,27 @@ int main(int argc, char** argv)
 	EigenvectorName = new char [64];
 	  if (ThreeBodyFlag == false)
 	    if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	      sprintf (EigenvectorName, "bosons_cp2_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+	      sprintf (EigenvectorName, "%s_cp2_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	    else
 	    {
 	      if(TzSymmetrizedBasis == true && TzMinusParity == false)
-		sprintf (EigenvectorName, "bosons_cp2_tzpsym_%s_n_%d_2s_%d_tz_%d_y_%d",  Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzpsym_%s_n_%d_2s_%d_tz_%d_y_%d",  StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if(TzSymmetrizedBasis == true && TzMinusParity == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzmsym_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzmsym_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if (TzZ3SymmetrizedBasis == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzZ3sym_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"),  NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzZ3sym_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"),  NbrParticles, NbrFluxQuanta, tz, y);
 	    }
 	else
 	  if (TzSymmetrizedBasis == false && TzZ3SymmetrizedBasis == false)
-	   sprintf (EigenvectorName, "bosons_cp2_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+	   sprintf (EigenvectorName, "%s_cp2_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	  else
 	    {
 	      if(TzSymmetrizedBasis == true && TzMinusParity == false)
-		sprintf (EigenvectorName, "bosons_cp2_tzpsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzpsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if(TzSymmetrizedBasis == true && TzMinusParity == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzmsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzmsym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	      if (TzZ3SymmetrizedBasis == true)
-		sprintf (EigenvectorName, "bosons_cp2_tzZ3sym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", Manager.GetString("interaction-name"), NbrBosons, NbrFluxQuanta, tz, y);
+		sprintf (EigenvectorName, "%s_cp2_tzZ3sym_threebody_%s_n_%d_2s_%d_tz_%d_y_%d", StatisticPrefix, Manager.GetString("interaction-name"), NbrParticles, NbrFluxQuanta, tz, y);
 	    }
       }
     char* ContentPrefix = new char[256];
