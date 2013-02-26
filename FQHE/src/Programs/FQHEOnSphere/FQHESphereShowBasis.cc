@@ -21,6 +21,7 @@
 #include "HilbertSpace/BosonOn4DSphereLong.h"
 #include "HilbertSpace/BosonOnCP2.h"
 #include "HilbertSpace/FermionOnCP2.h"
+#include "HilbertSpace/FermionOnCP2Long.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -176,7 +177,7 @@ int main(int argc, char** argv)
 	}
     }
     else
-      if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 > 64)
+      if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 > 128)
 	{
 	  cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
 	  return -1;
@@ -356,7 +357,10 @@ int main(int argc, char** argv)
 		      Space = new FermionOnSphereFourLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);
 		    else
 		      if (CP2Flag == true)
-			Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			if (NbrOrbitals < 64)
+			  Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			else
+			  Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, TzValue, YValue);
     }
   
   if (Manager.GetString("get-index") != 0)
