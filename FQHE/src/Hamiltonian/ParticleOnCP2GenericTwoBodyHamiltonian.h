@@ -39,6 +39,7 @@
 #include "Vector/RealVector.h"
 
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/FermionOnCP2.h"
 
 #include <iostream>
 
@@ -69,7 +70,8 @@ class ParticleOnCP2GenericTwoBodyHamiltonian : public AbstractQHEOnSphereFullHam
   // array that gives the value of s for one particle corresponding to the linearized index
   int* quantumNumberS;
   //Hilbert Space CP2
-  BosonOnCP2* Particles2;
+  BosonOnCP2* ParticlesBosons;
+  FermionOnCP2* ParticlesFermions;
   // array with the coefficient in front of each one body term (ordered such that the first element corresponds to the one of a+_-s a_-s)
   double* OneBodyPotentials;
   int* RepresentationDimension;

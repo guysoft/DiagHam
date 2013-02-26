@@ -77,15 +77,24 @@ ParticleOnCP2GenericTwoBodyHamiltonian::ParticleOnCP2GenericTwoBodyHamiltonian(P
     this->PseudoPotential[i] = pseudoPotential[i];
     if (this->PseudoPotential[i] != 0)
       this->PseudoPotentialIndexMax = i;
-  }
-  
-  this->Particles2 = (BosonOnCP2*) this->Particles;
+  }    
   this->quantumNumberTz = new int [this->NbrLzValue];
   this->quantumNumberY = new int [this->NbrLzValue];
   this->quantumNumberR = new int [this->NbrLzValue];
   this->quantumNumberS = new int [this->NbrLzValue];
   this->OneBodyTermFlag = false;
-  this->Particles2->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
+  
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+  {
+    this->ParticlesFermions = (FermionOnCP2*) this->Particles;
+    this->ParticlesFermions->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
+  }
+  else
+    {
+    this->ParticlesBosons = (BosonOnCP2*) this->Particles;
+    this->ParticlesBosons->GetQuantumNumbersFromLinearizedIndex(this->quantumNumberTz, this->quantumNumberY, this->quantumNumberR, this->quantumNumberS);
+    }
+  
 //   for (int i = 0; i<NbrLzValue; i++)
 //   {
 //    cout << i << " " << this->quantumNumberR[i] << " " << this->quantumNumberS[i] << endl; 
@@ -132,28 +141,19 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
   long TotalNbrInteractionFactors = 0;
   
   SU3ClebschGordanCoefficients Clebsch(this->NbrFluxQuanta, 0, this->NbrFluxQuanta, 0);
-  SU3IrreducibleRepresentations Representation(this->NbrFluxQuanta, 0);
-  
-//   for (int j = 0; j < Clebsch.GetNbrPQRepresentations(); ++j)
-//     {
-//       cout << PseudoPotential[j] << endl;
-//       for (int i = 0; i < Representation.GetDimension(); ++i)
-//       {
-// 	for (int k = 0; k < Representation.GetDimension(); ++k)
-//       {
-// 	for (int l = 0; l < Clebsch.GetRepresentationDimension(j) ; ++l)
-// 	  cout << i << " " << k << " " << l << " " << Clebsch.GetClebschGordanCoefficient(j, i, k, l) << endl;
-//       }
-//       }	    
-//     }
-		  
+  SU3IrreducibleRepresentations Representation(this->NbrFluxQuanta, 0);	  
   
   this->NbrSectorSums = (2*this->NbrFluxQuanta + 1)*(2*this->NbrFluxQuanta + 2)/2;
   this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
   for (int i = 0; i < this->NbrSectorSums; ++i)
   this->NbrSectorIndicesPerSum[i] = 0;  
       
-  for (int r1 = 0; r1 <= this->NbrFluxQuanta; ++r1)
+  
+  
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+  {
+    cout << "fermionic statistics" << endl;
+    for (int r1 = 0; r1 <= this->NbrFluxQuanta; ++r1)
     for (int r2 = 0; r2 <= this->NbrFluxQuanta; ++r2)
       for (int s1 = 0; s1 <= this->NbrFluxQuanta - r1; ++s1)
 	for (int s2 = 0; s2 <= this->NbrFluxQuanta - r2; ++s2) 
@@ -162,10 +162,10 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 	      int y1 = 3*(r1+s1) - 2*this->NbrFluxQuanta;
 	      int tz2 = r2 - s2;
 	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
-	      int Index1 = this->Particles2->GetLinearizedIndex(tz1, y1, 1);
-	      int Index2 = this->Particles2->GetLinearizedIndex(tz2, y2, 1);
-	      if (Index1 <= Index2)
-		++this->NbrSectorIndicesPerSum[this->Particles2->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2)];    
+	      int Index1 = this->ParticlesFermions->GetLinearizedIndex(tz1, y1, 1);
+	      int Index2 = this->ParticlesFermions->GetLinearizedIndex(tz2, y2, 1);
+	      if (Index1 < Index2)
+		++this->NbrSectorIndicesPerSum[this->ParticlesFermions->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2)];    
 	    }
 		
   this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
@@ -186,11 +186,11 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 	      int y1 = 3*(r1+s1) - 2*this->NbrFluxQuanta;
 	      int tz2 = r2 - s2;
 	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
-	      int Index1 = this->Particles2->GetLinearizedIndex(tz1, y1, 1);
-	      int Index2 = this->Particles2->GetLinearizedIndex(tz2, y2, 1);
-	      if (Index1 <= Index2)
+	      int Index1 = this->ParticlesFermions->GetLinearizedIndex(tz1, y1, 1);
+	      int Index2 = this->ParticlesFermions->GetLinearizedIndex(tz2, y2, 1);
+	      if (Index1 < Index2)
 		{
-		   int TmpSum = this->Particles2->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2);
+		   int TmpSum = this->ParticlesFermions->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2);
 		   this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		++this->NbrSectorIndicesPerSum[TmpSum];    
@@ -241,6 +241,115 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 		      for (int qIndex = 0; qIndex < Clebsch.GetRepresentationDimension(j); ++qIndex)
 			{
 // 			  cout << qIndex << " " << Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex) << endl;
+			 TmpInteractionFactor -= Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
+			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
+			 TmpInteractionFactor -= Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
+			}
+		      TmpInteractionFactor *= PseudoPotential[j];
+// 		      cout << TmpInteractionFactor << endl;
+		      }
+		    
+		    TmpFactor += TmpInteractionFactor;
+// 		    cout << j << " " << i << " " << Index << " = " << TmpInteractionFactor << endl;
+		  }
+	      this->InteractionFactors[i][Index] =  0.5*TmpFactor;
+	      
+	      TotalNbrInteractionFactors++;
+	      ++Index;
+	    }
+	   }
+	}
+  }
+  else
+  {
+    for (int r1 = 0; r1 <= this->NbrFluxQuanta; ++r1)
+      for (int r2 = 0; r2 <= this->NbrFluxQuanta; ++r2)
+	for (int s1 = 0; s1 <= this->NbrFluxQuanta - r1; ++s1)
+	  for (int s2 = 0; s2 <= this->NbrFluxQuanta - r2; ++s2) 
+	    {
+	      int tz1 = r1 - s1;
+	      int y1 = 3*(r1+s1) - 2*this->NbrFluxQuanta;
+	      int tz2 = r2 - s2;
+	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
+	      int Index1 = this->ParticlesBosons->GetLinearizedIndex(tz1, y1, 1);
+	      int Index2 = this->ParticlesBosons->GetLinearizedIndex(tz2, y2, 1);
+	      if (Index1 <= Index2)
+		++this->NbrSectorIndicesPerSum[this->ParticlesBosons->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2)];    
+	    }
+		
+    this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
+    for (int i = 0; i < this->NbrSectorSums; ++i)
+      {
+	if (this->NbrSectorIndicesPerSum[i]  > 0)
+	  {
+	    this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
+	    this->NbrSectorIndicesPerSum[i] = 0;
+	  }
+      }
+    for (int r1 = 0; r1 <= this->NbrFluxQuanta; ++r1)
+      for (int r2 = 0; r2 <= this->NbrFluxQuanta; ++r2)
+	for (int s1 = 0; s1 <= this->NbrFluxQuanta - r1; ++s1)
+	  for (int s2 = 0; s2 <= this->NbrFluxQuanta - r2; ++s2) 
+	    {
+	      int tz1 = r1 - s1;
+	      int y1 = 3*(r1+s1) - 2*this->NbrFluxQuanta;
+	      int tz2 = r2 - s2;
+	      int y2 = 3*(r2 + s2) - 2*this->NbrFluxQuanta;
+	      int Index1 = this->ParticlesBosons->GetLinearizedIndex(tz1, y1, 1);
+	      int Index2 = this->ParticlesBosons->GetLinearizedIndex(tz2, y2, 1);
+	      if (Index1 <= Index2)
+		{
+		   int TmpSum = this->ParticlesBosons->GetLinearizedIndex(tz1 + tz2, y1 + y2 , 2);
+		   this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
+		this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
+		++this->NbrSectorIndicesPerSum[TmpSum];    
+		}
+	    }
+      
+    this->InteractionFactors = new double* [this->NbrSectorSums];
+      
+      //cout << this->NbrSectorSums << endl;
+    for (int i = 0; i < this->NbrSectorSums; ++i)
+      {
+	 this->InteractionFactors[i] = new double[this->NbrSectorIndicesPerSum[i] * this->NbrSectorIndicesPerSum[i]];
+	 int Index = 0;
+	 for (int l1 = 0; l1 < this->NbrSectorIndicesPerSum[i]; ++l1)
+	   {
+	     int Index1 = this->SectorIndicesPerSum[i][l1 << 1];
+	     int Index2 = this->SectorIndicesPerSum[i][(l1 << 1) + 1];
+	     int tz1 = this->quantumNumberTz[Index1];
+	     int y1 = this->quantumNumberY[Index1];
+	     int tz2 = this->quantumNumberTz[Index2];
+	     int y2 = this->quantumNumberY[Index2];
+	     int qIndice1 = Representation.GetQIndices(tz1, y1, 0);
+	     int qIndice2 = Representation.GetQIndices(tz2, y2, 0);
+	     for (int l2 = 0; l2 < this->NbrSectorIndicesPerSum[i]; ++l2)
+	      {
+		 int Index3 = this->SectorIndicesPerSum[i][l2 << 1];
+		 int Index4 = this->SectorIndicesPerSum[i][(l2 << 1) + 1];
+		 int tz3 = this->quantumNumberTz[Index3];
+		 int y3 = this->quantumNumberY[Index3];
+		 int tz4 = this->quantumNumberTz[Index4];
+		 int y4 = this->quantumNumberY[Index4];
+		 int qIndice3 = Representation.GetQIndices(tz3, y3, 0);
+		 int qIndice4 = Representation.GetQIndices(tz4, y4, 0);
+		  
+// 		  cout << tz1 << " " << y1 << " " << qIndice1 << " ; " << tz2 << " " << y2 << " " << qIndice2 << " ; " << tz3 << " " << y3 << " " << qIndice3 << " ; " << tz4 << " " << y4 << " " << qIndice4 << endl;
+		 
+		  double TmpInteractionFactor;
+		  double TmpFactor = 0;
+		  
+		  for (int j = 0; j < Clebsch.GetNbrPQRepresentations(); ++j)
+		  {
+		    TmpInteractionFactor = 0;
+		    if ((this->PseudoPotential[j] != 0) && (Clebsch.GetDegeneracy(j, qIndice1, qIndice2) != 0))
+		      {
+// 			cout << j << " " << Clebsch.GetDegeneracy(j, qIndice1, qIndice2) << " " << Clebsch.GetRepresentationDimension(j) << endl;
+		      
+		      for (int qIndex = 0; qIndex < Clebsch.GetRepresentationDimension(j); ++qIndex)
+			{
+// 			  cout << qIndex << " " << Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex) << endl;
 			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
 			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice2, qIndice1, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice3, qIndice4, qIndex);
 			 TmpInteractionFactor += Clebsch.GetClebschGordanCoefficient(j, qIndice1, qIndice2, qIndex)*Clebsch.GetClebschGordanCoefficient(j, qIndice4, qIndice3, qIndex);
@@ -248,7 +357,7 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 			}
 		      TmpInteractionFactor *= PseudoPotential[j];
 // 		      cout << TmpInteractionFactor << endl;
-		      }
+		     }
 		    
 		    TmpFactor += TmpInteractionFactor;
 // 		    cout << j << " " << i << " " << Index << " = " << TmpInteractionFactor << endl;
@@ -262,9 +371,10 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
 
 	      TotalNbrInteractionFactors++;
 	      ++Index;
-	    }
 	   }
-	  }
+	}
+      }
+    }
   if (this->OneBodyTermFlag == true)
     {
       this->NbrOneBodyInteractionFactors = 0;
