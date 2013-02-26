@@ -7,6 +7,7 @@
 #include "HilbertSpace/BosonOnCP2.h"
 #include "HilbertSpace/BosonOnCP2TzSymmetry.h"
 #include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
+#include "HilbertSpace/FermionOnCP2.h"
 
 #include "Hamiltonian/ParticleOnCP2GenericTwoBodyHamiltonian.h"
 
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
   double* OneBodyPotentials = 0;
   double* PseudoPotentials = 0;
   
+    
   if (Manager.GetString("onebody-file") != 0)
   {
   ConfigurationParser OneBodyDefinition;
