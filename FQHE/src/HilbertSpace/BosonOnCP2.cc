@@ -67,7 +67,7 @@ BosonOnCP2::BosonOnCP2 ()
 // basic constructor
 // 
 // nbrBosons = number of bosons
-// p = number of flux quanta (determines an irreducible representation of SO(5), along with q=0 (LLL))
+// p = number of flux quanta (determines an irreducible representation of SU(3), along with q=0 (LLL))
 // totalJz = total value of jz
 // totalKz = total value of kz
 // memory = amount of memory granted for precalculations
@@ -273,7 +273,7 @@ ostream& BosonOnCP2::PrintState (ostream& Str, int state)
    //cout << TemporaryStateLzMax << endl;
 //   Str << hex << this->FermionBasis->StateDescription[state] << dec << " " <<  this->FermionBasis->StateLzMax[state] << "   ";
 //   cout << this->TotalTz << " " << this->TotalY << " ; " << this->TotalR << " " << this->TotalS << " ";
-  Str << this->FermionBasis->StateDescription[state] <<"[";
+  Str << "[";
   for (int index = 0; index <= this->TemporaryStateLzMax; ++index)
   {
    if (this->TemporaryState[index] > 0)
