@@ -20,6 +20,7 @@
 #include "HilbertSpace/BosonOn4DSphere.h"
 #include "HilbertSpace/BosonOn4DSphereLong.h"
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/FermionOnCP2.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 #include "Tools/FQHEFiles/FQHESqueezedBasisTools.h"
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
-  (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 (only available in the bosonic mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
@@ -166,11 +167,20 @@ int main(int argc, char** argv)
   
   if (CP2Flag == true)
   {
-   if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 + NbrParticles > 64)
-   {
-    cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
-    return -1;
-   }
+    if (Manager.GetBoolean("boson") == true)
+    {
+      if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 + NbrParticles > 64)
+	{
+	  cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	  return -1;
+	}
+    }
+    else
+      if ((NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)/2 > 64)
+	{
+	  cout  << "number of fermionic orbitals is too big to allow the storage of one state in one long integer" << endl;
+	  return -1;
+	}
    if ((YValue + 3*TzValue + 2*NbrParticles*NbrFluxQuanta) % 6 != 0)
    {
       cout << "Y + 3Tz + 2N*Nphi should  be a multiple of 6" << endl;
@@ -249,7 +259,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false) && (ThreeLLFlag == false) && (FourLLFlag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (AllSzFlag == false) && (TwoLLFlag == false) && (ThreeLLFlag == false) && (FourLLFlag == false) && (CP2Flag == false))
 	{
 	  if (HaldaneBasisFlag == false)
 	    {
@@ -343,7 +353,10 @@ int main(int argc, char** argv)
 		    Space = new FermionOnSphereThreeLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);	 
 		  else
 		    if (FourLLFlag == true)
-		      Space = new FermionOnSphereFourLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);	 		    
+		      Space = new FermionOnSphereFourLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta);
+		    else
+		      if (CP2Flag == true)
+			Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
     }
   
   if (Manager.GetString("get-index") != 0)
@@ -408,6 +421,9 @@ int main(int argc, char** argv)
 			if (FourLLFlag == true)
 			  sprintf (OutputFileName, "fermions_sphere_4ll_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 		      else
+			if (CP2Flag == true)
+			  sprintf(OutputFileName, "fermions_spherecp2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+			else
 			sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz);
 	}
       else
