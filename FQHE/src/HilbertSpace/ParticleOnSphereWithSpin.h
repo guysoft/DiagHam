@@ -418,6 +418,18 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int lzSector, 
 								     ComplexVector& groundState, AbstractArchitecture* architecture);
 
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // and computed from precalculated particle entanglement matrix
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  // thetaTop =  inclination angle defining one edge of the cut in degrees
+  // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, int szSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix);
+
 };
 
 #endif

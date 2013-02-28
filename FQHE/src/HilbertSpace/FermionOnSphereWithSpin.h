@@ -504,6 +504,28 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int lzSector, int szSector, RealVector& groundState);
 
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector and a gien Sz sector.
+  //
+  // nbrFermionSector = number of particles that belong to the subsytem
+  // lzSector = Lz sector in which the density matrix has to be evaluated
+  // szSector = Sz sector in which the density matrix has to be evaluated
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int lzSector, int szSector, RealVector& groundState, bool removeBinomialCoefficient);
+  
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
+  // and computed from precalculated particle entanglement matrix
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // phiRange = The angle traced in the \hat{phi} direction between the 2 longitudes defining the cut in degrees
+  // thetaTop =  inclination angle defining one edge of the cut in degrees
+  // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, int szSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix);
+  
   // compute the sign when moving all the up spin to the right from state index
   //
   // state = state whose spin splitting sign has to be computed

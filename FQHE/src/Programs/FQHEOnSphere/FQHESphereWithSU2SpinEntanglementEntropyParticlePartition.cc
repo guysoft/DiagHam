@@ -6,6 +6,7 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 
+#include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
 
 #include "Options/OptionManager.h"
@@ -14,6 +15,7 @@
 #include "Options/BooleanOption.h"
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleStringOption.h"
+#include "Options/SingleDoubleOption.h"
 
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
@@ -67,6 +69,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*SystemGroup) += new BooleanOption  ('\n', "realspace-cut", "use real space partition instead of particle partition");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-top", "inclination angle that defines the top of the real space parition (in degrees)", 0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-bot", "inclination angle that defines the bottom of the real space parition (in degrees)", 90);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-phi-range", "angle between the 2 longitudes that defines the real space parition (in degrees)", 360);
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
   (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "sza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Sz value", 0);
@@ -75,6 +81,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -112,6 +119,7 @@ int main(int argc, char** argv)
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
+  bool SVDFlag = Manager.GetBoolean("use-svd");
   char* DensityMatrixFileName = Manager.GetString("density-matrix");
   bool EigenstateFlag = Manager.GetBoolean("density-eigenstate");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
@@ -120,6 +128,7 @@ int main(int argc, char** argv)
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
   bool NoSzFlag = Manager.GetBoolean("no-sz");
   bool ComplexFlag = Manager.GetBoolean("complex");
+  bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
   int* TotalLz = 0;
   int* TotalSz = 0;
   bool Statistics = true;
@@ -206,9 +215,17 @@ int main(int argc, char** argv)
     {
       if (Statistics == true)
 	{
-	  cout << "error : fermions are not yet supported" << endl;
-	  return 0;
-	  Spaces[i] = 0;
+	  if (NoSzFlag == false)
+	    {
+	      Spaces[i] = new FermionOnSphereWithSpin (NbrParticles, TotalLz[i], LzMax, TotalSz[i]);
+	    }
+	  else
+	    {
+	      cout << "error : bosons without Sz are not yet supported" << endl;
+	      return 0;
+//	      Spaces[i] = new FermionOnSphereWithSpin (NbrParticles, TotalLz[i], LzMax);
+	    }
+	  
 	}
       else
 	{
@@ -297,9 +314,20 @@ int main(int argc, char** argv)
 
   int MaxSubsystemNbrParticles = (NbrParticles >> 1) + (NbrParticles & 1);
   if (Manager.GetInteger("max-na") > 0)
-    MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+    {
+      MaxSubsystemNbrParticles = Manager.GetInteger("max-na");
+    }
+  else
+    {
+      if (RealSpaceCut == true)
+        MaxSubsystemNbrParticles = NbrParticles;
+    }
   int SubsystemNbrParticles = Manager.GetInteger("min-na");
-
+  if ((RealSpaceCut == true) && (SubsystemNbrParticles == 1))
+    {
+      SubsystemNbrParticles = 0;
+    }
+  double TotalTrace = 0;
   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
       double EntanglementEntropy = 0.0;
@@ -321,6 +349,7 @@ int main(int argc, char** argv)
 		{
 		  SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax;
 		}
+	      
 	      int SubsystemTotalLz = -SubsystemMaxTotalLz; 
 	      for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 		{
@@ -341,55 +370,109 @@ int main(int argc, char** argv)
 		    }
 		  RealSymmetricMatrix PartialDensityMatrix;
 		  HermitianMatrix ComplexPartialDensityMatrix;
+		  RealMatrix PartialEntanglementMatrix; 
+		  
 		  for (int i = 0; i < NbrSpaces; ++i)
 		    {
-		      if ((SubsystemNbrNUp <= NbrNUp[i]) && (SubsystemNbrNDown <= NbrNDown[i]))
+		      int ComplementaryNbrNUp = NbrNUp[i] - SubsystemNbrNUp;
+		      int ComplementaryNbrNDown = NbrNDown[i] - SubsystemNbrNDown;
+		      int ComplementaryMaxTotalLz = 0;
+		      if (Statistics == true)
+			{
+			  ComplementaryMaxTotalLz = (((ComplementaryNbrNUp * LzMax) - (ComplementaryNbrNUp * (ComplementaryNbrNUp - 1)))
+						     + ((ComplementaryNbrNDown * LzMax) - ( ComplementaryNbrNDown * ( ComplementaryNbrNDown - 1))));
+			}
+		      else
+			{
+			  ComplementaryMaxTotalLz = (ComplementaryNbrNUp + ComplementaryNbrNDown) * LzMax;
+			}
+		      
+		      if ((SubsystemNbrNUp <= NbrNUp[i]) && (SubsystemNbrNDown <= NbrNDown[i]) && (abs(TotalLz[i] - SubsystemTotalLz) <= ComplementaryMaxTotalLz ))
 			{
 			  RealSymmetricMatrix TmpMatrix;
 			  HermitianMatrix ComplexTmpMatrix;
-			  if (NoSzFlag == false)
+			  
+			  if (Statistics == true)
 			    {
 			      if (ComplexFlag == false)
-			      TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
-												   SubsystemNbrNUp, SubsystemNbrNDown, GroundStates[i], Architecture.GetArchitecture());
-			      //else
-				//ComplexTmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,   SubsystemNbrNUp, SubsystemNbrNDown, ComplexGroundStates[i], Architecture.GetArchitecture());
+				{
+				  if (SVDFlag == true)
+				    {
+				      PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+																SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , false);
+				      if (RealSpaceCut == true)
+					{
+					  PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , true);
+					  if(PartialEntanglementMatrix.GetNbrRow() != 0)
+					    {
+					      Spaces[i]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, SubsystemNbrNUp - SubsystemNbrNDown ,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+					    }
+					}
+				      else
+					PartialEntanglementMatrix = Spaces[i]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz , SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i] , false);
+				    }
+				  else
+				    TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+													 SubsystemNbrNUp - SubsystemNbrNDown, GroundStates[i]);
+				}
 			    }
 			  else
 			    {
-			      if (ComplexFlag == false)
-			      TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
-												   GroundStates[i], Architecture.GetArchitecture());
+			      if (NoSzFlag == false)
+				{
+				  if (ComplexFlag == false)
+				    TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+													 SubsystemNbrNUp, SubsystemNbrNDown, GroundStates[i], Architecture.GetArchitecture());
+				  //else
+				  //ComplexTmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,   SubsystemNbrNUp, SubsystemNbrNDown, ComplexGroundStates[i], Architecture.GetArchitecture());
+				}
 			      else
-				ComplexTmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  ComplexGroundStates[i], Architecture.GetArchitecture());
-
+				{
+				  if (ComplexFlag == false)
+				    TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+													 GroundStates[i], Architecture.GetArchitecture());
+				  else
+				    ComplexTmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz,  ComplexGroundStates[i], Architecture.GetArchitecture());
+				  
+				}
 			    }
-			    if (ComplexFlag == false)
+			  
+			  if (SVDFlag == false)
 			    {
-			  if (PartialDensityMatrix.GetNbrRow() > 0)
-			    PartialDensityMatrix += TmpMatrix;
-			  else
-			    PartialDensityMatrix = TmpMatrix;
-			    }
-			    else
-			    {
-			      if (ComplexPartialDensityMatrix.GetNbrRow() > 0)
-			    ComplexPartialDensityMatrix += ComplexTmpMatrix;
-			  else
-			    ComplexPartialDensityMatrix = ComplexTmpMatrix;
-			      
+			      if (ComplexFlag == false)
+				{
+				  if (PartialDensityMatrix.GetNbrRow() > 0)
+				    PartialDensityMatrix += TmpMatrix;
+				  else
+				    PartialDensityMatrix = TmpMatrix;
+				}
+			      else
+				{
+				  if (ComplexPartialDensityMatrix.GetNbrRow() > 0)
+				    ComplexPartialDensityMatrix += ComplexTmpMatrix;
+				  else
+				    ComplexPartialDensityMatrix = ComplexTmpMatrix;
+				}
 			    }
 			}
 		    }
-		    if (ComplexFlag == false)
-		    {
-		  if (NbrSpaces > 1)
-		    PartialDensityMatrix /= ((double) NbrSpaces);
-		    }
-		    else
+		  if (ComplexFlag == false)
 		    {
 		      if (NbrSpaces > 1)
-		    ComplexPartialDensityMatrix /= ((double) NbrSpaces);
+			{ 
+			  if (SVDFlag == true)
+			    {
+			      cout <<"SVD is not possible for more than one state"<<endl;
+			      return -1;
+			    }
+			  else
+			    PartialDensityMatrix /= ((double) NbrSpaces);
+			}
+		    }
+		  else
+		    {
+		      if (NbrSpaces > 1)
+			ComplexPartialDensityMatrix /= ((double) NbrSpaces);
 		    }
 		  if (ShowTimeFlag == true)
 		    {
@@ -398,219 +481,237 @@ int main(int argc, char** argv)
 					    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
 		      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
 		    }
-		    if (ComplexFlag == false)
+		  if (ComplexFlag == false)
 		    {
-		  if (PartialDensityMatrix.GetNbrRow() > 1)
-		    {
-		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-		      if (LapackFlag == true)
+		      if ((PartialDensityMatrix.GetNbrRow() > 1)||(PartialEntanglementMatrix.GetNbrRow() >= 1))
 			{
-			  if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
+			  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+			  if (SVDFlag == false)
 			    {
-			      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
-							PartialDensityMatrix.GetNbrRow(), true);
-			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-				TmpEigenstates[i][i] = 1.0;
-			      PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
-			      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-			      char* TmpEigenstateName = new char[512];
-			      int MaxNbrEigenstates = NbrEigenstates;
-			      if (NbrEigenstates == 0)
-				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
-			      for (int i = 0; i < MaxNbrEigenstates; ++i)
+#ifdef __LAPACK__
+			      if (LapackFlag == true)
 				{
-				  if (TmpDiag[i] > 1e-14)
+				  if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
 				    {
-				      if (NoSzFlag == false)
+				      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+								PartialDensityMatrix.GetNbrRow(), true);
+				      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+					TmpEigenstates[i][i] = 1.0;
+				      PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+				      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+				      char* TmpEigenstateName = new char[512];
+				      int MaxNbrEigenstates = NbrEigenstates;
+				      if (NbrEigenstates == 0)
+					MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+				      for (int i = 0; i < MaxNbrEigenstates; ++i)
 					{
-					  if (Statistics == true)
+					  if (TmpDiag[i] > 1e-14)
 					    {
-					      sprintf (TmpEigenstateName,
-						       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
-					    }
-					  else
-					    {
-					      sprintf (TmpEigenstateName,
-						       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
+					      if (NoSzFlag == false)
+						{
+						  if (Statistics == true)
+						    {
+						      sprintf (TmpEigenstateName,
+							       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
+						    }
+						  else
+						    {
+						      sprintf (TmpEigenstateName,
+							       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
+						    }
+						}
+					      else
+						{
+						  if (Statistics == true)
+						    {
+						      sprintf (TmpEigenstateName,
+							       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalLz, i);
+						    }
+						  else
+						    {
+						      sprintf (TmpEigenstateName,
+							       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalLz, i);
+						    }
+						}
+					      TmpEigenstates[i].WriteVector(TmpEigenstateName);
 					    }
 					}
-				      else
-					{
-					  if (Statistics == true)
-					    {
-					      sprintf (TmpEigenstateName,
-						       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalLz, i);
-					    }
-					  else
-					    {
-					      sprintf (TmpEigenstateName,
-						       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalLz, i);
-					    }
-					}
-				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+				      delete[] TmpEigenstateName;
+				    }
+				  else
+				    {
+				      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
 				    }
 				}
-			      delete[] TmpEigenstateName;
+			      else
+				{
+				  if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
+				    {
+				      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
+								PartialDensityMatrix.GetNbrRow(), true);
+				      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+					TmpEigenstates[i][i] = 1.0;
+				      PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
+				      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+				      char* TmpEigenstateName = new char[512];
+				      int MaxNbrEigenstates = NbrEigenstates;
+				      if (NbrEigenstates == 0)
+					MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+				      for (int i = 0; i < MaxNbrEigenstates; ++i)
+					{
+					  if (TmpDiag[i] > 1e-14)
+					    {
+					      if (NoSzFlag == false)
+						{
+						  if (Statistics == true)
+						    {
+						      sprintf (TmpEigenstateName,
+							       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
+						    }
+						  else
+						    {
+						      sprintf (TmpEigenstateName,
+							       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
+						    }
+						}
+					      else
+						{
+						  if (Statistics == true)
+						    {
+						      sprintf (TmpEigenstateName,
+							       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalLz, i);
+						    }
+						  else
+						    {
+						      sprintf (TmpEigenstateName,
+							       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
+							       NbrParticles, LzMax, TotalLz[0], 
+							       SubsystemNbrParticles, SubsystemTotalLz, i);
+						    }
+						}
+					      TmpEigenstates[i].WriteVector(TmpEigenstateName);
+					    }
+					}
+				      delete[] TmpEigenstateName;
+				    }
+				  else
+				    {
+				      PartialDensityMatrix.Diagonalize(TmpDiag);
+				    }
+				}
+#else
+			      PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif 
 			    }
 			  else
 			    {
-			      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+			      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+			      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+			      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+				{
+				  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+				}
+			      for (int i = 0; i < TmpDimension; ++i)
+				{
+				  TmpValues[i] *= TmpValues[i];
+				}
+			      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);  
+			    }
+			  
+			  TmpDiag.SortMatrixDownOrder();
+			  if (DensityMatrixFileName != 0)
+			    {
+			      ofstream DensityMatrixFile;
+			      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			      DensityMatrixFile.precision(14);
+			      if (NoSzFlag == false)
+				{
+				  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+				    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+						      <<  SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+				}
+			      else
+				{
+				  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+				    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
+				}
+			      DensityMatrixFile.close();
+			    }
+			  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+			    {
+			      if (TmpDiag[i] > 1e-14)
+				{
+				  EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
+				  DensitySum +=TmpDiag[i];
+				}
+			    }
+			  if (ShowTimeFlag == true)
+			    {
+			      gettimeofday (&(TotalEndingTime), 0);
+			      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+						    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+			      cout << "diagonalization done in " << Dt << "s" << endl;
 			    }
 			}
 		      else
-			{
-			  if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
-			    {
-			      RealMatrix TmpEigenstates(PartialDensityMatrix.GetNbrRow(),
-							PartialDensityMatrix.GetNbrRow(), true);
-			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-				TmpEigenstates[i][i] = 1.0;
-			      PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
-			      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-			      char* TmpEigenstateName = new char[512];
-			      int MaxNbrEigenstates = NbrEigenstates;
-			      if (NbrEigenstates == 0)
-				MaxNbrEigenstates = PartialDensityMatrix.GetNbrRow();
-			      for (int i = 0; i < MaxNbrEigenstates; ++i)
-				{
-				  if (TmpDiag[i] > 1e-14)
-				    {
-				      if (NoSzFlag == false)
-					{
-					  if (Statistics == true)
-					    {
-					      sprintf (TmpEigenstateName,
-						       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
-					    }
-					  else
-					    {
-					      sprintf (TmpEigenstateName,
-						       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_sza_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalLz, i);
-					    }
-					}
-				      else
-					{
-					  if (Statistics == true)
-					    {
-					      sprintf (TmpEigenstateName,
-						       "fermions_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalLz, i);
-					    }
-					  else
-					    {
-					      sprintf (TmpEigenstateName,
-						       "bosons_sphere_su2_density_n_%d_2s_%d_lz_%d_na_%d_lza_%d.%d.vec",
-						       NbrParticles, LzMax, TotalLz[0], 
-						       SubsystemNbrParticles, SubsystemTotalLz, i);
-					    }
-					}
-				      TmpEigenstates[i].WriteVector(TmpEigenstateName);
-				    }
-				}
-			      delete[] TmpEigenstateName;
-			    }
-			  else
-			    {
-			      PartialDensityMatrix.Diagonalize(TmpDiag);
-			    }
-			}
-#else
-		      PartialDensityMatrix.Diagonalize(TmpDiag);
-#endif		  
-		      TmpDiag.SortMatrixDownOrder();
-		      if (DensityMatrixFileName != 0)
-			{
-			  ofstream DensityMatrixFile;
-			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			  DensityMatrixFile.precision(14);
-			  if (NoSzFlag == false)
-			    {
-			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
-						  <<  SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
-			    }
-			  else
-			    {
-			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpDiag[i] << endl;
-			    }
-			  DensityMatrixFile.close();
-			}
-		      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-			{
-			  if (TmpDiag[i] > 1e-14)
-			    {
-			      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
-			      DensitySum +=TmpDiag[i];
-			    }
-			}
-		      if (ShowTimeFlag == true)
-			{
-			  gettimeofday (&(TotalEndingTime), 0);
-			  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-						((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
-			  cout << "diagonalization done in " << Dt << "s" << endl;
-			}
-		    }
-		  else
-		    if (PartialDensityMatrix.GetNbrRow() == 1)
-		      {
-			double TmpValue = PartialDensityMatrix(0,0);
-			if (DensityMatrixFileName != 0)
+			if (PartialDensityMatrix.GetNbrRow() == 1)
 			  {
-			    ofstream DensityMatrixFile;
-			    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-			    DensityMatrixFile.precision(14);
-			    if (NoSzFlag == false)
+			    double TmpValue = PartialDensityMatrix(0,0);
+			    if (DensityMatrixFileName != 0)
 			      {
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
-						  << SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpValue << endl;
-			      }
-			    else
-			      {
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
-			      }
-			    DensityMatrixFile.close();
-			  }		  
+				ofstream DensityMatrixFile;
+				DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+				DensityMatrixFile.precision(14);
+				if (NoSzFlag == false)
+				  {
+				    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << SubsystemNbrNUp << " " 
+						      << SubsystemNbrNDown << " " << SubsystemTotalLz << " " << TmpValue << endl;
+				  }
+				else
+				  {
+				    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+				  }
+				DensityMatrixFile.close();
+			      }		  
 			if (TmpValue > 1e-14)
 			  {
 			    EntanglementEntropy += TmpValue * log(TmpValue);
 			    DensitySum += TmpValue;
 			  }
-		      }
-		}
-		else
-		{
-		 if (ComplexPartialDensityMatrix.GetNbrRow() > 1)
+			  }
+		    }
+		  else
 		    {
-		      RealDiagonalMatrix TmpDiag (ComplexPartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-		      if (LapackFlag == true)
+		      if (ComplexPartialDensityMatrix.GetNbrRow() > 1)
 			{
-			  if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
+			  RealDiagonalMatrix TmpDiag (ComplexPartialDensityMatrix.GetNbrRow());
+#ifdef __LAPACK__
+			  if (LapackFlag == true)
 			    {
-			      ComplexMatrix TmpEigenstates(ComplexPartialDensityMatrix.GetNbrRow(),
-							ComplexPartialDensityMatrix.GetNbrRow(), true);
-			      for (int i = 0; i < ComplexPartialDensityMatrix.GetNbrRow(); ++i)
-				TmpEigenstates[i][i] = 1.0;
-			      ComplexPartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
-			      TmpDiag.SortMatrixDownOrder(TmpEigenstates);
-			      char* TmpEigenstateName = new char[512];
-			      int MaxNbrEigenstates = NbrEigenstates;
+			      if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
+				{
+				  ComplexMatrix TmpEigenstates(ComplexPartialDensityMatrix.GetNbrRow(),
+							       ComplexPartialDensityMatrix.GetNbrRow(), true);
+				  for (int i = 0; i < ComplexPartialDensityMatrix.GetNbrRow(); ++i)
+				    TmpEigenstates[i][i] = 1.0;
+				  ComplexPartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+				  TmpDiag.SortMatrixDownOrder(TmpEigenstates);
+				  char* TmpEigenstateName = new char[512];
+				  int MaxNbrEigenstates = NbrEigenstates;
 			      if (NbrEigenstates == 0)
 				MaxNbrEigenstates = ComplexPartialDensityMatrix.GetNbrRow();
 			      for (int i = 0; i < MaxNbrEigenstates; ++i)
@@ -666,7 +767,7 @@ int main(int argc, char** argv)
 			  if ((EigenstateFlag == true) && (FilterLza == SubsystemTotalLz) && (FilterSza == SubsystemTotalSz))
 			    {
 			      ComplexMatrix TmpEigenstates(ComplexPartialDensityMatrix.GetNbrRow(),
-							ComplexPartialDensityMatrix.GetNbrRow(), true);
+							   ComplexPartialDensityMatrix.GetNbrRow(), true);
 			      for (int i = 0; i < ComplexPartialDensityMatrix.GetNbrRow(); ++i)
 				TmpEigenstates[i][i] = 1.0;
 			      ComplexPartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates, Manager.GetDouble("diag-precision"));
@@ -788,11 +889,20 @@ int main(int argc, char** argv)
 			  }
 		      }
 		} 
-
+		  
+		    }
 		}
 	    }
+      if (RealSpaceCut == true)
+	TotalTrace += DensitySum;
+
+	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
 	}
-      File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+  if (RealSpaceCut == true)
+    {
+      cout <<" Total density matrix trace is equal to "<< TotalTrace<<endl;
+      File << "# Total density matrix trace is equal to "<< TotalTrace<<endl;
     }
   File.close();
 }
+

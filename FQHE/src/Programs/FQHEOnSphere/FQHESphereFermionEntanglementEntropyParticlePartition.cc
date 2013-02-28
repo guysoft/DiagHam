@@ -63,10 +63,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-na", "minimum size of the particles whose entropy has to be evaluated", 1);
-	(*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum values of Lz whose sectors has to be evaluated", 0);
-	
-	 (*SystemGroup) += new SingleIntegerOption  ('\n', "min-lza", "minimum values of Lz whose sectors has to be evaluated", -1);
-    (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lza", "maximum values of Lz whose sectors has to be evaluated (0 if equal to half the total system size)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum values of Lz whose sectors has to be evaluated", 0);  
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "min-lza", "minimum values of Lz whose sectors has to be evaluated", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-lza", "maximum values of Lz whose sectors has to be evaluated (0 if equal to half the total system size)", -1);
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
@@ -141,8 +140,9 @@ int main(int argc, char** argv)
   ParticleOnSphere** Spaces = 0;
   RealVector* GroundStates = 0;
   char** GroundStateFiles = 0;
-	int MaxLzA = Manager.GetInteger("max-lza");
-	int MinLzA = Manager.GetInteger("min-lza");
+  int MaxLzA = Manager.GetInteger("max-lza");
+  int MinLzA = Manager.GetInteger("min-lza");
+ 
   if ((ComputeLValueFlag == true) && (DensityMatrixFileName == 0))
     {
       cout << "compute-lvalue only valid when density-matrix is activated" << endl;
@@ -348,11 +348,12 @@ int main(int argc, char** argv)
       while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
 	SubsystemMaxTotalLz -= 2;
       int SubsystemTotalLz = -SubsystemMaxTotalLz;
-			if ((MinLzA != -1) && (MinLzA > SubsystemTotalLz))
-				SubsystemTotalLz = MinLzA;
-			if ((MaxLzA != -1) && (MaxLzA < SubsystemMaxTotalLz))
-				SubsystemMaxTotalLz = MaxLzA;
-			
+	
+      if ((MinLzA != -1) && (MinLzA > SubsystemTotalLz))
+	SubsystemTotalLz = MinLzA;
+      if ((MaxLzA != -1) && (MaxLzA < SubsystemMaxTotalLz))
+	SubsystemMaxTotalLz = MaxLzA;
+      
       if ((LargestLSector == true) && (RealSpaceCut == false))
 	{
 	  if (((LzMax * NbrParticles) & 1) == 0)

@@ -2856,8 +2856,8 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
     {
       if (lzSector == 0)
 	{
-		cout <<this->TotalLz <<endl;
-		cout << this->LzMax<<endl;
+	  cout <<this->TotalLz <<endl;
+	  cout << this->LzMax<<endl;
 	  FermionOnSphere TmpHilbertSpace(this->NbrFermions, this->TotalLz - lzSector, this->LzMax);
 	  RealMatrix TmpEntanglementMatrix(1, TmpHilbertSpace.HilbertSpaceDimension, true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -2865,7 +2865,7 @@ RealMatrix FermionOnSphere::EvaluatePartialEntanglementMatrixParticlePartition(i
 	      int TmpLzMax = this->LzMax ;
 	      unsigned long TmpState = this->StateDescription[i];
 	      while ((TmpState >> TmpLzMax) == 0x0ul)
-					--TmpLzMax;
+		--TmpLzMax;
 	      
 	      TmpEntanglementMatrix.SetMatrixElement(0, TmpHilbertSpace.FindStateIndex(TmpState, TmpLzMax), groundState[i]);
 	    }
@@ -3572,6 +3572,7 @@ RealSymmetricMatrix FermionOnSphere::EvaluatePartialDensityMatrixRealSpacePartit
 // thetaBottom = inclination angle defining the bottom edge of the cut. thetaBottom>thetaTop in degrees
 // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
 // return value = reference on the entanglement matrix
+
 RealMatrix& FermionOnSphere::EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix)
 {
   if ((thetaBottom <= thetaTop) || (phiRange <= 0.0))
