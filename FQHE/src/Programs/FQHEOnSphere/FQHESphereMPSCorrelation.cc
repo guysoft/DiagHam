@@ -569,6 +569,12 @@ int main(int argc, char** argv)
 
           cout<<"Checksum = " << CheckSum << endl; 
 
+ 	  for (int i = 0; i <= NbrFluxQuanta; ++i)
+ 	   {
+ 	     delete Operators[i];
+ 	   }
+          delete[] Operators;
+
           long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
              
           Complex RhoRho; 
@@ -613,12 +619,15 @@ int main(int argc, char** argv)
  	            }
                }         
 
- 	      //for (int i = 0; i < NbrInteractionFactors; ++i)
- 	      // {
- 	      //   delete[] Operators[i];
- 	      // }
-              //delete[] Operators;
-              delete[] InteractionFactors;
+              if (NbrInteractionFactors > 0)
+               {
+ 	         for (int i = 0; i < NbrInteractionFactors; ++i)
+ 	          {
+ 	            delete Operators[i];
+ 	          }
+                 delete[] Operators;
+                 delete[] InteractionFactors;
+               }
 
               /*
               AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderDensityDensity (SpaceWrapper, NbrParticles, NbrFluxQuanta, AspectRatio, LandauLevel, X0, 0.0, X, 0.0, HoppingCutoff, Architecture.GetArchitecture(), Memory);
@@ -713,6 +722,8 @@ int main(int argc, char** argv)
 
 //       cout << endl;
 //     }
+
+  delete Basis;
 
   return 0;
 }
