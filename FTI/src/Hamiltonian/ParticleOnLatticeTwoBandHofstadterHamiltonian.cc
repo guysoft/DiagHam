@@ -154,10 +154,11 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }
 
-  for (int i=0; i<this->TightBindingModel->GetNbrStatePerBand(); ++i)
-    {
-      cout << "[" << this->OneBodyInteractionFactorsupup[i] << ", "<< this->OneBodyInteractionFactorsdowndown[i] << "]" << endl;
-    }
+  if (this->FlatBand == false)
+    for (int i=0; i<this->TightBindingModel->GetNbrStatePerBand(); ++i)
+      {
+	cout << "[" << this->OneBodyInteractionFactorsupup[i] << ", "<< this->OneBodyInteractionFactorsdowndown[i] << "]" << endl;
+      }
  
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
