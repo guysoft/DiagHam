@@ -1,12 +1,18 @@
 #include "Options/Options.h"
 
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
 
 #include "Hamiltonian/ParticleOnLatticeHofstadterSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeTwoBandHofstadterHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeFourBandHofstadterHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelHofstadterSquare.h"
 
@@ -117,7 +123,7 @@ int main(int argc, char** argv)
       cout << "max-band out of range"<<endl;
       exit(1);
     }
-  if (MinBand >= MaxBand)
+  if (MinBand > MaxBand)
     {
       cout << "min-band out of range"<<endl;
       exit(1);
@@ -293,8 +299,73 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      cout << "Multi-band situations not implemented, yet"<<endl;
-	      exit(1);
+	      if (NbrBands==2)
+		{
+		  
+		  if (Manager.GetBoolean("boson") == false)
+		    {
+		      if ((NbrCellX * NbrCellY) <= 63)
+			{
+			  Space = new FermionOnSquareLatticeWithSpinMomentumSpace (NbrParticles, NbrCellX, NbrCellY, i, j);
+			}
+		      else
+			{
+			  Space = new FermionOnSquareLatticeWithSpinMomentumSpaceLong (NbrParticles, NbrCellX, NbrCellY, i, j);
+			}
+		    }
+		  else
+		    {
+		      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrCellX, NbrCellY, i, j);
+		    }
+		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+		  // assign Hamiltonian:
+		  Hamiltonian = new ParticleOnLatticeTwoBandHofstadterHamiltonian((ParticleOnSphereWithSpin*)Space, NbrParticles, NbrCellX, NbrCellY, MinBand, Manager.GetDouble("u-potential"), 0.0 /*Manager.GetDouble("v-potential")*/, &TightBindingModel, 
+										     Manager.GetBoolean("flat-band"),
+										  Architecture.GetArchitecture(), Memory);
+		}
+	      else
+		{
+		  if (NbrBands==3)
+		    {
+		      cout << "Three-band case not implemented, yet"<<endl;
+		      exit(1);
+		    }
+		  if (NbrBands==4)
+		    {
+		      
+		      if (Manager.GetBoolean("boson") == false)
+			{
+			  if ((NbrCellX * NbrCellY) <= 63)
+			    {
+			      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrCellX, NbrCellY, i, j);
+			    }
+			  else
+			    {
+			      Space = new FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong (NbrParticles, NbrCellX, NbrCellY, i, j);
+			    }
+			}
+		      else
+			{
+			  Space = new BosonOnSquareLatticeWithSU4SpinMomentumSpace (NbrParticles, NbrCellX, NbrCellY, i, j);
+			}
+		      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+		      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+			Memory = Architecture.GetArchitecture()->GetLocalMemory();
+		      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+		      // assign Hamiltonian:
+		      Hamiltonian = new ParticleOnLatticeFourBandHofstadterHamiltonian((ParticleOnSphereWithSU4Spin*)Space, NbrParticles, NbrCellX, NbrCellY, MinBand, Manager.GetDouble("u-potential"), 0.0 /*Manager.GetDouble("v-potential")*/, &TightBindingModel, 
+										      Manager.GetBoolean("flat-band"),
+										      Architecture.GetArchitecture(), Memory);
+		    }
+		  else
+		    {
+		      cout << "Multi-band n>4 situations not implemented, yet"<<endl;
+		      exit(1);
+		    }
+		}
 	    }
 	  
 	  char* ContentPrefix = new char[256];

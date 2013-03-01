@@ -68,7 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "theta", "additional phase of 2nd NN hopping (units of pi)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "truncation", "energy cut-off with respect to groundstate, in units of U", -1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "truncation", "energy cut-off with respect to groundstate energy (negative = no cut-off)", -1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the chern number (only in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
@@ -96,8 +96,6 @@ int main(int argc, char** argv)
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   double TruncationEnergy = Manager.GetDouble("truncation");
-  if (Manager.GetDouble("u-potential")!=0)
-    TruncationEnergy*=Manager.GetDouble("u-potential");
   
   char* StatisticPrefix = new char [16];
   sprintf (StatisticPrefix, "fermions");
@@ -216,7 +214,7 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 
 	  ParticleOnSphereWithSpin* Space = 0;
-	  if (TruncationEnergy>0)
+	  if (TruncationEnergy>0.0)
 	    {
 	      if ((NbrSitesX * NbrSitesY) <= 31)
 		{

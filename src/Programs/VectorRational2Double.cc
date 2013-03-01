@@ -37,7 +37,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('i', "input-vector", "name of the file containing the binary vector");
-  (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the vector will be stored in ASCII mode");
+  (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the vector will be stored floating point mode");
 #ifdef __GMP__
   (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
 #else

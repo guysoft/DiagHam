@@ -132,6 +132,12 @@ void ParticleOnLatticeHofstadterSingleBandHamiltonian::EvaluateInteractionFactor
 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }
 
+  for (int i=0; i<this->TightBindingModel->GetNbrStatePerBand(); ++i)
+    {
+      cout << "[" << this->OneBodyInteractionFactors[i] << "]" << endl;
+    }
+
+
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {    
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;

@@ -121,7 +121,7 @@ BosonOnSquareLatticeWithSU4SpinMomentumSpace::BosonOnSquareLatticeWithSU4SpinMom
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSiteX - 1, this->NbrSiteY - 1, 0, 0, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, this->LzMax + this->NbrBosons, 0l);
       if (this->LargeHilbertSpaceDimension != TmpLargeHilbertSpaceDimension)
 	{
-	  cout << "error while generating the Hilbert space " << this->LargeHilbertSpaceDimension << " " << TmpLargeHilbertSpaceDimension << endl;
+	  cout << "error while generating the Hilbert space count: " << this->LargeHilbertSpaceDimension << " generate: " << TmpLargeHilbertSpaceDimension << endl;
 	}
       for (long i = 0; i < TmpLargeHilbertSpaceDimension; ++i)
 	{
@@ -425,7 +425,7 @@ long BosonOnSquareLatticeWithSU4SpinMomentumSpace::GenerateStates(int nbrBosons,
 	  for (int k = nbrBosons - i - j; k >= 0; --k)
 	    {
 	      unsigned long Mask3 = ((0x1ul << k) - 0x1ul) << (currentFermionicPositionDownPlus - k - 1);
-	      for (int l = nbrBosons - i - j - l; l >= 0; --l)
+	      for (int l = nbrBosons - i - j - k; l >= 0; --l)
 		{
 		  long TmpPos = this->GenerateStates(nbrBosons - i - j - k - l, currentKx, currentKy - 1, currentTotalKx + ((i + j + k + l) * currentKx), currentTotalKy + ((i + j + k + l) * currentKy), currentFermionicPositionUpPlus - i - 1, currentFermionicPositionUpMinus - j - 1, currentFermionicPositionDownPlus - k - 1, currentFermionicPositionDownMinus - l - 1, pos);
 		  unsigned long Mask4 = ((0x1ul << l) - 0x1ul) << (currentFermionicPositionDownMinus - l - 1);

@@ -810,7 +810,7 @@ int FermionOnSquareLatticeWithSpinMomentumSpaceTruncated::FindStateIndex(unsigne
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    if (CurrentState == this->StateDescription[PosMin])
+    if (stateDescription == this->StateDescription[PosMin])
       return PosMin;
     else
       return this->HilbertSpaceDimension;

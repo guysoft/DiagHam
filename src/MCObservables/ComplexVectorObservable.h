@@ -93,7 +93,7 @@ class ComplexVectorObservable
   
   
   const WCVOIndividualType& BinValue(int entry, int i) const  { return (Values[entry])[i]; }
-  const double BinValue2(int entry,int i) const { return (Values2Re[entry][i]+Values2Im[entry][i]) ;}
+  double BinValue2(int entry,int i) const { return (Values2Re[entry][i]+Values2Im[entry][i]) ;}
   const WCVOIndividualType& HistoryValue(int entry, int i) const  { return (HistoryAverages[entry])[i]; }
   const double& HistoryValue2(int entry, int i) const { return (HistoryBinVariances[entry])[i];}
   

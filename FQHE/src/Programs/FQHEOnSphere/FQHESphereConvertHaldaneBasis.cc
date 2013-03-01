@@ -168,7 +168,9 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      cout << "target space initialization requires to use the load-hilbert option in huge mode" << endl;
+	      cout <<"Calculating target space:"<<endl;
+	      TargetSpace = new FermionOnSphereHaldaneHugeBasis (NbrParticles, TotalLz, NbrFluxQuanta, /*Manager.GetInteger("file-size")*/ 0, TargetReferenceState, /*((unsigned long) Manager.GetInteger("memory"))*/ 100ul << 20, false, /*Manager.GetInteger("huge-fulldim")*/ 0);
+	      //cout << "target space initialization requires to use the target-loadhilbert option in huge mode" << endl;
 	    }
 	  if (Manager.GetBoolean("rational") == false)
 	    {
@@ -243,6 +245,7 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      cout << "initial space initialization requires to use the load-hilbert option in huge mode" << endl;
+	      exit(1);
 	    }
 	  BosonOnSphereHaldaneHugeBasisShort* TargetSpace = 0;
 	  int* TargetReferenceState = 0;
