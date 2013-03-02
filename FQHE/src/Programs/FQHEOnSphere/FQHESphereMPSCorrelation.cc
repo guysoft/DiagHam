@@ -234,6 +234,11 @@ int main(int argc, char** argv)
  
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
+  //cout<<"----------------------- B0 ----------------------"<<endl;
+  //SparseBMatrices[0].PrintNonZero(cout) << endl;
+  //cout<<"----------------------- B1 ----------------------"<<endl;
+  //SparseBMatrices[1].PrintNonZero(cout) << endl;
+
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
   if (Manager.GetBoolean("use-padding") == true)

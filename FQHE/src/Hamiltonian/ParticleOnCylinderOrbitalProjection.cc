@@ -63,13 +63,14 @@ using std::ostream;
 // maxMomentum = maximum Lz value reached by a particle in the state
 // ratio = ratio between the width in the x direction and the width in the y direction
 // orbitalIndex = index of the orbital to be projected out
+// anisotropy = shape (anisotropy) parameter
 // x0,y0 = position in real space
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderOrbitalProjection::ParticleOnCylinderOrbitalProjection(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, int orbitalIndex, double x0, double y0, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, int orbitalIndex, double anisotropy, double x0, double y0, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -79,6 +80,7 @@ ParticleOnCylinderOrbitalProjection::ParticleOnCylinderOrbitalProjection(Particl
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   this->OrbitalIndex = orbitalIndex;
+  this->Anisotropy = anisotropy;
   this->X0 = x0;
   this->Y0 = y0;
   this->Architecture = architecture;
@@ -167,7 +169,7 @@ Complex ParticleOnCylinderOrbitalProjection::EvaluateInteractionCoefficient(int 
   Phase.Re = cos((Xm1-Xm2) * this->Y0);
   Phase.Im = -sin((Xm1-Xm2) * this->Y0);
 
-  Coefficient = exp(-0.25*(Xm1-Xm2)*(Xm1-Xm2)) * Phase * this->OrbitalProjectionMatrixElement(Xm1, Xm2, this->X0, this->Y0, this->OrbitalIndex, this->LaguerreM, kappa, this->MaxMomentum, error);
+  Coefficient = exp(-0.25*(Xm1-Xm2)*(Xm1-Xm2)/this->Anisotropy) * Phase * this->OrbitalProjectionMatrixElement(Xm1, Xm2, this->X0, this->Y0, this->OrbitalIndex, this->Anisotropy, this->LaguerreM, kappa, this->MaxMomentum, error);
  
   return (-Coefficient/Length);
 }
@@ -184,6 +186,7 @@ namespace OrbitalProjectionMatEl
 struct f_params {
   double Xj1;
   double Xj2;
+  double Anisotropy;
   double X0;
   double Y0;
   double Kappa;
@@ -196,9 +199,9 @@ double Integrand(double qx, void *p)
 {
   f_params &params= *reinterpret_cast<f_params *>(p);
 
-  double Q2 = qx * qx + (params.Xj1 - params.Xj2) * (params.Xj1 - params.Xj2);
+  double Q2 = params.Anisotropy * qx * qx + (params.Xj1 - params.Xj2) * (params.Xj1 - params.Xj2)/params.Anisotropy;
 
-  return (exp(-0.25*qx*qx) * params.LaguerreM[params.OrbitalIndex].PolynomialEvaluate(0.5 * Q2) * 2.0 * cos(qx * (params.X0 + 0.5 * (params.Xj1 + params.Xj2 - params.Kappa * params.MaxMomentum))));   
+  return (exp(-0.25*qx*qx*params.Anisotropy) * params.LaguerreM[params.OrbitalIndex].PolynomialEvaluate(0.5 * Q2) * 2.0 * cos(qx * (params.X0 + 0.5 * (params.Xj1 + params.Xj2 - params.Kappa * params.MaxMomentum))));   
 }
 
 }
@@ -206,7 +209,7 @@ double Integrand(double qx, void *p)
 
 #endif
 
-double ParticleOnCylinderOrbitalProjection::OrbitalProjectionMatrixElement(double xj1, double xj2, double x0, double y0, int orbitalIndex, Polynomial* laguerreM, double kappa, int maxMomentum, double &error)
+double ParticleOnCylinderOrbitalProjection::OrbitalProjectionMatrixElement(double xj1, double xj2, double x0, double y0, int orbitalIndex, double anisotropy, Polynomial* laguerreM, double kappa, int maxMomentum, double &error)
 {
 #ifdef HAVE_GSL
 
@@ -214,13 +217,14 @@ double ParticleOnCylinderOrbitalProjection::OrbitalProjectionMatrixElement(doubl
     gsl_integration_workspace_alloc (1000000);
 
   double lower_limit = 0.0;
-  double abs_error = 1.0e-10;
-  double rel_error = 1.0e-10;
+  double abs_error = 1.0e-8;
+  double rel_error = 1.0e-8;
   double result;
 
   OrbitalProjectionMatEl::f_params params;
   params.Xj1=xj1;
   params.Xj2=xj2;
+  params.Anisotropy = anisotropy;
   params.X0 = x0;
   params.Y0 = y0; 
   params.Kappa = kappa;

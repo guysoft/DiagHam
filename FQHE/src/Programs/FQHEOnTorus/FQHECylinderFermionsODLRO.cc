@@ -64,12 +64,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "ky-max", "twice the maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "total-y", "twice the total momentum projection for the system (override autodetection from input file name if greater or equal to zero)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('a', "anisotropy", "shape (anisotropy) parameter", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "x0-start", "starting x-coordinate of the center of the projected orbital", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "y0-start", "starting y-coordinate of the center of the projected orbital", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "x0-end", "ending x-coordinate of the center of the projected orbital", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "y0-end", "ending y-coordinate of the center of the projected orbital", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrpoints-x", "calculate ODLRO at nbrpoints between x0start and x0end", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrpoints-y", "calculate ODLRO at nbrpoints between y0start and y0end", 1);
+  (*SystemGroup) += new BooleanOption  ('\n', "project-only", "project state with operator [1-n_2][1-n_1]n_0 and exit", false);
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name for output");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -94,6 +96,9 @@ int main(int argc, char** argv)
   double Y0Start = Manager.GetDouble("y0-start");
   double X0End = Manager.GetDouble("x0-end");
   double Y0End = Manager.GetDouble("y0-end");
+  double Anisotropy = ((SingleDoubleOption*) Manager["anisotropy"])->GetDouble();
+  cout<<"Orbital shape: anisotropy = "<<Anisotropy<<endl;
+
 
   int NbrPointsX = Manager.GetInteger("nbrpoints-x");
   int NbrPointsY = Manager.GetInteger("nbrpoints-y");
@@ -187,13 +192,13 @@ int main(int argc, char** argv)
   ComplexVector StateAt01(FullSpace->GetHilbertSpaceDimension(), true);
   ComplexVector StateAt012(FullSpace->GetHilbertSpaceDimension(), true);
 
-  AbstractHamiltonian* Hamiltonian0 = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 0, X0Start, Y0Start, Architecture.GetArchitecture(), Memory);
+  AbstractHamiltonian* Hamiltonian0 = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 0, Anisotropy, X0Start, Y0Start, Architecture.GetArchitecture(), Memory);
   VectorHamiltonianMultiplyOperation Operation0 (Hamiltonian0, &FullState, &StateAt0);
   Operation0.ApplyOperation(Architecture.GetArchitecture());
   cout<<"Completed projecting 0 orbital at (0,0); norm= "<<StateAt0.Norm()<<endl;
   delete Hamiltonian0;
 
-  AbstractHamiltonian* Hamiltonian01 = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 1, X0Start, Y0Start, Architecture.GetArchitecture(), Memory);
+  AbstractHamiltonian* Hamiltonian01 = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 1, Anisotropy, X0Start, Y0Start, Architecture.GetArchitecture(), Memory);
   VectorHamiltonianMultiplyOperation Operation01 (Hamiltonian01, &StateAt0, &StateAt01);
   Operation01.ApplyOperation(Architecture.GetArchitecture());
   cout<<"Completed projecting 1 orbital at (0,0); norm= "<< StateAt01.Norm() << endl;
@@ -201,7 +206,7 @@ int main(int argc, char** argv)
 
   StateAt01 = StateAt0 - StateAt01;
 
-  AbstractHamiltonian* Hamiltonian012 = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 2, X0Start, Y0Start, Architecture.GetArchitecture(), Memory);
+  AbstractHamiltonian* Hamiltonian012 = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 2, Anisotropy, X0Start, Y0Start, Architecture.GetArchitecture(), Memory);
   VectorHamiltonianMultiplyOperation Operation012 (Hamiltonian012, &StateAt01, &StateAt012);
   Operation012.ApplyOperation(Architecture.GetArchitecture());
   cout<<"Completed projecting 2 orbital at (0,0); norm= "<< StateAt012.Norm() << endl;
@@ -211,7 +216,15 @@ int main(int argc, char** argv)
   StateAt012 /= StateAt012.Norm();
   
   //*************************************************************************
-
+  if (((BooleanOption*) Manager["project-only"])->GetBoolean() == true)
+    {
+      StateAt012.WriteVector(OutputNameLz); 
+      cout<<"Overlap with initial state: "<<(FullState * StateAt012) << endl;
+      StateAt0 /= StateAt0.Norm();
+      cout<<"Overlap between n0 Psi and (1-n2)(1-n1)n0 Psi: "<<(StateAt0 * StateAt012) << endl;
+      return 0;
+    }
+  //*************************************************************************
 
   int counter=0;
   for (int i = 0; i < NbrPointsX; i++)
@@ -229,13 +242,13 @@ int main(int argc, char** argv)
     ComplexVector RStateAt01(FullSpace->GetHilbertSpaceDimension(), true);
     ComplexVector RStateAt012(FullSpace->GetHilbertSpaceDimension(), true);
 
-    AbstractHamiltonian* Hamiltonian0R = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 0, X, Y, Architecture.GetArchitecture(), Memory);
+    AbstractHamiltonian* Hamiltonian0R = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 0, Anisotropy, X, Y, Architecture.GetArchitecture(), Memory);
     VectorHamiltonianMultiplyOperation Operation0R (Hamiltonian0R, &FullState, &RStateAt0);
     Operation0R.ApplyOperation(Architecture.GetArchitecture());
     cout<<"Completed projecting 0 orbital at (x0,y0); norm= "<< RStateAt0.Norm() <<endl;
     delete Hamiltonian0R;
 
-    AbstractHamiltonian* Hamiltonian01R = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 1, X, Y, Architecture.GetArchitecture(), Memory);
+    AbstractHamiltonian* Hamiltonian01R = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 1, Anisotropy, X, Y, Architecture.GetArchitecture(), Memory);
     VectorHamiltonianMultiplyOperation Operation01R (Hamiltonian01R, &RStateAt0, &RStateAt01);
     Operation01R.ApplyOperation(Architecture.GetArchitecture());
     cout<<"Completed projecting 1 orbital at (x0,y0); norm= "<< RStateAt01.Norm() <<endl;
@@ -243,7 +256,7 @@ int main(int argc, char** argv)
 
     RStateAt01 = RStateAt0 - RStateAt01;
 
-    AbstractHamiltonian* Hamiltonian012R = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 2, X, Y, Architecture.GetArchitecture(), Memory);
+    AbstractHamiltonian* Hamiltonian012R = new ParticleOnCylinderOrbitalProjection (FullSpace, NbrParticles, KyMax, XRatio, 2, Anisotropy, X, Y, Architecture.GetArchitecture(), Memory);
     VectorHamiltonianMultiplyOperation Operation012R (Hamiltonian012R, &RStateAt01, &RStateAt012);
     Operation012R.ApplyOperation(Architecture.GetArchitecture());
     cout<<"Completed projecting 2 orbital at (x0,y0); norm= "<< RStateAt012.Norm() <<endl;

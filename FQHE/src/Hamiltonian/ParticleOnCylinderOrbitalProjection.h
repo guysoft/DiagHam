@@ -56,6 +56,9 @@ class ParticleOnCylinderOrbitalProjection : public AbstractQHEOnCylinderHamilton
   //orbital to be projected out
   int OrbitalIndex;
 
+  //shape (anisotropy) parameter
+  double Anisotropy;
+
   //position in real space
   double X0;
   double Y0;
@@ -82,11 +85,12 @@ class ParticleOnCylinderOrbitalProjection : public AbstractQHEOnCylinderHamilton
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
   // orbitalIndex = index of the orbital to be projected out 
+  // anisotropy = shape (anisotropy) parameter
   // x0, y0 = position in real space
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderOrbitalProjection(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, int orbitalIndex, double x0, double y0,
+  ParticleOnCylinderOrbitalProjection(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, int orbitalIndex, double anisotropy, double x0, double y0,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
@@ -110,7 +114,7 @@ class ParticleOnCylinderOrbitalProjection : public AbstractQHEOnCylinderHamilton
 
   double Integrand(double qx, void *p);
 
-  double OrbitalProjectionMatrixElement(double xj1, double xj2, double x0, double y0, int orbitalIndex, Polynomial* laguerreM, double kappa, int maxMomentum, double &error);
+  double OrbitalProjectionMatrixElement(double xj1, double xj2, double x0, double y0, int orbitalIndex, double anisotropy, Polynomial* laguerreM, double kappa, int maxMomentum, double &error);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

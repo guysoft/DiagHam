@@ -72,6 +72,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum along y-axis (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
   (*SystemGroup) += new SingleIntegerOption ('\n', "orbital-index", "index of the orbital to be projected out", 0);
+  (*SystemGroup) += new SingleDoubleOption ('a', "anisotropy", "shape (anisotropy) parameter", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "x0", "x0 coordinate for the center of the orbital", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "y0", "y0 coordinate for the center of the orbital", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "orbitalprojector");
@@ -118,8 +119,10 @@ int main(int argc, char** argv)
   double X0 = ((SingleDoubleOption*) Manager["x0"])->GetDouble();
   double Y0 = ((SingleDoubleOption*) Manager["y0"])->GetDouble();
   int OrbitalIndex = Manager.GetInteger("orbital-index");
+  double Anisotropy = ((SingleDoubleOption*) Manager["anisotropy"])->GetDouble();
 
   cout<<"Projector onto orbital "<<OrbitalIndex<<" centered at x0= "<<X0<<" y0= "<<Y0<<endl;
+  cout<<"Orbital shape: anisotropy = "<<Anisotropy<<endl;
 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
@@ -177,7 +180,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderOrbitalProjection (Space, NbrParticles, MaxMomentum, XRatio,  OrbitalIndex, X0, Y0, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderOrbitalProjection (Space, NbrParticles, MaxMomentum, XRatio,  OrbitalIndex, Anisotropy, X0, Y0, Architecture.GetArchitecture(), Memory);
 
       double Shift = 0.0;
       Hamiltonian->ShiftHamiltonian(Shift);

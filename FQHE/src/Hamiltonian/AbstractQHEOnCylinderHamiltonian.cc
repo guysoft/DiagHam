@@ -332,7 +332,6 @@ ComplexVector& AbstractQHEOnCylinderHamiltonian::LowLevelAddMultiply(ComplexVect
 								  int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-  cout<<firstComponent<<" "<<LastComponent<<endl;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Shift = this->EnergyShift;
   double Coefficient;
