@@ -144,7 +144,14 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("rr-3") == true)
 	{
-	  sprintf (StateName, "readrezayi3");
+	  if (Manager.GetBoolean("quasihole-sector") == false)
+	    {
+	      sprintf (StateName, "readrezayi3");
+	    }
+	  else
+	    {
+	      sprintf (StateName, "readrezayi3_qh");	      
+	    }
 	  NbrEigenstates = 5;
 	}
       else
@@ -271,9 +278,9 @@ int main(int argc, char** argv)
        if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
      ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
-										    EffectiveDimension, EffectiveBlockIndices, 
-										    BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-										    Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
+										   EffectiveDimension, EffectiveBlockIndices, 
+										   BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+										   Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
     }
   else
     {

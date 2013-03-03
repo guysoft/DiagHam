@@ -434,6 +434,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
 	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
 	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
 	  MatrixPsi11[i][j] = RationalMatrixPsi11[i][j];	  
+	  MatrixPsi11[i][j] *= 2.0 / sqrt(3.0);	  
 	  if ((3 + j) <= this->PLevel)
 	    {	
 	      MatrixPsi12[i][3 + j] = RationalMatrixPsi12[i][j];

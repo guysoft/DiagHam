@@ -210,8 +210,16 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("rr-3") == true)
 	    {
-	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 2);
-	      MPSColumnIndex = 3 * Manager.GetInteger("p-truncation");
+	      if (Manager.GetBoolean("quasihole-sector") == false)
+		{
+		  MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 2);
+		  MPSColumnIndex = 3 * Manager.GetInteger("p-truncation");
+		}
+	      else
+		{
+		  MPSRowIndex = 9 * Manager.GetInteger("p-truncation") + 9;
+		  MPSColumnIndex = 9 * Manager.GetInteger("p-truncation") + 6;
+		}		 
 	    }
 	  else
 	    {
