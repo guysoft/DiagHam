@@ -494,7 +494,81 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
   
   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
   cout << "B matrix size = " << MatrixSize << endl;
-  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
+  int* TmpNbrElementPerRow = new int[MatrixSize];
+  for (int i = 0; i < MatrixSize; ++i)
+    TmpNbrElementPerRow[i] = 0;
+
+
+  // B^[0]  matrix evaluation
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      for (int p = 0; p <= i; ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[i - p];
+	  RealMatrix& TmpOrthogonalBasisSigmaLeft = OrthogonalBasisSigmaLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPhiLeft = OrthogonalBasisPhiLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisEpsilonLeft = OrthogonalBasisEpsilonLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisSigmaRight = OrthogonalBasisSigmaRight[i - p];
+	  RealMatrix& TmpOrthogonalBasisEpsilonRight = OrthogonalBasisEpsilonRight[i - p];
+	  RealMatrix& TmpOrthogonalBasisPhiRight = OrthogonalBasisPhiRight[i - p];
+	  RealSymmetricMatrix& TmpScalarProductSigma = ScalarProductSigma[i - p];
+	  RealSymmetricMatrix& TmpScalarProductPhi = ScalarProductPhi[i - p];
+	  RealSymmetricMatrix& TmpScalarProductEpsilon = ScalarProductEpsilon[i - p];
+	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+	    {	      
+	      for (int j = QValueDenominator; j < this->NbrNValue; ++j)
+		{
+		  // Epsilon
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(); ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(); ++NeutralIndex2)
+			{
+			  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(), TmpOrthogonalBasisSigmaLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+			}
+		    }
+		  // sigma1 and sigma2
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisSigmaLeft.GetNbrColumn(); ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisSigmaLeft.GetNbrColumn(); ++NeutralIndex2)
+			{
+			  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(), TmpOrthogonalBasisSigmaLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+			  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 3, NeutralIndex1, TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(), TmpOrthogonalBasisSigmaLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      for (int p = 0; p <= (i - 1); ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral = U1BosonBasis[i - p - 1];
+	  RealMatrix& TmpOrthogonalBasisSigmaLeft = OrthogonalBasisSigmaLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisEpsilonLeft = OrthogonalBasisEpsilonLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPhiLeft = OrthogonalBasisPhiLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPhiRight = OrthogonalBasisPhiRight[i - p];
+	  RealSymmetricMatrix& TmpScalarProductPhi = ScalarProductPhi[i - p];
+	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+	    {	      
+	      for (int j = QValueDenominator; j < this->NbrNValue; ++j)
+		{
+		  // Phi
+		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPhiLeft.GetNbrColumn(); ++NeutralIndex1)
+		    {
+		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPhiLeft.GetNbrColumn(); ++NeutralIndex2)
+			{
+			  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 5, NeutralIndex1, TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(), TmpOrthogonalBasisSigmaLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+			}
+		    }
+		}
+	    }
+	}
+    }
+  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
   for (int i = 0; i <= this->PLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -610,10 +684,166 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
 	}
     }
 
+  // B^[1]  matrix evaluation
+  for (int i = 0; i < MatrixSize; ++i)
+    TmpNbrElementPerRow[i] = 0;
   FactorialCoefficient Coef;
   unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
   unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
-  BMatrices[1] = SparseRealMatrix(MatrixSize, MatrixSize);
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      for (int p = 0; p <= i; ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	  RealMatrix& TmpOrthogonalBasisEpsilon1 = OrthogonalBasisEpsilonLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisSigma1 = OrthogonalBasisSigmaLeft[i - p];
+	  for (int j = 0; j <= this->PLevel; ++j)
+	    {
+	      for (int q = 0; q <= j; ++q)
+		{
+		  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		  RealMatrix& TmpOrthogonalBasisEpsilon2 = OrthogonalBasisEpsilonRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisSigma2 = OrthogonalBasisSigmaRight[j - q];
+		  RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
+		  RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
+		  RealMatrix& TmpMatrixPsi11 = MatrixPsi11[i - p][j - q];
+	  
+		  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+		    {	      
+		      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			{	      
+			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			  int N2;
+			  int N1;
+			  N2 = QValueDenominator * (j - i) + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisEpsilon1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisSigma2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisEpsilon1.GetNbrColumn(), TmpOrthogonalBasisSigma1.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+				}
+
+			    }
+			  N2 = QValueDenominator * (j - i) + 2 + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisSigma1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisEpsilon2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisEpsilon1.GetNbrColumn(), TmpOrthogonalBasisSigma1.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+				}
+			    }
+
+			  N2 = QValueDenominator * (j - i) + 1 + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisSigma1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisSigma2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 3, NeutralIndex1, TmpOrthogonalBasisEpsilon1.GetNbrColumn(), TmpOrthogonalBasisSigma1.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+				}
+			    }
+			}
+		    }
+		}	      
+	    }
+	}
+    }
+  
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      for (int p = 0; p <= (i - 1); ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p - 1];
+	  RealMatrix& TmpOrthogonalBasisEpsilon1 = OrthogonalBasisEpsilonLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisSigma1 = OrthogonalBasisSigmaLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPhi1 = OrthogonalBasisPhiLeft[i - p];
+	  for (int j = 0; j <= this->PLevel; ++j)
+	    {
+	      for (int q = 0; q <= j; ++q)
+		{
+		  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		  RealMatrix& TmpOrthogonalBasisEpsilon2 = OrthogonalBasisEpsilonRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisSigma2 = OrthogonalBasisSigmaRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisPhi2 = OrthogonalBasisPhiRight[j - q];
+		  RealMatrix& TmpMatrixPsi21 = MatrixPsi21[i - p][j - q];	
+	  
+		  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+		    {	      
+		      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			{	      
+			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			  int N2;
+			  int N1;
+			  N2 = QValueDenominator * (j - i) + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPhi1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisSigma2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 5, NeutralIndex1, TmpOrthogonalBasisEpsilon1.GetNbrColumn(), TmpOrthogonalBasisSigma1.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+				}
+
+			    }
+			}
+		    }
+		}	      
+	    }
+	}
+    }
+  
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      for (int p = 0; p <= i; ++p)
+	{
+	  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	  RealMatrix& TmpOrthogonalBasisEpsilon1 = OrthogonalBasisEpsilonLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisSigma1 = OrthogonalBasisSigmaLeft[i - p];
+	  RealMatrix& TmpOrthogonalBasisPhi1 = OrthogonalBasisPhiLeft[i - p];
+	  for (int j = 0; j <= this->PLevel; ++j)
+	    {
+	      for (int q = 0; q <= (j - 1); ++q)
+		{
+		  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q - 1];
+		  RealMatrix& TmpOrthogonalBasisEpsilon2 = OrthogonalBasisEpsilonRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisSigma2 = OrthogonalBasisSigmaRight[j - q];
+		  RealMatrix& TmpOrthogonalBasisPhi2 = OrthogonalBasisPhiRight[j - q];
+		  RealMatrix& TmpMatrixPsi12 = MatrixPsi12[i - p][j - q];
+	  
+		  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+		    {	      
+		      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			{	      
+			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			  int N2;
+			  int N1;
+			  N2 = QValueDenominator * (j - i) + 2 + NValueShift;
+			  N1 = N2 + QValue - QValueDenominator;
+			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisSigma1.GetNbrColumn(); ++NeutralIndex1)
+			    {
+			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPhi2.GetNbrColumn(); ++NeutralIndex2)
+				{
+				  ++TmpNbrElementPerRow[this->GetReadRezayiK3MatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisEpsilon1.GetNbrColumn(), TmpOrthogonalBasisSigma1.GetNbrColumn(), StartingIndexPerPLevel[i][p])];
+				}
+			    }
+			}
+		    }
+		}	      
+	    }
+	}
+    }
+
+  BMatrices[1] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
   for (int i = 0; i <= this->PLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -853,11 +1083,6 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
     }
   delete[] BMatrices;
 
-//   cout << "B[0] = " << endl;
-//   this->RealBMatrices[0].PrintNonZero(cout) << endl;
-//   cout << "B[1] = " << endl;
-//   this->RealBMatrices[1].PrintNonZero(cout) << endl;
-
   delete[] ScalarProductSigma;
   delete[] ScalarProductPhi;
   delete[] ScalarProductEpsilon;
@@ -878,6 +1103,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
       delete[] RationalMatrixPsi11[i];
       delete U1BosonBasis[i];
     }
+  delete[] TmpNbrElementPerRow;
   delete[] U1BosonBasis;
   delete[] MatrixPsi01;
   delete[] MatrixPsi10;
