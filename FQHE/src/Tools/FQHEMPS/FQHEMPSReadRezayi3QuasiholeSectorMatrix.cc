@@ -604,7 +604,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
 			      Tmp += TmpOrthogonalBasisEpsilonLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 			    }
 			  if (this->CylinderFlag)
-			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightSigmaNumerical +  ((double) i)
+			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightEpsilonNumerical +  ((double) i)
 								     + (((j - QValueDenominator) - NValueShift) * ((j - QValueDenominator) - NValueShift) / (4.0 * QValue * QValueDenominator))
 								     + (((j - NValueShift) * (j - NValueShift)) / (4.0 * QValue*  QValueDenominator))));
 			  BMatrices[0].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(), TmpOrthogonalBasisSigmaLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
@@ -627,7 +627,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
 				  Tmp += TmpOrthogonalBasisSigmaLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 			    }
 			  if (this->CylinderFlag)
-			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightEpsilonNumerical +  ((double) i)
+			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightSigmaNumerical +  ((double) i)
 								     + (((j - QValueDenominator) - NValueShift) * ((j - QValueDenominator) - NValueShift) / (4.0 * QValue * QValueDenominator))
 								     + (((j - NValueShift) * (j - NValueShift)) / (4.0 * QValue*  QValueDenominator))));
 			  BMatrices[0].SetMatrixElement(this->GetReadRezayiK3MatrixIndex(j - QValueDenominator, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisEpsilonLeft.GetNbrColumn(), TmpOrthogonalBasisSigmaLeft.GetNbrColumn(), StartingIndexPerPLevel[i][p]), 
