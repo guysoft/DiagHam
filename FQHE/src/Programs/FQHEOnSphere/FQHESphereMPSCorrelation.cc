@@ -77,8 +77,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "hopping-cutoff", "cutoff on the hopping processes (=|m1-m3|)", -1);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-x", "x coordinate of the origin (for pair correlation)", 0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-y", "y coordinate of the origin (for pair correlation)", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "origin-x", "x coordinate of the origin (for pair correlation)", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "origin-y", "y coordinate of the origin (for pair correlation)", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-x", "starting point x coordinate (for pair correlation)", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "initial-y", "starting point y coordinate (for pair correlation)", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "final-x", "x coordinate of the final point (for pair correlation)", 10);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "final-y", "y coordinate of the final point (for pair correlation)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of point to evaluate", 1000);
@@ -506,8 +508,12 @@ int main(int argc, char** argv)
 	{
           int HoppingCutoff = Manager.GetInteger("hopping-cutoff");
 
-          double X0 = Manager.GetDouble("initial-x");
-          double Y0 = Manager.GetDouble("initial-y");
+          double X0 = Manager.GetDouble("origin-x");
+          double Y0 = Manager.GetDouble("origin-y");
+
+          double Xi = Manager.GetDouble("initial-x");
+          double Yi = Manager.GetDouble("initial-y");
+
           double Xf = Manager.GetDouble("final-x");
           double Yf = Manager.GetDouble("final-y");
 
@@ -524,6 +530,16 @@ int main(int argc, char** argv)
           if (Y0 > Perimeter)
              Y0 = 0;   
 
+          if (Xi < (-0.5 * H))
+             Xi = 0;   
+          if (Xi > (0.5 * H))
+             Xi = 0;   
+
+          if (Yi < 0.0)
+             Yi = 0;   
+          if (Yi > Perimeter)
+             Yi = 0;   
+
           if (Xf < (-0.5 * H))
              Xf = 0.5 * H;   
           if (Xf > (0.5 * H))
@@ -534,14 +550,22 @@ int main(int argc, char** argv)
           if (Yf > Perimeter)
              Yf = 0;   
 
-          if (Xf < X0)
+          if (Xi < X0)
             {
-              double Tmp = Xf;
-              Xf = X0;
+              double Tmp = Xi;
+              Xi = X0;
               X0 = Tmp;
             }
 
-          double XInc = (Xf - X0)/(double)NbrPoints;
+
+          if (Xf < Xi)
+            {
+              double Tmp = Xf;
+              Xf = Xi;
+              Xi = Tmp;
+            }
+
+          double XInc = (Xf - Xi)/(double)NbrPoints;
           
           //Precompute orbital occupations
           //will be needed for normalization by density(X0,Y0)*density(X,Y)
@@ -595,7 +619,7 @@ int main(int argc, char** argv)
           //Loop over all points between X0 and X
           for (int k = 0; k < NbrPoints; ++k)
 	    {
-              X = X0 + k * XInc;
+              X = Xi + k * XInc;
 
 
    	      AbstractOperator** Operators;
