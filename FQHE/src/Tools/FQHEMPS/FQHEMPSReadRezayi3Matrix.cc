@@ -88,6 +88,28 @@ FQHEMPSReadRezayi3Matrix::~FQHEMPSReadRezayi3Matrix()
 {
 }
   
+// get the name describing the B matrices 
+// 
+// return value = name 
+
+char* FQHEMPSReadRezayi3Matrix::GetName()
+{
+  char* TmpName = new char[16];
+  sprintf (TmpName, "readrezayi3", this->LaughlinIndex);
+  return TmpName;
+}
+
+// get the filling factor of the state associated the B matrices 
+// 
+// numerator = reference on the filling factor numerator
+// denominator = reference on the filling factor denominator
+
+void FQHEMPSReadRezayi3Matrix::GetFillingFactor(int& numerator, int& denominator)
+{
+  numerator = 3;
+  denominator = 5;
+}
+
 // create the B matrices for the laughlin state
 //
 

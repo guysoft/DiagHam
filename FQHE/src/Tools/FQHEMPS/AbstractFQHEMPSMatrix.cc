@@ -138,6 +138,28 @@ bool AbstractFQHEMPSMatrix::LoadMatrices (char* fileName)
   return true;
 }
 
+// get the name describing the B matrices 
+// 
+// return value = name 
+
+char* AbstractFQHEMPSMatrix::GetName()
+{
+  char* TmpName = new char[16];
+  sprintf(TmpName, "dummy");
+  return TmpName;
+}
+
+// get the filling factor of the state associated the B matrices 
+// 
+// numerator = reference on the filling factor numerator
+// denominator = reference on the filling factor denominator
+
+void AbstractFQHEMPSMatrix::GetFillingFactor(int& numerator, int& denominator)
+{
+  numerator = 0;
+  denominator = 0;
+}
+
 // extract a block with fixed quantum numbers of a given matrix written the MPS basis
 //
 // matrix = reference on the matrix

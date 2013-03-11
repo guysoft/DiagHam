@@ -62,6 +62,9 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // a temporary array to store a partition in the occupation number basis
   unsigned long* TemporaryOccupationNumber;
 
+  // value of the central charge
+  LongRational CentralCharge;
+
   // conformal weight of the identity (or the sigma field for the quasihole sector)
   LongRational WeightIdentity;
   // conformal weight of the psi field (or the phi field for the quasihole sector)
@@ -69,8 +72,16 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 
   // matrix element of <Psi|Psi(1)|0> (or <phi|Psi(1)|sigma>  for the quasihole sector)
   double MatrixElementNormalization;
+  // square of matrix element of <Psi|Psi(1)|0> (or <phi|Psi(1)|sigma>  for the quasihole sector)
+  LongRational SquareMatrixElementNormalization;
   // conformal weight of the primary field used in the matrix element
   LongRational WeightPrimaryFieldMatrixElement;
+
+  // degeneracy of the transfer matrix largest eigenvalue
+  int TransferMatrixDegeneracy;
+
+  // name describing the B matrices 
+  char* BMatrixOutputName;
 
  public:
   
@@ -88,6 +99,15 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // kappa = cylinder aspect ratio
   FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
 
+  // constructor from a file describing the state
+  //
+  // pLevel = |P| level truncation
+  // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // fileName = name of the file that contains the state description
+  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+  // kappa = cylinder aspect ratio
+  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+
   // constructor from stored B matrices
   //
   // rindex = r index (i.e. clustered (k=2,r) states) 
@@ -102,6 +122,22 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   //
   ~FQHEMPSClustered2RMatrix();
   
+  // get the name describing the B matrices 
+  // 
+  // return value = name 
+  virtual char* GetName ();
+
+  // get the filling factor of the state associated the B matrices 
+  // 
+  // numerator = reference on the filling factor numerator
+  // denominator = reference on the filling factor denominator
+  virtual void GetFillingFactor(int& numerator, int& denominator);
+
+  // get the degeneracy of the transfer matrix largest eigenvalue
+  // 
+  // return value = degeneracy 
+  virtual int GetTransferMatrixLargestEigenvalueDegeneracy();
+
   // create the B matrices for the laughlin state
   //
   virtual void CreateBMatrices ();
@@ -236,6 +272,25 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 				      int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
 
 };
+
+  
+// get the name describing the B matrices 
+// 
+// return value = name 
+
+inline char* FQHEMPSClustered2RMatrix::GetName ()
+{
+  return this->BMatrixOutputName;
+}
+
+// get the degeneracy of the transfer matrix largest eigenvalue
+// 
+// return value = degeneracy 
+
+inline int FQHEMPSClustered2RMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
+{
+  return this->TransferMatrixDegeneracy;
+}
 
 // compute the linearized index of the B matrix for the (k=2,r) clustered states
 //

@@ -97,6 +97,28 @@ FQHEMPSLaughlinMatrix::~FQHEMPSLaughlinMatrix()
   delete[] this->NbrIndicesPerPLevel;
 }
   
+// get the name describing the B matrices 
+// 
+// return value = name 
+
+char* FQHEMPSLaughlinMatrix::GetName()
+{
+  char* TmpName = new char[16];
+  sprintf (TmpName, "laughlin%d", this->LaughlinIndex);
+  return TmpName;
+}
+
+// get the filling factor of the state associated the B matrices 
+// 
+// numerator = reference on the filling factor numerator
+// denominator = reference on the filling factor denominator
+
+void FQHEMPSLaughlinMatrix::GetFillingFactor(int& numerator, int& denominator)
+{
+  numerator = 1;
+  denominator = this->LaughlinIndex;
+}
+
 // create the B matrices for the laughlin state
 //
 

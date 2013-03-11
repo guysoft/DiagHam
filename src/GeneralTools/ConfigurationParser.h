@@ -33,6 +33,7 @@
 
 #include "config.h"
 #include "GeneralTools/List.h"
+#include "MathTools/LongRational.h"
 
 #include <iostream>
 
@@ -117,6 +118,23 @@ class ConfigurationParser
   // nbrValues = reference on the double where the number of read values has to be stored
   // return value = true if no error occured
   bool GetAsDoubleArray (const char* parameterName, char separator, double*& array, int& nbrValues);
+
+  // get the long rational value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // value = reference on the long rational where the read value has to be stored
+  // return value = true if no errro occured
+  bool GetAsSingleLongRational (const char* parameterName, LongRational& value);
+
+  // get the long rational value corresponding to a configuration parameter 
+  //
+  // parameterName = string corresponding to a parameter name
+  // separator = caharacter which is used as separator between integer values in the string
+  //             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
+  // array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+  // nbrValues = reference on the integer where the number of read values has to be stored
+  // return value = true if no error occured
+  bool GetAsLongRationalArray (const char* parameterName, char separator, LongRational*& array, int& nbrValues);
 
   // get string value corresponding to a configuration parameter 
   //

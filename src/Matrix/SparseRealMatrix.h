@@ -431,6 +431,15 @@ class SparseRealMatrix : public Matrix
   // return value = sparse block diagonal matrix
   friend SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2);
   
+  // extract a submatrix 
+  //
+  // nbrRow = number of rows for the submatrix
+  // nbrColumn = number of columns for the submatrix
+  // rowFlags = array that indicated if a row index is part of the submtrix
+  // columnFlags = array that indicated if a column index is part of the submtrix
+  // return value = extracted matrix
+  SparseRealMatrix ExtractMatrix(int nbrRow, int nbrColumn, bool* rowFlags, bool* columnFlags);
+  
   // read matrix from a file 
   //
   // file = reference  on the input file stream

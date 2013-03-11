@@ -8,6 +8,7 @@
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/BosonOnSpherePTruncated.h"
 #include "HilbertSpace/FermionOnSphere.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
@@ -67,8 +68,10 @@ int main(int argc, char** argv)
  
   (*SystemGroup) += new MultipleStringOption  ('\0', "states", "name of the file that contains the bosonic(fermionic) state that will be multiplied (divided) by a Jastrow Factor");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
+  (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full n-body basis");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state (should be the one of the bosonic state)");
-	(*SystemGroup) += new SingleStringOption  ('\n', "vector-file", "single column file describing a list of state belonging to the same hilbert space to be converted");
+  (*SystemGroup) += new SingleStringOption  ('\n', "vector-file", "single column file describing a list of state belonging to the same hilbert space to be converted");
   (*OutputGroup) += new MultipleStringOption ('o', "output-states", "output file name (if none, guess it from the input file name)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -89,62 +92,62 @@ int main(int argc, char** argv)
   int NbrVectors;
   char** VectorFiles = Manager.GetStrings("states", NbrVectors);
   
-	if((NbrVectors == 0)&&(Manager.GetString("vector-file")==0))
+  if((NbrVectors == 0)&&(Manager.GetString("vector-file")==0))
     {
-			cout << "no input state" << endl << "see man page for option syntax or type FQHESphereBosonsFermionsConverter -h" << endl;
+      cout << "no input state" << endl << "see man page for option syntax or type FQHESphereBosonsFermionsConverter -h" << endl;
       return -1;
-		}
-    
-		if((Manager.GetString("vector-file")!=0)&&(IsFile(Manager.GetString("vector-file"))==false))
-			{
-				cout << "can't open file " <<  Manager.GetString("vector-file")<< endl;
-				return -1;
-			}
-	  
+    }
+  
+  if((Manager.GetString("vector-file")!=0)&&(IsFile(Manager.GetString("vector-file"))==false))
+    {
+      cout << "can't open file " <<  Manager.GetString("vector-file")<< endl;
+      return -1;
+    }
+  
   int NbrSpaces=0;
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
-	char** StateVectorFiles=0;
-	char** StateVector=0;
-	
-	if (Manager.GetString("vector-file") != 0)
-		{
-			MultiColumnASCIIFile VectorFile;
-			if (VectorFile.Parse(Manager.GetString("vector-file")) == false)
+  char** StateVectorFiles=0;
+  char** StateVector=0;
+  
+  if (Manager.GetString("vector-file") != 0)
+    {
+      MultiColumnASCIIFile VectorFile;
+      if (VectorFile.Parse(Manager.GetString("vector-file")) == false)
 	{
-		VectorFile.DumpErrors(cout);
-		return -1;
+	  VectorFile.DumpErrors(cout);
+	  return -1;
 	}
-			NbrSpaces = VectorFile.GetNbrLines();
-			StateVectorFiles = new char* [NbrSpaces];
-			
-			for (int i = 0; i < NbrSpaces; ++i)
-				{
-					StateVectorFiles[i] = new char [strlen(VectorFile(0, i)) + 1];
-					strcpy (StateVectorFiles[i], VectorFile(0, i));   
-				}
-		}
-		StateVector = new char * [NbrSpaces+NbrVectors];
-		
-	for(int i = 0;i<NbrVectors;i++)
-		{
-			StateVector[i] = new char [strlen(VectorFiles[i]) + 1];
-			strcpy (StateVector[i], VectorFiles[i]);
-		}
-	for(int i = 0;i<NbrSpaces;i++)
-		{
-			StateVector[i+NbrVectors]=new char [strlen(StateVectorFiles[i]) + 1];
-			strcpy (StateVector[i+NbrVectors], StateVectorFiles[i]);
-		}
-		
-		NbrVectors += NbrSpaces;
-	cout <<"NbrVectors = "<< NbrVectors<<endl;
-	
-	int* NbrParticles = new int [NbrVectors];
-	int* LzMax = new int [NbrVectors];
+      NbrSpaces = VectorFile.GetNbrLines();
+      StateVectorFiles = new char* [NbrSpaces];
+      
+      for (int i = 0; i < NbrSpaces; ++i)
+	{
+	  StateVectorFiles[i] = new char [strlen(VectorFile(0, i)) + 1];
+	  strcpy (StateVectorFiles[i], VectorFile(0, i));   
+	}
+    }
+  StateVector = new char * [NbrSpaces+NbrVectors];
+  
+  for(int i = 0;i<NbrVectors;i++)
+    {
+      StateVector[i] = new char [strlen(VectorFiles[i]) + 1];
+      strcpy (StateVector[i], VectorFiles[i]);
+    }
+  for(int i = 0;i<NbrSpaces;i++)
+    {
+      StateVector[i+NbrVectors]=new char [strlen(StateVectorFiles[i]) + 1];
+      strcpy (StateVector[i+NbrVectors], StateVectorFiles[i]);
+    }
+  
+  NbrVectors += NbrSpaces;
+  cout <<"NbrVectors = "<< NbrVectors<<endl;
+  
+  int* NbrParticles = new int [NbrVectors];
+  int* LzMax = new int [NbrVectors];
   int* TotalLz = new int [NbrVectors];
   bool* FermionFlag = new bool [NbrVectors];
   
-	for(int i = 0; i < NbrVectors; i++)
+  for(int i = 0; i < NbrVectors; i++)
     {
       NbrParticles[i] = 0;
       LzMax[i] = 0;
@@ -233,7 +236,7 @@ int main(int argc, char** argv)
   
   BosonOnSphereShort* Space = 0;
   
-  if (HaldaneBasisFlag == false)
+  if ((HaldaneBasisFlag == false) && (Manager.GetBoolean("p-truncated") == false))
     {
 #ifdef  __64_BITS__
       if ((LzMax[0] + NbrParticles[0] - 1) < 63)
@@ -245,7 +248,7 @@ int main(int argc, char** argv)
 	  }
 	else
 	  {
-	    cout << "error, the needed space needed class BosonOnSphere" <<endl;
+		cout << "error, the needed space needed class BosonOnSphere" <<endl;
 	  }
     }
   else
@@ -288,7 +291,10 @@ int main(int argc, char** argv)
 #else
 	if (LzMax[0]  < 31)	
 #endif
-	  Space = new BosonOnSphereHaldaneBasisShort(NbrParticles[0], TotalLz[0], LzMax[0], ReferenceState);
+      if (Manager.GetBoolean("p-truncated") == true)
+	Space = new BosonOnSpherePTruncated(NbrParticles[0], TotalLz[0], LzMax[0], Manager.GetBoolean("p-truncation"), ReferenceState);
+      else
+	Space = new BosonOnSphereHaldaneBasisShort(NbrParticles[0], TotalLz[0], LzMax[0], ReferenceState);
     }
   
   for(int i = 0; i < NbrVectors; i++)

@@ -88,6 +88,22 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   //
   ~FQHEMPSLaughlinMatrix();
   
+  // get the name describing the B matrices 
+  // 
+  // return value = name 
+  virtual char* GetName ();
+
+  // get the filling factor of the state associated the B matrices 
+  // 
+  // numerator = reference on the filling factor numerator
+  // denominator = reference on the filling factor denominator
+  virtual void GetFillingFactor(int& numerator, int& denominator);
+
+  // get the degeneracy of the transfer matrix largest eigenvalue
+  // 
+  // return value = degeneracy 
+  virtual int GetTransferMatrixLargestEigenvalueDegeneracy();
+
   // create the B matrices for the laughlin state
   //
   virtual void CreateBMatrices ();
@@ -176,6 +192,16 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 
   
 };
+
+// get the degeneracy of the transfer matrix largest eigenvalue
+// 
+// return value = degeneracy 
+
+inline int FQHEMPSLaughlinMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
+{
+  return this->LaughlinIndex;
+}
+
 
 // compute the linearized index of the B matrix for the Laughlin states
 //

@@ -102,6 +102,22 @@ class AbstractFQHEMPSMatrix
   // return value = array of nbrQuasiholes matrices corresponding to each quasihole
   virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
   
+  // get the name describing the B matrices 
+  // 
+  // return value = name 
+  virtual char* GetName();
+
+  // get the filling factor of the state associated the B matrices 
+  // 
+  // numerator = reference on the filling factor numerator
+  // denominator = reference on the filling factor denominator
+  virtual void GetFillingFactor(int& numerator, int& denominator);
+
+  // get the degeneracy of the transfer matrix largest eigenvalue
+  // 
+  // return value = degeneracy 
+  virtual int GetTransferMatrixLargestEigenvalueDegeneracy();
+
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix
@@ -202,6 +218,15 @@ inline void AbstractFQHEMPSMatrix::GetChargeAndPLevelFromMatrixIndex(int index, 
 {
   pLevel = -1;
   qValue = -1;
+}
+
+// get the degeneracy of the transfer matrix largest eigenvalue
+// 
+// return value = degeneracy 
+
+inline int AbstractFQHEMPSMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
+{
+  return 1;
 }
 
 #endif

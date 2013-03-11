@@ -30,6 +30,7 @@
 
 #include "config.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
+#include "GeneralTools/ConfigurationParser.h"
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/LongRationalMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
@@ -74,8 +75,77 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
   this->WeightPsi = LongRational(this->RIndex, 4l);
+  this->CentralCharge = LongRational((this->RIndex + 2l) - (2l * (this->RIndex - 1l) * (this->RIndex - 1l)), this->RIndex + 2l);
+  this->SquareMatrixElementNormalization = LongRational(1, 1);
   this->MatrixElementNormalization = 1.0;
+  this->TransferMatrixDegeneracy = this->RIndex + 2;
+  this->BMatrixOutputName = new char[256]; 
+  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
   this->CreateBMatrices();
+}
+
+// constructor from a file describing the state
+//
+// pLevel = |P| level truncation
+// nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+// fileName = name of the file that contains the state description
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag, double kappa)
+{
+  this->NbrBMatrices = nbrBMatrices;
+  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->CylinderFlag = cylinderFlag;
+  this->Kappa = kappa;
+  this->PLevel = pLevel;
+  
+  ConfigurationParser StateDefinition;
+  if (StateDefinition.Parse(fileName) == false)
+    {
+      StateDefinition.DumpErrors(cout) << endl;
+    }
+  else
+    {
+      bool ErrorFlag = true;
+      ErrorFlag = StateDefinition.GetAsSingleInteger("RIndex", this->RIndex);
+      ErrorFlag = StateDefinition.GetAsSingleInteger("LaughlinIndex", this->LaughlinIndex);
+      ErrorFlag = StateDefinition.GetAsSingleLongRational("WeightIdentity", this->WeightIdentity);
+      ErrorFlag = StateDefinition.GetAsSingleLongRational("WeightPsi", this->WeightPsi);
+      ErrorFlag = StateDefinition.GetAsSingleLongRational("CentralCharge", this->CentralCharge);
+      if (StateDefinition["EMatrixDegeneracy"] != 0)
+	{
+	  ErrorFlag = StateDefinition.GetAsSingleInteger("EMatrixDegeneracy", this->TransferMatrixDegeneracy);	  
+	}
+      else
+	{
+	  this->TransferMatrixDegeneracy = this->RIndex + 2;
+	}
+      if (StateDefinition["Name"] != 0)
+	{
+	  this->BMatrixOutputName = new char[strlen(StateDefinition["Name"]) + 1]; 
+	  strcpy(this->BMatrixOutputName, StateDefinition["Name"]);
+	}
+      else
+	{
+	  this->BMatrixOutputName = new char[256]; 
+	  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
+	}
+      if (StateDefinition["PsiSquareMatrixElement"] != 0)
+	{
+	  ErrorFlag = StateDefinition.GetAsSingleLongRational("PsiSquareMatrixElement", this->SquareMatrixElementNormalization);
+	}
+      else
+	{
+	  this->SquareMatrixElementNormalization = LongRational(1, 1);
+	}
+      this->MatrixElementNormalization = sqrt(fabs(this->SquareMatrixElementNormalization.GetNumericalValue()));
+      if (ErrorFlag == true)
+	{
+	  this->WeightPrimaryFieldMatrixElement = this->WeightPsi;
+	  this->CreateBMatrices();
+	}
+    }
 }
 
 // constructor from stored B matrices
@@ -98,7 +168,12 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
   this->WeightPsi = LongRational(this->RIndex, 4l);
+  this->CentralCharge = LongRational((this->RIndex + 2l) - (2l * (this->RIndex - 1l) * (this->RIndex - 1l)), this->RIndex + 2l);
+  this->SquareMatrixElementNormalization = LongRational(1, 1);
   this->MatrixElementNormalization = 1.0;
+  this->TransferMatrixDegeneracy = this->RIndex + 2;
+  this->BMatrixOutputName = new char[256]; 
+  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
 }
 
 // destructor
@@ -106,14 +181,26 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 
 FQHEMPSClustered2RMatrix::~FQHEMPSClustered2RMatrix()
 {
+  delete[] this->BMatrixOutputName;
 }
   
+// get the filling factor of the state associated the B matrices 
+// 
+// numerator = reference on the filling factor numerator
+// denominator = reference on the filling factor denominator
+
+void FQHEMPSClustered2RMatrix::GetFillingFactor(int& numerator, int& denominator)
+{
+  numerator = 2;
+  denominator = 2 + this->RIndex;
+}
+
 // create the B matrices for the laughlin state
 //
 
 void FQHEMPSClustered2RMatrix::CreateBMatrices ()
 {
-  LongRational CentralCharge12 ((this->RIndex + 2l) - (2l * (this->RIndex - 1l) * (this->RIndex - 1l)), this->RIndex + 2l);
+  LongRational CentralCharge12 (this->CentralCharge);
   cout << "central charge = " << CentralCharge12 << endl;
   CentralCharge12 /= 12l;
   double WeightIdentityNumerical = this->WeightIdentity.GetNumericalValue();

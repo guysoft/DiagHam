@@ -67,6 +67,11 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   //
   ~FQHEMPSReadRezayi3QuasiholeSectorMatrix();
   
+  // get the name describing the B matrices 
+  // 
+  // return value = name 
+  virtual char* GetName ();
+
   // create the B matrices for the laughlin state
   //
   virtual void CreateBMatrices ();

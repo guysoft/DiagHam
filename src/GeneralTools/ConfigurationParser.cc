@@ -589,6 +589,104 @@ bool ConfigurationParser::GetAsDoubleArray (const char* parameterName, char sepa
   return true;
 }
 
+// get the long rational value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// value = reference on the long rational where the read value has to be stored
+// return value = true if no errro occured
+
+bool ConfigurationParser::GetAsSingleLongRational (const char* parameterName, LongRational& value)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+  char* TmpError;
+  value = TmpValue;
+  return true;
+}
+
+// get the long rational value corresponding to a configuration parameter 
+//
+// parameterName = string corresponding to a parameter name
+// separator = caharacter which is used as separator between integer values in the string
+//             (if \s is used, then any number of consecutive \s or \t are identified as one separator)
+// array = reference on the array where the read values have to be stored (allocation is done by the method itself)
+// nbrValues = reference on the integer where the number of read values has to be stored
+// return value = true if no error occured
+
+bool ConfigurationParser::GetAsLongRationalArray (const char* parameterName, char separator, LongRational*& array, int& nbrValues)
+{
+  char* TmpValue = (*this)[parameterName];
+  if (TmpValue == 0)
+    return false;
+
+  nbrValues = 0;
+  if ((separator != ' ')  && (separator != '\t'))
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if ((*Start) == separator)
+	    ++nbrValues;
+	  ++Start;
+	}
+      array = new LongRational [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != separator))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = Start;
+	  ++nbrValues;
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  else
+    {
+      char* Start = TmpValue;
+      while ((*Start) != '\0')
+	{
+	  if (((*Start) == ' ') || ((*Start) == '\t'))
+	    {
+	      ++nbrValues;
+	      while (((*Start) != '\0') && (((*Start) == ' ') || ((*Start) == '\t')))
+		++Start;		
+	    }
+	  else
+	    ++Start;
+	}      
+      array = new LongRational [nbrValues + 1];
+      nbrValues = 0;
+      Start = TmpValue;
+      char* End = TmpValue;
+      char* Error;
+      while ((*Start) != '\0')
+	{
+	  while (((*End) != '\0') && ((*End) != ' ') && ((*End) != '\t'))
+	    {
+	      ++End;
+	    }	  
+	  array[nbrValues] = Start;
+	  ++nbrValues;
+	  while ((((*End) == ' ') || ((*End) == '\t')) && ((*End) != '\0'))
+	    {
+	      ++End;
+	    }
+	  Start = End;
+	}
+    }
+  return true;
+}
+
 // get string value corresponding to a configuration parameter 
 //
 // parameterName = string corresponding to a parameter name

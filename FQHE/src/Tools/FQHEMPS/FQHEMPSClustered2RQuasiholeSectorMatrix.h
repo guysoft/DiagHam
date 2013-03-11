@@ -52,6 +52,9 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // conformal weights of the phi field (if r is even, then the sigma field has to be identical to the phi field)
   LongRational WeightPhi;
 
+  // flag that indicates that the field is self conjugate
+  bool SelfDualFlag;
+
   // matrix element of <phi|Psi(1)|sigma>
 //  double MatrixElementNormalization;
   // conformal weight of the primary field used in the matrix element
@@ -72,6 +75,15 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
+
+  // constructor from a file describing the state
+  //
+  // pLevel = |P| level truncation
+  // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // fileName = name of the file that contains the state description
+  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+  // kappa = cylinder aspect ratio
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
 
   // constructor from stored B matrices
   //

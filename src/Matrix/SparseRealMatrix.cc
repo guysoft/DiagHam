@@ -1578,6 +1578,75 @@ SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, cons
   return  TmpMatrix;
 }
   
+// extract a submatrix 
+//
+// nbrRow = number of rows for the submatrix
+// nbrColumn = number of columns for the submatrix
+// rowFlags = array that indicated if a row index is part of the submtrix
+// columnFlags = array that indicated if a column index is part of the submtrix
+// return value = extracted matrix
+
+SparseRealMatrix SparseRealMatrix::ExtractMatrix(int nbrRow, int nbrColumn, bool* rowFlags, bool* columnFlags)
+{
+  int* TmpNbrElementPerRow = new int[nbrRow];
+  int TmpIndex = 0;
+  int* TmpColumnIndices = new int [this->NbrColumn];
+  for (int i = 0; i < this->NbrColumn; ++i)
+    {
+      if (columnFlags[i] == true)
+	{
+	  TmpColumnIndices[i] = TmpIndex;
+	  ++TmpIndex;
+	}
+    }
+  TmpIndex = 0;
+  long TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      if (rowFlags[i] == true)
+	{
+	  int& TmpIndex2 = TmpNbrElementPerRow[TmpIndex];
+	  TmpIndex2 = 0;
+	  long MinPos = this->RowPointers[i];
+	  if (MinPos >=  0l)
+	    {
+	      long MaxPos = this->RowLastPointers[i];
+	      for (; MinPos <= MaxPos; ++MinPos)
+		if (columnFlags[this->ColumnIndices[MinPos]] == true)
+		  ++TmpIndex2;
+	      TmpNbrMatrixElements += TmpIndex2;
+	      cout << TmpIndex << " " <<  TmpIndex2 << endl;
+	    }
+	  ++TmpIndex;
+	}
+    }
+  if (TmpNbrMatrixElements == 0l)
+    {
+      SparseRealMatrix TmpMatrix;
+      return TmpMatrix;
+    }
+  SparseRealMatrix TmpMatrix(nbrRow, nbrColumn, TmpNbrElementPerRow);
+  TmpIndex = 0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      if (rowFlags[i] == true)
+	{
+	  long MinPos = this->RowPointers[i];
+	  if (MinPos >=  0l)
+	    {
+	      long MaxPos = this->RowLastPointers[i];
+	      for (; MinPos <= MaxPos; ++MinPos)
+		if (columnFlags[this->ColumnIndices[MinPos]] == true)
+		  {
+		    TmpMatrix.SetMatrixElement(TmpIndex, TmpColumnIndices[this->ColumnIndices[MinPos]], this->MatrixElements[MinPos]);
+		  }
+	    }
+	  ++TmpIndex;
+	}
+    }
+  return TmpMatrix;
+}
+  
 // compute the number of non-zero matrix elements (zero having strictly zero square norm)
 //
 // return value = number of non-zero matrix elements

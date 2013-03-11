@@ -82,6 +82,17 @@ FQHEMPSReadRezayi3QuasiholeSectorMatrix::~FQHEMPSReadRezayi3QuasiholeSectorMatri
 {
 }
   
+// get the name describing the B matrices 
+// 
+// return value = name 
+
+char* FQHEMPSReadRezayi3QuasiholeSectorMatrix::GetName()
+{
+  char* TmpName = new char[24];
+  sprintf (TmpName, "readrezayi3_qh", this->LaughlinIndex);
+  return TmpName;
+}
+
 // create the B matrices for the laughlin state
 //
 
