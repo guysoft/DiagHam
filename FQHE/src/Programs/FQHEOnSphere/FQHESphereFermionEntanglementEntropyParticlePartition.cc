@@ -70,10 +70,16 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "compute-lvalue", "compute the L value of each reduced density matrix eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "largest-lz", "only compute the largest block of the reduced density matrix (Lz=0 or 1/2)");
   (*SystemGroup) += new BooleanOption  ('\n', "positive-lz", "only compute the positive Lz sectors");
+
   (*SystemGroup) += new BooleanOption  ('\n', "realspace-cut", "use real space partition instead of particle partition");
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-top", "inclination angle that defines the top of the real space parition (in degrees)", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-bot", "inclination angle that defines the bottom of the real space parition (in degrees)", 90);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-phi-range", "angle between the 2 longitudes that defines the real space parition (in degrees)", 360);
+
+  (*SystemGroup) += new BooleanOption  ('\n', "realspace-cylinder", "use real space partition instead of particle partition in the cylinder geometry");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-cylindercut", "x coordinate of the cut on the cylinder", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
+
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension)");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -131,6 +137,7 @@ int main(int argc, char** argv)
   bool LargestLSector = Manager.GetBoolean("largest-lz");
   bool PositiveLzSectors = Manager.GetBoolean("positive-lz");
   bool RealSpaceCut = Manager.GetBoolean("realspace-cut");
+  bool RealSpaceCutCylinder = Manager.GetBoolean("realspace-cylinder");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
   int* TotalLz = 0;
@@ -335,6 +342,17 @@ int main(int argc, char** argv)
     {
       SubsystemNbrParticles = 0;
     }
+
+  double Ratio, Perimeter, Height;
+  if (RealSpaceCutCylinder)
+    {
+      Ratio = Manager.GetDouble("ratio");
+      cout << "Cylinder geometry"<<endl;
+      Perimeter = sqrt(2.0 * M_PI * Ratio * (LzMax + 1));
+      Height = Perimeter/Ratio;
+      cout<<"L= "<<Perimeter<<" H= "<<Height<<endl;
+    }
+
   double TotalTrace = 0.0;
   for (; SubsystemNbrParticles <= MaxSubsystemNbrParticles; ++SubsystemNbrParticles)
     {
@@ -395,20 +413,34 @@ int main(int argc, char** argv)
 		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],false);
 		}
 	    }
-	  else
+	  else //real space
 	    {
 	      if (SVDFlag == false)
 		{
-		  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
+                  if (RealSpaceCutCylinder == false)
+		     PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
+                  else //cylinder
+                     PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionCylinder(SubsystemNbrParticles, SubsystemTotalLz, Perimeter, Height, Manager.GetDouble("realspace-cylindercut"), GroundStates[0]);
 		}
 	      else
 		{
-		  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
-		  if(PartialEntanglementMatrix.GetNbrRow() != 0)
-		    {
-		      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
-		    }
-		}
+                  if (RealSpaceCutCylinder == false)
+                    {
+		       PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
+		       if(PartialEntanglementMatrix.GetNbrRow() != 0)
+		         {
+		           Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+		         }
+                     }
+                  else //cylinder
+                    {
+		       PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
+		       if(PartialEntanglementMatrix.GetNbrRow() != 0)
+		         {
+		           Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrixCylinder(SubsystemNbrParticles, SubsystemTotalLz, Perimeter, Height, Manager.GetDouble("realspace-cylindercut"), PartialEntanglementMatrix);
+		         }
+                    }
+		 }
 	    }
 	  
 	  for (int i = 1; i < NbrSpaces; ++i)
@@ -426,19 +458,33 @@ int main(int argc, char** argv)
 		      TmpEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i]);
 		    }
 		}
-	      else
+	      else //real space cut
 		{
 		  if (SVDFlag == false)
 		    {
-		      TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[i]);
+                       if (RealSpaceCutCylinder == false)		      
+                           TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[i]);
+                       else //cylinder
+                           TmpMatrix = Spaces[i]->EvaluatePartialDensityMatrixRealSpacePartitionCylinder(SubsystemNbrParticles, SubsystemTotalLz, Perimeter, Height, Manager.GetDouble("realspace-cylindercut"), GroundStates[i]);
 		    }
 		  else
 		    {
-		      TmpEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i],true);
-		      if(PartialEntanglementMatrix.GetNbrRow() != 0)
-			{
-			  Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
-			}
+                      if (RealSpaceCutCylinder == false)
+                        {
+		          TmpEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i],true);
+		          if(PartialEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), TmpEntanglementMatrix);
+			    }
+                        }
+                      else //cylinder
+                       {
+		          TmpEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[i],true);
+		          if(PartialEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrixCylinder(SubsystemNbrParticles, SubsystemTotalLz, Perimeter, Height, Manager.GetDouble("realspace-cylindercut"), TmpEntanglementMatrix);
+			    }
+                       }  
 		    }
 		  
 		}

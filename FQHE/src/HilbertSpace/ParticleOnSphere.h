@@ -419,6 +419,18 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartition (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using real space partition. The density matrix is only evaluated in a given Lz sector.
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // perimeter = cylinder perimeter
+  // height = height of a cylinder (from -H/2 to H/2) 
+  // xcut = x-coordinate of a cylinder cut
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixRealSpacePartitionCylinder (int nbrBosonSector, int lzSector, double perimeter, double height, double xcut, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
   // core part of the evaluation density matrix real space partition calculation
   // 
   // minIndex = first index to consider in complementary Hilbert space
@@ -454,6 +466,17 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
   // return value = reference on the entanglement matrix
   virtual RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrBosonSector, int lzSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix);
+
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition on a cylinder. The entanglement matrix is only evaluated in a given Lz sector.
+  // and computed from precalculated particle entanglement matrix
+  // 
+  // nbrBosonSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // perimeter = cylinder perimeter
+  // height = height of a cylinder (from -H/2 to H/2) 
+  // xcut = x-coordinate of the cut   // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrixCylinder (int nbrBosonSector, int lzSector, double perimeter, double height, double xcut, RealMatrix& entanglementMatrix);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector
   // and computed from precalculated entanglement matrix
@@ -717,6 +740,14 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // incompleteBetaThetaTop = reference on the pointer to the array (allocation done by the method) where the top part coefficients will be stored
   // incompleteBetaThetaBotton = reference on the pointer to the array (allocation done by the method) where the bottom part coefficients will be stored
   virtual void EvaluatePartialDensityMatrixRealSpacePartitionCoefficient(int lzMax, double thetaTop, double thetaBottom, double*& incompleteBetaThetaTop, double*& incompleteBetaThetaBottom);
+
+  // evaluate coeffecicents requested to compute the real space partition (cylinder geometry)
+  //
+  // lzMax = twice the maximum angular momentum
+  // perimeter = cylinder perimeter
+  // xcut = x-coordinate of the cut
+  // incompleteBetaThetaTop = reference on the pointer to the array (allocation done by the method) where the top part coefficients will be stored
+  virtual void EvaluatePartialDensityMatrixRealSpacePartitionCoefficientCylinder(int lzMax, double perimeter, double xcut, double*& incompleteBetaThetaTop);
 
   // compute the number of particles in each Landau level
   //
