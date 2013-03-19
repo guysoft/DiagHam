@@ -364,6 +364,12 @@ class LongRational
   // return value = numerical value associated to the coefficient
   double GetNumericalValue();
 
+  // return string associated to the coefficient
+  //
+  // division = character to use instead of '/'
+  // return value = string associated to the coefficient
+  char* GetString(char division = '/');
+
   // Output stream overload
   //
   // str = reference on output stream

@@ -1615,7 +1615,6 @@ SparseRealMatrix SparseRealMatrix::ExtractMatrix(int nbrRow, int nbrColumn, bool
 		if (columnFlags[this->ColumnIndices[MinPos]] == true)
 		  ++TmpIndex2;
 	      TmpNbrMatrixElements += TmpIndex2;
-	      cout << TmpIndex << " " <<  TmpIndex2 << endl;
 	    }
 	  ++TmpIndex;
 	}

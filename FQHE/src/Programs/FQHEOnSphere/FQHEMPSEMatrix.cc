@@ -72,7 +72,6 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "consider only the block diagonal in P and Q");
-  (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "consider only the block diagonal in P and Q");
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
@@ -116,12 +115,12 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  int NbrBMatrices = 2;
   
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
 
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
+  int NbrBMatrices = MPSMatrix->GetNbrMatrices();
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
   int NbrEigenstates = MPSMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
   NbrEigenstates += Manager.GetInteger("nbr-excited");
@@ -266,90 +265,90 @@ int main(int argc, char** argv)
   else
     {
       Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpBMatrixDimension));
-      if (Manager.GetBoolean("fixed-qsector"))
-	{
-	  int GroupSize = 1;
-	  int TmpNumerator;
-	  MPSMatrix->GetFillingFactor(TmpNumerator, GroupSize);
-	  int NbrGroupBMatrices = 1 << GroupSize;
-	  SparseRealMatrix* TmpSparseGroupBMatrices = new SparseRealMatrix[NbrGroupBMatrices];
-	  double* GroupCoefficients = new double[NbrGroupBMatrices];
-	  for (int i = 0; i < NbrGroupBMatrices; ++i)
-	    {
-	      GroupCoefficients[i] = 1.0;
-	      TmpSparseGroupBMatrices[i].Copy(SparseBMatrices[i & 1]);
-	      for (int j = 1; j < GroupSize; ++j)
-		TmpSparseGroupBMatrices[i].Multiply(SparseBMatrices[(i >> j) & 1]);
-	    }
-	  if (Manager.GetBoolean("show-bmatrices"))
-	    {
-	      cout << "----------------------------------" << endl;
-	      for (int i = 0; i < NbrGroupBMatrices; ++i)
-		{
-		  cout << "B^[" << i << "]" << endl;
-		  TmpSparseGroupBMatrices[i].PrintNonZero(cout);
-		  cout << "----------------------------------" << endl;
-		}
-	    }	  
-	  int MinQ;
-	  int MaxQ;
-	  MPSMatrix->GetChargeIndexRange(MinQ, MaxQ);
-	  MinQ = 0;
-	  int GroupBMatrixDimension = 0l;
-	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
-	    {
-	      for (int QValue = MinQ; QValue <= MaxQ; QValue += GroupSize)
-		GroupBMatrixDimension += MPSMatrix->GetBondIndexRange(PLevel, QValue);
-	    }
-	  cout << "group B matrix size = " <<  GroupBMatrixDimension << "x" << GroupBMatrixDimension << endl;
-	  bool* GlobalIndices = new bool [TmpBMatrixDimension];
-	  for (int i = 0; i < TmpBMatrixDimension; ++i)
-	    GlobalIndices[i] = false;
-	  GroupBMatrixDimension = 0;
-	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
-	    {
-	      for (int QValue = MinQ; QValue <= MaxQ; QValue += GroupSize)
-		{
-		  int MaxLocalIndex = MPSMatrix->GetBondIndexRange(PLevel, QValue);
-		  for (int i = 0; i < MaxLocalIndex; ++i)
-		    {
-		      GlobalIndices[MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] = true;
-		      ++GroupBMatrixDimension;
-		    }
-		}
-	    }
-	  SparseRealMatrix* TmpSparseGroupBMatrices2 = new SparseRealMatrix[NbrGroupBMatrices];
-	  int NbrGroupBMatrices2 = 0;
-	  for (int i = 0; i < NbrGroupBMatrices; ++i)
-	    {
-	      TmpSparseGroupBMatrices2[i] = TmpSparseGroupBMatrices[i].ExtractMatrix(GroupBMatrixDimension, GroupBMatrixDimension, GlobalIndices, GlobalIndices);
-	      if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
-		++NbrGroupBMatrices2;
-	    }
-	  delete[] GlobalIndices;
-	  SparseRealMatrix* TmpSparseGroupBMatrices3 = new SparseRealMatrix[NbrGroupBMatrices2];
-	  NbrGroupBMatrices2 = 0;
-	  for (int i = 0; i < NbrGroupBMatrices; ++i)
-	    {
-	      if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
-		{
-		  TmpSparseGroupBMatrices3[NbrGroupBMatrices2] = TmpSparseGroupBMatrices2[i];
-		  ++NbrGroupBMatrices2;
-		}
-	    }
-	  if (Manager.GetBoolean("show-bmatrices"))
-	    {
-	      cout << "----------------------------------" << endl;
-	      for (int i = 0; i < NbrGroupBMatrices2; ++i)
-		{
-		  cout << "B^[" << i << "]" << endl;
-		  TmpSparseGroupBMatrices3[i].PrintNonZero(cout);
-		  cout << "----------------------------------" << endl;
-		}
-	    }	  
-	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrGroupBMatrices2, TmpSparseGroupBMatrices3, TmpSparseGroupBMatrices3, GroupCoefficients); 
-	}
-      else
+//       if (Manager.GetBoolean("fixed-qsector"))
+// 	{
+// 	  int GroupSize = 1;
+// 	  int TmpNumerator;
+// 	  MPSMatrix->GetFillingFactor(TmpNumerator, GroupSize);
+// 	  int NbrGroupBMatrices = 1 << GroupSize;
+// 	  SparseRealMatrix* TmpSparseGroupBMatrices = new SparseRealMatrix[NbrGroupBMatrices];
+// 	  double* GroupCoefficients = new double[NbrGroupBMatrices];
+// 	  for (int i = 0; i < NbrGroupBMatrices; ++i)
+// 	    {
+// 	      GroupCoefficients[i] = 1.0;
+// 	      TmpSparseGroupBMatrices[i].Copy(SparseBMatrices[i & 1]);
+// 	      for (int j = 1; j < GroupSize; ++j)
+// 		TmpSparseGroupBMatrices[i].Multiply(SparseBMatrices[(i >> j) & 1]);
+// 	    }
+// 	  if (Manager.GetBoolean("show-bmatrices"))
+// 	    {
+// 	      cout << "----------------------------------" << endl;
+// 	      for (int i = 0; i < NbrGroupBMatrices; ++i)
+// 		{
+// 		  cout << "B^[" << i << "]" << endl;
+// 		  TmpSparseGroupBMatrices[i].PrintNonZero(cout);
+// 		  cout << "----------------------------------" << endl;
+// 		}
+// 	    }	  
+// 	  int MinQ;
+// 	  int MaxQ;
+// 	  MPSMatrix->GetChargeIndexRange(MinQ, MaxQ);
+// 	  MinQ = 0;
+// 	  int GroupBMatrixDimension = 0l;
+// 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+// 	    {
+// 	      for (int QValue = MinQ; QValue <= MaxQ; QValue += GroupSize)
+// 		GroupBMatrixDimension += MPSMatrix->GetBondIndexRange(PLevel, QValue);
+// 	    }
+// 	  cout << "group B matrix size = " <<  GroupBMatrixDimension << "x" << GroupBMatrixDimension << endl;
+// 	  bool* GlobalIndices = new bool [TmpBMatrixDimension];
+// 	  for (int i = 0; i < TmpBMatrixDimension; ++i)
+// 	    GlobalIndices[i] = false;
+// 	  GroupBMatrixDimension = 0;
+// 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+// 	    {
+// 	      for (int QValue = MinQ; QValue <= MaxQ; QValue += GroupSize)
+// 		{
+// 		  int MaxLocalIndex = MPSMatrix->GetBondIndexRange(PLevel, QValue);
+// 		  for (int i = 0; i < MaxLocalIndex; ++i)
+// 		    {
+// 		      GlobalIndices[MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] = true;
+// 		      ++GroupBMatrixDimension;
+// 		    }
+// 		}
+// 	    }
+// 	  SparseRealMatrix* TmpSparseGroupBMatrices2 = new SparseRealMatrix[NbrGroupBMatrices];
+// 	  int NbrGroupBMatrices2 = 0;
+// 	  for (int i = 0; i < NbrGroupBMatrices; ++i)
+// 	    {
+// 	      TmpSparseGroupBMatrices2[i] = TmpSparseGroupBMatrices[i].ExtractMatrix(GroupBMatrixDimension, GroupBMatrixDimension, GlobalIndices, GlobalIndices);
+// 	      if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
+// 		++NbrGroupBMatrices2;
+// 	    }
+// 	  delete[] GlobalIndices;
+// 	  SparseRealMatrix* TmpSparseGroupBMatrices3 = new SparseRealMatrix[NbrGroupBMatrices2];
+// 	  NbrGroupBMatrices2 = 0;
+// 	  for (int i = 0; i < NbrGroupBMatrices; ++i)
+// 	    {
+// 	      if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
+// 		{
+// 		  TmpSparseGroupBMatrices3[NbrGroupBMatrices2] = TmpSparseGroupBMatrices2[i];
+// 		  ++NbrGroupBMatrices2;
+// 		}
+// 	    }
+// 	  if (Manager.GetBoolean("show-bmatrices"))
+// 	    {
+// 	      cout << "----------------------------------" << endl;
+// 	      for (int i = 0; i < NbrGroupBMatrices2; ++i)
+// 		{
+// 		  cout << "B^[" << i << "]" << endl;
+// 		  TmpSparseGroupBMatrices3[i].PrintNonZero(cout);
+// 		  cout << "----------------------------------" << endl;
+// 		}
+// 	    }	  
+// 	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrGroupBMatrices2, TmpSparseGroupBMatrices3, TmpSparseGroupBMatrices3, GroupCoefficients); 
+// 	}
+//       else
 	{
 	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients); 
 	  if (Manager.GetBoolean("show-bmatrices"))
@@ -362,8 +361,8 @@ int main(int argc, char** argv)
 		  cout << "----------------------------------" << endl;
 		}
 	    }	  
-	}
-    }
+ 	}
+     }
   if (Manager.GetBoolean("power-method") == true)
     ETransposeHamiltonian->ShiftHamiltonian(EnergyShift);
   

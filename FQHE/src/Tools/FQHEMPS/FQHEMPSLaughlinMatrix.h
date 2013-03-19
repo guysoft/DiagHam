@@ -104,6 +104,11 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // return value = degeneracy 
   virtual int GetTransferMatrixLargestEigenvalueDegeneracy();
 
+  // get the MPS truncation level
+  //
+  // return value = truncation level
+  virtual int GetTruncationLevel();
+
   // create the B matrices for the laughlin state
   //
   virtual void CreateBMatrices ();
@@ -261,6 +266,15 @@ inline void FQHEMPSLaughlinMatrix::GetChargeAndPLevelFromMatrixIndex(int index, 
     ++pLevel;
   --pLevel;
   qValue = (index - this->TotalStartingIndexPerPLevel[pLevel]) % this->NbrNValue;
+}
+
+// get the MPS truncation level
+//
+// return value = truncation level
+
+inline int FQHEMPSLaughlinMatrix::GetTruncationLevel()
+{
+  return this->PLevel;
 }
 
 #endif

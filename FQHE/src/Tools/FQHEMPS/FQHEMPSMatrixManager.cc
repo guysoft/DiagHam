@@ -42,6 +42,8 @@
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3QuasiholeSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSBlockMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSN1SuperconformalMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSFixedQSectorMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 
@@ -106,12 +108,14 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new SingleIntegerOption  ('\n', "p-truncation", "truncation level", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-index", "index of the Laughlin state to generate", 3);
   (*SystemGroup) += new BooleanOption  ('\n', "k-2", "consider the (k=2,r) series of clustered states");
+  (*SystemGroup) += new BooleanOption  ('\n', "n1-superconformal", "consider the N=1 superconformal states (requires a cft description)");
   (*SystemGroup) += new BooleanOption  ('\n', "rr-3", "consider the k= 3 Read-Rezayi state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new SingleStringOption  ('\n', "cft", "use a file that described the CFT to be used");
   (*SystemGroup) += new BooleanOption  ('\n', "quasihole-sector", "look at the quasihole sector for the (k=2,r) series of clustered states");
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
+  (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "consider only the block diagonal in P and Q");
   (*PrecalculationGroup) += new SingleStringOption('\n', "import-bmatrices", "import the B matrices from a given binary file instead of computing them");
   (*PrecalculationGroup) += new BooleanOption ('\n', "export-bmatrices", "export the B matrices in a binary file");
   (*PrecalculationGroup) += new SingleStringOption('\n', "export-bmatrixname", "use a custom output file name to export the B matrices instead of the default one");
@@ -148,7 +152,6 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
     }
 
   AbstractFQHEMPSMatrix* MPSMatrix = 0; 
-  char* ExportFileName = 0;
   int NbrBMatrices = 2;
   if (this->Options->GetString("with-quasiholes") == 0)
     {
@@ -203,15 +206,6 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 // 		  delete MPSMatrix2;
 		}
 	    }	  
-	  ExportFileName = new char [512];
-	  if (CylinderFlag == false)
-	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_clustered_k_2_r_%ld_q_2_p_%ld_n_%d.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices);
-	    }
-	  else
-	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_clustered_k_2_r_%ld_q_2_p_%ld_n_%d_perimeter_%.6f.dat", this->Options->GetInteger("r-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
-	    }
 	}
       else
 	{
@@ -243,40 +237,46 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 									      CylinderFlag, Kappa);
 		    }
 		}
-	      ExportFileName = new char [512];
-	      if (CylinderFlag == false)
-		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_readrezayi3_q_2_p_%ld_n_%d.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices);
-		}
-	      else
-		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_readrezayi3_q_2_p_%ld_n_%d_perimeter_%.6f.dat", this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
-		}
 	    }
 	  else
 	    {
-	      if (this->Options->GetString("import-bmatrices") != 0)
+	      if (this->Options->GetBoolean("n1-superconformal") != 0)
 		{
-		  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
-							CylinderFlag, Kappa);
+		  if (this->Options->GetString("import-bmatrices") != 0)
+		    {
+		      MPSMatrix = new FQHEMPSN1SuperconformalMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
+								    this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+		    }
+		  else
+		    {
+		      if (this->Options->GetString("cft") == 0)
+			{
+			  cout << "error N=1 superconformal states require a CFT description" << endl;
+			  return 0;
+			}
+		      MPSMatrix = new FQHEMPSN1SuperconformalMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
+								    CylinderFlag, Kappa);
+		    }
 		}
 	      else
 		{
-		  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							CylinderFlag, Kappa);
-		}
-	      ExportFileName = new char [512];
-	      if (CylinderFlag == false)
-		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_laughlin_q_%ld_p_%ld_n_%d.dat", this->Options->GetInteger("laughlin-index"), 
-			  this->Options->GetInteger("p-truncation"), NbrBMatrices);
-		}
-	      else
-		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_laughlin_q_%ld_p_%ld_n_%d_perimeter_%.6f.dat", this->Options->GetInteger("laughlin-index"), 
-			  this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
+		  if (this->Options->GetString("import-bmatrices") != 0)
+		    {
+		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
+							    CylinderFlag, Kappa);
+		    }
+		  else
+		    {
+		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							    CylinderFlag, Kappa);
+		    }
 		}
 	    }
+	}
+      if (this->Options->GetBoolean("fixed-qsector") == true)
+	{
+	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSFixedQSectorMatrix(MPSMatrix);
+	  MPSMatrix = MPSMatrix2;	  
 	}
     }
   else
@@ -296,12 +296,12 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 	      if (this->Options->GetString("import-bmatrices") != 0)
 		{
 		  MPSMatrix = new FQHEMPSLaughlinQuasiholeMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
-							CylinderFlag, Kappa);
+								 CylinderFlag, Kappa);
 		}
 	      else
 		{
 		  MPSMatrix = new FQHEMPSLaughlinQuasiholeMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							CylinderFlag, Kappa);
+								 CylinderFlag, Kappa);
 		}
 	    }
 	}
@@ -311,13 +311,26 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
       if (this->Options->GetString("export-bmatrixname") != 0)
 	MPSMatrix->SaveMatrices(this->Options->GetString("export-bmatrixname"));
       else
-	MPSMatrix->SaveMatrices(ExportFileName);
+	{
+	  char* ExportFileName = new char [1024];
+	  if (CylinderFlag == false)
+	    {
+	      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_%s_p_%ld_n_%d.dat", MPSMatrix->GetName(), 
+		      this->Options->GetInteger("p-truncation"), NbrBMatrices);
+		    }
+	  else
+	    {
+	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_%s_p_%ld_n_%d_perimeter_%.6f.dat", MPSMatrix->GetName(), 
+		      this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
+	    }
+	  MPSMatrix->SaveMatrices(ExportFileName);
+	  delete[] ExportFileName;
+	}
       cout << "number of non-zero matrix elements:" << endl;
       for (int i = 0; i < NbrBMatrices; ++i)
 	cout << "B[" << i << "] = " << MPSMatrix->GetMatrices()[i].ComputeNbrNonZeroMatrixElements() << endl;
     }
 
-  delete[] ExportFileName;
   return MPSMatrix;
 }
 

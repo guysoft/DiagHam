@@ -55,6 +55,14 @@ class BosonOnDiskShort :  public BosonOnSphereShort
   // bosons = reference on the hilbert space to copy to copy
   BosonOnDiskShort(const BosonOnDiskShort& bosons);
 
+  // copy constructor, preversing only some specific states 
+  // 
+  // bosons = reference on the hilbert space to copy to copy
+  // nbrPreservedStates = number of preserved states
+  // preservedStates = array of flags that indicates if the corresponding state has to be preserved 
+  //                   (dimension of the array should the one of the original Hilbert space)
+  BosonOnDiskShort (const BosonOnDiskShort& bosons, int nbrPreservedStates, bool* preservedStates);
+
   // destructor
   //
   ~BosonOnDiskShort ();

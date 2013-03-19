@@ -210,6 +210,14 @@ class FermionOnSphere :  public ParticleOnSphere
   // fermions = reference on the hilbert space to copy to copy
   FermionOnSphere(const FermionOnSphere& fermions);
 
+  // copy constructor, preversing only some specific states 
+  //
+  // fermions = reference on the hilbert space to copy to copy
+  // nbrPreservedStates = number of preserved states
+  // preservedStates = array of flags that indicates if the corresponding state has to be preserved 
+  //                   (dimension of the array should the one of the original Hilbert space)
+  FermionOnSphere(const FermionOnSphere& fermions, long nbrPreservedStates, bool* preservedStates);
+
   // destructor
   //
   virtual ~FermionOnSphere ();
@@ -760,7 +768,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
+  virtual void GenerateLookUpTable(unsigned long memory = 10000000);
 
   // generate look-up table for sign calculation
   // 

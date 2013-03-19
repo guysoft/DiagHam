@@ -118,6 +118,11 @@ class AbstractFQHEMPSMatrix
   // return value = degeneracy 
   virtual int GetTransferMatrixLargestEigenvalueDegeneracy();
 
+  // get the MPS truncation level
+  //
+  // return value = truncation level
+  virtual int GetTruncationLevel();
+
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix
@@ -227,6 +232,15 @@ inline void AbstractFQHEMPSMatrix::GetChargeAndPLevelFromMatrixIndex(int index, 
 inline int AbstractFQHEMPSMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
 {
   return 1;
+}
+
+// get the MPS truncation level
+//
+// return value = truncation level
+
+inline int AbstractFQHEMPSMatrix::GetTruncationLevel()
+{
+  return 0;
 }
 
 #endif

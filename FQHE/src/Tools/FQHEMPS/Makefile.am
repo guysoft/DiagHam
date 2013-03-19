@@ -10,4 +10,6 @@ FQHEMPSReadRezayi3Matrix.cc \
 FQHEMPSLaughlinQuasiholeMatrix.cc \
 FQHEMPSClustered2RQuasiholeSectorMatrix.cc \
 FQHEMPSReadRezayi3QuasiholeSectorMatrix.cc \
-FQHEMPSBlockMatrix.cc
+FQHEMPSBlockMatrix.cc \
+FQHEMPSN1SuperconformalMatrix.cc \
+FQHEMPSFixedQSectorMatrix.cc

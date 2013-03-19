@@ -223,8 +223,16 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("laughlin-index") - 1);
-	      MPSColumnIndex = Manager.GetInteger("p-truncation");
+	      if (Manager.GetBoolean("n1-superconformal") == true)
+		{
+		  MPSRowIndex = Manager.GetInteger("p-truncation") + 6;
+		  MPSColumnIndex = Manager.GetInteger("p-truncation");
+		}
+	      else
+		{
+		  MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("laughlin-index") - 1);
+		  MPSColumnIndex = Manager.GetInteger("p-truncation");
+		}
 	    }
 	}
     }

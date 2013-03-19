@@ -1478,15 +1478,18 @@ ComplexDiagonalMatrix& RealMatrix::LapackDiagonalize (ComplexDiagonalMatrix& M, 
 
 ostream& operator << (ostream& Str, const RealMatrix& P) 
 {
-  for (int i = 0; i < (P.NbrRow - 1); ++i)
+  if ((P.NbrColumn > 0) && (P.NbrRow > 0))
     {
-      for (int j = 0; j < (P.NbrColumn - 1); ++j)
-	Str << P.Columns[j].Components[i] << "    ";      
-      Str << P.Columns[P.NbrColumn - 1].Components[i] << endl;      
+      for (int i = 0; i < (P.NbrRow - 1); ++i)
+	{
+	  for (int j = 0; j < (P.NbrColumn - 1); ++j)
+	    Str << P.Columns[j].Components[i] << "    ";      
+	  Str << P.Columns[P.NbrColumn - 1].Components[i] << endl;      
+	}
+      for (int j = 0; j < (P.NbrColumn - 1); j ++)
+	Str << P.Columns[j].Components[P.NbrRow - 1] << "    ";      
+      Str << P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1] << endl;      
     }
-  for (int j = 0; j < (P.NbrColumn - 1); j ++)
-    Str << P.Columns[j].Components[P.NbrRow - 1] << "    ";      
-  Str << P.Columns[P.NbrColumn - 1].Components[P.NbrRow - 1] << endl;      
   return Str;
 }
 

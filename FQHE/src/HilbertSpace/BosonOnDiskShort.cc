@@ -113,6 +113,35 @@ BosonOnDiskShort::BosonOnDiskShort(const BosonOnDiskShort& bosons)
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];  
 }
 
+// copy constructor, preversing only some specific states 
+// 
+// bosons = reference on the hilbert space to copy to copy
+// nbrPreservedStates = number of preserved states
+// preservedStates = array of flags that indicates if the corresponding state has to be preserved 
+//                   (dimension of the array should the one of the original Hilbert space)
+
+BosonOnDiskShort::BosonOnDiskShort (const BosonOnDiskShort& bosons, int nbrPreservedStates, bool* preservedStates)
+{
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
+  this->NbrBosons = bosons.NbrBosons;
+  this->IncNbrBosons = bosons.IncNbrBosons;
+  this->TotalLz = bosons.TotalLz;
+  this->ShiftedTotalLz = bosons. ShiftedTotalLz;
+  this->LzMax = bosons.LzMax;
+  this->NbrLzValue = this->LzMax + 1;
+  this->HilbertSpaceDimension = nbrPreservedStates;
+  this->LargeHilbertSpaceDimension = (long) nbrPreservedStates;
+  this->Flag.Initialize();
+  this->FermionBasis = new FermionOnSphere(*(bosons.FermionBasis), nbrPreservedStates, preservedStates);
+  this->Minors = bosons.Minors;
+  this->KeptCoordinates = bosons.KeptCoordinates;
+  this->TemporaryState = new unsigned long [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned long [this->NbrLzValue];  
+}
+
 // destructor
 //
 

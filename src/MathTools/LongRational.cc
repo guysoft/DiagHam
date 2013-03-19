@@ -395,6 +395,27 @@ LongRational& LongRational::Power2Multiply (long x)
   return *this;
 }
 
+// return string associated to the coefficient
+//
+// division = character to use instead of '/'
+// return value = string associated to the coefficient
+
+char* LongRational::GetString(char division)
+{
+  int TmpStringSize = 1024;
+  char* TmpString = new char [TmpStringSize];
+  gmp_snprintf (TmpString, TmpStringSize - 1, "%Qd", this->Value);
+  if (division != '/')
+    {
+      char* TmpString2 = strchr (TmpString, '/');
+      if (TmpString2 != 0)
+	{
+	  (*TmpString2) = division;
+	}
+    } 
+  return TmpString; 
+}
+
 // Output stream overload
 //
 // str = reference on output stream
@@ -885,6 +906,32 @@ LongRational& LongRational::Power2Multiply (long x)
 	}
     }
   return *this;
+}
+
+// return string associated to the coefficient
+//
+// division = character to use instead of '/'
+// return value = string associated to the coefficient
+
+char* LongRational::GetString(char division)
+{
+  char* TmpString = new char [256];
+  if (this->Denominator > ((LONGLONG) 0l))
+    {
+      if (this->Denominator == ((LONGLONG) 1l))
+	sprintf (TmpString, "%ld", ((long) this->Numerator));
+      else
+	sprintf (TmpString, "%ld%c%ld", ((long) this->Numerator), division, ((long) this->Denominator));
+     }
+  else
+    {
+      if (this->Denominator == ((LONGLONG) -1l))
+	sprintf (TmpString, "%ld", (-((long) this->Numerator)));
+      else
+	sprintf (TmpString, "%ld%c%ld", (-((long) this->Numerator)), division, (-((long) this->Denominator)));
+    }
+  return TmpString;
+ 
 }
 
 // Output stream overload
