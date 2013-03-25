@@ -52,6 +52,14 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // |P| truncation level
   int PLevel;
 
+  // number of charge sectors that will be kept
+  int NbrQSectors;
+  // first linearized index for each truncation level and charge sector
+  int** TotalStartingIndexPerPLevelAndQSector;
+  // number of linearized index per truncation level and charge sector
+  int** NbrIndicesPerPLevelAndQSector;
+  int*** GlobalIndexMapper;
+
  public:
   
   // default constructor 
@@ -89,6 +97,32 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // return value = degeneracy 
   virtual int GetTransferMatrixLargestEigenvalueDegeneracy();
 
+  // get the MPS truncation level
+  //
+  // return value = truncation level
+  virtual int GetTruncationLevel();
+
+  // get the range for the bond index when fixing the tuncation level and the charge index
+  //
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // return value = range for the bond index with fixed tuncation level and charge index
+  virtual int GetBondIndexRange(int pLevel, int qValue);
+
+  // get the bond index for a fixed truncation level and the charge index 
+  //
+  // localIndex = bond index in the pLevel and qValue restricted range
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // return value = bond index in the full bond index range
+  virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
+
+  // get the charge index range
+  // 
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int& minQ, int& maxQ);
+
   
 };
 
@@ -109,6 +143,15 @@ inline void FQHEMPSFixedQSectorMatrix::GetFillingFactor(int& numerator, int& den
 inline int FQHEMPSFixedQSectorMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
 {
   return 1;
+}
+
+// get the MPS truncation level
+//
+// return value = truncation level
+
+inline int FQHEMPSFixedQSectorMatrix::GetTruncationLevel()
+{
+  return this->PLevel;
 }
 
 #endif

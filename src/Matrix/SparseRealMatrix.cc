@@ -32,6 +32,7 @@
 #include "Matrix/RealMatrix.h"
 #include "Vector/RealVector.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
 #include "Architecture/ArchitectureOperation/SparseMatrixMatrixMultiplyOperation.h"
 
 #include <iostream>
@@ -678,6 +679,31 @@ void SparseRealMatrix::SetToIdentity()
   return;  
 }
 
+// check if a sparse matrix is correctly formed
+//
+// return value = true if the sparse matrix is correctly formed
+
+bool SparseRealMatrix::CheckSanity()
+{
+  long TmpNbrNonZeroMatrixElement = 0l;
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      if (this->RowPointers[i] >= 0l)
+	{
+	  long MinPos = this->RowPointers[i];
+	  long MaxPos = this->RowLastPointers[i];
+	  TmpNbrNonZeroMatrixElement += MaxPos - MinPos + 1;
+	  for (; MinPos < MaxPos; ++MinPos)
+	    if (this->ColumnIndices[MinPos] > this->ColumnIndices[MinPos + 1])
+	      return false;
+	}
+    }
+  if (TmpNbrNonZeroMatrixElement == this->NbrMatrixElements)
+    return true;
+  else
+    return false;
+}
+
 // add two matrices
 //
 // matrix1 = first matrix
@@ -901,8 +927,6 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix)
       cout << "error, cannot multiply the two matrices" << endl;
       return *this; 
     }
-  double* TmpMatrixElements = new double[this->NbrMatrixElements * matrix.NbrMatrixElements];
-  int* TmpColumnIndices = new int[this->NbrMatrixElements * matrix.NbrMatrixElements];
   long TmpNbrMatrixElements = 0l;
   long PreviousTmpNbrMatrixElements = 0l;
   double* TmpElements = new double [matrix.NbrColumn];
@@ -910,6 +934,40 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix)
     {
       TmpElements[i] = 0.0;
     }
+
+  for (int i = 0; i < this->NbrRow; ++i)
+    {
+      long MinPos =  this->RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = this->RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = this->ColumnIndices[MinPos];
+	      long MinPos2 = matrix.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  double Tmp = this->MatrixElements[MinPos];
+		  long MaxPos2 = matrix.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix.ColumnIndices[MinPos2]] += 1.0;
+		    }      
+		}
+	    }	    
+	  for (int j = 0; j < matrix.NbrColumn; ++j)
+	    if (TmpElements[j] != 0)
+	      {
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	}
+    }
+  
+  double* TmpMatrixElements = new double[TmpNbrMatrixElements];
+  int* TmpColumnIndices = new int[TmpNbrMatrixElements];
+  TmpNbrMatrixElements = 0l;
+
   for (int i = 0; i < this->NbrRow; ++i)
     {
       long MinPos =  this->RowPointers[i];
@@ -948,15 +1006,17 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix)
   delete[] this->MatrixElements;
   delete[] this->ColumnIndices;
   this->NbrMatrixElements = TmpNbrMatrixElements;
-  this->MatrixElements = new double[this->NbrMatrixElements];
-  this->ColumnIndices = new int[this->NbrMatrixElements];
-  for (long i = 0l; i < this->NbrMatrixElements; ++i)
-    {
-      this->MatrixElements[i] = TmpMatrixElements[i];
-      this->ColumnIndices[i] = TmpColumnIndices[i];
-    }
-  delete[] TmpMatrixElements;
-  delete[] TmpColumnIndices;
+  this->MatrixElements = TmpMatrixElements;
+  this->ColumnIndices = TmpColumnIndices;
+//   this->MatrixElements = new double[this->NbrMatrixElements];
+//   this->ColumnIndices = new int[this->NbrMatrixElements];
+//   for (long i = 0l; i < this->NbrMatrixElements; ++i)
+//     {
+//       this->MatrixElements[i] = TmpMatrixElements[i];
+//       this->ColumnIndices[i] = TmpColumnIndices[i];
+//     }
+//   delete[] TmpMatrixElements;
+//   delete[] TmpColumnIndices;
   return *this;
 }
 
@@ -1643,6 +1703,70 @@ SparseRealMatrix SparseRealMatrix::ExtractMatrix(int nbrRow, int nbrColumn, bool
 	  ++TmpIndex;
 	}
     }
+  return TmpMatrix;
+}
+  
+  
+// extract a submatrix 
+//
+// nbrRow = number of rows for the submatrix
+// nbrColumn = number of columns for the submatrix and onto which index it has to be mapped (negative if it should not be kept)
+// rowKeptIndices = array that lists the row indices that have to be kept
+// columnKeptIndices = array that lists the column indices that have to be kept
+// return value = extracted matrix
+
+SparseRealMatrix SparseRealMatrix::ExtractMatrix(int nbrRow, int nbrColumn, int* rowKeptIndices, int* columnKeptIndices)
+{
+  int* TmpNbrElementPerRow = new int[nbrRow];
+  int* SortedColumnKeptIndices = new int [nbrColumn];
+  int* TranslationColumnIndices =  new int [nbrColumn];
+  for (int i = 0; i < nbrColumn; ++i)
+    {
+      TranslationColumnIndices[i] = i;
+      SortedColumnKeptIndices[i] = columnKeptIndices[i];
+    }
+  SortArrayUpOrdering<int>(SortedColumnKeptIndices, TranslationColumnIndices, nbrColumn);
+  long TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < nbrRow; ++i)
+    {
+      long MinPos = this->RowPointers[rowKeptIndices[i]];
+      int& TmpIndex2 = TmpNbrElementPerRow[i];
+      TmpIndex2 = 0;
+      if (MinPos >=  0l)
+	{
+	  long MaxPos = this->RowLastPointers[rowKeptIndices[i]];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      if (SearchInArray<int>(this->ColumnIndices[MinPos], SortedColumnKeptIndices, nbrColumn) >= 0)
+		++TmpIndex2;
+	    }
+	  TmpNbrMatrixElements += TmpIndex2;
+	}
+    }
+  if (TmpNbrMatrixElements == 0l)
+    {
+      delete[] SortedColumnKeptIndices;
+      delete[] TranslationColumnIndices;
+      SparseRealMatrix TmpMatrix;
+      return TmpMatrix;
+    }
+  SparseRealMatrix TmpMatrix(nbrRow, nbrColumn, TmpNbrElementPerRow);
+  for (int i = 0; i < nbrRow; ++i)
+    {
+      long MinPos = this->RowPointers[rowKeptIndices[i]];
+      if (MinPos >=  0l)
+	{
+	  long MaxPos = this->RowLastPointers[rowKeptIndices[i]];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpPos = SearchInArray<int>(this->ColumnIndices[MinPos], SortedColumnKeptIndices, nbrColumn);
+	      if (TmpPos >= 0)
+		TmpMatrix.SetMatrixElement(i, TranslationColumnIndices[TmpPos], this->MatrixElements[MinPos]);
+	    }
+	}
+    }
+  delete[] SortedColumnKeptIndices;
+  delete[] TranslationColumnIndices;
   return TmpMatrix;
 }
   

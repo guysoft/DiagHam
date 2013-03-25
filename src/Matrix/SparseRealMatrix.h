@@ -187,6 +187,11 @@ class SparseRealMatrix : public Matrix
   //
   void SetToIdentity();
 
+  // check if a sparse matrix is correctly formed
+  //
+  // return value = true if the sparse matrix is correctly formed
+  bool CheckSanity();
+
   // add two matrices
   //
   // matrix1 = first matrix
@@ -440,6 +445,15 @@ class SparseRealMatrix : public Matrix
   // return value = extracted matrix
   SparseRealMatrix ExtractMatrix(int nbrRow, int nbrColumn, bool* rowFlags, bool* columnFlags);
   
+  // extract a submatrix 
+  //
+  // nbrRow = number of rows for the submatrix
+  // nbrColumn = number of columns for the submatrix and onto which index it has to be mapped (negative if it should not be kept)
+  // rowKeptIndices = array that lists the row indices that have to be kept
+  // columnKeptIndices = array that lists the column indices that have to be kept
+  // return value = extracted matrix
+  SparseRealMatrix ExtractMatrix(int nbrRow, int nbrColumn, int* rowKeptIndices, int* columnKeptIndices);
+
   // read matrix from a file 
   //
   // file = reference  on the input file stream

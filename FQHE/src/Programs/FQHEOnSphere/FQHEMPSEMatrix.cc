@@ -230,9 +230,9 @@ int main(int argc, char** argv)
       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
 	  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue);
-	  for (int i = 0; i < Tmp; ++i)
+	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	    {
-	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	      for (int i = 0; i < Tmp; ++i)
 		{
 		  long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue));
 		  BlockIndexProductTableNbrElements[Tmp2] = Tmp;

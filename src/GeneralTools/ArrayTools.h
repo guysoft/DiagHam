@@ -1577,6 +1577,22 @@ int SearchInArray(const ClassName& element, ClassName* array, int nbrValue)
   return -1;
 }
 
+// find an element in a unsorted array
+//
+// element = element to find
+// array = sorted array where to search 
+// nbrValue = number of values in array
+// return value = element position (negative if not in the array)
+
+template <class ClassName>
+int SearchInUnsortedArray(const ClassName& element, ClassName* array, int nbrValue)
+{
+  for (int i = 0; i < nbrValue; ++i)
+    if (array[i] == element)
+      return i;
+  return -1;
+}
+
 // find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
 //
 // element = element to find
