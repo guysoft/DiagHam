@@ -269,7 +269,7 @@ ostream& FermionOnCP2::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
-  Str << "[";
+  Str <<  "[";
   for (int i = 0; i < this->NbrLzValue; ++i)
     {
       Tmp = (TmpState >> i);
@@ -395,4 +395,52 @@ int FermionOnCP2::FindStateIndexFromArray(int* stateDescription)
   while ((TmpState >> TmpLzMax) == 0x0ul)
     --TmpLzMax;
   return this->FindStateIndex(TmpState, TmpLzMax);
+}
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+bool FermionOnCP2::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  int* rootPartition1 = new int[2*this->NbrFermions];
+//   int* rootPartition2 = new int[2*this->NbrFermions];
+  int TmpLzMax = this->LzMax;
+  while ((this->StateDescription[index] >> TmpLzMax) == 0x0ul)
+    --TmpLzMax;
+  int particleIndex = 0;
+  for (int ind = 0; ind <= TmpLzMax; ++ind)
+    {
+      if (((this->StateDescription[index] >> ind) & 0x1ul) != 0)
+      {
+	    rootPartition1[particleIndex] = this->quantumNumberTz[ind];
+	    rootPartition1[particleIndex + 1] = this->quantumNumberY[ind];
+// 	    rootPartition2[particleIndex] = this->quantumNumberR[ind];
+// 	    rootPartition2[particleIndex + 1] = this->quantumNumberS[ind];
+// 	      cout << particleIndex << " " << rootPartition[particleIndex] << " " << rootPartition[particleIndex + 1] << endl;
+	    particleIndex += 2;
+      }
+    }
+  int i = 0;
+  while (i < this->NbrFermions - 1)
+    {
+      int j = i + 1;
+      while  (j < this->NbrFermions)
+      {
+       double distance1 = (3*(rootPartition1[j << 1] - rootPartition1[i << 1]) + 2*(rootPartition1[(j << 1) + 1] - rootPartition1[(i << 1) + 1]))/6.0;
+//        cout <<rootPartition[i<<1] << " " << rootPartition[j << 1]  << " " << rootPartition[(i << 1) + 1] << " " << rootPartition[(j << 1) + 1] << " " << distance << " " ;
+//        this->PrintState(cout, index) << endl;
+	double distance2 = (rootPartition1[(j<<1) + 1] - rootPartition1[(i<<1) + 1]) / 3;
+//        cout << distance ;
+//        this->PrintState(cout, index) << " " << pauliR <<  endl;
+// 	  int distance = abs(rootPartition[i << 1] - rootPartition[j << 1]) + abs(rootPartition[(i << 1) + 1] - rootPartition[(j << 1) + 1]) + abs (rootPartition[i << 1] - rootPartition[j << 1] + rootPartition[(i << 1) + 1] - rootPartition[(j << 1) + 1]);
+//        cout << (i<<1) << " , " << (j<<1) << " : " << rootPartition[(i << 1)] << " " << rootPartition[j << 1] << " " << rootPartition[(i << 1) + 1] << " " << rootPartition[(j << 1) + 1] << " : " << distance << endl;
+       if ((distance1 < (double) pauliR) && (distance2 < (double) pauliR))
+	  return false;
+       else
+	 j += 1;
+      }
+     i += 1;
+    }
+  return true; 
 }

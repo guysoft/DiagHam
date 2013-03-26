@@ -831,7 +831,7 @@ void GenericRealMainTask::AddOptionGroup(OptionManager *optionManager)
 // terminate = indicate if line should be terminated with endl
 void GenericRealMainTask::WriteResult(ofstream& file, double value, bool terminate)
 {
-  file << SubspaceStr <<" ";
+  file << this->SubspaceStr <<" ";
   file << value;
   // cout <<"wrote value "<<value<<" to file"<<endl;
   if (terminate)

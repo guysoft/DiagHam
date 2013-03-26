@@ -60,16 +60,16 @@ FQHECP2GeneralizedLaughlinWaveFunction::FQHECP2GeneralizedLaughlinWaveFunction()
 // nbrParticles = number of particles
 // wavefunctions = array to the wavefunctions that have to be multiplied
 // nbrWaveFunctions = number of wavefunctions to multiply
-// jastrowFactor = multiply(if positive) or divide (if negative) the wavefunction by an overall Jastrow factor
-// separateCoordinates = if false use the same coordinates to evaluate wavefunctions, if true use coordinates 0 to nbrParticles/nbrWaveFunctions - 1 for the first wavefunctions and so on
+// exponent = exponent of the generalized Laughlin wavefunction
  
-FQHECP2GeneralizedLaughlinWaveFunction::FQHECP2GeneralizedLaughlinWaveFunction(ComplexLapackDeterminant* determinant, int nbrParticles, int nbrFluxQuanta)
+FQHECP2GeneralizedLaughlinWaveFunction::FQHECP2GeneralizedLaughlinWaveFunction(ComplexLapackDeterminant* determinant, int nbrParticles, int nbrFluxQuanta, int exponent)
 {
   this->NbrParticles = nbrParticles;
   this->OddFlag = false;
-  if ((nbrFluxQuanta % 2 == 0))
-    this->NbrFluxQuanta = nbrFluxQuanta / 2;
-  if (nbrFluxQuanta == 3)
+  this->LaughlinExponent = exponent;
+  if ((nbrFluxQuanta % this->LaughlinExponent) == 0)
+    this->NbrFluxQuanta = nbrFluxQuanta / this->LaughlinExponent;
+  if ((this->LaughlinExponent == 2) && (nbrFluxQuanta == 3))
   {
     this->NbrFluxQuanta = 1;
     this->OddFlag = true;
@@ -121,7 +121,10 @@ Complex FQHECP2GeneralizedLaughlinWaveFunction::CalculateFromCoordinates(RealVec
 	}
       }
     result = this->TmpDeterminant->Determinant();
-    return result*result;
+    Complex TmpResult = result;
+    for (int i = 1; i < this->LaughlinExponent; ++i)
+      TmpResult *= result;
+    return TmpResult;
    }
   else
   {

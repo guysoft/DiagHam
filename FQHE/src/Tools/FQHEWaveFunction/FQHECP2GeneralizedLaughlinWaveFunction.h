@@ -59,6 +59,8 @@ class FQHECP2GeneralizedLaughlinWaveFunction
   ComplexLapackDeterminant* TmpDeterminant;
   // flag that indicates whether the wave function should be computed for NbrFluxQuanta odd (true) or even (false)
   bool OddFlag;
+  // exponent of the generalized Laughlin wavefunction
+  int LaughlinExponent;
 
  public:
 
@@ -70,7 +72,8 @@ class FQHECP2GeneralizedLaughlinWaveFunction
   //
   // nbrParticles = number of particles
   // nbrFluxQuanta = number of flux quanta
-  FQHECP2GeneralizedLaughlinWaveFunction(ComplexLapackDeterminant* determinant, int nbrParticles, int nbrFluxQuanta);
+  // exponent = exponent of the generalized Laughlin wavefunction
+  FQHECP2GeneralizedLaughlinWaveFunction(ComplexLapackDeterminant* determinant, int nbrParticles, int nbrFluxQuanta, int exponent = 2);
 
    // destructor
   //

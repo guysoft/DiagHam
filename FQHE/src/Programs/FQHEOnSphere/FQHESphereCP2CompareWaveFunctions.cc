@@ -5,6 +5,7 @@
 #include "HilbertSpace/BosonOnSphereLong.h"
 #include "HilbertSpace/BosonOnSphereSymmetricBasisShort.h"
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/FermionOnCP2.h"
 #include "HilbertSpace/BosonOnCP2TzSymmetry.h"
 #include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "use-exact", "file name of an exact state that has to be used as test wave function"); 
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-state", "name of the file corresponding to the state calculated by exact diagonalization"); 
   (*SystemGroup) += new  SingleStringOption ('\n', "record-wavefunctions", "optional file where each wavefunctions will be tabulated and recorded");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "laughlin-exponent", "exponent of the generalized Laughlin wavefunction", 2);
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -116,7 +118,7 @@ int main(int argc, char** argv)
     bool Statistics = true;
     int TotalTz = 0;
     int TotalY = 0;
-    
+    int LaughlinExponent = Manager.GetInteger("laughlin-exponent");
     
     AbstractFunctionBasis* ReferenceBasis = 0;   
   
@@ -127,9 +129,9 @@ int main(int argc, char** argv)
       cout << "error while retrieving system parameters from file name " << ReferenceStateName << endl;
       return -1; 
     }
-    if ((NbrFluxQuanta % 2) == 0 && (NbrBosons != ((NbrFluxQuanta / 2 + 1) * (NbrFluxQuanta / 2 + 2) / 2)))
+    if ((NbrFluxQuanta % LaughlinExponent) == 0 && (NbrBosons != ((NbrFluxQuanta / LaughlinExponent + 1) * (NbrFluxQuanta / LaughlinExponent + 2) / 2)))
     {
-      cout << " error : should provide a state with N = (Nphi/2 + 1)(Nphi/2 + 2)/2 " << endl;    
+      cout << " error : should provide a state with N = (Nphi/m + 1)(Nphi/m + 2)/2 " << endl;    
       return -1;
     }
     
@@ -152,16 +154,22 @@ int main(int argc, char** argv)
       }
     
     FQHECP2GeneralizedLaughlinWaveFunction* BaseFunction = 0;
-    BosonOnSphereShort* ReferenceSpace = 0;
+    ParticleOnSphere* ReferenceSpace = 0;
     ComplexLapackDeterminant* ExactDeterminant = 0;
-    if ((NbrFluxQuanta % 2 == 0))
+    if ((NbrFluxQuanta % LaughlinExponent == 0))
        ExactDeterminant = new ComplexLapackDeterminant(NbrBosons);
     else
       ExactDeterminant = new ComplexLapackDeterminant(3);
     if (RecordWaveFunctions == 0)
-      BaseFunction = new FQHECP2GeneralizedLaughlinWaveFunction(ExactDeterminant, NbrBosons, NbrFluxQuanta);
-    ReferenceSpace = new BosonOnCP2(NbrBosons, NbrFluxQuanta, TotalTz, TotalY);
-   
+      BaseFunction = new FQHECP2GeneralizedLaughlinWaveFunction(ExactDeterminant, NbrBosons, NbrFluxQuanta, LaughlinExponent);
+    if (Statistics == false)
+      {
+	ReferenceSpace = new BosonOnCP2(NbrBosons, NbrFluxQuanta, TotalTz, TotalY);
+      }
+    else
+      {
+	ReferenceSpace = new FermionOnCP2(NbrBosons, NbrFluxQuanta, TotalTz, TotalY);
+      }
     AbstractRandomNumberGenerator* RandomNumber = 0;
     RandomNumber = new StdlibRandomNumberGenerator (29457);
     Complex ValueExact;

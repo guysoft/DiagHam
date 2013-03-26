@@ -132,7 +132,12 @@ int main(int argc, char** argv)
   int TotalPz = Manager.GetInteger("total-entanglement");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   int PauliK=0, PauliR=0;
-  int NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)*(NbrFluxQuanta + 3) / 6;
+  int NbrOrbitals;
+  if (FourDFlag == true)
+    NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2)*(NbrFluxQuanta + 3) / 6;
+  if (CP2Flag == true)
+    NbrOrbitals = (NbrFluxQuanta + 1)*(NbrFluxQuanta + 2) / 2;
+  
   {
     int TmpL=0;
     int *TmpIs=Manager.GetIntegers("pauli",TmpL);

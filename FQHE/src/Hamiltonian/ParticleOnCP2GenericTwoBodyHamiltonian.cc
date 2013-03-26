@@ -152,7 +152,6 @@ void ParticleOnCP2GenericTwoBodyHamiltonian::EvaluateInteractionFactors()
   
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
   {
-    cout << "fermionic statistics" << endl;
     for (int r1 = 0; r1 <= this->NbrFluxQuanta; ++r1)
     for (int r2 = 0; r2 <= this->NbrFluxQuanta; ++r2)
       for (int s1 = 0; s1 <= this->NbrFluxQuanta - r1; ++s1)

@@ -311,7 +311,8 @@ void ParticleOnSphereGenericThreeBodyHamiltonian::EvaluateInteractionFactors()
       
       long TmpNbrNIndices = 0;
       for (int MinSum = 0; MinSum <= this->MaxSumIndices[3]; ++MinSum)
-	TmpNbrNIndices += this->NbrSortedIndicesPerSum[3][MinSum];
+      	TmpNbrNIndices += this->NbrSortedIndicesPerSum[3][MinSum];
+      
       this->NbrNIndices[3] = TmpNbrNIndices;
       this->NIndices[3] = new int[TmpNbrNIndices * 3];
       this->NbrMIndices[3] = new long[TmpNbrNIndices];

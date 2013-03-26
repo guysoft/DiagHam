@@ -152,12 +152,15 @@ class FermionOnCP2 : public FermionOnSphere
   // currentKz = current value of kz for a single particle
   // currentTotalJz = current total value of Jz
   // currentTotalKz = current total value of Kz
-  // currentFermionicPosition = current fermionic position within the state description
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrBosons, int currentTz, int currentTzMax, int currentY, int currentTotalTz, int currentTotalY, long pos);
   
-  
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
    
 };
 
