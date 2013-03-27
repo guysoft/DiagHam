@@ -2894,6 +2894,99 @@ RealSymmetricMatrix  FermionOnSphere::EvaluatePartialDensityMatrixParticlePartit
     }
 }
 
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  
+									 ParticleOnSphere* destinationHilbertSpace,
+									 RealVector& groundState,  RealSymmetricMatrix* densityMatrix)
+{
+  FermionOnSphere* TmpHilbertSpace =  (FermionOnSphere*) complementaryHilbertSpace;
+  FermionOnSphere* TmpDestinationHilbertSpace =  (FermionOnSphere*) destinationHilbertSpace;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int MaxIndex = minIndex + nbrIndex;
+  long TmpNbrNonZeroElements = 0l;
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
+  
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+ 	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = TmpDestinationHilbertSpace->LzMax;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+ 		    Coefficient *= 1.0;
+ 		  else
+ 		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  delete[] TmpStateCoefficient;
+  return TmpNbrNonZeroElements;
+}
+
 // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. The entanglement matrix is only evaluated in a given Lz sector.
 // 
 // nbrFermionSector = number of particles that belong to the subsytem 

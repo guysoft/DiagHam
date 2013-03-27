@@ -301,6 +301,33 @@ int main(int argc, char** argv)
 		  ++Index;
 		}
 	    }
+	  if (SU2SpinFlag == true)
+	    {
+	      KyValues = DensityMatrix.GetAsIntegerArray(4);
+	      Coefficients = DensityMatrix.GetAsDoubleArray(5);
+	      int* SzValues = DensityMatrix.GetAsIntegerArray(1);
+	      int* N1Values = DensityMatrix.GetAsIntegerArray(2);
+	      int* N2Values = DensityMatrix.GetAsIntegerArray(3);
+	      File << "# na sz Nup Ndown ky lambda -log(lambda)";
+	      File << endl;
+	      while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+		{
+		  double Tmp = Coefficients[Index];
+		  if (Tmp > Error)
+		    {
+		      int TmpKya = KyValues[Index];
+		      File << NbrParticlesInPartition << " " << SzValues[Index]  
+			   << " " << N1Values[Index] << " " << N2Values[Index] << " " << TmpKya << " " << Tmp << " " << (-log(Tmp));
+		      File << endl;
+		      if (TmpKya < MinKya)
+			MinKya = TmpKya;
+		      if (TmpKya > MaxKya)
+			MaxKya = TmpKya;
+		    }
+		  ++Index;
+		}
+	      
+	    }
 	  if (SU3SpinFlag == true)
 	    {
 	      KyValues = DensityMatrix.GetAsIntegerArray(6);
