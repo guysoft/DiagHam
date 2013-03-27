@@ -32,6 +32,7 @@
 #include "GeneralTools/Endian.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "FermionOnCP2.h"
+#include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 
 
 #include <math.h>
@@ -443,4 +444,218 @@ bool FermionOnCP2::HasPauliExclusions(int index, int pauliK, int pauliR)
      i += 1;
     }
   return true; 
+}
+
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given (Jz,Kz) sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// jzSector = Jz sector in which the density matrix has to be evaluated 
+// kzSector = Kz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix  FermionOnCP2::EvaluatePartialDensityMatrixParticlePartition(int nbrFermionSector, int tzSector, int ySector, RealVector& groundState, AbstractArchitecture* architecture)
+{  
+  if (nbrFermionSector == 0)
+    {
+      if ((tzSector == 0) and (ySector ==0))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  if (nbrFermionSector == this->NbrFermions)
+    {
+      if ((tzSector == this->TotalTz) and (ySector == this->TotalY))
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+    }
+
+  int ComplementaryNbrFermionSector = this->NbrFermions - nbrFermionSector;
+  int ComplementaryRSector = (this->TotalY - ySector + 3*(this->TotalTz - tzSector) + 2*ComplementaryNbrFermionSector*this->NbrFluxQuanta);
+  int ComplementarySSector = (this->TotalY - ySector - 3*(this->TotalTz - tzSector) + 2*ComplementaryNbrFermionSector*this->NbrFluxQuanta);
+  if ((ComplementaryRSector < 0) || (ComplementarySSector < 0) || ((ComplementaryRSector % 6) != 0) || ((ComplementarySSector % 6) != 0) || (ComplementaryRSector + ComplementarySSector > 6*this->NbrFluxQuanta*ComplementaryNbrFermionSector))
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+  cout << "nbr fermions = " << nbrFermionSector << ", tz = " << tzSector << ", y = " << ySector << endl;
+  cout << "nbr fermions complementary = " << ComplementaryNbrFermionSector << ", rb = " << ComplementaryRSector << ", sb = " << ComplementarySSector << " nbrFluxQuanta = " << this->NbrFluxQuanta << endl;
+  FermionOnCP2 TmpDestinationHilbertSpace(nbrFermionSector, this->NbrFluxQuanta, tzSector, ySector);
+  cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  if (TmpDestinationHilbertSpace.HilbertSpaceDimension == 0)
+  {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+   }
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  FermionOnCP2 TmpHilbertSpace(ComplementaryNbrFermionSector, this->NbrFluxQuanta, this->TotalTz - tzSector, this->TotalY - ySector);
+
+  
+  FQHESphereParticleEntanglementSpectrumOperation Operation(this, &TmpDestinationHilbertSpace, &TmpHilbertSpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to be stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnCP2::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace, RealVector& groundState, RealSymmetricMatrix* densityMatrix)
+{
+   FermionOnCP2* TmpHilbertSpace =  (FermionOnCP2*) complementaryHilbertSpace;
+   FermionOnCP2* TmpDestinationHilbertSpace =  (FermionOnCP2*) destinationHilbertSpace;
+   int ComplementaryNbrFermionSector = TmpHilbertSpace->NbrFermions;
+   int NbrFermionSector = TmpDestinationHilbertSpace->NbrFermions;
+   unsigned long* TmpMonomial2 = new unsigned long [NbrFermionSector];
+   unsigned long* TmpMonomial1 = new unsigned long [ComplementaryNbrFermionSector];
+   unsigned long* TmpMonomial3 = new unsigned long [this->NbrFermions];
+   int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+   double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+   int MaxIndex = minIndex + nbrIndex;
+   long TmpNbrNonZeroElements = 0l;
+
+   double* LogFactorials = new double[this->NbrFermions + 1];
+   LogFactorials[0] = 0.0;
+   LogFactorials[1] = 0.0;
+   for (int i = 2 ; i <= this->NbrFermions; ++i)
+     LogFactorials[i] = LogFactorials[i - 1] + log((double) i); 
+   double* TmpDestinationLogFactorials = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+   double TmpLogBinomial = LogFactorials[this->NbrFermions] - LogFactorials[ComplementaryNbrFermionSector] - LogFactorials[NbrFermionSector];
+
+   for (int i = 0; i < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++i)
+    {
+      double TmpFactor = 0.0;
+      int TmpLzMax = this->LzMax;
+      while ((this->StateDescription[i] >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      for (int k = 0; k <= TmpLzMax; ++k)
+	TmpFactor += LogFactorials[((this->StateDescription[i] >> k) & 0x1ul)];
+      TmpDestinationLogFactorials[i] =  TmpFactor;
+    }
+   for (; minIndex < MaxIndex; ++minIndex)    
+     {
+      int Pos = 0;
+      TmpHilbertSpace->ConvertToMonomial(TmpHilbertSpace->StateDescription[minIndex], TmpMonomial1);
+      int TmpLzMax = this->LzMax;
+      while ((this->StateDescription[minIndex] >> TmpLzMax) == 0x0ul)
+	--TmpLzMax;
+      double TmpHilbertSpaceFactorial = 0.0;
+      for (int k = 0; k <= TmpLzMax; ++k)
+	TmpHilbertSpaceFactorial += LogFactorials[((this->StateDescription[minIndex] >> k) & 0x1ul)];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  TmpDestinationHilbertSpace->ConvertToMonomial(TmpDestinationHilbertSpace->StateDescription[j], TmpMonomial2);
+	  int TmpIndex2 = 0;
+	  int TmpIndex3 = 0;
+	  int TmpIndex4 = 0;
+	  while ((TmpIndex2 < ComplementaryNbrFermionSector) && (TmpIndex3 < NbrFermionSector)) 
+	    {
+	      while ((TmpIndex2 < ComplementaryNbrFermionSector) && (TmpMonomial2[TmpIndex3] <= TmpMonomial1[TmpIndex2]))
+		{
+		  TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+		  ++TmpIndex2;
+		  ++TmpIndex4;		  
+		}
+	      if (TmpIndex2 < ComplementaryNbrFermionSector)
+		{
+		  while ((TmpIndex3 < NbrFermionSector) && (TmpMonomial1[TmpIndex2] <= TmpMonomial2[TmpIndex3]))
+		    {
+		      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+		      ++TmpIndex3;
+		      ++TmpIndex4;		  
+		    }
+		}
+	    }
+	  while (TmpIndex2 < ComplementaryNbrFermionSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial1[TmpIndex2];
+	      ++TmpIndex2;
+	      ++TmpIndex4;		  
+	    }
+	  while (TmpIndex3 < NbrFermionSector)
+	    {
+	      TmpMonomial3[TmpIndex4] = TmpMonomial2[TmpIndex3];
+	      ++TmpIndex3;
+	      ++TmpIndex4;		  
+	    }
+
+	  unsigned long TmpState = this->ConvertFromMonomial(TmpMonomial3);
+// 	  cout << TmpMonomial3[0] << " " ;
+// 	  for (int l = 0; l <= this->LzMax; ++l)
+// 	    cout << ((TmpState >> l) & 0x1ul) << " " ;
+// 	  cout << endl;
+	  int TmpPos = this->FindStateIndex(TmpState, TmpMonomial3[0]);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		  --TmpLzMax;
+	      double TmpFactorial = 0.0;	      
+	      for (int k = 0; k <= TmpLzMax; ++k)
+		TmpFactorial += LogFactorials[((TmpState >> k) & 0x1ul)];
+	      TmpFactorial -= TmpHilbertSpaceFactorial + TmpDestinationLogFactorials[j] + TmpLogBinomial;
+	      TmpFactorial *= 0.5; 
+	      
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      TmpStateCoefficient[Pos] = exp(TmpFactorial);
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		    ++TmpNbrNonZeroElements;
+		  }
+	    }
+	}
+     }
+   delete[] TmpMonomial2;
+   delete[] TmpMonomial1;
+   delete[] TmpMonomial3;
+   delete[] TmpStatePosition;
+   delete[] TmpStatePosition2;
+   delete[] TmpStateCoefficient;
+   delete[] TmpDestinationLogFactorials;
+   return TmpNbrNonZeroElements;
 }
