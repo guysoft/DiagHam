@@ -58,7 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\0', "input-file", "name of the file describing the system ground state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
-  (*SystemGroup) += new BooleanOption  ('b', "bipartite", "use bipartite cut instead of spin up/spin down separation");
+  (*SystemGroup) += new BooleanOption  ('\n', "spinup-spindown", "use spin up/spin down separation instead of the orbital bipartite cut");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
       return 0;
     }
   
-  bool BipartiteFlag = Manager.GetBoolean("bipartite");
+  bool BipartiteFlag = !(Manager.GetBoolean("spinup-spindown"));
 #ifdef __LAPACK__
   bool LapackFlag = Manager.GetBoolean("use-lapack");
 #endif
@@ -249,17 +249,20 @@ int main(int argc, char** argv)
 	    }
 	  else 
 	    {
-	      if (PartialDensityMatrix(0,0) > 1e-14)
+	      if (PartialDensityMatrix.GetNbrRow() == 1)
 		{
-		  EntanglementEntropy += PartialDensityMatrix(0,0) * log(PartialDensityMatrix(0,0));
-		  DensitySum += PartialDensityMatrix(0,0);
-		  if (DensityMatrixFileName != 0)
+		  if (PartialDensityMatrix(0,0) > 1e-14)
 		    {
-		      ofstream DensityMatrixFile;
-		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		      DensityMatrixFile.precision(14);
-		      DensityMatrixFile << (0.5 * ((double) lzUp)) << " " << PartialDensityMatrix(0,0) << endl;
-		  DensityMatrixFile.close();
+		      EntanglementEntropy += PartialDensityMatrix(0,0) * log(PartialDensityMatrix(0,0));
+		      DensitySum += PartialDensityMatrix(0,0);
+		      if (DensityMatrixFileName != 0)
+			{
+			  ofstream DensityMatrixFile;
+			  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+			  DensityMatrixFile.precision(14);
+			  DensityMatrixFile << (0.5 * ((double) lzUp)) << " " << PartialDensityMatrix(0,0) << endl;
+			  DensityMatrixFile.close();
+			}
 		    }
 		}
 	    }

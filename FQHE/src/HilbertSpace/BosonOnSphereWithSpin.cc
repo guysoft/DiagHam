@@ -100,31 +100,34 @@ BosonOnSphereWithSpin::BosonOnSphereWithSpin (int nbrBosons, int totalLz, int lz
   //  int TmpDim = this->GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, TmpLzMax, TmpLzMax, this->ShiftedTotalLz, 0);
   long TmpDim = GenerateStates(this->NbrBosonsUp, this->NbrBosonsDown, this->LzMax, this->TotalLz);
   
-  if (TmpDim!=this->HilbertSpaceDimension)
+  if (TmpDim != this->HilbertSpaceDimension)
     cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
-  this->GenerateLookUpTable(memory);
-  this->CoherenceFactors=new double[NbrBosons*NbrBosons+1];
-  for (int i=0; i<NbrBosons*NbrBosons+1; ++i)
-    this->CoherenceFactors[i]=sqrt((double)i);
-  this->KeptCoordinates = new int;
-  (*(this->KeptCoordinates)) = -1;
-  this->Minors = 0;
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  if (this->HilbertSpaceDimension > 0)
+    {
+      this->GenerateLookUpTable(memory);
+      this->CoherenceFactors=new double[NbrBosons*NbrBosons+1];
+      for (int i=0; i<NbrBosons*NbrBosons+1; ++i)
+	this->CoherenceFactors[i]=sqrt((double)i);
+      this->KeptCoordinates = new int;
+      (*(this->KeptCoordinates)) = -1;
+      this->Minors = 0;
+      this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 
-//   for (int i=0; i<HilbertSpaceDimension; ++i)
-//     {
-//       PrintState(cout,i)<<endl;      
-//     }
-
+      //   for (int i=0; i<HilbertSpaceDimension; ++i)
+      //     {
+      //       PrintState(cout,i)<<endl;      
+      //     }
+      
 #ifdef __DEBUG__
-  long UsedMemory = 0;
-  UsedMemory += 2*this->HilbertSpaceDimension * sizeof(unsigned long);  // StateDescriptionUp/Down
-  UsedMemory += this->HilbertSpaceDimension * sizeof(unsigned); // StateInfo
-  UsedMemory += (0x1l<<(this->LzMax+this->NbrBosonsUp)) * sizeof(unsigned long);  // LookUpTableUp 
-  UsedMemory += (0x1l<<(this->LzMax+this->NbrBosonsDown)) * sizeof(unsigned long); // LookUpTableDown
-  cout << "HS using ";
-  PrintMemorySize(cout, UsedMemory)<<endl;
+      long UsedMemory = 0;
+      UsedMemory += 2*this->HilbertSpaceDimension * sizeof(unsigned long);  // StateDescriptionUp/Down
+      UsedMemory += this->HilbertSpaceDimension * sizeof(unsigned); // StateInfo
+      UsedMemory += (0x1l<<(this->LzMax+this->NbrBosonsUp)) * sizeof(unsigned long);  // LookUpTableUp 
+      UsedMemory += (0x1l<<(this->LzMax+this->NbrBosonsDown)) * sizeof(unsigned long); // LookUpTableDown
+      cout << "HS using ";
+      PrintMemorySize(cout, UsedMemory)<<endl;
 #endif
+    }
 }
 
 // copy constructor (without duplicating datas)
