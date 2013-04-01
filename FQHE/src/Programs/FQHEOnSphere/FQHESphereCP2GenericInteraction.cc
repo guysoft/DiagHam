@@ -389,7 +389,7 @@ int main(int argc, char** argv)
 	      Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
 	    }
 	    else
-	      cout << " Warning : number of orbitals too big " << endl;
+	      Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, tz, y);
 	  }
      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
     if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
