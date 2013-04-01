@@ -172,6 +172,14 @@ class FermionOnCP2 : public FermionOnSphere
   // pauliK = number of particles allowed in consecutive orbitals
   // pauliR = number of consecutive orbitals
   virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
+  
+  // convert a state such that its components are now expressed in the unnormalized basis
+  //
+  // state = reference to the state to convert
+  // reference = set which component has to be normalized to 1
+  // symmetryFactor = if true also remove the symmetry factors
+  // return value = converted state
+  virtual RealVector& ConvertToUnnormalizedMonomial(RealVector& state, long reference = 0, bool symmetryFactor = true);
    
 };
 

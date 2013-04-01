@@ -14,6 +14,7 @@
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnSpherePTruncated.h"
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/FermionOnCP2.h"
 
 #include "Options/Options.h"
 
@@ -146,7 +147,10 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("normalize"))	
 	    sprintf (OutputFileName, "fermions_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
 	  else
-	    sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	    if (CP2Flag == false)
+	      sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	    else
+	      sprintf(OutputFileName, "fermions_unnormalized_cp2_n_%d_2s_%d_tz_%d_y_%d.0.vec", NbrParticles, LzMax, TotalTz, TotalY);
 	}
       else
 	{
@@ -189,7 +193,10 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("p-truncated") == false)
 		    {
-		      OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+		      if (CP2Flag == false)
+			OutputBasis = new FermionOnSphere(NbrParticles, TotalLz, LzMax);
+		      else
+			OutputBasis = new FermionOnCP2(NbrParticles, LzMax, TotalTz, TotalY);
 		    }
 		  else
 		    {

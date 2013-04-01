@@ -8,6 +8,7 @@
 #include "HilbertSpace/BosonOnCP2TzSymmetry.h"
 #include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 #include "HilbertSpace/FermionOnCP2.h"
+#include "HilbertSpace/FermionOnCP2Long.h"
 
 #include "Hamiltonian/ParticleOnCP2GenericTwoBodyHamiltonian.h"
 
@@ -243,7 +244,7 @@ int main(int argc, char** argv)
 	      Space = new FermionOnCP2(NbrParticles, NbrFluxQuanta, tz, y);
 	    }
 	    else
-	      cout << " Warning : number of orbitals too big " << endl;
+	      Space = new FermionOnCP2Long(NbrParticles, NbrFluxQuanta, tz, y);
 	  }
 	  if (Space->GetHilbertSpaceDimension() > 0)
 	  {
