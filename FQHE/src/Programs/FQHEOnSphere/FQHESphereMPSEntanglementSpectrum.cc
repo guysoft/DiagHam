@@ -853,20 +853,23 @@ int main(int argc, char** argv)
         else
           TmpNa -= MaxQValue/2;
 
-        if (Manager.GetBoolean("use-padding") == false)
-          TmpNa -= p;
+        if ((p==1) && (Manager.GetBoolean("use-padding") == false))
+           TmpNa -= (q-1)/2;
+        else
+           if (Manager.GetBoolean("use-padding") == false)
+              TmpNa -= p;
 
-        TmpNa =  (p * EntCut - TmpNa)/q; 
+        double ParticlesInA =  (p * EntCut - TmpNa)/((double)q); 
 
         if (Manager.GetBoolean("all-na"))
           {
-            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;  
-            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;
+            cout<< "Na= " << (int)ParticlesInA << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;  
+            File << EntCut << " " << (int)ParticlesInA << " " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;
           }
-        else if (TmpNa == Na)
+        else if ((int)ParticlesInA == Na)
           {
-            cout<< "Na= " << TmpNa << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;  
-            File << EntCut << " " << TmpNa << " " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;
+            cout<< "Na= " << (int)ParticlesInA << " P= " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;  
+            File << EntCut << " " << (int)ParticlesInA << " " << RhoPSector[i] << " " << RhoEigenvalues[ReorderingMap[i]] << endl;
           }
       }
    }
