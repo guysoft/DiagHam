@@ -320,10 +320,10 @@ int main(int argc, char** argv)
 	{
           if (DensityFlag == true)
     	     SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
-							  SparseBMatrices, Architecture.GetArchitecture());
+							     SparseBMatrices, Architecture.GetArchitecture());
           else
              SpaceWrapper = new FermionOnCylinderMPSWrapper (NbrParticles, TotalLz, NbrFluxQuanta, ReferenceState, MPSRowIndex, MPSColumnIndex, 
-							  SparseBMatrices, 0);
+							     SparseBMatrices, 0);
 	}
     }
   RealVector DummyState (1);
@@ -593,7 +593,7 @@ int main(int argc, char** argv)
            {
              Occupations[k] = Operation.GetMatrixElement(k);
              CheckSum += Occupations[k];
-             cout<<"Occupation of orbital "<<k<<" "<<Occupations[k]<<endl;
+             cout<<"Occupation of orbital " << k << " " << Occupations[k] << endl;
            }
 
           cout<<"Checksum = " << CheckSum << endl; 
@@ -604,7 +604,7 @@ int main(int argc, char** argv)
  	   }
           delete[] Operators;
 
-          long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+          long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
              
           Complex RhoRho; 
           double X;

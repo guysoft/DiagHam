@@ -141,7 +141,7 @@ SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeMatrices(int nb
 		    }
  		  else
 		    {
- 		      TmpCoefficient[i] = exp(I() * 2.0 * M_PI * quasiholePositions[i] * (((double) (2 * N1 - this->NbrNValue + 2)) / (2 * ((double) this->LaughlinIndex)) + ((double) (p - q))));
+ 		      TmpCoefficient[i] = exp(I() * 2.0 * M_PI * quasiholePositions[i] * (((double) (2 * N1 - this->NbrNValue + 2)) / (2 * ((double) this->LaughlinIndex)) + ((double) (p - q)))) * exp(- this->Kappa * this->Kappa * ((double) ((p + q) * (this->LaughlinIndex - 1))) * 0.25);
 //fabs((double) (p - q)));
 		    }
 		}

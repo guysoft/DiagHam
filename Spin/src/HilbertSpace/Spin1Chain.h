@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
+#include "Vector/RealVector.h"
 
 #include <iostream>
 
@@ -252,6 +253,15 @@ class Spin1Chain : public AbstractSpinChain
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+	
  private:
 
   // constructor from pre-constructed datas

@@ -76,7 +76,7 @@ bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin)
   StrNbrSpins = strstr(filename, "spin_");
   if (StrNbrSpins != 0)
     {
-      StrNbrSpins += 4;
+      StrNbrSpins += 5;
       int SizeString = 0;
       while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '_') && (StrNbrSpins[SizeString] >= '0') 
 	     && (StrNbrSpins[SizeString] <= '9'))
@@ -87,7 +87,7 @@ bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin)
 	  spin = atoi(StrNbrSpins);
 	  StrNbrSpins[SizeString] = '_';
 	  StrNbrSpins += SizeString;
-	  if (strstr((StrNbrSpins + SizeString), "_2_") == (StrNbrSpins + SizeString))
+	  if (strstr((StrNbrSpins + SizeString), "_2_") != (StrNbrSpins + SizeString))
 	    {
 	      spin *= 2;
 	    }

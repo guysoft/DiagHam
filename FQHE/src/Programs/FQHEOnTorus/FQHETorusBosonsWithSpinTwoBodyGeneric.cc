@@ -134,7 +134,10 @@ int main(int argc, char** argv)
     }
     
   char* OutputFileName = new char [512];
-  sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
+  if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
+    sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
+  else
+    sprintf (OutputFileName, "bosons_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);

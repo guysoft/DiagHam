@@ -34,11 +34,15 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
+#include "Matrix/RealSymmetricMatrix.h"
+
 #include <iostream>
 
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 #define MAX_HILBERTSPACE_DIMENSION 327680
@@ -1032,3 +1036,91 @@ ostream& Spin1Chain::PrintState (ostream& Str, int state)
     }
   return Str;
 }
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix Spin1Chain::EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+      
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      if (szSector == this->Sz)
+	{
+	  RealSymmetricMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  RealSymmetricMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}      
+    }
+  Spin1Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
+  Spin1Chain TmpHilbertSpace(this->ChainLength - nbrSites, this->Sz - szSector, 1000000);
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = nbrSites * 2;
+  unsigned long Mask = (0x1ul << Shift) - 0x1ul;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+  long TmpNbrNonZeroElements = 0l;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = (TmpHilbertSpace.ChainDescription[MinIndex] << Shift) & 0xfffffffful;
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpState | (TmpDestinationHilbertSpace.ChainDescription[j] & Mask);
+	  int TmpPos = this->FindStateIndex(TmpState2);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]];
+	      for (int k = 0; k < Pos; ++k)
+		{
+		  if (TmpStatePosition2[k] >= Pos2)
+		    {
+		      TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
+		    }
+		}
+	    }
+	}
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  return TmpDensityMatrix;
+}
+	
