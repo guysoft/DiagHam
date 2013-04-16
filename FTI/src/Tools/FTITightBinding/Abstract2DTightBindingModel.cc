@@ -100,6 +100,7 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrum(char* fileName)
 	    File << " " << this->EnergyBandStructure[i][LinearizedMomentumIndex];
 	  File << endl;
 	}
+      File << endl;
     }
   File.close();
   return true;

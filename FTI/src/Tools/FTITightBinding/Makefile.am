@@ -24,4 +24,5 @@ TightBindingModelEffectiveBilayerHaldaneLattice.cc \
 TightBindingModelFuKaneMeleLattice.cc \
 TightBindingModel3DSimpleTILattice.cc \
 TightBindingModelHofstadterSquare.cc \
-TightBindingModelThirringOnKagome.cc
+TightBindingModelThirringOnKagome.cc \
+TightBindingModelOFLSquareLattice.cc
