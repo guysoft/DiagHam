@@ -475,6 +475,14 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
   this->NbrNValue = QValueDenominator * (2 * this->PLevel) + 5;
   NValueShift = QValueDenominator * this->PLevel;
 
+  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
+  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
+  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
+    }
      
   this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[0].GetNbrColumn() 
 										 + OrthogonalBasisSigmaLeft[0].GetNbrColumn() 

@@ -487,6 +487,14 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices ()
   this->NbrNValue = QValueDenominator * (2 * this->PLevel) + 4 + 2 + 1;
   NValueShift = QValueDenominator * this->PLevel;
 
+  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
+  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
+  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
+    }
      
   this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() 
 									   + OrthogonalBasisPsiLeft[0].GetNbrColumn() 
@@ -1168,5 +1176,28 @@ int FQHEMPSReadRezayi3Matrix::GetBondIndexRange(int pLevel, int qValue)
 int FQHEMPSReadRezayi3Matrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
 {
   return (this->TotalStartingIndexPerPLevel[pLevel] + (localIndex * this->NbrNValue + qValue));
+}
+
+// get the boundary indices of the MPS representation
+//
+// rowIndex = matrix row index
+// columnIndex = matrix column index
+// padding = assume that the state has the estra padding
+
+void FQHEMPSReadRezayi3Matrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
+{
+  int MinQ;
+  int MaxQ;
+  this->GetChargeIndexRange(0, MinQ, MaxQ);
+  if (padding == true)
+    {
+      rowIndex = 3 * (this->PLevel + 1) - MinQ;
+      columnIndex = rowIndex;
+    }
+  else
+    {
+      rowIndex = 3 * (this->PLevel + 2) - MinQ;
+      columnIndex = 3 * this->PLevel - MinQ;
+    }
 }
 

@@ -743,8 +743,9 @@ int main(int argc, char** argv)
 
   int MinQValue = 0;
   int MaxQValue = 0;
-  MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
-  cout<<"MinQvalue = "<<MinQValue << " MaxQValue= "<<MaxQValue << endl;
+  cout << "warning, code not compatible with multi Q range" << endl;
+  MPSMatrix->GetChargeIndexRange(0, MinQValue, MaxQValue);
+  cout<<"MinQvalue = "<< MinQValue << " MaxQValue= "<< MaxQValue << endl;
 
   bool* RowIndicator = new bool[UMatrix->GetNbrRow()];
   for (int i = 0; i < UMatrix->GetNbrRow(); ++i)

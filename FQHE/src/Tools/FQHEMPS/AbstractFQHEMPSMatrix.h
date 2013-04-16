@@ -148,11 +148,12 @@ class AbstractFQHEMPSMatrix
   // return value = bond index in the full bond index range
   virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
 
-  // get the charge index range
+  // get the charge index range at a given truncation level
   // 
+  // pLevel = tuncation level
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
-  virtual void GetChargeIndexRange (int& minQ, int& maxQ);
+  virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
 
   // compute P, N from the linearized index of the B matrix for the Laughlin states
   //
@@ -167,6 +168,13 @@ class AbstractFQHEMPSMatrix
   // pLevel = reference on the level
   // qValue = reference on the charge index
   virtual void GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue);
+
+  // get the boundary indices of the MPS representation
+  //
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
  protected:
 

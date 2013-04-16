@@ -169,76 +169,11 @@ int main(int argc, char** argv)
 
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
-  if (Manager.GetBoolean("use-padding") == true)
-    {
-      if (Manager.GetBoolean("k-2") == true)
-	{
-	  if ((Manager.GetInteger("r-index") & 1) == 0)
-	    MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("r-index") / 2);
-	  else
-	    MPSRowIndex = 2 * Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index") - 1;
-	}
-      else
-	{
-	  if (Manager.GetBoolean("rr-3") == true)
-	    {
-	      MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 1);
-	    }
-	  else
-	    {
-	      MPSRowIndex = Manager.GetInteger("p-truncation") + ((Manager.GetInteger("laughlin-index") - 1) / 2);
-	    }
-	}
-      MPSColumnIndex = MPSRowIndex;
-    }
-  else
-    {
-      if (Manager.GetBoolean("k-2") == true)
-	{
-	  if ((Manager.GetInteger("r-index") & 1) == 0)
-	    {
-	      MPSRowIndex = Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index");
-	      MPSColumnIndex = Manager.GetInteger("p-truncation");
-	    }
-	  else
-	    {
-	      MPSRowIndex = 2 * (Manager.GetInteger("p-truncation") + Manager.GetInteger("r-index"));
-	      MPSColumnIndex = 2 * Manager.GetInteger("p-truncation");
-	    }
-	}
-      else
-	{
-	  if (Manager.GetBoolean("rr-3") == true)
-	    {
-	      if (Manager.GetBoolean("quasihole-sector") == false)
-		{
-		  MPSRowIndex = 3 * (Manager.GetInteger("p-truncation") + 2);
-		  MPSColumnIndex = 3 * Manager.GetInteger("p-truncation");
-		}
-	      else
-		{
-		  MPSRowIndex = 9 * Manager.GetInteger("p-truncation") + 9;
-		  MPSColumnIndex = 9 * Manager.GetInteger("p-truncation") + 6;
-		}		 
-	    }
-	  else
-	    {
-	      if (Manager.GetBoolean("n1-superconformal") == true)
-		{
-		  MPSRowIndex = Manager.GetInteger("p-truncation") + 6;
-		  MPSColumnIndex = Manager.GetInteger("p-truncation");
-		}
-	      else
-		{
-		  MPSRowIndex = Manager.GetInteger("p-truncation") + (Manager.GetInteger("laughlin-index") - 1);
-		  MPSColumnIndex = Manager.GetInteger("p-truncation");
-		}
-	    }
-	}
-    }
-
+  int MinQ;
+  int MaxQ;
+  MPSMatrix->GetChargeIndexRange(0, MinQ, MaxQ);
+  MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
-
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
   SparseComplexMatrix* SparseQuasiholeBMatrices = 0;

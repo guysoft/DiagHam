@@ -448,6 +448,14 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
       ExtraCylinderFactor = 4.0;
     }
 
+  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
+  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
+  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
+    }
      
   if (this->SelfDualFlag == false)
     {

@@ -54,6 +54,14 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   int* TotalStartingIndexPerPLevel;
   // number of linearized index per truncation level
   int* NbrIndicesPerPLevel;
+  // number of N (i.e. charge) values per  truncation level
+  int* NbrNValuesPerPLevel;
+  // initial N (i.e. charge) value per  truncation level
+  int* NInitialValuePerPLevel;
+  // last N (i.e. charge) value per  truncation level
+  int* NLastValuePerPLevel;
+  // indicate that the charge index range does not depend on the truncation level
+  bool UniformChargeIndexRange;
 
   // true if B_0 has to be normalized on the cylinder geometry
   bool CylinderFlag;
@@ -71,18 +79,20 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // trimChargeIndices = trim the charge indices, assuming an iMPS
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
 
   // constructor from stored B matrices
   //
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // fileName = name of the file that contains the B matrices
+  // trimChargeIndices = trim the charge indices, assuming an iMPS
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
 
   // destructor
   //
@@ -140,9 +150,10 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 
   // get the charge index range
   // 
+  // pLevel = tuncation level
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
-  virtual void GetChargeIndexRange (int& minQ, int& maxQ);
+  virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
 
   // compute P, N from the linearized index of the B matrix for the Laughlin states
   //
@@ -157,6 +168,13 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // pLevel = reference on the level
   // qValue = reference on the charge index
   virtual void GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue);
+
+  // get the boundary indices of the MPS representation
+  //
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
  protected:
 
@@ -195,7 +213,13 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 				       unsigned long* partition1, unsigned long* partition2, 
 				       int p1Level, int p2Level, FactorialCoefficient& coef);
 
-  
+  // compute the charge index range at a given truncation level
+  // 
+  // pLevel = tuncation level
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ);
+
 };
 
 // get the degeneracy of the transfer matrix largest eigenvalue
@@ -265,7 +289,7 @@ inline void FQHEMPSLaughlinMatrix::GetChargeAndPLevelFromMatrixIndex(int index, 
   while ((pLevel <= this->PLevel) && (this->TotalStartingIndexPerPLevel[pLevel] <= index))
     ++pLevel;
   --pLevel;
-  qValue = (index - this->TotalStartingIndexPerPLevel[pLevel]) % this->NbrNValue;
+  qValue = this->NInitialValuePerPLevel[pLevel] + (index - this->TotalStartingIndexPerPLevel[pLevel]) % this->NbrNValuesPerPLevel[pLevel];
 }
 
 // get the MPS truncation level

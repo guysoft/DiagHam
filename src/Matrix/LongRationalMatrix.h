@@ -270,6 +270,30 @@ class LongRationalMatrix : public Matrix
   // return value = permanent associated to the matrix
   LongRational Permanent();
 
+  // write matrix in a file 
+  //
+  // file = reference on the output file stream
+  // return value = true if no error occurs
+  virtual bool WriteMatrix (ofstream& file);
+
+  // write matrix in a file 
+  //
+  // fileName = name of the file where the matrix has to be stored
+  // return value = true if no error occurs
+  virtual bool WriteMatrix (char* fileName);
+
+  // read matrix from a file 
+  //
+  // file = reference  on the input file stream
+  // return value = true if no error occurs
+  virtual bool ReadMatrix (ifstream& file);
+
+  // read matrix from a file 
+  //
+  // fileName = name of the file where the matrix has to be read
+  // return value = true if no error occurs
+  virtual bool ReadMatrix (char* fileName);
+
   // Output Stream overload
   //
   // Str = reference on output stream

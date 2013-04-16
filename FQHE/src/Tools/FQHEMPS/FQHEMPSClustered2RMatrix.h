@@ -99,6 +99,17 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // kappa = cylinder aspect ratio
   FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
 
+  // constructor 
+  //
+  // rindex = r index (i.e. clustered (k=2,r) states) 
+  // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
+  // pLevel = |P| level truncation
+  // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+  // kappa = cylinder aspect ratio
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0);
+
   // constructor from a file describing the state
   //
   // pLevel = |P| level truncation
@@ -140,7 +151,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 
   // create the B matrices for the laughlin state
   //
-  virtual void CreateBMatrices ();
+  // cftDirectory = an optional path to the directory where all the CFT matrices are stored
+  virtual void CreateBMatrices (char* cftDirectory = 0);
 
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
@@ -166,6 +178,13 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // qValue = charge index of the block
   // return value = bond index in the full bond index range
   virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
+
+  // get the boundary indices of the MPS representation
+  //
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
  protected:
 

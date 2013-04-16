@@ -116,10 +116,12 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new BooleanOption  ('\n', "quasihole-sector", "look at the quasihole sector for the (k=2,r) series of clustered states");
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "consider only the block diagonal in P and Q");
+  (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
   (*PrecalculationGroup) += new SingleStringOption('\n', "import-bmatrices", "import the B matrices from a given binary file instead of computing them");
   (*PrecalculationGroup) += new BooleanOption ('\n', "export-bmatrices", "export the B matrices in a binary file");
   (*PrecalculationGroup) += new SingleStringOption('\n', "export-bmatrixname", "use a custom output file name to export the B matrices instead of the default one");
   (*PrecalculationGroup) += new BooleanOption ('\n', "only-export", "only export the B matrices in a binary file and exit from the program");
+  (*PrecalculationGroup) += new SingleStringOption('\n', "matrices-cft", "optional directory where the geomerty independent CFT matrices are stored");
   (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
   (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*OutputGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
@@ -174,7 +176,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       CylinderFlag, Kappa);
+							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa);
 		    }
 		}
 	    }
@@ -183,7 +185,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 	      if (this->Options->GetString("import-bmatrices") != 0)
 		{
 		  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-									      this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+									  this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
 		}
 	      else
 		{
@@ -262,13 +264,16 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 		{
 		  if (this->Options->GetString("import-bmatrices") != 0)
 		    {
-		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
+		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
+							    this->Options->GetInteger("p-truncation"), 
+							    this->Options->GetString("import-bmatrices"), 
+							    this->Options->GetBoolean("trim-qsector"),
 							    CylinderFlag, Kappa);
 		    }
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							    CylinderFlag, Kappa);
+							    this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
 		    }
 		}
 	    }

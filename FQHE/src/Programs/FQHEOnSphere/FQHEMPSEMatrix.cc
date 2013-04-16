@@ -187,9 +187,6 @@ int main(int argc, char** argv)
       SparseTransposeBMatrices[i] = SparseBMatrices[i].Transpose();
     }
   
-  int MinQValue = 0;
-  int MaxQValue = 0;
-  MPSMatrix->GetChargeIndexRange(MinQValue, MaxQValue);
   int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
   
   TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = 0;
@@ -208,6 +205,9 @@ int main(int argc, char** argv)
       long EffectiveDimension = 0l;
       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
+	  int MinQValue = 0;
+	  int MaxQValue = 0;
+	  MPSMatrix->GetChargeIndexRange(PLevel, MinQValue, MaxQValue);
 	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	    {
 	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
@@ -229,6 +229,9 @@ int main(int argc, char** argv)
       EffectiveDimension = 0l;
       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
+	  int MinQValue = 0;
+	  int MaxQValue = 0;
+	  MPSMatrix->GetChargeIndexRange(PLevel, MinQValue, MaxQValue);
 	  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue);
 	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	    {

@@ -295,7 +295,7 @@ class Matrix
   //
   // file = reference  on the input file stream
   // return value = true if no error occurs
-  bool ReadMatrix (ifstream& file);
+  virtual bool ReadMatrix (ifstream& file);
 
   // read matrix from a file 
   //

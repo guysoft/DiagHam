@@ -190,12 +190,13 @@ SparseRealMatrix AbstractFQHEMPSMatrix::ExtractBlock(SparseRealMatrix& matrix, i
   return TmpMatrix;
 }
 
-// get the charge index range
+// get the charge index range at a given truncation level
 // 
+// pLevel = tuncation level
 // minQ = reference on the lowest charge index
 // maxQ = reference on the lowest charge index
 
-void AbstractFQHEMPSMatrix::GetChargeIndexRange (int& minQ, int& maxQ)
+void AbstractFQHEMPSMatrix::GetChargeIndexRange (int pLevel, int& minQ, int& maxQ)
 {
   minQ = 1;
   maxQ = 0;
@@ -259,5 +260,17 @@ int AbstractFQHEMPSMatrix::GetBondIndexRange(int pLevel, int qValue)
 int AbstractFQHEMPSMatrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
 {
   return 0;
+}
+
+// get the boundary indices of the MPS representation
+//
+// rowIndex = matrix row index
+// columnIndex = matrix column index
+// padding = assume that the state has the estra padding
+
+void AbstractFQHEMPSMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
+{
+  rowIndex = -1;
+  columnIndex = -1;
 }
 

@@ -483,7 +483,7 @@ int main(int argc, char** argv)
 			PartialEntanglementMatrix /= sqrt(((double) NbrSpaces));
 		    }
 		  
-		  if ((PartialDensityMatrix.GetNbrRow() > 1) || (PartialEntanglementMatrix.GetNbrRow() >= 1))
+		  if ((PartialDensityMatrix.GetNbrRow() > 1) || ((PartialEntanglementMatrix.GetNbrRow() >= 1) && (PartialEntanglementMatrix.GetNbrColumn() >= 1)))
 		    {
 		      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 		      if (SVDFlag == false)
@@ -601,16 +601,36 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
-			  int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
-			  if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+			  if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
 			    {
-			      TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+			      cout << "PartialEntanglementMatrix = " << PartialEntanglementMatrix.GetNbrRow() << " x " << PartialEntanglementMatrix.GetNbrColumn() << endl;
+			      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+			      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+			      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+				{
+				  TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+				}
+			      for (int i = 0; i < TmpDimension; ++i)
+				TmpValues[i] *= TmpValues[i];
+			      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+			      TmpDiag.SortMatrixDownOrder();
 			    }
-			  for (int i = 0; i < TmpDimension; ++i)
-			    TmpValues[i] *= TmpValues[i];
-			  TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
-			  TmpDiag.SortMatrixDownOrder();
+			  else
+			    {
+			      double TmpValue = 0.0;
+			      if (PartialEntanglementMatrix.GetNbrRow() == 1)
+				{
+				  for (int i = 0; i < PartialEntanglementMatrix.GetNbrColumn(); ++i)
+				    TmpValue += PartialEntanglementMatrix[i][0] * PartialEntanglementMatrix[i][0];
+				}
+			      else
+				{
+				  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
+				    TmpValue += PartialEntanglementMatrix[0][i] * PartialEntanglementMatrix[0][i];				  
+				}
+			      TmpDiag = RealDiagonalMatrix(1, 1);
+			      TmpDiag[0] = TmpValue;
+			    }
 			}
 		      
 		      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)

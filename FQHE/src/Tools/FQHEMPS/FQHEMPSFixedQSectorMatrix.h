@@ -52,8 +52,12 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // |P| truncation level
   int PLevel;
 
-  // number of charge sectors that will be kept
-  int NbrQSectors;
+  // number of N (i.e. charge) values per  truncation level
+  int* NbrNValuesPerPLevel;
+  // initial N (i.e. charge) value per  truncation level
+  int* NInitialValuePerPLevel;
+  // last N (i.e. charge) value per  truncation level
+  int* NLastValuePerPLevel;
   // first linearized index for each truncation level and charge sector
   int** TotalStartingIndexPerPLevelAndQSector;
   // number of linearized index per truncation level and charge sector
@@ -119,11 +123,19 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
 
   // get the charge index range
   // 
+  // pLevel = tuncation level
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
-  virtual void GetChargeIndexRange (int& minQ, int& maxQ);
+  virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
 
   
+  // get the boundary indices of the MPS representation
+  //
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
+
 };
 
 // get the filling factor of the state associated the B matrices 

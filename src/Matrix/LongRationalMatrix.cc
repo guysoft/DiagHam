@@ -32,10 +32,13 @@
 #include "Vector/LongRationalVector.h"
 
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 using std::endl;
 using std::cout;
+using std::ios;
 
 
 // default constructor
@@ -696,6 +699,104 @@ LongRational LongRationalMatrix::Permanent()
     }  
   delete[] Tmp;
   return Perm;
+}
+
+// write matrix in a file 
+//
+// fileName = name of the file where the matrix has to be stored
+// return value = true if no error occurs
+
+bool LongRationalMatrix::WriteMatrix (char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  this->WriteMatrix(File);
+  File.close();
+  return true;
+}
+
+// write matrix in a file 
+//
+// file = reference on the output file stream
+// return value = true if no error occurs
+
+bool LongRationalMatrix::WriteMatrix (ofstream& file)
+{
+  file << "# LongRationalMatrix" << endl;
+  file << "# Nbr rows = " << this->NbrRow << endl;
+  file << "# Nbr columns = " << this->NbrColumn << endl;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrColumn; ++j)
+      file << i << " " << j << " " << this->Columns[j][i] << endl;  
+  return true;
+}
+
+// read matrix from a file 
+//
+// fileName = name of the file where the matrix has to be read
+// return value = true if no error occurs
+
+bool LongRationalMatrix::ReadMatrix (char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return false;
+    }
+  this->ReadMatrix(File);
+  File.close();
+  return true;
+}
+
+// read matrix from a file 
+//
+// file = reference  on the input file stream
+// return value = true if no error occurs
+
+bool LongRationalMatrix::ReadMatrix (ifstream& file)
+{
+  char* TmpBuffer = new char [256];  
+  int Count = 0;
+  for (int i = 0; (i < 256) && (Count < 3); ++i)
+    {  
+      file.read(TmpBuffer + i, 1);
+      if (TmpBuffer[i] == '\n')
+	++Count;
+    }
+  if (strcasestr(TmpBuffer, "# LongRationalMatrix") == 0)
+    {
+      return false;
+    }
+  char* TmpPos = strcasestr(TmpBuffer, "# Nbr rows = ");
+  if (TmpPos == 0)
+    return false;
+  this->NbrRow = atoi (TmpPos + 13);
+  TmpPos = strcasestr(TmpBuffer, "# Nbr columns = ");
+  if (TmpPos == 0)
+    return false;
+  this->NbrColumn = atoi (TmpPos + 16);
+  TmpPos = strcasestr(TmpPos, "\n");
+  if (TmpPos == 0)
+    return false;
+  this->ColumnGarbageFlag = new int;
+  *(this->ColumnGarbageFlag) = 1;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->Columns = new LongRationalVector [this->NbrColumn];
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i] = LongRationalVector (this->NbrRow, true);
+  int TmpColumnIndex;
+  int TmpRowIndex;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = 0; j < this->NbrColumn; ++j)
+      {
+	file >> TmpRowIndex;
+	file >> TmpColumnIndex;
+	this->Columns[TmpColumnIndex][TmpRowIndex].Read(file);
+      }  
+  return true;
 }
 
 // Output Stream overload

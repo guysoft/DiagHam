@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 
   int MaxSzValue = NbrSpins * SpinValue;
   int InitalSzValue = MaxSzValue & 1;
-  if (Manager.GetInteger("initial-sz") > 1)
+  if (Manager.GetInteger("initial-sz") != 0)
     {
       InitalSzValue += (Manager.GetInteger("initial-sz") & ~1);
     }
