@@ -102,7 +102,6 @@ bool Abstract2DTightBindingModel::WriteAsciiSpectrum(char* fileName)
 	    File << " " << this->EnergyBandStructure[i][LinearizedMomentumIndex];
 	  File << endl;
 	}
-      File << endl;
     }
   File.close();
   return true;
@@ -594,55 +593,68 @@ Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupied
 //return value = Z2 invariant
 int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
 {
-  int z2Invariant = 0;
-  double referenceLine = 1.27355902;
-  
-  double distance;
-  double distanceMod2Pi;
-  
-  int ModPiPlus = 0;
-  int ModPiMoins = 0;
-  
-  double theta1;
-  double theta2;
-  
-  Complex** Lambda = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
-  double** Theta = new double*[this->NbrSiteY];
-  for (int ky = 0; ky < this->NbrSiteY; ++ky)
-  {
-   Theta[ky] = new double[2];
-   for (int i = 0; i < 2; ++i)
-   {
-     theta1 = atan2(Lambda[ky][nbrOccupiedBands - 2].Im,Lambda[ky][nbrOccupiedBands - 2].Re);
-     theta2 = atan2(Lambda[ky][nbrOccupiedBands - 1].Im,Lambda[ky][nbrOccupiedBands - 1].Re);
-     Theta[ky][0] = max(theta1, theta2);
-     Theta[ky][1] = min(theta1, theta2); 
-   }
-  }
-  
-  for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
-  {
-    di
-  }
-  
-  int positionToReferenceFlag = (atan2(Theta[1][nbrOccupiedBands - 2].Im,Theta[1][nbrOccupiedBands - 2].Re) - referenceLine)*(atan2(Theta[1][nbrOccupiedBands - 1].Im,Theta[1][nbrOccupiedBands - 1].Re) - referenceLine);
-  for (int ky = 2; ky <= this->NbrSiteY / 2; ++ky)
-    {
-      theta1 = atan2(Theta[ky][nbrOccupiedBands - 2].Im,Theta[ky][nbrOccupiedBands - 2].Re);
-      theta2 = atan2(Theta[ky][nbrOccupiedBands - 1].Im,Theta[ky][nbrOccupiedBands - 1].Re);
-      cout << ky << " " << (theta1 - referenceLine) << " " << (theta2 - referenceLine) << " " << positionToReferenceFlag << endl;
-      if ((theta1 - referenceLine)*(theta2 - referenceLine)*positionToReferenceFlag < 0)
-      {
-	positionToReferenceFlag *= -1 ;
-	cout << abs(theta1 - M_PI) << " " << abs(theta1 + M_PI) << " " << abs(theta2 - M_PI) << " " << abs(theta2 - M_PI) << endl;
-	if ((abs(theta1 - M_PI) > 0.01) || (abs(theta1 + M_PI) > 0.01) || (abs(theta2 - M_PI) > 0.01) || (abs(theta2 + M_PI) > 0.01))
-	{
-	  cout << ky << " " << z2Invariant << endl;
-	  z2Invariant += 1;
-	}
-	
-      }
-    }
-  
-  return (z2Invariant % 2); 
+//   int z2Invariant = 0;
+//   double referenceLine = 1.27355902;
+//   
+//   double distancePlus;
+//   double distenceMoins;
+//   double distanceMod2PiPlus;
+//   double distanceMod2PiMoins;
+//   
+//   int ModPiPlus = 0;
+//   int ModPiMoins = 0;
+//   
+//   double theta1;
+//   double theta2;
+//   
+//   Complex** Lambda = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
+//   double** Theta = new double*[this->NbrSiteY];
+//   for (int ky = 0; ky < this->NbrSiteY; ++ky)
+//   {
+//    Theta[ky] = new double[2];
+//    for (int i = 0; i < 2; ++i)
+//    {
+//      theta1 = atan2(Lambda[ky][nbrOccupiedBands - 2].Im,Lambda[ky][nbrOccupiedBands - 2].Re);
+//      theta2 = atan2(Lambda[ky][nbrOccupiedBands - 1].Im,Lambda[ky][nbrOccupiedBands - 1].Re);
+//      Theta[ky][0] = max(theta1, theta2);
+//      Theta[ky][1] = min(theta1, theta2); 
+//    }
+//   }
+//   
+//   for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
+//   {
+//     distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
+//     distanceMod2PiPlus = abs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
+//     distenceMoins = 
+//     distanceMod2PiMoins = ;
+//     if (distanceMod2PiPlus < distancePlus)
+//     {
+//      ModPiPlus += 1;
+//      double Tmp = Theta[ky + 1][0];
+//      Theta[ky + 1][0] = Theta[ky + 1][1] + 2*M_PI;
+//      Theta[ky + 1][1] = Tmp;
+//     }
+//   }
+//   
+//   int positionToReferenceFlag = (atan2(Theta[1][nbrOccupiedBands - 2].Im,Theta[1][nbrOccupiedBands - 2].Re) - referenceLine)*(atan2(Theta[1][nbrOccupiedBands - 1].Im,Theta[1][nbrOccupiedBands - 1].Re) - referenceLine);
+//   for (int ky = 2; ky <= this->NbrSiteY / 2; ++ky)
+//     {
+//       theta1 = atan2(Theta[ky][nbrOccupiedBands - 2].Im,Theta[ky][nbrOccupiedBands - 2].Re);
+//       theta2 = atan2(Theta[ky][nbrOccupiedBands - 1].Im,Theta[ky][nbrOccupiedBands - 1].Re);
+//       cout << ky << " " << (theta1 - referenceLine) << " " << (theta2 - referenceLine) << " " << positionToReferenceFlag << endl;
+//       if ((theta1 - referenceLine)*(theta2 - referenceLine)*positionToReferenceFlag < 0)
+//       {
+// 	positionToReferenceFlag *= -1 ;
+// 	cout << abs(theta1 - M_PI) << " " << abs(theta1 + M_PI) << " " << abs(theta2 - M_PI) << " " << abs(theta2 - M_PI) << endl;
+// 	if ((abs(theta1 - M_PI) > 0.01) || (abs(theta1 + M_PI) > 0.01) || (abs(theta2 - M_PI) > 0.01) || (abs(theta2 + M_PI) > 0.01))
+// 	{
+// 	  cout << ky << " " << z2Invariant << endl;
+// 	  z2Invariant += 1;
+// 	}
+// 	
+//       }
+//     }
+//   
+//   return (z2Invariant % 2); 
+return 0;
 }
