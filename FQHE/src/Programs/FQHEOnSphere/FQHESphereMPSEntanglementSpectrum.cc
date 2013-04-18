@@ -81,6 +81,8 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
+  (*OutputGroup) += new BooleanOption ('\n', "suppress-output", "minimize the amount of output information");
+
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
 					       "maximum Hilbert space dimension for which full diagonalization is applied", 1000);
@@ -110,6 +112,8 @@ int main(int argc, char** argv)
 
   int EntCut = Manager.GetInteger("la");
   int Na = Manager.GetInteger("na");
+
+  bool MinimizeOutput = Manager.GetBoolean("suppress-output");
 
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
 
@@ -681,7 +685,10 @@ int main(int argc, char** argv)
    }
 
   long NbrEigenvalues = 0l;
-  OverlapMatrix.PrintNonZero(cout) << endl;
+
+  if (MinimizeOutput == false)
+     OverlapMatrix.PrintNonZero(cout) << endl;
+
   int MinQValue = 0;
   int MaxQValue = 0;
   cout << "warning, code not compatible with multi Q range" << endl;
