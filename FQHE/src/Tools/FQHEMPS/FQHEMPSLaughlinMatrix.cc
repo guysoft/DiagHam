@@ -395,8 +395,12 @@ bool FQHEMPSLaughlinMatrix::LoadHeader (ifstream& file)
   ReadLittleEndian(file, this->NbrNValue);
   ReadLittleEndian(file, this->CylinderFlag);
   ReadLittleEndian(file, this->Kappa);
+  ReadLittleEndian(file, this->UniformChargeIndexRange);
   this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
   this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
+  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
+  this->NLastValuePerPLevel = new int [this->PLevel + 1];
+  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
   for (int i = 0; i <= this->PLevel; ++i)
     {
       ReadLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
@@ -404,6 +408,18 @@ bool FQHEMPSLaughlinMatrix::LoadHeader (ifstream& file)
   for (int i = 0; i <= this->PLevel; ++i)
     {
       ReadLittleEndian(file, this->NbrIndicesPerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      ReadLittleEndian(file, this->NbrNValuesPerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      ReadLittleEndian(file, this->NInitialValuePerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      ReadLittleEndian(file, this->NLastValuePerPLevel[i]);
     }
   return true;
 }
@@ -422,6 +438,7 @@ bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
   WriteLittleEndian(file, this->NbrNValue);
   WriteLittleEndian(file, this->CylinderFlag);
   WriteLittleEndian(file, this->Kappa);
+  WriteLittleEndian(file, this->UniformChargeIndexRange);
   for (int i = 0; i <= this->PLevel; ++i)
     {
       WriteLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
@@ -429,6 +446,18 @@ bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
   for (int i = 0; i <= this->PLevel; ++i)
     {
       WriteLittleEndian(file, this->NbrIndicesPerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      WriteLittleEndian(file, this->NbrNValuesPerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      WriteLittleEndian(file, this->NInitialValuePerPLevel[i]);
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      WriteLittleEndian(file, this->NLastValuePerPLevel[i]);
     }
   return true;
 }
