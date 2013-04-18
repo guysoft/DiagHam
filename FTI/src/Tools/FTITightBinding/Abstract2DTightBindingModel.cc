@@ -30,6 +30,8 @@
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
+#include "Matrix/ComplexMatrix.h"
+#include "Matrix/ComplexDiagonalMatrix.h"
 #include "GeneralTools/Endian.h"
 
 #include <fstream>
@@ -146,6 +148,34 @@ bool Abstract2DTightBindingModel::WriteBandStructureASCII(char* fileName)
   return true;
 }
 
+
+// write the eigenvalues of the D matrix in an ASCII file
+//
+// fileName = name of the ASCII file 
+//nbrOccupiedBands = nbr of occupied bands
+// return value = true if no error occured
+
+bool Abstract2DTightBindingModel::WriteAsciiDMatrixEigenValues(char* fileName, int nbrOccupiedBands)
+{
+  ofstream File;
+  File.open(fileName);
+  this->WriteASCIIHeader(File, '#');
+  File << "# ky" ;
+  for (int i = 0; i < nbrOccupiedBands; ++i)
+    File <<  "   DEigenValue_" << i << "    Theta_" << i;
+  File << endl;
+  Complex** Theta = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
+  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+    {
+      File << ky; 
+      for (int i = 0; i < nbrOccupiedBands; ++i)
+	    File << " " << Theta[ky][i] << " " << atan2(Theta[ky][i].Im,Theta[ky][i].Re);
+      File << endl;
+    }
+   
+  File.close();
+  return true;
+}
 
 // compute the Chern number of a given band
 //
@@ -350,3 +380,269 @@ double Abstract2DTightBindingModel::ComputeBerryCurvature(int band, char* fileNa
   return TmpChernNumber.Im;
 }
 
+
+//compute the complex eigenvalues of the D(ky) matrix (in order to compute the Z2 invariant)
+//
+//bandIndex = band index (corresponds to two bands that are related by time reversal symmetry)
+//nbrOccupiedBands = dimension of the D matrix
+//DMatrixEigenvalues = array of eigenvalues of the D Matrix, for all values of ky
+//kyMin = minimal value of ky for which the D matrix has to be diagonalized
+//kyMax = maximal value of ky for which the D matrix has to be diagonalized
+//nbrKy = number of ky values for which the D matrix has to be diagonalized
+//return value = array of eigenvalues of the D matrix
+// Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupiedBands, int kyMin, int kyMax, int nbrKy)
+// {
+//   Complex** DMatrixEigenvalues;
+//   DMatrixEigenvalues = new Complex*[this->NbrSiteY];
+//   for (int i = 0; i < this->NbrSiteY; ++i)
+//     DMatrixEigenvalues[i] = new Complex[nbrOccupiedBands];
+//   ComplexMatrix TmpDMatrix(nbrOccupiedBands, nbrOccupiedBands, true);
+//   ComplexMatrix FMatrix(nbrOccupiedBands, nbrOccupiedBands, true);
+//   
+//   ComplexMatrix Rotation(this->NbrBands, this->NbrBands, true);
+//   Rotation.SetMatrixElement(0, 0, M_SQRT1_2);
+//   Rotation.SetMatrixElement(0, 1, (0.0, M_SQRT1_2));
+//   Rotation.SetMatrixElement(1, 0, (0.0, -1.0*M_SQRT1_2));
+//   Rotation.SetMatrixElement(1, 1, -1.0*M_SQRT1_2);
+//   Rotation.SetMatrixElement(2, 2, 1.0);
+//   Rotation.SetMatrixElement(3, 3, 1.0);
+// //   cout << this->NbrBands <<  " " << nbrOccupiedBands << endl;
+//   for (int ky = kyMin; ky <= kyMax; ++ky)
+//   {
+//     TmpDMatrix.SetToIdentity();
+//     for (int i = 0; i < this->NbrSiteX - 1; ++i)
+//       {
+// 	int LinearizedMomentumIndex1 = this->GetLinearizedMomentumIndex(i, ky);
+// 	int LinearizedMomentumIndex2 = this->GetLinearizedMomentumIndex(i + 1, ky);
+// // 	cout << i << " " << LinearizedMomentumIndex1 << " " << LinearizedMomentumIndex2 << " " << endl;
+// 	ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex1];
+// 	ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndex2];
+// 	
+// 	for (int n = 0; n < nbrOccupiedBands; ++n)
+// 	  {
+// 	    for (int m = 0; m < nbrOccupiedBands; ++m)
+// 	      {
+// 		Complex Tmp = 0.0;
+// 		for (int alpha = 0; alpha < this->NbrBands; ++alpha)
+// 		{
+// 		  Tmp += Conj(LocalBasis[n][alpha]) * LocalBasisIncX[m][alpha];
+// 		}
+// 		FMatrix.SetMatrixElement(n, m, Tmp);
+// 		
+// 	      }
+// 	  }
+// // 	  cout << i << endl;
+// // 	  cout << FMatrix << endl;
+// 	  TmpDMatrix.Multiply(FMatrix);
+//       }
+//     
+//       int LinearizedMomentumIndex1 = this->GetLinearizedMomentumIndex(this->NbrSiteX - 1, ky);
+//       int LinearizedMomentumIndex2 = this->GetLinearizedMomentumIndex(0, ky);
+//       
+//       ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex1];
+//       ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndex2];
+//       for (int n = 0; n < nbrOccupiedBands; ++n)
+// 	  {
+// 	    for (int m = 0; m < nbrOccupiedBands; ++m)
+// 	      {
+// 		Complex Tmp = 0.0;
+// 		for (int alpha = 0; alpha < this->NbrBands; ++alpha)
+// 		{
+// // 		  cout  << ky << " " << i << " " << alpha << " " << n << " " << m << endl;
+// 		  Tmp += Conj(LocalBasis[n][alpha]) * LocalBasisIncX[m][alpha];		
+// 		  
+// 		}
+// 		FMatrix.SetMatrixElement(n, m, Tmp);
+// 	      }
+// 	  }
+// // 	  cout << "2 " << endl;
+// // 	  cout << FMatrix << endl;
+// 	  TmpDMatrix.Multiply(FMatrix);
+// // 	  if (ky == 0)
+// // 	  {
+// // 	   cout << "ky = 0" << endl;
+// // 	   cout << TmpDMatrix << endl; 
+// // 	  }
+//     ComplexDiagonalMatrix TmpDiag(nbrOccupiedBands);
+// #ifdef __LAPACK__
+//     TmpDMatrix.LapackDiagonalize(TmpDiag);
+// #else
+//     TmpDMatrix.Diagonalize(TmpDiag);
+// #endif
+// //     cout << TmpDiag << endl;
+//     
+//     for (int j = 0; j < nbrOccupiedBands; ++j)
+//     {
+//       DMatrixEigenvalues[ky][j] = TmpDiag[j] ;
+// //       cout << DMatrixEigenvalues[ky][j] << endl;
+//     }
+//   }
+//   
+//   return DMatrixEigenvalues;
+// }
+
+
+Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupiedBands, int kyMin, int kyMax, int nbrKy)
+{
+  Complex** DMatrixEigenvalues;
+  DMatrixEigenvalues = new Complex*[this->NbrSiteY];
+  for (int i = 0; i < this->NbrSiteY; ++i)
+    DMatrixEigenvalues[i] = new Complex[nbrOccupiedBands];
+  ComplexMatrix TmpDMatrix(nbrOccupiedBands, nbrOccupiedBands, true);
+  ComplexMatrix FMatrix(nbrOccupiedBands, nbrOccupiedBands, true);
+  
+//   ComplexMatrix Rotation(this->NbrBands, this->NbrBands, true);
+//   Rotation.SetMatrixElement(0, 0, M_SQRT1_2);
+//   Rotation.SetMatrixElement(0, 1, Complex(0.0, M_SQRT1_2));
+//   Rotation.SetMatrixElement(1, 0, Complex(0.0, -1.0*M_SQRT1_2));
+//   Rotation.SetMatrixElement(1, 1, -1.0*M_SQRT1_2);
+//   Rotation.SetMatrixElement(2, 2, 1.0);
+//   Rotation.SetMatrixElement(3, 3, 1.0);
+  
+//   ComplexMatrix Rotation1(this->NbrBands, this->NbrBands, true);
+//   Rotation.SetMatrixElement(0, 0, M_SQRT1_2);
+//   Rotation.SetMatrixElement(0, 1, Complex(0.0, M_SQRT1_2));
+//   Rotation.SetMatrixElement(1, 0, Complex(0.0, -1.0*M_SQRT1_2));
+//   Rotation.SetMatrixElement(1, 1, -1.0*M_SQRT1_2);
+//   Rotation1.SetMatrixElement(2, 2, 1.0);
+//   Rotation1.SetMatrixElement(3, 3, 1.0);
+  
+  
+  for (int ky = kyMin; ky <= kyMax; ++ky)
+  {
+    TmpDMatrix.SetToIdentity();
+    for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      double KX = (double) i *2.0 * M_PI / ((double) this->NbrSiteX);
+      double KX1 = (double) (i + 1) *2.0 * M_PI / ((double) this->NbrSiteX);
+//       cout << cos(KX) << " " << sin(KX) << endl;
+//       Rotation.SetMatrixElement(0, 0, Complex(M_SQRT1_2*cos(KX), M_SQRT1_2*sin(KX)));
+//       Rotation.SetMatrixElement(0, 1, M_SQRT1_2);
+//       Rotation.SetMatrixElement(1, 0, M_SQRT1_2);
+//       Rotation.SetMatrixElement(1, 1, Complex(-1.0*M_SQRT1_2*cos(KX), M_SQRT1_2*sin(KX)));
+// 
+//       
+//       Rotation1.SetMatrixElement(0, 0, Complex(M_SQRT1_2*cos(KX1), M_SQRT1_2*sin(KX1)));
+//       Rotation1.SetMatrixElement(0, 1, M_SQRT1_2);
+//       Rotation1.SetMatrixElement(1, 0, M_SQRT1_2);
+//       Rotation1.SetMatrixElement(1, 1, Complex(-1.0*M_SQRT1_2*cos(KX1), M_SQRT1_2*sin(KX1)));
+//       Rotation.SetMatrixElement(0, 0, M_SQRT1_2);
+//       Rotation.SetMatrixElement(1, 1, -1.0*M_SQRT1_2);
+//       Rotation.SetMatrixElement(0, 1, M_SQRT1_2);
+//       Rotation.SetMatrixElement(1, 0, M_SQRT1_2);
+ 
+	int LinearizedMomentumIndex1 = this->GetLinearizedMomentumIndex(i, ky);
+	int LinearizedMomentumIndex2 = this->GetLinearizedMomentumIndex((i + 1) % this->NbrSiteX, ky);
+// 	cout << i << " " << LinearizedMomentumIndex1 << " " << LinearizedMomentumIndex2 << " " << endl;
+	ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex1];
+	ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndex2];
+// 	ComplexMatrix LocalBasis(this->NbrBands, this->NbrBands, true);
+// 	ComplexMatrix LocalBasisIncX(this->NbrBands, this->NbrBands, true);
+	
+// 	LocalBasis = TmpLocalBasis*Rotation;
+// 	LocalBasisIncX = TmpLocalBasisIncX*Rotation1;
+	
+// 	LocalBasis = TmpLocalBasis;
+// 	LocalBasisIncX = TmpLocalBasisIncX;
+	
+	for (int n = 0; n < nbrOccupiedBands; ++n)
+	  {
+	    for (int m = 0; m < nbrOccupiedBands; ++m)
+	      {
+// 		Complex Tmp = 0.0;
+// 		for (int alpha = 0; alpha < this->NbrBands; ++alpha)
+// 		{
+// 		  Tmp += Conj(LocalBasis[n][alpha]) * LocalBasisIncX[m][alpha];
+// 		}
+// 		FMatrix.SetMatrixElement(n, m, Tmp);
+		FMatrix.SetMatrixElement(n, m, LocalBasis[n] * LocalBasisIncX[m]);
+	      }
+	  }
+// 	  cout << i << endl;
+// 	  cout << FMatrix << endl;
+// 	  ComplexMatrix TmpMatrix = TmpDMatrix;
+// 	  TmpDMatrix = TmpMatrix*FMatrix;
+	  TmpDMatrix.Multiply(FMatrix);
+      }
+    
+// 	  if (ky == 0)
+// 	  {
+// 	   cout << "ky = 0" << endl;
+// 	   cout << TmpDMatrix << endl; 
+// 	  }
+    ComplexDiagonalMatrix TmpDiag(nbrOccupiedBands);
+#ifdef __LAPACK__
+    TmpDMatrix.LapackDiagonalize(TmpDiag);
+#else
+    TmpDMatrix.Diagonalize(TmpDiag);
+#endif
+//     cout << TmpDiag << endl;
+    
+    for (int j = 0; j < nbrOccupiedBands; ++j)
+    {
+      DMatrixEigenvalues[ky][j] = TmpDiag[j] ;
+//       cout << DMatrixEigenvalues[ky][j] << endl;
+    }
+  }
+  
+  return DMatrixEigenvalues;
+}
+
+//compute the Z2 topological invariant for a system with time reversal symmetry
+//
+//nbrOccupiedBands = number of occupied bands
+//return value = Z2 invariant
+int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
+{
+  int z2Invariant = 0;
+  double referenceLine = 1.27355902;
+  
+  double distance;
+  double distanceMod2Pi;
+  
+  int ModPiPlus = 0;
+  int ModPiMoins = 0;
+  
+  double theta1;
+  double theta2;
+  
+  Complex** Lambda = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
+  double** Theta = new double*[this->NbrSiteY];
+  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+  {
+   Theta[ky] = new double[2];
+   for (int i = 0; i < 2; ++i)
+   {
+     theta1 = atan2(Lambda[ky][nbrOccupiedBands - 2].Im,Lambda[ky][nbrOccupiedBands - 2].Re);
+     theta2 = atan2(Lambda[ky][nbrOccupiedBands - 1].Im,Lambda[ky][nbrOccupiedBands - 1].Re);
+     Theta[ky][0] = max(theta1, theta2);
+     Theta[ky][1] = min(theta1, theta2); 
+   }
+  }
+  
+  for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
+  {
+    di
+  }
+  
+  int positionToReferenceFlag = (atan2(Theta[1][nbrOccupiedBands - 2].Im,Theta[1][nbrOccupiedBands - 2].Re) - referenceLine)*(atan2(Theta[1][nbrOccupiedBands - 1].Im,Theta[1][nbrOccupiedBands - 1].Re) - referenceLine);
+  for (int ky = 2; ky <= this->NbrSiteY / 2; ++ky)
+    {
+      theta1 = atan2(Theta[ky][nbrOccupiedBands - 2].Im,Theta[ky][nbrOccupiedBands - 2].Re);
+      theta2 = atan2(Theta[ky][nbrOccupiedBands - 1].Im,Theta[ky][nbrOccupiedBands - 1].Re);
+      cout << ky << " " << (theta1 - referenceLine) << " " << (theta2 - referenceLine) << " " << positionToReferenceFlag << endl;
+      if ((theta1 - referenceLine)*(theta2 - referenceLine)*positionToReferenceFlag < 0)
+      {
+	positionToReferenceFlag *= -1 ;
+	cout << abs(theta1 - M_PI) << " " << abs(theta1 + M_PI) << " " << abs(theta2 - M_PI) << " " << abs(theta2 - M_PI) << endl;
+	if ((abs(theta1 - M_PI) > 0.01) || (abs(theta1 + M_PI) > 0.01) || (abs(theta2 - M_PI) > 0.01) || (abs(theta2 + M_PI) > 0.01))
+	{
+	  cout << ky << " " << z2Invariant << endl;
+	  z2Invariant += 1;
+	}
+	
+      }
+    }
+  
+  return (z2Invariant % 2); 
+}

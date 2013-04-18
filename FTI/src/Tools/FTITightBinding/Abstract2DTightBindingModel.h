@@ -119,6 +119,31 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // fileName = name of the output file 
   // return value = Chern number
   virtual double ComputeBerryCurvature(int band, char* fileName);
+  
+  
+  //compute the complex eigenvalues of the D(ky) matrix (in order to compute the Z2 invariant)
+  //
+  //bandIndex = band index (corresponds to two bands that are related by time reversal symmetry)
+  //nbrOccupiedBands = dimension of the D matrix
+  //DMatrixEigenvalues = array of eigenvalues of the D Matrix, for all values of ky
+  //kyMin = minimal value of ky for which the D matrix has to be diagonalized
+  //kyMax = maximal value of ky for which the D matrix has to be diagonalized
+  //nbrKy = number of ky values for which the D matrix has to be diagonalized
+  //return value = array of eigenvalues of the D Matrix
+  virtual Complex** ComputeDMatrixEigenvalues(int nbrOccupiedBands, int kyMin, int kyMax, int nbrKy);
+  
+  // write the eigenvalues of the D matrix in an ASCII file
+  //
+  // fileName = name of the ASCII file 
+  //nbrOccupiedBands = nbr of occupied bands
+  // return value = true if no error occured
+  virtual bool WriteAsciiDMatrixEigenValues(char* fileName, int nbrOccupiedBands);
+  
+  //compute the Z2 topological invariant for a system with time reversal symmetry
+  //
+  //nbrOccupiedBands = number of occupied bands
+  //return value = Z2 invariant
+  virtual int ComputeZ2Invariant(int nbrOccupiedBands);
 
  protected:
 
