@@ -42,6 +42,8 @@
 using std::ofstream;
 using std::endl;
 using std::cout;
+using std::max;
+using std::min;
 
 
 // default constructor
@@ -163,12 +165,54 @@ bool Abstract2DTightBindingModel::WriteAsciiDMatrixEigenValues(char* fileName, i
   for (int i = 0; i < nbrOccupiedBands; ++i)
     File <<  "   DEigenValue_" << i << "    Theta_" << i;
   File << endl;
-  Complex** Theta = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
+  
+  double distancePlus;
+  double distanceMoins;
+  double distanceMod2PiPlus;
+  double distanceMod2PiMoins;
+ 
+  double theta1;
+  double theta2;
+  
+  Complex** Lambda = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
+  double** Theta = new double*[this->NbrSiteY];
+  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+  {
+   Theta[ky] = new double[2];
+   for (int i = 0; i < 2; ++i)
+   {
+     theta1 = atan2(Lambda[ky][nbrOccupiedBands - 2].Im,Lambda[ky][nbrOccupiedBands - 2].Re);
+     theta2 = atan2(Lambda[ky][nbrOccupiedBands - 1].Im,Lambda[ky][nbrOccupiedBands - 1].Re);
+     Theta[ky][0] = max(theta1, theta2);
+     Theta[ky][1] = min(theta1, theta2); 
+   }
+  }
+  
+  for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
+  {
+    distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
+    distanceMod2PiPlus = abs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
+    distanceMoins = abs(Theta[ky][1] - Theta[ky + 1][1]);
+    distanceMod2PiMoins = abs(Theta[ky][1] - Theta[ky + 1][0] + 2*M_PI);
+    
+    if (distanceMod2PiPlus < distancePlus)
+    {
+     double Tmp = Theta[ky + 1][0];
+     Theta[ky + 1][0] = Theta[ky + 1][1] + 2*M_PI;
+     Theta[ky + 1][1] = Tmp;
+    }
+    
+    if (distanceMod2PiMoins < distanceMoins)
+    {
+     double Tmp = Theta[ky + 1][1];
+     Theta[ky + 1][1] = Theta[ky + 1][0] - 2*M_PI;
+     Theta[ky + 1][0] = Tmp;
+    }
+  }
   for (int ky = 0; ky < this->NbrSiteY; ++ky)
     {
       File << ky; 
-      for (int i = 0; i < nbrOccupiedBands; ++i)
-	    File << " " << Theta[ky][i] << " " << atan2(Theta[ky][i].Im,Theta[ky][i].Re);
+      File << " " << Lambda[ky][0] << " " << atan2(Lambda[ky][0].Im,Lambda[ky][0].Re) << " " << Lambda[ky][1] << " "<< atan2(Lambda[ky][1].Im,Lambda[ky][1].Re) << " " << Theta[ky][0] << " " << Theta[ky][1] ;
       File << endl;
     }
    
@@ -389,98 +433,6 @@ double Abstract2DTightBindingModel::ComputeBerryCurvature(int band, char* fileNa
 //kyMax = maximal value of ky for which the D matrix has to be diagonalized
 //nbrKy = number of ky values for which the D matrix has to be diagonalized
 //return value = array of eigenvalues of the D matrix
-// Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupiedBands, int kyMin, int kyMax, int nbrKy)
-// {
-//   Complex** DMatrixEigenvalues;
-//   DMatrixEigenvalues = new Complex*[this->NbrSiteY];
-//   for (int i = 0; i < this->NbrSiteY; ++i)
-//     DMatrixEigenvalues[i] = new Complex[nbrOccupiedBands];
-//   ComplexMatrix TmpDMatrix(nbrOccupiedBands, nbrOccupiedBands, true);
-//   ComplexMatrix FMatrix(nbrOccupiedBands, nbrOccupiedBands, true);
-//   
-//   ComplexMatrix Rotation(this->NbrBands, this->NbrBands, true);
-//   Rotation.SetMatrixElement(0, 0, M_SQRT1_2);
-//   Rotation.SetMatrixElement(0, 1, (0.0, M_SQRT1_2));
-//   Rotation.SetMatrixElement(1, 0, (0.0, -1.0*M_SQRT1_2));
-//   Rotation.SetMatrixElement(1, 1, -1.0*M_SQRT1_2);
-//   Rotation.SetMatrixElement(2, 2, 1.0);
-//   Rotation.SetMatrixElement(3, 3, 1.0);
-// //   cout << this->NbrBands <<  " " << nbrOccupiedBands << endl;
-//   for (int ky = kyMin; ky <= kyMax; ++ky)
-//   {
-//     TmpDMatrix.SetToIdentity();
-//     for (int i = 0; i < this->NbrSiteX - 1; ++i)
-//       {
-// 	int LinearizedMomentumIndex1 = this->GetLinearizedMomentumIndex(i, ky);
-// 	int LinearizedMomentumIndex2 = this->GetLinearizedMomentumIndex(i + 1, ky);
-// // 	cout << i << " " << LinearizedMomentumIndex1 << " " << LinearizedMomentumIndex2 << " " << endl;
-// 	ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex1];
-// 	ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndex2];
-// 	
-// 	for (int n = 0; n < nbrOccupiedBands; ++n)
-// 	  {
-// 	    for (int m = 0; m < nbrOccupiedBands; ++m)
-// 	      {
-// 		Complex Tmp = 0.0;
-// 		for (int alpha = 0; alpha < this->NbrBands; ++alpha)
-// 		{
-// 		  Tmp += Conj(LocalBasis[n][alpha]) * LocalBasisIncX[m][alpha];
-// 		}
-// 		FMatrix.SetMatrixElement(n, m, Tmp);
-// 		
-// 	      }
-// 	  }
-// // 	  cout << i << endl;
-// // 	  cout << FMatrix << endl;
-// 	  TmpDMatrix.Multiply(FMatrix);
-//       }
-//     
-//       int LinearizedMomentumIndex1 = this->GetLinearizedMomentumIndex(this->NbrSiteX - 1, ky);
-//       int LinearizedMomentumIndex2 = this->GetLinearizedMomentumIndex(0, ky);
-//       
-//       ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex1];
-//       ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndex2];
-//       for (int n = 0; n < nbrOccupiedBands; ++n)
-// 	  {
-// 	    for (int m = 0; m < nbrOccupiedBands; ++m)
-// 	      {
-// 		Complex Tmp = 0.0;
-// 		for (int alpha = 0; alpha < this->NbrBands; ++alpha)
-// 		{
-// // 		  cout  << ky << " " << i << " " << alpha << " " << n << " " << m << endl;
-// 		  Tmp += Conj(LocalBasis[n][alpha]) * LocalBasisIncX[m][alpha];		
-// 		  
-// 		}
-// 		FMatrix.SetMatrixElement(n, m, Tmp);
-// 	      }
-// 	  }
-// // 	  cout << "2 " << endl;
-// // 	  cout << FMatrix << endl;
-// 	  TmpDMatrix.Multiply(FMatrix);
-// // 	  if (ky == 0)
-// // 	  {
-// // 	   cout << "ky = 0" << endl;
-// // 	   cout << TmpDMatrix << endl; 
-// // 	  }
-//     ComplexDiagonalMatrix TmpDiag(nbrOccupiedBands);
-// #ifdef __LAPACK__
-//     TmpDMatrix.LapackDiagonalize(TmpDiag);
-// #else
-//     TmpDMatrix.Diagonalize(TmpDiag);
-// #endif
-// //     cout << TmpDiag << endl;
-//     
-//     for (int j = 0; j < nbrOccupiedBands; ++j)
-//     {
-//       DMatrixEigenvalues[ky][j] = TmpDiag[j] ;
-// //       cout << DMatrixEigenvalues[ky][j] << endl;
-//     }
-//   }
-//   
-//   return DMatrixEigenvalues;
-// }
-
-
 Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupiedBands, int kyMin, int kyMax, int nbrKy)
 {
   Complex** DMatrixEigenvalues;
@@ -593,68 +545,72 @@ Complex** Abstract2DTightBindingModel::ComputeDMatrixEigenvalues(int nbrOccupied
 //return value = Z2 invariant
 int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
 {
-//   int z2Invariant = 0;
-//   double referenceLine = 1.27355902;
-//   
-//   double distancePlus;
-//   double distenceMoins;
-//   double distanceMod2PiPlus;
-//   double distanceMod2PiMoins;
-//   
-//   int ModPiPlus = 0;
-//   int ModPiMoins = 0;
-//   
-//   double theta1;
-//   double theta2;
-//   
-//   Complex** Lambda = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
-//   double** Theta = new double*[this->NbrSiteY];
-//   for (int ky = 0; ky < this->NbrSiteY; ++ky)
-//   {
-//    Theta[ky] = new double[2];
-//    for (int i = 0; i < 2; ++i)
-//    {
-//      theta1 = atan2(Lambda[ky][nbrOccupiedBands - 2].Im,Lambda[ky][nbrOccupiedBands - 2].Re);
-//      theta2 = atan2(Lambda[ky][nbrOccupiedBands - 1].Im,Lambda[ky][nbrOccupiedBands - 1].Re);
-//      Theta[ky][0] = max(theta1, theta2);
-//      Theta[ky][1] = min(theta1, theta2); 
-//    }
-//   }
-//   
-//   for (int ky = 0; ky < this->NbrSiteY - 1; ++ ky)
-//   {
-//     distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
-//     distanceMod2PiPlus = abs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
-//     distenceMoins = 
-//     distanceMod2PiMoins = ;
-//     if (distanceMod2PiPlus < distancePlus)
-//     {
-//      ModPiPlus += 1;
-//      double Tmp = Theta[ky + 1][0];
-//      Theta[ky + 1][0] = Theta[ky + 1][1] + 2*M_PI;
-//      Theta[ky + 1][1] = Tmp;
-//     }
-//   }
-//   
-//   int positionToReferenceFlag = (atan2(Theta[1][nbrOccupiedBands - 2].Im,Theta[1][nbrOccupiedBands - 2].Re) - referenceLine)*(atan2(Theta[1][nbrOccupiedBands - 1].Im,Theta[1][nbrOccupiedBands - 1].Re) - referenceLine);
-//   for (int ky = 2; ky <= this->NbrSiteY / 2; ++ky)
-//     {
-//       theta1 = atan2(Theta[ky][nbrOccupiedBands - 2].Im,Theta[ky][nbrOccupiedBands - 2].Re);
-//       theta2 = atan2(Theta[ky][nbrOccupiedBands - 1].Im,Theta[ky][nbrOccupiedBands - 1].Re);
-//       cout << ky << " " << (theta1 - referenceLine) << " " << (theta2 - referenceLine) << " " << positionToReferenceFlag << endl;
-//       if ((theta1 - referenceLine)*(theta2 - referenceLine)*positionToReferenceFlag < 0)
-//       {
-// 	positionToReferenceFlag *= -1 ;
-// 	cout << abs(theta1 - M_PI) << " " << abs(theta1 + M_PI) << " " << abs(theta2 - M_PI) << " " << abs(theta2 - M_PI) << endl;
-// 	if ((abs(theta1 - M_PI) > 0.01) || (abs(theta1 + M_PI) > 0.01) || (abs(theta2 - M_PI) > 0.01) || (abs(theta2 + M_PI) > 0.01))
-// 	{
-// 	  cout << ky << " " << z2Invariant << endl;
-// 	  z2Invariant += 1;
-// 	}
-// 	
-//       }
-//     }
-//   
-//   return (z2Invariant % 2); 
-return 0;
+  int z2Invariant = 0;
+  double referenceLine = 0.9267;
+  
+  double distancePlus;
+  double distanceMoins;
+  double distanceMod2PiPlus;
+  double distanceMod2PiMoins;
+  
+  int ModPiPlus = 0;
+  int ModPiMoins = 0;
+  
+  double theta1;
+  double theta2;
+  
+  Complex** Lambda = this->ComputeDMatrixEigenvalues(nbrOccupiedBands, 0, this->NbrSiteY - 1, this->NbrSiteY); 
+  double** Theta = new double*[this->NbrSiteY];
+  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+  {
+   Theta[ky] = new double[2];
+   for (int i = 0; i < 2; ++i)
+   {
+     theta1 = atan2(Lambda[ky][nbrOccupiedBands - 2].Im,Lambda[ky][nbrOccupiedBands - 2].Re);
+     theta2 = atan2(Lambda[ky][nbrOccupiedBands - 1].Im,Lambda[ky][nbrOccupiedBands - 1].Re);
+     Theta[ky][0] = max(theta1, theta2);
+     Theta[ky][1] = min(theta1, theta2); 
+   }
+  }
+  
+  for (int ky = 0; ky < this->NbrSiteY  - 1; ++ ky)
+  {
+    distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
+    distanceMod2PiPlus = abs(Theta[ky][0] - Theta[ky + 1][1] - 2*M_PI);
+    distanceMoins = abs(Theta[ky][1] - Theta[ky + 1][1]);
+    distanceMod2PiMoins = abs(Theta[ky][1] - Theta[ky + 1][0] + 2*M_PI);
+    
+    if (distanceMod2PiPlus < distancePlus)
+    {
+     ModPiPlus += 1;
+     double Tmp = Theta[ky + 1][0];
+     Theta[ky + 1][0] = Theta[ky + 1][1] + 2*M_PI;
+     Theta[ky + 1][1] = Tmp;
+    }
+    
+    if (distanceMod2PiMoins < distanceMoins)
+    {
+     ModPiMoins += 1;
+     double Tmp = Theta[ky + 1][1];
+     Theta[ky + 1][1] = Theta[ky + 1][0] - 2*M_PI;
+     Theta[ky + 1][0] = Tmp;
+    }
+  }
+//   cout << ModPiPlus << " " << ModPiMoins << endl;
+  for (int ky = 1 ; ky < this->NbrSiteY/2 - 1; ++ky)
+  {
+//     cout << ky << " " << Theta[ky][0] << " " << Theta[ky][1] << endl;
+    for (int i = 0; i <= ModPiPlus; ++i)
+    {
+//       cout << Theta[ky + 1][0] - (referenceLine + i*2*M_PI) << " " << Theta[ky][0] - (referenceLine + i*2*M_PI) << " " << (Theta[ky + 1][1] - (referenceLine - i*2*M_PI)) << " " << (Theta[ky][1] - (referenceLine - i*2*M_PI)) << endl;
+      if ((Theta[ky + 1][0] - (referenceLine + i*2*M_PI)) * (Theta[ky][0] - (referenceLine + i*2*M_PI)) < 0)
+	z2Invariant += 1;
+    }
+    for (int i = 0; i <= ModPiMoins; ++i)
+    {
+      if ((Theta[ky + 1][1] - (referenceLine - i*2*M_PI)) * (Theta[ky][1] - (referenceLine - i*2*M_PI)) < 0)
+	z2Invariant += 1;
+    }
+  }
+  return (z2Invariant % 2); 
 }

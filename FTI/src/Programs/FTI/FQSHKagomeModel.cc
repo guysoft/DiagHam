@@ -4,6 +4,8 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 
+#include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLattice.h"
+
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -84,6 +86,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-13", "mixing term coupling the two copies of the kagome lattice (sites 1 and 3)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-23", "mixing term coupling the two copies of the kagome lattice (sites 2 and 3)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-z2invariant", "compute the z2 invariant of the fully filled band (only available in singleparticle-spectrum mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
+  (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytheta", "export the one-body topological information (phase of the eigenvalues of the D matrix) in an ASCII text file");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the kagome lattice");
   (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the checkerboard lattice");
@@ -161,7 +168,41 @@ int main(int argc, char** argv)
     }
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"));
+      bool ExportOneBody = false;
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true) || (Manager.GetBoolean("export-onebodytheta") == true))
+	ExportOneBody = true;
+      TightBindingModelTimeReversalKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+					   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+      /*
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);*/
+//       cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
+	{
+	  char* BandStructureOutputFile = new char [512];
+	  if (Manager.GetString("export-onebodyname") != 0)
+	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+	  else
+	    sprintf (BandStructureOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_tightbinding.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  if (Manager.GetBoolean("export-onebody") == true)
+	    {
+	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+	    }
+	  else
+	    {
+	      TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+	    }
+	  delete[] BandStructureOutputFile;
+	}
+      if (Manager.GetBoolean("singleparticle-z2invariant") == true)
+	cout << "Z2 invariant = " << TightBindingModel.ComputeZ2Invariant(2) << endl;
+      
+      if (Manager.GetBoolean("export-onebodytheta") == true)
+      {
+	cout << "Z2 invariant = " << TightBindingModel.ComputeZ2Invariant(2) << endl;
+	char* ThetaOutputFile = new char [512];
+	sprintf(ThetaOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_theta.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	TightBindingModel.WriteAsciiDMatrixEigenValues(ThetaOutputFile, 2);
+      }
       return 0;
     }
 

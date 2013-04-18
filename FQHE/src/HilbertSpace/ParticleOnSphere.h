@@ -795,6 +795,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
 					      ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
 					      long memory = 0l, long initialIndex = 0l, long nbrComponents = 0l);
 
+
 };
 
 #endif

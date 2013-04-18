@@ -765,6 +765,7 @@ ComplexMatrix operator - (const ComplexMatrix& M1,
   return ComplexMatrix(TmpColumns, M1.NbrColumn);
 }
 
+
 // multiply two matrices
 //
 // M1 = first matrix
