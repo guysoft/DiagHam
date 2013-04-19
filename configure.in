@@ -218,7 +218,7 @@ AC_MSG_RESULT([${HAVE_PKG_FFTW}])
 if test X${HAVE_PKG_FFTW} = Xyes; then
   AC_DEFINE(HAVE_FFTW,,[define if we are using fftw library])
   AC_CHECK_LIB(fftw3,fftw_plan_dft_r2c_1d,FFTW_LIBS=-lfftw3,AC_MSG_ERROR([fftw library not found]))
-  FFTW_LIBS="-lfftw"
+  FFTW_LIBS="-lfftw3"
 fi
 
 
