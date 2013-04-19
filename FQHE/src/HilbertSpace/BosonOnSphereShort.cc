@@ -632,6 +632,22 @@ int BosonOnSphereShort::FindStateIndex(char* stateDescription)
  return this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, NewLzMax), NewLzMax + this->NbrBosons - 1);
 }
 
+// find state index from an array of occupied orbitals
+//
+// stateDescription = array describing the state (stored as k1,k2,k3,...)
+// return value = corresponding index, -1 if an error occured
+int BosonOnSphereShort::FindStateIndex(int* stateDescription)
+{
+  for (int i = 0; i <= this->LzMax; ++i)
+    this->TemporaryState[i] = 0l;
+  for (int i = 0; i < this->NbrBosons; ++i)
+    ++this->TemporaryState[stateDescription[i]];
+  unsigned long TmpState = this->BosonToFermion(this->TemporaryState, this->LzMax);
+  int TmpLzMax = this->FermionBasis->LzMax;
+  while ((TmpState >> TmpLzMax) == 0x0ul)
+    --TmpLzMax;
+  return this->FermionBasis->FindStateIndex(TmpState, TmpLzMax);
+}
 
 // find state index from unsigned long representation
 //

@@ -293,6 +293,18 @@ class FermionOnSphereLong :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient);
 
+  // get the list of occupied orbitals in a given state
+  //
+  // state = ID of the state
+  // orbitals = list of orbitals to be filled
+  virtual void GetOccupied(int state, int* orbitals);
+
+  // find state index from an array of occupied orbitals
+  //
+  // stateDescription = array describing the state (stored as k1,k2,k3,...)
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(int* stateDescription);
+
   // print a given State
   //
   // Str = reference on current output stream 

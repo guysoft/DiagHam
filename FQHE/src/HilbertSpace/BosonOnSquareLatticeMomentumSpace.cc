@@ -244,6 +244,20 @@ bool BosonOnSquareLatticeMomentumSpace::WriteHilbertSpace (char* fileName)
   return true;
 }
 
+// get the list of occupied orbitals in a given state
+//
+// state = ID of the state
+// orbitals = list of orbitals to be filled
+
+void BosonOnSquareLatticeMomentumSpace::GetOccupied(int state, int* orbitals)
+{
+  this->FermionToBoson(this->FermionBasis->StateDescription[state], this->FermionBasis->StateLzMax[state], this->TemporaryState, this->TemporaryStateLzMax);
+  int i = 0;
+  for (int l = 0; l <= this->TemporaryStateLzMax; ++l)
+      for (int j = 0; j < this->TemporaryState[l]; ++j)
+          orbitals[i++] = l;
+}
+
 // print a given State
 //
 // Str = reference on current output stream 

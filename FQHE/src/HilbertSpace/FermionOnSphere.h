@@ -393,6 +393,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
 
+  // get the list of occupied orbitals in a given state
+  //
+  // state = ID of the state
+  // orbitals = list of orbitals to be filled
+  virtual void GetOccupied(int state, int* orbitals);
+
   // print a given State
   //
   // Str = reference on current output stream 
@@ -617,6 +623,12 @@ class FermionOnSphere :  public ParticleOnSphere
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+
+  // find state index from an array of occupied orbitals
+  //
+  // stateDescription = array describing the state (stored as k1,k2,k3,...)
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(int* stateDescription);
 
   // carefully test whether state is in Hilbert-space and find corresponding state index
   //

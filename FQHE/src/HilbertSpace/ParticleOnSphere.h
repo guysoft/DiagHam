@@ -528,11 +528,23 @@ class ParticleOnSphere :  public AbstractQHEParticle
   virtual void RebuildStateFromSchmidtDecompositionParticlePartition(int nbrParticleSector, int lzSector, RealVector& schmidtDecomposedState, 
 									     int nbrSingularValues, double* singularValues, RealMatrix& aVectors, RealMatrix& bVectors);
 
+  // get the list of occupied orbitals in a given state
+  //
+  // state = ID of the state
+  // orbitals = list of orbitals to be filled
+  virtual void GetOccupied(int state, int* orbitals);
+
   // find state index from a string
   //
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+
+  // find state index from an array of occupied orbitals
+  //
+  // stateDescription = array describing the state (stored as k1,k2,k3,...)
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(int* stateDescription);
 
   // convert a state such that its components are now expressed in the unnormalized basis
   //

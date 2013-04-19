@@ -626,6 +626,12 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+
+  // find state index from an array of occupied orbitals
+  //
+  // stateDescription = array describing the state (stored as k1,k2,k3,...)
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(int* stateDescription);
   
   // find state index from unsigned long representation
   //

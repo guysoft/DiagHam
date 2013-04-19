@@ -97,6 +97,12 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
   // return value = true if no error occured
   virtual bool WriteHilbertSpace (char* fileName);
 
+  // get the list of occupied orbitals in a given state
+  //
+  // state = ID of the state
+  // orbitals = list of orbitals to be filled
+  virtual void GetOccupied(int state, int* orbitals);
+
   // print a given State
   //
   // Str = reference on current output stream 

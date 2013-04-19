@@ -813,6 +813,22 @@ int FermionOnSphereLong::FindStateIndex(ULONGLONG stateDescription, int lzmax)
     return PosMin;
 }
 
+// find state index from an array of occupied orbitals
+//
+// stateDescription = array describing the state (stored as k1,k2,k3,...)
+// return value = corresponding index, -1 if an error occured
+
+int FermionOnSphereLong::FindStateIndex(int* stateDescription)
+{
+  ULONGLONG TmpState = ((ULONGLONG) 0x0ul);
+  for (int i = 0; i < this->NbrFermions; ++i)
+    TmpState |= ((ULONGLONG) 0x1ul) << (stateDescription[i]);
+  int TmpLzMax = this->LzMax;
+  while ((TmpState >> TmpLzMax) == ((ULONGLONG) 0x0ul))
+    --TmpLzMax;
+  return this->FindStateIndex(TmpState, TmpLzMax);
+}
+
 // get Lz component of a component
 //
 // j = index of the component in Hilbert space
@@ -822,6 +838,20 @@ int FermionOnSphereLong::GetLzValue(int j)
   return this->TotalLz;
 }
 
+
+// get the list of occupied orbitals in a given state
+//
+// state = ID of the state
+// orbitals = list of orbitals to be filled
+
+void FermionOnSphereLong::GetOccupied(int state, int* orbitals)
+{
+  ULONGLONG TmpState = this->StateDescription[state];
+  int i = 0;
+  for (int l = 0; l < this->NbrLzValue; ++l)
+      if ((TmpState >> l) & ((ULONGLONG) 0x1l) == ((ULONGLONG) 0x1))
+          orbitals[i++] = l;
+}
 
 // print a given State
 //
