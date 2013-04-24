@@ -1,4 +1,5 @@
 #include "HilbertSpace/BosonOnLatticeGeneric.h"
+//#include "HilbertSpace/FermionOnLatticeGeneric.h"
 #include "HilbertSpace/HardCoreBosonOnLatticeGeneric.h"
 #include "HilbertSpace/SingleBosonOnLatticeGeneric.h"
 #include "Hamiltonian/ParticleOnLatticeGenericHamiltonian.h"

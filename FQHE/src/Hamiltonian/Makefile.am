@@ -51,6 +51,7 @@ ParticleOnLatticeWithKyDeltaHamiltonian.cc \
 ParticleOnDiskGenericHamiltonian.cc \
 ParticleOnDiskLPlusLMinusHamiltonian.cc \
 ParticleOnSphereGenericThreeBodyHamiltonian.cc \
+ParticleOnSphereWithSpinGenericThreeBodyHamiltonianWithPairing.cc \
 ParticleOnDiskGenericThreeBodyHamiltonian.cc \
 AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian.cc \
 ParticleOnSphereWithSpinGenericThreeBodyHamiltonian.cc \

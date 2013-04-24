@@ -4,6 +4,8 @@
 #include "Hamiltonian/ParticleOnSphereWithSpinL2Hamiltonian.h"
 #include "Hamiltonian/ParticleOnSphereWithSpinS2Hamiltonian.h"
 
+#include "Operator/ParticleOnSphereWithSpinSzParityOperator.h"
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -63,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of the L^2 operator ", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "energy-shift", "if non zero, override energy shift using the indicated value ", -10.0);
+  //(*SystemGroup) += new BooleanOption  ('\n', "l2-up", "calculate L2 for upspins, only");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -97,13 +100,24 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool FirstRun = true;
+  //  bool EmulateL2Up = Manager.GetBoolean("l2-up");
   char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
-  if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
-    sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz);
+  bool FixedSz = !(Manager.GetBoolean("all-sz"));
+  if (FixedSz)
+    {
+      if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
+	sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz);
+      else
+	sprintf (OutputNameLz, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz);
+    }
   else
-    sprintf (OutputNameLz, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz);
-
-
+    {
+      if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
+	sprintf (OutputNameLz, "fermions_sphere_su2_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
+      else
+	sprintf (OutputNameLz, "bosons_sphere_su2_%s_n_%d_2s_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax);
+    }
+  
   ParticleOnSphereWithSpin* Space =  (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(TotalLz);
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
@@ -115,9 +129,9 @@ int main(int argc, char** argv)
 							      Architecture.GetArchitecture(), 
 							      Manager.GetDouble("l2-factor"),
 							      Memory, DiskCacheFlag,
-							      LoadPrecalculationFileName);
+							      LoadPrecalculationFileName); // , EmulateL2Up);
       if (Manager.GetDouble("s2-factor") != 0.0)
-	((AbstractQHEOnSphereWithSpinHamiltonian*) Hamiltonian)->AddS2(TotalLz, TotalSz, Manager.GetDouble("s2-factor"), Memory);
+	((AbstractQHEOnSphereWithSpinHamiltonian*) Hamiltonian)->AddS2(TotalLz, TotalSz, Manager.GetDouble("s2-factor"), Memory, FixedSz);
     }
   else
     {
@@ -126,7 +140,7 @@ int main(int argc, char** argv)
 								Architecture.GetArchitecture(), 
 								Manager.GetDouble("s2-factor"),
 								Memory, DiskCacheFlag,
-								LoadPrecalculationFileName);
+								LoadPrecalculationFileName, FixedSz);
       else
 	{
 	  cout << "Either L2 or S2 term have to be non-zero!"<<endl;
@@ -139,10 +153,20 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("eigenstate") == true)	
     {
       EigenvectorName = new char [256 + strlen(Manager.GetString("interaction-name"))];
-      if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
-	sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, TotalLz);
+      if (FixedSz)
+	{
+	  if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
+	    sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, TotalLz);
+	  else
+	    sprintf (EigenvectorName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, TotalLz);
+	}
       else
-	sprintf (EigenvectorName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalSz, TotalLz);
+	{
+	  if (strcmp ("fermions", Manager.GetString("statistics")) == 0)
+	    sprintf (EigenvectorName, "fermions_sphere_su2_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+	  else
+	    sprintf (EigenvectorName, "bosons_sphere_su2_%s_n_%d_2s_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, TotalLz);
+	}
     }
   QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, TotalLz, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
   MainTaskOperation TaskOperation (&Task);

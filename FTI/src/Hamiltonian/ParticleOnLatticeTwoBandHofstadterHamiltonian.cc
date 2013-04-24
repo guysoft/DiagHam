@@ -893,7 +893,7 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 	    {
 	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      	      int kx3,ky3;
+	      int kx3,ky3;
 	      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 	      int kx4,ky4;
 	      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
@@ -902,9 +902,9 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
 		  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
 		  int kx1,ky1;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
+		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 		  int kx2,ky2;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
+		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
 
 		  Tmp=0.0;
 		  for (int s=0; s<NbrSublattices; ++s)
