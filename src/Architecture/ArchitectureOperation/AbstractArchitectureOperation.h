@@ -90,7 +90,8 @@ class AbstractArchitectureOperation
       FQHESphereBosonsWithSpinLandauLevelLiftOperation = 0x18022,
       FQHELatticeFourierTransformOperation = 0x18024,
       FTIComputeBandStructureOperation = 0x30001,
-      FQHEMPSCreateStateOperation = 0x30002
+      FQHEMPSCreateStateOperation = 0x30002,
+      FQHEMPSEvaluateCFTOperation = 0x30003
     };
   
   // destructor

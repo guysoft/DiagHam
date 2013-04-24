@@ -161,7 +161,7 @@ int main(int argc, char** argv)
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
 
 
-  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta); 
+  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
   if (Manager.GetBoolean("only-export"))
     {
       return 0;

@@ -416,24 +416,24 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
 		      ++PartitionLength;		  
 		    }
 		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightEpsilon, WeightSigma, Weight,
-									 RationalMatrixPsi01, i, j - 1, U1BosonBasis);
+									 RationalMatrixPsi01, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
 		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightSigma, WeightEpsilon, Weight,
-							    RationalMatrixPsi10, i, j - 1, U1BosonBasis);
+							    RationalMatrixPsi10, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 		Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightSigma, WeightSigma, Weight,
-							    RationalMatrixPsi11, i, j - 1, U1BosonBasis);
+							    RationalMatrixPsi11, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		RationalMatrixPsi11[i][j].SetMatrixElement(n, m, Tmp);
 		if ((1 + j) <= this->PLevel)
 		  {	  
 		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightSigma, WeightPhi, Weight,
-								RationalMatrixPsi12, i - 1, j - 1, U1BosonBasis);
+								RationalMatrixPsi12, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalMatrixPsi12[i][j].SetMatrixElement(n, m, Tmp);
 		  }
 		if ((1 + i) <= this->PLevel)
 		  {	  
 		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPhi, WeightSigma, Weight,
-								RationalMatrixPsi21, i - 1, j - 1, U1BosonBasis);
+								RationalMatrixPsi21, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalMatrixPsi21[i][j].SetMatrixElement(n, m, Tmp);
 		  }
 	      }

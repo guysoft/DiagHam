@@ -131,9 +131,10 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
 // get the MPS matrice class defined by the running options
 //
 // nbrFluxQuanta = number of flux quanta
+// architecture = architecture to use for precalculation
 // return value = pointer to the MPS matrice class
 
-AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
+AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, AbstractArchitecture* architecture)
 {
   bool CylinderFlag = this->Options->GetBoolean("normalize-cylinder");
   double AspectRatio = this->Options->GetDouble("aspect-ratio");
@@ -171,12 +172,12 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta)
 		  if (this->Options->GetString("cft") != 0)
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
-							       CylinderFlag, Kappa);
+							       CylinderFlag, Kappa, architecture);
 		    }
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa);
+							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	    }

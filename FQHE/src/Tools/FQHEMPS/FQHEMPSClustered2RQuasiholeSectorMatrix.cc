@@ -535,12 +535,12 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
 		      ++PartitionLength;		  
 		    }
 		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightSigma, this->WeightPhi, this->WeightPrimaryFieldMatrixElement,
-									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis);
+									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
 		if (this->SelfDualFlag == false)
 		  {
 		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightPhi, this->WeightSigma, this->WeightPrimaryFieldMatrixElement,
-								RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis);
+								RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 		  }
 	      }

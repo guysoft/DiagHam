@@ -524,24 +524,24 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory)
 			  ++PartitionLength;		  
 			}
 		    LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight,
-									     RationalMatrixPsi01, i, j - 1, U1BosonBasis);
+									     RationalMatrixPsi01, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
 		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight,
-								RationalMatrixPsi10, i, j - 1, U1BosonBasis);
+								RationalMatrixPsi10, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightPsi, Weight,
-								RationalMatrixPsi11, i, j - 1, U1BosonBasis);
+								RationalMatrixPsi11, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalMatrixPsi11[i][j].SetMatrixElement(n, m, Tmp);
 		    if ((3 + j) <= this->PLevel)
 		      {	  
 			Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightW, Weight,
-								    RationalMatrixPsi12, i - 1, j - 1, U1BosonBasis);
+								    RationalMatrixPsi12, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi12[i][j].SetMatrixElement(n, m, Tmp);
 		      }
 		    if ((3 + i) <= this->PLevel)
 		      {	  
 			Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightPsi, Weight,
-								    RationalMatrixPsi21, i - 1, j - 1, U1BosonBasis);
+								    RationalMatrixPsi21, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi21[i][j].SetMatrixElement(n, m, Tmp);
 		      }
 		  }

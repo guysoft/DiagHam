@@ -39,10 +39,13 @@
 
 class LongRationalMatrix;
 class BosonOnDiskShort;
-
+class AbstractArchitecture;
 
 class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 {
+
+
+  friend class FQHEMPSEvaluateCFTOperation;
 
  protected:
 
@@ -97,7 +100,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
+  // architecture = architecture to use for precalculation
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor 
   //
@@ -108,7 +112,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0);
+  // architecture = architecture to use for precalculation
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from a file describing the state
   //
@@ -117,7 +122,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // fileName = name of the file that contains the state description
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  // architecture = architecture to use for precalculation
+  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
   //
@@ -152,7 +158,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // create the B matrices for the laughlin state
   //
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
-  virtual void CreateBMatrices (char* cftDirectory = 0);
+  // architecture = architecture to use for precalculation
+  virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
 
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
@@ -255,13 +262,14 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
   // precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
   // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
   // return value = matrix element
   virtual LongRational ComputeDescendantMatrixElement (long* partition, int partitionLength, int descendantPosition, int position, 
 						       LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
 						       LongRational& weight, LongRationalMatrix** precomputedDescendantMatrixElement,
 						       int precomputedDescendantMatrixElementMaxLeftPLevel, 
 						       int precomputedDescendantMatrixElementMaxRightPLevel, 
-						       BosonOnDiskShort** basis);
+						       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states
   //

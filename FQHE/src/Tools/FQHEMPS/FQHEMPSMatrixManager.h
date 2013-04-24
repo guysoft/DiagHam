@@ -37,6 +37,7 @@
 
 class OptionManager;
 class AbstractFQHEMPSMatrix;
+class AbstractArchitecture;
 
 
 class FQHEMPSMatrixManager
@@ -66,8 +67,9 @@ class FQHEMPSMatrixManager
   // get the MPS matrice class defined by the running options
   //
   // nbrFluxQuanta = number of flux quanta
+  // architecture = architecture to use for precalculation
   // return value = pointer to the MPS matrice class 
-  AbstractFQHEMPSMatrix* GetMPSMatrices(int nbrFluxQuanta = 0);
+  AbstractFQHEMPSMatrix* GetMPSMatrices(int nbrFluxQuanta = 0, AbstractArchitecture* architecture = 0);
 
   // get the cylinder perimeter (in magnetic length unit) if the cylinder geometry if used
   //
