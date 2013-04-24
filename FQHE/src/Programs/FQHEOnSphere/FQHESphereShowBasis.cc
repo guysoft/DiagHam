@@ -20,6 +20,7 @@
 #include "HilbertSpace/BosonOn4DSphere.h"
 #include "HilbertSpace/BosonOn4DSphereLong.h"
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 #include "HilbertSpace/FermionOnCP2.h"
 #include "HilbertSpace/FermionOnCP2Long.h"
 
@@ -67,6 +68,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   (*SystemGroup) += new BooleanOption  ('\n', "4-D", "consider particles on the 4D sphere (only available in the bosonic mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "cp2", "consider particles on the CP2 ");
+  (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use Tz <-> -Tz and Z3 permutations symmetrized version of the CP2 basis (only valid if total-tz=0 and total-y = 0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
@@ -127,6 +130,8 @@ int main(int argc, char** argv)
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
   bool FourDFlag = Manager.GetBoolean("4-D");
   bool CP2Flag = Manager.GetBoolean("cp2");
+  bool SymFlagTzZ3 = Manager.GetBoolean("tzZ3symmetrized-basis");
+  bool TzMinusParity = Manager.GetBoolean("minus-tzparity");
   int TotalSz = Manager.GetInteger("total-sz");
   int TotalIz = Manager.GetInteger("total-isosz");
   int TotalPz = Manager.GetInteger("total-entanglement");
@@ -223,7 +228,10 @@ int main(int argc, char** argv)
 		      Space = new BosonOnSphereShort(NbrParticles, TotalLz, NbrFluxQuanta);
 		    }
 		    else
-		      Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      if (SymFlagTzZ3 == false)
+			Space = new BosonOnCP2(NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      else
+			Space = new BosonOnCP2TzZ3Symmetry(NbrParticles, NbrFluxQuanta, TzValue, YValue, TzMinusParity);
 		    }
 		  else
 		  {
@@ -407,7 +415,10 @@ int main(int argc, char** argv)
 		    if (FourDFlag == true)
 		      sprintf (OutputFileName, "bosons_sphere4d_n_%d_2s_%d_jz_%d_kz_%d.basis", NbrParticles, NbrFluxQuanta, TotalJz, TotalKz);
 		    else
-		      sprintf (OutputFileName, "bosons_sphereCP2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      if (SymFlagTzZ3 == false)
+			sprintf (OutputFileName, "bosons_sphereCP2_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
+		      else
+			sprintf (OutputFileName, "bosons_sphereCP2_tzZ3sym_n_%d_2s_%d_tz_%d_y_%d.basis", NbrParticles, NbrFluxQuanta, TzValue, YValue);
 	  else
 	    if (SU2SpinFlag == true)
 	      sprintf (OutputFileName, "fermions_sphere_n_%d_2s_%d_lz_%d_sz_%d.basis", NbrParticles, NbrFluxQuanta, TotalLz, TotalSz);
@@ -510,11 +521,19 @@ int main(int argc, char** argv)
 		    {
 		      if ((fabs(State[i]) > Error)&&((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR))))
 			{
-			  if (AddIndex == true) 
-			    File << i << " ";	
-			  Space->PrintState(File, i) << " : " << State[i];
-			  if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
-			  else File<<endl;
+			  if (SymFlagTzZ3 == false)
+			  {
+			    if (AddIndex == true) 
+			      File << i << " ";	
+			    Space->PrintState(File, i) << " : " << State[i];
+			    if (AddSzValue == true) File<<" Sz= "<<Space->GetSzValue(i)<< endl;
+			    else File<<endl;
+			  }
+			  else
+			  {
+			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    File << endl;
+			  }
 			}
 		      else		     
 			{
@@ -529,11 +548,19 @@ int main(int argc, char** argv)
 		  {
 		    if ((fabs(State[i]) > Error)&&((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR))))
 		      {
-			if (AddIndex == true) 
-			  cout << i <<" ";
-			Space->PrintState(cout, i) << " : " << State[i];
-			if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
-			else cout<<endl;
+			if (SymFlagTzZ3 == false)
+			{
+			  if (AddIndex == true) 
+			    cout << i <<" ";
+			  Space->PrintState(cout, i) << " : " << State[i];
+			  if (AddSzValue == true) cout<<" Sz= "<<Space->GetSzValue(i)<< endl;
+			  else cout<<endl;
+			}
+			else
+			  {
+			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    cout << endl;
+			  }
 		      }
 		    else		     
 		      {
@@ -574,8 +601,18 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("save-disk") == true)
 		    {
 		      if (PauliK==0)
+		      {
 			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-			  Space->PrintState(File, i) << " : " << State[i] << endl;
+			{
+			if (SymFlagTzZ3 == false)
+			    Space->PrintState(File, i) << " : " << State[i] << endl;
+			else
+			  {
+			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    File << endl;
+			  }
+			}
+		      }
 		      else
 			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 			  if (Space->HasPauliExclusions(i,PauliK,PauliR))
@@ -585,7 +622,15 @@ int main(int argc, char** argv)
 		    {
 		      if (PauliK==0)
 			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-			  Space->PrintState(cout, i) << " : " << State[i] << endl;
+			{
+			if (SymFlagTzZ3 == false)
+			    Space->PrintState(cout, i) << " : " << State[i] << endl;
+			else
+			  {
+			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    cout << endl;
+			  }
+			}
 		      else
 			{
 			  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
@@ -620,13 +665,21 @@ int main(int argc, char** argv)
 		    {
 		      if ((State[i] != 0l) && ((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR))))
 			{
-			  if (AddIndex == true) 
-			    File << i << " ";	
-			  Space->PrintState(File, i) << " : " << State[i];
-			  if (AddSzValue == true) 
-			    File <<" Sz= "<<Space->GetSzValue(i)<< endl;
-			  else 
+			  if (SymFlagTzZ3 == false)
+			  {
+			    if (AddIndex == true) 
+			      File << i << " ";	
+			    Space->PrintState(File, i) << " : " << State[i];
+			    if (AddSzValue == true) 
+			      File <<" Sz= "<<Space->GetSzValue(i)<< endl;
+			    else 
+			      File << endl;
+			  }
+			  else
+			  {
+			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
 			    File << endl;
+			  }
 			}
 		      else		     
 			{
@@ -640,13 +693,21 @@ int main(int argc, char** argv)
 		    {
 		      if ((State[i] != 0l) && ((PauliK==0)||(Space->HasPauliExclusions(i,PauliK,PauliR))))
 			{
-			  if (AddIndex == true) 
-			    cout << i <<" ";
-			  Space->PrintState(cout, i) << " : " << State[i];
-			  if (AddSzValue == true)
-			    cout<< " Sz= "<< Space->GetSzValue(i)<< endl;
-			  else 
+			  if (SymFlagTzZ3 == false)
+			  {
+			    if (AddIndex == true) 
+			      cout << i <<" ";
+			    Space->PrintState(cout, i) << " : " << State[i];
+			    if (AddSzValue == true)
+			      cout<< " Sz= "<< Space->GetSzValue(i)<< endl;
+			    else 
+			      cout << endl;
+			  }
+			  else
+			  {
+			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
 			    cout << endl;
+			  }
 			}
 		      else		     
 			{
@@ -662,7 +723,13 @@ int main(int argc, char** argv)
 		{
 		  if (PauliK == 0)
 		    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		      Space->PrintState(File, i) << " : " << State[i] << endl;
+		      if (SymFlagTzZ3 == false)
+			Space->PrintState(File, i) << " : " << State[i] << endl;
+		      else
+			  {
+			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    File << endl;
+			  }
 		  else
 		    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		      if (Space->HasPauliExclusions(i,PauliK,PauliR))
@@ -672,7 +739,13 @@ int main(int argc, char** argv)
 		{
 		  if (PauliK == 0)
 		    for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		      Space->PrintState(cout, i) << " : " << State[i] << endl;
+		      if (SymFlagTzZ3 == false)
+			Space->PrintState(cout, i) << " : " << State[i] << endl;
+		      else
+			  {
+			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    cout << endl;
+			  }
 		  else
 		    {
 		      for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)

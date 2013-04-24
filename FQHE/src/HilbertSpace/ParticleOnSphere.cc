@@ -65,6 +65,15 @@ int ParticleOnSphere::GetTargetHilbertSpaceDimension()
   return this->HilbertSpaceDimension;
 }
 
+//return dimension of the subspace of the target space whose elements are related by the tz<->-tz and Z3 symmetry
+//
+//return value = dimension of the subspace
+int ParticleOnSphere::GetSymmetryDimension(int i)
+{
+ return this->GetSymmetryDimension(i); 
+}
+
+
 // get information about any additional symmetry of the Hilbert space
 //
 // return value = symmetry id

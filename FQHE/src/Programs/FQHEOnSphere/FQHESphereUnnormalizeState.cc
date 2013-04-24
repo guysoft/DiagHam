@@ -14,6 +14,7 @@
 #include "HilbertSpace/FermionOnSpherePTruncatedLong.h"
 #include "HilbertSpace/BosonOnSpherePTruncated.h"
 #include "HilbertSpace/BosonOnCP2.h"
+#include "HilbertSpace/BosonOnCP2TzZ3Symmetry.h"
 #include "HilbertSpace/FermionOnCP2.h"
 
 #include "Options/Options.h"
@@ -56,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full n-body basis");
   (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use fully symmetrized version of the basis on CP2 (only valid if total tz=0, y = 0, override detection from input vector name)");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
@@ -93,6 +95,10 @@ int main(int argc, char** argv)
   int TotalSz = 0;
   double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
   bool SymmetryFactor = !(Manager.GetBoolean("symmetry-factor"));
+  
+  bool SymFlagTz = false;
+  bool SymFlagTzMinusParity = false;
+  bool SymFlagTzZ3 = false;
 	   
   bool Statistics = true;
   if ((strstr(Manager.GetString("input-state"), "su2") == 0) && (strstr(Manager.GetString("input-state"), "cp2") == 0))
@@ -123,9 +129,7 @@ int main(int argc, char** argv)
       else
       {
 	CP2Flag = true;
-	bool SymFlagTz = false;
-	bool SymFlagTzMinusParity = false;
-	bool SymFlagTzZ3 = false;
+	
 	if (FQHEOnCP2FindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, LzMax, TotalTz, TotalY,SymFlagTz, SymFlagTzMinusParity, SymFlagTzZ3, Statistics) == false)
 	{
 	  cout << "error while retrieving system parameters from " << Manager.GetString("input-state") << endl;
@@ -162,7 +166,11 @@ int main(int argc, char** argv)
 	      sprintf (OutputFileName, "bosons_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
 	  }
 	  else
-	    sprintf(OutputFileName, "bosons_unnormalized_cp2_n_%d_2s_%d_tz_%d_y_%d.0.vec", NbrParticles, LzMax, TotalTz, TotalY);
+	    if (Manager.GetBoolean("tzZ3symmetrized-basis") == true || SymFlagTzZ3 == true)
+	      sprintf(OutputFileName, "bosons_unnormalized_cp2_tzZ3sym_n_%d_2s_%d_tz_%d_y_%d.0.vec", NbrParticles, LzMax, TotalTz, TotalY);
+	    else
+	      sprintf(OutputFileName, "bosons_unnormalized_cp2_n_%d_2s_%d_tz_%d_y_%d.0.vec", NbrParticles, LzMax, TotalTz, TotalY);
+	      	  
 	}
     }
 
@@ -285,7 +293,13 @@ int main(int argc, char** argv)
 		    OutputBasis = new BosonOnSphereShort(NbrParticles, TotalLz, LzMax);
 		  }
 		  else
-		    OutputBasis = new BosonOnCP2(NbrParticles, LzMax, TotalTz, TotalY);
+		  {
+		    if (Manager.GetBoolean("tzZ3symmetrized-basis") == true || SymFlagTzZ3 == true)
+		      OutputBasis = new BosonOnCP2TzZ3Symmetry(NbrParticles, LzMax, TotalTz, TotalY, SymFlagTzMinusParity);
+		    else
+		      OutputBasis = new BosonOnCP2(NbrParticles, LzMax, TotalTz, TotalY);
+		      
+		  }
 		}
 	      else
 		{
