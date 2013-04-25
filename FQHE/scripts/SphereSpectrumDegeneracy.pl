@@ -97,7 +97,6 @@ if ($LFlag != 0)
 	$Degeneracy{$TmpLine} -= $CurrentNbr;
 	$CurrentNbr += $Degeneracy{$TmpLine};
       }
-    
   }
 
 if (($LatexFlag == 0) && ($RowFlag == 0))

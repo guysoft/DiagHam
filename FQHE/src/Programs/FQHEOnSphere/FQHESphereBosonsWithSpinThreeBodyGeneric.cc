@@ -3,6 +3,7 @@
 #include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 
 #include "Hamiltonian/ParticleOnSphereWithSpinGenericThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnSphereWithSpinGenericThreeBodyHamiltonianWithPairing.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -62,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "pairing", "add a pair hopping term to the Hamiltonian in all-sz mode", 0.0);
   // (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -100,6 +102,7 @@ int main(int argc, char** argv)
   int NbrLz = Manager.GetInteger("nbr-lz");
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
+  bool AllSz = Manager.GetBoolean("all-sz");
   bool FirstRun = true;
 
   int NbrUp = (NbrParticles + SzTotal) >> 1;
@@ -204,9 +207,18 @@ int main(int argc, char** argv)
 	}
     }
 
-  char* OutputNameLz = new char [256 + strlen(Manager.GetString("interaction-name"))];
-  sprintf (OutputNameLz, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz.dat", Manager.GetString("interaction-name"), NbrParticles, LzMax, SzTotal);
-
+  char* OutputBaseName = new char [256 + strlen(Manager.GetString("interaction-name"))];
+  if (AllSz)
+    {
+      sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
+      
+    }
+  else
+    sprintf (OutputBaseName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz", Manager.GetString("interaction-name"), NbrParticles, LzMax, SzTotal);
+  
+  char* OutputNameLz = new char [strlen(OutputBaseName)+5];
+  sprintf (OutputNameLz,"%s.dat",OutputBaseName);
+  
   int Max = (LzMax * NbrUp) + (LzMax * NbrDown);
 
   int  L = 0;
@@ -232,20 +244,42 @@ int main(int argc, char** argv)
       AbstractQHEOnSphereWithSpinHamiltonian* Hamiltonian = 0;
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      if (PseudoPotentials == 0)
+      if (AllSz==false)
 	{
-	  Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials32, NbrThreeBodyPseudoPotentials32, ThreeBodyPotentials12, NbrThreeBodyPseudoPotentials12,
-										Architecture.GetArchitecture(), 
-										Memory, DiskCacheFlag,
-										LoadPrecalculationFileName);
+	  if (PseudoPotentials == 0)
+	    {
+	      Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials32, NbrThreeBodyPseudoPotentials32, ThreeBodyPotentials12, NbrThreeBodyPseudoPotentials12,
+										    Architecture.GetArchitecture(), 
+										    Memory, DiskCacheFlag,
+										    LoadPrecalculationFileName);
+	    }
+	  else
+	    {
+	      Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials32, NbrThreeBodyPseudoPotentials32, ThreeBodyPotentials12, NbrThreeBodyPseudoPotentials12,
+										    PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
+										    Architecture.GetArchitecture(), 
+										    Memory, DiskCacheFlag,
+										    LoadPrecalculationFileName);
+	    }
 	}
       else
 	{
-	  Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonian(Space, NbrParticles, LzMax, ThreeBodyPotentials32, NbrThreeBodyPseudoPotentials32, ThreeBodyPotentials12, NbrThreeBodyPseudoPotentials12,
-										PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
-										Architecture.GetArchitecture(), 
-										Memory, DiskCacheFlag,
-										LoadPrecalculationFileName);
+	  if (PseudoPotentials == 0)
+	    {
+	      Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials32, NbrThreeBodyPseudoPotentials32, ThreeBodyPotentials12, NbrThreeBodyPseudoPotentials12, Manager.GetDouble("pairing"), PseudoPotentials,
+										    Architecture.GetArchitecture(), 
+										    Memory, DiskCacheFlag,
+										    LoadPrecalculationFileName);		
+	    }
+	  else
+	    {
+	      Hamiltonian = new ParticleOnSphereWithSpinGenericThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials32, NbrThreeBodyPseudoPotentials32, ThreeBodyPotentials12, NbrThreeBodyPseudoPotentials12, Manager.GetDouble("pairing"), 
+										    PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
+										    Architecture.GetArchitecture(), 
+										    Memory, DiskCacheFlag,
+										    LoadPrecalculationFileName);
+	    }
+	  
 	}
       if (Manager.GetDouble("l2-factor") != 0.0)
 	Hamiltonian->AddL2(L, SzTotal, Manager.GetDouble("l2-factor"), ((unsigned long)Manager.GetInteger("l2-memory")) << 20); 
@@ -256,8 +290,8 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
-	  EigenvectorName = new char [64];
-	  sprintf (EigenvectorName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz_%d", Manager.GetString("interaction-name"), NbrParticles, LzMax, SzTotal, L);
+	  EigenvectorName = new char [strlen(OutputBaseName)+10];
+	  sprintf (EigenvectorName, "%s_%d", OutputBaseName, L);
 	}
       
       QHEOnSphereMainTask Task (&Manager, Space, Hamiltonian, L, Shift, OutputNameLz, FirstRun, EigenvectorName, LzMax);
@@ -272,7 +306,8 @@ int main(int argc, char** argv)
 	FirstRun = false;
       delete Space;
     }
-
+  delete [] OutputBaseName;
+  delete [] OutputNameLz;
   return 0;
 }
 
