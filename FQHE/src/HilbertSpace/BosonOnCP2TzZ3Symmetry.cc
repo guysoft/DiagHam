@@ -388,11 +388,14 @@ RealVector& BosonOnCP2TzZ3Symmetry::ConvertToUnnormalizedMonomial(RealVector& st
 	      ++Index1;
 	      ++Index2;
 	    }
-	  while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	    if (Index1 < this->NbrBosons)
 	    {
-	      Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
-	      ++Index2;
-	    }	  
+	      while ((Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] < TmpMonomial[Index2]))
+	      {
+		Coefficient *= SqrtCoefficients[TmpMonomial[Index2]];
+		++Index2;
+	      }	  
+	    }
 	}
       while (Index1 < this->NbrBosons)
 	{

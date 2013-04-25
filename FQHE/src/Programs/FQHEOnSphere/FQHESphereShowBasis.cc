@@ -531,7 +531,7 @@ int main(int argc, char** argv)
 			  }
 			  else
 			  {
-			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(File, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    File << endl;
 			  }
 			}
@@ -558,7 +558,7 @@ int main(int argc, char** argv)
 			}
 			else
 			  {
-			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(cout, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    cout << endl;
 			  }
 		      }
@@ -608,7 +608,7 @@ int main(int argc, char** argv)
 			    Space->PrintState(File, i) << " : " << State[i] << endl;
 			else
 			  {
-			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(File, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    File << endl;
 			  }
 			}
@@ -627,7 +627,7 @@ int main(int argc, char** argv)
 			    Space->PrintState(cout, i) << " : " << State[i] << endl;
 			else
 			  {
-			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(cout, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    cout << endl;
 			  }
 			}
@@ -677,7 +677,7 @@ int main(int argc, char** argv)
 			  }
 			  else
 			  {
-			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(File, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    File << endl;
 			  }
 			}
@@ -705,7 +705,7 @@ int main(int argc, char** argv)
 			  }
 			  else
 			  {
-			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(cout, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    cout << endl;
 			  }
 			}
@@ -727,7 +727,7 @@ int main(int argc, char** argv)
 			Space->PrintState(File, i) << " : " << State[i] << endl;
 		      else
 			  {
-			    Space->PrintState(File, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(File, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    File << endl;
 			  }
 		  else
@@ -743,7 +743,7 @@ int main(int argc, char** argv)
 			Space->PrintState(cout, i) << " : " << State[i] << endl;
 		      else
 			  {
-			    Space->PrintState(cout, i) << " : " << State[i] << " : dim = " << Space->GetSymmetryDimension(i);
+			    Space->PrintState(cout, i) << " : " << State[i] <<  " : " << Space->GetSymmetryDimension(i);
 			    cout << endl;
 			  }
 		  else
