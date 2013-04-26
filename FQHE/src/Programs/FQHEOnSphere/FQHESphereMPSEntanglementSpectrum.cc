@@ -828,7 +828,7 @@ int main(int argc, char** argv)
       {
         TmpNa = RhoQSector[ReorderingMap[i]];
 
-        MPSMatrix->ComputeChargeIndexRange(RhoPSector[i], MinQValue, MaxQValue, true);
+        MPSMatrix->ComputeGlobalChargeIndexRange(RhoPSector[i], MinQValue, MaxQValue);
 
         if ((p == 2) && (q == 4)) //Moore-Read
           TmpNa -= (MaxQValue - 1)/2;

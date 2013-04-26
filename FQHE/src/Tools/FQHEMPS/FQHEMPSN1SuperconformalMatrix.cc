@@ -409,7 +409,7 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices ()
   this->NLastValuePerPLevel = new int [this->PLevel + 1];     
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i], this->UniformChargeIndexRange);
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
       this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
     }
      

@@ -148,7 +148,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   int NValueShift = this->NbrNValue - 1;
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i], this->UniformChargeIndexRange);
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
       this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
     }
   this->NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * this->NbrNValuesPerPLevel[0];
@@ -467,11 +467,10 @@ bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
 // pLevel = tuncation level
 // minQ = reference on the lowest charge index
 // maxQ = reference on the lowest charge index
-// uniformChargeIndexRange = if true, assume full range of indices; else, use trimming and variable range of indices
 
-void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ, bool uniformChargeIndexRange)
+void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ)
 {
-  if (uniformChargeIndexRange == true)
+  if (this->UniformChargeIndexRange == true)
     {
       minQ = 0;
       maxQ = this->NbrNValue - 1;
@@ -524,6 +523,19 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
 //   minQ = (this->NbrNValue - 1 - 2 * (this->PLevel - pLevel + 1)) / 2;
 //   maxQ = (this->NbrNValue - 1 + 2 * (this->PLevel - pLevel + 1)) / 2;
   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;
+}
+
+// compute the global charge index range at a given truncation level
+// 
+// pLevel = tuncation level
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSLaughlinMatrix::ComputeGlobalChargeIndexRange(int pLevel, int& minQ, int& maxQ)
+{
+  minQ = 0;
+  maxQ = this->NbrNValue - 1;
+  return;
 }
 
 // get the boundary indices of the MPS representation
