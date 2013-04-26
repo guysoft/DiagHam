@@ -118,7 +118,7 @@ class FQHESphereBosonsWithSpinLandauLevelLiftOperation : public AbstractArchitec
   // rank = rank of process
   // size = number of processes
   // return value = size for process
-  static int GetRankChunkSize(int n, int rank, int size);
+  int GetRankChunkSize(int n, int rank, int size);
   
   // This function calculates the starting index for a process when using multiple processes. 
   //
@@ -126,7 +126,7 @@ class FQHESphereBosonsWithSpinLandauLevelLiftOperation : public AbstractArchitec
   // rank = rank of process
   // size = number of processes
   // return value = starting index for process
-  static int GetRankChunkStart(int n, int rank, int size);
+  int GetRankChunkStart(int n, int rank, int size);
     
  protected:
   

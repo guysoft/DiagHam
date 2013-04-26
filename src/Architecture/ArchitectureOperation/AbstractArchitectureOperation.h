@@ -128,7 +128,22 @@ class AbstractArchitectureOperation
   //
   // return value = true if no error occurs
   
+  // This function calculates the size for a process when using multiple processes. 
+  //
+  // n = total size
+  // rank = rank of process
+  // size = number of processes
+  // return value = size for process
+  virtual int GetRankChunkSize(int n, int rank, int size);
   
+  // This function calculates the starting index for a process when using multiple processes. 
+  //
+  // n = total size
+  // rank = rank of process
+  // size = number of processes
+  // return value = starting index for process
+  virtual int GetRankChunkStart(int n, int rank, int size);
+      
  protected:
 
   // apply operation for mono processor architecture
@@ -159,6 +174,57 @@ class AbstractArchitectureOperation
 inline int AbstractArchitectureOperation::GetOperationType ()
 {
   return this->OperationType;
+}
+
+// This function calculates the size for a process when using multiple processes. 
+//
+// n = total size
+// rank = rank of process
+// size = number of processes
+// return value = size for process
+
+inline int AbstractArchitectureOperation::GetRankChunkSize(int n, int rank, int size) 
+{
+  int  MaxChunk, MinChunk, CutOff; 
+  
+  MinChunk = (int)floor((double)n / (double)size); 
+  MaxChunk = (int)ceil((double)n / (double)size);
+  CutOff = n - (size * MinChunk); 
+  
+  if ( rank < CutOff ) 
+    {
+      return MaxChunk;
+    } 
+  else 
+    {
+      return MinChunk;
+    }
+}
+
+
+// This function calculates the starting index for a process when using multiple processes. 
+//
+// n = total size
+// rank = rank of process
+// size = number of processes
+// return value = starting index for process
+
+inline int AbstractArchitectureOperation::GetRankChunkStart(int n, int rank, int size)
+{
+  int  MaxChunk, MinChunk, CutOff; 
+  
+  MinChunk = (int)floor((double)n / (double)size); 
+  MaxChunk = (int)ceil((double)n / (double)size);
+  CutOff = n - (size * MinChunk); 
+
+  if ( rank < CutOff ) 
+    {
+      return rank * MaxChunk;
+    } 
+  else 
+    {
+      return (CutOff * MaxChunk) + ((rank - CutOff) * MinChunk);
+    }
 }
 
 #endif

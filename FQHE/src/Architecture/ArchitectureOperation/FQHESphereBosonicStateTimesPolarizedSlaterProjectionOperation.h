@@ -140,13 +140,13 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   //
   ~FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation();
   
-   // This function calculates the size for a process when using multiple processes. 
+  // This function calculates the size for a process when using multiple processes. 
   //
   // n = total size
   // rank = rank of process
   // size = number of processes
   // return value = size for process
-  static int GetRankChunkSize(int n, int rank, int size);
+  int GetRankChunkSize(int n, int rank, int size);
   
   // This function calculates the starting index for a process when using multiple processes. 
   //
@@ -154,7 +154,7 @@ class FQHESphereBosonicStateTimesPolarizedSlaterProjectionOperation : public Abs
   // rank = rank of process
   // size = number of processes
   // return value = starting index for process
-  static int GetRankChunkStart(int n, int rank, int size);
+  int GetRankChunkStart(int n, int rank, int size);
     
  protected:
   

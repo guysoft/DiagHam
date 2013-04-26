@@ -58,11 +58,15 @@ using std::endl;
 // previousMatrixElements = array where the already computed matrix element are stored
 // nbrLeftPreviousMatrixElements = number of entry of the PreviousMatrixElements first index
 // nbrRightPreviousMatrixElements = number of entry of the PreviousMatrixElements second index
+// nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+// nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+
 
 FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel, int rightLevel,
 							 const LongRational& centralCharge12, const LongRational& weightLeft, 
 							 const LongRational& weightRight, const LongRational& weightMatrixElement,
-							 LongRationalMatrix** previousMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements)
+							 LongRationalMatrix** previousMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
+							 int nbrMPIStage, int nbrSMPStage)
 {
   this->MPSMatrix = mPSMatrix;
   this->U1BosonBasis = u1BosonBasis;
@@ -79,35 +83,10 @@ FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatri
   this->NbrComponent = this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() * this->U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
   this->MatrixElements = LongRationalMatrix (this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension(), U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension(), true);
   this->OperationType = AbstractArchitectureOperation::FQHEMPSEvaluateCFTOperation;
+  this->NbrMPIStage = nbrMPIStage;
+  this->NbrSMPStage = nbrSMPStage;
+  this->SMPStages = new int[1]; 
 }
-
-// constructor for MPS with quasiholes
-//
-// space = pointer to the Hilbert space
-// bMatrices = array that gives the B matrices 
-// quasiholeBMatrices = array that gives the B matrices for quasiholes 
-// nbrQuasiholes = number of quasiholes 
-// state = pointer to the vector where the MPS state will be stored
-// mPSRowIndex = row index of the MPS element that has to be evaluated (-1 if the trace has to be considered instead of a single matrix element)
-// mPSColumnIndex = column index of the MPS element that has to be evaluated
-// blockSize = indicates the size of the block for precalculations
-
-// FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholes,
-// 							 ComplexVector* state, int mPSRowIndex, int mPSColumnIndex, int blockSize)
-// {
-//   this->FirstComponent = 0;
-//   this->NbrComponent = space->GetHilbertSpaceDimension();
-//   this->Space = (ParticleOnSphere*) space->Clone();
-//   this->OutputState = 0;
-//   this->ComplexOutputState = state;  
-//   this->BMatrices = bMatrices;
-//   this->QuasiholeBMatrices = quasiholeBMatrices;
-//   this->NbrQuasiholes = nbrQuasiholes;
-//   this->MPSRowIndex = mPSRowIndex;  
-//   this->MPSColumnIndex = mPSColumnIndex;
-//   this->PrecalculationBlockSize = blockSize;
-//   this->OperationType = AbstractArchitectureOperation::FQHEMPSEvaluateCFTOperation;
-// }
 
 // copy constructor 
 //
@@ -131,6 +110,9 @@ FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(const FQHEMPSEvaluateCF
   this->NbrRightPreviousMatrixElements = operation.NbrRightPreviousMatrixElements;
   this->MatrixElements = operation.MatrixElements;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSEvaluateCFTOperation;
+  this->NbrMPIStage = operation.NbrMPIStage;
+  this->NbrSMPStage = operation.NbrSMPStage;
+  this->SMPStages = operation.SMPStages;
 }
 
 // destructor
@@ -221,31 +203,34 @@ bool FQHEMPSEvaluateCFTOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* a
   int NbrComponents = this->NbrComponent;
   int FirstComponent = this->FirstComponent;
   
-//   int NbrStages = this->NbrSMPStage * architecture->GetNbrThreads();
-//   bool LockFlag = false;
-//   while ( StageIdx < NbrStages ) 
-//     {
-//       if (LockFlag == false)   
-//         {
-//           architecture->LockMutex();
-//           LockFlag = true;
-//         }
-//       StageIndex = this->SMPStages[0];
-//       if (StageIndex < NbrStages) 
-//         {         
-//           this->SMPStages[0]++;   
-//           architecture->UnLockMutex();
-//           LockFlag = false;
-//           this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIdx,  NbrStages),  this->GetRankChunkSize(NbrComponents, StageIdx,  NbrStages));
-//           this->RawApplyOperation();
-//           ++StageIndex;
-//         }
-//     }
-//   if (LockFlag == true)
-//     {
-//       architecture->UnLockMutex();
-//       LockFlag = false;
-//     }
+   int NbrStages = this->NbrSMPStage * architecture->GetNbrThreads();
+   int StageIndex = 0;
+
+   bool LockFlag = false;
+   while (StageIndex < NbrStages) 
+     {
+       if (LockFlag == false)   
+         {
+           architecture->LockMutex();
+           LockFlag = true;
+         }
+       StageIndex = this->SMPStages[0];
+       if (StageIndex < NbrStages) 
+         {         
+           this->SMPStages[0]++;   
+           architecture->UnLockMutex();
+           LockFlag = false;
+           this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIndex,  NbrStages),  
+				 this->GetRankChunkSize(NbrComponents, StageIndex,  NbrStages));
+           this->RawApplyOperation();
+           ++StageIndex;
+         }
+     }
+   if (LockFlag == true)
+     {
+       architecture->UnLockMutex();
+       LockFlag = false;
+     }
   return true;
 }
 
@@ -259,6 +244,7 @@ bool FQHEMPSEvaluateCFTOperation::ArchitectureDependentApplyOperation(SMPArchite
   int Step = this->NbrComponent / architecture->GetNbrThreads();
   if (Step == 0)
     Step = this->NbrComponent;
+  this->SMPStages[0] = 0;
   int TotalNbrComponent = this->FirstComponent + this->NbrComponent;
   int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
@@ -271,34 +257,31 @@ bool FQHEMPSEvaluateCFTOperation::ArchitectureDependentApplyOperation(SMPArchite
       architecture->SetThreadOperation(TmpOperations[i], i);
     }
   
-  for( int i = 0; i < architecture->GetNbrThreads(); i++)
-    {
-      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
-      TmpFirstComponent += Step;
-      if (TmpFirstComponent >= TotalNbrComponent)
-	{
-	  Step = 0;
-	  TmpFirstComponent = TotalNbrComponent;
-	}
-      else
-	{
-	  if ((TmpFirstComponent + Step) >= TotalNbrComponent)
-	    {
-	      Step = TotalNbrComponent - TmpFirstComponent;	      
-	    }
-	}
-    }
- 
-  architecture->SendJobs();
+  architecture->SendJobsRoundRobin();
 
-//   this->MatrixElements = LongRationalMatrix (this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension(), U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension(), true);
+//   for( int i = 0; i < architecture->GetNbrThreads(); i++)
+//     {
+//       TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+//       TmpFirstComponent += Step;
+//       if (TmpFirstComponent >= TotalNbrComponent)
+// 	{
+// 	  Step = 0;
+// 	  TmpFirstComponent = TotalNbrComponent;
+// 	}
+//       else
+// 	{
+// 	  if ((TmpFirstComponent + Step) >= TotalNbrComponent)
+// 	    {
+// 	      Step = TotalNbrComponent - TmpFirstComponent;	      
+// 	    }
+// 	}
+//     }
+//  architecture->SendJobs();
+
   for (int i = 0; i < architecture->GetNbrThreads(); i++)
     {
-//       if (TmpOperations[i]->NbrComponent > 0)
-// 	this->MatrixElements += TmpOperations[i]->MatrixElements;
       delete TmpOperations[i];
     }
-
   delete[] TmpOperations;
   return true;
 }

@@ -1132,7 +1132,7 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
 	  ++TmpPosition;
 	}
       if ((TmpPLevel1 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
-	{     
+	{
 	  int TmpPLevel2 = -partition[TmpPosition];	  
 	  FlagSorted = true;
 	  ++TmpPosition;
@@ -1144,6 +1144,9 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
 	      ++TmpPosition;
 	    }
 	  if ((TmpPLevel2 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
+// 	  if (TmpPLevel2 <= precomputedScalarProductMaxPLevel)
+// 	    {
+// 	      if (FlagSorted == true)
 	    {
 	      for (int k = 0; k <= (this->PLevel + 1); ++k)
 		this->TemporaryOccupationNumber[k] = 0x0ul;	  
@@ -1164,6 +1167,12 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
 	      LongRational Tmp;
 	      precomputedScalarProduct[TmpPLevel1].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
 	      return Tmp;
+// 		}
+// 	  else
+// 	    {
+// 	      cout << "missed" << endl;
+// 	    }
+
 	    }
 	}
     }
@@ -1387,7 +1396,7 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
 // return value = matrix element
   
 LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* partition, int partitionLength, 
-								       int descendantPosition, int position, 
+								       int descendantPosition, int position,
 								       LongRational& centralCharge12, LongRational& weight1, 
 								       LongRational& weight2, LongRational& weight,
 								       LongRationalMatrix** precomputedDescendantMatrixElement, 
@@ -1589,6 +1598,227 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
   Tmp1 += Tmp2;
   return Tmp1;
 }
+
+// compute the matrix elements of any primary field in the Virasoro descendant basis
+// 
+// partition = partition that desribes the product of Virasoro generators involved in the scalar product
+// partitionLength = partition length
+// descendantPosition = location of the primary field
+// position = position in partition up to which  all the indices are positive
+// centralCharge12 = reference on the value of the central charge divided by 12
+// weight1 = weight of the primary field that is considered for the left state
+// weight2 = weight of the primary field that is considered for the right state
+// weight = weight of the primary field whose matrix elements are computed
+// precomputedDescendantMatrixElement = matrices where matrix elements computed for previous levels are stored
+// precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
+// precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
+// basis = basis that related the partitions to their index
+// temporaryOccupationNumber = local temporary to store the occupation numbers 
+// return value = matrix element
+  
+// LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElementReverse (long* partition, int partitionLength, 
+// 									      int descendantPosition, int position,
+// 									      LongRational& centralCharge12, LongRational& weight1, 
+// 									      LongRational& weight2, LongRational& weight,
+// 									      LongRationalMatrix** precomputedDescendantMatrixElement, 
+// 									      int precomputedDescendantMatrixElementMaxLeftPLevel, 
+// 									      int precomputedDescendantMatrixElementMaxRightPLevel, 
+// 									      BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
+// {
+//   if (partitionLength == 0)
+//     {
+//       return 1l;
+//     }
+//   if ((descendantPosition < partitionLength) && (partition[partitionLength - 1] > 0))
+//     {
+//       return 0l;
+//     }
+//   while ((position < partitionLength) && (partition[position] > 0l))
+//     ++position;
+//   if (descendantPosition == partitionLength) 
+//     {
+//       LongRational Tmp(1l);
+//       LongRational TmpSum = weight1;
+//       TmpSum -= weight2;
+//       LongRational Tmp2;
+//       for (int i = partitionLength - 1; i >= 0; --i)
+// 	{
+// 	  Tmp2 = weight;
+// 	  Tmp2 *= partition[i];
+// 	  long Tmp3 = 0l;
+// 	  for (int j = 0; j < i; ++j)
+// 	    Tmp3 += partition[j];
+// 	  Tmp2 += TmpSum;
+// 	  Tmp2 += Tmp3;	  
+// 	  Tmp *= Tmp2;
+// 	}
+//       return Tmp;
+//     }
+//   if (position == partitionLength)
+//     {
+//       LongRational Tmp(1l);
+//       LongRational TmpSum = weight1;
+//       TmpSum -= weight2;
+//       LongRational Tmp2;
+//       for (int i = 0; i < partitionLength ; ++i)
+// 	{
+// 	  Tmp2 = weight;
+// 	  Tmp2 *= partition[i];
+// 	  long Tmp3 = 0l;
+// 	  for (int j = i + 1; j < partitionLength; ++j)
+// 	    Tmp3 -= partition[j];
+// 	  Tmp2 += TmpSum;
+// 	  Tmp2 -= Tmp3;
+// 	  Tmp *= Tmp2;
+// 	}
+//       Tmp *= 1l - (2l * (partitionLength & 1l));
+//       return Tmp;
+//     }
+//   if (descendantPosition == position)
+//     {
+//       int TmpPosition = position + 1;
+//       while ((TmpPosition < partitionLength) && (partition[TmpPosition] <= 0))
+// 	++TmpPosition;
+//       if (TmpPosition == partitionLength)
+// 	{
+// 	  TmpPosition = 1;
+// 	  int TmpPLevel1 = partition[0];
+// 	  bool FlagSorted = true;
+// 	  while (TmpPosition <= position)
+// 	    {
+// 	      TmpPLevel1 += partition[TmpPosition];
+// 	      if (partition[TmpPosition - 1] < partition[TmpPosition])
+// 		FlagSorted = false;
+// 	      ++TmpPosition;
+// 	    }
+// 	  if ((TmpPLevel1 <= precomputedDescendantMatrixElementMaxLeftPLevel) && (FlagSorted == true))
+// 	    {
+// 	      int TmpPLevel2 = -partition[TmpPosition];	  
+// 	      FlagSorted = true;
+// 	      ++TmpPosition;
+// 	      while (TmpPosition < partitionLength)
+// 		{
+// 		  TmpPLevel2 -= partition[TmpPosition];
+// 		  if (partition[TmpPosition - 1] < partition[TmpPosition])
+// 		    FlagSorted = false;
+// 		  ++TmpPosition;
+// 		}
+// 	      if ((TmpPLevel2 <= precomputedDescendantMatrixElementMaxRightPLevel) && (FlagSorted == true))
+// 		{
+// 		  for (int k = 0; k <= (this->PLevel + 1); ++k)
+// 		    temporaryOccupationNumber[k] = 0x0ul;	  
+// 		  for (TmpPosition = 0; TmpPosition <= position; ++TmpPosition)
+// 		    {
+// 		      temporaryOccupationNumber[partition[TmpPosition]]++;	      
+// 		    }
+// 		  temporaryOccupationNumber[0] = TmpPLevel1 - position;
+// 		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
+// 		  for (int k = 0; k <= (this->PLevel + 1); ++k)
+// 		    temporaryOccupationNumber[k] = 0x0ul;	  
+// 		  for (TmpPosition = position + 1; TmpPosition < partitionLength; ++TmpPosition)
+// 		    {
+// 		      temporaryOccupationNumber[-partition[TmpPosition]]++;	      
+// 		    }
+// 		  temporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+// 		  int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
+// 		  LongRational Tmp;
+// 		  precomputedDescendantMatrixElement[TmpPLevel1][TmpPLevel2].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
+// 		  return Tmp;
+// 		}
+// 	    }
+// 	}
+//     }
+//   if (descendantPosition > position)
+//     {
+//       LongRational Tmp(0l);
+//       if ((partition[position - 1] + partition[position]) == 0)
+// 	{
+// 	  long TmpLength = 0l;
+// 	  long Store = partition[position - 1];
+// 	  for (int i = position + 1; i < partitionLength; ++i)
+// 	    TmpLength += partition[i];
+// 	  for (int i = position + 1; i < partitionLength; ++i)
+// 	    partition[i - 2] = partition[i];
+// 	  Tmp += ((((Store * (Store * Store - 1l)) * centralCharge12)
+// 		   + (2l * Store) * (weight2 - TmpLength)) * 
+// 		  this->ComputeDescendantMatrixElement(partition, partitionLength - 2, descendantPosition, 
+// 						       position - 1, centralCharge12, weight1, weight2, weight,
+// 						       precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+// 						       precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber));
+// 	  for (int i = partitionLength - 1; i > position; --i)
+// 	    partition[i] = partition[i - 2];
+// 	  partition[position - 1] = Store;
+// 	  partition[position] = -Store;
+// 	}
+//       else
+// 	{
+//  	  long Store1 = partition[position - 1];
+// 	  long Store2 = partition[position];
+// 	  partition[position - 1] += partition[position];
+// 	  for (int i = position + 1; i < partitionLength; ++i)
+// 	    partition[i - 1] = partition[i];
+// 	  if ((Store1 + Store2) > 0)
+// 	    {
+// 	      Tmp += ((Store1 - Store2) 
+// 		      * this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition, 
+// 							     position, centralCharge12, weight1, weight2, weight,
+// 							     precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+// 							     precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber));
+// 	    }
+// 	  else
+// 	    {
+// 	      Tmp += ((Store1 - Store2) 
+// 		      * this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition, 
+// 							     position - 1, centralCharge12, weight1, weight2, weight,
+// 							     precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+// 							     precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber));
+// 	    }
+// 	  for (int i = partitionLength - 1; i > position; --i)
+// 	    partition[i] = partition[i - 1];
+// 	  partition[position] = Store2;
+// 	  partition[position - 1] = Store1;
+// 	}
+      
+//       long Store1 = partition[position - 1];
+//       partition[position - 1] = partition[position];
+//       partition[position] = Store1;
+//       Tmp += this->ComputeDescendantMatrixElement(partition, partitionLength, descendantPosition, position + 1, 
+// 						  centralCharge12, weight1, weight2, weight,
+// 						  precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+// 						  precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
+//       Store1 = partition[position - 1];
+//       partition[position - 1] = partition[position];
+//       partition[position] = Store1;
+//       return Tmp;  
+//     }
+
+//   LongRational Tmp1 = this->ComputeDescendantMatrixElement(partition, partitionLength, descendantPosition - 1, position, 
+// 							   centralCharge12, weight1, weight2, weight,
+// 							   precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+// 							   precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
+//   LongRational Tmp2 = weight;
+//   Tmp2 *= partition[position - 1];
+//   Tmp2 += weight1;
+//   Tmp2 -= weight2;
+//   long TmpLength = 0l;
+//   for (int i = position; i < partitionLength; ++i)
+//     TmpLength += partition[i];
+//   for (int i = 0; i < (position - 1); ++i)
+//     TmpLength += partition[i];
+//   Tmp2 += TmpLength;
+//   long Store = partition[position - 1];
+//   for (int i = position; i < partitionLength; ++i)
+//     partition[i - 1] = partition[i];
+//   Tmp2 *= this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition - 1, position - 1, 
+// 					       centralCharge12, weight1, weight2, weight,
+// 					       precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
+// 					       precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
+//   for (int i = partitionLength - 1; i >= position; --i)
+//     partition[i] = partition[i - 1];
+//   partition[position - 1] = Store;
+//   Tmp1 += Tmp2;
+//   return Tmp1;
+// }
 
 // get the range for the bond index when fixing the tuncation level and the charge index
 //

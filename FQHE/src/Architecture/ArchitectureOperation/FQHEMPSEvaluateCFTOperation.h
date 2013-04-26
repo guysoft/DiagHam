@@ -87,6 +87,13 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   // matrix storing the CFT matrix elements
   LongRationalMatrix MatrixElements; 
 
+ // number of part in the CFT calculation will be separated in MPI mode
+  int NbrMPIStage;
+  // number of part in the CFT calculation will be separated in SMP mode
+  int NbrSMPStage;
+  // array with size of SMP stages used to distribute work
+  int* SMPStages; 
+
  public:
   
   // constructor 
@@ -102,9 +109,12 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   // previousMatrixElements = array where the already computed matrix element are stored
   // nbrLeftPreviousMatrixElements = number of entry of the PreviousMatrixElements first index
   // nbrRightPreviousMatrixElements = number of entry of the PreviousMatrixElements second index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
   FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel, int rightLevel,
 			      const LongRational& centralCharge12, const LongRational& weightLeft, const LongRational& weightRight, const LongRational& weightMatrixElement,
-			      LongRationalMatrix** previousMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements);
+			      LongRationalMatrix** previousMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
+			      int nbrMPIStage = 100, int nbrSMPStage = 100);
   
   // copy constructor 
   //
