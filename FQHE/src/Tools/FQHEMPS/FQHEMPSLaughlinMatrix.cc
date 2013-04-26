@@ -148,7 +148,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   int NValueShift = this->NbrNValue - 1;
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i], this->UniformChargeIndexRange);
       this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
     }
   this->NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * this->NbrNValuesPerPLevel[0];
@@ -326,15 +326,15 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, i
 {
   double Tmp;
 
-  int NbrK1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
-  int NbrK2 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValue;
+  int NbrK1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValuesPerPLevel[pLevel1];
+  int NbrK2 = this->NbrIndicesPerPLevel[pLevel2] / this->NbrNValuesPerPLevel[pLevel2];
   SparseRealMatrix TmpMatrix (NbrK1, NbrK2);
   for (int k1 = 0; k1 < NbrK1; ++k1)
     {
       for (int k2 = 0; k2 < NbrK2; ++k2)
 	{
-	  matrix.GetMatrixElement(this->GetMatrixIndex(q1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[pLevel1]), 
-				  this->GetMatrixIndex(q2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[pLevel2]), Tmp);
+	  matrix.GetMatrixElement(this->GetMatrixIndex(q1 - this->NInitialValuePerPLevel[pLevel1], k1, this->NbrNValuesPerPLevel[pLevel1], this->TotalStartingIndexPerPLevel[pLevel1]),
+                                  this->GetMatrixIndex(q2 - this->NInitialValuePerPLevel[pLevel2], k2, this->NbrNValuesPerPLevel[pLevel2], this->TotalStartingIndexPerPLevel[pLevel2]), Tmp);
 	  if (Tmp != 0.0)
 	    TmpMatrix.SetMatrixElement(k1, k2, Tmp);
 	}
@@ -467,10 +467,11 @@ bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
 // pLevel = tuncation level
 // minQ = reference on the lowest charge index
 // maxQ = reference on the lowest charge index
+// uniformChargeIndexRange = if true, assume full range of indices; else, use trimming and variable range of indices
 
-void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ)
+void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ, bool uniformChargeIndexRange)
 {
-  if (this->UniformChargeIndexRange == true)
+  if (uniformChargeIndexRange == true)
     {
       minQ = 0;
       maxQ = this->NbrNValue - 1;

@@ -689,15 +689,19 @@ int main(int argc, char** argv)
   if (MinimizeOutput == false)
      OverlapMatrix.PrintNonZero(cout) << endl;
 
-  int MinQValue = 0;
-  int MaxQValue = 0;
-  cout << "warning, code not compatible with multi Q range" << endl;
-  MPSMatrix->GetChargeIndexRange(0, MinQValue, MaxQValue);
-  cout << "MinQValue = " << MinQValue << " MaxQValue= " << MaxQValue << endl;
-  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+ int MinQValue;
+ int MaxQValue;
+
+  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
     {
-      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
-	{
+      MinQValue = 0;
+      MaxQValue = 0;
+      //cout << "warning, code not compatible with multi Q range" << endl;
+      MPSMatrix->GetChargeIndexRange(PLevel, MinQValue, MaxQValue);
+      cout << "|P|= " << PLevel << " MinQValue = " << MinQValue << " MaxQValue= " << MaxQValue << endl;
+      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+        {
+
 	  SparseRealMatrix TmpOverlapBlock = MPSMatrix->ExtractBlock(OverlapMatrix, PLevel, QValue, PLevel, QValue);
 	  SparseRealMatrix RhoABlock = MPSMatrix->ExtractBlock(RhoA, PLevel, QValue, PLevel, QValue);
 
@@ -823,6 +827,9 @@ int main(int argc, char** argv)
     if (((fabs(RhoEigenvalues[ReorderingMap[i]]) > CutOff))) 
       {
         TmpNa = RhoQSector[ReorderingMap[i]];
+
+        MPSMatrix->ComputeChargeIndexRange(RhoPSector[i], MinQValue, MaxQValue, true);
+
         if ((p == 2) && (q == 4)) //Moore-Read
           TmpNa -= (MaxQValue - 1)/2;
         else

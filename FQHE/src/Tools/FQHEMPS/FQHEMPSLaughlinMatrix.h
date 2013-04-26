@@ -218,7 +218,8 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // pLevel = tuncation level
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
-  virtual void ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ);
+  // uniformChargeIndexRange = if true, assume full range of indices; else, use trimming and variable range of indices
+  virtual void ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ, bool uniformChargeIndexRange);
 
 };
 

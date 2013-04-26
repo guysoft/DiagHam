@@ -493,7 +493,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
   this->NLastValuePerPLevel = new int [this->PLevel + 1];     
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i], this->UniformChargeIndexRange);
       this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
     }
 

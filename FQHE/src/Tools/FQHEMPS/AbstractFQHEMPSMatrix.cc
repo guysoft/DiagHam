@@ -203,6 +203,20 @@ void AbstractFQHEMPSMatrix::GetChargeIndexRange (int pLevel, int& minQ, int& max
   return;
 }
 
+// compute the charge index range at a given truncation level
+// 
+// pLevel = tuncation level
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+// uniformChargeIndexRange = if true, assume full range of indices; else, use trimming and variable range of indices
+
+void AbstractFQHEMPSMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ, bool uniformChargeIndexRange)
+{
+  minQ = 1;
+  maxQ = 0;
+  return;
+}
+
 // load the specific informations from the file header
 // 
 // file = reference on the input file stream
