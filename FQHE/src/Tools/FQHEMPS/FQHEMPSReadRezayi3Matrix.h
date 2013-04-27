@@ -55,7 +55,8 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
+  // architecture = architecture to use for precalculation
+  FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor 
   //
@@ -65,7 +66,8 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0);
+  // architecture = architecture to use for precalculation
+  FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
   //
@@ -99,7 +101,8 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   // create the B matrices for the laughlin state
   //
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
-  virtual void CreateBMatrices (char* cftDirectory = 0);
+  // architecture = architecture to use for precalculation
+  virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
 
   // get the range for the bond index when fixing the tuncation level and the charge index
   //

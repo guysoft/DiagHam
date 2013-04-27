@@ -227,11 +227,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
   // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
   // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
   // return value = scalar product  
   virtual LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
 							       LongRational& centralCharge12, LongRational& weight,
 							       LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
-							       BosonOnDiskShort** basis);
+							       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
   // compute the matrix elements of any primary field in the Virasoro descendant basis
   // 

@@ -54,6 +54,9 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 
   // pointer to the MPS matrix 
   FQHEMPSClustered2RMatrix* MPSMatrix;
+  
+  // indicates if the overlap matrix has to be computed instead of the matrix elements
+  bool OverlapMatrix;
 
   // level for the left state
   int LeftLevel;
@@ -62,7 +65,10 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 
   // array that contains the Hilbert space for the partition at each level
   BosonOnDiskShort** U1BosonBasis;
+
   
+  // array where the already computed overlap matrices are stored
+  LongRationalMatrix* PreviousOverlapMatrices;
   // array where the already computed matrix element are stored
   LongRationalMatrix** PreviousMatrixElements;
   // number of entry of the PreviousMatrixElements first index
@@ -116,6 +122,22 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 			      LongRationalMatrix** previousMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
 			      int nbrMPIStage = 100, int nbrSMPStage = 100);
   
+  // constructor to compute the CFT overlap matrix
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left or right state
+  // centralCharge12 =value of the central charge divided by 12
+  // weightLeft = conformal weight of the left or right state at level 0 
+  // previousOverlapMatrices = array where the already computed overlap matrices are stored
+  // nbrPreviousOverlapMatrices = number of entry of the PreviousMatrixElements first index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
+			      const LongRational& centralCharge12, const LongRational& weightLeft,
+			      LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
+			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+
   // copy constructor 
   //
   // operation = reference on operation to copy

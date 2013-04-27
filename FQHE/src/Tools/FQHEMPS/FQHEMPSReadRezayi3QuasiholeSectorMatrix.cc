@@ -187,7 +187,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
 		  ++PartitionLength;		  
 		}
 	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightSigma,
-									     RationalScalarProductSigma, i - 1, U1BosonBasis);
+									     RationalScalarProductSigma, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 	    RationalScalarProductSigma[i].SetMatrixElement(m, n, Tmp);
 	    if (n != m)
 	      {
@@ -203,7 +203,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices ()
 		  }
 	      }
 	    Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, WeightEpsilon,
-								RationalScalarProductEpsilon, i - 1, U1BosonBasis);
+								RationalScalarProductEpsilon, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 	    RationalScalarProductEpsilon[i].SetMatrixElement(m, n, Tmp);
 	    if (n != m)
 	      {

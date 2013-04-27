@@ -45,7 +45,7 @@ using std::cout;
 using std::endl;
 
 
-// constructor 
+// constructor to compute the CFT matrix elements
 //
 // mPSMatrix = pointer to the MPS matrix 
 // u1BosonBasis = array that contains the Hilbert space for the partition at each level
@@ -76,11 +76,53 @@ FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatri
   this->WeightLeft = weightLeft;
   this->WeightRight = weightRight;
   this->WeightMatrixElement = weightMatrixElement;
+  this->PreviousOverlapMatrices = 0;
   this->PreviousMatrixElements = previousMatrixElements;
   this->NbrLeftPreviousMatrixElements = nbrLeftPreviousMatrixElements;
   this->NbrRightPreviousMatrixElements = nbrRightPreviousMatrixElements;
   this->FirstComponent = 0;
+  this->OverlapMatrix = false;
   this->NbrComponent = this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() * this->U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
+  this->MatrixElements = LongRationalMatrix (this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension(), U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension(), true);
+  this->OperationType = AbstractArchitectureOperation::FQHEMPSEvaluateCFTOperation;
+  this->NbrMPIStage = nbrMPIStage;
+  this->NbrSMPStage = nbrSMPStage;
+  this->SMPStages = new int[1]; 
+}
+
+// constructor to compute the CFT overlap matrix
+//
+// mPSMatrix = pointer to the MPS matrix 
+// u1BosonBasis = array that contains the Hilbert space for the partition at each level
+// leftLevel = level for the left or right state
+// centralCharge12 =value of the central charge divided by 12
+// weightLeft = conformal weight of the left or right state at level 0 
+// previousOverlapMatrices = array where the already computed overlap matrices are stored
+// nbrPreviousOverlapMatrices = number of entry of the PreviousMatrixElements first index
+// nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+// nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+
+
+FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
+							 const LongRational& centralCharge12, const LongRational& weightLeft,
+							 LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
+							 int nbrMPIStage, int nbrSMPStage)
+{
+  this->MPSMatrix = mPSMatrix;
+  this->U1BosonBasis = u1BosonBasis;
+  this->LeftLevel = leftLevel;
+  this->RightLevel = leftLevel;
+  this->CentralCharge12 = centralCharge12;
+  this->WeightLeft = weightLeft;
+  this->WeightRight = weightLeft;
+  this->WeightMatrixElement = 0l;
+  this->PreviousMatrixElements = 0;
+  this->PreviousOverlapMatrices = previousOverlapMatrices;
+  this->NbrLeftPreviousMatrixElements = nbrPreviousOverlapMatrices;
+  this->NbrRightPreviousMatrixElements = 0;
+  this->FirstComponent = 0;
+  this->OverlapMatrix = true;
+  this->NbrComponent = (this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() * (this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() + 1)) / 2;
   this->MatrixElements = LongRationalMatrix (this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension(), U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension(), true);
   this->OperationType = AbstractArchitectureOperation::FQHEMPSEvaluateCFTOperation;
   this->NbrMPIStage = nbrMPIStage;
@@ -97,6 +139,7 @@ FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(const FQHEMPSEvaluateCF
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
 
+  this->OverlapMatrix = operation.OverlapMatrix;
   this->MPSMatrix = operation.MPSMatrix;
   this->U1BosonBasis = operation.U1BosonBasis;
   this->LeftLevel = operation.LeftLevel;
@@ -105,6 +148,7 @@ FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(const FQHEMPSEvaluateCF
   this->WeightLeft = operation.WeightLeft;
   this->WeightRight = operation.WeightRight;
   this->WeightMatrixElement = operation.WeightMatrixElement;
+  this->PreviousOverlapMatrices = operation.PreviousOverlapMatrices;
   this->PreviousMatrixElements = operation.PreviousMatrixElements;
   this->NbrLeftPreviousMatrixElements = operation.NbrLeftPreviousMatrixElements;
   this->NbrRightPreviousMatrixElements = operation.NbrRightPreviousMatrixElements;
@@ -151,44 +195,95 @@ bool FQHEMPSEvaluateCFTOperation::RawApplyOperation()
   if (this->NbrComponent == 0)
     return true;
   int LastComponent = this->NbrComponent + this->FirstComponent;
-  long* Partition = new long[this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() + this->U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension() + 1];
-  unsigned long* TmpPartition = new unsigned long [this->MPSMatrix->GetTruncationLevel() + 2];
-  unsigned long* TemporaryOccupationNumber = new unsigned long [this->MPSMatrix->GetTruncationLevel() + 2];
-  for (int Index = this->FirstComponent; Index < LastComponent; ++Index)
+  if (this->OverlapMatrix == false)
     {
-      int n = Index / U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
-      int m = Index % U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
-      int PartitionLength = 0;
-      U1BosonBasis[this->LeftLevel]->GetOccupationNumber(n, TmpPartition);	    
-      for (int k = 1; k <= this->LeftLevel; ++k)
-	for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-	  {
-	    ++PartitionLength;
-	  }
-      int Position = PartitionLength;
-      PartitionLength = 0;
-      for (int k = 1; k <= this->LeftLevel; ++k)
-	for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-	  {
-	    Partition[Position - PartitionLength - 1] = (long) k;
-	    ++PartitionLength;
-	  }
-      U1BosonBasis[this->RightLevel]->GetOccupationNumber(m, TmpPartition);	    
-      for (int k = 1; k <= this->RightLevel; ++k)
-	for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-	  {
-	    Partition[PartitionLength] = -(long) k;
-	    ++PartitionLength;		  
-	  }
-      LongRational Tmp = this->MPSMatrix->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, this->CentralCharge12, 
-									  this->WeightLeft, this->WeightRight, this->WeightMatrixElement,
-									  this->PreviousMatrixElements, this->NbrLeftPreviousMatrixElements, this->NbrRightPreviousMatrixElements, 
-									  this->U1BosonBasis, TemporaryOccupationNumber);
-      this->MatrixElements.SetMatrixElement(n, m, Tmp);
+      long* Partition = new long[this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() + this->U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension() + 1];
+      unsigned long* TmpPartition = new unsigned long [this->MPSMatrix->GetTruncationLevel() + 2];
+      unsigned long* TemporaryOccupationNumber = new unsigned long [this->MPSMatrix->GetTruncationLevel() + 2];
+      for (int Index = this->FirstComponent; Index < LastComponent; ++Index)
+	{
+	  int n = Index / U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
+	  int m = Index % U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
+	  int PartitionLength = 0;
+	  U1BosonBasis[this->LeftLevel]->GetOccupationNumber(n, TmpPartition);	    
+	  for (int k = 1; k <= this->LeftLevel; ++k)
+	    for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	      {
+		++PartitionLength;
+	      }
+	  int Position = PartitionLength;
+	  PartitionLength = 0;
+	  for (int k = 1; k <= this->LeftLevel; ++k)
+	    for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	      {
+		Partition[Position - PartitionLength - 1] = (long) k;
+		++PartitionLength;
+	      }
+	  U1BosonBasis[this->RightLevel]->GetOccupationNumber(m, TmpPartition);	    
+	  for (int k = 1; k <= this->RightLevel; ++k)
+	    for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	      {
+		Partition[PartitionLength] = -(long) k;
+		++PartitionLength;		  
+	      }
+	  LongRational Tmp = this->MPSMatrix->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, this->CentralCharge12, 
+									      this->WeightLeft, this->WeightRight, this->WeightMatrixElement,
+									      this->PreviousMatrixElements, this->NbrLeftPreviousMatrixElements, this->NbrRightPreviousMatrixElements, 
+									      this->U1BosonBasis, TemporaryOccupationNumber);
+	  this->MatrixElements.SetMatrixElement(n, m, Tmp);
+	}
+      delete[] TmpPartition;
+      delete[] Partition;
+      return true;
     }
-  delete[] TmpPartition;
-  delete[] Partition;
-  return true;
+  else
+    {
+      long* Partition = new long[this->U1BosonBasis[this->LeftLevel]->GetHilbertSpaceDimension() + this->U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension() + 1];
+      unsigned long* TmpPartition = new unsigned long [this->MPSMatrix->GetTruncationLevel() + 2];
+      unsigned long* TemporaryOccupationNumber = new unsigned long [this->MPSMatrix->GetTruncationLevel() + 2];
+      for (int Index = this->FirstComponent; Index < LastComponent; ++Index)
+	{
+	  int n = 0;
+	  int MaxN = this->U1BosonBasis[this->RightLevel]->GetHilbertSpaceDimension();
+	  while ((n < MaxN) && (((n * (n +1)) / 2) <= Index))
+	    ++n;
+	  --n;
+	  int m = Index - ((n * (n +1)) / 2);
+	  int PartitionLength = 0;
+	  this->U1BosonBasis[this->LeftLevel]->GetOccupationNumber(n, TmpPartition);	    
+	  for (int k = 1; k <= this->LeftLevel; ++k)
+	    for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	      {
+		++PartitionLength;
+	      }
+	  int Position = PartitionLength;
+	  PartitionLength = 0;
+	  for (int k = 1; k <= this->LeftLevel; ++k)
+	    for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	      {
+		Partition[Position - PartitionLength - 1] = (long) k;
+		++PartitionLength;
+	      }
+	  this->U1BosonBasis[this->LeftLevel]->GetOccupationNumber(m, TmpPartition);	    
+	  for (int k = 1; k <= this->LeftLevel; ++k)
+	    for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	      {
+		Partition[PartitionLength] = -(long) k;
+		++PartitionLength;		  
+	      }
+	  LongRational Tmp = this->MPSMatrix->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightLeft,
+										      this->PreviousOverlapMatrices, this->NbrLeftPreviousMatrixElements, this->U1BosonBasis,
+										      TemporaryOccupationNumber);
+	  this->MatrixElements.SetMatrixElement(m, n, Tmp);
+	  if (n != m)
+	    {
+	      this->MatrixElements.SetMatrixElement(n, m, Tmp);	      
+	    }
+	}
+      delete[] TmpPartition;
+      delete[] Partition;
+      return true;
+    }
 }
 
 
@@ -200,8 +295,8 @@ bool FQHEMPSEvaluateCFTOperation::RawApplyOperation()
 
 bool FQHEMPSEvaluateCFTOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* architecture, int threadID)
 {      
-  int NbrComponents = this->NbrComponent;
-  int FirstComponent = this->FirstComponent;
+  int TmpNbrComponents = this->NbrComponent;
+  int TmpFirstComponent = this->FirstComponent;
   
    int NbrStages = this->NbrSMPStage * architecture->GetNbrThreads();
    int StageIndex = 0;
@@ -220,8 +315,8 @@ bool FQHEMPSEvaluateCFTOperation::ApplyOperationSMPRoundRobin(SMPArchitecture* a
            this->SMPStages[0]++;   
            architecture->UnLockMutex();
            LockFlag = false;
-           this->SetIndicesRange(FirstComponent + this->GetRankChunkStart(NbrComponents, StageIndex,  NbrStages),  
-				 this->GetRankChunkSize(NbrComponents, StageIndex,  NbrStages));
+           this->SetIndicesRange(TmpFirstComponent + this->GetRankChunkStart(TmpNbrComponents, StageIndex,  NbrStages),  
+				 this->GetRankChunkSize(TmpNbrComponents, StageIndex,  NbrStages));
            this->RawApplyOperation();
            ++StageIndex;
          }

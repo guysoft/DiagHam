@@ -275,7 +275,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
 		  ++PartitionLength;		  
 		}
  	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightSigma,
- 									     RationalScalarProductSigma, i - 1, U1BosonBasis);
+ 									     RationalScalarProductSigma, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 	    RationalScalarProductSigma[i].SetMatrixElement(m, n, Tmp);
 	    if (n != m)
 	      {
@@ -284,7 +284,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
 	    if (this->SelfDualFlag == false)
 	      {
 		Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightPhi,
-								    RationalScalarProductPhi, i - 1, U1BosonBasis);
+								    RationalScalarProductPhi, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		RationalScalarProductPhi[i].SetMatrixElement(m, n, Tmp);
 		if (n != m)
 		  {

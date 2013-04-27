@@ -298,7 +298,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	}
       else
 	{
-//	  if (architecture == 0)
+	  if (architecture == 0)
 	    {
 	      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
 		for (int m = n; m < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
@@ -326,25 +326,60 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			  ++PartitionLength;		  
 			}
 		    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightIdentity,
-										     RationalScalarProductIdentity, i - 1, U1BosonBasis);
+										     RationalScalarProductIdentity, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalScalarProductIdentity[i].SetMatrixElement(m, n, Tmp);
 		    if (n != m)
 		      {
 			RationalScalarProductIdentity[i].SetMatrixElement(n, m, Tmp);	      
 		      }
 		    Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightPsi,
-									RationalScalarProductPsi, i - 1, U1BosonBasis);
+									RationalScalarProductPsi, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 		    RationalScalarProductPsi[i].SetMatrixElement(m, n, Tmp);
 		    if (n != m)
 		      {
 			RationalScalarProductPsi[i].SetMatrixElement(n, m, Tmp);	      
 		      }
 		  }
+	      if (cftDirectory != 0)
+		{
+		  RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
+		  RationalScalarProductPsi[i].WriteMatrix(TmpScalarProductPsiFileName);
+		}
 	    }    
-	  if (cftDirectory != 0)
+	  else
 	    {
-	      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
-	      RationalScalarProductPsi[i].WriteMatrix(TmpScalarProductPsiFileName);
+	      if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
+		{		
+		  RationalScalarProductIdentity[i].ReadMatrix(TmpScalarProductIdentityFileName);
+		}
+	      else
+		{
+		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, CentralCharge12, 
+							 this->WeightIdentity,
+							 RationalScalarProductIdentity,  i- 1);
+		  Operation1.ApplyOperation(architecture);
+		  RationalScalarProductIdentity[i] = Operation1.GetMatrixElements();
+		  if (cftDirectory != 0)
+		    {
+		      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
+		    }
+		}
+	      if ((cftDirectory != 0) && (IsFile(TmpScalarProductPsiFileName)))
+		{
+		  RationalScalarProductPsi[i].ReadMatrix(TmpScalarProductPsiFileName);
+		}
+	      else
+		{
+		  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12, 
+							 this->WeightPsi,
+							 RationalScalarProductPsi,  i - 1);
+		  Operation2.ApplyOperation(architecture);
+		  RationalScalarProductPsi[i] = Operation2.GetMatrixElements();
+		  if (cftDirectory != 0)
+		    {
+		      RationalScalarProductPsi[i].WriteMatrix(TmpScalarProductPsiFileName);
+		    }
+		}
 	    }
 	}
       ScalarProductIdentity[i] = RationalScalarProductIdentity[i];      
@@ -575,25 +610,47 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 								    RationalMatrixPsi10, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 		      }
+		  if (cftDirectory != 0)
+		    {
+		      RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
+		      RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
+		    }
 		}
 	      else
 		{
-		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
-							 this->WeightIdentity, this->WeightPsi, this->WeightPrimaryFieldMatrixElement,
-							 RationalMatrixPsi01,  i, j - 1);
-		  Operation1.ApplyOperation(architecture);
-		  RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
-		  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, j, CentralCharge12, 
-							 this->WeightPsi, this->WeightIdentity, this->WeightPrimaryFieldMatrixElement,
-							 RationalMatrixPsi10,  i, j - 1);
-		  Operation2.ApplyOperation(architecture);
-		  RationalMatrixPsi10[i][j] = Operation2.GetMatrixElements();
+		  if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
+		    {
+		      RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductIdentityFileName);
+		    }
+		  else
+		    {
+		      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
+							     this->WeightIdentity, this->WeightPsi, this->WeightPrimaryFieldMatrixElement,
+							     RationalMatrixPsi01,  i, j - 1);
+		      Operation1.ApplyOperation(architecture);
+		      RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
+		      if (cftDirectory != 0)
+			{
+			  RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
+			}
+		    }
+		  if ((cftDirectory != 0) && (IsFile(TmpScalarProductPsiFileName)))
+		    {
+		      RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPsiFileName);
+		    }
+		  else
+		    {
+		      FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, j, CentralCharge12, 
+							     this->WeightPsi, this->WeightIdentity, this->WeightPrimaryFieldMatrixElement,
+							     RationalMatrixPsi10,  i, j - 1);
+		      Operation2.ApplyOperation(architecture);
+		      RationalMatrixPsi10[i][j] = Operation2.GetMatrixElements();
+		      if (cftDirectory != 0)
+			{
+			  RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
+			}
+		    }
 		}	      
-	      if (cftDirectory != 0)
-		{
-		  RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
-		  RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
-		}
 	    }
 	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
 	  MatrixPsi01[i][j] *= MatrixElementNormalization;
@@ -1085,12 +1142,13 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
 // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
 // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
 // basis = basis that related the partitions to their index
+// temporaryOccupationNumber = local temporary to store the occupation numbers 
 // return value = scalar product
 
 LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
 									       LongRational& centralCharge12, LongRational& weight,
 									       LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
-									       BosonOnDiskShort** basis)
+									       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
 {
   if (partitionLength == 0)
     {
@@ -1144,35 +1202,26 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
 	      ++TmpPosition;
 	    }
 	  if ((TmpPLevel2 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
-// 	  if (TmpPLevel2 <= precomputedScalarProductMaxPLevel)
-// 	    {
-// 	      if (FlagSorted == true)
 	    {
 	      for (int k = 0; k <= (this->PLevel + 1); ++k)
-		this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		temporaryOccupationNumber[k] = 0x0ul;	  
 	      for (TmpPosition = 0; TmpPosition < position; ++TmpPosition)
 		{
-		  this->TemporaryOccupationNumber[partition[TmpPosition]]++;	      
+		  temporaryOccupationNumber[partition[TmpPosition]]++;	      
 		}
-	      this->TemporaryOccupationNumber[0] = TmpPLevel1 - position;
-	      int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+	      temporaryOccupationNumber[0] = TmpPLevel1 - position;
+	      int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
 	      for (int k = 0; k <= (this->PLevel + 1); ++k)
-		this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		temporaryOccupationNumber[k] = 0x0ul;	  
 	      for (TmpPosition = position; TmpPosition < partitionLength; ++TmpPosition)
 		{
-		  this->TemporaryOccupationNumber[-partition[TmpPosition]]++;	      
+		  temporaryOccupationNumber[-partition[TmpPosition]]++;	      
 		}
-	      this->TemporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
-	      int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+	      temporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+	      int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
 	      LongRational Tmp;
 	      precomputedScalarProduct[TmpPLevel1].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
 	      return Tmp;
-// 		}
-// 	  else
-// 	    {
-// 	      cout << "missed" << endl;
-// 	    }
-
 	    }
 	}
     }
@@ -1188,7 +1237,7 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
       Tmp += ((((Store * (Store * Store - 1l)) * centralCharge12)
 	       + (2l * Store) * (weight - TmpLength)) * 
 	      this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, weight,
-							   precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+							   precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
       for (int i = partitionLength - 1; i > position; --i)
 	partition[i] = partition[i - 2];
       partition[position - 1] = Store;
@@ -1206,14 +1255,14 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
 	  Tmp += ((Store1 - Store2) 
 		  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 								 position, centralCharge12, weight,
-								 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+								 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 	}
       else
 	{
 	  Tmp += ((Store1 - Store2) 
 		  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 								 position - 1, centralCharge12, weight,
-								 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+								 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 	}
       for (int i = partitionLength - 1; i > position; --i)
 	partition[i] = partition[i - 1];
@@ -1225,7 +1274,7 @@ LongRational FQHEMPSClustered2RMatrix::ComputeVirasoroDescendantScalarProduct (l
   partition[position - 1] = partition[position];
   partition[position] = Store1;
   Tmp += this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, weight,
-						      precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis);
+						      precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber);
   Store1 = partition[position - 1];
   partition[position - 1] = partition[position];
   partition[position] = Store1;

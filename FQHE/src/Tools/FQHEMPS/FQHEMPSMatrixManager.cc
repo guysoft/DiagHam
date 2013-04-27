@@ -224,7 +224,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa);
+							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	      else
