@@ -28,24 +28,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TIGHTBINDINGMODELOFLSQUARELATTICE_H
-#define TIGHTBINDINGMODELOFLSQUARELATTICE_H
+#ifndef TIGHTBINDINGMODELOFLNORBITALTRIANGULARLATTICE_H
+#define TIGHTBINDINGMODELOFLNORBITALTRIANGULARLATTICE_H
 
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 
-class TightBindingModelOFLSquareLattice : public Abstract2DTightBindingModel
+class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBindingModel
 {
 
  protected:
 
   int NbrStep;
-  int NbrPoints;
+  int NbrInternalDegree;
   double LaserStrength;
   double InvMomentum;
-  double SplitInMomenta;
+
   
 
  public:
@@ -62,17 +62,23 @@ class TightBindingModelOFLSquareLattice : public Abstract2DTightBindingModel
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelOFLSquareLattice(double laserStrength, double gammaX, double gammaY, AbstractArchitecture* architecture, int nbrPoints, int cutOFF, bool storeOneBodyMatrices);
+  TightBindingModelOFLNOrbitalTriangularLattice(double laserStrength, int nbrInternalDegree, int nbrSiteX,  int nbrSiteY, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices = true);
 
   // destructor
   //
-  ~TightBindingModelOFLSquareLattice();
+  ~TightBindingModelOFLNOrbitalTriangularLattice();
   
   // write the energy spectrum in an ASCII file
   //
   // fileName = name of the ASCII file 
   // return value = true if no error occured
   virtual bool WriteAsciiSpectrum(char* fileName);
+ 
+  // get linearized indices
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  int GetIntermediateLinearizedIndices(int xMomentum, int yMomentum,int spin); 
   
  protected :
 
@@ -82,36 +88,36 @@ class TightBindingModelOFLSquareLattice : public Abstract2DTightBindingModel
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex = 0l, long nbrStates= 0l);
   
-  // get linearized indices
-  //
-  // minStateIndex = minimum index of the state to compute
-  // nbrStates = number of states to compute
-  int GetIntermediateLinearizedIndices(int XMomentum, int YMomentum,int Spin);
+ 
   
-  // get linearized indices
-  //
-  // minStateIndex = minimum index of the state to compute
-  // nbrStates = number of states to compute
-  int GetLinearizedMomentumIndex(int kx, int ky);
-
-
 };
 
 
-inline int TightBindingModelOFLSquareLattice::GetIntermediateLinearizedIndices(int XMomentum, int YMomentum,int Spin)
+inline int TightBindingModelOFLNOrbitalTriangularLattice::GetIntermediateLinearizedIndices(int xMomentum, int yMomentum,int spin)
 {
-  int TmpXMomentum = XMomentum;
-  int TmpYMomentum = YMomentum;
-  if ( XMomentum < 0)
-    TmpXMomentum = this->NbrStep+XMomentum;
- if ( YMomentum < 0)
-   TmpYMomentum = this->NbrStep+YMomentum;
-  return 2*((TmpXMomentum%this->NbrStep)*this->NbrStep+(TmpYMomentum%this->NbrStep))+Spin;
+  int TmpXMomentum = xMomentum;
+  int TmpYMomentum = yMomentum;
+  int TmpSpin = spin;
+ 
+ if(spin <0)
+    {
+      TmpSpin+=this->NbrInternalDegree;
+      TmpXMomentum--;
+    }
+ if(spin >= this->NbrInternalDegree)
+   {
+     TmpSpin-=this->NbrInternalDegree;
+     TmpXMomentum++;
+   }
+ 
+ if (TmpXMomentum < 0)
+   TmpXMomentum += this->NbrStep;
+ if (TmpYMomentum < 0)
+   TmpYMomentum += this->NbrStep;
+ 
+ return this->NbrInternalDegree*((TmpXMomentum%this->NbrStep)*this->NbrStep+(TmpYMomentum%this->NbrStep))+TmpSpin;
 }
 
 
-inline int TightBindingModelOFLSquareLattice::GetLinearizedMomentumIndex(int kx, int ky)
-{
-  return (kx*this->NbrPoints+ky);
-}
+
 #endif

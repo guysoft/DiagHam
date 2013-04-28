@@ -1,17 +1,18 @@
 #include "Options/Options.h"
-/*
+
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
-*/
-//#include "Hamiltonian/ParticleOnLatticeNOrbitalSquareLatticeSingleBandHamiltonian.h"
+
+
+#include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
-#include "Tools/FTITightBinding/TightBindingModelOFLSquareLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelOFLNOrbitalTriangularLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -42,7 +43,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FCIOFLSquareLattice" , "0.01");
+  OptionManager Manager ("FCIOFLNOrbitalTriangularLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -58,17 +59,18 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-  //(*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
-  //(*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
-  //(*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
-  //(*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
-  //(*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
-  //(*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
-  //(*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
-  //(*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next to nearest neighbor potential strength", 0.0);
-  //(*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
-  //(*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "laser", "strength of laser", -1.0);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next to nearest neighbor potential strength", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "three-body", "use a three body interaction instead of a two body interaction");
+  (*SystemGroup) += new BooleanOption  ('\n', "four-body", "use a four body interaction instead of a two body interaction");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "laser", "strength of laser", 1.0);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-spin", "number of internal degree of freedom", 4);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-points", "number of points in the first Brillioun zone", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "cutOFF", "number of reciprocal lattice points", 20);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
@@ -78,11 +80,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
-  //(*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
-  //(*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
+  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
-  //(*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
-  //(*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -93,7 +95,7 @@ int main(int argc, char** argv)
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FCIOFLSquareLattice -h" << endl;
+      cout << "see man page for option syntax or type FCIOFLNOrbitalTriangularLatticeModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -102,66 +104,66 @@ int main(int argc, char** argv)
       return 0;
     }
     
-  //int NbrParticles = Manager.GetInteger("nbr-particles"); 
-  //int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
-  //int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
-  //Long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-  
+  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
+  int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  int BandIndex = 0;
   double LaserStrength = Manager.GetDouble("laser");
   
-  /* char* StatisticPrefix = new char [16];
-     if (Manager.GetBoolean("boson") == false)
+  char* StatisticPrefix = new char [16];
+  if (Manager.GetBoolean("boson") == false)
     {
-    sprintf (StatisticPrefix, "fermions");
+      sprintf (StatisticPrefix, "fermions");
     }
-    else
+  else
     {
-    sprintf (StatisticPrefix, "bosons");
+      sprintf (StatisticPrefix, "bosons");
     }
     
     char* FilePrefix = new char [256];
     
     if (Manager.GetBoolean("three-body") == false)
-    { 
-    if (Manager.GetBoolean("four-body") == false)
-    { 
-    sprintf (FilePrefix, "%s_singleband_norbitalsquarelattice_nlayer_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-layers"), NbrParticles, NbrSitesX, NbrSitesY);
-    }
-      else
-      {
-	  sprintf (FilePrefix, "%s_singleband_fourbody_norbitalsquarelattice_nlayer_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-layers"), NbrParticles, NbrSitesX, NbrSitesY);
+      { 
+	if (Manager.GetBoolean("four-body") == false)
+	  { 
+	    sprintf (FilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	  }
+	else
+	  {
+	    sprintf (FilePrefix, "%s_singleband_fourbody_oflnorbitaltriangularlattice_s_%ld_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
 	  }
 	}
-  else
-  {
-  sprintf (FilePrefix, "%s_singleband_threebody_norbitalsquarelattice_nlayer_%ld_n_%d_x_%d_y_%d",StatisticPrefix, Manager.GetInteger("nbr-layers"),  NbrParticles, NbrSitesX, NbrSitesY);
+    else
+      {
+	sprintf (FilePrefix, "%s_singleband_threebody_oflnorbitaltriangularlattice_s_%ld_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
       }
     
     char* CommentLine = new char [256];
-    sprintf (CommentLine, "eigenvalues\n# kx ky ");*/
-  char* EigenvalueOutputFile = new char [512];
-  if (Manager.GetString("eigenvalue-file")!=0)
-    strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
-  /*else
-    {
-      if (Manager.GetBoolean("flat-band") == true)
-	{ 
-	  if (Manager.GetDouble("v-potential") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), T2, Phi, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	  else
-	  {
-	      sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential") , Manager.GetDouble("t1"), T2, Phi , Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+    sprintf (CommentLine, "eigenvalues\n# kx ky ");
+    char* EigenvalueOutputFile = new char [512];
+    if (Manager.GetString("eigenvalue-file")!=0)
+      strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
+    else
+      {
+	if (Manager.GetBoolean("flat-band") == true)
+	  { 
+	    if (Manager.GetDouble("v-potential") == 0.0)
+	      sprintf (EigenvalueOutputFile, "%s_las_%g_gx_%g_gy_%g.dat",FilePrefix, LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    else
+	      {
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      }
 	  }
-	}
-      else
-	{
-	  if (Manager.GetDouble("v-potential") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), T2, Phi, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	else
+	  {
+	    if (Manager.GetDouble("v-potential") == 0.0)
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_phi_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), T2 , Phi, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	}
-	}
-  */
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
+      }
+  
   
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
@@ -169,8 +171,8 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
 	ExportOneBody = true;
       
-      TightBindingModelOFLSquareLattice TightBindingModel(LaserStrength,Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
-							  Manager.GetInteger("nbr-points"), Manager.GetInteger("cutOFF"),ExportOneBody);
+      TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
+								      Manager.GetInteger("cutOFF"),ExportOneBody);
       
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      
 	{
@@ -187,7 +189,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("export-onebodyname") != 0)
 	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
 	  else
-	    //sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+	    sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
 	  if (Manager.GetBoolean("export-onebody") == true)
 	    {
 	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
@@ -200,11 +202,9 @@ int main(int argc, char** argv)
 	}	  
       return 0;
     }
-  return 0;
-}
-
-/*  int MinKx = 0;
-      int MaxKx = NbrSitesX - 1;
+  
+  int MinKx = 0;
+  int MaxKx = NbrSitesX - 1;
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
@@ -217,10 +217,11 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-
-      TightBindingModelNOrbitalSquareLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-layers"), Manager.GetDouble("t1"), T2,Phi, Manager.GetDouble("mu-s"), 
-							       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
-
+  
+  
+  TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
+								  Manager.GetInteger("cutOFF"));
+  
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -244,7 +245,9 @@ int main(int argc, char** argv)
 	    {
 	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 	    }
+	  
 	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+	  
 	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
@@ -253,7 +256,7 @@ int main(int argc, char** argv)
 	    { 
 	      if (Manager.GetBoolean("four-body") == false)
 		{ 
-		  Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"),  Manager.GetDouble("v-potential"),  &TightBindingModel, Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{
@@ -262,7 +265,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    { 
-	     Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	&TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      //Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	&TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 
 	  char* ContentPrefix = new char[256];
@@ -290,5 +293,5 @@ int main(int argc, char** argv)
     }
     return 0;
 }
-*/
+
 

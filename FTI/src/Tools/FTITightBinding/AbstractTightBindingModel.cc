@@ -372,5 +372,6 @@ bool AbstractTightBindingModel::WriteBandStructureASCII(char* fileName)
 void AbstractTightBindingModel::ComputeBandStructure()
 {
   this->CoreComputeBandStructure(0l, 0l);
+  cout <<"bla bla "<<endl;
 }
 

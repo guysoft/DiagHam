@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/TightBindingModelOFLSquareLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelOFLTriangularLattice.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -54,7 +54,7 @@ using std::endl;
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-TightBindingModelOFLSquareLattice::TightBindingModelOFLSquareLattice(double laserStrength, double gammaX, double gammaY, AbstractArchitecture* architecture, int nbrPoints, int cutOFF, bool storeOneBodyMatrices)
+TightBindingModelOFLTriangularLattice::TightBindingModelOFLTriangularLattice(double laserStrength, double gammaX, double gammaY, AbstractArchitecture* architecture, int nbrPoints, int cutOFF, bool storeOneBodyMatrices)
 {
   this->NbrSiteX=
   this->NbrStep = cutOFF+1;
@@ -64,8 +64,8 @@ TightBindingModelOFLSquareLattice::TightBindingModelOFLSquareLattice(double lase
   this->LaserStrength = laserStrength; 
   this->InvMomentum= 1.0/((2.0 * M_PI)*(2.0 * M_PI));
   this->SplitInMomenta = 2* M_PI/(double)this->NbrPoints;
-    //this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
-    //  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  //this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  //  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->NbrBands = 2*this->NbrStep*this->NbrStep;
@@ -93,7 +93,7 @@ TightBindingModelOFLSquareLattice::TightBindingModelOFLSquareLattice(double lase
 // destructor
 //
 
-TightBindingModelOFLSquareLattice::~TightBindingModelOFLSquareLattice()
+TightBindingModelOFLTriangularLattice::~TightBindingModelOFLTriangularLattice()
 {
 }
 
@@ -102,7 +102,7 @@ TightBindingModelOFLSquareLattice::~TightBindingModelOFLSquareLattice()
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelOFLSquareLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelOFLTriangularLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
@@ -114,7 +114,6 @@ void TightBindingModelOFLSquareLattice::CoreComputeBandStructure(long minStateIn
       for (int ky = 0; ky < this->NbrPoints; ++ky)
 	{
 	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
-	  cout << minStateIndex<<endl;
 	  cout << MaxStateIndex<<endl;
 	  cout << Index <<endl;
 	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
@@ -134,70 +133,62 @@ void TightBindingModelOFLSquareLattice::CoreComputeBandStructure(long minStateIn
 		      int IntermediateIndex=this->GetIntermediateLinearizedIndices(p, t, 0);
 		      double MomentaY=K2-M_PI*(this->NbrStep-1) + 2*M_PI*t;
 		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY));
-		      int IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t+1, 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,-LaserStrength/(4.0));
 		      
-		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t-1, 0);
-		      //cout << "IntermediateIndex1 = "<<IntermediateIndex1<<endl;
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,-LaserStrength/(4.0));
 
+		      int IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t+1, 0);
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,LaserStrength/(2.0));
+		      
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t-1, 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,1.0*LaserStrength/(4.0));
-		      
-		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t+1, 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,1.0*LaserStrength/(4.0));
+		      //cout << "IntermediateIndex1 = "<<IntermediateIndex1<<endl;
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,LaserStrength/(2.0));
 
+		      
 		      //interspin Interaction ky preserving
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,1.0*LaserStrength/(2.0));
 
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,1.0*LaserStrength/(2.0));
 		      
 		      //interspin Interaction kx preserving
 		      
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p, t-1, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,-I()*1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,I()*LaserStrength/(2.0));
 		      
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p, t+1 , 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,-I()*1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,I()*LaserStrength/(2.0));
 
 
 		      //Change spin
 		      IntermediateIndex= this->GetIntermediateLinearizedIndices(p, t, 1);
 
-
 		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY));
 		      
-		      
-		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t+1, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,(1.0)*LaserStrength/(4.0));
-		      
-		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t-1, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,(1.0)*LaserStrength/(4.0));
 
-		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t-1, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,-1.0*LaserStrength/(4.0));
-		      
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t+1, 1);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,-1.0*LaserStrength/(4.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength/(2.0));
+		      
+		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t-1, 1);
+		      //cout << "IntermediateIndex1 = "<<IntermediateIndex1<<endl;
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength/(2.0));
 
-
+		      /*
 		      //interspin Interaction ky preserving
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p-1, t, 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,1.0*LaserStrength/(2.0));
 
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p+1, t, 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,1.0*LaserStrength/(2.0));
 		      
 		      //interspin Interaction kx preserving
 		      
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p, t-1, 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,I()*1.0*LaserStrength/(2.0));
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,-I()*LaserStrength/(2.0));
 		      
 		      IntermediateIndex1=this->GetIntermediateLinearizedIndices(p, t+1 , 0);
-		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex, IntermediateIndex1,I()*1.0*LaserStrength/(2.0));
-		      
+		      TmpOneBodyHamiltonian.SetMatrixElement(IntermediateIndex1, IntermediateIndex,-I()*LaserStrength/(2.0));
+
+		      */
 		    }
 		}
 	      	      cout << TmpOneBodyHamiltonian << endl;
@@ -241,7 +232,7 @@ void TightBindingModelOFLSquareLattice::CoreComputeBandStructure(long minStateIn
 // fileName = name of the ASCII file 
 // return value = true if no error occured
 
-bool TightBindingModelOFLSquareLattice::WriteAsciiSpectrum(char* fileName)
+bool TightBindingModelOFLTriangularLattice::WriteAsciiSpectrum(char* fileName)
 {
   ofstream File;
   File.open(fileName);

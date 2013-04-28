@@ -28,15 +28,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef TIGHTBINDINGMODELOFLSQUARELATTICE_H
-#define TIGHTBINDINGMODELOFLSQUARELATTICE_H
+#ifndef TIGHTBINDINGMODELOFLTRIANGULARLATTICE_H
+#define TIGHTBINDINGMODELOFLTRIANGULARLATTICE_H
 
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 
-class TightBindingModelOFLSquareLattice : public Abstract2DTightBindingModel
+class TightBindingModelOFLTriangularLattice : public Abstract2DTightBindingModel
 {
 
  protected:
@@ -62,11 +62,11 @@ class TightBindingModelOFLSquareLattice : public Abstract2DTightBindingModel
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelOFLSquareLattice(double laserStrength, double gammaX, double gammaY, AbstractArchitecture* architecture, int nbrPoints, int cutOFF, bool storeOneBodyMatrices);
+  TightBindingModelOFLTriangularLattice(double laserStrength, double gammaX, double gammaY, AbstractArchitecture* architecture, int nbrPoints, int cutOFF, bool storeOneBodyMatrices);
 
   // destructor
   //
-  ~TightBindingModelOFLSquareLattice();
+  ~TightBindingModelOFLTriangularLattice();
   
   // write the energy spectrum in an ASCII file
   //
@@ -98,7 +98,7 @@ class TightBindingModelOFLSquareLattice : public Abstract2DTightBindingModel
 };
 
 
-inline int TightBindingModelOFLSquareLattice::GetIntermediateLinearizedIndices(int XMomentum, int YMomentum,int Spin)
+inline int TightBindingModelOFLTriangularLattice::GetIntermediateLinearizedIndices(int XMomentum, int YMomentum,int Spin)
 {
   int TmpXMomentum = XMomentum;
   int TmpYMomentum = YMomentum;
@@ -110,7 +110,7 @@ inline int TightBindingModelOFLSquareLattice::GetIntermediateLinearizedIndices(i
 }
 
 
-inline int TightBindingModelOFLSquareLattice::GetLinearizedMomentumIndex(int kx, int ky)
+inline int TightBindingModelOFLTriangularLattice::GetLinearizedMomentumIndex(int kx, int ky)
 {
   return (kx*this->NbrPoints+ky);
 }

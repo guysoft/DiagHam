@@ -11,7 +11,7 @@
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
-#include "Tools/FTITightBinding/TightBindingModelOFLSquareLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelOFLTriangularLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -42,7 +42,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FCIOFLSquareLattice" , "0.01");
+  OptionManager Manager ("FCIOFLTriangularLatticeModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
 	ExportOneBody = true;
       
-      TightBindingModelOFLSquareLattice TightBindingModel(LaserStrength,Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
+      TightBindingModelOFLTriangularLattice TightBindingModel(LaserStrength,Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
 							  Manager.GetInteger("nbr-points"), Manager.GetInteger("cutOFF"),ExportOneBody);
       
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      

@@ -26,6 +26,9 @@ TightBindingModel3DSimpleTILattice.cc \
 TightBindingModelHofstadterSquare.cc \
 TightBindingModelThirringOnKagome.cc \
 TightBindingModelOFLSquareLattice.cc \
+TightBindingModelOFLTriangularLattice.cc \
+TightBindingModelOFLNOrbitalTriangularLattice.cc \
+TightBindingModelOFLSquareLattice.cc \
 TightBindingModelTimeReversalKagomeLattice.cc \
 TightBindingModelTimeReversalCheckerboardLattice.cc \
 TightBindingModelTimeReversalBHZLattice.cc \
