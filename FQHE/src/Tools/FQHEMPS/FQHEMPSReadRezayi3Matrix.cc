@@ -226,7 +226,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	RationalScalarProductW[3 + i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       if (i < 3)
 	RationalScalarProductW[i] = LongRationalMatrix();
-       if (cftDirectory != 0)
+      if (cftDirectory != 0)
 	{
 	  sprintf (TmpScalarProductIdentityFileName, "%s/cft_readrezayi3_scalarproducts_identity_level_%d.dat", cftDirectory, i);
 	  sprintf (TmpScalarProductPsiFileName, "%s/cft_readrezayi3_scalarproducts_psi_level_%d.dat", cftDirectory, i);	  
@@ -315,7 +315,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							 RationalScalarProductIdentity,  i- 1);
 		  Operation1.ApplyOperation(architecture);
 		  RationalScalarProductIdentity[i] = Operation1.GetMatrixElements();
-		  if (cftDirectory != 0)
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
 		    }
@@ -331,7 +331,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							 RationalScalarProductPsi,  i - 1);
 		  Operation2.ApplyOperation(architecture);
 		  RationalScalarProductPsi[i] = Operation2.GetMatrixElements();
-		  if (cftDirectory != 0)
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductPsi[i].WriteMatrix(TmpScalarProductPsiFileName);
 		    }
@@ -349,7 +349,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							     RationalScalarProductW + 3,  i - 1);
 		      Operation2.ApplyOperation(architecture);
 		      RationalScalarProductW[3 + i] = Operation2.GetMatrixElements();
-		      if (cftDirectory != 0)
+		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalScalarProductW[3 + i].WriteMatrix(TmpScalarProductWFileName);
 			}
@@ -521,9 +521,9 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 
   cout << "computing Psi matrix elements" << endl;
   LongRational Weight (WeightPsi);
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int j = 0; j <= this->PLevel; ++j)
     {
-      for (int j = 0; j <= this->PLevel; ++j)
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
 	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	  RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
@@ -590,24 +590,24 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      ++PartitionLength;		  
 			    }
 			LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightIdentity, WeightPsi, Weight,
-										 RationalMatrixPsi01, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+										 RationalMatrixPsi01, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
 			Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightIdentity, Weight,
-								    RationalMatrixPsi10, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+								    RationalMatrixPsi10, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 			Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightPsi, Weight,
-								    RationalMatrixPsi11, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+								    RationalMatrixPsi11, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi11[i][j].SetMatrixElement(n, m, Tmp);
 			if ((3 + j) <= this->PLevel)
 			  {	  
 			    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightPsi, WeightW, Weight,
-									RationalMatrixPsi12, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+									RationalMatrixPsi12, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			    RationalMatrixPsi12[i][j].SetMatrixElement(n, m, Tmp);
 			  }
 			if ((3 + i) <= this->PLevel)
 			  {	  
 			    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, WeightW, WeightPsi, Weight,
-									RationalMatrixPsi21, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+									RationalMatrixPsi21, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			    RationalMatrixPsi21[i][j].SetMatrixElement(n, m, Tmp);
 			  }
 		      }
@@ -632,10 +632,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		    {
 		      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
 							     WeightIdentity, WeightPsi, Weight,
-							     RationalMatrixPsi01,  i, j - 1);
+							     RationalMatrixPsi01,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
 		      RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
-		      if (cftDirectory != 0)
+		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi01[i][j].WriteMatrix(TmpMatrixElementIdentityPsiFileName);
 			}
@@ -648,10 +648,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		    {
 		      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
 							     WeightPsi, WeightIdentity, Weight,
-							     RationalMatrixPsi10,  i, j - 1);
+							     RationalMatrixPsi10,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
 		      RationalMatrixPsi10[i][j] = Operation1.GetMatrixElements();
-		      if (cftDirectory != 0)
+		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi10[i][j].WriteMatrix(TmpMatrixElementPsiIdentityFileName);
 			}
@@ -664,10 +664,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		    {
 		      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
 							     WeightPsi, WeightPsi, Weight,
-							     RationalMatrixPsi11,  i, j - 1);
+							     RationalMatrixPsi11,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
 		      RationalMatrixPsi11[i][j] = Operation1.GetMatrixElements();
-		      if (cftDirectory != 0)
+		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi11[i][j].WriteMatrix(TmpMatrixElementPsiPsiFileName);
 			}
@@ -682,10 +682,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			{
 			  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
 								WeightPsi,  WeightW, Weight,
-								 RationalMatrixPsi12,  i, j - 1);
+								 RationalMatrixPsi12,  i - 1, j);
 			  Operation1.ApplyOperation(architecture);
 			  RationalMatrixPsi12[i][j] = Operation1.GetMatrixElements();
-			  if (cftDirectory != 0)
+			  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			    {
 			      RationalMatrixPsi12[i][j].WriteMatrix(TmpMatrixElementPsiWFileName);
 			    }
@@ -701,10 +701,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			{
 			  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
 								 WeightW, WeightPsi, Weight,
-								 RationalMatrixPsi21,  i, j - 1);
+								 RationalMatrixPsi21,  i - 1, j);
 			  Operation1.ApplyOperation(architecture);
 			  RationalMatrixPsi21[i][j] = Operation1.GetMatrixElements();
-			  if (cftDirectory != 0)
+			  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			    {
 			      RationalMatrixPsi21[i][j].WriteMatrix(TmpMatrixElementWPsiFileName);
 			    }

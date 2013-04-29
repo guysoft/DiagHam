@@ -56,16 +56,6 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   //
   FQHEMPSN1SuperconformalMatrix();
 
-  // constructor 
-  //
-  // rindex = r index (i.e. clustered (k=2,r) states) 
-  // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
-  // pLevel = |P| level truncation
-  // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
-  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
-  // kappa = cylinder aspect ratio
-  FQHEMPSN1SuperconformalMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
-
   // constructor from a file describing the state
   //
   // pLevel = |P| level truncation
@@ -73,7 +63,8 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   // fileName = name of the file that contains the state description
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0, 
+				AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
   //
@@ -91,7 +82,9 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   
   // create the B matrices for the laughlin state
   //
-  virtual void CreateBMatrices ();
+  // cftDirectory = an optional path to the directory where all the CFT matrices are stored
+  // architecture = architecture to use for precalculation
+  virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
 
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //

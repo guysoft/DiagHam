@@ -52,7 +52,20 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 1, bool cylinderFlag = false, double kappa = 1.0);
+  // architecture = architecture to use for precalculation
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 1, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+
+  // constructor 
+  //
+  // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  
+  // pLevel = |P| level truncation
+  // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+  // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+  // kappa = cylinder aspect ratio
+  // architecture = architecture to use for precalculation
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0, 
+					  AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
   //
@@ -74,7 +87,9 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
 
   // create the B matrices for the laughlin state
   //
-  virtual void CreateBMatrices ();
+  // cftDirectory = an optional path to the directory where all the CFT matrices are stored
+  // architecture = architecture to use for precalculation
+  virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
 
  protected:
 

@@ -71,6 +71,9 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
+  int MinQ, MaxQ;
+  for (int i = 0; i <= this->PLevel; ++i)
+    this->ComputeChargeIndexRange(i, MinQ, MaxQ);
   this->CreateBMatrices();
 }
 
@@ -476,18 +479,6 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
       maxQ = this->NbrNValue - 1;
       return;
     }
-//   if (this->PLevel == pLevel)
-//     {
-//       minQ = (this->NbrNValue - 5) / 2;
-//       maxQ = (this->NbrNValue + 3) / 2;
-//       return;
-//     }
-//   else
-//     {
-//       minQ = 0;
-//       maxQ = this->NbrNValue - 1;
-//       return;
-//     }
 
   minQ = (this->NbrNValue - 1 - (this->LaughlinIndex - 1)) / 2;
   maxQ = (this->NbrNValue - 1 + (this->LaughlinIndex - 1)) / 2;
@@ -520,8 +511,6 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
       if ((LocalQ < this->NbrNValue) && (LocalQ > maxQ))
 	maxQ = LocalQ;
     }
-//   minQ = (this->NbrNValue - 1 - 2 * (this->PLevel - pLevel + 1)) / 2;
-//   maxQ = (this->NbrNValue - 1 + 2 * (this->PLevel - pLevel + 1)) / 2;
   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;
 }
 

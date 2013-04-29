@@ -182,7 +182,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices,
       if (ErrorFlag == true)
 	{
 	  this->WeightPrimaryFieldMatrixElement = this->WeightPsi;
-	  this->CreateBMatrices(StateDefinition["cft-matrices"], architecture);
+	  this->CreateBMatrices(StateDefinition["CFTMatrixDirectory"], architecture);
 	}
     }
 }
@@ -359,7 +359,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							 RationalScalarProductIdentity,  i- 1);
 		  Operation1.ApplyOperation(architecture);
 		  RationalScalarProductIdentity[i] = Operation1.GetMatrixElements();
-		  if (cftDirectory != 0)
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
 		    }
@@ -375,7 +375,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							 RationalScalarProductPsi,  i - 1);
 		  Operation2.ApplyOperation(architecture);
 		  RationalScalarProductPsi[i] = Operation2.GetMatrixElements();
-		  if (cftDirectory != 0)
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductPsi[i].WriteMatrix(TmpScalarProductPsiFileName);
 		    }
@@ -555,9 +555,9 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 
   cout << "computing Psi matrix elements" << endl;
   LongRational Weight (this->WeightPsi);
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int j = 0; j <= this->PLevel; ++j)
     {
-      for (int j = 0; j <= this->PLevel; ++j)
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
 	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	  RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
@@ -603,11 +603,11 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			    }
 			LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, 
 										 this->WeightIdentity, this->WeightPsi, this->WeightPrimaryFieldMatrixElement,
-										 RationalMatrixPsi01, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+										 RationalMatrixPsi01, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
 			Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, 
 								    this->WeightPsi, this->WeightIdentity, this->WeightPrimaryFieldMatrixElement,
-								    RationalMatrixPsi10, i, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+								    RationalMatrixPsi10, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
 			RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
 		      }
 		  if (cftDirectory != 0)
@@ -626,10 +626,10 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		    {
 		      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
 							     this->WeightIdentity, this->WeightPsi, this->WeightPrimaryFieldMatrixElement,
-							     RationalMatrixPsi01,  i, j - 1);
+							     RationalMatrixPsi01,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
 		      RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
-		      if (cftDirectory != 0)
+		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
 			}
@@ -642,10 +642,10 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		    {
 		      FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, j, CentralCharge12, 
 							     this->WeightPsi, this->WeightIdentity, this->WeightPrimaryFieldMatrixElement,
-							     RationalMatrixPsi10,  i, j - 1);
+							     RationalMatrixPsi10,  i - 1, j);
 		      Operation2.ApplyOperation(architecture);
 		      RationalMatrixPsi10[i][j] = Operation2.GetMatrixElements();
-		      if (cftDirectory != 0)
+		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
 			}

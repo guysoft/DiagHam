@@ -35,7 +35,9 @@
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/LongRationalMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
+#include "Architecture/ArchitectureOperation/FQHEMPSEvaluateCFTOperation.h"
 
+#include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/Endian.h"
 
 #include <fstream>
@@ -63,8 +65,10 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// architecture = architecture to use for precalculation
 
-FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool cylinderFlag, double kappa)
+FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool cylinderFlag, double kappa, 
+										 AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -85,7 +89,43 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
   this->TransferMatrixDegeneracy = this->RIndex + 2;
   this->BMatrixOutputName = new char[256]; 
   sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
-  this->CreateBMatrices();
+  this->CreateBMatrices(0, architecture);
+}
+
+// constructor 
+//
+// rindex = r index (i.e. clustered (k=2,r) states) 
+// laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
+// pLevel = |P| level truncation
+// nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+// cftDirectory = path to the directory where all the pure CFT matrices are stored
+// cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
+// kappa = cylinder aspect ratio
+// architecture = architecture to use for precalculation
+
+FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, 
+										 bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
+{
+  this->NbrBMatrices = nbrBMatrices;
+  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->RIndex = rIndex;
+  this->LaughlinIndex = laughlinIndex;
+  this->PLevel = pLevel;
+  this->CylinderFlag = cylinderFlag;
+  this->Kappa = kappa;
+  this->CentralCharge = LongRational ((this->RIndex + 2l) - (2l * (this->RIndex - 1l) * (this->RIndex - 1l)), this->RIndex + 2l);
+  this->SelfDualFlag = ((this->RIndex & 1) == 0);
+  this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
+  this->WeightIdentity = LongRational(0l, 1l);
+  this->WeightPsi = LongRational(this->RIndex, 4l);
+  this->WeightSigma = LongRational(5l - (2l * this->RIndex), 4l * (this->RIndex + 2l));
+  this->WeightPhi = LongRational((this->RIndex - 1l) * (this->RIndex - 1l), 4l * (this->RIndex + 2l));
+  this->MatrixElementNormalization = 1.0 / M_SQRT2;
+  this->SquareMatrixElementNormalization = LongRational(1, 2);
+  this->TransferMatrixDegeneracy = this->RIndex + 2;
+  this->BMatrixOutputName = new char[256]; 
+  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
+  this->CreateBMatrices(cftDirectory, architecture);
 }
 
 // constructor from a file describing the state
@@ -95,8 +135,10 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
 // fileName = name of the file that contains the state description
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// architecture = architecture to use for precalculation
 
-FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag, double kappa)
+FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag, double kappa, 
+										 AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -161,7 +203,7 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
       if (ErrorFlag == true)
 	{
 	  this->WeightPrimaryFieldMatrixElement = this->WeightPsi;
-	  this->CreateBMatrices();
+	  this->CreateBMatrices(StateDefinition["CFTMatrixDirectory"], architecture);
 	}
     }
 }
@@ -207,8 +249,10 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::~FQHEMPSClustered2RQuasiholeSectorMatri
   
 // create the B matrices for the laughlin state
 //
+// cftDirectory = an optional path to the directory where all the CFT matrices are stored
+// architecture = architecture to use for precalculation
 
-void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
+void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture)
 {
   LongRational CentralCharge12 (this->CentralCharge);
   cout << "central charge = " << CentralCharge12 << endl;
@@ -243,55 +287,124 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
     }
 
   cout << "weight: " <<   this->WeightSigma << " " << this->WeightPhi << endl;
+  char* TmpScalarProductSigmaFileName = 0; 
+  char* TmpScalarProductPhiFileName = 0;
+  if (cftDirectory != 0)
+    {
+      TmpScalarProductSigmaFileName = new char[512 + strlen(cftDirectory)];
+      TmpScalarProductPhiFileName = new char[512 + strlen(cftDirectory)];
+    }
   for (int i = 0; i <= this->PLevel; ++i)
     {
       cout << "Level = " <<  i << endl;
       RationalScalarProductSigma[i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       if (this->SelfDualFlag == false)
 	RationalScalarProductPhi[i] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension(), true);
-      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	for (int m = n; m < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
-	  {
-	    int PartitionLength = 0;
-	    U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
-	    for (int k = 1; k <= i; ++k)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  ++PartitionLength;
-		}
-	    int Position = PartitionLength;
-	    PartitionLength = 0;
-	    for (int k = 1; k <= i; ++k)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		   Partition[Position - PartitionLength - 1] = (long) k;
-		  ++PartitionLength;
-		}
-	    U1BosonBasis[i]->GetOccupationNumber(m, TmpPartition);	    
-	    for (int k = 1; k <= i; ++k)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  Partition[PartitionLength] = -(long) k;
-		  ++PartitionLength;		  
-		}
- 	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightSigma,
- 									     RationalScalarProductSigma, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
-	    RationalScalarProductSigma[i].SetMatrixElement(m, n, Tmp);
-	    if (n != m)
-	      {
-		RationalScalarProductSigma[i].SetMatrixElement(n, m, Tmp);	      
-	      }
-	    if (this->SelfDualFlag == false)
-	      {
-		Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightPhi,
-								    RationalScalarProductPhi, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
-		RationalScalarProductPhi[i].SetMatrixElement(m, n, Tmp);
-		if (n != m)
+      if (cftDirectory != 0)
+	{
+	  sprintf (TmpScalarProductSigmaFileName, "%s/cft_%s_scalarproducts_sigma_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+	  if (this->SelfDualFlag == false)
+	    sprintf (TmpScalarProductPhiFileName, "%s/cft_%s_scalarproducts_phi_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+	}
+      if ((cftDirectory != 0) && (IsFile(TmpScalarProductSigmaFileName)) && (IsFile(TmpScalarProductPhiFileName)))
+	{
+	  RationalScalarProductSigma[i].ReadMatrix(TmpScalarProductSigmaFileName);
+	  if (this->SelfDualFlag == false)
+	    RationalScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
+	}
+      else
+	{
+	  if (architecture == 0)
+	    {
+	      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+		for (int m = n; m < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
 		  {
-		    RationalScalarProductPhi[i].SetMatrixElement(n, m, Tmp);	      
-		  }
-	      }
-	  }      
+		    int PartitionLength = 0;
+		    U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
+		    for (int k = 1; k <= i; ++k)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  ++PartitionLength;
+			}
+		    int Position = PartitionLength;
+		    PartitionLength = 0;
+		    for (int k = 1; k <= i; ++k)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  Partition[Position - PartitionLength - 1] = (long) k;
+			  ++PartitionLength;
+			}
+		    U1BosonBasis[i]->GetOccupationNumber(m, TmpPartition);	    
+		    for (int k = 1; k <= i; ++k)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  Partition[PartitionLength] = -(long) k;
+			  ++PartitionLength;		  
+			}
+		    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightSigma,
+										     RationalScalarProductSigma, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+		    RationalScalarProductSigma[i].SetMatrixElement(m, n, Tmp);
+		    if (n != m)
+		      {
+			RationalScalarProductSigma[i].SetMatrixElement(n, m, Tmp);	      
+		      }
+		    if (this->SelfDualFlag == false)
+		      {
+			Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, this->WeightPhi,
+									    RationalScalarProductPhi, i - 1, U1BosonBasis, this->TemporaryOccupationNumber);
+			RationalScalarProductPhi[i].SetMatrixElement(m, n, Tmp);
+			if (n != m)
+			  {
+			    RationalScalarProductPhi[i].SetMatrixElement(n, m, Tmp);	      
+			  }
+		      }
+		  }      
+	      if (cftDirectory != 0)
+		{
+		  RationalScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
+		  if (this->SelfDualFlag == false)
+		    RationalScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
+		}
+	    }
+	  else
+	    {
+	      if ((cftDirectory != 0) && (IsFile(TmpScalarProductSigmaFileName)))
+		{		
+		  RationalScalarProductSigma[i].ReadMatrix(TmpScalarProductSigmaFileName);
+		}
+	      else
+		{
+		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, CentralCharge12, 
+							 this->WeightSigma,
+							 RationalScalarProductSigma,  i- 1);
+		  Operation1.ApplyOperation(architecture);
+		  RationalScalarProductSigma[i] = Operation1.GetMatrixElements();
+		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		    {
+		      RationalScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
+		    }
+		}
+	      if (this->SelfDualFlag == false)
+		{
+		  if ((cftDirectory != 0) && (IsFile(TmpScalarProductPhiFileName)))
+		    {
+		      RationalScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
+		    }
+		  else
+		    {
+		      FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12, 
+							     this->WeightPhi,
+							     RationalScalarProductPhi,  i - 1);
+		      Operation2.ApplyOperation(architecture);
+		      RationalScalarProductPhi[i] = Operation2.GetMatrixElements();
+		      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+			{
+			  RationalScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
+			}
+		    }
+		}
+	    }
+	}
       ScalarProductSigma[i] = RationalScalarProductSigma[i];      
       if (this->SelfDualFlag == false)
 	ScalarProductPhi[i] = RationalScalarProductPhi[i];
@@ -501,49 +614,121 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices ()
 
   cout << "computing Psi matrix elements" << endl;
   LongRational Weight (this->WeightPsi);
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int j = 0; j <= this->PLevel; ++j)
     {
-      for (int j = 0; j <= this->PLevel; ++j)
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
 	  RationalMatrixPsi01[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	  if (this->SelfDualFlag == false)
 	    RationalMatrixPsi10[i][j] = LongRationalMatrix(U1BosonBasis[i]->GetHilbertSpaceDimension(),  U1BosonBasis[j]->GetHilbertSpaceDimension(), true);
 	  cout << "Levels = " <<  i << " " << j << endl;
-	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	    for (int m = 0; m < U1BosonBasis[j]->GetHilbertSpaceDimension(); ++m)
-	      {
-		int PartitionLength = 0;
-		U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
-		for (int k = 1; k <= i; ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	  if (cftDirectory != 0)
+	    {
+	      if (this->SelfDualFlag == false)
+		{
+		  sprintf (TmpScalarProductSigmaFileName, "%s/cft_%s_matrixelement_sigmaphi_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		  sprintf (TmpScalarProductPhiFileName, "%s/cft_%s_matrixelement_phisigma_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		}
+	      else
+		{
+		  sprintf (TmpScalarProductSigmaFileName, "%s/cft_%s_matrixelement_sigmasigma_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		}
+	    }
+	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductSigmaFileName)) && (IsFile(TmpScalarProductPhiFileName)))
+	    {
+	      RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductSigmaFileName);
+	      if (this->SelfDualFlag == false)
+		{
+		  RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPhiFileName);
+		}
+	    }
+	  else
+	    {
+	      if (architecture == 0)
+		{
+		  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+		    for (int m = 0; m < U1BosonBasis[j]->GetHilbertSpaceDimension(); ++m)
+		      {
+			int PartitionLength = 0;
+			U1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
+			for (int k = 1; k <= i; ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      ++PartitionLength;
+			    }
+			int Position = PartitionLength;
+			PartitionLength = 0;
+			for (int k = 1; k <= i; ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      Partition[Position - PartitionLength - 1] = (long) k;
+			      ++PartitionLength;
+			    }
+			U1BosonBasis[j]->GetOccupationNumber(m, TmpPartition);	    
+			for (int k = 1; k <= j; ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      Partition[PartitionLength] = -(long) k;
+			      ++PartitionLength;		  
+			    }
+			LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightSigma, this->WeightPhi, this->WeightPrimaryFieldMatrixElement,
+										 RationalMatrixPsi01, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
+			RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
+			if (this->SelfDualFlag == false)
+			  {
+			    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightPhi, this->WeightSigma, this->WeightPrimaryFieldMatrixElement,
+									RationalMatrixPsi10, i - 1, j, U1BosonBasis, this->TemporaryOccupationNumber);
+			    RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
+			  }
+		      }
+		  if (cftDirectory != 0)
 		    {
-		      ++PartitionLength;
+		      RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductSigmaFileName);
+		      if (this->SelfDualFlag == false)
+			{
+			  RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);
+			}
 		    }
-		int Position = PartitionLength;
-		PartitionLength = 0;
-		for (int k = 1; k <= i; ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		}
+	      else
+		{
+		  if ((cftDirectory != 0) && (IsFile(TmpScalarProductSigmaFileName)))
 		    {
-		      Partition[Position - PartitionLength - 1] = (long) k;
-		      ++PartitionLength;
+		      RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductSigmaFileName);
 		    }
-		U1BosonBasis[j]->GetOccupationNumber(m, TmpPartition);	    
-		for (int k = 1; k <= j; ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+		  else
 		    {
-		      Partition[PartitionLength] = -(long) k;
-		      ++PartitionLength;		  
+		      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
+							     this->WeightSigma, this->WeightPhi, this->WeightPrimaryFieldMatrixElement,
+							     RationalMatrixPsi01,  i - 1, j);
+		      Operation1.ApplyOperation(architecture);
+		      RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
+		      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+			{
+			  RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductSigmaFileName);
+			}
 		    }
-		LongRational Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightSigma, this->WeightPhi, this->WeightPrimaryFieldMatrixElement,
-									 RationalMatrixPsi01, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
-		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
-		if (this->SelfDualFlag == false)
-		  {
-		    Tmp = this->ComputeDescendantMatrixElement (Partition, PartitionLength, Position, Position, CentralCharge12, this->WeightPhi, this->WeightSigma, this->WeightPrimaryFieldMatrixElement,
-								RationalMatrixPsi10, i - 1, j - 1, U1BosonBasis, this->TemporaryOccupationNumber);
-		    RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
-		  }
-	      }
+		  if (this->SelfDualFlag == false)
+		    {
+		      if ((cftDirectory != 0) && (IsFile(TmpScalarProductPhiFileName)))
+			{
+			  RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPhiFileName);
+			}
+		      else
+			{
+			  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, j, CentralCharge12, 
+								 this->WeightPhi, this->WeightSigma, this->WeightPrimaryFieldMatrixElement,
+								 RationalMatrixPsi10,  i - 1, j);
+			  Operation2.ApplyOperation(architecture);
+			  RationalMatrixPsi10[i][j] = Operation2.GetMatrixElements();
+			  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+			    {
+			      RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);
+			    }
+			}
+		    }
+		}
+	    }
 	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
 	  MatrixPsi01[i][j] *= this->MatrixElementNormalization;
 	  if (this->SelfDualFlag == false)

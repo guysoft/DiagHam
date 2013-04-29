@@ -34,7 +34,9 @@
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/LongRationalMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
+#include "Architecture/ArchitectureOperation/FQHEMPSEvaluateCFTOperation.h"
 
+#include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/Endian.h"
 
 #include <fstream>
@@ -61,8 +63,10 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix()
 // fileName = name of the file that contains the state description
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// architecture = architecture to use for precalculation
 
-FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag, double kappa)
+FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag, double kappa, 
+							     AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -129,7 +133,7 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbr
       if (ErrorFlag == true)
 	{
 	  this->WeightPrimaryFieldMatrixElement = this->WeightPsi;
-	  this->CreateBMatrices();
+	  this->CreateBMatrices(StateDefinition["CFTMatrixDirectory"], architecture);
 	}
     }
 }
@@ -173,8 +177,10 @@ FQHEMPSN1SuperconformalMatrix::~FQHEMPSN1SuperconformalMatrix()
   
 // create the B matrices for the laughlin state
 //
+// cftDirectory = an optional path to the directory where all the CFT matrices are stored
+// architecture = architecture to use for precalculation
 
-void FQHEMPSN1SuperconformalMatrix::CreateBMatrices ()
+void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture)
 {
   LongRational CentralCharge12 (this->CentralCharge);
   cout << "central charge = " << CentralCharge12 << endl;
@@ -200,6 +206,13 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices ()
   RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevel + 2];
   RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[this->PLevel + 2];
   RealMatrix* OrthogonalBasisPsiRight = new RealMatrix[this->PLevel + 2];
+  char* TmpScalarProductIdentityFileName = 0; 
+  char* TmpScalarProductPsiFileName = 0;
+  if (cftDirectory != 0)
+    {
+      TmpScalarProductIdentityFileName = new char[512 + strlen(cftDirectory)];
+      TmpScalarProductPsiFileName = new char[512 + strlen(cftDirectory)];
+    }
 
   for (int i = 0; i <= this->EffectivePLevel; ++i)
     {
@@ -238,51 +251,72 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices ()
       else
 	cout << "Level = " <<  i << "/2" << endl;
       RationalScalarProductIdentity[i] = LongRationalMatrix(SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), true);
-      for (int n = 0; n < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	for (int m = n; m < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
-	  {
-	    int PartitionLength = 0;
-	    SupersymmetricU1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
-	    for (int k = 1; k <= i; ++k)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  ++PartitionLength;
-		}
-	    int Position = PartitionLength;
-	    PartitionLength = 0;
-	    for (int k = 2; k <= i; k += 2)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  Partition[Position - PartitionLength - 1] = (long) k;
-		  ++PartitionLength;
-		}
-	    for (int k = 1; k <= i; k += 2)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  Partition[Position - PartitionLength - 1] = (long) k;
-		  ++PartitionLength;
-		}
-	    SupersymmetricU1BosonBasis[i]->GetOccupationNumber(m, TmpPartition);	    
-	    for (int k = 2; k <= i; k += 2)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  Partition[PartitionLength] = -(long) k;
-		  ++PartitionLength;		  
-		}
-	    for (int k = 1; k <= i; k += 2)
-	      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		{
-		  Partition[PartitionLength] = -(long) k;
-		  ++PartitionLength;		  
-		}
-	    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity,
- 									     RationalScalarProductIdentity, i - 1, SupersymmetricU1BosonBasis);
-	    RationalScalarProductIdentity[i].SetMatrixElement(m, n, Tmp);
-	    if (n != m)
-	      {
-		RationalScalarProductIdentity[i].SetMatrixElement(n, m, Tmp);	      
-	      }
-	  }      
+      if (cftDirectory != 0)
+	{
+	  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+	}
+      if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
+	{
+	  RationalScalarProductIdentity[i].ReadMatrix(TmpScalarProductIdentityFileName);
+	}
+      else
+	{
+	  if (architecture == 0)
+	    {
+	      for (int n = 0; n < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
+		for (int m = n; m < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
+		  {
+		    int PartitionLength = 0;
+		    SupersymmetricU1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
+		    for (int k = 1; k <= i; ++k)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  ++PartitionLength;
+			}
+		    int Position = PartitionLength;
+		    PartitionLength = 0;
+		    for (int k = 2; k <= i; k += 2)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  Partition[Position - PartitionLength - 1] = (long) k;
+			  ++PartitionLength;
+			}
+		    for (int k = 1; k <= i; k += 2)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  Partition[Position - PartitionLength - 1] = (long) k;
+			  ++PartitionLength;
+			}
+		    SupersymmetricU1BosonBasis[i]->GetOccupationNumber(m, TmpPartition);	    
+		    for (int k = 2; k <= i; k += 2)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  Partition[PartitionLength] = -(long) k;
+			  ++PartitionLength;		  
+			}
+		    for (int k = 1; k <= i; k += 2)
+		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			{
+			  Partition[PartitionLength] = -(long) k;
+			  ++PartitionLength;		  
+			}
+		    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity,
+										     RationalScalarProductIdentity, i - 1, SupersymmetricU1BosonBasis);
+		    RationalScalarProductIdentity[i].SetMatrixElement(m, n, Tmp);
+		    if (n != m)
+		      {
+			RationalScalarProductIdentity[i].SetMatrixElement(n, m, Tmp);	      
+		      }
+		  }
+	    }
+	  else
+	    {
+	    }  
+	  if (cftDirectory != 0)
+	    {
+	      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
+	    }
+	}
       ScalarProductIdentity[i] = RationalScalarProductIdentity[i];      
 
 //      cout << RationalScalarProductIdentity[i] << endl;
@@ -436,80 +470,119 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices ()
 
   cout << "computing Psi matrix elements" << endl;
   LongRational Weight (this->WeightPsi);
-  for (int i = 0; i <= this->PLevel; ++i)
+  for (int j = 0; j <= this->PLevel; ++j)
     {
-      for (int j = 0; j <= this->PLevel; ++j)
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
 	  RationalMatrixPsi01[i][j] = LongRationalMatrix(SupersymmetricU1BosonBasis[2 * i]->GetHilbertSpaceDimension(),  SupersymmetricU1BosonBasis[2 * j + 3]->GetHilbertSpaceDimension(), true);
 	  RationalMatrixPsi10[i][j] = LongRationalMatrix(SupersymmetricU1BosonBasis[2 * i + 3]->GetHilbertSpaceDimension(),  SupersymmetricU1BosonBasis[2 * j]->GetHilbertSpaceDimension(), true);
 	  cout << "Levels = " <<  i << " " << (2 * j + 3) << "/2" << endl;
-	  for (int n = 0; n < SupersymmetricU1BosonBasis[2 * i]->GetHilbertSpaceDimension(); ++n)
-	    for (int m = 0; m < SupersymmetricU1BosonBasis[2 * j + 3]->GetHilbertSpaceDimension(); ++m)
-	      {
-		int PartitionLength = 0;
-		SupersymmetricU1BosonBasis[2 * i]->GetOccupationNumber(n, TmpPartition);	    
-		for (int k = 1; k <= (2 * i); ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	  if (cftDirectory != 0)
+	    {
+	      sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_matrixelement_rrns_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+	      sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_matrixelement_nsrr_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+	    }
+	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
+	    {
+	      RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductIdentityFileName);
+	    }
+	  else
+	    {
+	      if (architecture == 0)
+		{
+		  for (int n = 0; n < SupersymmetricU1BosonBasis[2 * i]->GetHilbertSpaceDimension(); ++n)
+		    for (int m = 0; m < SupersymmetricU1BosonBasis[2 * j + 3]->GetHilbertSpaceDimension(); ++m)
+		      {
+			int PartitionLength = 0;
+			SupersymmetricU1BosonBasis[2 * i]->GetOccupationNumber(n, TmpPartition);	    
+			for (int k = 1; k <= (2 * i); ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      ++PartitionLength;
+			    }
+			int Position = PartitionLength;		
+			PartitionLength = 0;
+			for (int k = 1; k <= (2 * i); ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      Partition[Position - PartitionLength - 1] = (long) k;
+			      ++PartitionLength;
+			    }
+			long TmpWeight = 2 * (j - i)  + 3;
+			Partition[Position] = TmpWeight;
+			if (TmpWeight > 0)
+			  ++Position;
+			++PartitionLength;
+			SupersymmetricU1BosonBasis[2 * j + 3]->GetOccupationNumber(m, TmpPartition);	    
+			for (int k = 1; k <= (2 * j + 3); ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      Partition[PartitionLength] = -(long) k;
+			      ++PartitionLength;		  
+			    }
+			LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity);
+			RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
+		      }
+		  if (cftDirectory != 0)
 		    {
-		      ++PartitionLength;
+		      RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
 		    }
-		int Position = PartitionLength;		
-		PartitionLength = 0;
-		for (int k = 1; k <= (2 * i); ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      Partition[Position - PartitionLength - 1] = (long) k;
-		      ++PartitionLength;
-		    }
-	        long TmpWeight = 2 * (j - i)  + 3;
-		Partition[Position] = TmpWeight;
-		if (TmpWeight > 0)
-		  ++Position;
-		++PartitionLength;
-		SupersymmetricU1BosonBasis[2 * j + 3]->GetOccupationNumber(m, TmpPartition);	    
-		for (int k = 1; k <= (2 * j + 3); ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      Partition[PartitionLength] = -(long) k;
-		      ++PartitionLength;		  
-		    }
-		LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity);
-		RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
-	      }
+		}
+	      else
+		{
+		}
+	    }
 	  cout << "Levels = " <<  (2 * i + 3) << "/2 " << j << endl;
-	  for (int n = 0; n < SupersymmetricU1BosonBasis[2 * i + 3]->GetHilbertSpaceDimension(); ++n)
-	    for (int m = 0; m < SupersymmetricU1BosonBasis[2 * j]->GetHilbertSpaceDimension(); ++m)
-	      {
-		int PartitionLength = 0;
-		SupersymmetricU1BosonBasis[2 * i + 3]->GetOccupationNumber(n, TmpPartition);	    
-		for (int k = 1; k <= (2 * i + 3); ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductPsiFileName)))
+	    {
+	      RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPsiFileName);
+	    }
+	  else
+	    {
+	      if (architecture == 0)
+		{
+		  for (int n = 0; n < SupersymmetricU1BosonBasis[2 * i + 3]->GetHilbertSpaceDimension(); ++n)
+		    for (int m = 0; m < SupersymmetricU1BosonBasis[2 * j]->GetHilbertSpaceDimension(); ++m)
+		      {
+			int PartitionLength = 0;
+			SupersymmetricU1BosonBasis[2 * i + 3]->GetOccupationNumber(n, TmpPartition);	    
+			for (int k = 1; k <= (2 * i + 3); ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      ++PartitionLength;
+			    }
+			int Position = PartitionLength;		
+			PartitionLength = 0;
+			for (int k = 1; k <= (2 * i + 3); ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      Partition[Position - PartitionLength - 1] = (long) k;
+			      ++PartitionLength;
+			    }
+			long TmpWeight = 2 * (j - i)  - 3;
+			Partition[Position] = TmpWeight;
+			if (TmpWeight > 0)
+			  ++Position;
+			++PartitionLength;
+			SupersymmetricU1BosonBasis[2 * j]->GetOccupationNumber(m, TmpPartition);	    
+			for (int k = 1; k <= (2 * j); ++k)
+			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
+			    {
+			      Partition[PartitionLength] = -(long) k;
+			      ++PartitionLength;		  
+			    }
+			LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity);
+			RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
+		      }
+		  if (cftDirectory != 0)
 		    {
-		      ++PartitionLength;
+		      RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
 		    }
-		int Position = PartitionLength;		
-		PartitionLength = 0;
-		for (int k = 1; k <= (2 * i + 3); ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      Partition[Position - PartitionLength - 1] = (long) k;
-		      ++PartitionLength;
-		    }
-	        long TmpWeight = 2 * (j - i)  - 3;
-		Partition[Position] = TmpWeight;
-		if (TmpWeight > 0)
-		  ++Position;
-		++PartitionLength;
-		SupersymmetricU1BosonBasis[2 * j]->GetOccupationNumber(m, TmpPartition);	    
-		for (int k = 1; k <= (2 * j); ++k)
-		  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-		    {
-		      Partition[PartitionLength] = -(long) k;
-		      ++PartitionLength;		  
-		    }
-		LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity);
-		RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
-	      }
+		}
+	      else
+		{
+		}
+	    }
 	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
 	  MatrixPsi01[i][j] *= this->MatrixElementNormalization;
 	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
@@ -517,7 +590,7 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices ()
 	}
     }
   cout << "building B matrices" << endl;
-
+  
   SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
   int* TmpNbrElementPerRow = new int[MatrixSize];
   for (int i = 0; i < MatrixSize; ++i)

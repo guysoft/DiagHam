@@ -193,20 +193,13 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		  if (this->Options->GetString("cft") != 0)
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"), 
-									      CylinderFlag, Kappa);
+									      CylinderFlag, Kappa, architecture);
 		    }
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-									      CylinderFlag, Kappa);
+									      this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
 		    }
-// 		  AbstractFQHEMPSMatrix* MPSMatrix1 = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-// 										   CylinderFlag, Kappa);
-// 		  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-// 												  CylinderFlag, Kappa);
-// 		  MPSMatrix = new FQHEMPSBlockMatrix(MPSMatrix1, MPSMatrix2);
-// 		  delete MPSMatrix1;
-// 		  delete MPSMatrix2;
 		}
 	    }	  
 	}
@@ -237,7 +230,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSReadRezayi3QuasiholeSectorMatrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-									      CylinderFlag, Kappa);
+									      this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	    }
@@ -258,7 +251,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 			  return 0;
 			}
 		      MPSMatrix = new FQHEMPSN1SuperconformalMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
-								    CylinderFlag, Kappa);
+								    CylinderFlag, Kappa, architecture);
 		    }
 		}
 	      else
