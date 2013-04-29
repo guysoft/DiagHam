@@ -1624,6 +1624,8 @@ LongRational FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* par
 							   centralCharge12, weight1, weight2, weight,
 							   precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
 							   precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
+
+
   LongRational Tmp2 = weight;
   Tmp2 *= partition[position - 1];
   Tmp2 += weight1;
