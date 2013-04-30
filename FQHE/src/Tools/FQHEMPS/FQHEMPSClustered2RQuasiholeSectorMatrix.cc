@@ -378,7 +378,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 							 this->WeightSigma,
 							 RationalScalarProductSigma,  i- 1);
 		  Operation1.ApplyOperation(architecture);
-		  RationalScalarProductSigma[i] = Operation1.GetMatrixElements();
+		  RationalScalarProductSigma[i] = Operation1.GetRationalMatrixElements();
 		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
@@ -396,7 +396,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 							     this->WeightPhi,
 							     RationalScalarProductPhi,  i - 1);
 		      Operation2.ApplyOperation(architecture);
-		      RationalScalarProductPhi[i] = Operation2.GetMatrixElements();
+		      RationalScalarProductPhi[i] = Operation2.GetRationalMatrixElements();
 		      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
@@ -702,7 +702,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 							     this->WeightSigma, this->WeightPhi, this->WeightPrimaryFieldMatrixElement,
 							     RationalMatrixPsi01,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
-		      RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
+		      RationalMatrixPsi01[i][j] = Operation1.GetRationalMatrixElements();
 		      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductSigmaFileName);
@@ -720,7 +720,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 								 this->WeightPhi, this->WeightSigma, this->WeightPrimaryFieldMatrixElement,
 								 RationalMatrixPsi10,  i - 1, j);
 			  Operation2.ApplyOperation(architecture);
-			  RationalMatrixPsi10[i][j] = Operation2.GetMatrixElements();
+			  RationalMatrixPsi10[i][j] = Operation2.GetRationalMatrixElements();
 			  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			    {
 			      RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);

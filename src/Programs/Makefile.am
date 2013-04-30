@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors VectorComplex2RealImaginary VectorRealImaginary2Complex
+bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii MatrixBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors VectorComplex2RealImaginary VectorRealImaginary2Complex
 
 ExplicitMatrixExample_SOURCES=ExplicitMatrixExample.cc
 
@@ -9,6 +9,8 @@ ResizeLanczos_SOURCES=ResizeLanczos.cc
 GenericOverlap_SOURCES=GenericOverlap.cc
 
 VectorBinary2Ascii_SOURCES=VectorBinary2Ascii.cc
+
+MatrixBinary2Ascii_SOURCES=MatrixBinary2Ascii.cc
 
 ReplayLanczos_SOURCES=ReplayLanczos.cc
 
@@ -73,6 +75,10 @@ DiffBinaryVectors_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Opt
 VectorBinary2Ascii_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a 
 
 VectorBinary2Ascii_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -L$(top_builddir)/src/MathTools -lVector -lMathTools -lOptions -lGeneralTools -lMathTools -lOutput @THREAD_LIBS@ @GMP_LIBS@ @GMP_LIBS@
+
+MatrixBinary2Ascii_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Matrix/libMatrix.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a
+
+MatrixBinary2Ascii_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Output -L$(top_builddir)/src/MathTools -lVector -L$(top_builddir)/src/Matrix -lMatrix -lVector -lMathTools -lOptions -lGeneralTools -lMathTools -lOutput @THREAD_LIBS@  @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @SCALAPACK_LIBS@ @FORTRAN2C_LIBS@ @GMP_LIBS@
 
 ReplayLanczos_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a
 

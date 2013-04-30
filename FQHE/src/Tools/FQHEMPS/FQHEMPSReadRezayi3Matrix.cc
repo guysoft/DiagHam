@@ -314,7 +314,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							 WeightIdentity,
 							 RationalScalarProductIdentity,  i- 1);
 		  Operation1.ApplyOperation(architecture);
-		  RationalScalarProductIdentity[i] = Operation1.GetMatrixElements();
+		  RationalScalarProductIdentity[i] = Operation1.GetRationalMatrixElements();
 		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
@@ -330,7 +330,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							 WeightPsi,
 							 RationalScalarProductPsi,  i - 1);
 		  Operation2.ApplyOperation(architecture);
-		  RationalScalarProductPsi[i] = Operation2.GetMatrixElements();
+		  RationalScalarProductPsi[i] = Operation2.GetRationalMatrixElements();
 		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalScalarProductPsi[i].WriteMatrix(TmpScalarProductPsiFileName);
@@ -348,7 +348,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							     WeightW,
 							     RationalScalarProductW + 3,  i - 1);
 		      Operation2.ApplyOperation(architecture);
-		      RationalScalarProductW[3 + i] = Operation2.GetMatrixElements();
+		      RationalScalarProductW[3 + i] = Operation2.GetRationalMatrixElements();
 		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalScalarProductW[3 + i].WriteMatrix(TmpScalarProductWFileName);
@@ -634,7 +634,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							     WeightIdentity, WeightPsi, Weight,
 							     RationalMatrixPsi01,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
-		      RationalMatrixPsi01[i][j] = Operation1.GetMatrixElements();
+		      RationalMatrixPsi01[i][j] = Operation1.GetRationalMatrixElements();
 		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi01[i][j].WriteMatrix(TmpMatrixElementIdentityPsiFileName);
@@ -650,7 +650,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							     WeightPsi, WeightIdentity, Weight,
 							     RationalMatrixPsi10,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
-		      RationalMatrixPsi10[i][j] = Operation1.GetMatrixElements();
+		      RationalMatrixPsi10[i][j] = Operation1.GetRationalMatrixElements();
 		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi10[i][j].WriteMatrix(TmpMatrixElementPsiIdentityFileName);
@@ -666,7 +666,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 							     WeightPsi, WeightPsi, Weight,
 							     RationalMatrixPsi11,  i - 1, j);
 		      Operation1.ApplyOperation(architecture);
-		      RationalMatrixPsi11[i][j] = Operation1.GetMatrixElements();
+		      RationalMatrixPsi11[i][j] = Operation1.GetRationalMatrixElements();
 		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			{
 			  RationalMatrixPsi11[i][j].WriteMatrix(TmpMatrixElementPsiPsiFileName);
@@ -684,7 +684,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 								WeightPsi,  WeightW, Weight,
 								 RationalMatrixPsi12,  i - 1, j);
 			  Operation1.ApplyOperation(architecture);
-			  RationalMatrixPsi12[i][j] = Operation1.GetMatrixElements();
+			  RationalMatrixPsi12[i][j] = Operation1.GetRationalMatrixElements();
 			  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			    {
 			      RationalMatrixPsi12[i][j].WriteMatrix(TmpMatrixElementPsiWFileName);
@@ -703,7 +703,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 								 WeightW, WeightPsi, Weight,
 								 RationalMatrixPsi21,  i - 1, j);
 			  Operation1.ApplyOperation(architecture);
-			  RationalMatrixPsi21[i][j] = Operation1.GetMatrixElements();
+			  RationalMatrixPsi21[i][j] = Operation1.GetRationalMatrixElements();
 			  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 			    {
 			      RationalMatrixPsi21[i][j].WriteMatrix(TmpMatrixElementWPsiFileName);

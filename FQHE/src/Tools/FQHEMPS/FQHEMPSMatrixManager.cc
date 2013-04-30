@@ -117,6 +117,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "consider only the block diagonal in P and Q");
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
+  (*SystemGroup) += new BooleanOption  ('\n', "use-nonrational", "use double numbers instead of rational numbers for CFT calcaultions");
   (*PrecalculationGroup) += new SingleStringOption('\n', "import-bmatrices", "import the B matrices from a given binary file instead of computing them");
   (*PrecalculationGroup) += new BooleanOption ('\n', "export-bmatrices", "export the B matrices in a binary file");
   (*PrecalculationGroup) += new SingleStringOption('\n', "export-bmatrixname", "use a custom output file name to export the B matrices instead of the default one");
@@ -177,7 +178,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
+							       this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	    }

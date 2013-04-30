@@ -38,6 +38,8 @@
 
 
 class LongRationalMatrix;
+class RealMatrix;
+class RealSymmetricMatrix;
 class BosonOnDiskShort;
 class AbstractArchitecture;
 
@@ -86,6 +88,9 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // name describing the B matrices 
   char* BMatrixOutputName;
 
+  // use arbitrary precision numbers for all the CFT calculations
+  bool UseRationalFlag;
+
  public:
   
   // default constructor 
@@ -98,10 +103,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // useRational = use arbitrary precision numbers for all the CFT calculations
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool useRational = true, 
+			   bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor 
   //
@@ -110,10 +117,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // useRational = use arbitrary precision numbers for all the CFT calculations
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational = true,
+			   bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from a file describing the state
   //
@@ -123,7 +132,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, 
+			   double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
   //
@@ -159,7 +169,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   //
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
   // architecture = architecture to use for precalculation
-  virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
+  virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
 
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
@@ -234,6 +244,23 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 							       LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
 							       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
+  // compute the scalar product matrices of the Virasoro descendant, using information from previous levels
+  // 
+  // partition = partition that desribes the product of Virasoro generators involved in the scalar product
+  // partitionLength = partition length
+  // position = position in partition starting from which all the indices are negative
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // weight = weight of the primary field that is considered
+  // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
+  // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
+  // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
+  // return value = scalar product
+  virtual double ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+							 double& centralCharge12, double& weight,
+							 RealSymmetricMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
+							 BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
+
   // compute the matrix elements of any primary field in the Virasoro descendant basis
   // 
   // partition = partition that desribes the product of Virasoro generators involved in the scalar product
@@ -271,6 +298,32 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 						       int precomputedDescendantMatrixElementMaxLeftPLevel, 
 						       int precomputedDescendantMatrixElementMaxRightPLevel, 
 						       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
+
+
+  // compute the matrix elements of any primary field in the Virasoro descendant basis, using double numbers instead of long rational
+  // 
+  // partition = partition that desribes the product of Virasoro generators involved in the scalar product
+  // partitionLength = partition length
+  // descendantPosition = location of the primary field
+  // position = position in partition starting from which all the indices are negative
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // weight1 = weight of the primary field that is considered for the left state
+  // weight2 = weight of the primary field that is considered for the right state
+  // weight = weight of the primary field whose matrix elements are computed
+  // precomputedDescendantMatrixElement = matrices where matrix elements computed for previous levels are stored
+  // precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
+  // precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
+  // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
+  // return value = matrix element  
+  virtual double ComputeDescendantMatrixElement (long* partition, int partitionLength, 
+						 int descendantPosition, int position,
+						 double& centralCharge12, double& weight1, 
+						 double& weight2, double& weight,
+						 RealMatrix** precomputedDescendantMatrixElement, 
+						 int precomputedDescendantMatrixElementMaxLeftPLevel, 
+						 int precomputedDescendantMatrixElementMaxRightPLevel, 
+						 BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states
   //

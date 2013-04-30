@@ -37,6 +37,8 @@
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 
 #include "Matrix/LongRationalMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 
 
@@ -56,7 +58,7 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   FQHEMPSClustered2RMatrix* MPSMatrix;
   
   // indicates if the overlap matrix has to be computed instead of the matrix elements
-  bool OverlapMatrix;
+  bool OverlapMatrixFlag;
 
   // level for the left state
   int LeftLevel;
@@ -68,9 +70,13 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 
   
   // array where the already computed overlap matrices are stored
-  LongRationalMatrix* PreviousOverlapMatrices;
+  LongRationalMatrix* PreviousRationalOverlapMatrices;
   // array where the already computed matrix element are stored
-  LongRationalMatrix** PreviousMatrixElements;
+  LongRationalMatrix** PreviousRationalMatrixElements;
+  // array where the already computed overlap matrices are stored
+  RealSymmetricMatrix* PreviousOverlapMatrices;
+  // array where the already computed matrix element are stored
+  RealMatrix** PreviousMatrixElements;
   // number of entry of the PreviousMatrixElements first index
   int NbrLeftPreviousMatrixElements;
   // number of entry of the PreviousMatrixElements second index
@@ -84,6 +90,14 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   LongRational WeightRight;
   // conformal weight of the field whose matrix elements have to be evaluated
   LongRational WeightMatrixElement;
+  // value of the central charge divided by 12
+  double CentralCharge12Numerical;
+  // conformal weight of the left state at level 0
+  double WeightLeftNumerical;
+  // conformal weight of the right state  at level 0
+  double WeightRightNumerical;
+  // conformal weight of the field whose matrix elements have to be evaluated
+  double WeightMatrixElementNumerical;
 
   // index of the first component
   long FirstComponent;
@@ -91,7 +105,15 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   long NbrComponent;
 
   // matrix storing the CFT matrix elements
-  LongRationalMatrix MatrixElements; 
+  LongRationalMatrix RationalMatrixElements; 
+
+  // matrix storing the CFT matrix elements
+  RealMatrix MatrixElements; 
+  // matrix storing the CFT overlap matrix
+  RealSymmetricMatrix OverlapMatrix; 
+
+  // use arbitrary precision numbers for all the CFT calculations
+  bool UseRationalFlag;
 
  // number of part in the CFT calculation will be separated in MPI mode
   int NbrMPIStage;
@@ -138,6 +160,43 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 			      LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
 			      int nbrMPIStage = 100, int nbrSMPStage = 100);
 
+  // constructor to compute the CFT matrix elements, using double instead of rational numbers
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left state
+  // rightLevel = level for the right state
+  // centralCharge12 =value of the central charge divided by 12
+  // weightLeft = conformal weight of the left state at level 0 
+  // weightRight = weight of the right state  at level 0
+  // WeightMatrixElement = weight of the field whose matrix elements have to be evaluated
+  // previousMatrixElements = array where the already computed matrix element are stored
+  // nbrLeftPreviousMatrixElements = number of entry of the PreviousMatrixElements first index
+  // nbrRightPreviousMatrixElements = number of entry of the PreviousMatrixElements second index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel, int rightLevel,
+			      double centralCharge12, double weightLeft, 
+			      double weightRight, double weightMatrixElement,
+			      RealMatrix** previousRationalMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
+			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+
+  // constructor to compute the CFT overlap matrix, using double instead of rational numbers
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left or right state
+  // centralCharge12 =value of the central charge divided by 12
+  // weightLeft = conformal weight of the left or right state at level 0 
+  // previousOverlapMatrices = array where the already computed overlap matrices are stored
+  // nbrPreviousOverlapMatrices = number of entry of the PreviousMatrixElements first index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
+			      double centralCharge12, double weightLeft,
+			      RealSymmetricMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
+			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+
   // copy constructor 
   //
   // operation = reference on operation to copy
@@ -156,8 +215,18 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   // get the matrix storing the CFT matrix elements
   // 
   // return value = reference on the matrix
-  virtual LongRationalMatrix& GetMatrixElements ();
+  virtual LongRationalMatrix& GetRationalMatrixElements ();
   
+  // get the matrix storing the CFT matrix elements
+  // 
+  // return value = reference on the matrix
+  virtual RealMatrix& GetMatrixElements ();
+
+  // get the matrix storing the CFT overlap matrix
+  // 
+  // return value = reference on the matrix
+  virtual  RealSymmetricMatrix& GetOverlapMatrix ();
+
   // set range of indices
   // 
   // firstComponent = index of the first component
@@ -201,9 +270,27 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 // 
 // return value = reference on the matrix
 
-inline LongRationalMatrix& FQHEMPSEvaluateCFTOperation::GetMatrixElements ()
+inline LongRationalMatrix& FQHEMPSEvaluateCFTOperation::GetRationalMatrixElements ()
 {
-  return this->MatrixElements;
+  return this->RationalMatrixElements;
+}
+
+// get the matrix storing the CFT matrix elements
+// 
+// return value = reference on the matrix
+
+inline RealMatrix& FQHEMPSEvaluateCFTOperation::GetMatrixElements ()
+{
+  return this->MatrixElements; 
+}
+
+// get the matrix storing the CFT overlap matrix
+// 
+// return value = reference on the matrix
+
+inline RealSymmetricMatrix& FQHEMPSEvaluateCFTOperation::GetOverlapMatrix ()
+{
+  return this->OverlapMatrix; 
 }
 
 #endif
