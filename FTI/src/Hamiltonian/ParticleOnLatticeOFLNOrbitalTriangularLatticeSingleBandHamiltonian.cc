@@ -265,11 +265,11 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 		{
 		  int Index2 = (kx2 * this->NbrSiteY) + ky2;
 		  TmpCalculationTable[Index1][Index2] = new Complex [4*this->NbrReciprocalVectors*this->NbrReciprocalVectors];
-		  for (int Nx = 0; Nx < 2*this->NbrReciprocalVectors; Nx++)
+		  for (int Nx = 0; Nx < this->NbrReciprocalVectors; Nx++)
 		    {
-		      for (int Ny = 0; Ny < 2*this->NbrReciprocalVectors; Ny++)
+		      for (int Ny = 0; Ny < this->NbrReciprocalVectors; Ny++)
 			{
-			  int TmpIndex =  Nx * 2 * this->NbrReciprocalVectors + Ny;
+			  int TmpIndex =  Nx * this->NbrReciprocalVectors + Ny;
 
 			  TmpCalculationTable[Index1][Index2][TmpIndex] = 0;
 			  
@@ -319,27 +319,27 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 		  int ShiftMomentumX = (kx1 + kx2 - kx3 - kx4) /  this->NbrSiteX;
 		  int ShiftMomentumY = (ky1 + ky2 - ky3 - ky4) /  this->NbrSiteY;
 		  
-		  for (int Nx = 0; Nx < 2*this->NbrReciprocalVectors; Nx++)
+		  for (int Nx = 0; Nx < this->NbrReciprocalVectors; Nx++)
 		    {
-		      for (int Ny = 0; Ny < 2*this->NbrReciprocalVectors; Ny++)
+		      for (int Ny = 0; Ny < this->NbrReciprocalVectors; Ny++)
 			{
-			  int TmpIndex =  Nx * 2 * this->NbrReciprocalVectors + Ny;
-			  int TmpNx =  -ShiftMomentumX + 2*this->NbrReciprocalVectors - Nx;
-			  int TmpNy =  -ShiftMomentumY + 2*this->NbrReciprocalVectors - Ny;
+			  int TmpIndex =  Nx * this->NbrReciprocalVectors + Ny;
+			  int TmpNx =  -ShiftMomentumX + this->NbrReciprocalVectors - Nx;
+			  int TmpNy =  -ShiftMomentumY + this->NbrReciprocalVectors - Ny;
 			  
 			  if (TmpNx < 0)
-			    TmpNx += 2*this->NbrReciprocalVectors;
+			    TmpNx += this->NbrReciprocalVectors;
 
-			  if (TmpNx >= 2*this->NbrReciprocalVectors)
-			    TmpNx -= 2*this->NbrReciprocalVectors;
+			  if (TmpNx >= this->NbrReciprocalVectors)
+			    TmpNx -= this->NbrReciprocalVectors;
 			  
 			  if (TmpNy < 0)
-			    TmpNy += 2*this->NbrReciprocalVectors;
+			    TmpNy += this->NbrReciprocalVectors;
 			  
-			  if (TmpNy >= 2*this->NbrReciprocalVectors)
-			    TmpNy -= 2*this->NbrReciprocalVectors;
+			  if (TmpNy >= this->NbrReciprocalVectors)
+			    TmpNy -= this->NbrReciprocalVectors;
 
-			  int TmpIndex2 =  TmpNx * 2 * this->NbrReciprocalVectors + TmpNy;
+			  int TmpIndex2 =  TmpNx *  this->NbrReciprocalVectors + TmpNy;
 
 			  this->InteractionFactors[i][Index] +=  FactorU * TmpCalculationTable[Index1][Index4][TmpIndex] * TmpCalculationTable[Index2][Index3][TmpIndex2];
 
