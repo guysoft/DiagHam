@@ -2,6 +2,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeNonPeriodicMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/FermionOnCubicLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
@@ -12,6 +13,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU4SpinMomentumSpace.h"
+#include "HilbertSpace/BosonOnCubicLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU2SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnCubicLatticeWithSU4SpinMomentumSpaceLong.h"
@@ -135,12 +137,19 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetInteger("nbr-subbands") == 1)
 	    {
-	      Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
-	      if (Manager.GetString("save-hilbert") != 0)
-		{
-		  Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-		  return 0;
-		}
+              if (Manager.GetBoolean("3d") == false)
+                {
+                  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+                  if (Manager.GetString("save-hilbert") != 0)
+                    {
+                      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+                      return 0;
+                    }
+                }
+              else
+                {
+                  Space = new FermionOnCubicLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+                }
 	    }
 	  else
 	    {
@@ -201,19 +210,26 @@ int main(int argc, char** argv)
     {
       if (Manager.GetInteger("nbr-subbands") == 1)
 	{
-	  if (Manager.GetBoolean("wannier"))
+	  if (Manager.GetBoolean("3d") == false)
 	    {
-	      Space = new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKy);
-	    }
-	  else
-	    {
-	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
-	    }
-	  if (Manager.GetString("save-hilbert") != 0)
-	    {
-	      Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
-	      return 0;
-	    }
+              if (Manager.GetBoolean("wannier"))
+                {
+                  Space = new BosonOnSquareLatticeWannierSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKy);
+                }
+              else
+                {
+                  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy);
+                }
+              if (Manager.GetString("save-hilbert") != 0)
+                {
+                  Space->WriteHilbertSpace(Manager.GetString("save-hilbert"));
+                  return 0;
+                }
+            }
+          else
+            {
+	      Space = new BosonOnCubicLatticeMomentumSpace (NbrParticles, NbrSiteX, NbrSiteY, NbrSiteZ, TotalKx, TotalKy, TotalKz);
+            }
 	}
       if (Manager.GetInteger("nbr-subbands") == 2)
 	{

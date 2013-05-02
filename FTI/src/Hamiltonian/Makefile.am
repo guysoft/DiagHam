@@ -60,6 +60,8 @@ ParticleOnLatticeHofstadterSingleBandHamiltonian.cc \
 ParticleOnLatticeTwoBandHofstadterHamiltonian.cc \
 ParticleOnLatticeFourBandHofstadterHamiltonian.cc \
 ParticleOnLatticeTwoBandThirringHamiltonian.cc \
+ParticleOnCubicLatticeSingleBandHamiltonian.cc \
+ParticleOnLatticeFCCLatticeSingleBandHamiltonian.cc \
 ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian.cc \
 ParticleOnCubicLatticeFullTwoBandSimpleTIHamiltonian.cc \
 ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian.cc
