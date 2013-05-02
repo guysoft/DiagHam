@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -60,23 +61,17 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::Particle
 // nbrParticles = number of particles
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
+// tightBindingModel = pointer to the tight binding model
 // uPotential = strength of the repulsive two body nearest neighbor interaction
 // vPotential = strength of the repulsive two body second nearest neighbor interaction
 // wPotential = strength of the repulsive three body nearest neighbor interaction
 // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-// t1 = imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-// t2 = the inter-orbital hopping amplitude between nearest neighbors along the y direction
-// t3 = the intra-orbital hopping amplitude between nearest neighbors
-// mus = sublattice chemical potential on A sites
-// gammaX = boundary condition twisting angle along x
-// gammaY = boundary condition twisting angle along y
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
-        double uPotential, double vPotential, double wPotential, double sPotential,
-        double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY,
+        Abstract2DTightBindingModel* tightBindingModel, double uPotential, double vPotential, double wPotential, double sPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -87,15 +82,10 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::Particle
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NBodyValue = 3;
   this->ComputePhaseArray();
+  this->TightBindingModel = tightBindingModel;
 
   this->HamiltonianShift = 0.0;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
-  this->NNHoppingInterX = t1;
-  this->NNHoppingInterY = t2;
-  this->NNHoppingIntra = t3;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -137,10 +127,19 @@ ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::~Particl
 void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
+
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
   if (this->FlatBand == false)
-    this->OneBodyInteractionFactors = new double [this->NbrSiteX * this->NbrSiteY];
-  this->ComputeOneBodyMatrices(OneBodyBasis);
+      this->OneBodyInteractionFactors = new double[this->TightBindingModel->GetNbrStatePerBand()];
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      {
+          int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+          if (this->FlatBand == false)
+              this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+          OneBodyBasis[Index] = this->TightBindingModel->GetOneBodyMatrix(Index);
+      }
+
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
   {
@@ -563,44 +562,6 @@ Complex ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::
     double dy3 = ((double)(ky3 - ky6)) * this->KyFactor;
     Complex Tmp = 2 * (cos(dx2+dx3) + cos(dy2+dy3));
     return Tmp;
-}
-
-// compute the one body transformation matrices and the optional one body band stucture contribution
-//
-// oneBodyBasis = array of one body transformation matrices
-
-void ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
-{
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-  {
-    double x=((double)kx + this->GammaX) * this->KxFactor;
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-        double y=((double)ky + this->GammaY) * this->KyFactor;
-	int Index = (kx * this->NbrSiteY) + ky;
-        Complex B1 = 2 * Complex(this->NNHoppingInterX * sin(x), - this->NNHoppingInterY * sin(y));
-        double d3 = this->MuS - 2 * this->NNHoppingIntra * (cos(x) + cos(y));
-	HermitianMatrix TmpOneBodyHamiltonian(2, true);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	oneBodyBasis[Index] = TmpMatrix;	
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactors[Index] = TmpDiag(0, 0);
-	  }
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << "  e1=[" << TmpMatrix[0][0] << ", " << TmpMatrix[0][1] << "]  e2=[" << TmpMatrix[1][0] << ", " << TmpMatrix[1][1] << "]" << endl;
-      }
-  }
 }
 
 // compute all the phase precalculation arrays 

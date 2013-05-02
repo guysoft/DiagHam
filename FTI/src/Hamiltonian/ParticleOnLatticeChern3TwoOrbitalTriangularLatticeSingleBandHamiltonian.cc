@@ -48,6 +48,12 @@ using std::cout;
 using std::endl;
 using std::ostream;
 
+// default constructor
+//
+
+ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian::ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian()
+{
+}
 
 
 // constructor
@@ -274,14 +280,9 @@ void ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian::Ev
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      double FactorUAB = 1.0 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      if (this->FlatBand == false)
-      {
-	FactorU *= this->UPotential;
-	FactorUAB *= this->UPotential;
-      }
-	
+      double FactorU = 0.5 * this->UPotential / ((double) (this->NbrSiteX * this->NbrSiteY));
+      double FactorUAB = 1.0 * this->UPotential / ((double) (this->NbrSiteX * this->NbrSiteY));
+
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{

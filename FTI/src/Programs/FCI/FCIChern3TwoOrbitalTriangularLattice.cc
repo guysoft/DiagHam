@@ -83,6 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
+  (*SystemGroup) += new BooleanOption('\n', "shift", "shift energy by +1.0 to help convergence");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -257,6 +258,9 @@ int main(int argc, char** argv)
 	    { 
 	      Hamiltonian = new ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), &TightBindingModel,  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
+
+          if (Manager.GetBoolean("shift"))
+              Hamiltonian->ShiftHamiltonian(1.0);
 
 	  char* ContentPrefix = new char[256];
 	  sprintf (ContentPrefix, "%d %d", i, j);

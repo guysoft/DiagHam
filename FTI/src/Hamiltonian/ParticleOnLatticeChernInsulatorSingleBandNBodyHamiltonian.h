@@ -70,8 +70,6 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
   // numerical factor for momentum along y
   double KyFactor;
 
-  // band parameter
-  double BandParameter;
 
 
  public:
@@ -86,10 +84,10 @@ class ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian : public Particl
   // nbrParticles = number of particles
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
-  // bandParameter = band parameter
+  // tightBindingModel = pointer to the tight binding model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double bandParameter, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

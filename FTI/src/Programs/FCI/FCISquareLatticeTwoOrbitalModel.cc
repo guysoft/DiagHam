@@ -7,6 +7,7 @@
 #include "Hamiltonian/ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandFourBodyHamiltonian.h"
+#include "Tools/FTITightBinding/TightBindingModelTwoOrbitalSquareLattice.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -29,22 +30,9 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSiteX = number of sites in the x direction
-// nbrSiteY = number of sites in the x direction
-// t1 = real part of the inter-orbital hopping amplitude between neareast neighbor cells along the x direction
-// t2 = imag part of the inter-orbital hopping amplitude between neareast neighbor cells along the y direction
-// t3 = the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double t1, double t2, double t3, double mus);
-
-
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHESquareLatticeTwoOrbitalModel" , "0.01");
+  OptionManager Manager ("FCISquareLatticeTwoOrbitalModel" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
@@ -66,7 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site Hubbard potential strength", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site Hubbard potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "uab-potential", "repulsive on-site Hubbard potential strength - ab for bosons", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest neighbor potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "w-potential", "repulsive three-body nearest neighbor potential strength", 1.0);
@@ -81,6 +69,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-chernnumber", "compute the Chern number of the fully filled band (only available in singleparticle-spectrum mode)");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
+  (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
+  (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -100,7 +92,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHESquareLatticeTwoOrbitalModel -h" << endl;
+      cout << "see man page for option syntax or type FCISquareLatticeTwoOrbitalModel -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -171,10 +163,38 @@ int main(int argc, char** argv)
       sprintf (EigenvalueOutputFile, "%s.dat", FilePrefix);
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
-    {
-      ComputeSingleParticleSpectrum(EigenvalueOutputFile, NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"));
+  {
+      bool ExportOneBody = false;
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
+          ExportOneBody = true;
+      TightBindingModelTwoOrbitalSquareLattice TightBindingModel(NbrSiteX, NbrSiteY,
+              Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
+              Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+      if (Manager.GetBoolean("singleparticle-chernnumber") == true)
+          cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
+      TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+      double BandSpread = TightBindingModel.ComputeBandSpread(0);
+      double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+      cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
+      if (ExportOneBody == true)
+      {
+          char* BandStructureOutputFile = new char [512];
+          if (Manager.GetString("export-onebodyname") != 0)
+              strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
+          else
+              sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+          if (Manager.GetBoolean("export-onebody") == true)
+          {
+              TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+          }
+          else
+          {
+              TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+          }
+          delete[] BandStructureOutputFile;
+      }	  
       return 0;
-    }
+  }
 
   int MinKx = 0;
   int MaxKx = NbrSiteX - 1;
@@ -190,6 +210,11 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+
+  TightBindingModelTwoOrbitalSquareLattice TightBindingModel(NbrSiteX, NbrSiteY,
+          Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
+          Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -225,25 +250,22 @@ int main(int argc, char** argv)
  	      AbstractQHEHamiltonian* Hamiltonian = 0;
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
 		{
-                  Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+                  Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, &TightBindingModel,
 												  Manager.GetDouble("u-potential"), Manager.GetDouble("uab-potential"), Manager.GetDouble("v-potential"), 
-												  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
 												  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
               else
 		{
 		  if (Manager.GetBoolean("three-body") == true)
 		    {
-                      Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+                      Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, &TightBindingModel,
 													       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-													       Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
 													       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
                   else
 		    {
-                      Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
+                      Hamiltonian = new ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, &TightBindingModel,
 													      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-													      Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),
 													      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		}
@@ -270,62 +292,3 @@ int main(int argc, char** argv)
   return 0;
 }
 
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSiteX = number of sites in the x direction
-// nbrSiteY = number of sites in the x direction
-// t1 = real part of the inter-orbital hopping amplitude between neareast neighbor cells along the x direction
-// t2 = imag part of the inter-orbital hopping amplitude between neareast neighbor cells along the y direction
-// t3 = the hopping amplitude between next neareast neighbor sites
-// mus = sublattice chemical potential on A sites
-
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSiteX, int nbrSiteY, double t1, double t2, double t3, double mus)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     E_-    E_-" << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  for (int kx = 0; kx < nbrSiteX; ++kx)
-  {
-      double x=2*M_PI*((double)kx)/nbrSiteX;
-      for (int ky = 0; ky < nbrSiteY; ++ky)
-      {
-          double y=2*M_PI*((double)ky)/nbrSiteY;
-          Complex B1 = 2 * Complex(t1 * sin(x), - t2 * sin(y));
-          double d3 = mus - 2 * t3 * (cos(x) + cos(y));
-	  HermitianMatrix TmpOneBodyHamiltonian(2, true);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, - d3);
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-#endif   
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
-	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	  if (MaxEPlus < TmpDiag(1, 1))
-	    {
-	      MaxEPlus = TmpDiag(1, 1);
-	    }
-	  if (MinEPlus > TmpDiag(1, 1))
-	    {
-	      MinEPlus = TmpDiag(1, 1);
-	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSiteX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSiteY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
-	}
-      File << endl;
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
-}

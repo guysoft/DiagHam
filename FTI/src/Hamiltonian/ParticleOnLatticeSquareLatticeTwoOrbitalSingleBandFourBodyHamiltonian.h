@@ -65,22 +65,17 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandFourBodyHamiltonian : pu
   // nbrParticles = number of particles
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
+  // tightBindingModel = pointer to the tight binding model
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive two body second neareast neighbor interaction
   // wPotential = strength of the repulsive three body neareast neighbor interaction
   // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-  // t1 = imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-  // t2 = the inter-orbital hopping amplitude between nearest neighbors along the y direction
-  // t3 = the intra-orbital hopping amplitude between nearest neighbors
-  // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandFourBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, 
           double uPotential, double vPotential, double wPotential, double sPotential,
-          double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+          bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

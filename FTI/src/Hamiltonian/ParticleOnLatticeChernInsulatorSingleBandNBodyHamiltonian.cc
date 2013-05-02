@@ -33,9 +33,11 @@
 
 #include "config.h"
 #include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "GeneralTools/StringTools.h"
 
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
@@ -63,12 +65,12 @@ ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ParticleOnLatticeCher
 // nbrParticles = number of particles
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
-// bandParameter = band parameter
+// tightBindingModel = pointer to the tight binding model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, 
-														     int nbrSiteY, double bandParameter, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY,
+        Abstract2DTightBindingModel* tightBindingModel, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -78,7 +80,7 @@ ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ParticleOnLatticeCher
   this->HamiltonianShift = 0.0;//4.0 * uPotential;
   this->NBodyValue = 3;
   this->SqrNBodyValue = this->NBodyValue * this->NBodyValue;
-  this->BandParameter = bandParameter;
+  this->TightBindingModel = tightBindingModel;
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactors = 0;
@@ -93,24 +95,8 @@ ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::ParticleOnLatticeCher
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
-      if (TmpMemory < 1024)
-	cout  << "fast = " <<  TmpMemory << "b ";
-      else
-	if (TmpMemory < (1 << 20))
-	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
-	else
-	  if (TmpMemory < (1 << 30))
-	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
-	  else
-	    {
-	      cout  << "fast = " << (TmpMemory >> 30) << ".";
-	      TmpMemory -= ((TmpMemory >> 30) << 30);
-	      TmpMemory *= 100l;
-	      TmpMemory >>= 30;
-	      if (TmpMemory < 10l)
-		cout << "0";
-	      cout  << TmpMemory << " Gb ";
-	    }
+      cout << "fast = ";
+      PrintMemorySize(cout, TmpMemory)<< endl;
       this->EnableFastMultiplication();
     }
 }
@@ -129,30 +115,13 @@ ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::~ParticleOnLatticeChe
 void ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
-  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+
+  ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
-	int Index = (kx1 * this->NbrSiteY) + ky1;
-	double d1 = sin (2.0 * M_PI * ((double) kx1) / ((double) this->NbrSiteX));
-	double d2 = sin (2.0 * M_PI * ((double) ky1) / ((double) this->NbrSiteY));
-	double d3 = (this->BandParameter - cos (2.0 * M_PI * ((double) ky1) / ((double) this->NbrSiteY))
-		     - cos (2.0 * M_PI * ((double) kx1) / ((double) this->NbrSiteX)));
-	HermitianMatrix TmpOneBobyHamiltonian(2, true);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, Complex(d1, -d2));
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, -d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	OneBodyBasis[Index] = TmpMatrix;	
-	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
+	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	OneBodyBasis[Index] = this->TightBindingModel->GetOneBodyMatrix(Index);
       }
   double** CosineTableX = new double*[this->NbrSiteX];
   for (int i = 0; i < this->NbrSiteX; ++i)

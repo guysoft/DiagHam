@@ -52,26 +52,12 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public Par
 
  protected:
   
-  // imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-  double NNHoppingInterX;
-  // the inter-orbital hopping amplitude between nearest neighbors along the y direction
-  double NNHoppingInterY;
-  // the intra-orbital hopping amplitude between nearest neighbors
-  double NNHoppingIntra;
-  // folding factor for the momenta along sigma_x and sigma_y
-  double FoldingFactor;  
-  // four times the sublattice staggered chemical potential 
-  double MuS;
   // nearest neighbor density-density potential strength
   double UPotential;
   // nearest neighbor density-density potential strength AB for bosons
   double UABPotential;
   // second nearest neighbor density-density potential strength
   double VPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
@@ -88,20 +74,14 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public Par
   // nbrParticles = number of particles
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
+  // tightBindingModel = pointer to the tight binding model
   // uPotential = strength of the repulsive two body nearest neighbor interaction
   // vPotential = strength of the repulsive two body next nearest neighbor interaction
-  // t1 = imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-  // t2 = the inter-orbital hopping amplitude between nearest neighbors along the y direction
-  // t3 = the intra-orbital hopping amplitude between nearest neighbors
-  // foldingFactor = folding factor for the momenta along sigma_x and sigma_y
-  // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double uabPotential, double vPotential, double t1, double t2, double t3, 
-								int foldingFactor, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory=-1);
+  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,
+          double uPotential, double uabPotential, double vPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory=-1);
 
   // destructor
   //
@@ -122,11 +102,6 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandHamiltonian : public Par
   // ky4 = creation momentum along y for the second site
   // return value = corresponding matrix element
   Complex ComputeTwoBodyMatrixElementNN(int kx2, int ky2, int kx4, int ky4);
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
 };
 

@@ -64,6 +64,10 @@ class ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian : 
   
  public:
 
+  // default constructor
+  //
+  ParticleOnLatticeChern3TwoOrbitalTriangularLatticeSingleBandHamiltonian();
+
   // constructor
   //
   // particles = Hilbert space associated to the system

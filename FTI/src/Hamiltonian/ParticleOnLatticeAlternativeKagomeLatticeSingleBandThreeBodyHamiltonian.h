@@ -50,162 +50,137 @@ using std::endl;
 class ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian : public ParticleOnLatticeChernInsulatorSingleBandNBodyHamiltonian
 {
 
- protected:
-  
-  // hoping amplitude between nearest neighbor sites
-  double NNHoping;
-  // hoping amplitude between next nearest neighbor sites
-  double NextNNHoping;
-  // Rashba coupling between nearest neighbor sites
-  double NNRashba;
-  // Rashba coupling between next nearest neighbor sites
-  double NextNNRashba;
+protected:
 
-  // index of the band that has to be partially filled
-  int BandIndex;
+    // index of the band that has to be partially filled
+    int BandIndex;
 
-  // nearest neighbor density-density potential strength
-  double UPotential;
-  // second nearest neighbor density-density potential strength
-  double VPotential;
-  // nearest neighbor density-density-density potential strength
-  double WPotential;
-  // next-to-nearest neighbor density-density-density potential strength
-  double SPotential;
+    // nearest neighbor density-density potential strength
+    double UPotential;
+    // second nearest neighbor density-density potential strength
+    double VPotential;
+    // nearest neighbor density-density-density potential strength
+    double WPotential;
+    // next-to-nearest neighbor density-density-density potential strength
+    double SPotential;
 
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
+    // use flat band model
+    bool FlatBand;
 
-  // use flat band model
-  bool FlatBand;
-  
-  // precalculation tables for cosine and sine factors
-  Complex* XPhaseTable;
-  Complex* YPhaseTable;
-  Complex* XHalfPhaseTable;
-  Complex* YHalfPhaseTable;
-  int XPhaseTableShift;
-  int YPhaseTableShift;
+    // precalculation tables for cosine and sine factors
+    Complex* XPhaseTable;
+    Complex* YPhaseTable;
+    Complex* XHalfPhaseTable;
+    Complex* YHalfPhaseTable;
+    int XPhaseTableShift;
+    int YPhaseTableShift;
 
- public:
+public:
 
-  // default constructor
-  //
-  ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian();
+    // default constructor
+    //
+    ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian();
 
-  // constructor
-  //
-  // particles = Hilbert space associated to the system
-  // nbrParticles = number of particles
-  // nbrSiteX = number of sites in the x direction
-  // nbrSiteY = number of sites in the y direction
-  // uPotential = strength of the repulsive two body neareast neighbor interaction
-  // vPotential = strength of the repulsive two body second neareast neighbor interaction
-  // wPotential = strength of the repulsive three body neareast neighbor interaction
-  // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-  // t1 = hoping amplitude between neareast neighbor sites
-  // t2 = hoping amplitude between next neareast neighbor sites
-  // l1 = Rashba coupling between nearest neighbor sites
-  // l2 = Rashba coupling between next nearest neighbor sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
-  // bandIndex = index of the band that has to be partially filled
-  // flatBandFlag = use flat band model
-  // architecture = architecture to use for precalculation
-  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
-									  double uPotential, double vPotential, double wPotential, double sPotential,
-									  double t1, double t2, double l1, double l2, double gammaX, double gammaY, int bandIndex, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+    // constructor
+    //
+    // particles = Hilbert space associated to the system
+    // nbrParticles = number of particles
+    // nbrSiteX = number of sites in the x direction
+    // nbrSiteY = number of sites in the y direction
+    // tightBindingModel = pointer to the tight binding model
+    // uPotential = strength of the repulsive two body neareast neighbor interaction
+    // vPotential = strength of the repulsive two body second neareast neighbor interaction
+    // wPotential = strength of the repulsive three body neareast neighbor interaction
+    // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
+    // bandIndex = index of the band that has to be partially filled
+    // flatBandFlag = use flat band model
+    // architecture = architecture to use for precalculation
+    // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+    ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, 
+            double uPotential, double vPotential, double wPotential, double sPotential, int bandIndex, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
-  // destructor
-  //
-  ~ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian();
-  
+    // destructor
+    //
+    ~ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian();
 
- protected:
- 
-  // evaluate all interaction factors
-  //   
-  virtual void EvaluateInteractionFactors();
 
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
+protected:
 
-  // compute all the phase precalculation arrays 
-  //
-  virtual void ComputePhaseArray();
+    // evaluate all interaction factors
+    //   
+    virtual void EvaluateInteractionFactors();
 
-  // compute the matrix element for the two body interaction between two sites A and B 
-  //
-  // kx2 = annihilation momentum along x for the B site
-  // ky2 = annihilation momentum along y for the B site
-  // kx4 = creation momentum along x for the B site
-  // ky4 = creation momentum along y for the B site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementNNAB(int kx2, int ky2, int kx4, int ky4);
-  
-  // compute the matrix element for the two body interaction between two sites B and C
-  //
-  // kx2 = annihilation momentum along x for the C site
-  // ky2 = annihilation momentum along y for the C site
-  // kx4 = creation momentum along x for the C site
-  // ky4 = creation momentum along y for the C site
-  // return value = corresponding matrix element
-  
-  Complex ComputeTwoBodyMatrixElementNNBC(int kx2, int ky2, int kx4, int ky4);
-  
-  // compute the matrix element for the two body interaction between two sites C and A
-  //
-  // kx2 = annihilation momentum along x for the A site
-  // ky2 = annihilation momentum along y for the A site
-  // kx4 = creation momentum along x for the A site
-  // ky4 = creation momentum along y for the A site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementNNCA(int kx2, int ky2, int kx4, int ky4);
-  
-  // compute the matrix element for the two body interaction between two A sites
-  //
-  // kx2 = annihilation momentum along x for the second site
-  // ky2 = annihilation momentum along y for the second site
-  // kx4 = creation momentum along x for the second site
-  // ky4 = creation momentum along y for the second site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementNNNAB(int kx2, int ky2, int kx4, int ky4);
-  
-  // compute the matrix element for the two body interaction between two B sites
-  //
-  // kx2 = annihilation momentum along x for the second site
-  // ky2 = annihilation momentum along y for the second site
-  // kx4 = creation momentum along x for the second site
-  // ky4 = creation momentum along y for the second site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementNNNBC(int kx2, int ky2, int kx4, int ky4);
-  
-  // compute the matrix element for the two body interaction between two C sites
-  //
-  // kx2 = annihilation momentum along x for the second site
-  // ky2 = annihilation momentum along y for the second site
-  // kx4 = creation momentum along x for the second site
-  // ky4 = creation momentum along y for the second site
-  // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementNNNCA(int kx2, int ky2, int kx4, int ky4);
+    // compute all the phase precalculation arrays 
+    //
+    virtual void ComputePhaseArray();
 
-  // compute the matrix element for the three body interaction between one site A and two sites B 
-  //
-  // kx2 = annihilation momentum along x for the first B site
-  // ky2 = annihilation momentum along y for the first B site
-  // kx3 = annihilation momentum along x for the second B site
-  // ky3 = annihilation momentum along y for the second B site
-  // kx5 = creation momentum along x for the first B site
-  // ky5 = creation momentum along y for the first B site
-  // kx6 = creation momentum along x for the second B site
-  // ky6 = creation momentum along y for the second B site
-  // return value = corresponding matrix element
-  Complex ComputeThreeBodyMatrixElementNNABC(int kx2, int ky2, int kx3, int ky3, int kx5, int ky5, int kx6, int ky6);
+    // compute the matrix element for the two body interaction between two sites A and B 
+    //
+    // kx2 = annihilation momentum along x for the B site
+    // ky2 = annihilation momentum along y for the B site
+    // kx4 = creation momentum along x for the B site
+    // ky4 = creation momentum along y for the B site
+    // return value = corresponding matrix element
+    Complex ComputeTwoBodyMatrixElementNNAB(int kx2, int ky2, int kx4, int ky4);
+
+    // compute the matrix element for the two body interaction between two sites B and C
+    //
+    // kx2 = annihilation momentum along x for the C site
+    // ky2 = annihilation momentum along y for the C site
+    // kx4 = creation momentum along x for the C site
+    // ky4 = creation momentum along y for the C site
+    // return value = corresponding matrix element
+
+    Complex ComputeTwoBodyMatrixElementNNBC(int kx2, int ky2, int kx4, int ky4);
+
+    // compute the matrix element for the two body interaction between two sites C and A
+    //
+    // kx2 = annihilation momentum along x for the A site
+    // ky2 = annihilation momentum along y for the A site
+    // kx4 = creation momentum along x for the A site
+    // ky4 = creation momentum along y for the A site
+    // return value = corresponding matrix element
+    Complex ComputeTwoBodyMatrixElementNNCA(int kx2, int ky2, int kx4, int ky4);
+
+    // compute the matrix element for the two body interaction between two A sites
+    //
+    // kx2 = annihilation momentum along x for the second site
+    // ky2 = annihilation momentum along y for the second site
+    // kx4 = creation momentum along x for the second site
+    // ky4 = creation momentum along y for the second site
+    // return value = corresponding matrix element
+    Complex ComputeTwoBodyMatrixElementNNNAB(int kx2, int ky2, int kx4, int ky4);
+
+    // compute the matrix element for the two body interaction between two B sites
+    //
+    // kx2 = annihilation momentum along x for the second site
+    // ky2 = annihilation momentum along y for the second site
+    // kx4 = creation momentum along x for the second site
+    // ky4 = creation momentum along y for the second site
+    // return value = corresponding matrix element
+    Complex ComputeTwoBodyMatrixElementNNNBC(int kx2, int ky2, int kx4, int ky4);
+
+    // compute the matrix element for the two body interaction between two C sites
+    //
+    // kx2 = annihilation momentum along x for the second site
+    // ky2 = annihilation momentum along y for the second site
+    // kx4 = creation momentum along x for the second site
+    // ky4 = creation momentum along y for the second site
+    // return value = corresponding matrix element
+    Complex ComputeTwoBodyMatrixElementNNNCA(int kx2, int ky2, int kx4, int ky4);
+
+    // compute the matrix element for the three body interaction between one site A and two sites B 
+    //
+    // kx2 = annihilation momentum along x for the first B site
+    // ky2 = annihilation momentum along y for the first B site
+    // kx3 = annihilation momentum along x for the second B site
+    // ky3 = annihilation momentum along y for the second B site
+    // kx5 = creation momentum along x for the first B site
+    // ky5 = creation momentum along y for the first B site
+    // kx6 = creation momentum along x for the second B site
+    // ky6 = creation momentum along y for the second B site
+    // return value = corresponding matrix element
+    Complex ComputeThreeBodyMatrixElementNNABC(int kx2, int ky2, int kx3, int ky3, int kx5, int ky5, int kx6, int ky6);
 };
 
 #endif

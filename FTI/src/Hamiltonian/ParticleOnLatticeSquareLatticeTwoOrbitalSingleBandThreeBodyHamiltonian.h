@@ -51,15 +51,7 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian : p
 {
 
  protected:
-  
-  // imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-  double NNHoppingInterX;
-  // the inter-orbital hopping amplitude between nearest neighbors along the y direction
-  double NNHoppingInterY;
-  // the intra-orbital hopping amplitude between nearest neighbors
-  double NNHoppingIntra;
-  // four times the sublattice staggered chemical potential 
-  double MuS;
+
   // nearest neighbor density-density potential strength
   double UPotential;
   // second nearest neighbor density-density potential strength
@@ -68,10 +60,6 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian : p
   double WPotential;
   // next-to-nearest neighbor density-density-density potential strength
   double SPotential;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
 
   // use flat band model
   bool FlatBand;
@@ -96,22 +84,16 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian : p
   // nbrParticles = number of particles
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
+  // tightBindingModel = pointer to the tight binding model
   // uPotential = strength of the repulsive two body nearest neighbor interaction
   // vPotential = strength of the repulsive two body next nearest neighbor interaction
   // wPotential = strength of the repulsive three body neareast neighbor interaction
   // sPotential = strength of the repulsive three body next-to-nearest neighbor interaction
-  // t1 = imag part of the inter-orbital hopping amplitude between nearest neighbors along the x direction
-  // t2 = the inter-orbital hopping amplitude between nearest neighbors along the y direction
-  // t3 = the intra-orbital hopping amplitude between nearest neighbors
-  // mus = sublattice chemical potential on A sites
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
-          double uPotential, double vPotential, double wPotential, double sPotential,
-          double t1, double t2, double t3, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, 
+          double uPotential, double vPotential, double wPotential, double sPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -123,11 +105,6 @@ class ParticleOnLatticeSquareLatticeTwoOrbitalSingleBandThreeBodyHamiltonian : p
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
-
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
 
   // compute all the phase precalculation arrays 
   //
