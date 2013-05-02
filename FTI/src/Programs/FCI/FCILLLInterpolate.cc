@@ -3,8 +3,16 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
-#include "Hamiltonian/ParticleOnLatticeChernInsulatorSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeAlternativeKagomeLatticeLLLInterpolateSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeChern3TwoOrbitalTriangularLatticeLLLInterpolateSingleBandHamiltonian.h"
+
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
+#include "Tools/FTITightBinding/TightBindingModelHaldaneHoneycombLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelRubyLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelTwoOrbitalSquareLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelPyrochloreSlabLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelChern3TwoOrbitalTriangularLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 #include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h"
@@ -54,18 +62,18 @@ int main(int argc, char** argv)
     Manager += ToolsGroup;
     Manager += MiscGroup;
 
-    (*SystemGroup) += new SingleIntegerOption('p', "nbr-particles", "number of particles", 3);
-    (*SystemGroup) += new SingleIntegerOption('x', "nbr-sitex", "number of sites along the x direction", 3);
-    (*SystemGroup) += new SingleIntegerOption('y', "nbr-sitey", "number of sites along the y direction", 5);
-    (*SystemGroup) += new SingleIntegerOption('c', "nbr-color", "number of colors", 2);
-    (*SystemGroup) += new SingleDoubleOption('\n', "angle", "angle between the two fundamental cycles of the torus divided by Pi", 0.5);
+    (*SystemGroup) += new SingleIntegerOption('p', "nbr-particles", "number of particles", 8);
+    (*SystemGroup) += new SingleIntegerOption('x', "nbr-sitex", "number of sites along the x direction", 6);
+    (*SystemGroup) += new SingleIntegerOption('y', "nbr-sitey", "number of sites along the y direction", 4);
+    (*SystemGroup) += new SingleDoubleOption('\n', "interpolate", "interpolation parameter", 0.5);
+    (*SystemGroup) += new SingleStringOption('\n', "model", "model name", "kagome");
+    (*SystemGroup) += new SingleDoubleOption('\n', "angle", "angle between the two fundamental cycles of the torus divided by Pi. set to lattice model value if negative", -1);
     (*SystemGroup) += new SingleDoubleOption('\n', "ratio", "aspect ratio Lx / Ly of the torus. set to Nx / Ny if negative", -1);
-    (*SystemGroup) += new SingleDoubleOption('\n', "gamma-x", "color-entangled LLL boundary condition twisting angle along x", 0.0);
-    (*SystemGroup) += new SingleDoubleOption('\n', "gamma-y", "color-entangled LLL boundary condition twisting angle along y", 0.0);
     (*SystemGroup) += new SingleIntegerOption('\n', "only-kx", "constraint on the total momentum in the x direction (negative if none)", -1);
     (*SystemGroup) += new SingleIntegerOption('\n', "only-ky", "constraint on the total momentum in the y direction (negative if none)", -1);
     (*SystemGroup) += new BooleanOption('\n', "inversion", "use inversion symmetry to reduce calculation");
     (*SystemGroup) += new BooleanOption('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+    (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 1.0);
     (*SystemGroup) += new SingleStringOption('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
     (*SystemGroup) += new SingleStringOption('\n', "eigenvalue-file", "filename for eigenvalues output");
     (*SystemGroup) += new SingleStringOption('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
@@ -93,16 +101,35 @@ int main(int argc, char** argv)
 
 
     int NbrParticles = Manager.GetInteger("nbr-particles");
-    int NbrColor = Manager.GetInteger("nbr-color");
     int NbrSiteX = Manager.GetInteger("nbr-sitex");
     int NbrSiteY = Manager.GetInteger("nbr-sitey");
+
+    Abstract2DTightBindingModel* TB;
+    if (!strcmp(Manager.GetString("model"), "kagome"))
+        TB = new TightBindingModelAlternativeKagomeLattice(NbrSiteX, NbrSiteY, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, Architecture.GetArchitecture());
+    else if (!strcmp(Manager.GetString("model"), "haldane"))
+        TB = new TightBindingModelHaldaneHoneycombLattice(NbrSiteX, NbrSiteY, 1.0, 1.0, 0.13, 0.0, 0.0, 0.0, Architecture.GetArchitecture());
+    else if (!strcmp(Manager.GetString("model"), "ruby"))
+        TB = new TightBindingModelRubyLattice(NbrSiteX, NbrSiteY, 1.0, 1.2, -1.2, 2.6, -1.2, 0.0, 0.0, 0.0, Architecture.GetArchitecture());
+    else if (!strcmp(Manager.GetString("model"), "square"))
+        TB = new TightBindingModelTwoOrbitalSquareLattice(NbrSiteX, NbrSiteY, 1.0, 1.0, 1.0, 1, 2.0, 0.0, 0.0, Architecture.GetArchitecture());
+    else if (!strcmp(Manager.GetString("model"), "pyrochlore2"))
+        TB = new TightBindingModelPyrochloreSlabLattice(NbrSiteX, NbrSiteY, 2, 1.0, 0.0, 0.83, 0.0, -1.03, 0.0, 0.0, 0.0, Architecture.GetArchitecture());
+    else if (!strcmp(Manager.GetString("model"), "triangle2"))
+        TB = new TightBindingModelChern3TwoOrbitalTriangularLattice(NbrSiteX, NbrSiteY, 1.0, 0.28, -0.22, 0.0, 0.0, 0.0, Architecture.GetArchitecture());
+    else
+    {
+        cout << "please provide a VALID model name" << endl;
+        return -1;
+    }
+
     double TwistAngle = M_PI * Manager.GetDouble("angle");
+    if (TwistAngle < 0)
+        TwistAngle = TB->GetTwistAngle();
+
     double AspectRatio = Manager.GetDouble("ratio");
     if (AspectRatio < 0)
         AspectRatio = ((double) NbrSiteX) / NbrSiteY;
-
-    double LLLGammaX = Manager.GetDouble("gamma-x");
-    double LLLGammaY = Manager.GetDouble("gamma-y");
 
     char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
     char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
@@ -151,7 +178,8 @@ int main(int argc, char** argv)
     else
         sprintf(StatisticPrefix, "fermions");
     char* FilePrefix = new char[256];
-    sprintf(FilePrefix, "%s_torusbloch_n_%d_x_%d_y_%d_c_%d_angle_%f", StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY, NbrColor, Manager.GetDouble("angle"));
+    sprintf(FilePrefix, "%s_%s-LLL_n_%d_x_%d_y_%d_u_%f_angle_%f_interpolate_%f", StatisticPrefix, Manager.GetString("model"),
+            NbrParticles, NbrSiteX, NbrSiteY, Manager.GetDouble("u-potential"), TwistAngle, Manager.GetDouble("interpolate"));
 
     char* CommentLine = new char[256];
     sprintf (CommentLine, "eigenvalues\n# kx ky ");
@@ -161,7 +189,6 @@ int main(int argc, char** argv)
     else
         sprintf(EigenvalueOutputFile, "%s.dat", FilePrefix);
 
-    TightBindingModelTwoOrbitalSquareLattice TightBindingModel(NbrSiteX, NbrSiteY, 1.0, 1.0, 1.0, 1, 0.0, 0.0, 0.0, Architecture.GetArchitecture());
 
     int MinKx = 0;
     int MaxKx = NbrSiteX - 1;
@@ -182,8 +209,8 @@ int main(int argc, char** argv)
     {
         for (int j = MinKy; j <= MaxKy; ++j)
         {
-            int k = TightBindingModel.GetLinearizedMomentumIndexSafe(i, j);
-            int m = TightBindingModel.GetLinearizedMomentumIndexSafe(-i, -j);
+            int k = TB->GetLinearizedMomentumIndexSafe(i, j);
+            int m = TB->GetLinearizedMomentumIndexSafe(-i, -j);
             if (Manager.GetBoolean("inversion") && (k > m))
                 continue;
 
@@ -205,9 +232,23 @@ int main(int argc, char** argv)
                 Memory = Architecture.GetArchitecture()->GetLocalMemory();
             Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
-            AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeChernInsulatorSingleBandHamiltonian(Space,
-                    NbrParticles, NbrSiteX, NbrSiteY, &TightBindingModel, NbrColor, TwistAngle, AspectRatio, LLLGammaX, LLLGammaY, NbrPseudoPotentials, PseudoPotentials,
-                    Architecture.GetArchitecture(), Memory);
+            AbstractQHEHamiltonian* Hamiltonian;
+
+            if (!strcmp(Manager.GetString("model"), "kagome"))
+                Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeLLLInterpolateSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, TB, 
+                        Manager.GetDouble("u-potential"), 0.0, 0, true,
+                        Manager.GetDouble("interpolate"), TwistAngle, AspectRatio, NbrPseudoPotentials, PseudoPotentials,
+                        Architecture.GetArchitecture(), Memory);
+            else if (!strcmp(Manager.GetString("model"), "triangle2"))
+                Hamiltonian = new ParticleOnLatticeChern3TwoOrbitalTriangularLatticeLLLInterpolateSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, TB, 
+                        Manager.GetDouble("u-potential"), true,
+                        Manager.GetDouble("interpolate"), TwistAngle, AspectRatio, NbrPseudoPotentials, PseudoPotentials,
+                        Architecture.GetArchitecture(), Memory);
+            else
+            {
+                cout << "please provide a VALID model name for Hamiltonian" << endl;
+                return -1;
+            }
 
             if (Manager.GetBoolean("shift"))
                 Hamiltonian->ShiftHamiltonian(1.0);
@@ -239,4 +280,5 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
 

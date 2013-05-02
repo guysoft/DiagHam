@@ -75,19 +75,18 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
 // nbrSiteX = number of sites in the x direction
 // nbrSiteY = number of sites in the y direction
 // tightBindingModel = pointer to the tight binding model
-// interpolationToFQH = the interpolation parameter lambda between FQH and FCI, as in H = lambda * H_FQH + (1 - lambda) * H_FCI
 // nbrColor = dimension of the internal (color) space. this should be equal to the Chern number of the occupid band
 // twistAngle = angle between the two fundamental cycles of the torus in Radians
 // aspectRatio = aspect ratio of torus, Lx / Ly
 // lLLGammaX = color-entangled LLL boundary condition twisting angle along x
 // lLLGammaY = color-entangled LLL boundary condition twisting angle along y
-// pseudoPotentials = array of the pseudo-potentials
 // nbrPseudopotentials = array of the number of pseudo-potentials
+// pseudoPotentials = array of the pseudo-potentials
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsulatorSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,
-        double interpolationToFQH, int nbrColor, double twistAngle, double aspectRatio, double lLLGammaX, double lLLGammaY, int nbrPseudopotentials, double* pseudoPotentials,
+        int nbrColor, double twistAngle, double aspectRatio, double lLLGammaX, double lLLGammaY, int nbrPseudopotentials, double* pseudoPotentials,
         AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -100,8 +99,7 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
   this->HamiltonianShift = 0.0;
   this->TightBindingModel = tightBindingModel;
 
-  this->InterpolationToFQH = interpolationToFQH;
-  this->NbrColor = nbrColor;
+  this->NbrColor = nbrColor; // specified externally (ignore the FCI content in this class)
   this->TwistAngle = twistAngle;
   this->LLLGammaX = lLLGammaX;
   this->LLLGammaY = lLLGammaY;
@@ -135,10 +133,9 @@ ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ParticleOnLatticeChernInsu
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
 
-  if (this->InterpolationToFQH != 1.0)
-      this->EvaluateInteractionFactors();
-  if (this->InterpolationToFQH != 0.0)
-      this->EvaluateFQHInteractionFactors();
+  // instance of this class is supposed to be used for colorful LLL calculations. NOT FCI-FQH interpolations
+  this->InterpolationToFQH = 1.0;
+  this->EvaluateFQHInteractionFactors();
 
   this->HermitianSymmetryFlag = true;
   if (memory > 0)
@@ -328,6 +325,41 @@ void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::EvaluateInteractionFa
 
 void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
 {
+}
+
+// perform gauge transform to the LLL gauge
+//
+
+void ParticleOnLatticeChernInsulatorSingleBandHamiltonian::TransformToLLLGauge(ComplexMatrix& gauge, double gammaX, double gammaY)
+{
+    double NbrFlux = ((double)(this->NbrSiteX * this->NbrSiteY)) / this->NbrColor; // not necessarily an integer!
+    for (int i = 0; i < this->NbrSectorSums; ++i)
+    {
+        int Index = 0;
+        for (int j1 = 0; j1 < this->NbrSectorIndicesPerSum[i]; ++j1)
+        {
+            int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
+            int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
+            int kx1, ky1, kx2, ky2;
+            this->TightBindingModel->GetLinearizedMomentumIndexSafe(Index1, kx1, ky1);
+            this->TightBindingModel->GetLinearizedMomentumIndexSafe(Index2, kx2, ky2);
+            for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
+            {
+                int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
+                int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
+                int kx3, ky3, kx4, ky4;
+                this->TightBindingModel->GetLinearizedMomentumIndexSafe(Index3, kx3, ky3);
+                this->TightBindingModel->GetLinearizedMomentumIndexSafe(Index4, kx4, ky4);
+
+                // InteractionFactor = coefficient to  A+_3 A_1 A+_4 A_2
+                this->InteractionFactors[i][Index] /= gauge[ky3][kx3] * Phase(- 2 * M_PI * ky3 * gammaX / NbrFlux);
+                this->InteractionFactors[i][Index] /= gauge[ky4][kx4] * Phase(- 2 * M_PI * ky4 * gammaX / NbrFlux);
+                this->InteractionFactors[i][Index] *= gauge[ky1][kx1] * Phase(- 2 * M_PI * ky1 * gammaX / NbrFlux);
+                this->InteractionFactors[i][Index] *= gauge[ky2][kx2] * Phase(- 2 * M_PI * ky2 * gammaX / NbrFlux);
+                ++Index;
+            }
+        }
+    }
 }
 
 // evaluate all FQH interaction factors

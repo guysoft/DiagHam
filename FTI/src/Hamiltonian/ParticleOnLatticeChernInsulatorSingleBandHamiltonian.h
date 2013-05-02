@@ -65,6 +65,9 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLa
   // number of sites in the y direction
   int NbrSiteY;
 
+  // index of the band that has to be partially filled
+  int BandIndex;
+
   // the interpolation parameter lambda between FQH and FCI, as in H = lambda * H_FQH + (1 - lambda) * H_FCI
   double InterpolationToFQH;
   // dimension of the internal (color) space. this should be equal to the Chern number of the occupid band
@@ -103,18 +106,18 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLa
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // tightBindingModel = pointer to the tight binding model
-  // interpolationToFQH = the interpolation parameter lambda between FQH and FCI, as in H = lambda * H_FQH + (1 - lambda) * H_FCI
   // nbrColor = dimension of the internal (color) space. this should be equal to the Chern number of the occupid band
   // twistAngle = angle between the two fundamental cycles of the torus in Radians
   // aspectRatio = aspect ratio of torus, Lx / Ly
   // lLLGammaX = color-entangled LLL boundary condition twisting angle along x
   // lLLGammaY = color-entangled LLL boundary condition twisting angle along y
-  // pseudoPotentials = array of the pseudo-potentials
   // nbrPseudopotentials = array of the number of pseudo-potentials
+  // pseudoPotentials = array of the pseudo-potentials
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeChernInsulatorSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,
-          double interpolationToFQH, int nbrColor, double twistAngle, double aspectRatio, double lLLGammaX, double lLLGammaY, int nbrPseudopotentials, double* pseudoPotentials, AbstractArchitecture* architecture, long memory = -1);
+          int nbrColor, double twistAngle, double aspectRatio, double lLLGammaX, double lLLGammaY, int nbrPseudopotentials, double* pseudoPotentials,
+          AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -131,6 +134,10 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLa
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
+
+  // perform gauge transform to the LLL gauge
+  //
+  void TransformToLLLGauge(ComplexMatrix& gauge, double gammaX, double gammaY);
 
   // evaluate all FQH interaction factors
   //
