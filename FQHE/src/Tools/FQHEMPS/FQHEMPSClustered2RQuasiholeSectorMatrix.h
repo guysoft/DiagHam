@@ -120,7 +120,7 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   //
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
   // architecture = architecture to use for precalculation
-  virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
+  virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
 
  protected:
 

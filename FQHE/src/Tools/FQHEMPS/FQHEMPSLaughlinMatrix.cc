@@ -148,7 +148,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   this->NLastValuePerPLevel = new int [this->PLevel + 1];
   this->TotalStartingIndexPerPLevel[0] = 0;
   this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
-  int NValueShift = this->NbrNValue - 1;
+  int NValueShift = this->PLevel;
   for (int i = 0; i <= this->PLevel; ++i)
     {
       this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
@@ -184,9 +184,12 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	    {
 	      double Tmp = 1.0;
 	      if (this->CylinderFlag)
+// symmetric normalization
+// 		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
+// 							 + ((j - 1.0 - NValueShift) * (j - 1.0 - NValueShift) / (4.0 * (double) this->LaughlinIndex))
+// 							 + (((j - NValueShift) * (j - NValueShift)) / (4.0 * (double) this->LaughlinIndex))));
 		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-							 + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) / (4.0 * this->LaughlinIndex))
-							 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) / (4.0 * this->LaughlinIndex))));
+							 + (((j - NValueShift) * (j - NValueShift)) / (2.0 * (double) this->LaughlinIndex))));
 	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(j - 1 - this->NInitialValuePerPLevel[i], k, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i]),
 					    this->GetMatrixIndex(j - this->NInitialValuePerPLevel[i], k, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i]), Tmp);
 	    }
@@ -208,7 +211,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	  for (int j = 0; j <= this->PLevel; ++j)
 	    {
 	      BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	      int N2 = (2 * (j - i) - this->LaughlinIndex + 1 + NValueShift) / 2;
+	      int N2 = (j - i) + NValueShift;
 	      int N1 = N2 + (this->LaughlinIndex - 1);
   	      if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
   		  && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
@@ -232,7 +235,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	  for (int j = 0; j <= this->PLevel; ++j)
 	    {
 	      BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	      int N2 = (2 * (j - i) - this->LaughlinIndex + 1 + NValueShift) / 2;
+	      int N2 = (j - i) + NValueShift;
 	      int N1 = N2 + (this->LaughlinIndex - 1);
   	      if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
   		  && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
@@ -245,9 +248,12 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 			  TmpSpace2->GetOccupationNumber(k2, Partition2);
 			  double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex * m * m, 1, Partition1, Partition2, i, j, Coef);
 			  if (this->CylinderFlag)
-			    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
-									   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift)  / (2.0 * this->LaughlinIndex))
-									   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift))  / (2.0 * this->LaughlinIndex))));
+// symmetric normalization
+// 			    Tmp *= exp(-this->Kappa * this->Kappa * (( 0.5 *  ((double) (i + j)))
+// 								     + ((N1 - NValueShift) * (N1 - NValueShift)  / (4.0 * (double) this->LaughlinIndex))
+// 								     + (((N2 - NValueShift) * (N2 - NValueShift))  / (4.0 * (double) this->LaughlinIndex))));
+			    Tmp *= exp(-this->Kappa * this->Kappa * (((double) j)
+								     + (((N2 - NValueShift) * (N2 - NValueShift))  / (2.0 * (double) this->LaughlinIndex))));
 			  BMatrices[m].SetMatrixElement(this->GetMatrixIndex(N1 - this->NInitialValuePerPLevel[i], k1, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i]), 
 					 		this->GetMatrixIndex(N2 - this->NInitialValuePerPLevel[j], k2, this->NbrNValuesPerPLevel[j], this->TotalStartingIndexPerPLevel[j]), Tmp);
 			}

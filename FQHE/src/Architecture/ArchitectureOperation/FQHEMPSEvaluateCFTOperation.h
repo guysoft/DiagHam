@@ -142,7 +142,7 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel, int rightLevel,
 			      const LongRational& centralCharge12, const LongRational& weightLeft, const LongRational& weightRight, const LongRational& weightMatrixElement,
 			      LongRationalMatrix** previousMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
-			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
   
   // constructor to compute the CFT overlap matrix
   //
@@ -158,7 +158,7 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
 			      const LongRational& centralCharge12, const LongRational& weightLeft,
 			      LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
-			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
 
   // constructor to compute the CFT matrix elements, using double instead of rational numbers
   //
@@ -179,7 +179,7 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 			      double centralCharge12, double weightLeft, 
 			      double weightRight, double weightMatrixElement,
 			      RealMatrix** previousRationalMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
-			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
 
   // constructor to compute the CFT overlap matrix, using double instead of rational numbers
   //
@@ -195,7 +195,7 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
 			      double centralCharge12, double weightLeft,
 			      RealSymmetricMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
-			      int nbrMPIStage = 100, int nbrSMPStage = 100);
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
 
   // copy constructor 
   //

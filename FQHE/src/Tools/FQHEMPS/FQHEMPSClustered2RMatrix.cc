@@ -420,8 +420,12 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	Error = 1e-14;
       int Count  = 0;
       for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	if (fabs(TmpDiag(n, n)) < Error)
-	  ++Count;
+	{
+	  cout << fabs(TmpDiag(n, n)) << " ";
+	  if (fabs(TmpDiag(n, n)) < Error)
+	    ++Count;
+	}
+      cout << endl;
       cout << "nbr of null vectors identity sector = " << Count << " (" << (U1BosonBasis[i]->GetHilbertSpaceDimension() - Count) << " non null vectors)" << endl;
       if (Count < U1BosonBasis[i]->GetHilbertSpaceDimension())
 	{
