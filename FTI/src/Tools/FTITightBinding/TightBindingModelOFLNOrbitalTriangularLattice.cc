@@ -117,8 +117,6 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 	      K1 = this->KxFactor*(((double) kx) + this->GammaX);
 	      K2 = this->KyFactor*(((double) ky) + this->GammaY);
 	      
-	      // construct magnetic unit cell:
-	      
 	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
 	      cout<<"this->NbrBands"<<this->NbrBands<<endl;
 	      for (int p = 0; p< this->NbrStep ; p++)
@@ -192,12 +190,8 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
 		}
 	    }
-		  
-	  
 	}
     }
-  
-  
 }
 
 
@@ -233,3 +227,5 @@ bool TightBindingModelOFLNOrbitalTriangularLattice::WriteAsciiSpectrum(char* fil
   File.close();
   return true;
 }
+
+

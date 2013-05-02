@@ -30,15 +30,25 @@
 
 #include "config.h"
 #include "Tools/FTITightBinding/AbstractTightBindingModel.h"
+#include "Architecture/ArchitectureOperation/FTIComputeBandStructureOperation.cc"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/OrderedList.h"
-
+#include <sys/time.h>
 #include <fstream>
 
 
 using std::ofstream;
 using std::ios;
 using std::endl;
+
+
+// default constructor
+//
+
+AbstractTightBindingModel::AbstractTightBindingModel()
+{
+  this->Architecture = 0;
+}
 
 
 // destructor
@@ -371,7 +381,14 @@ bool AbstractTightBindingModel::WriteBandStructureASCII(char* fileName)
 
 void AbstractTightBindingModel::ComputeBandStructure()
 {
-  this->CoreComputeBandStructure(0l, 0l);
-  cout <<"bla bla "<<endl;
+  timeval TotalStartingTime;
+  gettimeofday (&TotalStartingTime, 0);
+  FTIComputeBandStructureOperation Operation (this);
+  Operation.ApplyOperation(this->Architecture);
+  timeval TotalEndingTime;
+  gettimeofday (&TotalEndingTime, 0);
+  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
+		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+  cout << "One-body diagonalization done in " << Dt << " s" << endl;
 }
 

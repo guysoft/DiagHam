@@ -46,7 +46,6 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   double LaserStrength;
   double InvMomentum;
 
-  
 
  public:
 
@@ -87,8 +86,6 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex = 0l, long nbrStates= 0l);
-  
- 
   
 };
 

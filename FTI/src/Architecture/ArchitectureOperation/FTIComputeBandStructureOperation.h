@@ -45,11 +45,6 @@ class FTIComputeBandStructureOperation: public AbstractPrecalculationOperation
   // pointer to the tight binding model
   AbstractTightBindingModel* TightBindingModel;
 
-  // a temporary array to store copies of operations in SMP mode
-  FTIComputeBandStructureOperation** LocalOperations;
-  // number of operation copies
-  int NbrLocalOperations;
-
  public:
   
   // constructor 
@@ -70,12 +65,13 @@ class FTIComputeBandStructureOperation: public AbstractPrecalculationOperation
   //
   // return value = pointer to cloned operation
   AbstractArchitectureOperation* Clone();
-  
+
   // get hilbert space dimension
   // 
   // return value = hilbert space dimension  
-  virtual int GetHilbertSpaceDimension ();
+  virtual int GetHilbertSpaceDimension();
 
+  
  protected:
 
   // apply operation for SMP architecture
@@ -105,5 +101,7 @@ int FTIComputeBandStructureOperation::GetHilbertSpaceDimension ()
 {
   return this->TightBindingModel->GetNbrStatePerBand();
 }
+
+
 
 #endif

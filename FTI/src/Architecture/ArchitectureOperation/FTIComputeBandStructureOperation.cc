@@ -46,8 +46,6 @@ FTIComputeBandStructureOperation::FTIComputeBandStructureOperation (AbstractTigh
   this->NbrComponent = this->TightBindingModel->GetNbrStatePerBand();
   this->LargeFirstComponent = 0l;
   this->LargeNbrComponent = this->TightBindingModel->GetNbrStatePerBand();
-  this->LocalOperations = 0;
-  this->NbrLocalOperations = 0;
 }
 
 // copy constructor 
@@ -57,8 +55,7 @@ FTIComputeBandStructureOperation::FTIComputeBandStructureOperation (AbstractTigh
 FTIComputeBandStructureOperation::FTIComputeBandStructureOperation(const FTIComputeBandStructureOperation& operation)
 {
   this->OperationType = AbstractArchitectureOperation::FTIComputeBandStructureOperation;
-  this->LocalOperations = 0;
-  this->NbrLocalOperations = 0;
+  this->TightBindingModel= operation.TightBindingModel;
 }
   
 // destructor
@@ -66,14 +63,6 @@ FTIComputeBandStructureOperation::FTIComputeBandStructureOperation(const FTIComp
 
 FTIComputeBandStructureOperation::~FTIComputeBandStructureOperation()
 {
-  if (this->LocalOperations != 0)
-    {
-      for (int i = 0; i < this->NbrLocalOperations; ++i)
-	{
-	  delete this->LocalOperations[i];
-	}
-      delete[] this->LocalOperations;
-    }
 }
   
 // clone operation
@@ -92,7 +81,9 @@ AbstractArchitectureOperation* FTIComputeBandStructureOperation::Clone()
 bool FTIComputeBandStructureOperation::RawApplyOperation()
 {
   if (this->LargeNbrComponent > 0l)
-    this->TightBindingModel->CoreComputeBandStructure(this->LargeFirstComponent, this->LargeNbrComponent);
+    {
+      this->TightBindingModel->CoreComputeBandStructure(this->LargeFirstComponent, this->LargeNbrComponent);
+    }
   return true;
 }
 
@@ -104,13 +95,39 @@ bool FTIComputeBandStructureOperation::RawApplyOperation()
 
 bool FTIComputeBandStructureOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  long Step = this->LargeNbrComponent / ((long) architecture->GetNbrThreads());
-  if (Step == 0l)
+  long TmpNbrThreads = ((long) architecture->GetNbrThreads());
+  if(this->LargeNbrComponent < TmpNbrThreads)
+    TmpNbrThreads = this->LargeNbrComponent;
+  long Step = this->LargeNbrComponent / ((long) TmpNbrThreads);
+  FTIComputeBandStructureOperation** TmpOperations = new FTIComputeBandStructureOperation * [architecture->GetNbrThreads()];
+  long DecTmpNbrThreads = TmpNbrThreads -1;
+  for (int i = 0; i < DecTmpNbrThreads ; i++)
     {
+      TmpOperations[i] = (FTIComputeBandStructureOperation *) this->Clone();
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      TmpOperations[i]->SetIndicesRange(i*Step,Step);
     }
-  else
+  TmpOperations[DecTmpNbrThreads] = (FTIComputeBandStructureOperation *) this->Clone();
+  architecture->SetThreadOperation(TmpOperations[DecTmpNbrThreads], DecTmpNbrThreads);
+  TmpOperations[DecTmpNbrThreads]->SetIndicesRange(DecTmpNbrThreads*Step,this->LargeNbrComponent-DecTmpNbrThreads*Step);
+  
+  for (int i = TmpNbrThreads; i< architecture->GetNbrThreads(); i++)
     {
+      TmpOperations[i] = (FTIComputeBandStructureOperation *) this->Clone();
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      TmpOperations[i]->SetIndicesRange(i*Step,0l); 
     }
+  
+  architecture->SendJobs();
+  
+  for (int i = 0; i <  architecture->GetNbrThreads() ; ++i)
+    delete TmpOperations[i];
+  delete[] TmpOperations;
+  
   return true;
 }
   
+bool FTIComputeBandStructureOperation::ArchitectureDependentApplyOperation(SimpleMPIArchitecture* architecture)
+{
+  return this->RawApplyOperation();
+}

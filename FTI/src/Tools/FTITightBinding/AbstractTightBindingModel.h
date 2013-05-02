@@ -45,7 +45,7 @@ using std::ostream;
 class AbstractTightBindingModel
 {
 
-  friend class FTIComputeBandStructureOperation;
+ friend class FTIComputeBandStructureOperation;
 
  protected:
 
@@ -59,6 +59,10 @@ class AbstractTightBindingModel
   AbstractArchitecture* Architecture;
 
  public:
+
+  // default constructor
+  //
+  AbstractTightBindingModel();
 
   // destructor
   //
