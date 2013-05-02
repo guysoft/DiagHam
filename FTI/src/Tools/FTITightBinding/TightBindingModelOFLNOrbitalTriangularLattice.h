@@ -46,6 +46,8 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   double LaserStrength;
   double InvMomentum;
 
+  int ChernNumber;
+
 
  public:
 
@@ -61,7 +63,7 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelOFLNOrbitalTriangularLattice(double laserStrength, int nbrInternalDegree, int nbrSiteX,  int nbrSiteY, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices = true);
+  TightBindingModelOFLNOrbitalTriangularLattice(double laserStrength, int nbrInternalDegree, int nbrSiteX,  int nbrSiteY, int chernNumber, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices = true);
 
   // destructor
   //

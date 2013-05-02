@@ -219,9 +219,10 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 	      {
 		int Index1 = (kx1 * this->NbrSiteY) + ky1;
 		int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		//if (Index1 <= Index2)
-		++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
+		if (Index1 <= Index2)
+		  ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
 	      }
+      
       this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -239,13 +240,13 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 	      {
 		int Index1 = (kx1 * this->NbrSiteY) + ky1;
 		int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		//if (Index1 <= Index2)
-		//  {
+		if (Index1 <= Index2)
+		  {
 		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
 		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
-		    // }
+		  }
 	      }
       double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       if (this->FlatBand == false)
@@ -342,17 +343,19 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 			  int TmpIndex2 =  TmpNx *  this->NbrReciprocalVectors + TmpNy;
 
 			  this->InteractionFactors[i][Index] +=  FactorU * TmpCalculationTable[Index1][Index4][TmpIndex] * TmpCalculationTable[Index2][Index3][TmpIndex2];
+			  this->InteractionFactors[i][Index] +=  FactorU * TmpCalculationTable[Index2][Index4][TmpIndex] * TmpCalculationTable[Index1][Index3][TmpIndex2];
 
+			  this->InteractionFactors[i][Index] +=  FactorU * TmpCalculationTable[Index1][Index3][TmpIndex] * TmpCalculationTable[Index2][Index4][TmpIndex2];
+			  this->InteractionFactors[i][Index] +=  FactorU * TmpCalculationTable[Index2][Index3][TmpIndex] * TmpCalculationTable[Index1][Index4][TmpIndex2];
 			}
 		    }
 
-		    /*
+		    
 		    if (Index3 == Index4)
 		      this->InteractionFactors[i][Index] *= 0.5;
 		    if (Index1 == Index2)
 		      this->InteractionFactors[i][Index] *= 0.5;
-		    this->InteractionFactors[i][Index] *= 2.0;
-		    */
+
 		    TotalNbrInteractionFactors++;
 		    ++Index;
 		}

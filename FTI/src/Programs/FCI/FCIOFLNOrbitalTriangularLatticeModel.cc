@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('c', "chernnumber", "chern number", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
@@ -106,7 +107,8 @@ int main(int argc, char** argv)
     
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
-  int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+  int NbrSitesY = Manager.GetInteger("nbr-sitey");
+  int ChernNumber = Manager.GetInteger("chernnumber");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int BandIndex = 0;
   double LaserStrength = Manager.GetDouble("laser");
@@ -127,16 +129,16 @@ int main(int argc, char** argv)
       { 
 	if (Manager.GetBoolean("four-body") == false)
 	  { 
-	    sprintf (FilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
 	  }
 	else
 	  {
-	    sprintf (FilePrefix, "%s_singleband_fourbody_oflnorbitaltriangularlattice_s_%ld_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_singleband_fourbody_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), ChernNumber, Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
 	  }
 	}
     else
       {
-	sprintf (FilePrefix, "%s_singleband_threebody_oflnorbitaltriangularlattice_s_%ld_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
+	sprintf (FilePrefix, "%s_singleband_threebody_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), ChernNumber, Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
       }
     
     char* CommentLine = new char [256];
@@ -171,7 +173,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
 	ExportOneBody = true;
       
-      TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
+      TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
 								      Manager.GetInteger("cutOFF"),ExportOneBody);
       
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      
@@ -219,7 +221,7 @@ int main(int argc, char** argv)
     }
   
   
-  TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
+  TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
 								  Manager.GetInteger("cutOFF"));
   
   bool FirstRunFlag = true;

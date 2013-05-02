@@ -54,12 +54,13 @@ using std::endl;
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-TightBindingModelOFLNOrbitalTriangularLattice::TightBindingModelOFLNOrbitalTriangularLattice(double laserStrength,  int nbrInternalDegree,  int nbrSiteX,  int nbrSiteY, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices)
+TightBindingModelOFLNOrbitalTriangularLattice::TightBindingModelOFLNOrbitalTriangularLattice(double laserStrength,  int nbrInternalDegree,  int nbrSiteX,  int nbrSiteY, int chernNumber, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices)
 {
   this->NbrStep = cutOFF+1;
   this->NbrInternalDegree =  nbrInternalDegree;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->ChernNumber = chernNumber;
   this->LaserStrength = laserStrength; 
   this->InvMomentum= 1.0/((2.0 * M_PI)*(2.0 * M_PI));
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
@@ -134,11 +135,11 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  
 			  int IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(2*M_PI*Spin/((double) this->NbrInternalDegree ))); 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree ))); 
 			  
 			  IntermediateIndex1=this->GetIntermediateLinearizedIndices(p, t-1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-2*M_PI*Spin/((double) this->NbrInternalDegree ))); 		 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree ))); 		 
 			  
 			  //
 			  
@@ -148,7 +149,7 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  
 			  IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t-1, Spin-1);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-M_PI*(2*Spin-1)/((double) this->NbrInternalDegree ))); 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-M_PI*this->ChernNumber*(2*Spin-1)/((double) this->NbrInternalDegree ))); 
 
 
 			  IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t, Spin+1);
@@ -157,7 +158,7 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  
 			  IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin+1);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(M_PI*(2*Spin+1)/((double) this->NbrInternalDegree ))); 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(M_PI*this->ChernNumber*(2*Spin+1)/((double) this->NbrInternalDegree ))); 
 
 
 			}
