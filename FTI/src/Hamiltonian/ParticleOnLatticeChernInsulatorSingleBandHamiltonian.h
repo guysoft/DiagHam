@@ -49,6 +49,7 @@ using std::endl;
 
 class AbstractArchitecture;
 class Abstract2DTightBindingModel;
+class Polynomial;
 
 
 class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian
@@ -63,6 +64,25 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLa
   int NbrSiteX;
   // number of sites in the y direction
   int NbrSiteY;
+
+  // the interpolation parameter lambda between FQH and FCI, as in H = lambda * H_FQH + (1 - lambda) * H_FCI
+  double InterpolationToFQH;
+  // dimension of the internal (color) space. this should be equal to the Chern number of the occupid band
+  int NbrColor;
+  // angle between the two fundamental cycles of the torus in Radians
+  double TwistAngle;
+  // aspect ratio of torus, Lx / Ly
+  double AspectRatio;
+  // color-entangled LLL boundary condition twisting angle along x
+  double LLLGammaX;
+  // color-entangled LLL boundary condition twisting angle along y
+  double LLLGammaY;
+  // array of the pseudo-potentials
+  double* Pseudopotentials;
+  // array of the number of pseudo-potentials
+  int NbrPseudopotentials;
+  // Laguerre polynomial for the pseudopotentials
+  Polynomial* LaguerrePolynomials;
 
   // numerical factor for momentum along x
   double KxFactor;
@@ -83,9 +103,18 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLa
   // nbrSiteX = number of sites in the x direction
   // nbrSiteY = number of sites in the y direction
   // tightBindingModel = pointer to the tight binding model
+  // interpolationToFQH = the interpolation parameter lambda between FQH and FCI, as in H = lambda * H_FQH + (1 - lambda) * H_FCI
+  // nbrColor = dimension of the internal (color) space. this should be equal to the Chern number of the occupid band
+  // twistAngle = angle between the two fundamental cycles of the torus in Radians
+  // aspectRatio = aspect ratio of torus, Lx / Ly
+  // lLLGammaX = color-entangled LLL boundary condition twisting angle along x
+  // lLLGammaY = color-entangled LLL boundary condition twisting angle along y
+  // pseudoPotentials = array of the pseudo-potentials
+  // nbrPseudopotentials = array of the number of pseudo-potentials
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeChernInsulatorSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeChernInsulatorSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,
+          double interpolationToFQH, int nbrColor, double twistAngle, double aspectRatio, double lLLGammaX, double lLLGammaY, int nbrPseudopotentials, double* pseudoPotentials, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -102,6 +131,28 @@ class ParticleOnLatticeChernInsulatorSingleBandHamiltonian : public ParticleOnLa
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
+
+  // evaluate all FQH interaction factors
+  //
+  virtual void EvaluateFQHInteractionFactors();
+
+  // evaluate matrix element of the FQH pseudopotential Hamiltonian, namely the numerical coefficient in front of the a+_k1 a+_k2 a_k3 a_k4
+  // kx1 = first kx index
+  // ky1 = first ky index
+  // kx2 = second kx index
+  // ky2 = second ky index
+  // kx3 = third kx index
+  // ky3 = third ky index
+  // kx4 = fourth kx index
+  // ky4 = fourth ky index
+  // nbrPseudopotentials = number of pseudopotentials
+  // pseudopotentials = pseudopotential coefficients
+  // return value = numerical coefficient
+  virtual Complex EvaluateFQHInteractionCoefficient(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
+
+  // get fourier transform of FQH pseudopotential interaction times the exponential supression
+  // Q2_half = one half of q² value
+  double GetVofQ(double Q2_half);
 
 };
 
