@@ -46,14 +46,7 @@ using std::endl;
 
 AbstractTightBindingModel::AbstractTightBindingModel()
 {
-    this->Inversion = ComplexMatrix();
-}
-
-// default constructor
-//
-
-AbstractTightBindingModel::AbstractTightBindingModel()
-{
+  this->Inversion = ComplexMatrix();
   this->Architecture = 0;
 }
 
