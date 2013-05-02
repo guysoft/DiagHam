@@ -59,10 +59,18 @@ TightBindingModelChern3TwoOrbitalTriangularLattice::TightBindingModelChern3TwoOr
   this->NNNHoping = t2;
   this->NNNNHoping = t3;
   this->MuS = mus;
+  this->TwistAngle = M_PI / 3;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->NbrBands = 2;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+
+  this->EmbeddingX = RealVector(this->NbrBands, true);
+  this->EmbeddingY = RealVector(this->NbrBands, true);
+  this->Inversion = ComplexMatrix(this->NbrBands, this->NbrBands, true);
+  for (int i = 0; i < this->NbrBands; ++i)
+      this->Inversion[i][i] = 1.0;
+
   this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)

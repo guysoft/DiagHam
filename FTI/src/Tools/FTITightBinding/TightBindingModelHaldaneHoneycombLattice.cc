@@ -59,10 +59,22 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
   this->NextNNHoping = t2;
   this->HaldanePhase = phi;
   this->MuS = mus;
+  this->TwistAngle = 2 * M_PI / 3;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->NbrBands = 2;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+
+  this->EmbeddingX = RealVector(this->NbrBands, true);
+  this->EmbeddingX[0] = 1.0 / 6;
+  this->EmbeddingX[1] = -1.0 / 6;
+  this->EmbeddingY = RealVector(this->NbrBands, true);
+  this->EmbeddingY[0] = 1.0 / 3;
+  this->EmbeddingY[1] = - 1.0 / 3;
+  this->Inversion = ComplexMatrix(this->NbrBands, this->NbrBands, true);
+  for (int i = 0; i < this->NbrBands; ++i)
+      this->Inversion[i][1 - i] = 1.0;
+
   this->Architecture = architecture;
 
   if (storeOneBodyMatrices == true)

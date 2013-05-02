@@ -9,9 +9,12 @@ Abstract3DTightBindingModel.cc \
 GenericTightBindingModel.cc \
 Generic2DTightBindingModel.cc \
 Generic3DTightBindingModel.cc \
+TightBindingModelTwoOrbitalSquareLattice.cc \
 TightBindingModelRubyLattice.cc \
+TightBindingModelAlternativeKagomeLattice.cc \
 TightBindingModelKagomeLattice.cc \
 TightBindingModelCheckerboardLattice.cc \
+TightBindingModelChern2TwoOrbitalSquareLattice.cc \
 TightBindingModelChern2DiceLattice.cc \
 TightBindingModelChern2TriangularLattice.cc \
 TightBindingModelPyrochloreSlabLattice.cc \

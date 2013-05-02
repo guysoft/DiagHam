@@ -61,11 +61,34 @@ TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbr
   this->T1iHopping = t1i;
   this->T4Hopping = t4;
   this->MuS = mus;
+  this->TwistAngle = 2 * M_PI / 3;
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+
+  double a = 1 + sqrt(3);
+
+  this->EmbeddingX = RealVector(this->NbrBands, true);
+  this->EmbeddingX[0] = -sqrt(3) / (3 * a);
+  this->EmbeddingX[1] = sqrt(3) / (3 * a);
+  this->EmbeddingX[2] = - 1 / a - sqrt(3) / (3 * a);
+  this->EmbeddingX[3] = sqrt(3) / (3 * a);
+  this->EmbeddingX[4] = -sqrt(3) / (3 * a);
+  this->EmbeddingX[5] = sqrt(3) / (3 * a) + 1 / a;
+
+  this->EmbeddingY = RealVector(this->NbrBands, true);
+  this->EmbeddingY[0] = -sqrt(3) / (6 * a) + 1 / (2 * a);
+  this->EmbeddingY[1] = sqrt(3) / (6 * a) + 1 / (2 * a);
+  this->EmbeddingY[2] = -1 / (2 * a) - sqrt(3) / (6 * a);
+  this->EmbeddingY[3] = -1 / (2 * a) + sqrt(3) / (6 * a);
+  this->EmbeddingY[4] = -1 / (2 * a) - sqrt(3) / (6 * a);
+  this->EmbeddingY[5] = sqrt(3) / (6 * a) + 1 / (2 * a);
+
+  this->Inversion = ComplexMatrix(this->NbrBands, this->NbrBands, true);
+  for (int i = 0; i < this->NbrBands; ++i)
+      this->Inversion[i][i] = 1.0;
 
   if (storeOneBodyMatrices == true)
     {
