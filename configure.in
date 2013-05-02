@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(src/config.h)
 AM_INIT_AUTOMAKE(DiagHam,0.01)
 
-AM_CONFIG_HEADER(src/config_ac.h:src/config_ac.h.in)
+AC_CONFIG_HEADERS(src/config_ac.h:src/config_ac.h.in)
 
 dnl Checks for programs.
 AC_PROG_CC
