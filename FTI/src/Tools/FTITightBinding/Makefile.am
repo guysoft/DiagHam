@@ -22,6 +22,8 @@ TightBindingModelHaldaneHoneycombLattice.cc \
 TightBindingModelChern3TwoOrbitalTriangularLattice.cc \
 TightBindingModelNOrbitalSquareLattice.cc \
 TightBindingModelPyrochloreLattice.cc \
+TightBindingModelFrozen3D.cc \
+TightBindingModelRandom3D.cc \
 TightBindingModel3DAtomicLimitLattice.cc \
 TightBindingModelEffectiveBilayerHaldaneLattice.cc \
 TightBindingModelFuKaneMeleLattice.cc \

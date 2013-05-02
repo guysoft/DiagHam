@@ -13,6 +13,8 @@
 #include "Tools/FTITightBinding/TightBindingModelPyrochloreLattice.h"
 #include "Tools/FTITightBinding/TightBindingModel3DAtomicLimitLattice.h"
 #include "Tools/FTITightBinding/TightBindingModel3DSimpleTILattice.h"
+#include "Tools/FTITightBinding/TightBindingModelFrozen3D.h"
+#include "Tools/FTITightBinding/TightBindingModelRandom3D.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -71,8 +73,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "wu-potential", "repulsive nearest neighbor site potential strength between identical spins", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "wv-potential", "repulsive nearest neighbor site potential strength between opposite spins", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "lambda-nn", "spin orbit coupling to neareast neighbor sites", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "lambda-nextnn", "spin orbit coupling to next neareast neighbor sites", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "spin orbit coupling to neareast neighbor sites", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "spin orbit coupling to next neareast neighbor sites", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "atomic", "take atomic limit, with two sites allowed");
+  (*SystemGroup) += new BooleanOption  ('\n', "frozen", "use frozen Hamiltonian");
+  (*SystemGroup) += new BooleanOption  ('\n', "random", "use random Hamiltonian");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-z", "boundary condition twisting angle along z (in 2 Pi unit)", 0.0);
@@ -83,8 +88,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "four-bands", "perform the calculations within the full four band model");
   (*SystemGroup) += new BooleanOption ('\n', "project-fourbands", "project the hamiltonian from the four band model to the two band model");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
+  (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new BooleanOption('\n', "shift", "shift energy by +1.0 to help convergence");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -128,17 +136,20 @@ int main(int argc, char** argv)
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky kz ");
   char* FilePrefix = new char [512];
-  sprintf (FilePrefix, "%s_quantumspinhall3d_pyrochlore_n_%d_x_%d_y_%d_z_%d_sonn_%f_sonnn_%f",  StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"));
+  sprintf (FilePrefix, "%s_quantumspinhall3d_pyrochlore_n_%d_x_%d_y_%d_z_%d_l1_%f_l2_%f",  StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("l1"), Manager.GetDouble("l2"));
   char* EigenvalueOutputFile = new char [1024];
-  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_wu_%f_wv_%f_gx_%f_gy_%f_gz_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("wu-potential"), Manager.GetDouble("wv-potential"), 
-	   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
+  if (Manager.GetString("eigenvalue-file")!=0)
+    strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
+  else
+    sprintf(EigenvalueOutputFile, "%s_u_%f_v_%f_wu_%f_wv_%f_gx_%f_gy_%f_gz_%f.dat", FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("wu-potential"), Manager.GetDouble("wv-potential"),
+            Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"));
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       bool ExportOneBody = false;
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true))
 	ExportOneBody = true;
-      TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
+      TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 							   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture(), ExportOneBody);
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(3);
@@ -185,46 +196,32 @@ int main(int argc, char** argv)
       MinKz = Manager.GetInteger("only-kz");
       MaxKz = MinKz;
     }
-   TightBindingModelPyrochloreLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-   						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
-  
-//   TightBindingModelPyrochloreLattice TightBindingModel2(NbrSitesY, NbrSitesX, NbrSitesZ, Manager.GetDouble("lambda-nn"), Manager.GetDouble("lambda-nextnn"), 
-// 							Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
-  
-//   TightBindingModel3DSimpleTILattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 0.5,
-// 						       Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), 
-// 						       Architecture.GetArchitecture());
 
-  
-  
+  Abstract3DTightBindingModel *TightBindingModel;
 
-//     double* TmpChem = new double[8];
-//     TmpChem[0] = -1.0;
-//     TmpChem[1] = -1.0;
-//     TmpChem[2] = 1.0;
-//     TmpChem[3] = 1.0;
-//     TmpChem[4] = -1.0;
-//     TmpChem[5] = -1.0;
-//     TmpChem[6] = 1.0;
-//     TmpChem[7] = 1.0;
-//     TightBindingModel3DAtomicLimitLattice TightBindingModel(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
-// 							    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
-//   ComplexMatrix OneBodyBasis1 =  TightBindingModel.GetOneBodyMatrix(1);
-//   ComplexMatrix OneBodyBasis2 =  TightBindingModel2.GetOneBodyMatrix(1);
-//   for (int i = 0; i < 8; ++i)
-//     {
-//       double Sum = 0.0;
-//       for (int j = 0; j < 8; ++j)
-// 	{
-// 	  Complex Tmp = 0.0;
-// 	  for (int k = 0; k < 8; ++k)
-// 	    Tmp += Conj(OneBodyBasis2[i][k]) * OneBodyBasis1[j][k];
-// 	  cout << i << " " << j << " : " << SqrNorm(Tmp) << endl;
-// 	  Sum += SqrNorm(Tmp);
-// 	}
-//       cout << "sum = " << Sum << endl;
-//     }
-    
+  if (Manager.GetBoolean("atomic"))
+  {
+      double TmpChem[8] = {1, 1, 0, 0, 1, 1, 0, 0}; // allow spin up and down on sites 1,2
+      TightBindingModel = new TightBindingModel3DAtomicLimitLattice(NbrSitesX, NbrSitesY, NbrSitesZ, 8, TmpChem, 
+              Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+  }
+  else if (Manager.GetBoolean("random"))
+  {
+      TightBindingModel = new TightBindingModelRandom3D(NbrSitesX, NbrSitesY, NbrSitesZ, 8, Manager.GetBoolean("frozen"), Architecture.GetArchitecture());
+  }
+  else if (Manager.GetBoolean("frozen"))
+  {
+      TightBindingModelPyrochloreLattice tb(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("l1"), Manager.GetDouble("l2"),
+              Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+      double energy[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+      TightBindingModel = new TightBindingModelFrozen3D(NbrSitesX, NbrSitesY, NbrSitesZ,
+              tb.GetOneBodyMatrix(4), energy, Architecture.GetArchitecture());
+  }
+  else
+  {
+      TightBindingModel = new TightBindingModelPyrochloreLattice(NbrSitesX, NbrSitesY, NbrSitesZ, Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+              Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("gamma-z"), Architecture.GetArchitecture());
+  }
 
    bool FirstRunFlag = true;
    for (int i = MinKx; i <= MaxKx; ++i)
@@ -265,19 +262,27 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      AbstractHamiltonian* Hamiltonian = 0;
 	      Hamiltonian = new ParticleOnCubicLatticeFourBandPyrochloreHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-										    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("wu-potential"), Manager.GetDouble("wv-potential"), &TightBindingModel,
+										    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("wu-potential"), Manager.GetDouble("wv-potential"), TightBindingModel,
 										    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 // 	      Hamiltonian = new ParticleOnCubicLatticeFullFourBandSimpleTIHamiltonian((ParticleOnSphereWithSU4Spin*) Space, NbrParticles, NbrSitesX, NbrSitesY, NbrSitesZ,
-// 										      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel,
+// 										      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel,
 // 										      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+
+              if (Manager.GetBoolean("shift"))
+                  Hamiltonian->ShiftHamiltonian(1.0);
 		  
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d %d", i, j, k);
 	      char* EigenstateOutputFile = new char [512];
-	      char* TmpExtention = new char [512];
-	      sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
-	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
-	      
+              if (Manager.GetString("eigenstate-file")!=0)
+                  sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
+              else
+              {
+                  char* TmpExtention = new char [512];
+                  sprintf (TmpExtention, "_kx_%d_ky_%d_kz_%d", i, j, k);
+                  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+              }
+
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);
