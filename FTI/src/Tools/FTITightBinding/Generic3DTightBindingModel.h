@@ -39,8 +39,6 @@
 class Generic3DTightBindingModel : public Abstract3DTightBindingModel
 {
 
- protected:
-
  public:
 
   // default constructor
@@ -52,6 +50,13 @@ class Generic3DTightBindingModel : public Abstract3DTightBindingModel
   //
   ~Generic3DTightBindingModel();
 
+ protected :
+
+  // core part that compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 };
 
 #endif

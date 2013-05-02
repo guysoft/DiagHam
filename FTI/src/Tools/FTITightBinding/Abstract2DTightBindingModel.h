@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "Tools/FTITightBinding/Abstract1DTightBindingModel.h"
+#include "Matrix/RealMatrix.h"
 
 
 class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
@@ -49,6 +50,21 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
 
   // boundary condition twisting angle along y
   double GammaY;
+
+  // embedding of sublattices relative to the unit cell reference point along y
+  RealVector EmbeddingY;
+
+  // angle between the two primitive vectors
+  double TwistAngle;
+
+  // Chern number of each band
+  int* Chern;
+
+  // Berry curvature of each band over the BZ
+  RealMatrix* Curvature;
+
+  double *LLLGammaX;
+  double *LLLGammaY;
 
  public:
 
@@ -90,6 +106,11 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = inearized momentum index
   virtual void GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky);
 
+  // get the angle between the two primitive lattice vectors
+  //
+  // return value = angle between the two primitive lattice vectors
+  virtual double GetTwistAngle();
+
   // get the number of sites in the y direction
   //
   // return value = number of sites in the y direction
@@ -106,6 +127,92 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // fileName = name of the output file 
   // return value = true if no error occured  
   virtual bool WriteBandStructureASCII(char* fileName);
+
+  // compute the exponentiated, unitary Abelian connection
+  //
+  // kx = momentum along x
+  // ky = momentum along y
+  // qx = momentum transfer along x
+  // qy = momentum transfer along y
+  // band = band index
+  // return value = Phase of < u(k) | u(k+q) >
+  virtual Complex GetAbelianConnection(int kx, int ky, int qx, int qy, int band);
+
+  // compute the unitary Abelian Wilson loop
+  //
+  // ky = momentum along y
+  // band = band index
+  // return value = value of the Wilson loop
+  virtual Complex GetAbelianWilsonLoopX(int ky, int band);
+
+  // compute the unitary Abelian Wilson loop
+  //
+  // kx = momentum along x
+  // band = band index
+  // return value = value of the Wilson loop
+  virtual Complex GetAbelianWilsonLoopY(int kx, int band);
+
+  // get the total curvature over the plaquette specified by the lower-left corner. C > 0 corresponds to Bz < 0 magnetic field (holomorphic z = x + iy)
+  //
+  // kx = momentum along x
+  // ky = momentum along y
+  // band = band index
+  // return value = Arg(<k|k+x><k+x|k+x+y><k+x+y|k+y><k+y|k>) / (2 Pi), range = (-0.5, 0.5]
+  virtual double GetCurvature(int kx, int ky, int band);
+
+  // get the Chern number of a specified band
+  //
+  // band = band index
+  // return = Chern number
+  virtual int GetChernNumber(int band);
+
+  // get the LLL twist angle along x for Bloch construction gauge fixing
+  //
+  // band = band index
+  // return = gamma_x
+  virtual double GetLLLGammaX(int band);
+
+  // get the LLL twist angle along y for Bloch construction gauge fixing
+  //
+  // band = band index
+  // return = gamma_y
+  virtual double GetLLLGammaY(int band);
+
+  // compute the total curvature over the plaquette specified by the lower-left corner. C > 0 corresponds to Bz < 0 magnetic field (holomorphic z = x + iy)
+  //
+  // kx = momentum along x
+  // ky = momentum along y
+  // band = band index
+  // return value = Arg(<k|k+x><k+x|k+x+y><k+x+y|k+y><k+y|k>) / (2 Pi), range = (-0.5, 0.5]
+  virtual double ComputeCurvatureSinglePlaquette(int kx, int ky, int band);
+
+  // compute the stream function for the part of Berry connections that accounts for curvature fluctuations
+  //
+  // band = band index
+  // phi = reference to the stream function over linearized BZ
+  // vx = reference to the linear coefficent in phi along ky with a minus sign
+  // vy = reference to the linear coefficent in phi along kx
+  // return = 0 if succeed, otherwise fail
+  virtual int ComputeStreamFunction(int band, RealVector& phi, double& vx, double& vy);
+
+  // build the gauge transform such that gauge(k) * |k⟩_lat is in the "Γ"-shaped parallel-transport gauge
+  // 
+  // band = band index
+  // gauge = reference to the gauge transform
+  virtual void BuildParallelTransportGauge(int band, ComplexMatrix& gauge);
+
+  // build the gauge transform such that gauge(k) * |k⟩_lat is in the generalized π/2-rotated Landau gauge
+  //
+  // band = band index
+  // gauge = reference to the gauge transform
+  // return = 0 if succeed, otherwise fail
+  virtual int BuildGeneralizedLandauGauge(int band, ComplexMatrix& gauge);
+
+  // compute the curvature over each plaquette in the BZ, and also Chern number
+  //
+  // band = band index
+  // return = 0 if succeed, otherwise fail
+  virtual void ComputeCurvature();
 
   // compute the Chern number of a given band
   //
@@ -213,6 +320,15 @@ inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int inde
   ky = index % this->NbrSiteY;
 }
 
+// get the angle between the two primitive lattice vectors
+//
+// return value = angle between the two primitive lattice vectors
+
+inline double Abstract2DTightBindingModel::GetTwistAngle()
+{
+  return this->TwistAngle;
+}
+
 // get the number of sites in the y direction
 //
 // return value = number of sites in the y direction
@@ -220,6 +336,69 @@ inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int inde
 inline int Abstract2DTightBindingModel::GetNbrSiteY()
 {
   return this->NbrSiteY;
+}
+
+// get the total curvature over the plaquette specified by the lower-left corner. C > 0 corresponds to Bz < 0 magnetic field (holomorphic z = x + iy)
+//
+// kx = momentum along x
+// ky = momentum along y
+// band = band index
+// return value = Arg(<k|k+x><k+x|k+x+y><k+x+y|k+y><k+y|k>) / (2 Pi), range = (-0.5, 0.5]
+
+inline double Abstract2DTightBindingModel::GetCurvature(int kx, int ky, int band)
+{
+    if (this->Curvature == NULL)
+        this->ComputeCurvature();
+    return this->Curvature[band][ky][kx];
+}
+
+// get the Chern number of a specified band
+//
+// band = band index
+// return = Chern number
+
+inline int Abstract2DTightBindingModel::GetChernNumber(int band)
+{
+    if (this->Chern == NULL)
+        this->ComputeCurvature();
+    return this->Chern[band];
+}
+
+// get the LLL twist angle along x for Bloch construction gauge fixing
+//
+// band = band index
+// return = gamma_x
+
+inline double Abstract2DTightBindingModel::GetLLLGammaX(int band)
+{
+    if (this->LLLGammaX == NULL)
+        this->ComputeCurvature();
+    return this->LLLGammaX[band];
+}
+
+// get the LLL twist angle along y for Bloch construction gauge fixing
+//
+// band = band index
+// return = gamma_y
+inline double Abstract2DTightBindingModel::GetLLLGammaY(int band)
+{
+    if (this->LLLGammaY == NULL)
+        this->ComputeCurvature();
+    return this->LLLGammaY[band];
+}
+
+// compute the curvature sum over the plaquette specified by the lower-left corner. C > 0 corresponds to Bz < 0 magnetic field (holomorphic z = x + iy)
+//
+// kx = momentum along x
+// ky = momentum along y
+// band = band index
+// return value = Arg(<k|k+x><k+x|k+x+y><k+x+y|k+y><k+y|k>) / (2 Pi), range = (-0.5, 0.5]
+
+inline double Abstract2DTightBindingModel::ComputeCurvatureSinglePlaquette(int kx, int ky, int band)
+{
+    Complex W = this->GetAbelianConnection(kx, ky, 1, 0, band) * this->GetAbelianConnection(kx + 1, ky, 0, 1, band);
+    W *= this->GetAbelianConnection(kx + 1, ky + 1, -1, 0, band) * this->GetAbelianConnection(kx, ky + 1, 0, -1, band);
+    return Arg(W) / (2 * M_PI);
 }
 
 #endif

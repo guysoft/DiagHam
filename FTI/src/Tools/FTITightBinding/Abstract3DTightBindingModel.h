@@ -56,6 +56,9 @@ class Abstract3DTightBindingModel : public Abstract2DTightBindingModel
   // boundary condition twisting angle along z
   double GammaZ;
 
+  // embedding of sublattices relative to the unit cell reference point along z
+  RealVector EmbeddingZ;
+
  public:
 
   // default constructor

@@ -50,6 +50,9 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // boundary condition twisting angle along x
   double GammaX;
 
+  // embedding of sublattices relative to the unit cell reference point along x
+  RealVector EmbeddingX;
+
   // One body eigenstate basis associated to each point of the band structure, the array index corresponds to the linearized momentum
   ComplexMatrix* OneBodyBasis;
 

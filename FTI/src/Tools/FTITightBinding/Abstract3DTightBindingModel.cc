@@ -44,6 +44,7 @@ using std::endl;
 
 Abstract3DTightBindingModel::Abstract3DTightBindingModel()
 {
+  this->EmbeddingZ = RealVector();
 }
 
 // destructor
@@ -67,12 +68,45 @@ ofstream& Abstract3DTightBindingModel::WriteHeader(ofstream& output)
   WriteLittleEndian(output, this->NbrSiteX);
   WriteLittleEndian(output, this->KxFactor);
   WriteLittleEndian(output, this->GammaX);
+  if (this->EmbeddingX.GetVectorDimension() != this->NbrBands)
+  {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, Tmp);
+  }
+  else
+  {
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, this->EmbeddingX[i]);
+  }
   WriteLittleEndian(output, this->NbrSiteY);
   WriteLittleEndian(output, this->KyFactor);
   WriteLittleEndian(output, this->GammaY);
+  if (this->EmbeddingY.GetVectorDimension() != this->NbrBands)
+  {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, Tmp);
+  }
+  else
+  {
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, this->EmbeddingY[i]);
+  }
   WriteLittleEndian(output, this->NbrSiteZ);
   WriteLittleEndian(output, this->KzFactor);
   WriteLittleEndian(output, this->GammaZ);
+  if (this->EmbeddingZ.GetVectorDimension() != this->NbrBands)
+  {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, Tmp);
+  }
+  else
+  {
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, this->EmbeddingZ[i]);
+  }
   return output; 
 }
 

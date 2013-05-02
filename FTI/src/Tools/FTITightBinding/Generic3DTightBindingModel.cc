@@ -62,14 +62,24 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
   File.open(fileName, ios::binary | ios::in);
   ReadLittleEndian(File, this->NbrBands);
   ReadLittleEndian(File, this->NbrStatePerBand);
+  this->Inversion.Resize(this->NbrBands, this->NbrBands);
+  for (int i = 0; i < this->NbrBands; ++i)
+      for (int j = 0; j < this->NbrBands; ++j)
+      {
+          Complex TmpInversion = 0.0;
+          ReadLittleEndian(File, TmpInversion);
+          this->Inversion[i][j] = TmpInversion;
+      }
   int HeaderSize = -1;
   ReadLittleEndian(File, HeaderSize);
-  if (HeaderSize >= (4 * sizeof(int) + 6 * sizeof(double)))
+  int CorrectDimension = 3;
+  int CorrectHeaderSize = (((this->NbrBands + 2) * CorrectDimension) * sizeof(double)) + ((CorrectDimension + 1) * sizeof(int));
+  if (HeaderSize >= CorrectHeaderSize)
     {
       int TmpDimension = -1;
       ReadLittleEndian(File, TmpDimension);
       HeaderSize -= sizeof(int);
-      if (TmpDimension != 3)
+      if (TmpDimension != CorrectDimension)
 	{
 	  cout << "error : " << fileName << " does not contain a valid 3D band structure" << endl;
 	  this->NbrBands = 0;
@@ -80,13 +90,34 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
       ReadLittleEndian(File, this->NbrSiteX);
       ReadLittleEndian(File, this->KxFactor);
       ReadLittleEndian(File, this->GammaX);	 
+      this->EmbeddingX.Resize(this->NbrBands);
+      for (int i = 0; i < this->NbrBands; ++i)
+      {
+          double Tmp = 0.0;
+          ReadLittleEndian(File, Tmp);
+          this->EmbeddingX[i] = Tmp;
+      }
       ReadLittleEndian(File, this->NbrSiteY);
       ReadLittleEndian(File, this->KyFactor);
       ReadLittleEndian(File, this->GammaY);	  
+      this->EmbeddingY.Resize(this->NbrBands);
+      for (int i = 0; i < this->NbrBands; ++i)
+      {
+          double Tmp = 0.0;
+          ReadLittleEndian(File, Tmp);
+          this->EmbeddingY[i] = Tmp;
+      }
       ReadLittleEndian(File, this->NbrSiteZ);
       ReadLittleEndian(File, this->KzFactor);
       ReadLittleEndian(File, this->GammaZ);	  
-      HeaderSize -= (3 * sizeof(int) + 6 * sizeof(double));
+      this->EmbeddingZ.Resize(this->NbrBands);
+      for (int i = 0; i < this->NbrBands; ++i)
+      {
+          double Tmp = 0.0;
+          ReadLittleEndian(File, Tmp);
+          this->EmbeddingZ[i] = Tmp;
+      }
+      HeaderSize -= (CorrectHeaderSize - sizeof(int));
       File.seekg (HeaderSize, ios::cur);
     }
   else
@@ -106,7 +137,7 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
 	  ReadLittleEndian(File, this->EnergyBandStructure[i][j]);
 	}
     }
-  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + HeaderSize))
+  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + (this->NbrBands * this->NbrBands * sizeof(Complex)) + HeaderSize))
     {
       this->OneBodyBasis = 0;
     }
@@ -125,5 +156,13 @@ Generic3DTightBindingModel::Generic3DTightBindingModel(char* fileName)
 //
 
 Generic3DTightBindingModel::~Generic3DTightBindingModel()
+{
+}
+
+// core part that compute the band structure
+//
+// minStateIndex = minimum index of the state to compute
+// nbrStates = number of states to compute
+void Generic3DTightBindingModel::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
 }

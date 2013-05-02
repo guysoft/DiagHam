@@ -6,8 +6,7 @@
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                    class of generic 2D tight binding model                 //
-//                                                                            //
+//                    class of generic 2D tight binding model                 // //                                                                            //
 //                        last modification : 03/10/2012                      //
 //                                                                            //
 //                                                                            //
@@ -39,8 +38,6 @@
 class Generic2DTightBindingModel : public Abstract2DTightBindingModel
 {
 
- protected:
-
  public:
 
   // default constructor
@@ -52,6 +49,13 @@ class Generic2DTightBindingModel : public Abstract2DTightBindingModel
   //
   ~Generic2DTightBindingModel();
 
+ protected :
+
+  // core part that compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 };
 
 #endif

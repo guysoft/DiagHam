@@ -46,6 +46,7 @@ Abstract1DTightBindingModel::Abstract1DTightBindingModel()
 {
   this->EnergyBandStructure = 0;
   this->OneBodyBasis = 0;
+  this->EmbeddingX = RealVector();
 }
 
 // destructor
@@ -75,12 +76,23 @@ Abstract1DTightBindingModel::~Abstract1DTightBindingModel()
 ofstream& Abstract1DTightBindingModel::WriteHeader(ofstream& output)
 {
   int Dimension = 1;
-  int HeaderSize = ((2 * Dimension) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
+  int HeaderSize = (((this->NbrBands + 2) * Dimension) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
   WriteLittleEndian(output, HeaderSize);
   WriteLittleEndian(output, Dimension);
   WriteLittleEndian(output, this->NbrSiteX);
   WriteLittleEndian(output, this->KxFactor);
   WriteLittleEndian(output, this->GammaX);
+  if (this->EmbeddingX.GetVectorDimension() != this->NbrBands)
+  {
+      double Tmp = 0.0;
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, Tmp);
+  }
+  else
+  {
+      for (int i = 0; i < this->NbrBands; ++i)
+          WriteLittleEndian(output, this->EmbeddingX[i]);
+  }
   return output; 
 }
 
