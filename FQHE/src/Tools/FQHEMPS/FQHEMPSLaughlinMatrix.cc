@@ -471,6 +471,15 @@ bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
   return true;
 }
 
+// 2 times the maximal P value in the 'root partition' with a given charge N at a particular cut
+// N takes value in [-Pmax, Pmax + q - 1]
+static int twop(int N, int q)
+{
+    // (N // (q - 1)), python-style downward rounding
+    int r = (N - ((N < 0)?(q-2):0)) / (q - 1);
+    return r * (2 * N - (q - 1) * (r + 1));
+}
+
 // compute the charge index range at a given truncation level
 // 
 // pLevel = tuncation level
@@ -479,45 +488,21 @@ bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
 
 void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ)
 {
-  if (this->UniformChargeIndexRange == true)
+    if (this->UniformChargeIndexRange == true)
     {
-      minQ = 0;
-      maxQ = this->NbrNValue - 1;
-      return;
+        minQ = 0;
+        maxQ = this->NbrNValue - 1;
+        return;
     }
 
-  minQ = (this->NbrNValue - 1 - (this->LaughlinIndex - 1)) / 2;
-  maxQ = (this->NbrNValue - 1 + (this->LaughlinIndex - 1)) / 2;
-  if (minQ < 0)
-    {
-      minQ = 0;
-    }
-  if (maxQ >= this->NbrNValue)
-    maxQ = this->NbrNValue - 1;
-  int QShift = minQ;
-  for (int LocalP = this->PLevel - 1; LocalP >= pLevel; --LocalP)
-    {
-      int LocalQ = minQ;
-      while ((LocalQ >= 0) && 
-	     (((LocalQ >= QShift) && ((((LocalQ - QShift) / (this->LaughlinIndex - 1)) * (2 * (LocalQ - QShift) - (this->LaughlinIndex - 1) * (((LocalQ - QShift) / (this->LaughlinIndex - 1)) + 1))) != (2 * (this->PLevel - LocalP)))) ||
-	      ((LocalQ < QShift) && ((((LocalQ - QShift - (this->LaughlinIndex - 2)) / (this->LaughlinIndex - 1)) * (2 * (LocalQ - QShift) - (this->LaughlinIndex - 1) * (((LocalQ - QShift - (this->LaughlinIndex - 2)) / (this->LaughlinIndex - 1)) + 1))) != (2 * (this->PLevel - LocalP))))))
-
-	{
-	  --LocalQ;
-	}
-      if ((LocalQ >= 0) && (LocalQ < minQ))
-	minQ = LocalQ;
-      LocalQ = maxQ;
-      while ((LocalQ < this->NbrNValue) && 
-	     (((LocalQ >= QShift) && ((((LocalQ - QShift) / (this->LaughlinIndex - 1)) * (2 * (LocalQ - QShift) - (this->LaughlinIndex - 1) * (((LocalQ - QShift) / (this->LaughlinIndex - 1)) + 1))) != (2 * (this->PLevel - LocalP)))) ||
-	      ((LocalQ < QShift) && ((((LocalQ - QShift - (this->LaughlinIndex - 2)) / (this->LaughlinIndex - 1)) * (2 * (LocalQ - QShift) - (this->LaughlinIndex - 1) * (((LocalQ - QShift - (this->LaughlinIndex - 2)) / (this->LaughlinIndex - 1)) + 1))) != (2 * (this->PLevel - LocalP))))))
-	{
-	  ++LocalQ;
-	}
-      if ((LocalQ < this->NbrNValue) && (LocalQ > maxQ))
-	maxQ = LocalQ;
-    }
-  cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;
+    int QShift = this->PLevel;
+    for (minQ = 0; minQ < this->NbrNValue; ++minQ)
+        if (2 * pLevel + twop(minQ - QShift, this->LaughlinIndex) <= 2 * this->PLevel)
+            break;
+    for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
+        if (2 * pLevel + twop(maxQ - QShift, this->LaughlinIndex) <= 2 * this->PLevel)
+            break;
+    cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;
 }
 
 // compute the global charge index range at a given truncation level
