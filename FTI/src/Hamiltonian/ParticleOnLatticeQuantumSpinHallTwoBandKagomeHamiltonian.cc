@@ -158,6 +158,24 @@ void ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian::EvaluateInteracti
 
   this->ComputeOneBodyMatrices(OneBodyBasis);
  
+//   ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
+//   if (this->FlatBand == false)
+//     {
+//       this->OneBodyInteractionFactorsupup = new double [this->TightBindingModel->GetNbrStatePerBand()];
+//       this->OneBodyInteractionFactorsdowndown = new double [this->TightBindingModel->GetNbrStatePerBand()];
+//     }
+//   for (int kx = 0; kx < this->NbrSiteX; ++kx)
+//     for (int ky = 0; ky < this->NbrSiteY; ++ky)
+//       {
+// 	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+// 	if (this->FlatBand == false)
+// 	  {
+// 	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+// 	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->TightBindingModel->GetEnergy(1, Index);
+// 	  }
+// 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
+//       }
+ 
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)

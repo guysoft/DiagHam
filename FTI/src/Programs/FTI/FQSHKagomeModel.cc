@@ -169,10 +169,13 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true) || (Manager.GetBoolean("export-onebodytheta") == true))
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || 
+	  (Manager.GetBoolean("singleparticle-z2invariant") == true) || (Manager.GetBoolean("export-onebodytheta") == true))
 	ExportOneBody = true;
-      TightBindingModelTimeReversalKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-					   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+      TightBindingModelTimeReversalKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+								   Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+								   Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+								   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       /*
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);*/
 //       cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
