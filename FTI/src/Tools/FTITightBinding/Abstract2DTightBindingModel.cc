@@ -160,6 +160,7 @@ bool Abstract2DTightBindingModel::WriteBandStructureASCII(char* fileName)
 {
   ofstream File;
   File.open(fileName);
+  File.precision(14);
   this->WriteASCIIHeader(File, '#');
   File << "# kx    ky";
   for (int i = 0; i < this->NbrBands; ++i)

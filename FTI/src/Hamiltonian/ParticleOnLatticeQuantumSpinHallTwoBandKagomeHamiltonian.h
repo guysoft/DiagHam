@@ -51,28 +51,6 @@ class ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian : public Particle
 
  protected:
   
-  // hopping amplitude between neareast neighbor sites
-  double NNHopping;
-  // hopping amplitude between next neareast neighbor sites
-  double NextNNHopping;
-  // spin orbit coupling to neareast neighbor sites
-  double NNSpinOrbit;
-  // spin orbit coupling to next neareast neighbor sites
-  double NextNNSpinOrbit;
-  
-  // mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
-  double MixingTerm12;
-  // mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
-  double MixingTerm13;
-  // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
-  double MixingTerm23;
-
-  // four times the sublattice staggered chemical potential 
-  double MuS;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
   // nearest neighbor density-density potential strength
   double UPotential;
   // strength of the repulsive on site two body interaction between opposite spins
@@ -93,21 +71,10 @@ class ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian : public Particle
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // vPotential = strength of the repulsive on site two body interaction between opposite spins
   // wPotential = strength of the repulsive two body neareast neighbor interaction between opposite spins
-  // t1 = real part of the hopping amplitude between neareast neighbor sites
-  // t2 = real part of the hopping amplitude between next neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-  // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
-  // mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
-  // mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
-  // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
-  // gammaX = boundary condition twisting angle along x
-  // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential, 
-							   double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, 
-							   double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential,Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -237,12 +204,7 @@ class ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian : public Particle
   // return value = corresponding matrix element
   virtual Complex ComputeTwoBodyMatrixElementCUpCDown(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4);
 
-  // compute the one body transformation matrices and the optional one body band stucture contribution
-  //
-  // oneBodyBasis = array of one body transformation matrices
-  virtual void ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis);
-
-
+  
 };
 
 

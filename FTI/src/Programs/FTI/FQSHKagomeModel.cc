@@ -32,22 +32,6 @@ using std::ios;
 using std::ofstream;
 
 
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda2 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice staggered chemical potential 
-// mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
-// mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
-// mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double mixingTerm12, double mixingTerm13, double mixingTerm23);
-
-
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FQHEQuantumSpinHallKagomeModelTwoBands" , "0.01");
@@ -185,7 +169,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("export-onebodyname") != 0)
 	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
 	  else
-	    sprintf (BandStructureOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_tightbinding.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    sprintf (BandStructureOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  if (Manager.GetBoolean("export-onebody") == true)
 	    {
 	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
@@ -203,10 +187,11 @@ int main(int argc, char** argv)
       {
 	cout << "Z2 invariant = " << TightBindingModel.ComputeZ2Invariant(2) << endl;
 	char* ThetaOutputFile = new char [512];
-	sprintf(ThetaOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f_theta.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	sprintf(ThetaOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_theta.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	TightBindingModel.WriteAsciiDMatrixEigenValues(ThetaOutputFile, 2);
       }
-      return 0;
+     return 0;
+      
     }
 
   int MinKx = 0;
@@ -223,6 +208,13 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+  
+  TightBindingModelTimeReversalKagomeLattice *TightBindingModel;
+  TightBindingModel = new TightBindingModelTimeReversalKagomeLattice(NbrSitesX, NbrSitesY,  
+								   Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+								   Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+								   Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+								   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -243,8 +235,7 @@ int main(int argc, char** argv)
 	      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-														 Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
-														 Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
+														 Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"),TightBindingModel, 		     
 														 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
@@ -311,123 +302,5 @@ int main(int argc, char** argv)
 	}
     }
   return 0;
-}
-
-// compute the single particle spectrum 
-//
-// outputFileName = name of the output file
-// nbrSitesX = number of sites in the x direction
-// nbrSitesY = number of sites in the x direction
-// t1 = real part of the hopping amplitude between neareast neighbor sites
-// t2 = real part of the hopping amplitude between next neareast neighbor sites
-// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
-// lambda2 = imaginary part of the hopping amplitude between next neareast neighbor sites
-// mus = sublattice staggered chemical potential 
-// mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
-// mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
-// mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
-
-void ComputeSingleParticleSpectrum(char* outputFileName, int nbrSitesX, int nbrSitesY, double t1, double t2, double lambda1, double lambda2, double mus, double mixingTerm12, double mixingTerm13, double mixingTerm23)
-{
-  ofstream File;
-  File.open(outputFileName);
-  File << "# kx    ky     E_{-,1}    E_{-,2}    E_{-,3}    E_{+,1}    E_{+,2}    E_{+,3}" << endl;
-  double MinEMinus = 0.0;
-  double MaxEMinus = -10.0;
-  double MinEPlus = 10.0;
-  double MaxEPlus = 0.0;
-  double NNHopping = t1;
-  double NNSpinOrbit = lambda1;
-  double NextNNHopping = t2;
-  double NextNNSpinOrbit = lambda2;
-  double KxFactor =  2.0 * M_PI / ((double) nbrSitesX);
-  double KyFactor = 2.0 * M_PI / ((double) nbrSitesY);
-
-  for (int kx = 0; kx < nbrSitesX; ++kx)
-    {
-      for (int ky = 0; ky < nbrSitesY; ++ky)
-	{
-	  HermitianMatrix TmpOneBodyHamiltonian(6, true);
-	  double KX = 0.5 * KxFactor * ((double) kx);
-	  double KY = 0.5 * KyFactor * ((double) ky);
-	  Complex HAB (-2.0 * NNHopping, -2.0 * NNSpinOrbit);
-	  HAB *= cos (KX);
-	  Complex HAC(-2.0 * NNHopping, 2.0 * NNSpinOrbit);
-	  HAC *= cos (KY);
-	  Complex HBC(-2.0 * NNHopping, -2.0 * NNSpinOrbit);
-	  HBC *= cos(KX - KY);
-	  
-	  Complex HAB2 (-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
-	  HAB2 *= cos (KX - 2.0 * KY);
-	  Complex HAC2 (-2.0 * NextNNHopping, -2.0 * NextNNSpinOrbit);
-	  HAC2 *= cos (2.0 * KX - KY);
-	  Complex HBC2 (-2.0 * NextNNHopping, 2.0  *  NextNNSpinOrbit);
-	  HBC2 *= cos (KX + KY);
-	  
-	  HAB += HAB2;
-	  HAC += HAC2;
-	  HBC += HBC2;
-	  
-	  double InvKX = 0.5 * KxFactor * (((double) -kx));
-	  double InvKY = 0.5 * KyFactor * (((double) -ky));
-	  Complex InvHAB (-2.0 * NNHopping, -2.0 * NNSpinOrbit);
-	  InvHAB *= cos (InvKX);
-	  Complex InvHAC (-2.0 * NNHopping, 2.0 * NNSpinOrbit);
-	  InvHAC *= cos (InvKY);
-	  Complex InvHBC (-2.0 * NNHopping, -2.0 * NNSpinOrbit);
-	  InvHBC *= cos(InvKX - InvKY);
-	  
-	  Complex InvHAB2 = Complex(-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
-	  InvHAB2 *= cos (InvKX - 2.0 * InvKY);
-	  Complex InvHAC2 = Complex(-2.0 * NextNNHopping, -2.0 * NextNNSpinOrbit);
-	  InvHAC2 *= cos (2.0 * InvKX - InvKY);
-	  Complex InvHBC2 = Complex(-2.0 * NextNNHopping, 2.0 * NextNNSpinOrbit);
-	  InvHBC2 *= cos (InvKX + InvKY);
-	  
-	  InvHAB += InvHAB2;
-	  InvHAC += InvHAC2;
-	  InvHBC += InvHBC2;
-	  
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
-	  
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, mixingTerm12);
-	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, mixingTerm13);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -mixingTerm12);
-	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, mixingTerm23);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -mixingTerm13);
-	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -mixingTerm23);
-	  
-	  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
-#else
-	  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-#endif   
-	  if (MaxEMinus < TmpDiag(0, 0))
-	    {
-	      MaxEMinus = TmpDiag(0, 0);
-	    }
-	  if (MinEMinus > TmpDiag(0, 0))
-	    {
-	      MinEMinus = TmpDiag(0, 0);
-	    }
-	  if (MaxEPlus < TmpDiag(2, 2))
-	    {
-	      MaxEPlus = TmpDiag(2, 2);
-	    }
-	  if (MinEPlus > TmpDiag(2, 2))
-	    {
-	      MinEPlus = TmpDiag(2, 2);
-	    }
-	  File << (2.0 * M_PI * ((double) kx) / ((double) nbrSitesX)) << " " << (2.0 * M_PI * ((double) ky) / ((double) nbrSitesY)) << " " << TmpDiag(0, 0) << " " << TmpDiag(1, 1) <<  " " << TmpDiag(2, 2) << " " << TmpDiag(3, 3) << " " << TmpDiag(4, 4) << " " << TmpDiag(5, 5) << endl;
-	}
-      File << endl;
-    }
-  cout << "Spread = " << (MaxEMinus - MinEMinus) << "  Gap = " <<  (MinEPlus - MaxEMinus) << "  Flatening = " << ((MaxEMinus - MinEMinus) / (MinEPlus - MaxEMinus)) << endl;
 }
 
