@@ -1195,7 +1195,7 @@ void BosonOnSphereWithSpinAllSz::GenerateLookUpTable(int memory)
     }
   for (int i=0; i<this->HilbertSpaceDimension; ++i)
     delete [] this->StateDescription[i];
-  delete this->StateDescription;
+  delete [] this->StateDescription;
   this->StateDescription=NULL;
   delete [] this->StateLzMaxDown;  
   this->StateLzMaxDown=NULL;
