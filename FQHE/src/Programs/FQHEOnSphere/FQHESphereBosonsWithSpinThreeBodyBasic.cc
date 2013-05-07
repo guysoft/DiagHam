@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption  ('\n', "initial-lz", "twice the inital momentum projection for the system", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lz", "number of lz value to evaluate", -1);
-  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body and 3-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool AllSz = Manager.GetBoolean("all-sz");
+  bool PairParity = Manager.GetInteger("pair-parity");
   bool FirstRun = true;
 
   int NbrUp = (NbrParticles + SzTotal) >> 1;
@@ -322,7 +323,10 @@ int main(int argc, char** argv)
   char* OutputBaseName = new char [256 + strlen(Manager.GetString("interaction-name"))];
   if (AllSz)
     {
-      sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
+      if (PairParity)
+	sprintf (OutputBaseName, "bosons_sphere_su2_%s_parity_%d_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), PairParity, Manager.GetDouble("pairing"),NbrParticles, LzMax);
+      else  
+	sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
     }
   else
     sprintf (OutputBaseName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz", Manager.GetString("interaction-name"), NbrParticles, LzMax, SzTotal);

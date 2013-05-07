@@ -657,6 +657,8 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  if (InitialVectorDescription.Parse(this->InitialBlockVectorFileName) == false)
 		    {
 		      InitialVectorDescription.DumpErrors(cout) << endl;
+		      cout << "Error: Could not parse definitions for initial block-vectors" << endl;
+		      Lanczos->InitializeLanczosAlgorithm();
 		    }
 		  else
 		    {
@@ -664,6 +666,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		      if (InitialVectorDescription.GetAsStringArray("InitialVectors", ' ', VectorFileNames, TmpNbrInitialVectors) == false)
 			{
 			  cout << "Vectors are not defined or have a wrong value in " << this->InitialBlockVectorFileName << endl;
+			  Lanczos->InitializeLanczosAlgorithm();
 			}
 		      else
 			{

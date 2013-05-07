@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-sz", "what is the desired Sz value of the output state?", 0);
   (*SystemGroup) += new SingleDoubleOption  ('t', "tunneling-amp", "tunneling amplitude", 0.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
@@ -94,6 +95,7 @@ int main(int argc, char** argv)
   int LzMax = Manager.GetInteger("lzmax");
   int TotalLz = Manager.GetInteger("total-lz");
   int TotalSz = Manager.GetInteger("total-sz");
+  int PairParity = Manager.GetInteger("pair-parity");
   bool SzSymmetrizedBasis;
   bool SzMinusParity;  
   bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
@@ -157,7 +159,7 @@ int main(int argc, char** argv)
     }
 
 
-  long MemorySpace = 9l << 20;
+  unsigned long MemorySpace = 9l << 20;
   char* OutputName;
   if (FermionFlag==true)
     {
@@ -255,7 +257,12 @@ int main(int argc, char** argv)
 	{
 	  BosonOnSphereWithSpin* SU2Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
 
-	  BosonOnSphereWithSpinAllSz* Space = new BosonOnSphereWithSpinAllSz(NbrParticles, TotalLz, LzMax, MemorySpace);
+	  BosonOnSphereWithSpinAllSz* Space;
+	  
+	  if ( PairParity >=0 ) 
+	    Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, PairParity, MemorySpace);
+	  else
+	    Space = new BosonOnSphereWithSpinAllSz(NbrParticles, TotalLz, LzMax, MemorySpace);
     
 	  RealVector OutputState = Space->ForgeSU2FromTunneling(State, *SU2Space, TotalSz);
 	  OutputState.WriteVector(OutputName);	

@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool AllSz = Manager.GetBoolean("all-sz");
+  bool PairParity = Manager.GetInteger("pair-parity");
   bool FirstRun = true;
 
   int NbrUp = (NbrParticles + SzTotal) >> 1;
@@ -210,8 +211,10 @@ int main(int argc, char** argv)
   char* OutputBaseName = new char [256 + strlen(Manager.GetString("interaction-name"))];
   if (AllSz)
     {
-      sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
-      
+      if (PairParity)
+	sprintf (OutputBaseName, "bosons_sphere_su2_%s_parity_%d_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), PairParity, Manager.GetDouble("pairing"),NbrParticles, LzMax);
+      else
+	sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
     }
   else
     sprintf (OutputBaseName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz", Manager.GetString("interaction-name"), NbrParticles, LzMax, SzTotal);

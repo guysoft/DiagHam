@@ -66,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('a', "alpha", "deviation of flux-density from n_phi=1/2", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('t', "tunnelling", "tunnelling splitting Delta_SAS that couples to S_z term", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('b', "density-imbalance", "density imbalance term that couples to S_x", 0.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
   (*SystemGroup) += new BooleanOption ('\n', "project-l2", "add a projector onto the L2 groundstate");
   
   (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
@@ -123,6 +124,12 @@ int main(int argc, char** argv)
   int NbrBosons = Manager.GetInteger("nbr-particles");
   double Alpha = Manager.GetDouble("alpha");
   double DeltaSAS = Manager.GetDouble("tunnelling");
+  int PairParity = Manager.GetInteger("pair-parity");
+  if ((PairParity>=0)&&(DeltaSAS!=0.0))
+    {
+      cout << "Attention, pair-parity requires single particle tunnelling to vanish. Ignoring requested parity."<<endl;
+      PairParity = -1;
+    }
   double DensityImbalance = Manager.GetDouble("density-imbalance"); 
   int LzMax = Manager.GetInteger("lzmax");
 
@@ -283,8 +290,11 @@ int main(int argc, char** argv)
   char* OutputNameLz = new char [512 + strlen(Manager.GetString("interaction-name"))];
   char* ExtraTerms = new char[50];
   ExtraTerms[0]='\0';
+  int Offset=0;
+  if (PairParity>=0)
+    Offset+=sprintf(ExtraTerms,"_parity_%d",PairParity);
   if (Manager.GetBoolean("project-l2"))
-    sprintf(ExtraTerms,"_Pl2");
+    sprintf(ExtraTerms+Offset,"_Pl2");
 
   if (Manager.GetString("interaction-file")!=NULL)
     sprintf (OutputNameLz, "bosons_sphere_eff_su2%s_%s_a_%g_n_%d_2s_%d_t_%g_b_%g_lz.dat", ExtraTerms, Manager.GetString("interaction-name"), Alpha, NbrBosons, LzMax, DeltaSAS, DensityImbalance);
@@ -318,8 +328,11 @@ int main(int argc, char** argv)
       ParticleOnSphereWithSpin* Space = 0; 
 
       //^^^^^^^^^^^^^^^^^^^^^^^HILBERT SPACE^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      
-      Space = new BosonOnSphereWithSpinAllSz(NbrBosons, L, LzMax, MemorySpace);
+
+      if (PairParity>=0)
+	Space = new BosonOnSphereWithSpinAllSz(NbrBosons, L, LzMax, PairParity, MemorySpace);
+      else
+	Space = new BosonOnSphereWithSpinAllSz(NbrBosons, L, LzMax, MemorySpace);
       
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)

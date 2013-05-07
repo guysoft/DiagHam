@@ -69,6 +69,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
   this->LzMax = lzMax;
   this->ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
   this->NbrLzValue = this->LzMax + 1;
+  this->SzParity = -1;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, this->TotalLz);
   cout << "dim = " << this->HilbertSpaceDimension << endl;
   this->TemporaryState = new unsigned [this->NbrLzValue];
@@ -115,6 +116,72 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
 #endif
 }
 
+
+// basic constructor with pair parity
+// 
+// nbrBosons = number of bosons
+// totalLz = momentum total value
+// lzMax = maximum Lz value reached by a boson
+// szParity = parity of the total Sz : (-1)^Sz == 1 (even parity 0 generalized for all N by: N_\up mod 2 == \lgauss N/2 \rgauss mod 2)
+// memory = amount of memory granted for precalculations
+//
+BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int totalLz, int lzMax, int szParity, unsigned long memory)
+{
+  cout << "BosonOnSphereWithSpinAllSz"<<endl;
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
+  this->TotalLz = totalLz;
+  this->LzMax = lzMax;
+  this->ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
+  int ShiftedParity = ((nbrBosons>>1) + szParity) & 0x1;
+  this->NbrLzValue = this->LzMax + 1;
+  this->SzParity = szParity;
+  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->LzMax, this->TotalLz, this->SzParity);
+  cout << "dim = " << this->HilbertSpaceDimension << endl;
+  this->TemporaryState = new unsigned [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned [this->NbrLzValue];
+  this->Flag.Initialize();
+  this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
+  this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
+  this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
+  this->StateNbrUp = new unsigned [this->HilbertSpaceDimension];
+  this->SubspaceRestriction = true;
+  this->SubspaceSz = NbrBosons & 1;
+  int TmpLzMax = this->LzMax;
+  if (this->ShiftedTotalLz < TmpLzMax)
+    {
+      TmpLzMax = this->ShiftedTotalLz;	  
+    }
+  int StartLzMax = (LzMax<<1)+1;
+  int TmpDim = this->GenerateStates(this->NbrBosons, LzMax, StartLzMax, this->ShiftedTotalLz, 0, ShiftedParity, 0);
+  if (TmpDim!=this->HilbertSpaceDimension)
+    cout << "Count inconsistent: "<<TmpDim<<" vs " << this->HilbertSpaceDimension<<endl;
+  this->GenerateLookUpTable(memory);
+  this->CoherenceFactors=new double[NbrBosons*NbrBosons+1];
+  for (int i=0; i<NbrBosons*NbrBosons+1; ++i)
+    this->CoherenceFactors[i]=sqrt((double)i);
+  this->KeptCoordinates = new int;
+  (*(this->KeptCoordinates)) = -1;
+  this->Minors = 0;
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+
+//   for (int i=0; i<HilbertSpaceDimension; ++i)
+//     {
+//       PrintState(cout,i)<<endl;      
+//     }
+
+#ifdef __DEBUG__
+  long UsedMemory = 0;
+  UsedMemory += 2*this->HilbertSpaceDimension * sizeof(unsigned long);  // StateDescriptionUp/Down
+  UsedMemory += this->HilbertSpaceDimension * sizeof(unsigned); // StateInfo
+  // 
+  UsedMemory += this->NbrTensoredElements * (sizeof(unsigned long) + 2*sizeof(unsigned) + sizeof(int));  // TensoredElements, UpSpinLookUpTable  , DownSpinLookUpTable, TensoredLzMax
+  UsedMemory += (this->TotalLz + this->NbrBosons) * (LookUpTableMemorySize+1) * sizeof(int); // LookUpTableShift, LookUpTable
+  cout << "HS using ";
+  PrintMemorySize(cout, UsedMemory)<<endl;
+#endif
+}
+
 // copy constructor (without duplicating datas)
 //
 // bosons = reference on the hilbert space to copy to copy
@@ -127,6 +194,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz(const BosonOnSphereWithSp
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = this->LzMax + 1;
+  this->SzParity = bosons.SzParity;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateDescriptionUp = bosons.StateDescriptionUp;
@@ -252,6 +320,7 @@ BosonOnSphereWithSpinAllSz& BosonOnSphereWithSpinAllSz::operator = (const BosonO
   this->TotalLz = bosons.TotalLz;
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
+  this->SzParity = bosons.SzParity;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->StateDescriptionUp = bosons.StateDescriptionUp;
@@ -1002,6 +1071,90 @@ int BosonOnSphereWithSpinAllSz::GenerateStates(int nbrBosons, int lzMax, int cur
   return pos;
 }
 
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// currentLzMax = momentum maximum value for bosons that are still to be placed
+// totalLz = momentum total value
+// totalNbrUp = number of up-particles placed so far
+// szParity = target parity of totalNbrUp
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+int BosonOnSphereWithSpinAllSz::GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int totalNbrUp, int szParity, int pos)
+{
+  // cout << "GenerateStates(n:"<< nbrBosons<<", currLz:"<<currentLzMax<< ", totalLz:" <<totalLz<<", pos:"<< pos<<")"<<endl;
+  int CurrentMomentum = currentLzMax%this->NbrLzValue;
+  int CurrentSpinUp = currentLzMax/this->NbrLzValue;
+  if ((nbrBosons < 0) || (totalLz < 0) || (currentLzMax < 0) || ((CurrentSpinUp==0)&&((nbrBosons * CurrentMomentum) < totalLz)))
+    return pos;
+  if (nbrBosons == 0)
+    {
+      if ((totalLz == 0)&&((totalNbrUp & 0x1) == szParity))
+
+	{
+	  this->StateDescription[pos] = new unsigned [lzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
+	  for (int i = 0; i <= lzMax; ++i)
+	    TmpState[i] = 0;
+	  this->StateNbrUp[pos] = 0;
+	  this->StateLzMaxUp[pos] = 0;
+	  this->StateLzMaxDown[pos] = 0;
+	  return pos + 1;
+	}
+      else return pos;
+    }
+  if ((CurrentSpinUp==0)&&(nbrBosons == 1))
+    {
+      if ((currentLzMax >= totalLz)&&((totalNbrUp & 0x1) == szParity))
+	{
+	  this->StateDescription[pos] = new unsigned [lzMax + 1];
+	  unsigned* TmpState = this->StateDescription[pos];
+	  for (int i = 0; i <= lzMax; ++i)
+	    TmpState[i] = 0;
+	  TmpState[totalLz] = 1; // place spin down
+	  this->StateNbrUp[pos] = 0;
+	  this->StateLzMaxUp[pos] = 0;
+	  this->StateLzMaxDown[pos] = totalLz;
+	  return pos + 1;	
+	}
+      else return pos;
+    }
+  if (((CurrentSpinUp==0)&&((nbrBosons * CurrentMomentum) == totalLz))&&((totalNbrUp & 0x1) == szParity))
+    {
+      this->StateDescription[pos] = new unsigned [lzMax + 1];
+      unsigned* TmpState = this->StateDescription[pos];
+      for (int i = 0; i <= lzMax; ++i)
+	TmpState[i] = 0;	    	
+      TmpState[CurrentMomentum] = nbrBosons; // place spin down
+      this->StateNbrUp[pos] = 0;
+      this->StateLzMaxUp[pos] = 0;
+      this->StateLzMaxDown[pos] = CurrentMomentum;
+      return pos + 1;	
+    }
+  int ReducedCurrentLzMax = currentLzMax - 1;
+  int TmpPos = pos;
+  int TmpNbrUp;
+  for (int ToPlace=nbrBosons; ToPlace>=0; --ToPlace)
+    {
+      TmpPos = this->GenerateStates(nbrBosons-ToPlace, lzMax, ReducedCurrentLzMax, totalLz-ToPlace*CurrentMomentum, totalNbrUp+ToPlace*CurrentSpinUp, szParity, pos);
+      TmpNbrUp = ToPlace*CurrentSpinUp;
+      for (int i = pos; i < TmpPos; i++)
+	{
+	  this->StateDescription[i][CurrentMomentum] |= ToPlace << (16*CurrentSpinUp);
+	  this->StateNbrUp[i] += TmpNbrUp;
+	  if (ToPlace>0)
+	    {
+	      if (CurrentSpinUp>0)
+		this->StateLzMaxUp[i] = CurrentMomentum;
+	      else
+		this->StateLzMaxDown[i] = CurrentMomentum;
+	    }
+	}
+      pos = TmpPos;
+    }
+  return pos;
+}
 
 
 // generate look-up table associated to current Hilbert space
@@ -1240,6 +1393,18 @@ int BosonOnSphereWithSpinAllSz::EvaluateHilbertSpaceDimension(int nbrBosons, int
   return this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons, 2*lzMax+1, (totalLz + lzMax * nbrBosons) >> 1,0);
 }
 
+// evaluate Hilbert space dimension
+//
+// nbrBosons = number of bosons
+// lzMax = momentum maximum value for a boson
+// totalLz = momentum total value
+// szParity = parity of the total Sz : (-1)^Sz == 1?
+// return value = Hilbert space dimension
+
+int BosonOnSphereWithSpinAllSz::EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int szParity)
+{
+  return this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons, 2*lzMax+1, (totalLz + lzMax * nbrBosons) >> 1, 0, ((nbrBosons>>1) + szParity)&0x1, 0);
+}
 
 // generate all states corresponding to the constraints
 // 
@@ -1303,6 +1468,77 @@ int BosonOnSphereWithSpinAllSz::ShiftedEvaluateHilbertSpaceDimension(int nbrBoso
   return TmpDim;
 }
 
+
+// generate all states corresponding to the constraints
+// 
+// nbrBosons = number of bosons remaining to be placed
+// lzMax = momentum maximum value for a boson in the state 
+// currentLzMax = momentum maximum value for bosons that are still to be placed
+//                (counting from 0 to lzMax for down and lzMax+1 to 2LzMax+1 for up)
+// totalLz = momentum total value
+// totalNbrUp = number of up-particles placed so far
+// szParity = target parity of the total number of up particles
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+int BosonOnSphereWithSpinAllSz::ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int currentLzMax, int totalLz, int totalNbrUp, int szParity, int level)
+{
+  int CurrentMomentum = currentLzMax%(this->NbrLzValue);
+  int CurrentSpinUp = currentLzMax/(this->NbrLzValue);
+  //for (int i=0; i<level; ++i) cout << "  ";
+  //cout << "SEV(n="<<nbrBosons<<", lz="<<currentLzMax<<", "<<totalLz<<") - Lz="<<CurrentMomentum<<endl;
+  if ((nbrBosons < 0) || (totalLz < 0) || (currentLzMax < 0) || ((CurrentSpinUp==0)&&((nbrBosons * CurrentMomentum) < totalLz)))
+    {
+//       for (int i=0; i<level; ++i) cout << "  ";
+//       cout << "add 0"<<endl;
+      return 0;
+    }
+  if (nbrBosons == 0)
+    {
+      if (totalLz == 0)
+	{
+// 	  for (int i=0; i<level; ++i) cout << "  ";
+// 	  cout << "add 1"<<endl;
+	  if ((totalNbrUp & 0x1) == szParity)
+	    return 1;
+	  else
+	    return 0;
+	}
+      else
+	{
+// 	  for (int i=0; i<level; ++i) cout << "  ";	  
+// 	  cout << "add 0"<<endl;
+	  return 0;
+	}
+    }
+  if ((CurrentSpinUp==0)&&(nbrBosons == 1))
+    {
+      if (currentLzMax >= totalLz)
+	{
+// 	  for (int i=0; i<level; ++i) cout << "  ";
+// 	  cout << "add 1"<<endl;
+	  if ((totalNbrUp & 0x1) == szParity)
+	    return 1;
+	  else
+	    return 0;
+	}
+      else return 0;
+    }
+  if ((CurrentSpinUp==0)&&((nbrBosons * CurrentMomentum) == totalLz))
+    {
+//       for (int i=0; i<level; ++i) cout << "  ";
+//       cout << "add 1"<<endl;
+      if ((totalNbrUp & 0x1) == szParity)
+	return 1;
+    }
+  int ReducedCurrentLzMax = currentLzMax - 1;
+  int TmpDim = 0;
+  for (int ToPlace=nbrBosons; ToPlace>=0; --ToPlace)
+    TmpDim += this->ShiftedEvaluateHilbertSpaceDimension(nbrBosons-ToPlace, ReducedCurrentLzMax, totalLz-ToPlace*CurrentMomentum, totalNbrUp+ToPlace*CurrentSpinUp, szParity, level+1);
+//   for (int i=0; i<level; ++i) cout << "  ";
+//   cout << "add: "<<TmpDim<<endl;
+  return TmpDim;
+}
 
 
 // evaluate wave function in real space using a given basis

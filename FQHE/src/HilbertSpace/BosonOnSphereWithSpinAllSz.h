@@ -66,6 +66,8 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   int LzMax;
   // number of Lz values in a state
   int NbrLzValue;
+  // parity flag for Sz (-1=no parity, 0=even, 1=odd)
+  int SzParity;
   
 
   // array describing each state (full storage, temporary use)
@@ -135,6 +137,17 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // lzMax = maximum Lz value reached by a boson
   // memory = amount of memory granted for precalculations
   BosonOnSphereWithSpinAllSz (int nbrBosons, int totalLz, int lzMax, unsigned long memory = 10000000);
+
+  // basic constructor with pair parity
+  // 
+  // nbrBosons = number of bosons
+  // totalLz = momentum total value
+  // lzMax = maximum Lz value reached by a boson
+  // szParity = parity of the total Sz : (-1)^Sz == 1 (even parity 0 generalized for all N by: N_\up mod 2 == \lgauss N/2 \rgauss mod 2)
+  // memory = amount of memory granted for precalculations
+  //
+  BosonOnSphereWithSpinAllSz (int nbrBosons, int totalLz, int lzMax, int szParity, unsigned long memory = 10000000);
+
 
   // copy constructor (without duplicating datas)
   //
@@ -505,6 +518,16 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // return value = Hilbert space dimension
   int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int currentLzMax, int totalLz, int l);
 
+  // evaluate Hilbert space dimension with shifted values for lzMax and totalLz
+  //
+  // nbrBosons = number of bosons
+  // currentLzMax = two times momentum maximum value for a boson plus one at current stage in recursion
+  // totalLz = momentum total value plus nbrBosons * (momentum maximum value for a boson + 1)
+  // totalNbrUp = number of up-particles placed so far
+  // szParity = target parity of totalNbrUp
+  // return value = Hilbert space dimension
+  int ShiftedEvaluateHilbertSpaceDimension(int nbrBosons, int currentLzMax, int totalLz, int totalNbrUp, int szParity, int l);
+
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
@@ -518,6 +541,15 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // return value = Hilbert space dimension
   virtual int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz);
 
+  // evaluate Hilbert space dimension
+  //
+  // nbrBosons = number of bosons
+  // lzMax = momentum maximum value for a boson
+  // totalLz = momentum total value
+  // szParity = parity of the total Sz : (-1)^Sz == 1?
+  // return value = Hilbert space dimension
+  virtual int EvaluateHilbertSpaceDimension(int nbrBosons, int lzMax, int totalLz, int szParity);
+
   // generate all states corresponding to the constraints
   // 
   // nbrBosons = number of bosons
@@ -527,6 +559,18 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int pos);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrBosons = number of bosons
+  // lzMax = momentum maximum value for a boson
+  // currentLzMax = momentum maximum value for bosons that are still to be placed
+  // totalLz = momentum total value
+  // totalNbrUp = number of up-particles placed so far
+  // szParity = target parity of totalNbrUp
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  int GenerateStates(int nbrBosons, int lzMax, int currentLzMax, int totalLz, int totalNbrUp, int szParity, int pos);
 
   // convert a bosonic state into its fermionic counterpart
   //

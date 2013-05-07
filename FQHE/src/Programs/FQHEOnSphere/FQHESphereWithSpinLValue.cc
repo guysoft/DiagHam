@@ -76,6 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total lz value of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new BooleanOption  ('A', "all-sz", "assume a hilbert space including all sz values");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new BooleanOption  ('\n', "no-spin", "do not compute the S^2 value of the state");
   (*SystemGroup) += new BooleanOption  ('\n', "no-szparity", "do not compute the parity under the Sz<->-Sz symmetry");
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
   int LzMax = Manager.GetInteger("lzmax");
   int TotalLz = Manager.GetInteger("total-lz");
   int TotalSz = Manager.GetInteger("total-sz");
+  int PairParity = Manager.GetInteger("pair-parity");
   bool SzSymmetrizedBasis = Manager.GetBoolean("szsymmetrized-basis");
   bool SzMinusParity = Manager.GetBoolean("minus-szparity");
   bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
@@ -202,7 +204,7 @@ int main(int argc, char** argv)
     }
 
 
-  long MemorySpace = 9l << 20;
+  unsigned long MemorySpace = 9ul << 20;
   ParticleOnSphereWithSpin* Space;
   if (FermionFlag == true)
     {
@@ -323,7 +325,12 @@ int main(int argc, char** argv)
   else
     {
       if (Manager.GetBoolean("all-sz"))
-	Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, MemorySpace);
+	{
+	  if ( PairParity >=0 ) 
+	    Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, PairParity, MemorySpace);
+	  else
+	    Space = new BosonOnSphereWithSpinAllSz (NbrParticles, TotalLz, LzMax, MemorySpace);
+	}
       else
 	Space = new BosonOnSphereWithSpin(NbrParticles, TotalLz, LzMax, TotalSz);
     }

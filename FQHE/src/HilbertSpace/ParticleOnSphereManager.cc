@@ -177,6 +177,7 @@ void ParticleOnSphereManager::AddOptionGroup(OptionManager* manager, const char*
 	  {
 	    // boson options
 	    (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "use Hilbert-space with all values of sz");
+	    (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
 	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-old", "use full integer representation of bosonic states (slow)");
 	    (*PrecalculationGroup) += new BooleanOption  ('\n', "use-alt", "use alternative Hilbert space for  bosonic states");
 	  }
@@ -838,7 +839,10 @@ ParticleOnSphere* ParticleOnSphereManager::GetHilbertSpaceSU2(int totalLz)
       if (this->Options->GetBoolean("all-sz"))
 	{
 	  unsigned long MemorySpace = ((unsigned long) this->Options->GetInteger("fast-search")) << 20;
-	  Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
+	  if (this->Options->GetInteger("pair-parity")>=0)
+	    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, this->Options->GetInteger("pair-parity"), MemorySpace);
+	  else
+	    Space = new BosonOnSphereWithSpinAllSz(NbrBosons, totalLz, LzMax, MemorySpace);
 	}
       else
 	{
