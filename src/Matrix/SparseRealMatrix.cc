@@ -115,13 +115,13 @@ SparseRealMatrix::SparseRealMatrix(int nbrRow, int nbrColumn, long nbrMatrixElem
     {
       this->MatrixElements = new double[this->NbrMatrixElements];
       this->ColumnIndices = new int[this->NbrMatrixElements];
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  this->RowPointers[i] = -1l;
+	  this->RowLastPointers[i] = -1l;
+	}
       if (zero == true)
 	{
-	  for (int i = 0; i < this->NbrRow; i++)
-	    {
-	      this->RowPointers[i] = -1l;
-	      this->RowLastPointers[i] = -1l;
-	    }
 	  for (long i = 0l; i < this->NbrMatrixElements; ++i)
 	    {
 	      this->MatrixElements[i] = 0.0;

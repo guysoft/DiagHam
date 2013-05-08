@@ -108,21 +108,29 @@ SparseComplexMatrix::SparseComplexMatrix(int nbrRow, int nbrColumn, long nbrMatr
   this->NbrMatrixElementPacketSize = 0l;
   this->RowPointers = new long[this->NbrRow];
   this->RowLastPointers = new long[this->NbrRow];
-  this->MatrixElements = new Complex[this->NbrMatrixElements];
-  this->ColumnIndices = new int[this->NbrMatrixElements];
-  if (zero == true)
+  if (this->NbrMatrixElements > 0)
     {
+      this->MatrixElements = new Complex[this->NbrMatrixElements];
+      this->ColumnIndices = new int[this->NbrMatrixElements];
       for (int i = 0; i < this->NbrRow; i++)
 	{
 	  this->RowPointers[i] = -1l;
 	  this->RowLastPointers[i] = -1l;
 	}
-      for (long i = 0l; i < this->NbrMatrixElements; ++i)
+      if (zero == true)
 	{
-	  this->MatrixElements[i] = 0.0;
-	  this->ColumnIndices[i] = -1;
+	  for (long i = 0l; i < this->NbrMatrixElements; ++i)
+	    {
+	      this->MatrixElements[i] = 0.0;
+	      this->ColumnIndices[i] = -1;
+	    }
 	}
    }
+  else
+    {
+      this->MatrixElements = 0;
+      this->ColumnIndices = 0;
+    }
 }
 
 // copy constructor (without duplicating datas)
@@ -394,9 +402,30 @@ SparseComplexMatrix& SparseComplexMatrix::Copy (SparseRealMatrix& matrix)
 
 void SparseComplexMatrix::SetMatrixElement(int i, int j, double x)
 {
-  if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
+  if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
   if (this->NbrMatrixElementPacketSize == 0l)
+    {
+      if (this->RowPointers[i] >= 0l)
+	{
+	  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+	  if (TmpIndex >= 0l)
+	    {
+	      this->MatrixElements[TmpIndex] = x;
+	      return;
+	    }
+	}     
+      return;
+    }
+  if (this->NbrMatrixElementPacketSize < 0l)
+    {
+      long& TmpIndex = this->RowLastPointers[i];
+      ++TmpIndex;
+      this->ColumnIndices[TmpIndex] = j;
+      this->MatrixElements[TmpIndex] = x;
+      return;
+    }
+  if (this->RowPointers[i] >= 0l)
     {
       long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
       if (TmpIndex >= 0l)
@@ -404,9 +433,54 @@ void SparseComplexMatrix::SetMatrixElement(int i, int j, double x)
 	  this->MatrixElements[TmpIndex] = x;
 	  return;
 	}
+      this->IncreaseNbrMatrixElements();
+      for (int k = i + 1; k < this->NbrRow; ++k)
+	{
+	  if (this->RowPointers[k] >= 0l)
+	    {
+	      ++this->RowPointers[k];
+	      ++this->RowLastPointers[k];
+	    }
+	}
+      TmpIndex = this->RowPointers[i];
+      while ((TmpIndex <= this->RowLastPointers[i]) && (this->ColumnIndices[TmpIndex] < j))
+	++TmpIndex;
+      for (long k = this->NbrMatrixElements - 1; k > TmpIndex;  --k)
+	{
+	  this->MatrixElements[k] = this->MatrixElements[k - 1];
+	  this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
+	}
+      this->MatrixElements[TmpIndex] = x;
+      this->ColumnIndices[TmpIndex] = j;
+      ++this->RowLastPointers[i];
       return;
     }
-  this->SetMatrixElement(i, j, Complex (x));
+  int TmpIndex1 = i;
+  while ((TmpIndex1 >= 0) && (this->RowPointers[TmpIndex1] == -1l))
+    --TmpIndex1;
+  long TmpIndex = 0l;
+  if (TmpIndex1 >= 0)
+    TmpIndex = this->RowLastPointers[TmpIndex1] + 1l;
+
+  this->IncreaseNbrMatrixElements();
+  for (int k = i + 1; k < this->NbrRow; ++k)
+    {
+      if (this->RowPointers[k] >= 0l)
+	{
+	  ++this->RowPointers[k];
+	  ++this->RowLastPointers[k];
+	}
+    }
+  for (long k = this->NbrMatrixElements - 1; k > TmpIndex;  --k)
+    {
+      this->MatrixElements[k] = this->MatrixElements[k - 1];
+      this->ColumnIndices[k] = this->ColumnIndices[k - 1];	  
+    }
+  this->MatrixElements[TmpIndex] = x;
+  this->ColumnIndices[TmpIndex] = j;
+  this->RowPointers[i] = TmpIndex;
+  this->RowLastPointers[i] = TmpIndex;
+  return;
 }
 
 // set a matrix element
@@ -417,16 +491,27 @@ void SparseComplexMatrix::SetMatrixElement(int i, int j, double x)
 
 void SparseComplexMatrix::SetMatrixElement(int i, int j, const Complex& x)
 {
-  if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
+  if ((i > this->NbrRow) || (j > this->NbrColumn))
     return;
   if (this->NbrMatrixElementPacketSize == 0l)
     {
-      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
-      if (TmpIndex >= 0l)
+      if (this->RowPointers[i] >= 0l)
 	{
-	  this->MatrixElements[TmpIndex] = x;
-	  return;
-	}
+	  long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
+	  if (TmpIndex >= 0l)
+	    {
+	      this->MatrixElements[TmpIndex] = x;
+	      return;
+	    }
+	}     
+      return;
+    }
+  if (this->NbrMatrixElementPacketSize < 0l)
+    {
+      long& TmpIndex = this->RowLastPointers[i];
+      ++TmpIndex;
+      this->ColumnIndices[TmpIndex] = j;
+      this->MatrixElements[TmpIndex] = x;
       return;
     }
   if (this->RowPointers[i] >= 0l)
@@ -495,19 +580,6 @@ void SparseComplexMatrix::SetMatrixElement(int i, int j, const Complex& x)
 // imag = new imaginary value for matrix element
 void SparseComplexMatrix::SetMatrixElement(int i, int j, double real, double imag)
 {
-  if ((i > this->NbrRow) || (j > this->NbrColumn) || (this->RowPointers[i] == -1l))
-    return;
-  if (this->NbrMatrixElementPacketSize == 0l)
-    {
-      long TmpIndex = this->FindColumnIndexPosition(j, this->RowPointers[i], this->RowLastPointers[i]);
-      if (TmpIndex >= 0l)
-	{
-	  this->MatrixElements[TmpIndex].Re = real;
-	  this->MatrixElements[TmpIndex].Im = imag;
-	  return;
-	}
-      return;
-    }
   this->SetMatrixElement(i, j, Complex (real, imag));
 }
 
