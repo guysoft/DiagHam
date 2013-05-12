@@ -79,7 +79,7 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
-  // trimChargeIndices = trim the charge indices, assuming an iMPS
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
@@ -89,7 +89,7 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // fileName = name of the file that contains the B matrices
-  // trimChargeIndices = trim the charge indices, assuming an iMPS
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);

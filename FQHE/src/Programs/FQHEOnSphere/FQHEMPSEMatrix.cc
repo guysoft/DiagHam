@@ -76,7 +76,6 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
-  (*OutputGroup) += new BooleanOption  ('\n', "show-bmatrices", "show the B matrices");
   (*OutputGroup) += new BooleanOption  ('\n', "show-ematrix", "show the transfer matrix");
   (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
 					       "maximum Hilbert space dimension for which full diagonalization is applied", 1000);
@@ -192,16 +191,6 @@ int main(int argc, char** argv)
   TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = 0;
   if (Manager.GetBoolean("diagonal-block"))
     {
-      if (Manager.GetBoolean("show-bmatrices"))
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < NbrBMatrices; ++i)
-	    {
-	      cout << "B^[" << i << "]" << endl;
-	      SparseBMatrices[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
       long EffectiveDimension = 0l;
       for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
 	{
@@ -283,16 +272,6 @@ int main(int argc, char** argv)
 // 	      for (int j = 1; j < GroupSize; ++j)
 // 		TmpSparseGroupBMatrices[i].Multiply(SparseBMatrices[(i >> j) & 1]);
 // 	    }
-// 	  if (Manager.GetBoolean("show-bmatrices"))
-// 	    {
-// 	      cout << "----------------------------------" << endl;
-// 	      for (int i = 0; i < NbrGroupBMatrices; ++i)
-// 		{
-// 		  cout << "B^[" << i << "]" << endl;
-// 		  TmpSparseGroupBMatrices[i].PrintNonZero(cout);
-// 		  cout << "----------------------------------" << endl;
-// 		}
-// 	    }	  
 // 	  int MinQ;
 // 	  int MaxQ;
 // 	  MPSMatrix->GetChargeIndexRange(MinQ, MaxQ);
@@ -339,31 +318,11 @@ int main(int argc, char** argv)
 // 		  ++NbrGroupBMatrices2;
 // 		}
 // 	    }
-// 	  if (Manager.GetBoolean("show-bmatrices"))
-// 	    {
-// 	      cout << "----------------------------------" << endl;
-// 	      for (int i = 0; i < NbrGroupBMatrices2; ++i)
-// 		{
-// 		  cout << "B^[" << i << "]" << endl;
-// 		  TmpSparseGroupBMatrices3[i].PrintNonZero(cout);
-// 		  cout << "----------------------------------" << endl;
-// 		}
-// 	    }	  
 // 	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrGroupBMatrices2, TmpSparseGroupBMatrices3, TmpSparseGroupBMatrices3, GroupCoefficients); 
 // 	}
 //       else
 	{
 	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients); 
-	  if (Manager.GetBoolean("show-bmatrices"))
-	    {
-	      cout << "----------------------------------" << endl;
-	      for (int i = 0; i < NbrBMatrices; ++i)
-		{
-		  cout << "B^[" << i << "]" << endl;
-		  SparseBMatrices[i].PrintNonZero(cout);
-		  cout << "----------------------------------" << endl;
-		}
-	    }	  
  	}
      }
   if (Manager.GetBoolean("power-method") == true)

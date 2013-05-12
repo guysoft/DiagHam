@@ -309,6 +309,44 @@ Vector& LongRationalVector::ClearVectorSegment (long start, long nbrComponent)
   return *this;
 }
 
+// copy a vector into another
+//
+// vector = vector to copy
+// coefficient = optional coefficient which multiply source to copy
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::Copy (LongRationalVector& vector)
+{
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
+  this->Localize();
+  vector.Localize();
+  for (long i = 0; i < this->LargeDimension; i++)
+    this->Components[i] = vector.Components[i];
+  this->Delocalize();
+  vector.Delocalize();
+  return *this;
+}
+
+// copy a vector into another
+//
+// vector = vector to copy
+// coefficient = optional coefficient which multiply source to copy
+// return value = reference on current vector
+
+LongRationalVector& LongRationalVector::Copy (LongRationalVector& vector, const LongRational& coefficient)
+{
+  if ((this->Dimension != vector.Dimension)||(this->LargeDimension != vector.LargeDimension))
+    this->Resize(vector.LargeDimension);
+  this->Localize();
+  vector.Localize();
+  for (long i = 0; i < this->LargeDimension; i++)
+    this->Components[i] = vector.Components[i] * coefficient;
+  this->Delocalize();
+  vector.Delocalize();
+  return *this;
+}
+
 // create a new vector with same size and same type but non-initialized components
 //
 // zeroFlag = true if all coordinates have to be set to zero

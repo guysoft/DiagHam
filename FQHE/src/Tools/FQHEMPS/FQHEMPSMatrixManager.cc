@@ -126,6 +126,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
   (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
   (*OutputGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
+  (*OutputGroup) += new BooleanOption  ('\n', "show-bmatrices", "show the B matrices");
 }
 
 
@@ -166,19 +167,20 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	      if (this->Options->GetString("import-bmatrices") != 0)
 		{
 		  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-							   this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+							   this->Options->GetString("import-bmatrices"), this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa);
 		}
 	      else
 		{
 		  if (this->Options->GetString("cft") != 0)
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
-							       CylinderFlag, Kappa, architecture);
+							       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 		    }
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), CylinderFlag, Kappa, architecture);
+							       this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), 
+							       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	    }
@@ -329,6 +331,17 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
       cout << "number of non-zero matrix elements:" << endl;
       for (int i = 0; i < NbrBMatrices; ++i)
 	cout << "B[" << i << "] = " << MPSMatrix->GetMatrices()[i].ComputeNbrNonZeroMatrixElements() << endl;
+    }
+
+  if (this->Options->GetBoolean("show-bmatrices"))
+    {
+      cout << "----------------------------------" << endl;
+      for (int i = 0; i < NbrBMatrices; ++i)
+	{
+	  cout << "B^[" << i << "]" << endl;
+	  (MPSMatrix->GetMatrices())[i].PrintNonZero(cout);
+	  cout << "----------------------------------" << endl;
+	}
     }
 
   return MPSMatrix;

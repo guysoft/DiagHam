@@ -102,6 +102,13 @@ class SparseComplexMatrix : public Matrix
   // zero = true if matrix elements have to be set to zero
   SparseComplexMatrix(int nbrRow, int nbrColumn, long nbrMatrixElements, bool zero = false);
 
+  // constructor for a sparse matrix knowing how many non-zero elements per row will be required
+  //
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  // nbrElementPerRow = number of non-zero matrix elements per row
+  SparseComplexMatrix(int nbrRow, int nbrColumn, int* nbrElementPerRow);
+
   // copy constructor from a complex matrix
   //
   // M = matrix to copy

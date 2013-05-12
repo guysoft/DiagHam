@@ -122,6 +122,19 @@ class LongRationalVector : public Vector
   // return value = reference on current vector
   virtual Vector& ClearVectorSegment (long start, long nbrComponent);
 
+  // copy a vector into another
+  //
+  // vector = vector to copy
+  // return value = reference on current vector
+  LongRationalVector& Copy (LongRationalVector& vector);
+
+  // copy a vector into another
+  //
+  // vector = vector to copy
+  // coefficient = optional coefficient which multiply source to copy
+  // return value = reference on current vector
+  LongRationalVector& Copy (LongRationalVector& vector, const LongRational& coefficient);
+
   // create a new vector with same size and same type but non-initialized components
   //
   // zeroFlag = true if all coordinates have to be set to zero

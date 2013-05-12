@@ -133,6 +133,54 @@ SparseComplexMatrix::SparseComplexMatrix(int nbrRow, int nbrColumn, long nbrMatr
     }
 }
 
+// constructor for a sparse matrix knowing how many non-zero elements per row will be required
+//
+// nbrRow = number of rows
+// nbrColumn = number of columns
+// nbrElementPerRow = number of non-zero matrix elements per row
+
+SparseComplexMatrix::SparseComplexMatrix(int nbrRow, int nbrColumn, int* nbrElementPerRow)
+{
+  this->Flag.Initialize();
+  this->MatrixType = Matrix::RealElements | Matrix::Sparse;
+  this->NbrColumn = nbrColumn;
+  this->NbrRow = nbrRow;
+  this->TrueNbrRow = this->NbrRow;
+  this->TrueNbrColumn = this->NbrColumn;
+  this->NbrMatrixElements = 0l;
+  for (int i = 0; i < this->NbrRow; ++i)
+    this->NbrMatrixElements += (long) nbrElementPerRow[i];
+  this->MaximumNbrMatrixElements = this->NbrMatrixElements;
+  this->NbrMatrixElementPacketSize = -1l;
+  this->RowPointers = new long[this->NbrRow];
+  this->RowLastPointers = new long[this->NbrRow];
+  if (this->NbrMatrixElements > 0)
+    {
+      this->MatrixElements = new Complex[this->NbrMatrixElements];
+      this->ColumnIndices = new int[this->NbrMatrixElements];
+      long Index = 0l;
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  if (nbrElementPerRow[i] != 0)
+	    {
+	      this->RowPointers[i] = Index;
+	      this->RowLastPointers[i] = this->RowPointers[i] - 1l;
+	      Index += (long) nbrElementPerRow[i];
+	    }
+	  else
+	    {
+	      this->RowPointers[i] = -1l;
+	      this->RowLastPointers[i] = -1l;
+	    }
+	}
+   }
+  else
+    {
+      this->MatrixElements = 0;
+      this->ColumnIndices = 0;
+    }
+}
+
 // copy constructor (without duplicating datas)
 //
 // M = matrix to copy
@@ -1263,7 +1311,7 @@ SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseCo
     {
       tmpElements[i] = 0.0;
     }
-  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0l);
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
       long MinPos =  matrix1.RowPointers[i];
@@ -1414,7 +1462,7 @@ SparseComplexMatrix Multiply (const SparseComplexMatrix& matrix1, const SparseRe
     {
       tmpElements[i] = 0.0;
     }
-  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0l);
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
       long MinPos =  matrix1.RowPointers[i];
@@ -1496,7 +1544,7 @@ SparseComplexMatrix Multiply (const SparseRealMatrix& matrix1, const SparseCompl
     {
       tmpElements[i] = 0.0;
     }
-  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0);
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0l);
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
       long MinPos =  matrix1.RowPointers[i];
@@ -1639,7 +1687,7 @@ SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseC
     {
       tmpElements[i] = 0.0;
     }
-  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0);
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0l);
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
       long MinPos =  matrix1.RowPointers[i];
@@ -1752,7 +1800,7 @@ SparseComplexMatrix Conjugate (const SparseComplexMatrix& matrix1, const SparseR
     {
       tmpElements[i] = 0.0;
     }
-  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0);
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix3.NbrColumn, 0l);
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
       long MinPos =  matrix1.RowPointers[i];

@@ -254,6 +254,18 @@ class LongRational
   // return value = reference on current coefficient
   LongRational& operator /= (const LongRational& x);
 
+  // multiply by x! factorial
+  //
+  // x = value of x (x!)
+  // return value = reference on current coefficient
+  LongRational& FactorialMultiply (long x);
+
+  // divide by x! factorial
+  //
+  // x = value of x (x!)
+  // return value = reference on current coefficient
+  LongRational& FactorialDivide (long x);
+
   // multiply the current rational by 2^x
   // 
   // x = 2 power exponent

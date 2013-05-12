@@ -80,7 +80,6 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
-  (*OutputGroup) += new BooleanOption ('\n', "suppress-output", "minimize the amount of output information");
 
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
@@ -109,10 +108,7 @@ int main(int argc, char** argv)
   if ((Manager.GetBoolean("infinite-cylinder") == false) && (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false))
     return -1;
 
-  int EntCut = Manager.GetInteger("la");
-  int Na = Manager.GetInteger("na");
-
-  bool MinimizeOutput = Manager.GetBoolean("suppress-output");
+   int Na = Manager.GetInteger("na");
 
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
 
@@ -178,6 +174,7 @@ int main(int argc, char** argv)
 	    }
 	}
       File.open(TmpFileName, ios::binary | ios::out);     
+      File << "#  N    Lz    lambda" << endl;
    }
 
 
@@ -197,9 +194,28 @@ int main(int argc, char** argv)
   int* TmpColumnIndices = new int [MaxTmpMatrixElements];
   double* TmpElements = new double [BMatrices[0].GetNbrRow()];
 
-  SparseRealMatrix FullOverlapMatrixA (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
-  FullOverlapMatrixA.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);  
-  int MaxNbrFluxQuantaA = PLevel + QValue * (Na - 1);
+  cout << "MPSRowIndex = " << MPSRowIndex << endl;
+  cout << "MPSColumnIndex = " << MPSColumnIndex << endl;
+  
+//   SparseRealMatrix TmpNormalizationMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
+//   TmpNormalizationMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);  
+//   for (int i = 0; i <= NbrFluxQuanta; ++i)
+//     {
+//       SparseRealMatrix TmpMatrix2;
+//       SparseRealMatrix TmpMatrix3;
+//       TmpMatrix2 = Conjugate(ConjugateBMatrices[0], TmpNormalizationMatrix, BMatrices[0], 
+// 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
+//       TmpMatrix3 = Conjugate(ConjugateBMatrices[1], TmpNormalizationMatrix, BMatrices[1], 
+// 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
+//       TmpNormalizationMatrix  = TmpMatrix2 + TmpMatrix3;
+//     }
+//   double Normalization;
+//   TmpNormalizationMatrix.GetMatrixElement(MPSColumnIndex, MPSColumnIndex, Normalization);
+//   cout << "Normalization = " << Normalization << endl;
+
+  SparseRealMatrix FullLeftOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
+  FullLeftOverlapMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);  
+  int MaxNbrFluxQuantaA = PLevel + QValue * (Na - 1) + ((QValue - 1) / 2);
   if (MaxNbrFluxQuantaA > NbrFluxQuanta)
     {
       MaxNbrFluxQuantaA = NbrFluxQuanta;
@@ -208,16 +224,16 @@ int main(int argc, char** argv)
     {
       SparseRealMatrix TmpMatrix2;
       SparseRealMatrix TmpMatrix3;
-      TmpMatrix2 = Conjugate(ConjugateBMatrices[0], FullOverlapMatrixA, BMatrices[0], 
+      TmpMatrix2 = Conjugate(ConjugateBMatrices[0], FullLeftOverlapMatrix, BMatrices[0], 
 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-      TmpMatrix3 = Conjugate(ConjugateBMatrices[1], FullOverlapMatrixA, BMatrices[1], 
+      TmpMatrix3 = Conjugate(ConjugateBMatrices[1], FullLeftOverlapMatrix, BMatrices[1], 
 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-      FullOverlapMatrixA = TmpMatrix2 + TmpMatrix3;
+      FullLeftOverlapMatrix = TmpMatrix2 + TmpMatrix3;
     }
 
-  SparseRealMatrix FullOverlapMatrixB (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
-  FullOverlapMatrixB.SetMatrixElement(MPSColumnIndex, MPSColumnIndex, 1.0);  
-  int MaxNbrFluxQuantaB = PLevel + QValue * (Na - 1);
+  SparseRealMatrix FullRightOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
+  FullRightOverlapMatrix.SetMatrixElement(MPSColumnIndex, MPSColumnIndex, 1.0);  
+  int MaxNbrFluxQuantaB = PLevel + QValue * (NbrParticles - Na - 1)+ ((QValue - 1) / 2);
   if (MaxNbrFluxQuantaB > NbrFluxQuanta)
     {
       MaxNbrFluxQuantaB = NbrFluxQuanta;
@@ -226,30 +242,226 @@ int main(int argc, char** argv)
     {
       SparseRealMatrix TmpMatrix2;
       SparseRealMatrix TmpMatrix3;
-      TmpMatrix2 = Conjugate(ConjugateBMatrices[0], FullOverlapMatrixB, BMatrices[0], 
+      TmpMatrix2 = Conjugate(BMatrices[0], FullRightOverlapMatrix, ConjugateBMatrices[0], 
 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-      TmpMatrix3 = Conjugate(ConjugateBMatrices[1], FullOverlapMatrixB, BMatrices[1], 
+      TmpMatrix3 = Conjugate(BMatrices[1], FullRightOverlapMatrix, ConjugateBMatrices[1], 
 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-      FullOverlapMatrixB = TmpMatrix2 + TmpMatrix3;
+      FullRightOverlapMatrix = TmpMatrix2 + TmpMatrix3;
     }
+  
+  SparseRealMatrix NormalizationMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
+  NormalizationMatrix.SetToIdentity();
+  int TmpPower = 2 * PLevel;
+  for (int i = 0; i < TmpPower; ++i)
+    {
+      NormalizationMatrix.Multiply(BMatrices[0]);
+    }
+  double Error = 1e-13;
+  double LeftEigenvalueError = 0.0;
+  double RightEigenvalueError = 0.0;
+  LeftEigenvalueError = Error;
+  RightEigenvalueError = Error;
+  double TotalTraceThoA = 0;
+  int MinQValue;
+  int MaxQValue;
+  MPSMatrix->GetChargeIndexRange(0, MinQValue, MaxQValue);
+  for (int CurrentPLevel = 1; CurrentPLevel <= PLevel; ++CurrentPLevel)
+    {
+      int TmpMinQValue;
+      int TmpMaxQValue;
+      MPSMatrix->GetChargeIndexRange(CurrentPLevel, TmpMinQValue, TmpMaxQValue);
+    }
+  double** EntanglementSpectrum = new double*[PLevel + 1];
+  int* EntanglementSpectrumDimension = new int[PLevel + 1];
+  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+    EntanglementSpectrumDimension[CurrentPLevel] = 0;
 
 
+//   FullLeftOverlapMatrix.PrintNonZero(cout) << endl;
+//   FullRightOverlapMatrix.PrintNonZero(cout) << endl;
+//  cout << NormalizationMatrix << endl;
   for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
     {
-      int NbrFluxQuantaA = CurrentPLevel + QValue * (Na - 1);
-      int NbrFluxQuantaB = NbrFluxQuanta + CurrentPLevel - QValue * Na;
-      if ((NbrFluxQuantaA >= 0) && (NbrFluxQuantaA <= NbrFluxQuanta) && 
-	  (NbrFluxQuantaB >= 0) && (NbrFluxQuantaB <= NbrFluxQuanta))
+      cout << "computing level " << CurrentPLevel << endl;
+      int LeftQValue = PLevel + PLevel + (QValue - 1) / 2; // charge Q=+1
+      int RightQValue = PLevel - PLevel + (QValue - 1) / 2; // charge Q=+1
+      SparseRealMatrix RightOverlapMatrix = MPSMatrix->ExtractBlock(FullRightOverlapMatrix, CurrentPLevel, RightQValue, CurrentPLevel, RightQValue);
+      SparseRealMatrix LocalNormalizationMatrix = MPSMatrix->ExtractBlock(NormalizationMatrix, CurrentPLevel, RightQValue, CurrentPLevel, LeftQValue);
+      for (int i = 0; i < LocalNormalizationMatrix.GetNbrRow(); ++i)
 	{
-	  int QValueA = 0;
-	  int QValueB = 0;
-	  SparseRealMatrix OverlapMatrixA = MPSMatrix->ExtractBlock (FullOverlapMatrixA, CurrentPLevel, QValueA, CurrentPLevel, QValueA);
-	  SparseRealMatrix OverlapMatrixB = MPSMatrix->ExtractBlock (FullOverlapMatrixB, CurrentPLevel, QValueB, CurrentPLevel, QValueB);
-	  
+	  double Tmp;
+	  LocalNormalizationMatrix.GetMatrixElement(i, i, Tmp);
+	  LocalNormalizationMatrix.SetMatrixElement(i, i, 1.0 / Tmp);
 	}
-      
+      SparseRealMatrix LeftOverlapMatrix =MPSMatrix->ExtractBlock(FullLeftOverlapMatrix, CurrentPLevel, LeftQValue, CurrentPLevel, LeftQValue);
+      cout << LocalNormalizationMatrix << endl;
+      cout << LeftOverlapMatrix << endl;
+      cout << RightOverlapMatrix << endl;
+      if ((LeftOverlapMatrix.GetNbrRow() > 0) && (RightOverlapMatrix.GetNbrRow() > 0))
+	{
+	  cout << "scalar product matrix for the left part : " << endl;
+	  RealSymmetricMatrix SymLeftOverlapMatrix (LeftOverlapMatrix);
+	  RealMatrix TmpLeftBasis(SymLeftOverlapMatrix.GetNbrRow(), SymLeftOverlapMatrix.GetNbrRow());
+	  TmpLeftBasis.SetToIdentity();
+	  RealDiagonalMatrix TmpLeftDiag;
+#ifdef __LAPACK__
+	  SymLeftOverlapMatrix.LapackDiagonalize(TmpLeftDiag, TmpLeftBasis);
+#else
+	  SymLeftOverlapMatrix.Diagonalize(TmpLeftDiag, TmpLeftBasis);
+#endif
+	  double LocalLeftEigenvalueError = 0.0;
+	  for (int i = 0; i < TmpLeftDiag.GetNbrColumn(); ++i)
+	    if (TmpLeftDiag(i, i) > LocalLeftEigenvalueError)
+	      LocalLeftEigenvalueError = TmpLeftDiag(i, i);
+	  LocalLeftEigenvalueError *= Error;
+	  int NbrZeroLeftEigenvalues = 0;
+	  for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+	    {
+	      if (TmpLeftDiag(i, i) < LocalLeftEigenvalueError)
+		{
+		  ++NbrZeroLeftEigenvalues;	    
+		}
+	    }
+	  cout << "nbr non zero eigenvalues = " << (TmpLeftDiag.GetNbrRow() - NbrZeroLeftEigenvalues) << " (full dim = " << TmpLeftDiag.GetNbrRow() << ")" << endl;
+	  
+	  RealSymmetricMatrix SymRightOverlapMatrix (RightOverlapMatrix);
+	  RealMatrix TmpRightBasis(SymRightOverlapMatrix.GetNbrRow(), SymRightOverlapMatrix.GetNbrRow());
+	  RealDiagonalMatrix TmpRightDiag;
+	  TmpRightBasis.SetToIdentity();
+#ifdef __LAPACK__
+	  SymRightOverlapMatrix.LapackDiagonalize(TmpRightDiag, TmpRightBasis);
+#else
+	  SymRightOverlapMatrix.Diagonalize(TmpRightDiag, TmpRightBasis);
+#endif
+	  int NbrZeroRightEigenvalues = 0;
+	  cout << "scalar product matrix for the right part : " << endl;
+	  double LocalRightEigenvalueError = 0.0;
+	  for (int i = 0; i < TmpRightDiag.GetNbrColumn(); ++i)
+	    if (TmpRightDiag(i, i) > LocalRightEigenvalueError)
+	      LocalRightEigenvalueError = TmpRightDiag(i, i);
+	  LocalRightEigenvalueError *= Error;
+	  for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
+	    {
+	      if (TmpRightDiag(i, i) < LocalRightEigenvalueError)
+		{
+		  ++NbrZeroRightEigenvalues;	    
+		}
+	    }
+	  cout << "nbr non zero eigenvalues = " << (TmpRightDiag.GetNbrRow() - NbrZeroRightEigenvalues) << " (full dim = " << TmpRightDiag.GetNbrRow() << ")"  << endl;
+	  if ((NbrZeroLeftEigenvalues < SymLeftOverlapMatrix.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightOverlapMatrix.GetNbrRow()))
+	    {
+	      RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(), TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
+	      NbrZeroLeftEigenvalues = 0;
+	      for (int i = 0; i < TmpLeftBasis.GetNbrColumn(); ++i)
+		{
+		  if (TmpLeftDiag(i, i) > LocalLeftEigenvalueError)
+//		  if (fabs(TmpLeftDiag(i, i)) > LeftEigenvalueError)
+		    {
+		      TruncatedLeftBasis[NbrZeroLeftEigenvalues].Copy(TmpLeftBasis[i]);
+		      TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(TmpLeftDiag(i, i));
+		      ++NbrZeroLeftEigenvalues;
+		    }
+		}
+	      
+	      RealMatrix TruncatedRightBasis (TmpRightDiag.GetNbrRow(), TmpRightDiag.GetNbrRow() -  NbrZeroRightEigenvalues, true);
+	      NbrZeroRightEigenvalues = 0;
+	      for (int i = 0; i < TmpRightBasis.GetNbrColumn(); ++i)
+		{
+		  cout << TmpRightDiag(i, i) << endl;
+//		  if (fabs(TmpRightDiag(i, i)) > RightEigenvalueError)
+		  if (TmpRightDiag(i, i) > LocalRightEigenvalueError)
+		    {
+		      TruncatedRightBasis[NbrZeroRightEigenvalues].Copy(TmpRightBasis[i]);
+		      TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(TmpRightDiag(i, i));
+		      ++NbrZeroRightEigenvalues;
+		    }
+		}
+	      
+	      
+	      RealDiagonalMatrix TmpRhoADiag;
+	      RealMatrix TmpLocalNormalizationMatrix (LocalNormalizationMatrix);
+// 	      for (int i = 0; i < TmpLocalNormalizationMatrix.GetNbrRow(); ++i)
+// 		{
+// 		  TmpLocalNormalizationMatrix[i][i] = 1.0 / TmpLocalNormalizationMatrix[i][i];
+// 		}
+	      if (false)
+		{
+		  RealMatrix TranposedTruncatedRightBasis = TruncatedRightBasis.DuplicateAndTranspose();
+		  TruncatedRightBasis.Multiply(TranposedTruncatedRightBasis);		      
+		  RealMatrix TranposedTruncatedLeftBasis = TruncatedLeftBasis.DuplicateAndTranspose();
+		  TranposedTruncatedLeftBasis.Multiply(TruncatedRightBasis);
+		  TranposedTruncatedLeftBasis.Multiply(TruncatedLeftBasis);
+		  
+		  RealSymmetricMatrix ReducedDensityMatrix ((Matrix&) TranposedTruncatedLeftBasis);
+	      
+		  if (ReducedDensityMatrix.IsDiagonal() == true)
+		    {
+		      TmpRhoADiag = RealDiagonalMatrix(TranposedTruncatedLeftBasis);
+		    }
+		  else
+		    {
+#ifdef __LAPACK__
+		      ReducedDensityMatrix.LapackDiagonalize(TmpRhoADiag);
+#else
+		      ReducedDensityMatrix.Diagonalize(TmpRhoADiag);
+#endif
+		    }
+		}
+	      else
+		{
+		  cout << TruncatedLeftBasis  << endl;
+		  cout <<  TruncatedRightBasis << endl;
+		  RealMatrix TmpEntanglementMatrix = TruncatedLeftBasis.DuplicateAndTranspose();
+		  TmpEntanglementMatrix.Multiply(TmpLocalNormalizationMatrix);
+		  TmpEntanglementMatrix.Multiply(TruncatedRightBasis);
+		  cout <<  TmpEntanglementMatrix << endl;
+#ifdef __LAPACK__
+		  double* TmpValues = TmpEntanglementMatrix.SingularValueDecomposition();
+		  int TmpDimension = TmpEntanglementMatrix.GetNbrColumn();
+		  if (TmpDimension > TmpEntanglementMatrix.GetNbrRow())
+		    {
+		      TmpDimension = TmpEntanglementMatrix.GetNbrRow();
+		    }
+		  for (int i = 0; i < TmpDimension; ++i)
+		    {
+		      TmpValues[i] *= TmpValues[i];
+		    }
+		  TmpRhoADiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+#endif		  
+		}
+	      int NbrNonZeroEigenvalues = 0;
+	      double Sum = 0.0;
+	      EntanglementSpectrum[CurrentPLevel] = new double[TmpRhoADiag.GetNbrColumn()];
+	      for (int i = 0; i < TmpRhoADiag.GetNbrColumn(); ++i)
+		{
+		  if (TmpRhoADiag[i] > 0.0)
+		    {
+		      cout << "xi = " << TmpRhoADiag[i] << endl;
+		      EntanglementSpectrum[CurrentPLevel][EntanglementSpectrumDimension[CurrentPLevel]] = TmpRhoADiag[i];
+		      ++EntanglementSpectrumDimension[CurrentPLevel];
+		      Sum += TmpRhoADiag(i, i);
+		      ++NbrNonZeroEigenvalues;
+		    }
+		}
+	      SortArrayDownOrdering<double>(EntanglementSpectrum[CurrentPLevel], EntanglementSpectrumDimension[CurrentPLevel]);
+	      cout << "P=" << PLevel << " " << " Q=" << QValue << " NbrStates=" << NbrNonZeroEigenvalues << " Tr(rho_A)=" << Sum << endl;
+	      TotalTraceThoA += Sum;
+	    }
+	}
     }
- 
+	
+  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+    {
+      for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel]; ++i)
+	File << Na << " " << CurrentPLevel << " " 
+	     <<  (EntanglementSpectrum[CurrentPLevel][i] / EntanglementSpectrum[0][0])  
+	     <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][i] / TotalTraceThoA)) << endl;
+//	     <<  (EntanglementSpectrum[CurrentPLevel][i] / EntanglementSpectrum[0][0] * (50.0 / 3.0))  
+    }
+  File.close();
+
+  cout << "Tr(rho_A)=" << TotalTraceThoA << endl;
+  
   return 0;
 }
 

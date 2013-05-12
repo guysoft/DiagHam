@@ -58,7 +58,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix()
 // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
-// trimChargeIndices = trim the charge indices, assuming an iMPS
+// trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 
@@ -71,6 +71,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
+  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
   int MinQ, MaxQ;
   for (int i = 0; i <= this->PLevel; ++i)
     this->ComputeChargeIndexRange(i, MinQ, MaxQ);
@@ -147,7 +148,6 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   this->NInitialValuePerPLevel = new int [this->PLevel + 1];
   this->NLastValuePerPLevel = new int [this->PLevel + 1];
   this->TotalStartingIndexPerPLevel[0] = 0;
-  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
   int NValueShift = this->PLevel;
   for (int i = 0; i <= this->PLevel; ++i)
     {
@@ -503,6 +503,41 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
         if (2 * pLevel + twop(maxQ - QShift, this->LaughlinIndex) <= 2 * this->PLevel)
             break;
     cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;
+    cout << "other method" << endl;
+    int TmpMinQ = this->NbrNValue - 1;
+    int TmpMaxQ = 0;    
+    int NValueShift = this->PLevel;
+    for (int Q = 0; Q < this->NbrNValue; ++Q)
+      {
+	int QPrime = Q;
+	int TmpP = 0;
+	int TmpMaxP = 0;
+	while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  {
+	    if (TmpP > TmpMaxP)
+	      TmpMaxP = TmpP;	    
+	    QPrime -= (this->LaughlinIndex - 1);
+	    TmpP += QPrime - NValueShift;
+	  }
+	QPrime = Q;
+	TmpP = 0;
+	int TmpMaxP2 = 0;
+	while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  {
+	    if (TmpP > TmpMaxP2)
+	      TmpMaxP2 = TmpP;	    
+	    TmpP -= QPrime - NValueShift;
+	    QPrime += (this->LaughlinIndex - 1);
+	  }
+	if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+	  {
+	    if (Q < TmpMinQ)
+	      TmpMinQ = Q;
+	    if (Q > TmpMaxQ)
+	      TmpMaxQ = Q;	    
+	  }
+      }
+     cout << "range at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
 }
 
 // compute the global charge index range at a given truncation level

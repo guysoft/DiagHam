@@ -385,6 +385,30 @@ LongRational& LongRational::operator /= (long y)
   return *this;
 }
 
+// multiply by x! factorial
+//
+// x = value of x (x!)
+// return value = reference on current coefficient
+
+LongRational& LongRational::FactorialMultiply (long x)
+{
+  for (; x > 1l; --x) 
+    (*this) *= x;
+  return *this;
+}
+
+// divide by x! factorial
+//
+// x = value of x (x!)
+// return value = reference on current coefficient
+
+LongRational& LongRational::FactorialDivide (long x)
+{
+  for (; x > 1l; --x) 
+    (*this) /= x;
+  return *this;
+}
+
 // multiply the current rational by 2^x
 // 
 // x = 2 power exponent
@@ -392,6 +416,17 @@ LongRational& LongRational::operator /= (long y)
 
 LongRational& LongRational::Power2Multiply (long x)
 {
+  if (x < 0l)
+    {
+      for (; x < 0l; ++x)
+	(*this) /= 2l;
+    }
+  else
+    {
+      for (; x > 0l; --x)
+	(*this) *= 2l;
+    }
+
   return *this;
 }
 
