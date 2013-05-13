@@ -122,6 +122,13 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
 
+  // get the boundary indices of the MPS representation
+  //
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding);
+
  protected:
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states

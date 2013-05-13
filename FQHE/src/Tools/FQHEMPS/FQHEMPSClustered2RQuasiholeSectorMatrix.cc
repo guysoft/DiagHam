@@ -278,6 +278,8 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   RealMatrix* OrthogonalBasisPhiLeft = new RealMatrix[this->PLevel + 1];
   RealMatrix* OrthogonalBasisSigmaRight = new RealMatrix[this->PLevel + 1];
   RealMatrix* OrthogonalBasisPhiRight = new RealMatrix[this->PLevel + 1];
+  LongRational** RationalMultiplicityFactor = new LongRational*[this->PLevel + 1];
+  double** MultiplicityFactor = new double*[this->PLevel + 1];
 
   for (int i = 0; i <= this->PLevel; ++i)
     {
@@ -286,6 +288,23 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
       MatrixPsi10[i] = new RealMatrix[this->PLevel + 1];
       RationalMatrixPsi01[i] = new LongRationalMatrix[this->PLevel + 1];
       RationalMatrixPsi10[i] = new LongRationalMatrix[this->PLevel + 1];
+      RationalMultiplicityFactor[i] = new LongRational[U1BosonBasis[i]->GetHilbertSpaceDimension()];
+      MultiplicityFactor[i] = new double[U1BosonBasis[i]->GetHilbertSpaceDimension()];
+      for (int j = 0; j < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
+	{
+	  U1BosonBasis[i]->GetOccupationNumber(j, TmpPartition);	    
+	  RationalMultiplicityFactor[i][j] = 1l;
+	  MultiplicityFactor[i][j] = 1.0;
+ 	  for (int k = 1; k <= i; ++k)
+ 	    if (TmpPartition[k] > 1ul)
+	      {
+		RationalMultiplicityFactor[i][j].FactorialDivide(TmpPartition[k]);
+		double Tmp = 1.0;
+		for (unsigned long l = 2l; l <= TmpPartition[k]; ++l)
+		  Tmp *=  (double) l;
+		MultiplicityFactor[i][j] /= Tmp;
+	      }
+	}
     }
 
   cout << "weight: " <<   this->WeightSigma << " " << this->WeightPhi << endl;
@@ -319,7 +338,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 	  if (this->UseRationalFlag == true)
 	    {
 	      RationalScalarProductSigma[i].ReadMatrix(TmpScalarProductSigmaFileName);
-	      ScalarProductSigma[i] = RationalScalarProductSigma[i];      
 	    }
 	  else
 	    {
@@ -339,7 +357,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		{
 		  RationalScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
 		}
-	      ScalarProductSigma[i] = RationalScalarProductSigma[i];      
 	    }
 	  else
 	    {
@@ -352,25 +369,46 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		{
 		  ScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
 		}
-	      ScalarProductSigma[i] = RationalScalarProductSigma[i];      
 	    }
 	}
       if (this->SelfDualFlag == false)
 	{
 	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductPhiFileName)))
 	    {
-	      RationalScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
+	      if (this->UseRationalFlag == true)
+		{
+		  RationalScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
+		}
+	      else
+		{
+		  ScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
+		}
 	    }
 	  else
 	    {
-	      FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12, 
-						     this->WeightPhi,
-						     RationalScalarProductPhi,  i - 1);
-	      Operation2.ApplyOperation(architecture);
-	      RationalScalarProductPhi[i] = Operation2.GetRationalMatrixElements();
-	      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+	      if (this->UseRationalFlag == true)
 		{
-		  RationalScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
+		  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12, 
+							 this->WeightPhi,
+							 RationalScalarProductPhi,  i - 1);
+		  Operation2.ApplyOperation(architecture);
+		  RationalScalarProductPhi[i] = Operation2.GetRationalMatrixElements();
+		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		    {
+		      RationalScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
+		    }
+		}
+	      else
+		{
+		  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12Numerical, 
+							 WeightPhiNumerical,
+							 ScalarProductPhi,  i - 1);
+		  Operation2.ApplyOperation(architecture);
+		  ScalarProductPhi[i] = Operation2.GetRationalMatrixElements();
+		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		    {
+		      ScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
+		    }
 		}
 	    }
 	}
@@ -378,6 +416,47 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
       if (this->SelfDualFlag == false)
 	ScalarProductPhi[i] = RationalScalarProductPhi[i];
       
+       if (this->UseRationalFlag == true)
+ 	{
+	  for (int k = 0; k < RationalScalarProductSigma[i].GetNbrRow(); ++k)
+	    for (int l = 0; l < RationalScalarProductSigma[i].GetNbrColumn(); ++l)
+	      {
+		RationalScalarProductSigma[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+	      }
+ 	  ScalarProductSigma[i] = RationalScalarProductSigma[i];
+	  if (this->SelfDualFlag == false)
+	    {
+	      for (int k = 0; k < RationalScalarProductPhi[i].GetNbrRow(); ++k)
+		for (int l = 0; l < RationalScalarProductPhi[i].GetNbrColumn(); ++l)
+		  {
+		    RationalScalarProductPhi[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+		  }
+	      ScalarProductPhi[i] = RationalScalarProductPhi[i];
+	    }
+ 	}
+       else
+	{
+	  for (int k = 0; k < ScalarProductSigma[i].GetNbrRow(); ++k)
+	    for (int l = k; l < ScalarProductSigma[i].GetNbrColumn(); ++l)
+	      {
+		double Tmp;
+		ScalarProductSigma[i].GetMatrixElement(k, l, Tmp);
+		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+		ScalarProductSigma[i].SetMatrixElement(k, l, Tmp);
+	      }
+	  if (this->SelfDualFlag == false)
+	    {
+	      for (int k = 0; k < ScalarProductPhi[i].GetNbrRow(); ++k)
+		for (int l = k; l < ScalarProductPhi[i].GetNbrColumn(); ++l)
+		  {
+		    double Tmp;
+		    ScalarProductPhi[i].GetMatrixElement(k, l, Tmp);
+		    Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+		    ScalarProductPhi[i].SetMatrixElement(k, l, Tmp);
+		  }
+	    }
+	}
+
       RealSymmetricMatrix TmpMatrix;
       TmpMatrix.Copy(ScalarProductSigma[i]);
       RealMatrix TmpBasis(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension());
@@ -620,7 +699,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 	      if (this->UseRationalFlag == true)
 		{
 		  RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductSigmaFileName);
-		  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
 		}
 	      else
 		{
@@ -640,7 +718,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		    {
 		      RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductSigmaFileName);
 		    }
-		  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
 		}
 	      else
 		{
@@ -662,7 +739,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		  if (this->UseRationalFlag == true)
 		    {
 		      RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPhiFileName);
-		      MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
 		    }
 		  else
 		    {
@@ -682,7 +758,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 			{
 			  RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);
 			}
-		      MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
 		    }
 		  else
 		    {
@@ -696,6 +771,46 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 			  MatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);
 			}
 		    }
+		}
+	    }
+	  if (this->UseRationalFlag == true)
+	    {
+	      for (int k = 0; k < RationalMatrixPsi01[i][j].GetNbrRow(); ++k)
+		for (int l = 0; l < RationalMatrixPsi01[i][j].GetNbrColumn(); ++l)
+		  {
+		    RationalMatrixPsi01[i][j][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[j][l]);
+		  }
+	      MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
+	      if (this->SelfDualFlag == false)
+		{
+		  for (int k = 0; k < RationalMatrixPsi10[i][j].GetNbrRow(); ++k)
+		    for (int l = 0; l < RationalMatrixPsi10[i][j].GetNbrColumn(); ++l)
+		      {
+			RationalMatrixPsi10[i][j][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[j][l]);
+		      }
+		  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
+		}
+	    }
+	  else
+	    {
+	      for (int k = 0; k < MatrixPsi01[i][j].GetNbrRow(); ++k)
+		for (int l = 0; l < MatrixPsi01[i][j].GetNbrColumn(); ++l)
+		  {
+		    double Tmp;
+		    MatrixPsi01[i][j].GetMatrixElement(k, l, Tmp);
+		    Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[j][l]);
+		    MatrixPsi01[i][j].SetMatrixElement(k, l, Tmp);
+		  }
+	      if (this->SelfDualFlag == false)
+		{
+		  for (int k = 0; k < MatrixPsi10[i][j].GetNbrRow(); ++k)
+		    for (int l = 0; l < MatrixPsi10[i][j].GetNbrColumn(); ++l)
+		      {
+			double Tmp;
+			MatrixPsi10[i][j].GetMatrixElement(k, l, Tmp);
+			Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[j][l]);
+			MatrixPsi10[i][j].SetMatrixElement(k, l, Tmp);
+		      }
 		}
 	    }
 	  MatrixPsi01[i][j] *= this->MatrixElementNormalization;
@@ -1145,6 +1260,8 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
       delete[] MatrixPsi01[i];
       delete[] MatrixPsi10[i];
       delete U1BosonBasis[i];
+      delete[] RationalMultiplicityFactor[i];
+      delete[] MultiplicityFactor[i];
     }
   delete[] TmpNbrElementPerRow;
   delete[] U1BosonBasis;
@@ -1154,6 +1271,42 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   delete[] OrthogonalBasisPhiLeft;
   delete[] OrthogonalBasisSigmaRight;
   delete[] OrthogonalBasisPhiRight;
+  delete[] RationalMultiplicityFactor;
+  delete[] MultiplicityFactor;
 }
 
+
+// get the boundary indices of the MPS representation
+//
+// rowIndex = matrix row index
+// columnIndex = matrix column index
+// padding = assume that the state has the estra padding
+
+void FQHEMPSClustered2RQuasiholeSectorMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
+{
+  int MinQ;
+  int MaxQ;
+  this->GetChargeIndexRange(0, MinQ, MaxQ);
+  if (padding == true)
+    {
+      if ((this->RIndex & 1) == 0)
+	rowIndex = this->PLevel + (this->RIndex / 2) - MinQ;
+      else
+	rowIndex = 2 * this->PLevel + this->RIndex - 1 - MinQ;      
+      columnIndex = rowIndex;
+    }
+  else
+    {
+      if ((this->RIndex & 1) == 0)
+	{
+	  rowIndex = this->PLevel + this->RIndex - MinQ;
+	  columnIndex = this->PLevel + this->RIndex - 1 - MinQ ;
+	}
+      else
+	{
+	  rowIndex = 2 * (this->PLevel + this->RIndex) - MinQ;
+	  columnIndex = 2 * this->PLevel - MinQ;
+	}
+    }
+}
 
