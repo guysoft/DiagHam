@@ -415,43 +415,29 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		}
 	    }
 	}
-       if (this->UseRationalFlag == true)
+      RealSymmetricMatrix TmpMatrix;
+      if (this->UseRationalFlag == true)
  	{
-	  for (int k = 0; k < RationalScalarProductIdentity[i].GetNbrRow(); ++k)
+ 	  LongRationalMatrix TmpRationalMatrix(RationalScalarProductIdentity[i].GetNbrRow(), RationalScalarProductIdentity[i].GetNbrColumn());
+ 	  for (int k = 0; k < RationalScalarProductIdentity[i].GetNbrRow(); ++k)
 	    for (int l = 0; l < RationalScalarProductIdentity[i].GetNbrColumn(); ++l)
 	      {
-		RationalScalarProductIdentity[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+		TmpRationalMatrix[l][k] = RationalScalarProductIdentity[i][l][k] * (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
 	      }
-	  for (int k = 0; k < RationalScalarProductPsi[i].GetNbrRow(); ++k)
-	    for (int l = 0; l < RationalScalarProductPsi[i].GetNbrColumn(); ++l)
-	      {
-		RationalScalarProductPsi[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
-	      }
- 	  ScalarProductIdentity[i] = RationalScalarProductIdentity[i];
- 	  ScalarProductPsi[i] = RationalScalarProductPsi[i];
+ 	  TmpMatrix = TmpRationalMatrix;
  	}
        else
 	{
+	  TmpMatrix = RealSymmetricMatrix (ScalarProductIdentity[i].GetNbrRow(), ScalarProductIdentity[i].GetNbrColumn());
 	  for (int k = 0; k < ScalarProductIdentity[i].GetNbrRow(); ++k)
 	    for (int l = k; l < ScalarProductIdentity[i].GetNbrColumn(); ++l)
 	      {
 		double Tmp;
 		ScalarProductIdentity[i].GetMatrixElement(k, l, Tmp);
 		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
-		ScalarProductIdentity[i].SetMatrixElement(k, l, Tmp);
-	      }
-	  for (int k = 0; k < ScalarProductPsi[i].GetNbrRow(); ++k)
-	    for (int l = k; l < ScalarProductPsi[i].GetNbrColumn(); ++l)
-	      {
-		double Tmp;
-		ScalarProductPsi[i].GetMatrixElement(k, l, Tmp);
-		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
-		ScalarProductPsi[i].SetMatrixElement(k, l, Tmp);
+		TmpMatrix.SetMatrixElement(k, l, Tmp);
 	      }
 	}
-
-      RealSymmetricMatrix TmpMatrix;
-      TmpMatrix.Copy(ScalarProductIdentity[i]);
       RealMatrix TmpBasis(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension());
       TmpBasis.SetToIdentity();
       RealDiagonalMatrix TmpDiag;
@@ -470,7 +456,6 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
       int Count  = 0;
       for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
 	{
-//	  cout << fabs(TmpDiag(n, n)) << " ";
 	  if (fabs(TmpDiag(n, n)) < Error)
 	    ++Count;
 	}
@@ -505,7 +490,28 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	  OrthogonalBasisIdentityRight[i] = RealMatrix();
 	}
 
-      TmpMatrix.Copy(ScalarProductPsi[i]);
+       if (this->UseRationalFlag == true)
+ 	{
+	  LongRationalMatrix TmpRationalMatrix(RationalScalarProductPsi[i].GetNbrRow(), RationalScalarProductPsi[i].GetNbrColumn());
+	  for (int k = 0; k < RationalScalarProductPsi[i].GetNbrRow(); ++k)
+	    for (int l = 0; l < RationalScalarProductPsi[i].GetNbrColumn(); ++l)
+	      {
+		TmpRationalMatrix[l][k] = RationalScalarProductPsi[i][l][k] * (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+	      }
+ 	  TmpMatrix = TmpRationalMatrix;
+ 	}
+       else
+	{
+	  TmpMatrix = RealSymmetricMatrix (ScalarProductPsi[i].GetNbrRow(), ScalarProductPsi[i].GetNbrColumn());
+	  for (int k = 0; k < ScalarProductPsi[i].GetNbrRow(); ++k)
+	    for (int l = k; l < ScalarProductPsi[i].GetNbrColumn(); ++l)
+	      {
+		double Tmp;
+		ScalarProductPsi[i].GetMatrixElement(k, l, Tmp);
+		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+		TmpMatrix.SetMatrixElement(k, l, Tmp);
+	      }
+	}
       TmpBasis.SetToIdentity();
 #ifdef __LAPACK__
       TmpMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
@@ -522,7 +528,6 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
       Count  = 0;
       for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
 	{
-//	  cout << fabs(TmpDiag(n, n)) << " ";
 	  if (fabs(TmpDiag(n, n)) < Error)
 	    ++Count;
 	}
@@ -557,6 +562,49 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	  OrthogonalBasisPsiRight[i] = RealMatrix();
 	}
       cout << "---------------------------------" << endl;
+    }
+  for (int i = 0; i <= this->PLevel; ++i)
+    {
+      if (this->UseRationalFlag == true)
+ 	{
+ 	  for (int k = 0; k < RationalScalarProductIdentity[i].GetNbrRow(); ++k)
+	    for (int l = 0; l < RationalScalarProductIdentity[i].GetNbrColumn(); ++l)
+	      {
+		RationalScalarProductIdentity[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+	      }
+ 	  ScalarProductIdentity[i] = RationalScalarProductIdentity[i];
+ 	}
+       else
+	{
+	  for (int k = 0; k < ScalarProductIdentity[i].GetNbrRow(); ++k)
+	    for (int l = k; l < ScalarProductIdentity[i].GetNbrColumn(); ++l)
+	      {
+		double Tmp;
+		ScalarProductIdentity[i].GetMatrixElement(k, l, Tmp);
+		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+		ScalarProductIdentity[i].SetMatrixElement(k, l, Tmp);
+	      }
+	}
+        if (this->UseRationalFlag == true)
+ 	{
+	  for (int k = 0; k < RationalScalarProductPsi[i].GetNbrRow(); ++k)
+	    for (int l = 0; l < RationalScalarProductPsi[i].GetNbrColumn(); ++l)
+	      {
+		RationalScalarProductPsi[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+	      }
+ 	  ScalarProductPsi[i] = RationalScalarProductPsi[i];
+ 	}
+       else
+	{
+	  for (int k = 0; k < ScalarProductPsi[i].GetNbrRow(); ++k)
+	    for (int l = k; l < ScalarProductPsi[i].GetNbrColumn(); ++l)
+	      {
+		double Tmp;
+		ScalarProductPsi[i].GetMatrixElement(k, l, Tmp);
+		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+		ScalarProductPsi[i].SetMatrixElement(k, l, Tmp);
+	      }
+	}
     }
 
   this->StartingIndexPerPLevel = new int* [this->PLevel + 1];
@@ -722,6 +770,12 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		    }
 		}
 	    }
+	}
+    }
+  for (int j = 0; j <= this->PLevel; ++j)
+    {
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
 	  if (this->UseRationalFlag == true)
 	    {
 	      for (int k = 0; k < RationalMatrixPsi01[i][j].GetNbrRow(); ++k)
