@@ -385,51 +385,6 @@ LongRational& LongRational::operator /= (long y)
   return *this;
 }
 
-// multiply by x! factorial
-//
-// x = value of x (x!)
-// return value = reference on current coefficient
-
-LongRational& LongRational::FactorialMultiply (long x)
-{
-  for (; x > 1l; --x) 
-    (*this) *= x;
-  return *this;
-}
-
-// divide by x! factorial
-//
-// x = value of x (x!)
-// return value = reference on current coefficient
-
-LongRational& LongRational::FactorialDivide (long x)
-{
-  for (; x > 1l; --x) 
-    (*this) /= x;
-  return *this;
-}
-
-// multiply the current rational by 2^x
-// 
-// x = 2 power exponent
-// return value = referencce on the current rational
-
-LongRational& LongRational::Power2Multiply (long x)
-{
-  if (x < 0l)
-    {
-      for (; x < 0l; ++x)
-	(*this) /= 2l;
-    }
-  else
-    {
-      for (; x > 0l; --x)
-	(*this) *= 2l;
-    }
-
-  return *this;
-}
-
 // return string associated to the coefficient
 //
 // division = character to use instead of '/'
@@ -1020,3 +975,49 @@ ifstream& LongRational::Read(ifstream& file)
 }
 
 #endif
+
+// multiply by x! factorial
+//
+// x = value of x (x!)
+// return value = reference on current coefficient
+
+LongRational& LongRational::FactorialMultiply (long x)
+{
+  for (; x > 1l; --x) 
+    (*this) *= x;
+  return *this;
+}
+
+// divide by x! factorial
+//
+// x = value of x (x!)
+// return value = reference on current coefficient
+
+LongRational& LongRational::FactorialDivide (long x)
+{
+  for (; x > 1l; --x) 
+    (*this) /= x;
+  return *this;
+}
+
+// multiply the current rational by 2^x
+// 
+// x = 2 power exponent
+// return value = referencce on the current rational
+
+LongRational& LongRational::Power2Multiply (long x)
+{
+  if (x < 0l)
+    {
+      for (; x < 0l; ++x)
+	(*this) /= 2l;
+    }
+  else
+    {
+      for (; x > 0l; --x)
+	(*this) *= 2l;
+    }
+
+  return *this;
+}
+

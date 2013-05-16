@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
   int LandauLevel = 0;
 
-  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta); 
+  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
   if (Manager.GetBoolean("only-export"))
     {
       return 0;
@@ -150,32 +150,16 @@ int main(int argc, char** argv)
   else
     {
       char* TmpFileName = new char [512];
-      char* StateName = new char [256];
-      if (Manager.GetBoolean("k-2") == true)
-	{
-	  sprintf (StateName, "clustered_k_2_r_%ld", Manager.GetInteger("r-index"));
-	}
-      else
-	{
-	  if (Manager.GetBoolean("rr-3") == true)
-	    {
-	      sprintf (StateName, "readrezayi3");
-	    }
-	  else
-	    {
-	      sprintf (StateName, "laughlin%ld", Manager.GetInteger("laughlin-index"));
-	    }
-	}      
       if (CylinderFlag == true)
 	{
 	  if (Manager.GetBoolean("infinite-cylinder"))
 	    {
-	      sprintf(TmpFileName, "fermions_infinite_cylinder_%s_perimeter_%f_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", StateName,
+	      sprintf(TmpFileName, "fermions_infinite_cylinder_%s_perimeter_%f_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", MPSMatrix->GetName(),
 		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
 	    }
 	  else
 	    {
-	      sprintf(TmpFileName, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
+	      sprintf(TmpFileName, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", MPSMatrix->GetName(),
 		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
 	    }
 	}
@@ -183,12 +167,12 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("infinite-cylinder"))
 	    {
-	      sprintf(TmpFileName, "fermions_infinite_%s_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", StateName,
+	      sprintf(TmpFileName, "fermions_infinite_%s_plevel_%ld_n_0_2s_0_lz_0.0.full.ent", MPSMatrix->GetName(),
 		      Manager.GetInteger("p-truncation"));
 	    }
 	  else
 	    {
-	      sprintf(TmpFileName, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", StateName,
+	      sprintf(TmpFileName, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.ent", MPSMatrix->GetName(),
 		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz);
 	    }
 	}
@@ -721,6 +705,7 @@ int main(int argc, char** argv)
 	      int NbrNonZeroVectors = 0;
 	      for (int j = 0; j < TmpSectorDim; ++j)
 		{
+		  cout << TmpDiag[j] << " ";
 		  if (fabs(TmpDiag[j]) > CutOff)
 		    {
 		      ++NbrNonZeroVectors;
@@ -793,31 +778,14 @@ int main(int argc, char** argv)
 
   int p = 0;
   int q = 0;
-  if (Manager.GetBoolean("k-2") == true) 
-    {
-       p = 2;
-       q = 2 + Manager.GetInteger("r-index");
-    }
-  else
-   {
-    if (Manager.GetBoolean("rr-3") == true)
-      {
-        p = 3;
-        q = 5;
-      }
-     else
-      {
-        p = 1;
-        q = Manager.GetInteger("laughlin-index");
-      }  
-   } 
+  MPSMatrix->GetFillingFactor(p, q);
   cout << "Filling factor nu = p/q = "<<p<<"/"<<q<<endl;
   int gcd = FindGCD(p, q);
   if (gcd > 1)
     {
       p /= gcd;
       q /= gcd;
-      cout << "Filling factor nu* = p/q = "<<p<<"/"<<q<<endl;
+      cout << "Filling factor nu* = p/q = " << p << "/" << q << endl;
     }
 
   int TmpNa;
