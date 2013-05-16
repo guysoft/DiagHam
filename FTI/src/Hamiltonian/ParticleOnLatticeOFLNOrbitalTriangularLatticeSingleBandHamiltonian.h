@@ -96,6 +96,10 @@ public:
   //   
   virtual void EvaluateInteractionFactors();  
 
+  // evaluate all interaction factors
+  //   
+  virtual void OldEvaluateInteractionFactors();  
+  
   //inline int GetIndexInTemporaryTable(int kx1, int ky1 , int kx2, int ky2, int nx, int ny);
   
 };

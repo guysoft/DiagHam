@@ -1,14 +1,15 @@
 #include "Options/Options.h"
 
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+//#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
+//#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+//#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
+//#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
 
 #include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian.h"
-//#include "Hamiltonian/ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "two-bands", "use the two lowest energy bands", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next to nearest neighbor potential strength", 0.0);
@@ -92,6 +94,7 @@ int main(int argc, char** argv)
 #ifdef __SCALAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -124,21 +127,27 @@ int main(int argc, char** argv)
     }
     
     char* FilePrefix = new char [256];
-    
-    if (Manager.GetBoolean("three-body") == false)
-      { 
-	if (Manager.GetBoolean("four-body") == false)
+    if (Manager.GetBoolean("two-bands") == false)
+      {
+	if (Manager.GetBoolean("three-body") == false)
 	  { 
-	    sprintf (FilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	    if (Manager.GetBoolean("four-body") == false)
+	      { 
+		sprintf (FilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	      }
+	    else
+	      {
+		sprintf (FilePrefix, "%s_singleband_fourbody_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), ChernNumber, Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
+	      }
 	  }
 	else
 	  {
-	    sprintf (FilePrefix, "%s_singleband_fourbody_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), ChernNumber, Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_singleband_threebody_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), ChernNumber, Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
 	  }
-	}
+      }
     else
       {
-	sprintf (FilePrefix, "%s_singleband_threebody_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix,  Manager.GetInteger("nbr-spin"), ChernNumber, Manager.GetInteger("cutOFF"), NbrParticles, NbrSitesX, NbrSitesY);
+	sprintf (FilePrefix, "%s_twoband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
       }
     
     char* CommentLine = new char [256];
@@ -160,7 +169,7 @@ int main(int argc, char** argv)
 	else
 	  {
 	    if (Manager.GetDouble("v-potential") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      sprintf (EigenvalueOutputFile, "%s_u_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
 	    sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  }
@@ -232,20 +241,29 @@ int main(int argc, char** argv)
 	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
 
 	  ParticleOnSphere* Space = 0;
-	  if (Manager.GetBoolean("boson") == false)
+	  if (Manager.GetBoolean("two-bands") == false)
 	    {
-	      if ((NbrSitesX * NbrSitesY) <= 63)
+	      if (Manager.GetBoolean("boson") == false)
 		{
-		  Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  if ((NbrSitesX * NbrSitesY) <= 63)
+		    {
+		      Space = 0;
+		      // Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
+		  else
+		    {
+		      Space =0;
+		      //Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		    }
 		}
 	      else
 		{
-		  Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		}
 	    }
 	  else
 	    {
-	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+	      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 	    }
 	  
 	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
@@ -258,7 +276,14 @@ int main(int argc, char** argv)
 	    { 
 	      if (Manager.GetBoolean("four-body") == false)
 		{ 
-		  Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+		  if (Manager.GetBoolean("two-bands") == false)
+		    {
+		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+		    }
+		  else
+		    {
+		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
+		    }
 		}
 	      else
 		{

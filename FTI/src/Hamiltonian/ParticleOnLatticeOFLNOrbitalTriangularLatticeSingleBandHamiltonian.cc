@@ -265,7 +265,7 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 		{
 		  int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		  TmpCalculationTable[Index1][Index2] = new Complex [4*this->NbrReciprocalVectors*this->NbrReciprocalVectors];
+		  TmpCalculationTable[Index1][Index2] = new Complex [this->NbrReciprocalVectors*this->NbrReciprocalVectors];
 		  for (int Nx = 0; Nx < this->NbrReciprocalVectors; Nx++)
 		    {
 		      for (int Ny = 0; Ny < this->NbrReciprocalVectors; Ny++)
@@ -368,12 +368,12 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
   delete [] OneBodyBasis;
 }
 
-/*
+
 
 // evaluate all interaction factors
 //   
 
-void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::EvaluateInteractionFactors()
+void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::OldEvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
@@ -477,6 +477,7 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 		}
 	    }
 	    }
+*/
 	}
   else
     {
@@ -591,13 +592,13 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
 			      }
 			  }
 		      }
-		    
+		      /*	    
 		    if (Index3 == Index4)
 		      this->InteractionFactors[i][Index] *= 0.5;
 		    if (Index1 == Index2)
 		      this->InteractionFactors[i][Index] *= 0.5;
 		    this->InteractionFactors[i][Index] *= 2.0;
-		    
+*/
 		    TotalNbrInteractionFactors++;
 		    ++Index;
 		}
@@ -609,4 +610,4 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
   
   delete [] OneBodyBasis;
 }
-*/
+

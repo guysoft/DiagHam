@@ -132,7 +132,6 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  int IntermediateIndex = this->GetIntermediateLinearizedIndices(p, t, Spin);
 			  TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY-MomentaX*MomentaY ));
 			  
-			  
 			  int IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
 			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree ))); 
@@ -205,6 +204,7 @@ bool TightBindingModelOFLNOrbitalTriangularLattice::WriteAsciiSpectrum(char* fil
 {
   ofstream File;
   File.open(fileName);
+  File.precision(10);
   this->WriteASCIIHeader(File, '#');
   int LimitOut = 100;
   if (this->NbrBands < LimitOut)
@@ -221,9 +221,7 @@ bool TightBindingModelOFLNOrbitalTriangularLattice::WriteAsciiSpectrum(char* fil
 
 	  for (int i = 0; i < LimitOut; ++i)
 	    File << kx << " " << ky << " " << this->EnergyBandStructure[i][LinearizedMomentumIndex]<<endl;
-	  File << endl; 
 	}
-      File << endl;
     }
   File.close();
   return true;

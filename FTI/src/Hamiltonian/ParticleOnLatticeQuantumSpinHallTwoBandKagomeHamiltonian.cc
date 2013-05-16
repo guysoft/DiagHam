@@ -169,7 +169,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian::EvaluateInteracti
       for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2)      
 	  ++this->NbrInterSectorIndicesPerSum[((((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY))];
+  
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
+
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
       if (this->NbrInterSectorIndicesPerSum[i] > 0)
@@ -178,6 +180,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian::EvaluateInteracti
 	  this->NbrInterSectorIndicesPerSum[i] = 0;
 	}
     }
+  
   for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
     for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
       for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
