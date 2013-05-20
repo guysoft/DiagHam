@@ -113,6 +113,13 @@ class AbstractFQHEMPSMatrix
   // denominator = reference on the filling factor denominator
   virtual void GetFillingFactor(int& numerator, int& denominator);
 
+  // get the number of particles that fit the root configuration once the number of flux quanta is fixed
+  // 
+  // nbrFluxQuanta = number of flux quanta
+  // padding = assume that the state has the extra padding
+  // return value = number of partciles
+  virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding = false);
+
   // get the degeneracy of the transfer matrix largest eigenvalue
   // 
   // return value = degeneracy 
@@ -153,7 +160,6 @@ class AbstractFQHEMPSMatrix
   // pLevel = tuncation level
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
-
   virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
 
   // compute the global charge index range at a given truncation level
@@ -182,7 +188,7 @@ class AbstractFQHEMPSMatrix
   //
   // rowIndex = matrix row index
   // columnIndex = matrix column index
-  // padding = assume that the state has the estra padding
+  // padding = assume that the state has the extra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
  protected:

@@ -208,7 +208,8 @@ int main(int argc, char** argv)
 	    }
 	}
 
-      cout << "computing effective E matrix indices " << endl;
+      cout << "number of eigenvalues for the transfer matrix = " << NbrEigenstates << endl;
+      cout << "computing effective transfer matrix indices " << endl;
       long** BlockIndexProductTable = new long* [TmpBMatrixDimension];
       int* BlockIndexProductTableNbrElements = new int [TmpBMatrixDimension];
       int* BlockIndexProductTableShift = new int [TmpBMatrixDimension];

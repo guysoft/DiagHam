@@ -287,3 +287,21 @@ void AbstractFQHEMPSMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnI
   columnIndex = -1;
 }
 
+// get the number of particles that fit the root configuration once the number of flux quanta is fixed
+// 
+// nbrFluxQuanta = number of flux quanta
+// padding = assume that the state has the extra padding
+// return value = number of partciles
+
+int AbstractFQHEMPSMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding)
+{
+  int Numerator;
+  int Denominator;
+  this->GetFillingFactor(Numerator, Denominator);
+  int NbrParticles = ((nbrFluxQuanta + 1) * Numerator);
+  if ((NbrParticles % Denominator) == 0)
+    return (NbrParticles / Denominator);
+  else
+    return ((NbrParticles / Denominator) + 1);
+}
+

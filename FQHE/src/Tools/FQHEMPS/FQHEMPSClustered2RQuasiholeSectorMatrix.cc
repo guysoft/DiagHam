@@ -87,6 +87,8 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
   this->MatrixElementNormalization = 1.0 / M_SQRT2;
   this->SquareMatrixElementNormalization = LongRational(1, 2);
   this->TransferMatrixDegeneracy = this->RIndex + 2;
+  if (this->SelfDualFlag == true)
+    this->TransferMatrixDegeneracy /= 2;
   this->BMatrixOutputName = new char[256]; 
   sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
   this->CreateBMatrices(0, architecture);
