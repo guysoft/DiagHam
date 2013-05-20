@@ -64,8 +64,11 @@ class ParticleOnCylinderFunctionBasis: public AbstractFunctionBasis
 
   // constructor
   //
-  // lzMax = twice the maximum momentum value reached by a particle
-  ParticleOnCylinderFunctionBasis(int maxMomentum, int landauLevel, double ratio);
+  // maxMomentum = maximum momentum reached by a particle
+  // landauLevel = Landau level index
+  // ratio = aspect ratio of the cylinder
+  // indexShiftFlag = true if apply a (maxMomentum / 2) shift to state index
+  ParticleOnCylinderFunctionBasis(int maxMomentum, int landauLevel, double ratio, bool indexShiftFlag = true);
 
   // get value of the i-th function at a given point (for functions which take values in C)
   //

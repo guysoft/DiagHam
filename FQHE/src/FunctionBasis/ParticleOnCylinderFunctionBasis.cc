@@ -43,8 +43,9 @@ using std::endl;
 // maxMomentum = maximum momentum reached by a particle
 // landauLevel = Landau level index
 // ratio = aspect ratio of the cylinder
+// indexShiftFlag = true if apply a (maxMomentum / 2) shift to state index
 
-ParticleOnCylinderFunctionBasis::ParticleOnCylinderFunctionBasis(int maxMomentum, int landauLevel, double ratio)
+ParticleOnCylinderFunctionBasis::ParticleOnCylinderFunctionBasis(int maxMomentum, int landauLevel, double ratio, bool indexShiftFlag)
 {
   this->MaxMomentum = maxMomentum;
   this->LandauLevel = landauLevel;
@@ -64,8 +65,11 @@ ParticleOnCylinderFunctionBasis::ParticleOnCylinderFunctionBasis(int maxMomentum
 	  cout << "LL >= 2 " << endl;
 	  exit(1);
 	}
-    }   
-  this->IndexShift = 0.5 * ((double) this->MaxMomentum);
+    }
+  if (indexShiftFlag)
+      this->IndexShift = 0.5 * ((double) this->MaxMomentum);
+  else
+      this->IndexShift = 0;
 }
 
 // get value of the i-th function at a given point (for functions which take values in C)

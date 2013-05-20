@@ -77,5 +77,20 @@ void ParticleOnDiskFunctionBasis::GetFunctionValue(RealVector& value, Complex& r
     }
 }
 
+// get value of the i-th function at a given point (for functions which take values in C)
+//
+// x, y = coordinate where the function has to be evaluated
+// index = function index 
 
+Complex ParticleOnDiskFunctionBasis::GetFunctionValue(double x, double y, int index)
+{
+    Complex result = this->Prefactor[index];
+    Complex Tmp(x, y);
+    while (index > 0)
+    {
+        result *= Tmp;
+        --index;
+    }
+    return result;
+}
 

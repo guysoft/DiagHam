@@ -66,6 +66,12 @@ class ParticleOnDiskFunctionBasis: public AbstractFunctionBasis
   // index = function index 
   void GetFunctionValue(RealVector& value, Complex& result, int index);
 
+  // get value of the i-th function at a given point (for functions which take values in C)
+  //
+  // x, y = coordinate where the function has to be evaluated
+  // index = function index 
+  virtual Complex GetFunctionValue(double x, double y, int index);
+
 };
 
 #endif
