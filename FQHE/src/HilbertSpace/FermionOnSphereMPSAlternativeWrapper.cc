@@ -241,6 +241,7 @@ void FermionOnSphereMPSAlternativeWrapper::InitializeOperators()
 
     // row marks final state, column marks initial state
     // also, remember the ComplexMatrix[column][row] convention
+    // so, [initial][final] = amplitude
 
     op = this->Operators + IdentityOperator;
     op->ResizeAndClean(2, 2);
@@ -249,11 +250,11 @@ void FermionOnSphereMPSAlternativeWrapper::InitializeOperators()
 
     op = this->Operators + CreationOperator;
     op->ResizeAndClean(2, 2);
-    (*op)[1][0] = 1.0;
+    (*op)[0][1] = 1.0;
 
     op = this->Operators + AnnihilationOperator;
     op->ResizeAndClean(2, 2);
-    (*op)[0][1] = 1.0;
+    (*op)[1][0] = 1.0;
 
     op = this->Operators + NumberOperator;
     op->ResizeAndClean(2, 2);
