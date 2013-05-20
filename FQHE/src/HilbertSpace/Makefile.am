@@ -149,6 +149,7 @@ BosonOnCubicLatticeMomentumSpace.cc \
 BosonOnSquareLatticeMomentumSpaceLong.cc \
 FermionOnSpherePTruncated.cc \
 FermionOnSpherePTruncatedLong.cc \
+FermionOnSphereMPSAlternativeWrapper.cc \
 FermionOnSphereMPSWrapper.cc \
 BosonOnDiskWithSU2Spin.cc \
 FermionOnCylinderMPSWrapper.cc \
