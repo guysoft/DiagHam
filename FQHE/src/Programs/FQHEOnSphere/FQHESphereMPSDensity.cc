@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     Manager += MiscGroup;
 
     (*SystemGroup) += new SingleIntegerOption('p', "nbr-particles", "number of particles", 2);
-    (*SystemGroup) += new SingleIntegerOption('l', "lzmax", "twice the maximum momentum for a single particle", 3);
     (*SystemGroup) += new SingleStringOption('\n', "location-file", "evaluate density at locations given in this text file");
+    (*SystemGroup) += new SingleStringOption('\n', "output-file", "write density values to this text file");
     (*MiscGroup) += new BooleanOption('h', "help", "display this help");
 
     if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -59,28 +59,7 @@ int main(int argc, char** argv)
     }
 
     int NbrParticles = Manager.GetInteger("nbr-particles"); 
-    int NbrFluxQuanta = Manager.GetInteger("lzmax");
     bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
-
-    double AspectRatio = Manager.GetDouble("aspect-ratio");
-    double Kappa = 0.0;
-    double Perimeter = 0.0;
-    double H;
-
-    if (Manager.GetDouble("cylinder-perimeter") > 0.0)
-    {
-        Kappa = (2.0 * M_PI) / Manager.GetDouble("cylinder-perimeter");
-        Perimeter = Manager.GetDouble("cylinder-perimeter");
-        H =  2.0 * M_PI * (NbrFluxQuanta + 1.0)/Perimeter;
-        AspectRatio = Perimeter/H;
-    }
-    else
-    {
-        Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
-        Perimeter = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio); 
-        H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
-    }
-    cout << "Cylinder geometry: perimeter = " << Perimeter << " H = " << H << ", kappa = " << Kappa << endl;
 
     int NbrQuasiholes = 0;
     Complex* QuasiholePositions = 0;
@@ -99,6 +78,27 @@ int main(int argc, char** argv)
         for (int i = 0; i < NbrQuasiholes; ++i)
             cout << QuasiholePositions[i] << endl;
     }
+
+    int NbrFluxQuanta = Manager.GetInteger("laughlin-index") * (NbrParticles - 1) + NbrQuasiholes;
+
+    double AspectRatio = Manager.GetDouble("aspect-ratio");
+    double Kappa = 0.0;
+    double Perimeter = 0.0;
+    double H;
+    if (Manager.GetDouble("cylinder-perimeter") > 0.0)
+    {
+        Kappa = (2.0 * M_PI) / Manager.GetDouble("cylinder-perimeter");
+        Perimeter = Manager.GetDouble("cylinder-perimeter");
+        H =  2.0 * M_PI * (NbrFluxQuanta + 1.0)/Perimeter;
+        AspectRatio = Perimeter/H;
+    }
+    else
+    {
+        Kappa = (2.0 * M_PI)/sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio);
+        Perimeter = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1) * AspectRatio); 
+        H = sqrt(2.0 * M_PI * (NbrFluxQuanta + 1.0))/sqrt(AspectRatio);
+    }
+    cout << "Cylinder geometry: perimeter = " << Perimeter << " H = " << H << ", kappa = " << Kappa << endl;
 
 
     int LandauLevel = 0;
@@ -178,6 +178,13 @@ int main(int argc, char** argv)
         NbrLocations = LocationFile.GetNbrLines();
     }
 
+    ofstream File;
+    if (Manager.GetString("output-file") != 0)
+    {
+        File.open(Manager.GetString("output-file"), ios::out);
+        File.precision(14);
+    }
+
     cout << "evaluate density at " << NbrLocations << " location(s): (before cylinder exp, if at all)" << endl;
     for (int i = 0; i < NbrLocations; ++i)
     {
@@ -196,7 +203,11 @@ int main(int argc, char** argv)
         if (!CylinderFlag) // ParticleOnDiskFunctionBasis does not provide the Gaussian factor
             Sum *= exp(- 0.5 * (x * x + y * y));
         cout << "(" << x << "," << y << ") " << Sum << endl;
+
+        if (Manager.GetString("output-file") != 0)
+            File << Sum.Re << endl;
     }
+    File.close();
 
     delete Basis;
     delete SpaceWrapper;
