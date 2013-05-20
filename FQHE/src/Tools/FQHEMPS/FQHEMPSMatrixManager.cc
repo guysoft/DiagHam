@@ -298,11 +298,13 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	      if (this->Options->GetString("import-bmatrices") != 0)
 		{
 		  MPSMatrix = new FQHEMPSLaughlinQuasiholeMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"),
+							         this->Options->GetBoolean("trim-qsector"),
 								 CylinderFlag, Kappa);
 		}
 	      else
 		{
 		  MPSMatrix = new FQHEMPSLaughlinQuasiholeMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							         this->Options->GetBoolean("trim-qsector"),
 								 CylinderFlag, Kappa);
 		}
 	    }

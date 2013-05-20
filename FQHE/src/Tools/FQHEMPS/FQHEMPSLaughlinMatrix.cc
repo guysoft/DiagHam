@@ -68,13 +68,11 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
+  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
+  this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
-  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
-  int MinQ, MaxQ;
-  for (int i = 0; i <= this->PLevel; ++i)
-    this->ComputeChargeIndexRange(i, MinQ, MaxQ);
   this->CreateBMatrices();
 }
 
@@ -91,6 +89,8 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char
 {
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
+  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
+  this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
@@ -148,7 +148,6 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   this->NInitialValuePerPLevel = new int [this->PLevel + 1];
   this->NLastValuePerPLevel = new int [this->PLevel + 1];
   this->TotalStartingIndexPerPLevel[0] = 0;
-  int NValueShift = this->PLevel;
   for (int i = 0; i <= this->PLevel; ++i)
     {
       this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
@@ -161,7 +160,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
       this->NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * this->NbrNValuesPerPLevel[i];
     }
   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
-  cout << "B matrix size = " << MatrixSize << endl;
+  cout << "B matrix size = " << MatrixSize << "x" << MatrixSize << endl;
   int* TmpNbrElementPerRow = new int[MatrixSize];
   for (int i = 0; i < MatrixSize; ++i)
     TmpNbrElementPerRow[i] = 0;
@@ -171,7 +170,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
       for (int j = this->NInitialValuePerPLevel[i] + 1; j <= this->NLastValuePerPLevel[i]; ++j)
 	{
 	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
-	    ++TmpNbrElementPerRow[this->GetMatrixIndex(j - 1 - this->NInitialValuePerPLevel[i], k, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i])];
+	    ++TmpNbrElementPerRow[this->GetMatrixIndex(i, k, j - 1)];
 	}
     }
   BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
@@ -186,12 +185,11 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	      if (this->CylinderFlag)
 // symmetric normalization
 // 		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-// 							 + ((j - 1.0 - NValueShift) * (j - 1.0 - NValueShift) / (4.0 * (double) this->LaughlinIndex))
-// 							 + (((j - NValueShift) * (j - NValueShift)) / (4.0 * (double) this->LaughlinIndex))));
+// 							 + ((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift) / (4.0 * (double) this->LaughlinIndex))
+// 							 + (((j - this->NValueGlobalShift) * (j - this->NValueGlobalShift)) / (4.0 * (double) this->LaughlinIndex))));
 		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-							 + (((j - 1.0 - NValueShift) * (j - 1.0 - NValueShift)) / (2.0 * (double) this->LaughlinIndex))));
-	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(j - 1 - this->NInitialValuePerPLevel[i], k, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i]),
-					    this->GetMatrixIndex(j - this->NInitialValuePerPLevel[i], k, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i]), Tmp);
+							 + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
+	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(i, k, j - 1), this->GetMatrixIndex(i, k, j), Tmp);
 	    }
 	}
     }
@@ -200,7 +198,6 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
   FactorialCoefficient Coef;
   
-  cout << "NValueShift = " << NValueShift << endl;
   for (int m = 1; m < this->NbrBMatrices; ++m)
     {
       for (int i = 0; i < MatrixSize; ++i)
@@ -211,7 +208,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	  for (int j = 0; j <= this->PLevel; ++j)
 	    {
 	      BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	      int N2 = (j - i) + NValueShift;
+	      int N2 = (j - i) + this->NValueGlobalShift;
 	      int N1 = N2 + (this->LaughlinIndex - 1);
   	      if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
   		  && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
@@ -220,7 +217,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 		    {
 		      for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
 			{
-			  ++TmpNbrElementPerRow[this->GetMatrixIndex(N1 - this->NInitialValuePerPLevel[i], k1, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i])];
+			  ++TmpNbrElementPerRow[this->GetMatrixIndex(i, k1, N1)];
 			}
 		    }
 		}
@@ -235,7 +232,7 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 	  for (int j = 0; j <= this->PLevel; ++j)
 	    {
 	      BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	      int N2 = (j - i) + NValueShift;
+	      int N2 = (j - i) + this->NValueGlobalShift;
 	      int N1 = N2 + (this->LaughlinIndex - 1);
   	      if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
   		  && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
@@ -250,12 +247,11 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 			  if (this->CylinderFlag)
 // symmetric normalization
 // 			    Tmp *= exp(-this->Kappa * this->Kappa * (( 0.5 *  ((double) (i + j)))
-// 								     + ((N1 - NValueShift) * (N1 - NValueShift)  / (4.0 * (double) this->LaughlinIndex))
-// 								     + (((N2 - NValueShift) * (N2 - NValueShift))  / (4.0 * (double) this->LaughlinIndex))));
+// 								     + ((N1 - this->NValueGlobalShift) * (N1 - this->NValueGlobalShift)  / (4.0 * (double) this->LaughlinIndex))
+// 								     + (((N2 - this->NValueGlobalShift) * (N2 - this->NValueGlobalShift))  / (4.0 * (double) this->LaughlinIndex))));
 			    Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-								     + (((N1 - NValueShift) * (N1 - NValueShift))  / (2.0 * (double) this->LaughlinIndex))));
-			  BMatrices[m].SetMatrixElement(this->GetMatrixIndex(N1 - this->NInitialValuePerPLevel[i], k1, this->NbrNValuesPerPLevel[i], this->TotalStartingIndexPerPLevel[i]), 
-					 		this->GetMatrixIndex(N2 - this->NInitialValuePerPLevel[j], k2, this->NbrNValuesPerPLevel[j], this->TotalStartingIndexPerPLevel[j]), Tmp);
+								     + (((N1 - this->NValueGlobalShift) * (N1 - this->NValueGlobalShift))  / (2.0 * (double) this->LaughlinIndex))));
+			  BMatrices[m].SetMatrixElement(this->GetMatrixIndex(i, k1, N1), this->GetMatrixIndex(j, k2, N2), Tmp);
 			}
 		    }
 		}
@@ -342,8 +338,7 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, i
     {
       for (int k2 = 0; k2 < NbrK2; ++k2)
 	{
-	  matrix.GetMatrixElement(this->GetMatrixIndex(q1 - this->NInitialValuePerPLevel[pLevel1], k1, this->NbrNValuesPerPLevel[pLevel1], this->TotalStartingIndexPerPLevel[pLevel1]),
-                                  this->GetMatrixIndex(q2 - this->NInitialValuePerPLevel[pLevel2], k2, this->NbrNValuesPerPLevel[pLevel2], this->TotalStartingIndexPerPLevel[pLevel2]), Tmp);
+	  matrix.GetMatrixElement(this->GetMatrixIndex(pLevel1, k1, q1), this->GetMatrixIndex(pLevel2, k2, q2), Tmp);
 	  if (Tmp != 0.0)
 	    TmpMatrix.SetMatrixElement(k1, k2, Tmp);
 	}
@@ -402,6 +397,7 @@ bool FQHEMPSLaughlinMatrix::LoadHeader (ifstream& file)
   ReadLittleEndian(file, this->PLevel);
   ReadLittleEndian(file, this->LaughlinIndex);
   ReadLittleEndian(file, this->NbrNValue);
+  ReadLittleEndian(file, this->NValueGlobalShift);
   ReadLittleEndian(file, this->CylinderFlag);
   ReadLittleEndian(file, this->Kappa);
   ReadLittleEndian(file, this->UniformChargeIndexRange);
@@ -440,11 +436,12 @@ bool FQHEMPSLaughlinMatrix::LoadHeader (ifstream& file)
 
 bool FQHEMPSLaughlinMatrix::SaveHeader (ofstream& file)
 {
-  int HeaderSize = (this->PLevel + 1) * (2 * sizeof(int)) + (sizeof(int) * 3) + sizeof(bool) + sizeof(double);
+  int HeaderSize = (this->PLevel + 1) * (5 * sizeof(int)) + (sizeof(int) * 5) + (sizeof(bool) * 2) + sizeof(double);
   WriteLittleEndian(file, HeaderSize);
   WriteLittleEndian(file, this->PLevel);
   WriteLittleEndian(file, this->LaughlinIndex);
   WriteLittleEndian(file, this->NbrNValue);
+  WriteLittleEndian(file, this->NValueGlobalShift);
   WriteLittleEndian(file, this->CylinderFlag);
   WriteLittleEndian(file, this->Kappa);
   WriteLittleEndian(file, this->UniformChargeIndexRange);
@@ -495,14 +492,14 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
         return;
     }
 
-    int QShift = this->PLevel;
     for (minQ = 0; minQ < this->NbrNValue; ++minQ)
-        if (2 * pLevel + twop(minQ - QShift, this->LaughlinIndex) <= 2 * this->PLevel)
+        if (2 * pLevel + twop(minQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
             break;
     for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
-        if (2 * pLevel + twop(maxQ - QShift, this->LaughlinIndex) <= 2 * this->PLevel)
+        if (2 * pLevel + twop(maxQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
             break;
-    cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;
+    cout << "N range at " << pLevel << ": [" << minQ - this->NValueGlobalShift << "," << maxQ - this->NValueGlobalShift << "] (+" << this->NValueGlobalShift << ")" << endl;
+
     cout << "other method" << endl;
     int TmpMinQ = this->NbrNValue - 1;
     int TmpMaxQ = 0;    
@@ -566,12 +563,12 @@ void FQHEMPSLaughlinMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnI
   this->GetChargeIndexRange(0, MinQ, MaxQ);
   if (padding == true)
     {
-      rowIndex = this->PLevel + (this->LaughlinIndex - 1) / 2 - MinQ;
+      rowIndex = this->NValueGlobalShift + (this->LaughlinIndex - 1) / 2 - MinQ;
       columnIndex = rowIndex;
     }
   else
     {
-      rowIndex = this->PLevel + this->LaughlinIndex - 1 - MinQ;
-      columnIndex = this->PLevel - MinQ;
+      rowIndex = this->NValueGlobalShift + this->LaughlinIndex - 1 - MinQ;
+      columnIndex = this->NValueGlobalShift - MinQ;
     }
 }

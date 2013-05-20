@@ -56,35 +56,38 @@ class FQHEMPSLaughlinQuasiholeMatrix : public FQHEMPSLaughlinMatrix
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // trimChargeIndices = trim the charge indices, assuming an iMPS
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
 
   // constructor from stored B matrices
   //
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // fileName = name of the file that contains the B matrices
+  // trimChargeIndices = trim the charge indices, assuming an iMPS
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
 
   // destructor
   //
   ~FQHEMPSLaughlinQuasiholeMatrix();
   
-  // get the B matrices corresponding to localized quasiholes
+  // get the edge matrix for localized quasiholes, with normal ordering
   //
   // nbrQuasiholes = number of quasiholes
-  // quasiholePositions = quasihole positions (for cylinder, positions have to be expressed in perimeter units)
-  // return value = array of nbrQuasiholes matrices corresponding to each quasihole
+  // quasiholePositions = quasihole positions in unit of magnetic length
+  // return value = pointer to the edge matrix
   virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
 
- protected:
-
-  // create the B matrices for the laughlin state
+  // get the boundary indices of the MPS representation
   //
-  virtual void CreateBMatrices ();
+  // rowIndex = matrix row index
+  // columnIndex = matrix column index
+  // padding = assume that the state has the estra padding
+  virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
 };
 

@@ -178,7 +178,16 @@ int main(int argc, char** argv)
 
   SparseComplexMatrix* SparseQuasiholeBMatrices = 0;
   if (NbrQuasiholes > 0)
-    SparseQuasiholeBMatrices = MPSMatrix->GetQuasiholeMatrices(NbrQuasiholes, QuasiholePositions);
+  {
+      if (Manager.GetBoolean("use-padding"))
+      {
+          cout << "please do not use padding for quasiholes." << endl;
+          return -1;
+      }
+      MPSRowIndex = 0;
+      SparseQuasiholeBMatrices = MPSMatrix->GetQuasiholeMatrices(NbrQuasiholes, QuasiholePositions);
+  }
+
   RealVector State ;
   ComplexVector ComplexState ;
   if (NbrQuasiholes > 0)
@@ -279,25 +288,50 @@ int main(int argc, char** argv)
 	      
 	    }
 	  
-	  RealVector NewState;
-	  NewState = ((FermionOnSpherePTruncated*) Space)->ConvertToHaldaneBasis(State, *SpaceHaldane);
-	  
-	  if (OutputTxtFileName != 0)
+	  if (NbrQuasiholes > 0)
 	    {
-	      ofstream File;
-	      File.open(OutputTxtFileName, ios::binary | ios::out);
-	      File.precision(14);	
-	      for (long i = 0; i < SpaceHaldane->GetLargeHilbertSpaceDimension(); ++i)
-		{
-		  NewState.PrintComponent(File, i) << " ";
-		  Space->PrintStateMonomial(File, i) << endl;
-		}
-	      File.close();
-	    }
-	  if (OutputFileName != 0)
-	    {
-	      NewState.WriteVector(OutputFileName);
-	    }
+              ComplexVector NewState;
+              NewState = ((FermionOnSpherePTruncated*) Space)->ConvertToHaldaneBasis(ComplexState, *SpaceHaldane);
+
+              if (OutputTxtFileName != 0)
+                {
+                  ofstream File;
+                  File.open(OutputTxtFileName, ios::binary | ios::out);
+                  File.precision(14);
+                  for (long i = 0; i < SpaceHaldane->GetLargeHilbertSpaceDimension(); ++i)
+                    {
+                      NewState.PrintComponent(File, i) << " ";
+                      SpaceHaldane->PrintStateMonomial(File, i) << endl;
+                    }
+                  File.close();
+                }
+              if (OutputFileName != 0)
+                {
+                  NewState.WriteVector(OutputFileName);
+                }
+            }
+          else
+            {
+              RealVector NewState;
+              NewState = ((FermionOnSpherePTruncated*) Space)->ConvertToHaldaneBasis(State, *SpaceHaldane);
+
+              if (OutputTxtFileName != 0)
+                {
+                  ofstream File;
+                  File.open(OutputTxtFileName, ios::binary | ios::out);
+                  File.precision(14);
+                  for (long i = 0; i < SpaceHaldane->GetLargeHilbertSpaceDimension(); ++i)
+                    {
+                      NewState.PrintComponent(File, i) << " ";
+                      SpaceHaldane->PrintStateMonomial(File, i) << endl;
+                    }
+                  File.close();
+                }
+              if (OutputFileName != 0)
+                {
+                  NewState.WriteVector(OutputFileName);
+                }
+            }
 	}
       else 
 	{ 

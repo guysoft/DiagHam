@@ -50,6 +50,8 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   
   // number of charge indices
   int NbrNValue;
+  // global shift of charge indices to make it non-negative
+  int NValueGlobalShift;
   // first linearized index for each truncation level
   int* TotalStartingIndexPerPLevel;
   // number of linearized index per truncation level
@@ -192,12 +194,11 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 
   // compute the linearized index of the B matrix for the Laughlin states
   //
-  // charge = charge index
-  // chargedPartitionIndex =index of the partition in the charge sector
-  // nbrCharges = total number of charge indices
-  // globalIndexShift = index of the first state at the considered level
+  // pLevel = truncation level
+  // partitionIndex = index of the partition at the given pLevel
+  // charge = charge index (with the global shift by Pmax)
   // return value = linearized index
-  int GetMatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int globalIndexShift);
+  int GetMatrixIndex(int pLevel, int partitionIndex, int charge);
 
   // create the matrix element of the B matrix U(1) part
   //
@@ -239,19 +240,15 @@ inline int FQHEMPSLaughlinMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
   return this->LaughlinIndex;
 }
 
-
 // compute the linearized index of the B matrix for the Laughlin states
 //
-// charge = charge index
-// chargedPartitionIndex =index of the partition in the charge sector
-// nbrCharges = total number of charge indices
-// globalIndexShift = index of the first state at the considered level
+// pLevel = truncation level
+// partitionIndex = index of the partition at the given pLevel
+// charge = charge index (already with NValueGlobalShift)
 // return value = linearized index
-
-inline int FQHEMPSLaughlinMatrix::GetMatrixIndex(int charge, int chargedPartitionIndex, 
-						 int nbrCharges, int globalIndexShift)
+inline int FQHEMPSLaughlinMatrix::GetMatrixIndex(int pLevel, int partitionIndex, int charge)
 {
-  return ((chargedPartitionIndex * nbrCharges + charge) + globalIndexShift);
+    return this->TotalStartingIndexPerPLevel[pLevel] + this->NbrNValuesPerPLevel[pLevel] * partitionIndex + charge - this->NInitialValuePerPLevel[pLevel];
 }
 
 // compute P, N from the linearized index of the B matrix for the Laughlin states

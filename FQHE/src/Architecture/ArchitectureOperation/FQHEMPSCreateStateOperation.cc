@@ -167,8 +167,11 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
   if (this->NbrQuasiholes == 0)
     this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
   else
-    this->Space->CreateStateFromMPSDescription(this->BMatrices, this->QuasiholeBMatrices, this->NbrQuasiholes, *(this->ComplexOutputState), 
+  {
+    // FIXME: the third argument "1" is a hack for the case of a single matrix at edge
+    this->Space->CreateStateFromMPSDescription(this->BMatrices, this->QuasiholeBMatrices, 1, *(this->ComplexOutputState), 
 					       this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+  }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +

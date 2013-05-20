@@ -95,11 +95,11 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the array
   virtual SparseRealMatrix* GetMatrices();
 
-  // get the B matrices corresponding to localized quasiholes
+  // get the edge matrix for localized quasiholes, with normal ordering
   //
   // nbrQuasiholes = number of quasiholes
-  // quasiholePositions = quasihole positions
-  // return value = array of nbrQuasiholes matrices corresponding to each quasihole
+  // quasiholePositions = quasihole positions (for cylinder, positions have to be expressed in perimeter units)
+  // return value = pointer to the edge matrix
   virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
   
   // get the name describing the B matrices 

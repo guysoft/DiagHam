@@ -60,14 +60,17 @@ FQHEMPSLaughlinQuasiholeMatrix::FQHEMPSLaughlinQuasiholeMatrix()
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 
-FQHEMPSLaughlinQuasiholeMatrix::FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, 
+FQHEMPSLaughlinQuasiholeMatrix::FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool trimChargeIndices, 
 							       bool cylinderFlag, double kappa)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
-  this->QuasiholeBMatrices = new SparseRealMatrix [1];
+  this->QuasiholeBMatrices = 0;
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
+  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
+  this->NValueGlobalShift = this->PLevel;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->CreateBMatrices();
@@ -81,11 +84,14 @@ FQHEMPSLaughlinQuasiholeMatrix::FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 
-FQHEMPSLaughlinQuasiholeMatrix::FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, char* fileName, 
+FQHEMPSLaughlinQuasiholeMatrix::FQHEMPSLaughlinQuasiholeMatrix(int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices, 
 							       bool cylinderFlag, double kappa)
 {
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
+  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
+  this->NValueGlobalShift = this->PLevel;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->LoadMatrices(fileName);
@@ -100,185 +106,86 @@ FQHEMPSLaughlinQuasiholeMatrix::~FQHEMPSLaughlinQuasiholeMatrix()
   delete[] this->NbrIndicesPerPLevel;
 }
 
-// get the B matrices corresponding to localized quasiholes
+// get the edge matrix for localized quasiholes, with normal ordering
 //
 // nbrQuasiholes = number of quasiholes
-// quasiholePositions = quasihole positions (for cylinder, positions have to be expressed in perimeter units)
-// return value = array of nbrQuasiholes matrices corresponding to each quasihole
+// quasiholePositions = quasihole positions in unit of magnetic length
+// return value = pointer to the edge matrix
 
 SparseComplexMatrix* FQHEMPSLaughlinQuasiholeMatrix::GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions)
 {
-  SparseComplexMatrix* TmpQuasiholeBMatrices = new SparseComplexMatrix[nbrQuasiholes];
-  for (int i = 0; i < nbrQuasiholes; ++i)
-    TmpQuasiholeBMatrices[i] = SparseComplexMatrix(this->QuasiholeBMatrices[0]);
-  Complex* TmpCoefficient = new Complex[nbrQuasiholes];
-  for (int p = 0; p <= this->PLevel; ++p)
+    SparseComplexMatrix* QuasiholeMatrix = new SparseComplexMatrix(1, this->RealBMatrices[0].GetNbrRow());
+
+    BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
+    for (int p = 0; p <= this->PLevel; ++p)
+        U1BosonBasis[p] = new BosonOnDiskShort(p, p, this->PLevel + 1);
+    unsigned long* Monomial = new unsigned long[this->PLevel];
+
+    FactorialCoefficient Coef;
+    unsigned long* Occupation = new unsigned long [this->PLevel + 2];
+    unsigned long* ZeroOccupation = new unsigned long [this->PLevel + 2];
+    for (int i = 0; i < this->PLevel + 2; ++i)
+        ZeroOccupation[i] = 0;
+
+    int N = this->NValueGlobalShift + this->LaughlinIndex - 1 - nbrQuasiholes;
+    for (int p = 0; p <= this->PLevel; ++p)
     {
-      int NbrParitions1 = this->NbrIndicesPerPLevel[p] / this->NbrNValue;
-      for (int q = 0; q <= this->PLevel; ++q)
-	{
-	  int NbrParitions2 = this->NbrIndicesPerPLevel[q] / this->NbrNValue;	  
-	  for (int N2 = 0; N2 < (this->NbrNValue - 1); ++N2)
-	    {
-	      int N1 = N2 + 1;
-	      for (int i = 0; i < nbrQuasiholes; ++i)
-		{
-		  if (this->CylinderFlag == false)
-		    {
-		      if (Norm(quasiholePositions[i]) > MACHINE_PRECISION)
-			TmpCoefficient[i] = pow (quasiholePositions[i], (double) (this->PLevel + p - q));//((double) (2 * N1 - this->NbrNValue + 2)) / (2 * ((double) this->LaughlinIndex)) + ((double) (p - q)));
-		      else
-			{
-			  if ((2 * N1 - this->NbrNValue - 1) == (2 * this->LaughlinIndex * (q - p)))
-			    {
-			      TmpCoefficient[i] = 1.0;
-			    }
-			  else
-			    {
-			      TmpCoefficient[i] = 0.0;
-			    }
-			}
-		    }
- 		  else
-		    {
- 		      TmpCoefficient[i] = exp(I() * 2.0 * M_PI * quasiholePositions[i] * (((double) (2 * N1 - this->NbrNValue + 2)) / (2 * ((double) this->LaughlinIndex)) + ((double) (p - q)))) * exp(- this->Kappa * this->Kappa * ((double) ((p + q) * (this->LaughlinIndex - 1))) * 0.25);
-//fabs((double) (p - q)));
-		    }
-		}
-	      for (int k1 = 0; k1 < NbrParitions1; ++k1)
-		for (int k2 = 0; k2 < NbrParitions2; ++k2)
-		  {
-		    double Tmp;
-		    int Index1 = this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[p]);
-		    int Index2 = this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[q]);
-		    this->QuasiholeBMatrices[0].GetMatrixElement(Index1, Index2, Tmp);
-		    for (int i = 0; i < nbrQuasiholes; ++i)
-		      {
-			TmpQuasiholeBMatrices[i].SetMatrixElement(Index1, Index2, Tmp * TmpCoefficient[i]);
-		      }
-		  }
-	    }
-	}
+        if ((N < this->NInitialValuePerPLevel[p]) || (N > this->NLastValuePerPLevel[p]))
+            continue;
+        BosonOnDiskShort* Space = U1BosonBasis[p];
+        for (int k = 0; k < Space->GetHilbertSpaceDimension(); ++k)
+        {
+            Space->GetOccupationNumber(k, Occupation);
+            Complex coeff = this->CreateLaughlinAMatrixElement(1, this->LaughlinIndex, ZeroOccupation, Occupation, 0, p, Coef);
+
+            Space->GetMonomial(k, Monomial);
+            for (int i = 0; (i < p) && (Monomial[i] > 0); ++i) // partition ENDS at the first zero in Monomial
+            {
+                Complex sum = 0;
+                if (this->CylinderFlag)
+                {
+                    for (int a = 0; a < nbrQuasiholes; ++a)
+                        sum += exp(this->Kappa * quasiholePositions[a] * Monomial[i]);
+                }
+                else
+                {
+                    for (int a = 0; a < nbrQuasiholes; ++a)
+                        sum += pow(quasiholePositions[a], ((double)Monomial[i])); // don't add minus sign to unsigned long...
+                }
+                coeff *= sum;
+            }
+
+            QuasiholeMatrix->SetMatrixElement(0, this->GetMatrixIndex(p, k, N), coeff);
+        }
     }
-  delete[] TmpCoefficient;
-//   for (int i = 0; i < nbrQuasiholes; ++i)
-//      {
-//        cout << " final matrix  " << i << " : ";
-//        TmpQuasiholeBMatrices[i].PrintNonZero(cout) << endl;
-//        cout << "--------------------------------" << endl;
-//      }
-  return TmpQuasiholeBMatrices;
+
+    // cout << "--- quasihole matrix" << endl;
+    // QuasiholeMatrix->PrintNonZero(cout);
+    // cout << "---" <<endl;
+    cout << "quasihole matrix size = " << QuasiholeMatrix->GetNbrRow() << "x" << QuasiholeMatrix->GetNbrColumn() << endl;
+    for (int p = 0; p <= this->PLevel; ++p)
+        delete U1BosonBasis[p];
+    delete[] U1BosonBasis;
+    delete[] Monomial;
+    delete[] Occupation;
+    delete[] ZeroOccupation;
+    return QuasiholeMatrix;
 }
 
-  
-// create the B matrices for the laughlin state
+// get the boundary indices of the MPS representation
 //
+// rowIndex = matrix row index
+// columnIndex = matrix column index
+// padding = assume that the state has the estra padding
 
-void FQHEMPSLaughlinQuasiholeMatrix::CreateBMatrices ()
+void FQHEMPSLaughlinQuasiholeMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
 {
-  BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      U1BosonBasis[i] = new BosonOnDiskShort(i, i, this->PLevel + 1);
-    }
-  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
-  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  this->TotalStartingIndexPerPLevel[0] = 0;
-  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
-  int NValueShift = this->NbrNValue - 1;
-  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
-  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
-  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
-      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
-    }
-  this->NbrIndicesPerPLevel[0] = U1BosonBasis[0]->GetHilbertSpaceDimension() * this->NbrNValuesPerPLevel[0];
-  for (int i = 1; i <= this->PLevel; ++i)
-    {
-      this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
-      this->NbrIndicesPerPLevel[i] = U1BosonBasis[i]->GetHilbertSpaceDimension()  * this->NbrNValuesPerPLevel[i];
-    }
-  int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
-  cout << "B matrix size = " << MatrixSize << endl;
-  this->RealBMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
-  this->QuasiholeBMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
-      for (int j = 1; j < this->NbrNValue; ++j)
-	{
-	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
-	    {
-	      double Tmp = 1.0;
-              if (this->CylinderFlag)
-		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-							 + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) / (4.0 * this->LaughlinIndex))
-							 + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) / (4.0 * this->LaughlinIndex))));
-	      this->RealBMatrices[0].SetMatrixElement(this->GetMatrixIndex(j - 1, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]),
-						      this->GetMatrixIndex(j, k, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), Tmp);
-	    }
-	}
-    }
-   
-  for (int m = 1; m < this->NbrBMatrices; ++m)
-    this->RealBMatrices[m] = SparseRealMatrix(MatrixSize, MatrixSize);
-  this->QuasiholeBMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize);
-
-  unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
-  unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
-  FactorialCoefficient Coef;
-
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      BosonOnDiskShort* TmpSpace1 = U1BosonBasis[i];
-      for (int j = 0; j <= this->PLevel; ++j)
-	{
-	  BosonOnDiskShort* TmpSpace2 = U1BosonBasis[j];
-	  for (int k1 = 0; k1 < TmpSpace1->GetHilbertSpaceDimension(); ++k1)
-	    {
-	      TmpSpace1->GetOccupationNumber(k1, Partition1);
-	      for (int k2 = 0; k2 < TmpSpace2->GetHilbertSpaceDimension(); ++k2)
-		{
-		  TmpSpace2->GetOccupationNumber(k2, Partition2);
-		  int N2 = (2 * (j - i) - this->LaughlinIndex + 1 + NValueShift) / 2;
-		  int N1 = N2 + (this->LaughlinIndex - 1);
-		  double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex, 1, Partition1, Partition2, i, j, Coef);
-		  if (this->CylinderFlag)
-		    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
-								   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift)  / (2.0 * this->LaughlinIndex))
-								   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift))  / (2.0 * this->LaughlinIndex))));
-		  this->RealBMatrices[1].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
-							  this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp);
-		  Tmp = this->CreateLaughlinAMatrixElement(1, this->LaughlinIndex, Partition1, Partition2, i, j, Coef);
-		  for (int N2 = 0; N2 < (this->NbrNValue - 1); ++N2)
-		    {
-		      int N1 = N2 + 1;
-		      double Tmp2 = Tmp;
-//		      if (this->CylinderFlag)
-// 			Tmp2 *= exp(-0.5 * this->Kappa * this->Kappa * (((double) (i + j))
-// 									+ ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) / (2.0 * this->LaughlinIndex))
-// 									+ (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) / (2.0 * this->LaughlinIndex))));
-		      this->QuasiholeBMatrices[0].SetMatrixElement(this->GetMatrixIndex(N1, k1, this->NbrNValue, this->TotalStartingIndexPerPLevel[i]), 
-								   this->GetMatrixIndex(N2, k2, this->NbrNValue, this->TotalStartingIndexPerPLevel[j]), Tmp2);
-		    }		    
-		}
-	    }
-	}
-    }
-
-  cout << " final B matrices  : ";
-//   this->RealBMatrices[0].PrintNonZero(cout) << endl;
-//   this->RealBMatrices[1].PrintNonZero(cout) << endl;
-//   this->QuasiholeBMatrices[0].PrintNonZero(cout) << endl;
-
-
-  delete[] Partition1;
-  delete[] Partition2;
-
-  for (int i = 0; i <= this->PLevel; ++i)
-    delete U1BosonBasis[i];
-  delete[] U1BosonBasis;
+    int MinQ;
+    int MaxQ;
+    this->GetChargeIndexRange(0, MinQ, MaxQ);
+    if (padding == true)
+        cout << "padding is not supported!" << endl;
+    rowIndex = 0;
+    columnIndex = this->NValueGlobalShift - MinQ;
 }
 
