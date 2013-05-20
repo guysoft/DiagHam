@@ -560,6 +560,21 @@ RealVector FermionOnSpherePTruncated::ConvertToHaldaneBasis(RealVector& state, F
   return TmpVector;
 }
 
+// convert a gien state from truncated to Haldane basis
+//
+// state = reference on the vector to convert
+// haldaneBasis = reference on the Haldane basis to use
+// return value = converted vector
+
+ComplexVector FermionOnSpherePTruncated::ConvertToHaldaneBasis(ComplexVector& state, FermionOnSphereHaldaneBasis& haldaneBasis)
+{
+  cout<<"Convert to Haldane basis "<<this->HilbertSpaceDimension<<" "<<haldaneBasis.GetHilbertSpaceDimension()<<endl;
+  ComplexVector TmpVector (haldaneBasis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    TmpVector[haldaneBasis.FindStateIndex(this->StateDescription[i], this->StateLzMax[i])] = state[i];
+  return TmpVector;
+}
+
 // find state index
 //
 // stateDescription = unsigned integer describing the state

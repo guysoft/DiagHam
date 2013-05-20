@@ -120,6 +120,13 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // return value = converted vector
   RealVector ConvertToHaldaneBasis(RealVector& state, FermionOnSphereHaldaneBasis& haldaneBasis);
 
+  // convert a given state from truncated to Haldane basis
+  //
+  // state = reference on the vector to convert
+  // haldaneBasis = reference on the Haldane basis to use
+  // return value = converted vector
+  ComplexVector ConvertToHaldaneBasis(ComplexVector& state, FermionOnSphereHaldaneBasis& haldaneBasis);
+
   // create the Jack polynomial decomposition corresponding to the root partition
   //
   // jack = vector where the ecomposition of the corresponding Jack polynomial on the unnormalized basis will be stored
