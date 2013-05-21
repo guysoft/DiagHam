@@ -214,6 +214,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // maxQ = reference on the lowest charge index
   virtual void ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ);
 
+  // get the number of particles that fit the root configuration once the number of flux quanta is fixed
+  // 
+  // nbrFluxQuanta = number of flux quanta
+  // padding = assume that the state has the extra padding
+  // return value = number of partciles
+  virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding = false);
 
  protected:
 

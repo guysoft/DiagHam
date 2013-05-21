@@ -2664,3 +2664,17 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
     }
   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   
 }
+
+// get the number of particles that fit the root configuration once the number of flux quanta is fixed
+// 
+// nbrFluxQuanta = number of flux quanta
+// padding = assume that the state has the extra padding
+// return value = number of partciles
+
+int FQHEMPSClustered2RMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding)
+{
+  nbrFluxQuanta += this->RIndex + 1;
+  nbrFluxQuanta *= 2;
+  return (nbrFluxQuanta / (this->RIndex + 2));
+}
+

@@ -196,10 +196,10 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      sprintf(TmpFileName, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.%s", StateName,
-		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
-	      sprintf(TmpFileName2, "fermions_cylinder_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.%s", StateName,
-		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(TmpFileName, "fermions_cylinder_%s_perimeter_%f_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.%s", StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(TmpFileName2, "fermions_cylinder_%s_perimeter_%f_plevel_%ld_n_%d_2s_%d_lz_%d.0.%s", StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
 	    }
 	}
       else
@@ -379,7 +379,7 @@ int main(int argc, char** argv)
 	    {
 	      cout << "computing sector P=" << CurrentPLevel<< " Q=" << LocalQValue << endl;
 	      RealDiagonalMatrix TmpRhoADiag = FQHEMPSEvaluatePartialEntanglementSpectrum(MPSMatrix, FullLeftOverlapMatrix, FullRightOverlapMatrix, 
-										   CurrentPLevel, LocalQValue, CurrentPLevel, LocalQValue, Error);
+											  CurrentPLevel, LocalQValue, CurrentPLevel, LocalQValue, Error);
 	      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
 	      if (TmpRhoADiag.GetNbrRow() > 0)
 		{
