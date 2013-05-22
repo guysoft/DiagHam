@@ -267,7 +267,7 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWi
   this->Alpha = alpha;
 
   this->PseudoPotentials = new double* [4];
-  for (int j = 0; j < 4; ++j)
+  for (int j = 0; j < 3; ++j)
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)

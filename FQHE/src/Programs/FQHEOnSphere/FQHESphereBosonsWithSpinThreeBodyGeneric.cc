@@ -193,10 +193,10 @@ int main(int argc, char** argv)
 
 
       if ((InteractionDefinition["Pseudopotentials"] != 0) || (InteractionDefinition["PseudopotentialsUpUp"] != 0)
-	  || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0))
+	  || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0) || (InteractionDefinition["PseudopotentialsPairTunneling"] != 0))
 	{
-	  PseudoPotentials  = new double*[3];
-	  for (int i = 0; i < 3; ++i)
+	  PseudoPotentials  = new double*[4];
+	  for (int i = 0; i < 4; ++i)
 	    {
 	      PseudoPotentials[i] = new double[LzMax + 1];
 	      for (int j = 0; j <= LzMax; ++j)

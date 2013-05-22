@@ -158,6 +158,31 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
 	cout << "PseudopotentialsUpDown has a wrong value in " << fileName << endl;
 	return false;
       }
+  // section needed only in all-sz modes
+  if (InteractionDefinition.GetAsDoubleArray("PseudopotentialsPairTunneling", ' ', TmpPseudoPotentials, TmpNbrPseudoPotentials) == true)
+    {
+      Flag = true;
+      if (TmpNbrPseudoPotentials > (lzMax +1))
+	{
+	  cout << "Invalid number of pseudo-potentials in PseudopotentialsPairTunneling" << endl;
+	  return false;
+	}
+      for (int j = 0; j < TmpNbrPseudoPotentials; ++j)
+	pseudoPotentials[3][j] = TmpPseudoPotentials[j];
+      if (TmpNbrPseudoPotentials <= lzMax)
+	{
+	  cout << "warning : number of pseudo-potentials in PseudopotentialsPairTunneling is lower than expected, padding with zeros" << endl;
+	  for (int j = TmpNbrPseudoPotentials; j <= lzMax; ++j)
+	    pseudoPotentials[3][j] = 0.0;
+	}
+    }
+  else
+    if (InteractionDefinition["PseudopotentialsPairTunneling"] != 0)
+      {
+	cout << "PseudopotentialsPairTunneling has a wrong value in " << fileName << endl;
+	return false;
+      }
+  // end all-sz insertion
   if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', oneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
     {
       if (TmpNbrPseudoPotentials != (lzMax + 1))

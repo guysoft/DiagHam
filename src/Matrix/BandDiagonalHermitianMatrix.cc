@@ -182,6 +182,7 @@ BandDiagonalHermitianMatrix::~BandDiagonalHermitianMatrix()
       delete[] this->ImaginaryUpperOffDiagonalElements;
       delete[] this->DiagonalElements;
 
+#ifdef __LAPACK__
       if (this->LapackWorkAreaDimension>0)
 	{
 	  delete[] this->LapackMatrix;
@@ -190,6 +191,7 @@ BandDiagonalHermitianMatrix::~BandDiagonalHermitianMatrix()
 	  delete[] this->LapackWorkingArea;
 	  delete[] this->LapackRealWorkingArea;
 	}
+#endif      
     }
 }
 

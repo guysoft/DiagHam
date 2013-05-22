@@ -103,7 +103,7 @@ int main(int argc, char** argv)
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");  
   bool DiskCacheFlag = Manager.GetBoolean("disk-cache");
   bool AllSz = Manager.GetBoolean("all-sz");
-  bool PairParity = Manager.GetInteger("pair-parity");
+  int PairParity = Manager.GetInteger("pair-parity");
   bool FirstRun = true;
 
   int NbrUp = (NbrParticles + SzTotal) >> 1;
@@ -305,10 +305,10 @@ int main(int argc, char** argv)
 
 
       if ((InteractionDefinition["Pseudopotentials"] != 0) || (InteractionDefinition["PseudopotentialsUpUp"] != 0)
-          || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0))
+          || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0) || (InteractionDefinition["PseudopotentialsPairTunneling"] != 0))
         {
-          PseudoPotentials  = new double*[3];
-          for (int i = 0; i < 3; ++i)
+          PseudoPotentials  = new double*[4];
+          for (int i = 0; i < 4; ++i)
             {
               PseudoPotentials[i] = new double[LzMax + 1];
               for (int j = 0; j <= LzMax; ++j)
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
   char* OutputBaseName = new char [256 + strlen(Manager.GetString("interaction-name"))];
   if (AllSz)
     {
-      if (PairParity)
+      if (PairParity>=0)
 	sprintf (OutputBaseName, "bosons_sphere_su2_%s_parity_%d_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), PairParity, Manager.GetDouble("pairing"),NbrParticles, LzMax);
       else  
 	sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
