@@ -390,8 +390,8 @@ void ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::EvaluateInt
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementNNAB(int kx2, int ky2, int kx4, int ky4)
 {
-    double dx = 2.0 * M_PI * ((double)(kx2-kx4)) / this->NbrSiteX;
-    double dy = 2.0 * M_PI * ((double)(ky2-ky4)) / this->NbrSiteY;
+    double dx = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0));
+    double dy = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1));
     Complex Tmp = 1 + Phase(-dx);
     return Tmp;
 }
@@ -406,8 +406,8 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementNNBC(int kx2, int ky2, int kx4, int ky4)
 {
-    double dx = 2.0 * M_PI * ((double)(kx2-kx4)) / this->NbrSiteX;
-    double dy = 2.0 * M_PI * ((double)(ky2-ky4)) / this->NbrSiteY;
+    double dx = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0));
+    double dy = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1));
     Complex Tmp = 1 + Phase(dx - dy);
     return Tmp;
 }
@@ -422,8 +422,8 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementNNCA(int kx2, int ky2, int kx4, int ky4)
 {
-    double dx = 2.0 * M_PI * ((double)(kx2-kx4)) / this->NbrSiteX;
-    double dy = 2.0 * M_PI * ((double)(ky2-ky4)) / this->NbrSiteY;
+    double dx = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0));
+    double dy = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1));
     Complex Tmp = 1 + Phase(dy);
     return Tmp;
 }
@@ -438,8 +438,8 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementNNNAB(int kx2, int ky2, int kx4, int ky4)
 {
-    double dx = 2.0 * M_PI * ((double)(kx2-kx4)) / this->NbrSiteX;
-    double dy = 2.0 * M_PI * ((double)(ky2-ky4)) / this->NbrSiteY;
+    double dx = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0));
+    double dy = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1));
     Complex Tmp = Phase(-dy) + Phase(dy - dx);
     return Tmp;
 }
@@ -454,8 +454,8 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementNNNBC(int kx2, int ky2, int kx4, int ky4)
 {
-    double dx = 2.0 * M_PI * ((double)(kx2-kx4)) / this->NbrSiteX;
-    double dy = 2.0 * M_PI * ((double)(ky2-ky4)) / this->NbrSiteY;
+    double dx = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0));
+    double dy = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1));
     Complex Tmp = Phase(dx) + Phase(-dy);
     return Tmp;
 }
@@ -470,8 +470,8 @@ Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeT
 
 Complex ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementNNNCA(int kx2, int ky2, int kx4, int ky4)
 {
-    double dx = 2.0 * M_PI * ((double)(kx2-kx4)) / this->NbrSiteX;
-    double dy = 2.0 * M_PI * ((double)(ky2-ky4)) / this->NbrSiteY;
+    double dx = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0));
+    double dy = (double)(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1));
     Complex Tmp = Phase(dx) + Phase(dy - dx);
     return Tmp;
 }

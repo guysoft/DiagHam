@@ -7,6 +7,8 @@
 #include "Hamiltonian/ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian.h"
 #include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelKagomeLatticeTilted.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -53,6 +55,11 @@ int main(int argc, char** argv)
     (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
     (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
     (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
+    (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+    (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+    (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+    (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+    (*SystemGroup) += new SingleIntegerOption  ('\n', "offset", "second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)", 0);
     (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
     (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive two-body nearest neighbor potential strength", 1.0);
     (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive two-body nearest next neighbor potential strength", 0.0);
@@ -103,7 +110,31 @@ int main(int argc, char** argv)
     int NbrSiteY = Manager.GetInteger("nbr-sitey"); 
     int BandIndex = Manager.GetInteger("band-index");
     long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+    int nx1 = Manager.GetInteger("nx1");
+    int ny1 = Manager.GetInteger("ny1");
+    int nx2 = Manager.GetInteger("nx2");
+    int ny2 = Manager.GetInteger("ny2");
+    int offset = Manager.GetInteger("offset");
+    bool TiltedFlag = true;
+    if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
+      TiltedFlag = false;
+    else
+    {
+      if ((nx1*ny2 - nx2*ny1) != NbrSiteX * NbrSiteY)
+      {
+	cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	return 0;
+      }
+      if (((offset*ny2 - ny1) % NbrSiteX) != 0 || ((nx1 - offset*nx2) % NbrSiteX != 0))
+      {
+	cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSiteX) = 0 and ((nx1 - offset*nx2) % NbrSiteX = 0) to verify momentum conservation" << endl;
+	return 0;
+      }
+      else
+	cout << "Using tilted boundary conditions" << endl;
+    }
 
+    
     char* StatisticPrefix = new char [16];
     if (Manager.GetBoolean("boson") == false)
         sprintf (StatisticPrefix, "fermions");
@@ -112,14 +143,19 @@ int main(int argc, char** argv)
 
     char* FilePrefix = new char[512];
     int lenFilePrefix=0;
-    if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
+    if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (TiltedFlag == false))
         lenFilePrefix += sprintf (FilePrefix, "%s_singleband_kagome_band_%d_n_%d_x_%d_y_%d", StatisticPrefix, BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
     else
     {
+      if (TiltedFlag == true)
+	lenFilePrefix += sprintf (FilePrefix, "%s_singleband_kagomelatticetilted_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2);
+      else
+      {
         if (Manager.GetBoolean("three-body") == true)
             lenFilePrefix += sprintf (FilePrefix, "%s_singleband_threebody_kagome_band_%d_n_%d_x_%d_y_%d", StatisticPrefix, BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
         else
             lenFilePrefix += sprintf (FilePrefix, "%s_singleband_fourbody_kagome_band_%d_n_%d_x_%d_y_%d", StatisticPrefix, BandIndex, NbrParticles, NbrSiteX, NbrSiteY);
+      }
     }
 
     lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_u_%f_v_%f", Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"));
@@ -138,19 +174,29 @@ int main(int argc, char** argv)
     else
         sprintf(EigenvalueOutputFile, "%s.dat", FilePrefix);
 
+    Abstract2DTightBindingModel *TightBindingModel;
+    
     if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
         bool ExportOneBody = false;
         if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
             ExportOneBody = true;
-        TightBindingModelAlternativeKagomeLattice TightBindingModel(NbrSiteX, NbrSiteY,
+	if (TiltedFlag == false)
+	{
+	  TightBindingModel = new TightBindingModelAlternativeKagomeLattice (NbrSiteX, NbrSiteY,
                 Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
                 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+	}
+	else
+	{
+	  TightBindingModel = new TightBindingModelKagomeLatticeTilted (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+						   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+	}
         if (Manager.GetBoolean("singleparticle-chernnumber") == true)
-            cout << "Chern number = " << TightBindingModel.ComputeChernNumber(BandIndex) << endl;
-        TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
-        double BandSpread = TightBindingModel.ComputeBandSpread(0);
-        double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
+            cout << "Chern number = " << TightBindingModel->ComputeChernNumber(BandIndex) << endl;
+        TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
+        double BandSpread = TightBindingModel->ComputeBandSpread(0);
+        double DirectBandGap = TightBindingModel->ComputeDirectBandGap(0);
         cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
         if (ExportOneBody == true)
         {
@@ -161,11 +207,11 @@ int main(int argc, char** argv)
                 sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
             if (Manager.GetBoolean("export-onebody") == true)
             {
-                TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+                TightBindingModel->WriteBandStructure(BandStructureOutputFile);
             }
             else
             {
-                TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+                TightBindingModel->WriteBandStructureASCII(BandStructureOutputFile);
             }
             delete[] BandStructureOutputFile;
         }	  
@@ -187,9 +233,17 @@ int main(int argc, char** argv)
         MaxKy = MinKy;
     }
 
-    TightBindingModelAlternativeKagomeLattice TightBindingModel(NbrSiteX, NbrSiteY,
-            Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-            Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+    if (TiltedFlag == false)
+	{
+	  TightBindingModel = new TightBindingModelAlternativeKagomeLattice (NbrSiteX, NbrSiteY,
+                Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+                Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+	}
+    else
+	{
+	  TightBindingModel = new TightBindingModelKagomeLatticeTilted (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+						   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+	}
 
     bool FirstRunFlag = true;
     for (int i = MinKx; i <= MaxKx; ++i)
@@ -216,7 +270,7 @@ int main(int argc, char** argv)
             AbstractQHEHamiltonian* Hamiltonian = 0;
             if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
             {
-                Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, &TightBindingModel,
+                Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, TightBindingModel,
                         Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
                         BandIndex, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
             }
@@ -224,7 +278,7 @@ int main(int argc, char** argv)
             {
                 if (Manager.GetBoolean("three-body") == true)
                 {
-                    Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, &TightBindingModel,
+                    Hamiltonian = new ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, TightBindingModel,
                             Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
                             BandIndex, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                 }

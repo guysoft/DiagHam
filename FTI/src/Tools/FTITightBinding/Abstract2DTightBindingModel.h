@@ -65,6 +65,8 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
 
   double *LLLGammaX;
   double *LLLGammaY;
+  
+  double** ProjectedMomenta;
 
  public:
 
@@ -251,7 +253,16 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //nbrOccupiedBands = number of occupied bands
   //return value = Z2 invariant
   virtual int ComputeZ2Invariant(int nbrOccupiedBands);
-
+  
+  //Computes value of projected momentum along the lattice directions
+  //
+  //kx = first coordinate of the given point in the Brillouin zone
+  //ky = second coordinate of the given point in the Brillouin zone
+  //latticeComponent = index of the lattice vector along which the projection is to be performed
+  //return value = projected momentum
+  virtual double GetProjectedMomentum(int kx, int ky, int latticeComponent);
+  
+  
  protected:
 
   // write an header that describes the tight binding model
@@ -400,5 +411,19 @@ inline double Abstract2DTightBindingModel::ComputeCurvatureSinglePlaquette(int k
     W *= this->GetAbelianConnection(kx + 1, ky + 1, -1, 0, band) * this->GetAbelianConnection(kx, ky + 1, 0, -1, band);
     return Arg(W) / (2 * M_PI);
 }
+
+  //Computes value of projected momentum along the lattice directions
+  //
+  //kx = first coordinate of the given point in the Brillouin zone
+  //ky = second coordinate of the given point in the Brillouin zone
+  //latticeComponent = index of the lattice vector along which the projection is to be performed
+  //return value = projected momentum
+  inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, int latticeComponent)
+  {
+    if (latticeComponent == 0)
+      return 2.0 * M_PI * ((double) kx) / ((double) this->NbrSiteX);
+    else
+      return 2.0 * M_PI * ((double) ky) / ((double) this->NbrSiteY);
+  }
 
 #endif

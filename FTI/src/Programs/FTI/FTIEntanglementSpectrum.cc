@@ -36,6 +36,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('e', "eigenvalue-error", "lowest acceptable reduced density matrix eigenvalue", 1e-14);   (*SystemGroup) += new SingleDoubleOption  ('\n', "xi-error", "minus log of the lowest acceptable reduced density matrix eigenvalue (o if error control relies on the eigenvalue-error option)", 0);  
   (*SystemGroup) += new BooleanOption ('\n', "show-minmaxkya", "show minimum an maximum Ky value that can be reached");
   (*SystemGroup) += new BooleanOption ('\n', "show-counting", "show degeneracy counting for each Ky value");
+  (*SystemGroup) += new BooleanOption ('\n', "show-countingSz", "show degeneracy counting for each sz value (in decoupled mode)");
   (*SystemGroup) += new BooleanOption ('\n', "particle-entanglement", "compute particle entanglement spectrum");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky-periodic", "set the periodicity for for the ky momentum (0 if non-periodic )", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
@@ -108,7 +109,10 @@ int main(int argc, char** argv)
 
   int MinKa = 1 << 30;
   int MaxKa = -MinKa; 
+  int MinSza = Manager.GetInteger("nbr-particles") % 2;
+  int MaxSza = Manager.GetInteger("nbr-particles") / 2;
   int* KaValueArray = 0;
+  int* SzaValueArray = 0;
 
 
   if (Manager.GetBoolean("particle-entanglement") == false)
@@ -169,7 +173,7 @@ int main(int argc, char** argv)
 	    File << "# na kx ky kz linearized_k lambda -log(lambda)";
 	  else
 	    {
-	      if (FlagDecoupled == true)
+	      if (FlagDecoupled == false)
 		{
 		  File << "# na kx ky linearized_k lambda -log(lambda)";
 		}
@@ -229,6 +233,22 @@ int main(int argc, char** argv)
                   ++Index;
                 }
 	    }
+	    	    
+	    if (FlagDecoupled == true)
+	    {
+              SzaValueArray = new int[(NbrParticlesInPartition + 1)];
+              for (int i = 0; i <= NbrParticlesInPartition ; ++i)
+                SzaValueArray[i] = 0; 
+              Index = TmpIndex;
+              while ((Index < MaxIndex) && (NaValues[Index] == NbrParticlesInPartition))
+                {
+                  if (Coefficients[Index] > Error)
+                    {
+                      SzaValueArray[(SzValues[Index] + NbrParticlesInPartition) / 2]++; 
+                    }
+                  ++Index;
+                }
+	    }
 	  File.close();	      
 	}
       else
@@ -273,6 +293,23 @@ int main(int argc, char** argv)
 	 }
      }
 
+     
+     
+     if ((Manager.GetBoolean("show-countingSz")) && ( Manager.GetBoolean("decoupled") == true))
+     {
+       long TotalDegenracy = 0l;
+       for (int i = MinKa; i <= MaxKa; ++i)
+ 	{
+ 	  TotalDegenracy += KaValueArray[(i - MinKa)]; 
+ 	}
+       cout << "total degeneracy counting " << TotalDegenracy << endl;
+       cout << "degeneracy counting : " << endl;
+       for (int i = 0; i <= NbrParticlesInPartition; ++i)
+	     {
+	       cout << "Sza = " << (2*i - NbrParticlesInPartition) << " : " << SzaValueArray[i] << endl; 
+	     }
+	
+     }
   return 0;
 }
 
