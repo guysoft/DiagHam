@@ -33,6 +33,7 @@
 #define COMPLEXLAPACKDETERMINANT_H
 
 #include "config.h"
+
 #ifdef HAVE_LAPACK
 #include "MathTools/Complex.h"
 #include <iostream>
@@ -104,6 +105,64 @@ inline void ComplexLapackDeterminant::GetMatrixElement(int i, int j, Complex& x)
   x.Im = this->Components[i+j*Dimension].i;
 }
 
+
+#else
+
+#include "ComplexMatrix.h"
+#include <iostream>
+
+using std::ostream;
+
+
+class ComplexLapackDeterminant
+{
+ private:
+  ComplexMatrix *M;
+  
+ public:
+  // default constructor
+  //
+  ComplexLapackDeterminant();
+
+  // constructor for an empty matrix
+  //
+  // dimension = number of columns and rows
+  // zero = tue if matrix elements have to be set to zero
+  ComplexLapackDeterminant(int dimension, bool zero = false);
+
+  // destructor
+  ~ComplexLapackDeterminant();
+
+  // set a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = new value for matrix element
+  void SetMatrixElement(int i, int j, const Complex& x);
+
+  // set a matrix element
+  //
+  // i = line position
+  // j = column position
+  // (re,im) = new value for matrix element
+  void SetMatrixElement(int i, int j, const double re, const double im);
+
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+  void GetMatrixElement(int i, int j, Complex& x) const;
+
+
+  // calculate the determinant, loosing information about the matrix elements
+  Complex Determinant();
+
+  // resize determinant dimensions
+  void Resize(int newDimension);
+
+  
+};
 
 #endif // HAVE_LAPACK
 

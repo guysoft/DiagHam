@@ -122,4 +122,67 @@ void ComplexLapackDeterminant::Resize(int newDimension)
     }
 }
 
+#else
+// provide wrapper for ComplexMatrix
+
+// default constructor
+//
+ComplexLapackDeterminant::ComplexLapackDeterminant()
+{
+  this->M=NULL;
+}
+   
+
+// constructor for an empty matrix
+//
+// dimension = number of columns and rows
+// zero = tue if matrix elements have to be set to zero
+ComplexLapackDeterminant::ComplexLapackDeterminant(int dimension, bool zero)
+{
+  this->M=new ComplexMatrix(dimension,dimension,zero);
+}
+
+// destructor
+ComplexLapackDeterminant::~ComplexLapackDeterminant()
+{
+  if (this->M!=NULL)
+    delete M;
+}
+
+// set a matrix element
+//
+// i = line position
+// j = column position
+// x = new value for matrix element
+void ComplexLapackDeterminant::SetMatrixElement(int i, int j, const Complex& x)
+{
+  M->SetMatrixElement(i, j, x);
+}
+
+// set a matrix element
+//
+// i = line position
+// j = column position
+// (re,im) = new value for matrix element
+void ComplexLapackDeterminant::SetMatrixElement(int i, int j, const double re, const double im)
+{
+  M->SetMatrixElement(i, j, re, im);
+}
+
+// calculate the determinant, loosing information about the matrix elements
+Complex ComplexLapackDeterminant::Determinant()
+{
+  return M->Determinant();
+}
+
+// resize determinant dimensions
+void ComplexLapackDeterminant::Resize(int newDimension)
+{
+  if (M!=NULL)
+    M->Resize(newDimension,newDimension);
+  else
+    M=new ComplexMatrix(newDimension,newDimension,true);
+}
+
+
 #endif
