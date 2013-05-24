@@ -701,7 +701,12 @@ int main(int argc, char** argv)
 	      RealSymmetricMatrix HRep (TmpOverlapBlock);
 	      RealDiagonalMatrix TmpDiag (TmpSectorDim);
 	      RealMatrix Q(TmpSectorDim, TmpSectorDim);
+#ifdef __LAPACK__
 	      HRep.LapackDiagonalize(TmpDiag, Q);
+		      
+#else
+	      HRep.Diagonalize(TmpDiag, Q);
+#endif
 	      
 	      int NbrNonZeroVectors = 0;
 	      for (int j = 0; j < TmpSectorDim; ++j)
@@ -745,8 +750,11 @@ int main(int argc, char** argv)
 		  RealSymmetricMatrix HRepRho = TmpMat.Conjugate(BlockBasisLeftMatrix, BlockBasisRightMatrix);
 
 		  RealDiagonalMatrix TmpDiagRho (NbrNonZeroVectors);
+#ifdef __LAPACK__
 		  HRepRho.LapackDiagonalize(TmpDiagRho);
-
+#else
+		  HRepRho.Diagonalize(TmpDiagRho);
+#endif
 		  for (int j = 0; j < NbrNonZeroVectors; ++j)
 		    {
 		      TraceRho += TmpDiagRho[j];
