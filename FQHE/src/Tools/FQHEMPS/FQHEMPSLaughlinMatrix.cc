@@ -485,56 +485,60 @@ static int twop(int N, int q)
 
 void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ)
 {
-    if (this->UniformChargeIndexRange == true)
+  if (this->UniformChargeIndexRange == true)
     {
-        minQ = 0;
-        maxQ = this->NbrNValue - 1;
-        return;
+      minQ = 0;
+      maxQ = this->NbrNValue - 1;
+      return;
     }
-
-    for (minQ = 0; minQ < this->NbrNValue; ++minQ)
-        if (2 * pLevel + twop(minQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
-            break;
-    for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
-        if (2 * pLevel + twop(maxQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
-            break;
-    cout << "N range at " << pLevel << ": [" << minQ - this->NValueGlobalShift << "," << maxQ - this->NValueGlobalShift << "] (+" << this->NValueGlobalShift << ")" << endl;
-
-    cout << "other method" << endl;
-    int TmpMinQ = this->NbrNValue - 1;
-    int TmpMaxQ = 0;    
-    int NValueShift = this->PLevel;
-    for (int Q = 0; Q < this->NbrNValue; ++Q)
-      {
-	int QPrime = Q;
-	int TmpP = 0;
-	int TmpMaxP = 0;
-	while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	  {
-	    if (TmpP > TmpMaxP)
-	      TmpMaxP = TmpP;	    
-	    QPrime -= (this->LaughlinIndex - 1);
-	    TmpP += QPrime - NValueShift;
-	  }
-	QPrime = Q;
-	TmpP = 0;
-	int TmpMaxP2 = 0;
-	while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	  {
-	    if (TmpP > TmpMaxP2)
-	      TmpMaxP2 = TmpP;	    
-	    TmpP -= QPrime - NValueShift;
-	    QPrime += (this->LaughlinIndex - 1);
-	  }
-	if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
-	  {
-	    if (Q < TmpMinQ)
-	      TmpMinQ = Q;
-	    if (Q > TmpMaxQ)
-	      TmpMaxQ = Q;	    
-	  }
-      }
-     cout << "range at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
+  
+  for (minQ = 0; minQ < this->NbrNValue; ++minQ)
+    if (2 * pLevel + twop(minQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
+      break;
+  for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
+    if (2 * pLevel + twop(maxQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
+      break;
+  cout << "N range at " << pLevel << ": [" << minQ - this->NValueGlobalShift << "," << maxQ - this->NValueGlobalShift << "] (+" << this->NValueGlobalShift << ")" << endl;
+  
+  cout << "other method" << endl;
+  int TmpMinQ = this->NbrNValue - 1;
+  int TmpMaxQ = 0;    
+  int NValueShift = this->PLevel;
+  for (int Q = 0; Q < this->NbrNValue; ++Q)
+    {
+      int QPrime = Q;
+      int TmpP = 0;
+      int TmpMaxP = -1;
+      QPrime -= (this->LaughlinIndex - 1);
+      TmpP += QPrime - NValueShift;
+      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	{
+	  if (TmpP > TmpMaxP)
+	    TmpMaxP = TmpP;	    
+	  QPrime -= (this->LaughlinIndex - 1);
+	  TmpP += QPrime - NValueShift;
+	}
+      QPrime = Q;
+      TmpP = 0;
+      int TmpMaxP2 = -1;
+      TmpP -= QPrime - NValueShift;
+      QPrime += (this->LaughlinIndex - 1);
+      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	{
+	  if (TmpP > TmpMaxP2)
+	    TmpMaxP2 = TmpP;	    
+	  TmpP -= QPrime - NValueShift;
+	  QPrime += (this->LaughlinIndex - 1);
+	}
+      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+	{
+	  if (Q < TmpMinQ)
+	    TmpMinQ = Q;
+	  if (Q > TmpMaxQ)
+	    TmpMaxQ = Q;	    
+	}
+    }
+  cout << "range at " << pLevel << " : " << (TmpMinQ - this->NValueGlobalShift) << " " << (TmpMaxQ - this->NValueGlobalShift) << " (" << this->NbrNValue << ")" << endl;   
 }
 
 // compute the global charge index range at a given truncation level

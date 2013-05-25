@@ -375,6 +375,7 @@ int main(int argc, char** argv)
 	    {
 	      EntanglementSpectrum[CurrentPLevel] = 0;
 	    }
+	  cout << "range = " << LocalMinQValue << " " << LocalMaxQValue << endl;
 	  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
 	    {
 	      cout << "computing sector P=" << CurrentPLevel<< " Q=" << LocalQValue << endl;
@@ -655,7 +656,8 @@ RealDiagonalMatrix FQHEMPSEvaluatePartialEntanglementSpectrum(AbstractFQHEMPSMat
 								rightPSector, rightQSector);
   SparseRealMatrix LeftOverlapMatrix = mPSMatrix->ExtractBlock(leftOverlapMatrix, leftPSector, leftQSector, leftPSector, leftQSector);
   RealDiagonalMatrix TmpRhoADiag;
-  if ((LeftOverlapMatrix.GetNbrRow() > 0) && (RightOverlapMatrix.GetNbrRow() > 0))
+  if ((LeftOverlapMatrix.GetNbrRow() > 0) && (RightOverlapMatrix.GetNbrRow() > 0) && 
+      (LeftOverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l) && (RightOverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l))
     {
       cout << "scalar product matrix for the left part : " << endl;
       RealSymmetricMatrix SymLeftOverlapMatrix (LeftOverlapMatrix);

@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 
   int LandauLevel = 0;
 
-  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta); 
+  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
   if (Manager.GetBoolean("only-export"))
     {
       return 0;

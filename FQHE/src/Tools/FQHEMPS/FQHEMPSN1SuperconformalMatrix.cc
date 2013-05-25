@@ -253,11 +253,25 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
       RationalScalarProductIdentity[i] = LongRationalMatrix(SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       if (cftDirectory != 0)
 	{
-	  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+	      if (this->UseRationalFlag == true)
+		{
+		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+		}
+	      else
+		{
+		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+		}
 	}
       if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
 	{
-	  RationalScalarProductIdentity[i].ReadMatrix(TmpScalarProductIdentityFileName);
+	  if (this->UseRationalFlag == true)
+	    {
+	      RationalScalarProductIdentity[i].ReadMatrix(TmpScalarProductIdentityFileName);
+	    }
+	  else
+	    {
+	      ScalarProductIdentity[i].ReadMatrix(TmpScalarProductIdentityFileName);
+	    }
 	}
       else
 	{

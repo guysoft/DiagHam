@@ -859,7 +859,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		}
 	      else
 		{
-		  for (int j = 2; j < this->NbrNValue; ++j)
+		  for (int j = this->NInitialValuePerPLevel[i] + 2; j <= this->NLastValuePerPLevel[i]; ++j)
+		    //		  for (int j = 2; j < this->NbrNValue; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -949,7 +950,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		}
 	      else
 		{
-		  for (int j = 2; j < this->NbrNValue; ++j)
+		  for (int j = this->NInitialValuePerPLevel[i] + 2; j <= this->NLastValuePerPLevel[i]; ++j)
+		    //		  for (int j = 2; j < this->NbrNValue; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -2548,33 +2550,49 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
       maxQ = this->NbrNValue - 1;
       return;
     }
-   minQ = 0;
-   maxQ = this->NbrNValue - 1;
-   if (pLevel == 1)
-     {
-       minQ = 1;
-       maxQ = this->NbrNValue - 2;
-     }
-   return;
+  minQ = 0;
+  maxQ = this->NbrNValue - 1;
+//   if (pLevel == 1)
+//     {
+//       minQ = 2;
+//       maxQ = 6;
+//     }
+//   if (pLevel == 0)
+//     {
+//       minQ = 2;
+//       maxQ = 6;
+//     }
+//   if (pLevel == 2)
+//     {
+//       minQ = 3;
+//       maxQ = 5;
+//     }
+//   if (pLevel == 3)
+//     {
+//       minQ = 3;
+//       maxQ = 5;
+//     }
+//   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   
+//   return;
 
-  int TmpMinQ = this->NbrNValue - 1;
-  int TmpMaxQ = 0;    
-  int NValueShift = this->PLevel;
-  int QValue = 1 + (this->RIndex / 2);
   if ((this->RIndex & 1) == 0)
     {
+      int TmpMinQ = this->NbrNValue - 1;
+      int TmpMaxQ = 0;    
+      int NValueShift = this->PLevel;
+      int QValue = 1 + (this->RIndex / 2);
       for (int Q = 0; Q < this->NbrNValue; ++Q)
 	{
 	  int QPrime = Q;
 	  int TmpP = 0;
 	  int TmpMaxP = 0;
-	  while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 	    {
 	      if (TmpP > TmpMaxP)
 		TmpMaxP = TmpP;	    
 	      QPrime -= (QValue - 1);
 	      TmpP += QPrime - (this->RIndex / 2) - NValueShift;
-	      if ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP)
 		    TmpMaxP = TmpP;	    
@@ -2585,17 +2603,17 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
 	  QPrime = Q;
 	  TmpP = 0;
 	  int TmpMaxP2 = 0;
-	  while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 	    {
 	      if (TmpP > TmpMaxP2)
 		TmpMaxP2 = TmpP;	    
-	      TmpP -= QPrime - NValueShift - (this->RIndex / 2);
+	      TmpP -= QPrime - NValueShift;
 	      QPrime += (QValue - 1);
-	      if ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP2)
 		    TmpMaxP2 = TmpP;	    
-		  TmpP -= QPrime - NValueShift;
+		  TmpP -= QPrime  - (this->RIndex / 2) - NValueShift;
 		  QPrime += (QValue - 1);
 		}
 	    }
@@ -2607,7 +2625,10 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
 		TmpMaxQ = Q;	    
 	    }
 	}
-      cout << "range1 at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
+      cout << "range at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
+      minQ = TmpMinQ;
+      maxQ = TmpMaxQ;
+      return;
       TmpMinQ = this->NbrNValue - 1;
       TmpMaxQ = 0;    
       for (int Q = 0; Q < this->NbrNValue; ++Q)
@@ -2615,13 +2636,13 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
 	  int QPrime = Q;
 	  int TmpP = 0;
 	  int TmpMaxP3 = 0;
-	  while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 	    {
 	      if (TmpP > TmpMaxP3)
 		TmpMaxP3 = TmpP;	    
 	      QPrime -= (QValue - 1);
 	      TmpP += QPrime - NValueShift;
-	      if ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP3)
 		    TmpMaxP3 = TmpP;	    
@@ -2629,25 +2650,24 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
 		  TmpP += QPrime - (this->RIndex / 2) - NValueShift;
 		}
 	    }
+
 	  QPrime = Q;
 	  TmpP = 0;
 	  int TmpMaxP4 = 0;
-	  while ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 	    {
 	      if (TmpP > TmpMaxP4)
 		TmpMaxP4 = TmpP;	    
-	      TmpP -= QPrime - NValueShift;
+	      TmpP -= QPrime - NValueShift - (this->RIndex / 2);
 	      QPrime += (QValue - 1);
-	      if ((TmpP >= 0) && (TmpP <= this->PLevel) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP4)
 		    TmpMaxP4 = TmpP;	    
-		  TmpP -= QPrime - NValueShift - (this->RIndex / 2);
+		  TmpP -= QPrime - NValueShift;
 		  QPrime += (QValue - 1);
 		}
 	    }
-//	  cout << TmpMaxP  << " " << TmpMaxP2  << " " << TmpMaxP3  << " " << TmpMaxP4 << endl;
-//	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel) && ((this->PLevel - TmpMaxP3) >= pLevel) && ((this->PLevel - TmpMaxP4) >= pLevel))
 	  if (((this->PLevel - TmpMaxP3) >= pLevel) && ((this->PLevel - TmpMaxP4) >= pLevel))
 	    {
 	      if (Q < TmpMinQ)
@@ -2661,6 +2681,58 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
     }
   else
     {
+      int TmpMinQ = this->NbrNValue - 1;
+      int TmpMaxQ = 0;    
+      int NValueShift = this->PLevel;
+      int QValue = this->RIndex + 2;
+      for (int Q = 0; Q < this->NbrNValue; Q += 2)
+	{
+	  int QPrime = Q;
+	  int TmpP = 0;
+	  int TmpMaxP = 0;
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	    {
+	      if (TmpP > TmpMaxP)
+		TmpMaxP = TmpP;	    
+	      QPrime -= (QValue - 2);
+	      TmpP += (QPrime - this->RIndex) / 2 - NValueShift;
+	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue - 2);
+		  TmpP += QPrime / 2 - NValueShift;
+		}
+	    }
+	  QPrime = Q;
+	  TmpP = 0;
+	  int TmpMaxP2 = 0;
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	    {
+	      if (TmpP > TmpMaxP2)
+		TmpMaxP2 = TmpP;	    
+	      TmpP -= QPrime - NValueShift;
+	      QPrime += (QValue - 2);
+	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime - this->RIndex) / 2 - NValueShift;
+		  QPrime += (QValue - 2);
+		}
+	    }
+	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+	    {
+	      if (Q < TmpMinQ)
+		TmpMinQ = Q;
+	      if (Q > TmpMaxQ)
+		TmpMaxQ = Q;	    
+	    }
+	}
+      cout << "range at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
+      minQ = TmpMinQ;
+      maxQ = TmpMaxQ;
+      return;
     }
   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   
 }
