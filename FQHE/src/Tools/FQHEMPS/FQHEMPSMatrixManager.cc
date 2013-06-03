@@ -279,6 +279,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	{
 	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSFixedQSectorMatrix(MPSMatrix);
 	  MPSMatrix = MPSMatrix2;	  
+	  NbrBMatrices = MPSMatrix->GetNbrMatrices();
 	}
     }
   else

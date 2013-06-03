@@ -249,8 +249,16 @@ FQHEMPSClustered2RMatrix::~FQHEMPSClustered2RMatrix()
 
 void FQHEMPSClustered2RMatrix::GetFillingFactor(int& numerator, int& denominator)
 {
-  numerator = 2;
-  denominator = 2 + this->RIndex;
+//   if ((this->RIndex & 1) != 0)
+//     {
+      numerator = 2;
+      denominator = 2 + this->RIndex;
+//     }
+//   else
+//     {
+//       numerator = 1;
+//       denominator = 1 + (this->RIndex / 2);
+//     }
 }
 
 // create the B matrices for the laughlin state
@@ -2433,7 +2441,21 @@ int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue)
 {
   if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue))
     return 0;
-  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValue;  
+  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValuesPerPLevel[pLevel];  
+}
+
+// get the range for the bond index when fixing the tuncation level, charge and CFT sector index
+//
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// cftSector = CFT sector index of the block
+// return value = range for the bond index with fixed tuncation level, charge and CFT sector index
+
+int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue, int cftSector)
+{
+  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue) || (cftSector > 1) ||  (cftSector < 0))
+    return 0;
+  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValuesPerPLevel[pLevel];  
 }
 
 // get the bond index for a fixed truncation level and the charge index 
@@ -2445,8 +2467,22 @@ int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue)
 
 int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
 {
-  return (this->TotalStartingIndexPerPLevel[pLevel] + (localIndex * this->NbrNValue + qValue));
+  return (this->TotalStartingIndexPerPLevel[pLevel] + (localIndex * this->NbrNValuesPerPLevel[pLevel] + (qValue - this->NInitialValuePerPLevel[pLevel])));
 }
+
+// get the bond index for a fixed truncation level, charge and CFT sector index
+//
+// localIndex = bond index in the pLevel and qValue and cftSector restricted range
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// cftSector = CFT sector index of the block
+// return value = bond index in the full bond index range
+
+int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargePLevelCFTSector(int localIndex, int pLevel, int qValue, int cftSector)
+{
+  return this->GetBondIndexWithFixedChargeAndPLevel(localIndex, pLevel, qValue);
+}
+
 
 // get the boundary indices of the MPS representation
 //

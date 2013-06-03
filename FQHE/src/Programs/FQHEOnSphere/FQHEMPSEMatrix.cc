@@ -34,6 +34,7 @@
 #include "MainTask/FQHEMPSEMatrixMainTask.h"
 
 #include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include "Options/Options.h"
 
@@ -72,6 +73,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "consider only the block diagonal in P and Q");
+  (*SystemGroup) += new BooleanOption  ('\n', "right-eigenstates", "compute the right eigenstates");
+  (*SystemGroup) += new BooleanOption  ('\n', "left-eigenstates", "compute the left eigenstates");
   
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
@@ -138,25 +141,33 @@ int main(int argc, char** argv)
       NbrEigenstates = 1;
     }
 
+  char* PrefixOutputFileName = 0;
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
     {
       OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
       strcpy (OutputFileName, Manager.GetString("output-file"));
+      if (GetExtensionFromFileName(OutputFileName) != 0)
+	{
+	  int TmpLength = strlen(OutputFileName) - strlen(GetExtensionFromFileName(OutputFileName));
+	  PrefixOutputFileName = new char[TmpLength + 1];
+	  strncpy(PrefixOutputFileName, OutputFileName, TmpLength);
+	  PrefixOutputFileName[TmpLength] = '\0';
+	}
     }
   else
     {
-      OutputFileName  = new char [512];
+      PrefixOutputFileName  = new char [1024];
       if (CylinderFlag == true)
 	{
 	  if (Manager.GetBoolean("diagonal-block"))
 	    {
-	      sprintf(OutputFileName, "ematrix_diagblock_cylinder_%s_perimeter_%f_plevel_%ld.dat", StateName,
+	      sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_perimeter_%f_plevel_%ld", StateName,
 		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
 	    }
 	  else
 	    {
-	      sprintf(OutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld.dat", StateName,
+	      sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld", StateName,
 		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
 	    }
 	}
@@ -164,15 +175,17 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("diagonal-block"))
 	    {
-	      sprintf(OutputFileName, "ematrix_diagblock_%s_plevel_%ld.dat", StateName,
+	      sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_plevel_%ld", StateName,
 		      Manager.GetInteger("p-truncation"));
 	    }
 	  else
 	    {
-	      sprintf(OutputFileName, "ematrix_%s_plevel_%ld.dat", StateName,
+	      sprintf(PrefixOutputFileName, "ematrix_%s_plevel_%ld", StateName,
 		      Manager.GetInteger("p-truncation"));
 	    }
 	}
+      OutputFileName = new char[strlen(PrefixOutputFileName) + 64];
+      sprintf(OutputFileName, "%s.dat", PrefixOutputFileName);
    }
 
 
@@ -189,6 +202,7 @@ int main(int argc, char** argv)
   int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
   
   TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = 0;
+  TensorProductSparseMatrixHamiltonian* EHamiltonian = 0;
   if (Manager.GetBoolean("diagonal-block"))
     {
       long EffectiveDimension = 0l;
@@ -257,87 +271,67 @@ int main(int argc, char** argv)
   else
     {
       Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpBMatrixDimension));
-//       if (Manager.GetBoolean("fixed-qsector"))
-// 	{
-// 	  int GroupSize = 1;
-// 	  int TmpNumerator;
-// 	  MPSMatrix->GetFillingFactor(TmpNumerator, GroupSize);
-// 	  int NbrGroupBMatrices = 1 << GroupSize;
-// 	  SparseRealMatrix* TmpSparseGroupBMatrices = new SparseRealMatrix[NbrGroupBMatrices];
-// 	  double* GroupCoefficients = new double[NbrGroupBMatrices];
-// 	  for (int i = 0; i < NbrGroupBMatrices; ++i)
-// 	    {
-// 	      GroupCoefficients[i] = 1.0;
-// 	      TmpSparseGroupBMatrices[i].Copy(SparseBMatrices[i & 1]);
-// 	      for (int j = 1; j < GroupSize; ++j)
-// 		TmpSparseGroupBMatrices[i].Multiply(SparseBMatrices[(i >> j) & 1]);
-// 	    }
-// 	  int MinQ;
-// 	  int MaxQ;
-// 	  MPSMatrix->GetChargeIndexRange(MinQ, MaxQ);
-// 	  MinQ = 0;
-// 	  int GroupBMatrixDimension = 0l;
-// 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
-// 	    {
-// 	      for (int QValue = MinQ; QValue <= MaxQ; QValue += GroupSize)
-// 		GroupBMatrixDimension += MPSMatrix->GetBondIndexRange(PLevel, QValue);
-// 	    }
-// 	  cout << "group B matrix size = " <<  GroupBMatrixDimension << "x" << GroupBMatrixDimension << endl;
-// 	  bool* GlobalIndices = new bool [TmpBMatrixDimension];
-// 	  for (int i = 0; i < TmpBMatrixDimension; ++i)
-// 	    GlobalIndices[i] = false;
-// 	  GroupBMatrixDimension = 0;
-// 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
-// 	    {
-// 	      for (int QValue = MinQ; QValue <= MaxQ; QValue += GroupSize)
-// 		{
-// 		  int MaxLocalIndex = MPSMatrix->GetBondIndexRange(PLevel, QValue);
-// 		  for (int i = 0; i < MaxLocalIndex; ++i)
-// 		    {
-// 		      GlobalIndices[MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue)] = true;
-// 		      ++GroupBMatrixDimension;
-// 		    }
-// 		}
-// 	    }
-// 	  SparseRealMatrix* TmpSparseGroupBMatrices2 = new SparseRealMatrix[NbrGroupBMatrices];
-// 	  int NbrGroupBMatrices2 = 0;
-// 	  for (int i = 0; i < NbrGroupBMatrices; ++i)
-// 	    {
-// 	      TmpSparseGroupBMatrices2[i] = TmpSparseGroupBMatrices[i].ExtractMatrix(GroupBMatrixDimension, GroupBMatrixDimension, GlobalIndices, GlobalIndices);
-// 	      if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
-// 		++NbrGroupBMatrices2;
-// 	    }
-// 	  delete[] GlobalIndices;
-// 	  SparseRealMatrix* TmpSparseGroupBMatrices3 = new SparseRealMatrix[NbrGroupBMatrices2];
-// 	  NbrGroupBMatrices2 = 0;
-// 	  for (int i = 0; i < NbrGroupBMatrices; ++i)
-// 	    {
-// 	      if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
-// 		{
-// 		  TmpSparseGroupBMatrices3[NbrGroupBMatrices2] = TmpSparseGroupBMatrices2[i];
-// 		  ++NbrGroupBMatrices2;
-// 		}
-// 	    }
-// 	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrGroupBMatrices2, TmpSparseGroupBMatrices3, TmpSparseGroupBMatrices3, GroupCoefficients); 
-// 	}
-//       else
+      if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
+	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients); 
+      if (Manager.GetBoolean("left-eigenstates") == true)
 	{
-	  ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients); 
- 	}
+	  SparseRealMatrix* ConjugateSparseBMatrices = new SparseRealMatrix[NbrBMatrices];
+	  for (int i = 0; i < NbrBMatrices; ++i)
+	    ConjugateSparseBMatrices[i] = SparseBMatrices[i].Transpose();
+	  RealMatrix Test1(SparseBMatrices[1]);
+	  RealMatrix Test2(ConjugateSparseBMatrices[1]);
+
+	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseBMatrices, Coefficients); 
+	}
      }
   if (Manager.GetBoolean("power-method") == true)
-    ETransposeHamiltonian->ShiftHamiltonian(EnergyShift);
+    {
+      if (ETransposeHamiltonian != 0)
+	ETransposeHamiltonian->ShiftHamiltonian(EnergyShift);
+      if (EHamiltonian != 0)
+	EHamiltonian->ShiftHamiltonian(EnergyShift);
+    }
   
   if (Manager.GetBoolean("show-ematrix"))
     {
-      ComplexMatrix EMatrix (ETransposeHamiltonian->GetHilbertSpaceDimension(), ETransposeHamiltonian->GetHilbertSpaceDimension());
-      ETransposeHamiltonian->GetHamiltonian(EMatrix);
-      cout << EMatrix << endl;
+      if (ETransposeHamiltonian != 0)
+	{
+	  ComplexMatrix EMatrix (ETransposeHamiltonian->GetHilbertSpaceDimension(), ETransposeHamiltonian->GetHilbertSpaceDimension());
+	  ETransposeHamiltonian->GetHamiltonian(EMatrix);
+	  cout << EMatrix << endl;
+	}
+      if (EHamiltonian != 0)
+	{
+	  ComplexMatrix EMatrix (EHamiltonian->GetHilbertSpaceDimension(), EHamiltonian->GetHilbertSpaceDimension());
+	  EHamiltonian->GetHamiltonian(EMatrix);
+	  cout << EMatrix << endl;
+	}      
     }
 
-  FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
-  MainTaskOperation TaskOperationLeft (&TaskLeft);
-  TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+  if ((Manager.GetBoolean("right-eigenstates") == false) && (Manager.GetBoolean("left-eigenstates") == false))
+    {
+      FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, false, true, 1e-10, EnergyShift, OutputFileName);
+      MainTaskOperation TaskOperationLeft (&TaskLeft);
+      TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+    }
+  if (Manager.GetBoolean("right-eigenstates") == true)
+    {
+      cout << "computing right eigenstates" << endl;
+      char* EigenvectorFileName = new char [strlen(PrefixOutputFileName) + 128];
+      sprintf(EigenvectorFileName, "%s_right", PrefixOutputFileName);
+      FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, true, true, 1e-10, EnergyShift, OutputFileName, 0, EigenvectorFileName);
+      MainTaskOperation TaskOperationLeft (&TaskLeft);
+      TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+    }
+  if (Manager.GetBoolean("left-eigenstates") == true)
+    {
+      cout << "computing left eigenstates" << endl;
+      char* EigenvectorFileName = new char [strlen(PrefixOutputFileName) + 128];
+      sprintf(EigenvectorFileName, "%s_left", PrefixOutputFileName);
+      FQHEMPSEMatrixMainTask TaskLeft(&Manager, EHamiltonian, NbrEigenstates, true, false, 1e-10, EnergyShift, OutputFileName, 0, EigenvectorFileName);
+      MainTaskOperation TaskOperationLeft (&TaskLeft);
+      TaskOperationLeft.ApplyOperation(Architecture.GetArchitecture());
+    }
   return 0;
 }
 

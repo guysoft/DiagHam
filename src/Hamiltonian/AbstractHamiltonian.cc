@@ -134,15 +134,15 @@ ComplexMatrix& AbstractHamiltonian::GetHamiltonian (ComplexMatrix& M)
 	{
 	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
 	    {
-	      M.SetMatrixElement(i, j, TmpV2[j]);
+	      M.SetMatrixElement(j, i, TmpV2[j]);
 	    }
 	}
       else
+	{
 	  for (int j = 0; j < this->GetHilbertSpaceDimension(); j++)
 	    {
-	      M.SetMatrixElement(j, i, TmpV2[j]);
+	      M.SetMatrixElement(i, j, TmpV2[j]);
 	    }
-	{
 	}
       TmpV1[i] = 0.0;
     }

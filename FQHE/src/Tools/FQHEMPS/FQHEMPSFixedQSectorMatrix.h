@@ -48,6 +48,9 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   int QPeriodicity;
   // Q sector that has to be selected
   int QSector;
+  
+  // degeneracy of the transfer matrix largest eigenvalue
+  int TransferMatrixLargestEigenvalueDegeneracy;
 
   // |P| truncation level
   int PLevel;
@@ -154,7 +157,7 @@ inline void FQHEMPSFixedQSectorMatrix::GetFillingFactor(int& numerator, int& den
 
 inline int FQHEMPSFixedQSectorMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
 {
-  return 1;
+  return this->TransferMatrixLargestEigenvalueDegeneracy;;
 }
 
 // get the MPS truncation level

@@ -44,6 +44,8 @@
 #include "LanczosAlgorithm/PowerMethodAlgorithm.h"
 #include "LanczosAlgorithm/ImplicitlyRestartedArnoldiAlgorithm.h"
 
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+
 #include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
@@ -210,6 +212,7 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
       RealMatrix HRepresentation (this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension(), 
 				  this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension());
       this->Hamiltonian->GetHamiltonian(HRepresentation);
+
       ComplexDiagonalMatrix TmpDiag (HRepresentation.GetNbrRow(), true);  
       LocalNbrEigenvalues = this->Hamiltonian->GetHilbertSpace()->GetHilbertSpaceDimension();
       TmpEigenvalues = new Complex [LocalNbrEigenvalues];
@@ -350,8 +353,9 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
       for (int i = 0; i < this->NbrEigenvalues; ++i)
 	{
 	  ComplexVector TestE (this->Eigenstates[i].GetVectorDimension());
-	  this->Hamiltonian->Multiply(this->Eigenstates[i], TestE);
-	  cout << ((TestE * this->Eigenstates[i]) - this->EnergyShift) << " " << this->Eigenvalues[i] << endl;
+	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(this->Eigenstates[i]), &TestE);
+	  Operation1.ApplyOperation(this->Architecture);
+	  cout << ((this->Eigenstates[i] * TestE) - this->EnergyShift) << " " << this->Eigenvalues[i] << endl;
 	}
       if (this->EigenvectorFileName != 0)
 	{

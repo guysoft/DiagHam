@@ -254,7 +254,7 @@ int main(int argc, char** argv)
       TensorProductSparseMatrixSelectedBlockHamiltonian* ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
 																       EffectiveDimension, EffectiveBlockIndices, 
 																       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-																       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
+ 																       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       cout << "computing left eigenstates : " << endl;
       FQHEMPSEMatrixMainTask TaskLeft(&Manager, ETransposeHamiltonian, NbrEigenstates, true, true, 1e-10);
       MainTaskOperation TaskOperationLeft (&TaskLeft);
@@ -266,8 +266,8 @@ int main(int argc, char** argv)
       Architecture.GetArchitecture()->SetDimension(EffectiveDimension);
       TensorProductSparseMatrixSelectedBlockHamiltonian* EHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseTransposeBMatrices, SparseTransposeBMatrices, Coefficients, 
 															      EffectiveDimension, EffectiveBlockIndices, 
-															      BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-															      Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
+ 															      BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+ 															      Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);
       cout << "computing right eigenstates : " << endl;
       FQHEMPSEMatrixMainTask TaskRight(&Manager, EHamiltonian, NbrEigenstates, true, false, 1e-10);
       MainTaskOperation TaskOperationRight (&TaskRight);
