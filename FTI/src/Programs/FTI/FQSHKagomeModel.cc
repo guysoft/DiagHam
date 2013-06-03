@@ -5,6 +5,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLatticeTilted.h"
 
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.h"
@@ -55,6 +56,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "offset", "second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength between identical spins", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
@@ -107,6 +113,30 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  int nx1 = Manager.GetInteger("nx1");
+  int ny1 = Manager.GetInteger("ny1");
+  int nx2 = Manager.GetInteger("nx2");
+  int ny2 = Manager.GetInteger("ny2");
+  int offset = Manager.GetInteger("offset");
+  bool TiltedFlag = true;
+  if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
+     TiltedFlag = false;
+  else
+    {
+      if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
+      {
+	cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	return 0;
+      }
+      if (((offset*ny2 - ny1) % NbrSitesX) != 0 || ((nx1 - offset*nx2) % NbrSitesX != 0))
+      {
+	cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSitesX) = 0 and ((nx1 - offset*nx2) % NbrSitesX = 0) to verify momentum conservation" << endl;
+	return 0;
+      }
+      else
+	cout << "Using tilted boundary conditions" << endl;
+    }
+
 
   char* CommentLine = new char [256];
   if (Manager.GetBoolean("decoupled") == false)
@@ -132,11 +162,25 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("decoupled") == true)
 	{
-	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  if (TiltedFlag == false)
+	  {
+	    sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
+	  else
+	    {
+	    sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagometilted_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
 	}
       else
 	{
+	  if (TiltedFlag == false)
+	  {
 	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
+	  else
+	  {
+	    sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagometilted_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
 	}
     }
   else
@@ -150,16 +194,29 @@ int main(int argc, char** argv)
 	  sprintf (EigenvalueOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_u_%f_v_%f_w_%f_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_mus_%f.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	}
     }
+    
+  Abstract2DTightBindingModel *TightBindingModel;
+  
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || 
-	  (Manager.GetBoolean("singleparticle-z2invariant") == true) || (Manager.GetBoolean("export-onebodytheta") == true))
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("export-onebodytheta") == true))
 	ExportOneBody = true;
-      TightBindingModelTimeReversalKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+      
+      if (TiltedFlag == false)
+      {
+	TightBindingModel = new TightBindingModelTimeReversalKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 								   Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 								   Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
 								   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+      }
+      else
+      {
+	TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+								   Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+								   Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+								   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+      }
       /*
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);*/
 //       cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
@@ -169,26 +226,31 @@ int main(int argc, char** argv)
 	  if (Manager.GetString("export-onebodyname") != 0)
 	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
 	  else
-	    sprintf (BandStructureOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  {
+	    if (TiltedFlag == false)
+	      sprintf (BandStructureOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    else
+	      sprintf (BandStructureOutputFile, "%s_twoband_quantumspinhall_kagometilted_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_tightbinding.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	  }
 	  if (Manager.GetBoolean("export-onebody") == true)
 	    {
-	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
+	      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
 	    }
 	  else
 	    {
-	      TightBindingModel.WriteBandStructureASCII(BandStructureOutputFile);
+	      TightBindingModel->WriteBandStructureASCII(BandStructureOutputFile);
 	    }
 	  delete[] BandStructureOutputFile;
 	}
       if (Manager.GetBoolean("singleparticle-z2invariant") == true)
-	cout << "Z2 invariant = " << TightBindingModel.ComputeZ2Invariant(2) << endl;
+	cout << "Z2 invariant = " << TightBindingModel->ComputeZ2Invariant(2) << endl;
       
       if (Manager.GetBoolean("export-onebodytheta") == true)
       {
-	cout << "Z2 invariant = " << TightBindingModel.ComputeZ2Invariant(2) << endl;
+	cout << "Z2 invariant = " << TightBindingModel->ComputeZ2Invariant(2) << endl;
 	char* ThetaOutputFile = new char [512];
 	sprintf(ThetaOutputFile, "%s_twoband_quantumspinhall_kagome_n_%d_x_%d_y_%d_t1_%f_t2_%f_l1_%f_l2_%f_mix12_%f_mix13_%f_mix23_%f_gx_%f_gy_%f_theta.dat", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
-	TightBindingModel.WriteAsciiDMatrixEigenValues(ThetaOutputFile, 2);
+	TightBindingModel->WriteAsciiDMatrixEigenValues(ThetaOutputFile, 2);
       }
      return 0;
       
@@ -209,12 +271,21 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   
-  TightBindingModelTimeReversalKagomeLattice *TightBindingModel;
-  TightBindingModel = new TightBindingModelTimeReversalKagomeLattice(NbrSitesX, NbrSitesY,  
+  if (TiltedFlag == false)
+  {
+    TightBindingModel = new TightBindingModelTimeReversalKagomeLattice(NbrSitesX, NbrSitesY,  
 								   Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 								   Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 								   Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
 								   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+  }
+  else
+  {
+    TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+								   Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
+								   Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
+								   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+  }
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {

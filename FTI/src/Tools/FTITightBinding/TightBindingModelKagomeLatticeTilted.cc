@@ -4,7 +4,7 @@
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
-//                                                                            //
+//                     Class author Cecile Repellin                           //
 //                                                                            //
 //               class of tight binding model for the kagome lattice          //
 //                    with tilted boundary conditions                         //
@@ -180,7 +180,7 @@ void TightBindingModelKagomeLatticeTilted::CoreComputeBandStructure(long minStat
     }
 }
 
-//computes all the values of the momentum projected and stores them in a double array
+//computes all the values of the projected momentum and stores them in a double array
 //
 void TightBindingModelKagomeLatticeTilted::ComputeAllProjectedMomenta()
 {

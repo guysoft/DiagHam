@@ -7,8 +7,8 @@
 //                         Class author : Cecile Repellin                     //
 //                                                                            //
 //         class of tight binding model for the Kagome lattice                //
-//                     Time Reversal Invariant Model                          //
-//                   last modification : 16/04/2013                           //
+//      Time Reversal Invariant Model with tilted boudary conditions          //
+//                   last modification : 03/06/2013                           //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLatticeTilted.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -51,10 +51,15 @@
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
-TightBindingModelTimeReversalKagomeLattice::TightBindingModelTimeReversalKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+TightBindingModelTimeReversalKagomeLatticeTilted::TightBindingModelTimeReversalKagomeLatticeTilted(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->Nx1 = nx1;
+  this->Ny1 = ny1;
+  this->Nx2 = nx2;
+  this->Ny2 = ny2;
+  this->Offset = offset;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NNHopping = t1;
@@ -69,6 +74,12 @@ TightBindingModelTimeReversalKagomeLattice::TightBindingModelTimeReversalKagomeL
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  
+  this->ComputeAllProjectedMomenta();
+  
 
   if (storeOneBodyMatrices == true)
     {
@@ -89,7 +100,7 @@ TightBindingModelTimeReversalKagomeLattice::TightBindingModelTimeReversalKagomeL
 // destructor
 //
 
-TightBindingModelTimeReversalKagomeLattice::~TightBindingModelTimeReversalKagomeLattice()
+TightBindingModelTimeReversalKagomeLatticeTilted::~TightBindingModelTimeReversalKagomeLatticeTilted()
 {
 }
 
@@ -98,7 +109,7 @@ TightBindingModelTimeReversalKagomeLattice::~TightBindingModelTimeReversalKagome
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelTimeReversalKagomeLatticeTilted::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
@@ -113,8 +124,8 @@ void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long m
 
 	HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
 	
-	KX = this->KxFactor * (((double) kx) + this->GammaX);
-	KY = this->KyFactor * (((double) ky) + this->GammaY);
+	KX = this->GetProjectedMomentum(kx, ky, 0);
+	KY = this->GetProjectedMomentum(kx, ky, 1);
 	Complex HAB (-this->NNHopping, -this->NNSpinOrbit);
 	HAB *= 1 + Phase(KX);
 	Complex HAC(-this->NNHopping, this->NNSpinOrbit);
@@ -123,8 +134,8 @@ void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long m
 	HBC *= 1 + Phase(KY - KX);
 
 		
-	double InvKX = this->KxFactor * (((double) -kx) + this->GammaX);
-	double InvKY = this->KyFactor * (((double) -ky) + this->GammaY);
+	double InvKX = -this->GetProjectedMomentum(kx, ky, 0);
+	double InvKY = -this->GetProjectedMomentum(kx, ky, 1);
 	Complex InvHAB = Complex(- this->NNHopping, - this->NNSpinOrbit);
 	InvHAB *= 1 + Phase(InvKX);
 	Complex InvHAC = Complex(- this->NNHopping,  this->NNSpinOrbit);
@@ -178,3 +189,22 @@ void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long m
 
 
 
+//computes all the values of the projected momentum and stores them in a double array
+//
+void TightBindingModelTimeReversalKagomeLatticeTilted::ComputeAllProjectedMomenta()
+{
+ double projectedMomentum1;
+ double projectedMomentum2;
+ for (int kx = 0; kx < this->NbrSiteX; ++kx)
+ {
+   for (int ky = 0; ky < this->NbrSiteY; ++ky)
+   {
+     int kx_trans = kx + this->Offset*ky;
+     int ky_trans = ky;
+     projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+     projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
+     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
+   }
+ }
+}
