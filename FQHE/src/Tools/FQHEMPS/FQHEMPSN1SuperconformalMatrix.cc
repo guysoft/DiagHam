@@ -74,6 +74,7 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbr
   this->Kappa = kappa;
   this->PLevel = pLevel;
   this->RIndex = 6;
+  this->NbrCFTSectors = 2;
 
   ConfigurationParser StateDefinition;
   if (StateDefinition.Parse(fileName) == false)
@@ -162,6 +163,7 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int rIndex, int lau
   this->SquareMatrixElementNormalization = LongRational(1, 1);
   this->MatrixElementNormalization = 1.0;
   this->TransferMatrixDegeneracy = this->RIndex + 2;
+  this->NbrCFTSectors = 2;
   char* TmpCentralCharge = this->CentralCharge.GetString('_');
   this->BMatrixOutputName = new char[256 + strlen(TmpCentralCharge)]; 
   sprintf(this->BMatrixOutputName, "n1superconformal_c_%s", TmpCentralCharge);
@@ -433,9 +435,14 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
   this->IdentityBasisDimension = new int [this->PLevel + 1];
   this->PsiBasisDimension = new int [this->PLevel + 1];
   this->U1BasisDimension = new int [this->PLevel + 1];	
+  this->NeutralSectorDimension = new int* [this->NbrCFTSectors];
+  for (int i = 0; i < this->NbrCFTSectors; ++i)
+    this->NeutralSectorDimension[i] = new int [this->PLevel + 1];
   for (int i = 0; i <= this->PLevel; ++i)
     {
       this->IdentityBasisDimension[i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
+      this->NeutralSectorDimension[0][i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
+      this->NeutralSectorDimension[1][i] = OrthogonalBasisPsiLeft[i].GetNbrColumn();
       this->U1BasisDimension[i] = U1BosonBasis[i]->GetHilbertSpaceDimension();
     }
   this->TotalStartingIndexPerPLevel[0] = 0;
@@ -452,14 +459,7 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
   NValueShift = 2 * this->PLevel - 1;
   QValueDenominator = 1;
 
-  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
-  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
-  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
-      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
-    }
+  this->ComputeLinearizedIndexArrays();
      
   this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn())) * this->NbrNValue;
   for (int i = 1; i <= this->PLevel; ++i)
@@ -630,14 +630,14 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 		    {
 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex2)
 			{
-			  ++TmpNbrElementPerRow[this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p])];
+			  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1)];
 			}
 		    }
 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 		    {
 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
 			{
-			  ++TmpNbrElementPerRow[this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p])];
+			  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1)];
 			}
 		    }
 		}
@@ -681,8 +681,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
 								     + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 								     + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-			  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
-							this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), Tmp);
+			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1),
+ 							    this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 			}
 		    }
 		  TmpSpaceNeutral = SupersymmetricU1BosonBasis[2 * (i - p) + 3];
@@ -704,8 +704,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
 								     + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 								     + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-			  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndex(j - 1, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
-							this->Get2RMatrixIndex(j, ChargedIndex, this->NbrNValue, TmpSpaceCharged->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentityLeft.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), Tmp);
+			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+ 							    this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
 			}
 		    }
 		}
@@ -751,9 +751,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			    {
 			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
 				{
-				  ++TmpNbrElementPerRow[this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), this->StartingIndexPerPLevel[i][p])];
+				  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1)];
 				}
-
 			    }
 			  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
 			  N1 = N2 + QValue - 1;
@@ -761,7 +760,7 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			    {
 			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
 				{
-				  ++TmpNbrElementPerRow[this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), this->StartingIndexPerPLevel[i][p])];
+				  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1)];
 				}
 			    }
 			}
@@ -822,8 +821,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
 										   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
 										   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 0, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
-								this->Get2RMatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 1, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), this->StartingIndexPerPLevel[j][q]), Tmp);
+				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1),
+								this->Get2RMatrixIndexV2(j, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 				}
 
 			    }
@@ -850,8 +849,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
 										   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
 										   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndex(N1, ChargedIndex1, this->NbrNValue, TmpSpaceCharged1->GetHilbertSpaceDimension(), 1, NeutralIndex1, TmpOrthogonalBasisIdentity1.GetNbrColumn(), this->StartingIndexPerPLevel[i][p]), 
-								this->Get2RMatrixIndex(N2, ChargedIndex2, this->NbrNValue, TmpSpaceCharged2->GetHilbertSpaceDimension(), 0, NeutralIndex2, TmpOrthogonalBasisIdentity2.GetNbrColumn(), this->StartingIndexPerPLevel[j][q]), Tmp);
+				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1),
+								this->Get2RMatrixIndexV2(j, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 				}
 			    }
 			}

@@ -58,29 +58,33 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix()
 // matrix = MPS matrix
 // qPeriodicity = if set to zero, guess it from the filling factor
 // qSector = Q sector that has to be selected (from 0 to qPeriodicity-1)
+// cftSector = CFT sector that has to be selected (from 0 to nbrCFTSector - 1)
 
-FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qPeriodicity, int qSector)
+FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qPeriodicity, int qSector, int cftSector)
 {
   this->MPSMatrix = matrix;
   this->QPeriodicity = qPeriodicity;
   this->QSector = qSector;
+  this->CFTSector = cftSector;
   this->PLevel = this->MPSMatrix->GetTruncationLevel();
   this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
   if (this->QPeriodicity == 0)
     {
       int TmpNumerator;
       this->MPSMatrix->GetFillingFactor(TmpNumerator, this->QPeriodicity);
+      this->BMatrixGroupSize = this->QPeriodicity;
       int GCD = FindGCD(this->QPeriodicity, TmpNumerator);
       this->QPeriodicity /= GCD;
-      this->TransferMatrixLargestEigenvalueDegeneracy = GCD;
+//      this->TransferMatrixLargestEigenvalueDegeneracy = GCD;
     }
-  int NbrGroupBMatrices = 1 << this->QPeriodicity;
+  this->QPeriodicity = 1;
+  int NbrGroupBMatrices = 1 << this->BMatrixGroupSize;
   SparseRealMatrix* TmpSparseGroupBMatrices = new SparseRealMatrix[NbrGroupBMatrices];
-  cout << "grouping " << this->QPeriodicity << " B matrices (" << NbrGroupBMatrices << " matrices)" << endl;
+  cout << "grouping " << this->BMatrixGroupSize << " B matrices (" << NbrGroupBMatrices << " matrices)" << endl;
   for (int i = 0; i < NbrGroupBMatrices; ++i)
     {
       TmpSparseGroupBMatrices[i].Copy(this->MPSMatrix->GetMatrices()[i & 1]);
-      for (int j = 1; j < this->QPeriodicity; ++j)
+      for (int j = 1; j < this->BMatrixGroupSize; ++j)
 	TmpSparseGroupBMatrices[i].Multiply(this->MPSMatrix->GetMatrices()[(i >> j) & 1]);
     }
   int GroupBMatrixDimension = 0l;
@@ -97,7 +101,8 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	MinQ += this->QPeriodicity - (MinQ % this->QPeriodicity);
       for (int QValue = MinQ; QValue <= MaxQ; QValue += this->QPeriodicity)
 	{
-	  GroupBMatrixDimension += this->MPSMatrix->GetBondIndexRange(p, QValue);
+	  GroupBMatrixDimension += this->MPSMatrix->GetBondIndexRange(p, QValue, this->CFTSector);
+//	  GroupBMatrixDimension += this->MPSMatrix->GetBondIndexRange(p, QValue);
 	}
       if (MaxQ >= MinQ)
 	{
@@ -133,15 +138,18 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	MinQ += this->QPeriodicity - (MinQ % this->QPeriodicity);
       for (int QValue = MinQ; QValue <= MaxQ; QValue += this->QPeriodicity)
 	{
-	  int MaxLocalIndex = this->MPSMatrix->GetBondIndexRange(p, QValue);
+//	  int MaxLocalIndex = this->MPSMatrix->GetBondIndexRange(p, QValue);
+	  int MaxLocalIndex = this->MPSMatrix->GetBondIndexRange(p, QValue, this->CFTSector);
+	  cout << p << " " <<  QValue << " " <<  this->CFTSector<< " " << MaxLocalIndex << endl;
  	  this->GlobalIndexMapper[p][(QValue - MinQ) / this->QPeriodicity] = new int[MaxLocalIndex];      
 	  this->NbrIndicesPerPLevelAndQSector[p][(QValue - MinQ) / this->QPeriodicity] = MaxLocalIndex;
 	  this->TotalStartingIndexPerPLevelAndQSector[p][(QValue - MinQ) / this->QPeriodicity] = GroupBMatrixDimension;
 	  for (int i = 0; i < MaxLocalIndex; ++i)
 	    {
-	      GlobalIndices[GroupBMatrixDimension] = this->MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, p, QValue);
+//	      GlobalIndices[GroupBMatrixDimension] = this->MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, p, QValue);
+	      GlobalIndices[GroupBMatrixDimension] = this->MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, p, QValue, this->CFTSector);
+	      cout << this->MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, p, QValue, this->CFTSector) << endl;
 	      this->GlobalIndexMapper[p][(QValue - MinQ) / this->QPeriodicity][i] = GroupBMatrixDimension;      
-//	      cout << "i=" << i << " p=" << p << " q=" << QValue << " = " << GlobalIndices[GroupBMatrixDimension] << " (" << GroupBMatrixDimension << ")" << endl;
 	      ++GroupBMatrixDimension;
 	    }
 	}
@@ -155,11 +163,6 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
       if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
  	++this->NbrBMatrices;
     }
-//   for (int i = 0; i < NbrGroupBMatrices; ++i)
-//     {
-//       TmpSparseGroupBMatrices2[i] = TmpSparseGroupBMatrices[i];
-//       ++this->NbrBMatrices;
-//     }
 
   cout  << this->NbrBMatrices << " non zero B matrices" << endl;
   delete[] TmpSparseGroupBMatrices;
@@ -172,6 +175,10 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
 	{
 	  this->RealBMatrices[this->NbrBMatrices] = TmpSparseGroupBMatrices2[i];
 	  ++this->NbrBMatrices;
+	}
+      else
+	{
+	  cout << "throwing away B matrix " << i << endl;
 	}
     }
 }
@@ -219,7 +226,6 @@ int FQHEMPSFixedQSectorMatrix::GetBondIndexRange(int pLevel, int qValue)
 int FQHEMPSFixedQSectorMatrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
 {  
   return this->GlobalIndexMapper[pLevel][qValue - this->NInitialValuePerPLevel[pLevel]][localIndex];
-  //  return (this->TotalStartingIndexPerPLevelAndQSector[pLevel][qValue] + localIndex);
 }
 
 // get the charge index range

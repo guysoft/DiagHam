@@ -54,6 +54,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // r index (i.e. clustered (k=2,r) states) 
   int RIndex;
 
+  // number of CFT sectors
+  int NbrCFTSectors;
 
   // indicate the first linearized index for fixed of the total p-level and the U(1) p-level
   int** StartingIndexPerPLevel;
@@ -90,6 +92,17 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 
   // use arbitrary precision numbers for all the CFT calculations
   bool UseRationalFlag;
+  
+  // first linearized index for each truncation level, CFT sector, Q sector
+  int*** StartingIndexPerPLevelCFTSectorQValue;
+  // number of linearized indices for each truncation level, CFT sector, Q sector
+  int*** NbrIndexPerPLevelCFTSectorQValue;
+  // first linearized index for each truncation level, CFT sector, Q sector and U(1) sector
+  int**** StartingIndexPerPLevelCFTSectorQValueU1Sector;
+  // number of linearized indices for each truncation level, CFT sector, Q sector and U(1) sector
+  int**** NbrIndexPerPLevelCFTSectorQValueU1Sector;
+  // dimensions of each CFT sector at a given level
+  int** NeutralSectorDimension;
 
  public:
   
@@ -360,19 +373,21 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 						 int precomputedDescendantMatrixElementMaxRightPLevel, 
 						 BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
+  // compute the various arrays required to convert from quantum numbers and local indices to a global linearized index
+  //
+  virtual void ComputeLinearizedIndexArrays();
+
   // compute the linearized index of the B matrix for the (k=2,r) clustered states
   //
-  // charge = charge index
-  // chargedPartitionIndex =index of the partition in the charge sector
-  // nbrCharges = total number of charge indices
-  // chargeSectorDimension =  total number of partitions in the charge sector
-  // fieldIndex = field index (0 for the identity, 1 for psi)
-  // neutralPartitionIndex = index of the state in the neutral sector (linearly independant basis)
-  // nbrIdentityDescendant = number of linearly independent descendant of the identity at the current level
-  // globalIndexShift = index of the first state at the considered level
+  // pLevel = current total level
+  // cftSector = CFT sector
+  // qValue = charge index (i.e. Q)
+  // chargeSectorLevel = level for the charge sector
+  // chargeSectorIndex = index of the charge sector
+  // cftSectorIndex = index within the current CFT sector and corresponding level (pLevel - chargeSectorLevel)
   // return value = linearized index
-  virtual int Get2RMatrixIndex(int charge, int chargedPartitionIndex, int nbrCharges, int chargeSectorDimension, 
-			       int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
+  virtual int Get2RMatrixIndexV2(int pLevel, int cftSector, int qValue, 
+				 int chargeSectorLevel, int chargeSectorIndex, int cftSectorIndex);
 
   // compute the linearized index of a block of the matrices with fixed charge and p-level values
   //
@@ -410,22 +425,19 @@ inline int FQHEMPSClustered2RMatrix::GetTransferMatrixLargestEigenvalueDegenerac
 
 // compute the linearized index of the B matrix for the (k=2,r) clustered states
 //
-// charge = charge index
-// chargedPartitionIndex =index of the partition in the charge sector
-// nbrCharges = total number of charge indices
-// chargeSectorDimension =  total number of partitions in the charge sector
-// fieldIndex = field index (0 for the identity, 1 for psi)
-// neutralPartitionIndex = index of the state in the neutral sector (linearly independant basis)
-// nbrIdentityDescendant = number of linearly independent descendant of the identity at the current level
-// globalIndexShift = index of the first state at the considered level
+// pLevel = current total level
+// cftSector = CFT sector
+// qValue = charge index (i.e. Q)
+// chargeSectorLevel = level for the charge sector
+// chargeSectorIndex = index of the charge sector
+// cftSectorIndex = index within the current CFT sector and corresponding level (pLevel - chargeSectorLevel)
 // return value = linearized index
 
-inline int FQHEMPSClustered2RMatrix::Get2RMatrixIndex(int charge, int chargedPartitionIndex, 
-						      int nbrCharges, int chargeSectorDimension, 
-						      int fieldIndex, int neutralPartitionIndex, 
-						      int nbrIdentityDescendant, int globalIndexShift)
+inline int FQHEMPSClustered2RMatrix::Get2RMatrixIndexV2(int pLevel, int cftSector, int qValue, 
+							int chargeSectorLevel, int chargeSectorIndex, int cftSectorIndex)
 {
-  return (((((nbrIdentityDescendant * fieldIndex) + neutralPartitionIndex) * chargeSectorDimension + chargedPartitionIndex) * nbrCharges + charge) + globalIndexShift);
+  return (this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevel[pLevel]][chargeSectorLevel] 
+	  + (this->NeutralSectorDimension[cftSector][pLevel - chargeSectorLevel] * chargeSectorIndex) + cftSectorIndex);
 }
 
 // compute the linearized index of a block of the matrices with fixed charge and p-level values

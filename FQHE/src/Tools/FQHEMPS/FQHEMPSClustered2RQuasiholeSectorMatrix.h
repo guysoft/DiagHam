@@ -72,10 +72,13 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // useRational = use arbitrary precision numbers for all the CFT calculations
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool cylinderFlag = false, double kappa = 1.0, 
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool useRational = true, 
+					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor 
@@ -84,11 +87,14 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // useRational = use arbitrary precision numbers for all the CFT calculations
+  // trimChargeIndices = trim the charge indices
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0, 
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational = true, 
+					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor from a file describing the state

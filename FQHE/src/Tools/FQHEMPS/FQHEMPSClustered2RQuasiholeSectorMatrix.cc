@@ -63,12 +63,14 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
 // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+// useRational = use arbitrary precision numbers for all the CFT calculations
+// trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
-FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool cylinderFlag, double kappa, 
-										 AbstractArchitecture* architecture)
+FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool useRational, 
+										 bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -76,6 +78,8 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
+  this->UseRationalFlag = useRational;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->Kappa = kappa;
   this->CentralCharge = LongRational ((this->RIndex + 2l) - (2l * (this->RIndex - 1l) * (this->RIndex - 1l)), this->RIndex + 2l);
   this->SelfDualFlag = ((this->RIndex & 1) == 0);
@@ -87,8 +91,12 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
   this->MatrixElementNormalization = 1.0 / M_SQRT2;
   this->SquareMatrixElementNormalization = LongRational(1, 2);
   this->TransferMatrixDegeneracy = this->RIndex + 2;
+  this->NbrCFTSectors = 2;
   if (this->SelfDualFlag == true)
-    this->TransferMatrixDegeneracy /= 2;
+    {
+      this->TransferMatrixDegeneracy /= 2;
+      this->NbrCFTSectors = 1;
+    }
   this->BMatrixOutputName = new char[256]; 
   sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
   this->CreateBMatrices(0, architecture);
@@ -101,11 +109,14 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
 // cftDirectory = path to the directory where all the pure CFT matrices are stored
+// useRational = use arbitrary precision numbers for all the CFT calculations
+// trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
 FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, 
+										 bool useRational, bool trimChargeIndices,
 										 bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
@@ -124,7 +135,15 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
   this->WeightPhi = LongRational((this->RIndex - 1l) * (this->RIndex - 1l), 4l * (this->RIndex + 2l));
   this->MatrixElementNormalization = 1.0 / M_SQRT2;
   this->SquareMatrixElementNormalization = LongRational(1, 2);
+  this->UseRationalFlag = useRational;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->TransferMatrixDegeneracy = this->RIndex + 2;
+  this->NbrCFTSectors = 2;
+  if (this->SelfDualFlag == true)
+    {
+      this->TransferMatrixDegeneracy /= 2;
+      this->NbrCFTSectors = 1;
+    }
   this->BMatrixOutputName = new char[256]; 
   sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
   this->CreateBMatrices(cftDirectory, architecture);
@@ -201,6 +220,11 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
 	{
 	  this->BMatrixOutputName = new char[256]; 
 	  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
+	}
+      this->NbrCFTSectors = 2;
+      if (this->SelfDualFlag == true)
+	{
+	  this->NbrCFTSectors = 1;
 	}
       if (ErrorFlag == true)
 	{
@@ -368,7 +392,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 						     WeightSigmaNumerical,
 						     ScalarProductSigma,  i- 1);
 	      Operation1.ApplyOperation(architecture);
-	      ScalarProductSigma[i] = Operation1.GetMatrixElements();
+	      ScalarProductSigma[i] = Operation1.GetOverlapMatrix();
 	      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		{
 		  ScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
@@ -408,7 +432,7 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 							 WeightPhiNumerical,
 							 ScalarProductPhi,  i - 1);
 		  Operation2.ApplyOperation(architecture);
-		  ScalarProductPhi[i] = Operation2.GetRationalMatrixElements();
+		  ScalarProductPhi[i] = Operation2.GetOverlapMatrix();
 		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      ScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
@@ -617,12 +641,17 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   this->IdentityBasisDimension = new int [this->PLevel + 1];
   this->PsiBasisDimension = new int [this->PLevel + 1];
   this->U1BasisDimension = new int [this->PLevel + 1];	
+  this->NeutralSectorDimension = new int* [this->NbrCFTSectors];
+  for (int i = 0; i < this->NbrCFTSectors; ++i)
+    this->NeutralSectorDimension[i] = new int [this->PLevel + 1];
   for (int i = 0; i <= this->PLevel; ++i)
     {
       this->IdentityBasisDimension[i] = OrthogonalBasisSigmaLeft[i].GetNbrColumn();
+      this->NeutralSectorDimension[0][i] = OrthogonalBasisSigmaLeft[i].GetNbrColumn();
       if (this->SelfDualFlag == false)
 	{
 	  this->PsiBasisDimension[i] = OrthogonalBasisPhiLeft[i].GetNbrColumn();
+	  this->NeutralSectorDimension[1][i] = OrthogonalBasisPhiLeft[i].GetNbrColumn();
 	}
       else
 	{
@@ -659,15 +688,8 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
       ExtraCylinderFactor = 4.0;
     }
 
-  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
-  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
-  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
-      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
-    }
-     
+  this->ComputeLinearizedIndexArrays();
+
   if (this->SelfDualFlag == false)
     {
       this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[0].GetNbrColumn() + OrthogonalBasisPhiLeft[0].GetNbrColumn())) * this->NbrNValue;
