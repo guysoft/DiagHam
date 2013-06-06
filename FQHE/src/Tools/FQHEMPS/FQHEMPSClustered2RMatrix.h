@@ -195,6 +195,11 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
 
+  // get the number of CFT sectors invloved on the MPS
+  //
+  // return value = number of CFT sectors
+  virtual int GetNbrCFTSectors();
+
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix
@@ -243,6 +248,14 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
+
+  // get the charge index range at a given truncation level and in a given CFT sector
+  // 
+  // pLevel = tuncation level
+  // cftSector = CFT sector
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ);
 
   // get the boundary indices of the MPS representation
   //
@@ -471,6 +484,15 @@ inline int FQHEMPSClustered2RMatrix::Get2RReducedMatrixIndex(int chargedPartitio
 							     int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift)
 {
   return (globalIndexShift + (chargedPartitionIndex + chargeSectorDimension * ((fieldIndex * nbrIdentityDescendant) + neutralPartitionIndex)));
+}
+
+// get the number of CFT sectors invloved on the MPS
+//
+// return value = number of CFT sectors
+
+inline int  FQHEMPSClustered2RMatrix::GetNbrCFTSectors()
+{
+  return this->NbrCFTSectors;
 }
 
 

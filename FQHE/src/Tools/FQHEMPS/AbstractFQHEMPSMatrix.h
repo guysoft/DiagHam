@@ -130,6 +130,11 @@ class AbstractFQHEMPSMatrix
   // return value = truncation level
   virtual int GetTruncationLevel();
 
+  // get the number of CFT sectors invloved on the MPS
+  //
+  // return value = number of CFT sectors
+  virtual int GetNbrCFTSectors();
+
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix
@@ -178,6 +183,14 @@ class AbstractFQHEMPSMatrix
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
+
+  // get the charge index range at a given truncation level and in a given CFT sector
+  // 
+  // pLevel = tuncation level
+  // cftSector = CFT sector
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ);
 
   // compute the global charge index range at a given truncation level
   // 
@@ -281,6 +294,15 @@ inline int AbstractFQHEMPSMatrix::GetTransferMatrixLargestEigenvalueDegeneracy()
 inline int AbstractFQHEMPSMatrix::GetTruncationLevel()
 {
   return 0;
+}
+
+// get the number of CFT sectors invloved on the MPS
+//
+// return value = number of CFT sectors
+
+inline int AbstractFQHEMPSMatrix::GetNbrCFTSectors()
+{
+  return 1;
 }
 
 #endif

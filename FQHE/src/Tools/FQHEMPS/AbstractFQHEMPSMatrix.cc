@@ -203,6 +203,18 @@ void AbstractFQHEMPSMatrix::GetChargeIndexRange (int pLevel, int& minQ, int& max
   return;
 }
 
+// get the charge index range at a given truncation level and in a given CFT sector
+// 
+// pLevel = tuncation level
+// cftSector = CFT sector
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void AbstractFQHEMPSMatrix::GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ)
+{
+  return this->GetChargeIndexRange(pLevel, minQ, maxQ);
+}
+
 // compute the global charge index range at a given truncation level
 // 
 // pLevel = tuncation level

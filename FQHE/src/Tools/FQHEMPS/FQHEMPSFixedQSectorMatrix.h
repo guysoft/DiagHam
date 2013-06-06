@@ -44,6 +44,9 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // pointer to the full MPS matrix without a fixed charge sector
   AbstractFQHEMPSMatrix* MPSMatrix;
 
+  // number of CFT sectors
+  int NbrCFTSectors;
+
   int BMatrixGroupSize;
   // periodicity of the charge sector
   int QPeriodicity;
@@ -81,8 +84,7 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // matrix = MPS matrix
   // qPeriodicity = periodicity of the charge sector, if set to zero, guess it from the filling factor
   // qSector = Q sector that has to be selected (from 0 to qPeriodicity-1)
-  // cftSector = CFT sector that has to be selected (from 0 to nbrCFTSector - 1)
-  FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qPeriodicity = 0, int qSector = 0, int cftSector = 0);
+  FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qPeriodicity = 0, int qSector = 0);
 
   // destructor
   //

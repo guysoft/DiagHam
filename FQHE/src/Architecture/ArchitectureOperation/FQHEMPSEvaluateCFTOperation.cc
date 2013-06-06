@@ -109,7 +109,6 @@ FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatri
 // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
 // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
 
-
 FQHEMPSEvaluateCFTOperation::FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
 							 const LongRational& centralCharge12, const LongRational& weightLeft,
 							 LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,

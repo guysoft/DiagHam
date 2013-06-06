@@ -2299,9 +2299,10 @@ int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue)
 
 int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue, int cftSector)
 {
-  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue) || (cftSector > 1) ||  (cftSector < 0))
+  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]) || 
+      (qValue > this->NLastValuePerPLevelCFTSector[pLevel][cftSector]) || (cftSector > 1) ||  (cftSector < 0))
     return 0;
-  return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[cftSector][pLevel]];
+  return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]];
 }
 
 // get the bond index for a fixed truncation level and the charge index 
@@ -2341,7 +2342,7 @@ int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargeAndPLevel(int localInde
 
 int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargePLevelCFTSector(int localIndex, int pLevel, int qValue, int cftSector)
 {
-  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[cftSector][pLevel]]  + localIndex);
+  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]]  + localIndex);
 }
 
 
@@ -2360,6 +2361,19 @@ void FQHEMPSClustered2RMatrix::GetChargeIndexRange (int pLevel, int& minQ, int& 
   if (this->NLastValuePerPLevelCFTSector[pLevel][1] > maxQ)
     maxQ = this->NLastValuePerPLevelCFTSector[pLevel][1];  
   return;
+}
+
+// get the charge index range at a given truncation level and in a given CFT sector
+// 
+// pLevel = tuncation level
+// cftSector = CFT sector
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSClustered2RMatrix::GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ)
+{
+  minQ = this->NInitialValuePerPLevelCFTSector[pLevel][cftSector];
+  maxQ = this->NLastValuePerPLevelCFTSector[pLevel][cftSector];
 }
 
 // get the boundary indices of the MPS representation
@@ -2474,7 +2488,7 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
       int TmpMaxQ = 0;    
       int NValueShift = this->PLevel;
       int QValue = 1 + (this->RIndex / 2);
-      if (cftSector == 0)
+      if (cftSector == 0) 
 	{
 	  for (int Q = 0; Q < this->NbrNValue; ++Q)
 	    {
