@@ -751,7 +751,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
   this->NLastValuePerPLevel = new int [this->PLevel + 1];     
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->ComputeChargeIndexRange(i, 0, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
       this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
     }
      
@@ -1460,3 +1460,21 @@ void FQHEMPSReadRezayi3Matrix::GetMatrixBoundaryIndices(int& rowIndex, int& colu
     }
 }
 
+// compute the charge index range at a given truncation level
+// 
+// pLevel = tuncation level
+// cftSector = CFT sector
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSReadRezayi3Matrix::ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ)
+{
+  if (this->UniformChargeIndexRange == true)
+    {
+      minQ = 0;
+      maxQ = this->NbrNValue - 1;
+      return;
+    }
+  minQ = 0;
+  maxQ = this->NbrNValue - 1;
+}

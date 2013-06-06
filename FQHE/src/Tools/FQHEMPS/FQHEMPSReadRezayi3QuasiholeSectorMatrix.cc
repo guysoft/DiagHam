@@ -740,7 +740,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   this->NLastValuePerPLevel = new int [this->PLevel + 1];     
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
+      this->ComputeChargeIndexRange(i, 0, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
       this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
     }
      

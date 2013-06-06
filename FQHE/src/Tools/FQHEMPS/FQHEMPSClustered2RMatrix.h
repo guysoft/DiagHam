@@ -66,6 +66,13 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // number of U(1) mode at a given level 
   int* U1BasisDimension;		  
 
+  // number of N (i.e. charge) values per  truncation level
+  int** NbrNValuesPerPLevelCFTSector;
+  // initial N (i.e. charge) value per  truncation level
+  int** NInitialValuePerPLevelCFTSector;
+  // last N (i.e. charge) value per  truncation level
+  int** NLastValuePerPLevelCFTSector;
+
   // a temporary array to store a partition in the occupation number basis
   unsigned long* TemporaryOccupationNumber;
 
@@ -230,6 +237,13 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // return value = bond index in the full bond index range
   virtual int GetBondIndexWithFixedChargePLevelCFTSector(int localIndex, int pLevel, int qValue, int cftSector);
 
+  // get the charge index range
+  // 
+  // pLevel = tuncation level
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
+
   // get the boundary indices of the MPS representation
   //
   // rowIndex = matrix row index
@@ -240,9 +254,10 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // compute the charge index range at a given truncation level
   // 
   // pLevel = tuncation level
+  // cftSector = CFT sector
   // minQ = reference on the lowest charge index
   // maxQ = reference on the lowest charge index
-  virtual void ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ);
+  virtual void ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ);
 
   // get the number of particles that fit the root configuration once the number of flux quanta is fixed
   // 
@@ -375,7 +390,8 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 
   // compute the various arrays required to convert from quantum numbers and local indices to a global linearized index
   //
-  virtual void ComputeLinearizedIndexArrays();
+  // return value = dimension of the B matrix
+  virtual int ComputeLinearizedIndexArrays();
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states
   //
@@ -436,7 +452,7 @@ inline int FQHEMPSClustered2RMatrix::GetTransferMatrixLargestEigenvalueDegenerac
 inline int FQHEMPSClustered2RMatrix::Get2RMatrixIndexV2(int pLevel, int cftSector, int qValue, 
 							int chargeSectorLevel, int chargeSectorIndex, int cftSectorIndex)
 {
-  return (this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevel[pLevel]][chargeSectorLevel] 
+  return (this->StartingIndexPerPLevelCFTSectorQValueU1Sector[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]][chargeSectorLevel] 
 	  + (this->NeutralSectorDimension[cftSector][pLevel - chargeSectorLevel] * chargeSectorIndex) + cftSectorIndex);
 }
 

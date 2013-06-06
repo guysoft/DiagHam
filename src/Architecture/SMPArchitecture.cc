@@ -242,6 +242,7 @@ void* ThreadExecuteOperation(void* param)
   pthread_mutex_lock(LocalThreadParamater->mut);
   (*(LocalThreadParamater->Flag)) = LocalThreadParamater->ThreadID;
   pthread_mutex_unlock(LocalThreadParamater->mut);
+  pthread_exit(0);
 #endif
   return 0;
 }

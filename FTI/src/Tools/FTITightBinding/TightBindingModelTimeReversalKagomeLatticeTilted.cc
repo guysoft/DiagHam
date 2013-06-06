@@ -159,33 +159,33 @@ void TightBindingModelTimeReversalKagomeLatticeTilted::CoreComputeBandStructure(
 	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -this->MixingTerm23);
 
 	if (this->OneBodyBasis != 0)
-		{
-		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
-		  TmpMatrix.SetToIdentity();
-		  RealDiagonalMatrix TmpDiag;
+	  {
+	    ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+	    TmpMatrix.SetToIdentity();
+	    RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+	    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+	    TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-		  this->OneBodyBasis[Index] = TmpMatrix;
-		  for (int i = 0; i < this->NbrBands; ++i)
-		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		}
-	      else
-		{
-		  RealDiagonalMatrix TmpDiag;
+	    this->OneBodyBasis[Index] = TmpMatrix;
+	    for (int i = 0; i < this->NbrBands; ++i)
+	      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+	  }
+	else
+	  {
+	    RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+	    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
-		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+	    TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif
-		  for (int i = 0; i < this->NbrBands; ++i)
-		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		}
-	    }
-	}
-    }
+	    for (int i = 0; i < this->NbrBands; ++i)
+	      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+	  }
+      }
+  }
+}
 
 
 

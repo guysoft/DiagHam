@@ -99,28 +99,22 @@ bool FTIComputeBandStructureOperation::ArchitectureDependentApplyOperation(SMPAr
   if(this->LargeNbrComponent < TmpNbrThreads)
     TmpNbrThreads = this->LargeNbrComponent;
   long Step = this->LargeNbrComponent / ((long) TmpNbrThreads);
-  FTIComputeBandStructureOperation** TmpOperations = new FTIComputeBandStructureOperation * [architecture->GetNbrThreads()];
-  long DecTmpNbrThreads = TmpNbrThreads -1;
+  FTIComputeBandStructureOperation** TmpOperations = new FTIComputeBandStructureOperation* [TmpNbrThreads];
+  long DecTmpNbrThreads = TmpNbrThreads - 1;
   for (int i = 0; i < DecTmpNbrThreads ; i++)
     {
       TmpOperations[i] = (FTIComputeBandStructureOperation *) this->Clone();
       architecture->SetThreadOperation(TmpOperations[i], i);
-      TmpOperations[i]->SetIndicesRange(i*Step,Step);
+      TmpOperations[i]->SetIndicesRange(i * Step, Step);
     }
   TmpOperations[DecTmpNbrThreads] = (FTIComputeBandStructureOperation *) this->Clone();
   architecture->SetThreadOperation(TmpOperations[DecTmpNbrThreads], DecTmpNbrThreads);
-  TmpOperations[DecTmpNbrThreads]->SetIndicesRange(DecTmpNbrThreads*Step,this->LargeNbrComponent-DecTmpNbrThreads*Step);
+  TmpOperations[DecTmpNbrThreads]->SetIndicesRange(DecTmpNbrThreads * Step, 
+						   this->LargeNbrComponent - DecTmpNbrThreads * Step);
   
-  for (int i = TmpNbrThreads; i< architecture->GetNbrThreads(); i++)
-    {
-      TmpOperations[i] = (FTIComputeBandStructureOperation *) this->Clone();
-      architecture->SetThreadOperation(TmpOperations[i], i);
-      TmpOperations[i]->SetIndicesRange(i*Step,0l); 
-    }
+  architecture->SendJobs(TmpNbrThreads);
   
-  architecture->SendJobs();
-  
-  for (int i = 0; i <  architecture->GetNbrThreads() ; ++i)
+  for (int i = 0; i <  TmpNbrThreads; ++i)
     delete TmpOperations[i];
   delete[] TmpOperations;
   

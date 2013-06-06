@@ -652,27 +652,27 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
       ExtraCylinderFactor = 4.0;
     }
 
-  this->ComputeLinearizedIndexArrays();
+  int MatrixSize = this->ComputeLinearizedIndexArrays();
 
-  this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn())) * this->NbrNValuesPerPLevel[0];
-  for (int i = 1; i <= this->PLevel; ++i)
-    {
-      this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
-      this->StartingIndexPerPLevel[i] = new int [i + 1];      
-      this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
-      int Tmp = 0;
-      int Tmp2;
-      for (int j = 0; j < i; ++j)
-	{
-	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn()) * this->NbrNValuesPerPLevel[i];
-	  this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
-	  Tmp += Tmp2;
-	}
-      Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn()) * this->NbrNValuesPerPLevel[i];
-      this->NbrIndicesPerPLevel[i] =  Tmp;
-    }
+//   this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn())) * this->NbrNValuesPerPLevel[0];
+//   for (int i = 1; i <= this->PLevel; ++i)
+//     {
+//       this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
+//       this->StartingIndexPerPLevel[i] = new int [i + 1];      
+//       this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
+//       int Tmp = 0;
+//       int Tmp2;
+//       for (int j = 0; j < i; ++j)
+// 	{
+// 	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn()) * this->NbrNValuesPerPLevel[i];
+// 	  this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
+// 	  Tmp += Tmp2;
+// 	}
+//       Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn()) * this->NbrNValuesPerPLevel[i];
+//       this->NbrIndicesPerPLevel[i] =  Tmp;
+//     }
   
-  int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
+//  int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
   cout << "B matrix size = " << MatrixSize << endl;
 
   cout << "computing Psi matrix elements" << endl;
@@ -839,7 +839,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	    {	      
 	      if ((this->RIndex & 1) == 0)
 		{
-		  for (int j = this->NInitialValuePerPLevel[i] + 1; j <= this->NLastValuePerPLevel[i]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][0] + 1; j <= this->NLastValuePerPLevelCFTSector[i][0]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -848,6 +848,9 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1)];
 			    }
 			}
+		    }
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][1] + 1; j <= this->NLastValuePerPLevelCFTSector[i][1]; ++j)
+		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
 			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
@@ -859,7 +862,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		}
 	      else
 		{
-		  for (int j = this->NInitialValuePerPLevel[i] + 2; j <= this->NLastValuePerPLevel[i]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][0] + 2; j <= this->NLastValuePerPLevelCFTSector[i][0]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -868,6 +871,9 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, j - 2, p, ChargedIndex, NeutralIndex1)];
 			    }
 			}
+		    }
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][1] + 2; j <= this->NLastValuePerPLevelCFTSector[i][1]; ++j)
+		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
 			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
@@ -898,7 +904,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	    {	      
 	      if ((this->RIndex & 1) == 0)
 		{
-		  for (int j = this->NInitialValuePerPLevel[i] + 1; j <= this->NLastValuePerPLevel[i]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][0] + 1; j <= this->NLastValuePerPLevelCFTSector[i][0]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -922,6 +928,9 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
  							    this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 			    }
 			}
+		    }
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][1] + 1; j <= this->NLastValuePerPLevelCFTSector[i][1]; ++j)
+		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
 			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
@@ -948,7 +957,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		}
 	      else
 		{
-		  for (int j = this->NInitialValuePerPLevel[i] + 2; j <= this->NLastValuePerPLevel[i]; ++j)
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][0] + 2; j <= this->NLastValuePerPLevelCFTSector[i][0]; ++j)
 		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
@@ -972,6 +981,9 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
  							    this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 			    }
 			}
+		    }
+		  for (int j = this->NInitialValuePerPLevelCFTSector[i][1] + 2; j <= this->NLastValuePerPLevelCFTSector[i][1]; ++j)
+		    {
 		      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 			{
 			  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
@@ -1044,8 +1056,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
 			      N1 = N2 + QValue - 2;
 			    }			  
-			  if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
-			      && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
 			    { 
 			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 				{
@@ -1066,8 +1078,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      N2 = (4 * (j - i) + 2 + NValueShift) / 2;
 			      N1 = N2 + QValue - 2;
 			    }
-			  if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
-			      && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
 			    { 
 			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 				{
@@ -1122,8 +1134,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
 			      N1 = N2 + QValue - 2;
 			    }			  
-			  if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
-			      && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
 			    { 
 			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 				{
@@ -1160,8 +1172,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 			      N2 = (4 * (j - i) + 2 + NValueShift) / 2;
 			      N1 = N2 + QValue - 2;
 			    }
-			  if (((N1 >= this->NInitialValuePerPLevel[i]) && (N1 <= this->NLastValuePerPLevel[i]))
-			      && ((N2 >= this->NInitialValuePerPLevel[j]) && (N2 <= this->NLastValuePerPLevel[j])))
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
 			    { 
 			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 				{
@@ -2201,16 +2213,23 @@ double FQHEMPSClustered2RMatrix::ComputeDescendantMatrixElement (long* partition
 
 // compute the various arrays required to convert from quantum numbers and local indices to a global linearized index
 //
+// return value = dimension of the B matrix
 
-void FQHEMPSClustered2RMatrix::ComputeLinearizedIndexArrays()
+int FQHEMPSClustered2RMatrix::ComputeLinearizedIndexArrays()
 {
-  this->NbrNValuesPerPLevel = new int [this->PLevel + 1];
-  this->NInitialValuePerPLevel = new int [this->PLevel + 1];
-  this->NLastValuePerPLevel = new int [this->PLevel + 1];     
+  this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
+  this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
+  this->NLastValuePerPLevelCFTSector = new int* [this->PLevel + 1];     
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->ComputeChargeIndexRange(i, this->NInitialValuePerPLevel[i], this->NLastValuePerPLevel[i]);
-      this->NbrNValuesPerPLevel[i] =  this->NLastValuePerPLevel[i] - this->NInitialValuePerPLevel[i] + 1;
+      this->NbrNValuesPerPLevelCFTSector[i] = new int [this->NbrCFTSectors];
+      this->NInitialValuePerPLevelCFTSector[i] = new int [this->NbrCFTSectors];
+      this->NLastValuePerPLevelCFTSector[i] = new int [this->NbrCFTSectors];
+      for (int l = 0; l < this->NbrCFTSectors; ++l)
+	{
+	  this->ComputeChargeIndexRange(i, l, this->NInitialValuePerPLevelCFTSector[i][l], this->NLastValuePerPLevelCFTSector[i][l]);
+	  this->NbrNValuesPerPLevelCFTSector[i][l] =  this->NLastValuePerPLevelCFTSector[i][l] - this->NInitialValuePerPLevelCFTSector[i][l] + 1;
+	}
     }
 
   this->StartingIndexPerPLevelCFTSectorQValue = new int** [this->PLevel + 1];
@@ -2226,26 +2245,27 @@ void FQHEMPSClustered2RMatrix::ComputeLinearizedIndexArrays()
       this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i] = new int** [this->NbrCFTSectors];
       for (int l = 0; l < this->NbrCFTSectors; ++l)
 	{
-	  this->StartingIndexPerPLevelCFTSectorQValue[i][l] = new int [this->NbrNValuesPerPLevel[i]];
-	  this->NbrIndexPerPLevelCFTSectorQValue[i][l] = new int [this->NbrNValuesPerPLevel[i]];
-	  this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l] = new int* [this->NbrNValuesPerPLevel[i]];
-	  this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l] = new int* [this->NbrNValuesPerPLevel[i]];
-	  for (int j = this->NInitialValuePerPLevel[i];  j <= this->NLastValuePerPLevel[i]; ++j)
+	  this->StartingIndexPerPLevelCFTSectorQValue[i][l] = new int [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  this->NbrIndexPerPLevelCFTSectorQValue[i][l] = new int [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l] = new int* [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l] = new int* [this->NbrNValuesPerPLevelCFTSector[i][l]];
+	  for (int j = this->NInitialValuePerPLevelCFTSector[i][l];  j <= this->NLastValuePerPLevelCFTSector[i][l]; ++j)
 	    {
-	      this->StartingIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevel[i]] = TotalIndex;
-	      this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevel[i]] = new int [i + 1];
-	      this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevel[i]] = new int [i + 1];
+	      this->StartingIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = TotalIndex;
+	      this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = new int [i + 1];
+	      this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = new int [i + 1];
 	      for (int k = 0; k <= i; ++k)
 		{
-		  this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevel[i]][k] = TotalIndex;
+		  this->StartingIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]][k] = TotalIndex;
 		  int Tmp = this->U1BasisDimension[k] * this->NeutralSectorDimension[l][i - k];
-		  this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevel[i]][k] = Tmp;
+		  this->NbrIndexPerPLevelCFTSectorQValueU1Sector[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]][k] = Tmp;
 		  TotalIndex += Tmp;	      
 		}
-	      this->NbrIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevel[i]] = TotalIndex - this->StartingIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevel[i]];
+	      this->NbrIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]] = TotalIndex - this->StartingIndexPerPLevelCFTSectorQValue[i][l][j - this->NInitialValuePerPLevelCFTSector[i][l]];
 	    }
 	}
     }
+  return TotalIndex;
 }
 
 // get the range for the bond index when fixing the tuncation level and the charge index
@@ -2256,9 +2276,18 @@ void FQHEMPSClustered2RMatrix::ComputeLinearizedIndexArrays()
 
 int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue)
 {
-  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue))
+  if ((pLevel < 0) || (pLevel > this->PLevel))
     return 0;
-  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValuesPerPLevel[pLevel];  
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][0]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][0]))
+    {
+      int Tmp = this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]];
+      if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][1]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][1]))
+	Tmp += this->NbrIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]];
+      return Tmp;
+    }
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][1]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][1]))
+    return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]];
+  return 0;
 }
 
 // get the range for the bond index when fixing the tuncation level, charge and CFT sector index
@@ -2272,7 +2301,7 @@ int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue, int cftS
 {
   if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue) || (cftSector > 1) ||  (cftSector < 0))
     return 0;
-  return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevel[pLevel]];
+  return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[cftSector][pLevel]];
 }
 
 // get the bond index for a fixed truncation level and the charge index 
@@ -2284,11 +2313,22 @@ int FQHEMPSClustered2RMatrix::GetBondIndexRange(int pLevel, int qValue, int cftS
 
 int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
 {
-  qValue -= this->NInitialValuePerPLevel[pLevel];
-  if (localIndex < this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue])
-    return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][0][qValue]  + localIndex);
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][0]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][0]))
+    {
+      if (localIndex < this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]])
+	{	  
+	  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]]  + localIndex);
+	}
+      else
+	{
+	  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]]  
+		  + (localIndex - this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]]));
+	}
+    }
   else
-    return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][1][qValue]  + (localIndex - this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue]));
+    {
+      return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]] + localIndex);
+    }
 }
 
 // get the bond index for a fixed truncation level, charge and CFT sector index
@@ -2301,9 +2341,26 @@ int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargeAndPLevel(int localInde
 
 int FQHEMPSClustered2RMatrix::GetBondIndexWithFixedChargePLevelCFTSector(int localIndex, int pLevel, int qValue, int cftSector)
 {
-  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevel[pLevel]]  + localIndex);
+  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[cftSector][pLevel]]  + localIndex);
 }
 
+
+// get the charge index range at a given truncation level
+// 
+// pLevel = tuncation level
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSClustered2RMatrix::GetChargeIndexRange (int pLevel, int& minQ, int& maxQ)
+{
+  minQ = this->NInitialValuePerPLevelCFTSector[pLevel][0];
+  maxQ = this->NLastValuePerPLevelCFTSector[pLevel][0];
+  if (this->NInitialValuePerPLevelCFTSector[pLevel][1] < minQ)
+    minQ = this->NInitialValuePerPLevelCFTSector[pLevel][1];
+  if (this->NLastValuePerPLevelCFTSector[pLevel][1] > maxQ)
+    maxQ = this->NLastValuePerPLevelCFTSector[pLevel][1];  
+  return;
+}
 
 // get the boundary indices of the MPS representation
 //
@@ -2396,10 +2453,11 @@ bool FQHEMPSClustered2RMatrix::SaveHeader (ofstream& file)
 // compute the charge index range at a given truncation level
 // 
 // pLevel = tuncation level
+// cftSector = CFT sector
 // minQ = reference on the lowest charge index
 // maxQ = reference on the lowest charge index
 
-void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& maxQ)
+void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ)
 {
   if (this->UniformChargeIndexRange == true)
     {
@@ -2416,99 +2474,101 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
       int TmpMaxQ = 0;    
       int NValueShift = this->PLevel;
       int QValue = 1 + (this->RIndex / 2);
-      for (int Q = 0; Q < this->NbrNValue; ++Q)
+      if (cftSector == 0)
 	{
-	  int QPrime = Q;
-	  int TmpP = 0;
-	  int TmpMaxP = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  for (int Q = 0; Q < this->NbrNValue; ++Q)
 	    {
-	      if (TmpP > TmpMaxP)
-		TmpMaxP = TmpP;	    
-	      QPrime -= (QValue - 1);
-	      TmpP += QPrime - (this->RIndex / 2) - NValueShift;
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP)
 		    TmpMaxP = TmpP;	    
 		  QPrime -= (QValue - 1);
-		  TmpP += QPrime - NValueShift;
+		  TmpP += QPrime - (this->RIndex / 2) - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue - 1);
+		      TmpP += QPrime - NValueShift;
+		    }
 		}
-	    }
-	  QPrime = Q;
-	  TmpP = 0;
-	  int TmpMaxP2 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP2)
-		TmpMaxP2 = TmpP;	    
-	      TmpP -= QPrime - NValueShift;
-	      QPrime += (QValue - 1);
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP2)
 		    TmpMaxP2 = TmpP;	    
-		  TmpP -= QPrime  - (this->RIndex / 2) - NValueShift;
+		  TmpP -= QPrime - NValueShift;
 		  QPrime += (QValue - 1);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= QPrime  - (this->RIndex / 2) - NValueShift;
+		      QPrime += (QValue - 1);
+		    }
 		}
-	    }
-	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
-	    {
-	      if (Q < TmpMinQ)
-		TmpMinQ = Q;
-	      if (Q > TmpMaxQ)
-		TmpMaxQ = Q;	    
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
 	    }
 	}
-      cout << "range at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
-      minQ = TmpMinQ;
-      maxQ = TmpMaxQ;
-      return;
-      TmpMinQ = this->NbrNValue - 1;
-      TmpMaxQ = 0;    
-      for (int Q = 0; Q < this->NbrNValue; ++Q)
+      else
 	{
-	  int QPrime = Q;
-	  int TmpP = 0;
-	  int TmpMaxP3 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  TmpMinQ = this->NbrNValue - 1;
+	  TmpMaxQ = 0;    
+	  for (int Q = 0; Q < this->NbrNValue; ++Q)
 	    {
-	      if (TmpP > TmpMaxP3)
-		TmpMaxP3 = TmpP;	    
-	      QPrime -= (QValue - 1);
-	      TmpP += QPrime - NValueShift;
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP3 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP3)
 		    TmpMaxP3 = TmpP;	    
 		  QPrime -= (QValue - 1);
-		  TmpP += QPrime - (this->RIndex / 2) - NValueShift;
+		  TmpP += QPrime - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP3)
+			TmpMaxP3 = TmpP;	    
+		      QPrime -= (QValue - 1);
+		      TmpP += QPrime - (this->RIndex / 2) - NValueShift;
+		    }
 		}
-	    }
-
-	  QPrime = Q;
-	  TmpP = 0;
-	  int TmpMaxP4 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP4)
-		TmpMaxP4 = TmpP;	    
-	      TmpP -= QPrime - NValueShift - (this->RIndex / 2);
-	      QPrime += (QValue - 1);
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP4 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP4)
 		    TmpMaxP4 = TmpP;	    
-		  TmpP -= QPrime - NValueShift;
+		  TmpP -= QPrime - NValueShift - (this->RIndex / 2);
 		  QPrime += (QValue - 1);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP4)
+			TmpMaxP4 = TmpP;	    
+		      TmpP -= QPrime - NValueShift;
+		      QPrime += (QValue - 1);
+		    }
 		}
-	    }
-	  if (((this->PLevel - TmpMaxP3) >= pLevel) && ((this->PLevel - TmpMaxP4) >= pLevel))
-	    {
-	      if (Q < TmpMinQ)
-		TmpMinQ = Q;
-	      if (Q > TmpMaxQ)
-		TmpMaxQ = Q;	    
+	      if (((this->PLevel - TmpMaxP3) >= pLevel) && ((this->PLevel - TmpMaxP4) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	    
+		}
 	    }
 	}
       minQ = TmpMinQ;
@@ -2520,54 +2580,58 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, in
       int TmpMaxQ = 0;    
       int NValueShift = this->PLevel;
       int QValue = this->RIndex + 2;
-      for (int Q = 0; Q < this->NbrNValue; Q += 2)
+      if (cftSector == 0)
 	{
-	  int QPrime = Q;
-	  int TmpP = 0;
-	  int TmpMaxP = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  for (int Q = 0; Q < this->NbrNValue; Q += 2)
 	    {
-	      if (TmpP > TmpMaxP)
-		TmpMaxP = TmpP;	    
-	      QPrime -= (QValue - 2);
-	      TmpP += (QPrime - this->RIndex) / 2 - NValueShift;
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP)
 		    TmpMaxP = TmpP;	    
 		  QPrime -= (QValue - 2);
-		  TmpP += QPrime / 2 - NValueShift;
+		  TmpP += (QPrime - this->RIndex) / 2 - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue - 2);
+		      TmpP += QPrime / 2 - NValueShift;
+		    }
 		}
-	    }
-	  QPrime = Q;
-	  TmpP = 0;
-	  int TmpMaxP2 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP2)
-		TmpMaxP2 = TmpP;	    
-	      TmpP -= QPrime - NValueShift;
-	      QPrime += (QValue - 2);
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP2)
 		    TmpMaxP2 = TmpP;	    
-		  TmpP -= (QPrime - this->RIndex) / 2 - NValueShift;
+		  TmpP -= QPrime - NValueShift;
 		  QPrime += (QValue - 2);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime - this->RIndex) / 2 - NValueShift;
+		      QPrime += (QValue - 2);
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	    
 		}
 	    }
-	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
-	    {
-	      if (Q < TmpMinQ)
-		TmpMinQ = Q;
-	      if (Q > TmpMaxQ)
-		TmpMaxQ = Q;	    
-	    }
+	  minQ = TmpMinQ;
+	  maxQ = TmpMaxQ;
 	}
-      cout << "range at " << pLevel << " : " << TmpMinQ << " " << TmpMaxQ << " (" << this->NbrNValue << ")" << endl;   
-      minQ = TmpMinQ;
-      maxQ = TmpMaxQ;
-      return;
+      else
+	{
+	}
     }
   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   
 }

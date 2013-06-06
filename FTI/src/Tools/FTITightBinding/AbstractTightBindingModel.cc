@@ -401,8 +401,16 @@ void AbstractTightBindingModel::ComputeBandStructure()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-  FTIComputeBandStructureOperation Operation (this);
-  Operation.ApplyOperation(this->Architecture);
+  if (this->Architecture == 0)
+    {
+      this->CoreComputeBandStructure(0, this->GetNbrStatePerBand());
+      return;
+    }
+  else
+    {
+      FTIComputeBandStructureOperation Operation (this);
+      Operation.ApplyOperation(this->Architecture);
+    }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
