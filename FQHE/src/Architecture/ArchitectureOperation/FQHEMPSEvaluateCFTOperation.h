@@ -47,6 +47,7 @@ class RealVector;
 class SparseRealMatrix;
 class SparseComplexMatrix;
 class FQHEMPSClustered2RMatrix;
+class FQHEMPSN1SuperconformalMatrix;
 
 
 class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
@@ -67,7 +68,8 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 
   // array that contains the Hilbert space for the partition at each level
   BosonOnDiskShort** U1BosonBasis;
-
+  // indicate that the U1BosonBasis is actually a supersymmetric basis
+  bool SupersymmetricFlag;
   
   // array where the already computed overlap matrices are stored
   LongRationalMatrix* PreviousRationalOverlapMatrices;
@@ -84,6 +86,8 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   
   // value of the central charge divided by 12
   LongRational CentralCharge12;
+  // 3 / (central charge)
+  LongRational InvCentralCharge3;
   // conformal weight of the left state at level 0
   LongRational WeightLeft;
   // conformal weight of the right state  at level 0
@@ -92,6 +96,8 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   LongRational WeightMatrixElement;
   // value of the central charge divided by 12
   double CentralCharge12Numerical;
+  // 3 / (central charge)
+  double InvCentralCharge3Numerical;
   // conformal weight of the left state at level 0
   double WeightLeftNumerical;
   // conformal weight of the right state  at level 0
@@ -160,6 +166,43 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 			      LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
 			      int nbrMPIStage = 500, int nbrSMPStage = 500);
 
+  // constructor to compute the CFT matrix elements for the supersymmetric case
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left state
+  // rightLevel = level for the right state
+  // centralCharge12 =value of the central charge divided by 12
+  // invCentralCharge3 = 3 / (central charge)
+  // weightLeft = conformal weight of the left state at level 0 
+  // previousMatrixElements = array where the already computed matrix element are stored
+  // nbrLeftPreviousMatrixElements = number of entry of the PreviousMatrixElements first index
+  // nbrRightPreviousMatrixElements = number of entry of the PreviousMatrixElements second index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode  
+  FQHEMPSEvaluateCFTOperation(FQHEMPSN1SuperconformalMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel, int rightLevel,
+			      const LongRational& centralCharge12, const LongRational& invCentralCharge3, const LongRational& weightLeft, 
+			      LongRationalMatrix** previousRationalMatrixElements, int nbrLeftPreviousMatrixElements, 
+			      int nbrRightPreviousMatrixElements,
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
+
+  // constructor to compute the CFT overlap matrix for the supersymmetric case
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left or right state
+  // centralCharge12 =value of the central charge divided by 12
+  // invCentralCharge3 = 3 / (central charge)
+  // weightLeft = conformal weight of the left or right state at level 0 
+  // previousOverlapMatrices = array where the already computed overlap matrices are stored
+  // nbrPreviousOverlapMatrices = number of entry of the PreviousMatrixElements first index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHEMPSEvaluateCFTOperation(FQHEMPSN1SuperconformalMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
+			      const LongRational& centralCharge12, const LongRational& invCentralCharge3, const LongRational& weightLeft,
+			      LongRationalMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
+
   // constructor to compute the CFT matrix elements, using double instead of rational numbers
   //
   // mPSMatrix = pointer to the MPS matrix 
@@ -181,6 +224,25 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
 			      RealMatrix** previousRationalMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
 			      int nbrMPIStage = 500, int nbrSMPStage = 500);
 
+  // constructor to compute the CFT matrix elements for the supersymmetric case, using double instead of rational numbers
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left state
+  // rightLevel = level for the right state
+  // centralCharge12 =value of the central charge divided by 12
+  // invCentralCharge3 = 3 / (central charge)
+  // weightLeft = conformal weight of the left state at level 0 
+  // previousMatrixElements = array where the already computed matrix element are stored
+  // nbrLeftPreviousMatrixElements = number of entry of the PreviousMatrixElements first index
+  // nbrRightPreviousMatrixElements = number of entry of the PreviousMatrixElements second index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHEMPSEvaluateCFTOperation(FQHEMPSN1SuperconformalMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel, int rightLevel,
+			      double centralCharge12, double invCentralCharge3, double weightLeft, 
+			      RealMatrix** previousRationalMatrixElements, int nbrLeftPreviousMatrixElements, int nbrRightPreviousMatrixElements,
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
+
   // constructor to compute the CFT overlap matrix, using double instead of rational numbers
   //
   // mPSMatrix = pointer to the MPS matrix 
@@ -194,6 +256,23 @@ class FQHEMPSEvaluateCFTOperation: public AbstractArchitectureOperation
   // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
   FQHEMPSEvaluateCFTOperation(FQHEMPSClustered2RMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
 			      double centralCharge12, double weightLeft,
+			      RealSymmetricMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
+			      int nbrMPIStage = 500, int nbrSMPStage = 500);
+
+  // constructor to compute the CFT overlap matrix for the supersymmetric case, using double instead of rational numbers
+  //
+  // mPSMatrix = pointer to the MPS matrix 
+  // u1BosonBasis = array that contains the Hilbert space for the partition at each level
+  // leftLevel = level for the left or right state
+  // centralCharge12 = value of the central charge divided by 12
+  // invCentralCharge3 = 3 / (central charge)
+  // weightLeft = conformal weight of the left or right state at level 0 
+  // previousOverlapMatrices = array where the already computed overlap matrices are stored
+  // nbrPreviousOverlapMatrices = number of entry of the PreviousMatrixElements first index
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHEMPSEvaluateCFTOperation(FQHEMPSN1SuperconformalMatrix* mPSMatrix, BosonOnDiskShort** u1BosonBasis, int leftLevel,
+			      double centralCharge12, double invCentralCharge3, double weightLeft,
 			      RealSymmetricMatrix* previousOverlapMatrices, int nbrPreviousOverlapMatrices,
 			      int nbrMPIStage = 500, int nbrSMPStage = 500);
 

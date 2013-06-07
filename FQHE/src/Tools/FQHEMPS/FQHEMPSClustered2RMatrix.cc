@@ -588,7 +588,7 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		ScalarProductIdentity[i].SetMatrixElement(k, l, Tmp);
 	      }
 	}
-        if (this->UseRationalFlag == true)
+      if (this->UseRationalFlag == true)
  	{
 	  for (int k = 0; k < RationalScalarProductPsi[i].GetNbrRow(); ++k)
 	    for (int l = 0; l < RationalScalarProductPsi[i].GetNbrColumn(); ++l)

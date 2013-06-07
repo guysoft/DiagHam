@@ -44,6 +44,8 @@ class BosonOnDiskShort;
 class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
 {
 
+  friend class FQHEMPSEvaluateCFTOperation;
+
  protected:
 
 
@@ -148,11 +150,42 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
   // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
   // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
   // return value = scalar product  
   virtual LongRational ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
 							       LongRational& centralCharge12, LongRational& invCentralCharge3, LongRational& weight,
 							       LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
-							       BosonOnDiskShort** basis);
+							       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
+
+  // compute the scalar product matrices of the Virasoro descendant
+  // 
+  // partition = partition that desribes the product of Virasoro generators involved in the scalar product
+  // partitionLength = partition length
+  // position = position in partition starting from which all the indices are negative
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // invCentralCharge3 = reference on the value of three divided by the central charge
+  // weight = weight of the primary field that is considered
+  // return value = scalar product  
+  double ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+						 double& centralCharge12, double& invCentralCharge3, double& weight);
+
+  // compute the scalar product matrices of the Virasoro descendant, using information from previous levels
+  // 
+  // partition = partition that desribes the product of Virasoro generators involved in the scalar product
+  // partitionLength = partition length
+  // position = position in partition starting from which all the indices are negative
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // invCentralCharge3 = reference on the value of three divided by the central charge
+  // weight = weight of the primary field that is considered
+  // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
+  // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
+  // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
+  // return value = scalar product
+  double ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+						 double& centralCharge12, double& invCentralCharge3, double& weight,
+						 RealSymmetricMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
+						 BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
   // compute the matrix elements of any primary field in the Virasoro descendant basis
   // 
@@ -183,13 +216,14 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   // precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
   // precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
   // basis = basis that related the partitions to their index
+  // temporaryOccupationNumber = local temporary to store the occupation numbers 
   // return value = matrix element
   virtual LongRational ComputeDescendantMatrixElement (long* partition, int partitionLength, int descendantPosition, int position, 
 						       LongRational& centralCharge12, LongRational& weight1, LongRational& weight2, 
 						       LongRational& weight, LongRationalMatrix** precomputedDescendantMatrixElement,
 						       int precomputedDescendantMatrixElementMaxLeftPLevel, 
 						       int precomputedDescendantMatrixElementMaxRightPLevel, 
-						       BosonOnDiskShort** basis);
+						       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber);
 
 
 };

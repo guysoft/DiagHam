@@ -131,6 +131,21 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbr
 	  this->SquareMatrixElementNormalization = LongRational(1, 1);
 	}
       this->MatrixElementNormalization = sqrt(fabs(this->SquareMatrixElementNormalization.GetNumericalValue()));
+      this->UseRationalFlag = true;
+      if (StateDefinition["UseNonRational"])
+	{
+	  bool TmpFlag;
+	  StateDefinition.GetAsBoolean("UseNonRational", TmpFlag);
+	  this->UseRationalFlag = !TmpFlag;
+	}
+      if (this->UseRationalFlag)
+	{
+	  cout << "using rational numbers" << endl;
+	}
+      else
+	{
+	  cout << "using double numbers" << endl;
+	}
       if (ErrorFlag == true)
 	{
 	  this->WeightPrimaryFieldMatrixElement = this->WeightPsi;
@@ -190,11 +205,14 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
   this->EffectivePLevel = (2 * this->PLevel + 3);
   LongRational InvCentralCharge3 (3l, 1l);
   InvCentralCharge3 /= this->CentralCharge;
-  double WeightIdentityNumerical = this->WeightIdentity.GetNumericalValue();
-  double WeightPsiNumerical = this->WeightPsi.GetNumericalValue();
   long* Partition = new long[2 * (this->EffectivePLevel + 1) + 1];
   unsigned long* TmpPartition = new unsigned long [this->EffectivePLevel + 2];
   this->TemporaryOccupationNumber = new unsigned long [this->EffectivePLevel + 2];
+
+  double CentralCharge12Numerical = CentralCharge12.GetNumericalValue();
+  double InvCentralCharge3Numerical = InvCentralCharge3.GetNumericalValue();
+  double WeightIdentityNumerical = this->WeightIdentity.GetNumericalValue();
+  double WeightPsiNumerical = this->WeightPsi.GetNumericalValue();
 
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
   BosonOnDiskShort** SupersymmetricU1BosonBasis = new BosonOnDiskShort* [this->EffectivePLevel + 1];
@@ -216,6 +234,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
       TmpScalarProductPsiFileName = new char[512 + strlen(cftDirectory)];
     }
 
+  LongRational** RationalMultiplicityFactor = new LongRational*[this->EffectivePLevel + 1];
+  double** MultiplicityFactor = new double*[this->EffectivePLevel + 1];
   for (int i = 0; i <= this->EffectivePLevel; ++i)
     {
       BosonOnDiskShort TmpU1BosonBasis (i, i, this->EffectivePLevel + 1);
@@ -234,6 +254,26 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 	}
       SupersymmetricU1BosonBasis[i] = new BosonOnDiskShort(TmpU1BosonBasis, EffectiveDimension, U1BosonBasisKeptFlag);
       delete[] U1BosonBasisKeptFlag;
+      if (SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension() > 0)
+	{
+	  RationalMultiplicityFactor[i] = new LongRational[SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension()];
+	  MultiplicityFactor[i] = new double[SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension()];
+	  for (int j = 0; j < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
+	    {
+	      SupersymmetricU1BosonBasis[i]->GetOccupationNumber(j, TmpPartition);	    
+	      RationalMultiplicityFactor[i][j] = 1l;
+	      MultiplicityFactor[i][j] = 1.0;
+	      for (int k = 1; k <= i; ++k)
+		if (TmpPartition[k] > 1ul)
+		  {
+		    RationalMultiplicityFactor[i][j].FactorialDivide(TmpPartition[k]);
+		    double Tmp = 1.0;
+		    for (unsigned long l = 2l; l <= TmpPartition[k]; ++l)
+		      Tmp *=  (double) l;
+		    MultiplicityFactor[i][j] /= Tmp;
+		  }
+	    }
+	}
     }
 
   for (int i = 0; i <= this->PLevel; ++i)
@@ -255,14 +295,14 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
       RationalScalarProductIdentity[i] = LongRationalMatrix(SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), true);
       if (cftDirectory != 0)
 	{
-	      if (this->UseRationalFlag == true)
-		{
-		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-		}
-	      else
-		{
-		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-		}
+	  if (this->UseRationalFlag == true)
+	    {
+	      sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+	    }
+	  else
+	    {
+	      sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
+	    }
 	}
       if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
 	{
@@ -277,68 +317,56 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 	}
       else
 	{
-	  if (architecture == 0)
+	  if (this->UseRationalFlag == true)
 	    {
-	      for (int n = 0; n < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-		for (int m = n; m < SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(); ++m)
-		  {
-		    int PartitionLength = 0;
-		    SupersymmetricU1BosonBasis[i]->GetOccupationNumber(n, TmpPartition);	    
-		    for (int k = 1; k <= i; ++k)
-		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			{
-			  ++PartitionLength;
-			}
-		    int Position = PartitionLength;
-		    PartitionLength = 0;
-		    for (int k = 2; k <= i; k += 2)
-		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			{
-			  Partition[Position - PartitionLength - 1] = (long) k;
-			  ++PartitionLength;
-			}
-		    for (int k = 1; k <= i; k += 2)
-		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			{
-			  Partition[Position - PartitionLength - 1] = (long) k;
-			  ++PartitionLength;
-			}
-		    SupersymmetricU1BosonBasis[i]->GetOccupationNumber(m, TmpPartition);	    
-		    for (int k = 2; k <= i; k += 2)
-		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			{
-			  Partition[PartitionLength] = -(long) k;
-			  ++PartitionLength;		  
-			}
-		    for (int k = 1; k <= i; k += 2)
-		      for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			{
-			  Partition[PartitionLength] = -(long) k;
-			  ++PartitionLength;		  
-			}
-		    LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity,
-										     RationalScalarProductIdentity, i - 1, SupersymmetricU1BosonBasis);
-		    RationalScalarProductIdentity[i].SetMatrixElement(m, n, Tmp);
-		    if (n != m)
-		      {
-			RationalScalarProductIdentity[i].SetMatrixElement(n, m, Tmp);	      
-		      }
-		  }
+	      FQHEMPSEvaluateCFTOperation Operation1(this, SupersymmetricU1BosonBasis, i, CentralCharge12, InvCentralCharge3,
+						     this->WeightIdentity,
+						     RationalScalarProductIdentity,  i - 1);
+	      Operation1.ApplyOperation(architecture);
+	      RationalScalarProductIdentity[i] = Operation1.GetRationalMatrixElements();
+	      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		{
+		  RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
+		}
 	    }
 	  else
 	    {
-	    }  
-	  if (cftDirectory != 0)
-	    {
-	      RationalScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
+	      FQHEMPSEvaluateCFTOperation Operation1(this, SupersymmetricU1BosonBasis, i, CentralCharge12Numerical, InvCentralCharge3Numerical,
+						     WeightIdentityNumerical,
+						     ScalarProductIdentity,  i - 1);
+	      Operation1.ApplyOperation(architecture);
+	      ScalarProductIdentity[i] = Operation1.GetOverlapMatrix();
+	      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		{
+		  ScalarProductIdentity[i].WriteMatrix(TmpScalarProductIdentityFileName);
+		}
 	    }
-	}
-      ScalarProductIdentity[i] = RationalScalarProductIdentity[i];      
+	}  
 
-//      cout << RationalScalarProductIdentity[i] << endl;
-      
       RealSymmetricMatrix TmpMatrix;
       TmpMatrix.Copy(ScalarProductIdentity[i]);
+      if (this->UseRationalFlag == true)
+ 	{
+ 	  LongRationalMatrix TmpRationalMatrix(RationalScalarProductIdentity[i].GetNbrRow(), RationalScalarProductIdentity[i].GetNbrColumn());
+ 	  for (int k = 0; k < RationalScalarProductIdentity[i].GetNbrRow(); ++k)
+	    for (int l = 0; l < RationalScalarProductIdentity[i].GetNbrColumn(); ++l)
+	      {
+		TmpRationalMatrix[l][k] = RationalScalarProductIdentity[i][l][k] * (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+	      }
+ 	  TmpMatrix = TmpRationalMatrix;
+ 	}
+       else
+	{
+	  TmpMatrix = RealSymmetricMatrix (ScalarProductIdentity[i].GetNbrRow(), ScalarProductIdentity[i].GetNbrColumn());
+	  for (int k = 0; k < ScalarProductIdentity[i].GetNbrRow(); ++k)
+	    for (int l = k; l < ScalarProductIdentity[i].GetNbrColumn(); ++l)
+	      {
+		double Tmp;
+		ScalarProductIdentity[i].GetMatrixElement(k, l, Tmp);
+		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+		TmpMatrix.SetMatrixElement(k, l, Tmp);
+	      }
+	}
       RealMatrix TmpBasis(SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension(), SupersymmetricU1BosonBasis[i]->GetHilbertSpaceDimension());
       TmpBasis.SetToIdentity();
       RealDiagonalMatrix TmpDiag;
@@ -429,6 +457,31 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 	}
       cout << "---------------------------------" << endl;
     }
+  
+   for (int i = 0; i <= this->EffectivePLevel; ++i)
+     {
+       if (this->UseRationalFlag == true)
+  	{
+  	  for (int k = 0; k < RationalScalarProductIdentity[i].GetNbrRow(); ++k)
+ 	    for (int l = 0; l < RationalScalarProductIdentity[i].GetNbrColumn(); ++l)
+ 	      {
+ 		RationalScalarProductIdentity[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
+ 	      }
+  	  ScalarProductIdentity[i] = RationalScalarProductIdentity[i];
+  	}
+       else
+ 	{
+ 	  for (int k = 0; k < ScalarProductIdentity[i].GetNbrRow(); ++k)
+	    for (int l = k; l < ScalarProductIdentity[i].GetNbrColumn(); ++l)
+ 	      {
+ 		double Tmp;
+ 		ScalarProductIdentity[i].GetMatrixElement(k, l, Tmp);
+ 		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
+ 		ScalarProductIdentity[i].SetMatrixElement(k, l, Tmp);
+ 	      }
+ 	}
+     }
+
   this->StartingIndexPerPLevel = new int* [this->PLevel + 1];
   this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
   this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
@@ -488,118 +541,138 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
     {
       for (int i = 0; i <= this->PLevel; ++i)
 	{
-	  RationalMatrixPsi01[i][j] = LongRationalMatrix(SupersymmetricU1BosonBasis[2 * i]->GetHilbertSpaceDimension(),  SupersymmetricU1BosonBasis[2 * j + 3]->GetHilbertSpaceDimension(), true);
-	  RationalMatrixPsi10[i][j] = LongRationalMatrix(SupersymmetricU1BosonBasis[2 * i + 3]->GetHilbertSpaceDimension(),  SupersymmetricU1BosonBasis[2 * j]->GetHilbertSpaceDimension(), true);
 	  cout << "Levels = " <<  i << " " << (2 * j + 3) << "/2" << endl;
 	  if (cftDirectory != 0)
 	    {
-	      sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_matrixelement_rrns_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
-	      sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_matrixelement_nsrr_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+	      if (this->UseRationalFlag == true)
+		{
+		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_matrixelement_rrns_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		  sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_matrixelement_nsrr_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		}
+	      else
+		{
+		  sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_matrixelement_rrns_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		  sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_num_matrixelement_nsrr_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, i, j);
+		}
 	    }
 	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductIdentityFileName)))
 	    {
-	      RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductIdentityFileName);
+	      if (this->UseRationalFlag == true)
+		{
+		  RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductIdentityFileName);
+		}
+	      else
+		{
+		  MatrixPsi01[i][j].ReadMatrix(TmpScalarProductIdentityFileName);
+		}
 	    }
 	  else
 	    {
-	      if (architecture == 0)
+	      if (this->UseRationalFlag == true)
 		{
-		  for (int n = 0; n < SupersymmetricU1BosonBasis[2 * i]->GetHilbertSpaceDimension(); ++n)
-		    for (int m = 0; m < SupersymmetricU1BosonBasis[2 * j + 3]->GetHilbertSpaceDimension(); ++m)
-		      {
-			int PartitionLength = 0;
-			SupersymmetricU1BosonBasis[2 * i]->GetOccupationNumber(n, TmpPartition);	    
-			for (int k = 1; k <= (2 * i); ++k)
-			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			    {
-			      ++PartitionLength;
-			    }
-			int Position = PartitionLength;		
-			PartitionLength = 0;
-			for (int k = 1; k <= (2 * i); ++k)
-			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			    {
-			      Partition[Position - PartitionLength - 1] = (long) k;
-			      ++PartitionLength;
-			    }
-			long TmpWeight = 2 * (j - i)  + 3;
-			Partition[Position] = TmpWeight;
-			if (TmpWeight > 0)
-			  ++Position;
-			++PartitionLength;
-			SupersymmetricU1BosonBasis[2 * j + 3]->GetOccupationNumber(m, TmpPartition);	    
-			for (int k = 1; k <= (2 * j + 3); ++k)
-			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			    {
-			      Partition[PartitionLength] = -(long) k;
-			      ++PartitionLength;		  
-			    }
-			LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity);
-			RationalMatrixPsi01[i][j].SetMatrixElement(n, m, Tmp);
-		      }
-		  if (cftDirectory != 0)
+		  FQHEMPSEvaluateCFTOperation Operation1(this, SupersymmetricU1BosonBasis, 2 * i, 2 * j + 3, CentralCharge12, InvCentralCharge3,
+							 this->WeightIdentity, 
+							 RationalMatrixPsi01, 2 * (i - 1), 2 * j + 3);
+		  Operation1.ApplyOperation(architecture);
+		  RationalMatrixPsi01[i][j] = Operation1.GetRationalMatrixElements();
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
 		    }
 		}
 	      else
 		{
+		  FQHEMPSEvaluateCFTOperation Operation1(this, SupersymmetricU1BosonBasis, 2 * i, 2 * j + 3, CentralCharge12Numerical, InvCentralCharge3Numerical,
+							 WeightIdentityNumerical, 
+							 MatrixPsi01, 2 * (i - 1), 2 * j + 3);
+		  Operation1.ApplyOperation(architecture);
+		  MatrixPsi01[i][j] = Operation1.GetMatrixElements();
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		    {
+		      MatrixPsi01[i][j].WriteMatrix(TmpScalarProductIdentityFileName);
+		    }
 		}
 	    }
 	  cout << "Levels = " <<  (2 * i + 3) << "/2 " << j << endl;
 	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductPsiFileName)))
 	    {
-	      RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPsiFileName);
+	      if (this->UseRationalFlag == true)
+		{
+		  RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPsiFileName);
+		}
+	      else
+		{
+		  MatrixPsi10[i][j].ReadMatrix(TmpScalarProductPsiFileName);
+		}
 	    }
 	  else
 	    {
-	      if (architecture == 0)
+	      if (this->UseRationalFlag == true)
 		{
-		  for (int n = 0; n < SupersymmetricU1BosonBasis[2 * i + 3]->GetHilbertSpaceDimension(); ++n)
-		    for (int m = 0; m < SupersymmetricU1BosonBasis[2 * j]->GetHilbertSpaceDimension(); ++m)
-		      {
-			int PartitionLength = 0;
-			SupersymmetricU1BosonBasis[2 * i + 3]->GetOccupationNumber(n, TmpPartition);	    
-			for (int k = 1; k <= (2 * i + 3); ++k)
-			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			    {
-			      ++PartitionLength;
-			    }
-			int Position = PartitionLength;		
-			PartitionLength = 0;
-			for (int k = 1; k <= (2 * i + 3); ++k)
-			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			    {
-			      Partition[Position - PartitionLength - 1] = (long) k;
-			      ++PartitionLength;
-			    }
-			long TmpWeight = 2 * (j - i)  - 3;
-			Partition[Position] = TmpWeight;
-			if (TmpWeight > 0)
-			  ++Position;
-			++PartitionLength;
-			SupersymmetricU1BosonBasis[2 * j]->GetOccupationNumber(m, TmpPartition);	    
-			for (int k = 1; k <= (2 * j); ++k)
-			  for (unsigned long  l = 0ul; l < TmpPartition[k]; ++l)
-			    {
-			      Partition[PartitionLength] = -(long) k;
-			      ++PartitionLength;		  
-			    }
-			LongRational Tmp = this->ComputeVirasoroDescendantScalarProduct (Partition, PartitionLength, Position, CentralCharge12, InvCentralCharge3, this->WeightIdentity);
-			RationalMatrixPsi10[i][j].SetMatrixElement(n, m, Tmp);
-		      }
-		  if (cftDirectory != 0)
+		  FQHEMPSEvaluateCFTOperation Operation2(this, SupersymmetricU1BosonBasis, 2 * i + 3, 2 * j, CentralCharge12, InvCentralCharge3,
+							 this->WeightIdentity,
+							 RationalMatrixPsi10,  2 * i + 1, 2 * j);
+		  Operation2.ApplyOperation(architecture);
+		  RationalMatrixPsi10[i][j] = Operation2.GetRationalMatrixElements();
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
 		    {
 		      RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
 		    }
 		}
 	      else
 		{
+		  FQHEMPSEvaluateCFTOperation Operation2(this, SupersymmetricU1BosonBasis, 2 * i + 3, 2 * j, CentralCharge12Numerical, InvCentralCharge3Numerical,
+							 WeightIdentityNumerical,
+							 MatrixPsi10,  2 * i + 1, 2 * j);
+		  Operation2.ApplyOperation(architecture);
+		  MatrixPsi10[i][j] = Operation2.GetMatrixElements();
+		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
+		    {
+		      MatrixPsi10[i][j].WriteMatrix(TmpScalarProductPsiFileName);
+		    }
 		}
 	    }
-	  MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
+	}
+    }
+  for (int j = 0; j <= this->PLevel; ++j)
+    {
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  if (this->UseRationalFlag == true)
+	    {
+	      for (int k = 0; k < RationalMatrixPsi01[i][j].GetNbrRow(); ++k)
+		for (int l = 0; l < RationalMatrixPsi01[i][j].GetNbrColumn(); ++l)
+		  {
+		    RationalMatrixPsi01[i][j][l][k] *= (RationalMultiplicityFactor[2 * i][k] * RationalMultiplicityFactor[2 * j + 3][l]);
+		  }
+	      for (int k = 0; k < RationalMatrixPsi10[i][j].GetNbrRow(); ++k)
+		for (int l = 0; l < RationalMatrixPsi10[i][j].GetNbrColumn(); ++l)
+		  {
+		    RationalMatrixPsi10[i][j][l][k] *= (RationalMultiplicityFactor[2 * i + 3][k] * RationalMultiplicityFactor[2 * j][l]);
+		  }
+	      MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
+	      MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
+	    }
+	  else
+	    {
+	      for (int k = 0; k < MatrixPsi01[i][j].GetNbrRow(); ++k)
+		for (int l = 0; l < MatrixPsi01[i][j].GetNbrColumn(); ++l)
+		  {
+		    double Tmp;
+		    MatrixPsi01[i][j].GetMatrixElement(k, l, Tmp);
+		    Tmp *= (MultiplicityFactor[2 * i][k] * MultiplicityFactor[2 * j + 3][l]);
+		    MatrixPsi01[i][j].SetMatrixElement(k, l, Tmp);
+		  }
+	      for (int k = 0; k < MatrixPsi10[i][j].GetNbrRow(); ++k)
+		for (int l = 0; l < MatrixPsi10[i][j].GetNbrColumn(); ++l)
+		  {
+		    double Tmp;
+		    MatrixPsi10[i][j].GetMatrixElement(k, l, Tmp);
+		    Tmp *= (MultiplicityFactor[2 * i + 3][k] * MultiplicityFactor[2 * j][l]);
+		    MatrixPsi10[i][j].SetMatrixElement(k, l, Tmp);
+		  }
+	    }
 	  MatrixPsi01[i][j] *= this->MatrixElementNormalization;
-	  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
 	  MatrixPsi10[i][j] *= this->MatrixElementNormalization;
 	}
     }
@@ -1098,12 +1171,13 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 // precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
 // precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
 // basis = basis that related the partitions to their index
+// temporaryOccupationNumber = local temporary to store the occupation numbers 
 // return value = scalar product
 
 LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
 										    LongRational& centralCharge12, LongRational& invCentralCharge3, LongRational& weight,
 										    LongRationalMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
-										    BosonOnDiskShort** basis)
+										    BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
 {
   if (partitionLength == 0)
     {
@@ -1200,34 +1274,34 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 	  if ((TmpPLevel2 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
 	    {
 	      for (int k = 0; k <= (this->EffectivePLevel + 1); ++k)
-		this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		temporaryOccupationNumber[k] = 0x0ul;	  
 	      for (TmpPosition = 0; TmpPosition < position; ++TmpPosition)
 		{
-		  this->TemporaryOccupationNumber[partition[TmpPosition]]++;	      
+		  temporaryOccupationNumber[partition[TmpPosition]]++;	      
 		}
-	      this->TemporaryOccupationNumber[0] = TmpPLevel1 - position;
+	      temporaryOccupationNumber[0] = TmpPLevel1 - position;
 	      FlagSorted = true;
 	      for (int k = 1; k <= (this->EffectivePLevel + 1); k += 2)
-		if (this->TemporaryOccupationNumber[k] > 1l)
+		if (temporaryOccupationNumber[k] > 1l)
 		  FlagSorted = false;
 	      if (FlagSorted == true)
 		{
-		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
 		  for (int k = 0; k <= (this->EffectivePLevel + 1); ++k)
-		    this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		    temporaryOccupationNumber[k] = 0x0ul;	  
 		  for (TmpPosition = position; TmpPosition < partitionLength; ++TmpPosition)
 		    {
-		      this->TemporaryOccupationNumber[-partition[TmpPosition]]++;	      
+		      temporaryOccupationNumber[-partition[TmpPosition]]++;	      
 		    }
-		  this->TemporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+		  temporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
 		  FlagSorted = true;
 		  for (int k = 1; k <= (this->EffectivePLevel + 1); k += 2)
-		    if (this->TemporaryOccupationNumber[k] > 1l)
+		    if (temporaryOccupationNumber[k] > 1l)
 		      FlagSorted = false;
 		  if (FlagSorted == true)
 		    {
 		      LongRational Tmp;		      
-		      int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+		      int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
 		      precomputedScalarProduct[TmpPLevel1].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
 		      return Tmp;
 		    }
@@ -1249,7 +1323,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 	  Tmp += (((((Store / 2l) * ((Store  / 2l) * (Store / 2l) - 1l)) * centralCharge12)
 		   + ((Store / 2l) * (2l * weight - TmpLength))) * 
 		  this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, invCentralCharge3, weight,
-							       precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+							       precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 	  for (int i = partitionLength - 1; i > position; --i)
 	    partition[i] = partition[i - 2];
 	  partition[position - 1] = Store;
@@ -1266,7 +1340,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 	  Tmp += ((LongRational((Store * Store - 1l), 8l)
 		   + invCentralCharge3 * (weight - LongRational(TmpLength, 2l))) * 
 		  this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, invCentralCharge3, weight,
-							       precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+							       precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 	  for (int i = partitionLength - 1; i > position; --i)
 	    partition[i] = partition[i - 2];
 	  partition[position - 1] = Store;
@@ -1287,14 +1361,14 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 	      Tmp += (((Store1 - Store2) / 2l)
 		      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 								     position, centralCharge12, invCentralCharge3, weight,
-								     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+								     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 	    }
 	  else
 	    {
 	      Tmp += (((Store1 - Store2) / 2l) 
 		      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 								     position - 1, centralCharge12, invCentralCharge3, weight,
-								     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+								     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 	    }
 	  for (int i = partitionLength - 1; i > position; --i)
 	    partition[i] = partition[i - 1];
@@ -1315,14 +1389,14 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 		  Tmp += ( invCentralCharge3
 			  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 									 position, centralCharge12, invCentralCharge3, weight,
-									 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+									 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 		}
 	      else
 		{
 		  Tmp += (invCentralCharge3
 			  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 									 position - 1, centralCharge12, invCentralCharge3, weight,
-									 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+									 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 		}
 	      for (int i = partitionLength - 1; i > position; --i)
 		partition[i] = partition[i - 1];
@@ -1343,14 +1417,14 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 		      Tmp += (LongRational((Store1 - 2l * Store2), 4l)
 			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 									     position, centralCharge12, invCentralCharge3, weight,
-									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 		    }
 		  else
 		    {
 		      Tmp += (LongRational((2l * Store1 - Store2), 4l)
 			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 									     position, centralCharge12, invCentralCharge3, weight,
-									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 		    }
 		}
 	      else
@@ -1360,14 +1434,14 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
 		      Tmp += (LongRational((Store1 - 2l * Store2), 4l)
 			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 									     position - 1, centralCharge12, invCentralCharge3, weight,
-									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 		    }
 		  else
 		    {
 		      Tmp += (LongRational((2l * Store1 - Store2), 4l)
 			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
 									     position - 1, centralCharge12, invCentralCharge3, weight,
-									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis));
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
 		    }
 		}
 	      for (int i = partitionLength - 1; i > position; --i)
@@ -1384,7 +1458,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
       partition[position - 1] = partition[position];
       partition[position] = Store1;
       Tmp += this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, invCentralCharge3, weight,
-							  precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis);
+							  precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber);
       Store1 = partition[position - 1];
       partition[position - 1] = partition[position];
       partition[position] = Store1;
@@ -1396,7 +1470,531 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProdu
       partition[position - 1] = partition[position];
       partition[position] = Store1;
       Tmp -= this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, invCentralCharge3, weight,
-							  precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis);
+							  precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber);
+      Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      return Tmp;
+    }
+  return Tmp;
+}
+
+// compute the scalar product matrices of the Virasoro descendant
+// 
+// partition = partition that desribes the product of Virasoro generators involved in the scalar product
+// partitionLength = partition length
+// position = position in partition starting from which all the indices are negative
+// centralCharge12 = reference on the value of the central charge divided by 12
+// invCentralCharge3 = reference on the value of three divided by the central charge
+// weight = weight of the primary field that is considered
+// return value = scalar product
+
+double FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+									      double& centralCharge12, double& invCentralCharge3, double& weight)
+{
+  if (partitionLength == 0)
+    {
+      return 1l;
+    }
+  while ((position > 0) && (partition[position - 1] < 0l))
+    --position;
+  if ((position == partitionLength) || (position == 0))
+    return 0l;
+  if (partitionLength == 2)
+    {
+      if (partition[0] != -partition[1])
+	{
+	  return 0l;
+	}
+      else
+	{
+	  if ((partition[0] & 1l) == 0)
+	    {
+	      double Tmp1 = centralCharge12;
+	      Tmp1 *= (partition[0] / 2l) * ((partition[0] / 2l) * (partition[0] / 2l) - 1l);
+	      double Tmp2 = weight;
+	      Tmp2 *= partition[0];
+	      Tmp1 += Tmp2;
+	      return Tmp1;
+	    }
+	  else
+	    {
+	      double Tmp1 = invCentralCharge3;
+	      Tmp1 *= weight;
+	      double Tmp2 = ((double) partition[0] * partition[0] - 1l) /  8.0;
+	      Tmp1 += Tmp2;
+	      return Tmp1;
+	    }
+	}
+    }
+  double Tmp = 0.0;
+  if ((partition[position - 1] + partition[position]) == 0)
+    {
+      if ((partition[position] & 1l) == 0)
+	{
+	  long TmpLength = 0l;
+	  long Store = partition[position - 1];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    TmpLength += partition[i];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 2] = partition[i];
+	  Tmp += (((((Store / 2l) * ((Store  / 2l) * (Store / 2l) - 1l)) * centralCharge12)
+		   + ((Store / 2l) * (2l * weight - TmpLength))) * 
+		  this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, invCentralCharge3, weight));
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 2];
+	  partition[position - 1] = Store;
+	  partition[position] = -Store;
+	}
+      else
+	{
+	  long TmpLength = 0l;
+	  long Store = partition[position - 1];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    TmpLength += partition[i];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 2] = partition[i];
+	  Tmp += (((((double) (Store * Store - 1l))/  8l)
+		   + invCentralCharge3 * (weight - (((double) TmpLength) / 2.0))) * 
+		  this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, invCentralCharge3, weight));
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 2];
+	  partition[position - 1] = Store;
+	  partition[position] = -Store;
+	}
+    }
+  else
+    {
+      if (((partition[position - 1] & 1l) == 0l) && ((partition[position] & 1l) == 0l))
+	{
+	  long Store1 = partition[position - 1];
+	  long Store2 = partition[position];
+	  partition[position - 1] += partition[position];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 1] = partition[i];
+	  if ((Store1 + Store2) > 0)
+	    {
+	      Tmp += (((Store1 - Store2) / 2l)
+		      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+								     position, centralCharge12, invCentralCharge3, weight));
+	    }
+	  else
+	    {
+	      Tmp += (((Store1 - Store2) / 2l) 
+		      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+								     position - 1, centralCharge12, invCentralCharge3, weight));
+	    }
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 1];
+	  partition[position] = Store2;
+	  partition[position - 1] = Store1;
+	}
+      else
+	{
+	  if (((partition[position - 1] & 1l) == 1l) && ((partition[position] & 1l) == 1l))
+	    {
+	      long Store1 = partition[position - 1];
+	      long Store2 = partition[position];
+	      partition[position - 1] += partition[position];
+	      for (int i = position + 1; i < partitionLength; ++i)
+		partition[i - 1] = partition[i];
+	      if ((Store1 + Store2) > 0)
+		{
+		  Tmp += ( invCentralCharge3
+			  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									 position, centralCharge12, invCentralCharge3, weight));
+		}
+	      else
+		{
+		  Tmp += (invCentralCharge3
+			  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									 position - 1, centralCharge12, invCentralCharge3, weight));
+		}
+	      for (int i = partitionLength - 1; i > position; --i)
+		partition[i] = partition[i - 1];
+	      partition[position] = Store2;
+	      partition[position - 1] = Store1;
+	    }
+	  else
+	    {
+	      long Store1 = partition[position - 1];
+	      long Store2 = partition[position];
+	      partition[position - 1] += partition[position];
+	      for (int i = position + 1; i < partitionLength; ++i)
+		partition[i - 1] = partition[i];
+	      if ((Store1 + Store2) > 0)
+		{
+		  if ((Store1 & 1l) == 0l)
+		    {
+		      Tmp += ((((double) (Store1 - 2l * Store2)) / 4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position, centralCharge12, invCentralCharge3, weight));
+		    }
+		  else
+		    {
+		      Tmp += ((((double) (2l * Store1 - Store2)) / 4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position, centralCharge12, invCentralCharge3, weight));
+		    }
+		}
+	      else
+		{
+		  if ((Store1 & 1l) == 0l)
+		    {
+		      Tmp += ((((double) (Store1 - 2l * Store2)) / 4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position - 1, centralCharge12, invCentralCharge3, weight));
+		    }
+		  else
+		    {
+		      Tmp += ((((double) (2l * Store1 - Store2)) / 4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position - 1, centralCharge12, invCentralCharge3, weight));
+		    }
+		}
+	      for (int i = partitionLength - 1; i > position; --i)
+		partition[i] = partition[i - 1];
+	      partition[position] = Store2;
+	      partition[position - 1] = Store1;
+	    }
+	}
+    }
+
+  if ((partition[position - 1] & partition[position] & 1l) == 0l)
+    {
+      long Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      Tmp += this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, invCentralCharge3, weight);
+      Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      return Tmp;
+    }
+  else
+    {
+      long Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      Tmp -= this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, invCentralCharge3, weight);
+      Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      return Tmp;
+    }
+}
+
+// compute the scalar product matrices of the Virasoro descendant, using information from previous levels
+// 
+// partition = partition that desribes the product of Virasoro generators involved in the scalar product
+// partitionLength = partition length
+// position = position in partition starting from which all the indices are negative
+// centralCharge12 = reference on the value of the central charge divided by 12
+// invCentralCharge3 = reference on the value of three divided by the central charge
+// weight = weight of the primary field that is considered
+// precomputedScalarProduct = matrices where scalar product matrix elements computed for previous levels are stored
+// precomputedScalarProductMaxPLevel = maxixum P level that can be accessed through precomputedScalarProduct
+// basis = basis that related the partitions to their index
+// temporaryOccupationNumber = local temporary to store the occupation numbers 
+// return value = scalar product
+
+double FQHEMPSN1SuperconformalMatrix::ComputeVirasoroDescendantScalarProduct (long* partition, int partitionLength, int position, 
+									      double& centralCharge12, double& invCentralCharge3, double& weight,
+									      RealSymmetricMatrix* precomputedScalarProduct, int precomputedScalarProductMaxPLevel, 
+									      BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
+{
+  if (partitionLength == 0)
+    {
+      return 1l;
+    }
+  while ((position > 0) && (partition[position - 1] < 0l))
+    --position;
+  if ((position == partitionLength) || (position == 0))
+    return 0l;
+  if (partitionLength == 2)
+    {
+      if (partition[0] != -partition[1])
+	{
+	  return 0l;
+	}
+      else
+	{
+	  if ((partition[0] & 1l) == 0)
+	    {
+	      double Tmp1 = centralCharge12;
+	      Tmp1 *= (partition[0] / 2l) * ((partition[0] / 2l) * (partition[0] / 2l) - 1l);
+	      double Tmp2 = weight;
+	      Tmp2 *= partition[0];
+	      Tmp1 += Tmp2;
+	      return Tmp1;
+	    }
+	  else
+	    {
+	      double Tmp1 = invCentralCharge3 ;
+	      Tmp1 *= weight;
+	      double Tmp2 = ((double) (partition[0] * partition[0] - 1l)) / 8.0;
+	      Tmp1 += Tmp2;
+	      return Tmp1;
+	    }
+	}
+    }
+  int TmpPosition = 0;
+  while ((TmpPosition < position) && (partition[TmpPosition] >= 0))
+    ++TmpPosition;
+  if (TmpPosition == position)
+    {
+      TmpPosition = 1;
+      int TmpPLevel1 = partition[0];
+      bool FlagSorted = true;
+      if ((partition[0] & 1) == 1)
+	{
+	  while ((TmpPosition < position) && (FlagSorted == true) && ((partition[TmpPosition] & 1) == 1))
+	    {
+	      TmpPLevel1 += partition[TmpPosition];
+	      if (partition[TmpPosition - 1] < partition[TmpPosition])
+		FlagSorted = false;
+	      ++TmpPosition;
+	    }
+	  if (TmpPosition < position)
+	    {
+	      TmpPLevel1 += partition[TmpPosition];
+	      ++TmpPosition;
+	    }
+	}
+      while ((TmpPosition < position) && (FlagSorted == true))
+	{
+	  TmpPLevel1 += partition[TmpPosition];
+	  if ((partition[TmpPosition - 1] < partition[TmpPosition]) || ((partition[TmpPosition] & 1) == 1))
+	    FlagSorted = false;
+	  ++TmpPosition;
+	}
+      if ((TmpPLevel1 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
+	{     
+	  int TmpPLevel2 = -partition[TmpPosition];	  
+	  FlagSorted = true;
+	  ++TmpPosition;
+	  if ((partition[TmpPosition - 1] & 1) == 0)
+	    {
+	      while ((TmpPosition < partitionLength) && (FlagSorted == true) && ((partition[TmpPosition] & 1) == 0))
+		{
+		  TmpPLevel2 -= partition[TmpPosition];
+		  if (partition[TmpPosition - 1] < partition[TmpPosition])
+		    FlagSorted = false;
+		  ++TmpPosition;
+		}
+	      if (TmpPosition < partitionLength)
+		{
+		  TmpPLevel2 -= partition[TmpPosition];
+		  ++TmpPosition;
+		}
+	    }
+	  while ((TmpPosition < partitionLength) && (FlagSorted == true))
+	    {
+	      TmpPLevel2 -= partition[TmpPosition];
+	      if ((partition[TmpPosition - 1] < partition[TmpPosition]) || ((partition[TmpPosition] & 1) == 0))
+		FlagSorted = false;
+	      ++TmpPosition;
+	    }
+	  if ((TmpPLevel2 <= precomputedScalarProductMaxPLevel) && (FlagSorted == true))
+	    {
+	      for (int k = 0; k <= (this->EffectivePLevel + 1); ++k)
+		temporaryOccupationNumber[k] = 0x0ul;	  
+	      for (TmpPosition = 0; TmpPosition < position; ++TmpPosition)
+		{
+		  temporaryOccupationNumber[partition[TmpPosition]]++;	      
+		}
+	      temporaryOccupationNumber[0] = TmpPLevel1 - position;
+	      FlagSorted = true;
+	      for (int k = 1; k <= (this->EffectivePLevel + 1); k += 2)
+		if (temporaryOccupationNumber[k] > 1l)
+		  FlagSorted = false;
+	      if (FlagSorted == true)
+		{
+		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
+		  for (int k = 0; k <= (this->EffectivePLevel + 1); ++k)
+		    temporaryOccupationNumber[k] = 0x0ul;	  
+		  for (TmpPosition = position; TmpPosition < partitionLength; ++TmpPosition)
+		    {
+		      temporaryOccupationNumber[-partition[TmpPosition]]++;	      
+		    }
+		  temporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+		  FlagSorted = true;
+		  for (int k = 1; k <= (this->EffectivePLevel + 1); k += 2)
+		    if (temporaryOccupationNumber[k] > 1l)
+		      FlagSorted = false;
+		  if (FlagSorted == true)
+		    {
+		      double Tmp;		      
+		      int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
+		      precomputedScalarProduct[TmpPLevel1].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
+		      return Tmp;
+		    }
+		}
+	    }
+	}
+    }
+  double Tmp = 0.0;
+  if ((partition[position - 1] + partition[position]) == 0)
+    {
+      if ((partition[position] & 1l) == 0)
+	{
+	  long TmpLength = 0l;
+	  long Store = partition[position - 1];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    TmpLength += partition[i];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 2] = partition[i];
+	  Tmp += (((((Store / 2l) * ((Store  / 2l) * (Store / 2l) - 1l)) * centralCharge12)
+		   + ((Store / 2l) * (2l * weight - TmpLength))) * 
+		  this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, invCentralCharge3, weight,
+							       precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 2];
+	  partition[position - 1] = Store;
+	  partition[position] = -Store;
+	}
+      else
+	{
+	  long TmpLength = 0l;
+	  long Store = partition[position - 1];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    TmpLength += partition[i];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 2] = partition[i];
+	  Tmp += (((((double) (Store * Store - 1l)) / 8.0)
+		   + invCentralCharge3 * (weight - ((double) TmpLength) *0.5)) * 
+		  this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 2, position - 1, centralCharge12, invCentralCharge3, weight,
+							       precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 2];
+	  partition[position - 1] = Store;
+	  partition[position] = -Store;
+	}
+    }
+  else
+    {
+      if (((partition[position - 1] & 1l) == 0l) && ((partition[position] & 1l) == 0l))
+	{
+	  long Store1 = partition[position - 1];
+	  long Store2 = partition[position];
+	  partition[position - 1] += partition[position];
+	  for (int i = position + 1; i < partitionLength; ++i)
+	    partition[i - 1] = partition[i];
+	  if ((Store1 + Store2) > 0)
+	    {
+	      Tmp += (((Store1 - Store2) / 2l)
+		      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+								     position, centralCharge12, invCentralCharge3, weight,
+								     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+	    }
+	  else
+	    {
+	      Tmp += (((Store1 - Store2) / 2l) 
+		      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+								     position - 1, centralCharge12, invCentralCharge3, weight,
+								     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+	    }
+	  for (int i = partitionLength - 1; i > position; --i)
+	    partition[i] = partition[i - 1];
+	  partition[position] = Store2;
+	  partition[position - 1] = Store1;
+	}
+      else
+	{
+	  if (((partition[position - 1] & 1l) == 1l) && ((partition[position] & 1l) == 1l))
+	    {
+	      long Store1 = partition[position - 1];
+	      long Store2 = partition[position];
+	      partition[position - 1] += partition[position];
+	      for (int i = position + 1; i < partitionLength; ++i)
+		partition[i - 1] = partition[i];
+	      if ((Store1 + Store2) > 0)
+		{
+		  Tmp += ( invCentralCharge3
+			  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									 position, centralCharge12, invCentralCharge3, weight,
+									 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+		}
+	      else
+		{
+		  Tmp += (invCentralCharge3
+			  * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									 position - 1, centralCharge12, invCentralCharge3, weight,
+									 precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+		}
+	      for (int i = partitionLength - 1; i > position; --i)
+		partition[i] = partition[i - 1];
+	      partition[position] = Store2;
+	      partition[position - 1] = Store1;
+	    }
+	  else
+	    {
+	      long Store1 = partition[position - 1];
+	      long Store2 = partition[position];
+	      partition[position - 1] += partition[position];
+	      for (int i = position + 1; i < partitionLength; ++i)
+		partition[i - 1] = partition[i];
+	      if ((Store1 + Store2) > 0)
+		{
+		  if ((Store1 & 1l) == 0l)
+		    {
+		      Tmp += ((((double) (Store1 - 2l * Store2)) /  4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position, centralCharge12, invCentralCharge3, weight,
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+		    }
+		  else
+		    {
+		      Tmp += ((((double) ((2l * Store1 - Store2))) /  4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position, centralCharge12, invCentralCharge3, weight,
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+		    }
+		}
+	      else
+		{
+		  if ((Store1 & 1l) == 0l)
+		    {
+		      Tmp += ((((double) (Store1 - 2l * Store2)) / 4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position - 1, centralCharge12, invCentralCharge3, weight,
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+		    }
+		  else
+		    {
+		      Tmp += ((((double) (2l * Store1 - Store2)) / 4.0)
+			      * this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength - 1, 
+									     position - 1, centralCharge12, invCentralCharge3, weight,
+									     precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber));
+		    }
+		}
+	      for (int i = partitionLength - 1; i > position; --i)
+		partition[i] = partition[i - 1];
+	      partition[position] = Store2;
+	      partition[position - 1] = Store1;
+	    }
+	}
+    }
+
+  if ((partition[position - 1] & partition[position] & 1l) == 0l)
+    {
+      long Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      Tmp += this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, invCentralCharge3, weight,
+							  precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber);
+      Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      return Tmp;
+    }
+  else
+    {
+      long Store1 = partition[position - 1];
+      partition[position - 1] = partition[position];
+      partition[position] = Store1;
+      Tmp -= this->ComputeVirasoroDescendantScalarProduct(partition, partitionLength, position + 1, centralCharge12, invCentralCharge3, weight,
+							  precomputedScalarProduct, precomputedScalarProductMaxPLevel, basis, temporaryOccupationNumber);
       Store1 = partition[position - 1];
       partition[position - 1] = partition[position];
       partition[position] = Store1;
@@ -1565,6 +2163,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 // precomputedDescendantMatrixElementMaxLeftPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the left entry
 // precomputedDescendantMatrixElementMaxRightPLevel = maxixum P level that can be accessed through precomputedDescendantMatrixElement for the right entry
 // basis = basis that related the partitions to their index
+// temporaryOccupationNumber = local temporary to store the occupation numbers 
 // return value = matrix element
   
 LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long* partition, int partitionLength, 
@@ -1574,7 +2173,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 								       LongRationalMatrix** precomputedDescendantMatrixElement, 
 								       int precomputedDescendantMatrixElementMaxLeftPLevel, 
 								       int precomputedDescendantMatrixElementMaxRightPLevel, 
-								       BosonOnDiskShort** basis)
+								       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
 {
   if (partitionLength == 0)
     {
@@ -1657,21 +2256,21 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 	      if ((TmpPLevel2 <= precomputedDescendantMatrixElementMaxRightPLevel) && (FlagSorted == true))
 		{
 		  for (int k = 0; k <= (this->PLevel + 1); ++k)
-		    this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		    temporaryOccupationNumber[k] = 0x0ul;	  
 		  for (TmpPosition = 0; TmpPosition < position; ++TmpPosition)
 		    {
-		      this->TemporaryOccupationNumber[partition[TmpPosition]]++;	      
+		      temporaryOccupationNumber[partition[TmpPosition]]++;	      
 		    }
-		  this->TemporaryOccupationNumber[0] = TmpPLevel1 - position;
-		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+		  temporaryOccupationNumber[0] = TmpPLevel1 - position;
+		  int TmpIndex1 = basis[TmpPLevel1]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
 		  for (int k = 0; k <= (this->PLevel + 1); ++k)
-		    this->TemporaryOccupationNumber[k] = 0x0ul;	  
+		    temporaryOccupationNumber[k] = 0x0ul;	  
 		  for (TmpPosition = position; TmpPosition < partitionLength; ++TmpPosition)
 		    {
-		      this->TemporaryOccupationNumber[-partition[TmpPosition]]++;	      
+		      temporaryOccupationNumber[-partition[TmpPosition]]++;	      
 		    }
-		  this->TemporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
-		  int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(this->TemporaryOccupationNumber);
+		  temporaryOccupationNumber[0] = TmpPLevel2 - partitionLength + position;
+		  int TmpIndex2 = basis[TmpPLevel2]->FindStateIndexFromOccupationNumber(temporaryOccupationNumber);
 		  LongRational Tmp;
 		  precomputedDescendantMatrixElement[TmpPLevel1][TmpPLevel2].GetMatrixElement(TmpIndex1, TmpIndex2, Tmp);
 		  return Tmp;
@@ -1695,7 +2294,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 		  this->ComputeDescendantMatrixElement(partition, partitionLength - 2, descendantPosition, 
 						       position - 1, centralCharge12, weight1, weight2, weight,
 						       precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
-						       precomputedDescendantMatrixElementMaxRightPLevel, basis));
+						       precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber));
 	  for (int i = partitionLength - 1; i > position; --i)
 	    partition[i] = partition[i - 2];
 	  partition[position - 1] = Store;
@@ -1714,7 +2313,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 		      * this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition, 
 							     position, centralCharge12, weight1, weight2, weight,
 							     precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
-							     precomputedDescendantMatrixElementMaxRightPLevel, basis));
+							     precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber));
 	    }
 	  else
 	    {
@@ -1722,7 +2321,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 		      * this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition, 
 							     position - 1, centralCharge12, weight1, weight2, weight,
 							     precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
-							     precomputedDescendantMatrixElementMaxRightPLevel, basis));
+							     precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber));
 	    }
 	  for (int i = partitionLength - 1; i > position; --i)
 	    partition[i] = partition[i - 1];
@@ -1736,7 +2335,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
       Tmp += this->ComputeDescendantMatrixElement(partition, partitionLength, descendantPosition, position + 1, 
 						  centralCharge12, weight1, weight2, weight,
 						  precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
-						  precomputedDescendantMatrixElementMaxRightPLevel, basis);
+						  precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
       Store1 = partition[position - 1];
       partition[position - 1] = partition[position];
       partition[position] = Store1;
@@ -1746,7 +2345,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
   LongRational Tmp1 = this->ComputeDescendantMatrixElement(partition, partitionLength, descendantPosition - 1, position, 
 							   centralCharge12, weight1, weight2, weight,
 							   precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
-							   precomputedDescendantMatrixElementMaxRightPLevel, basis);
+							   precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
   LongRational Tmp2 = weight;
   Tmp2 *= partition[position - 1];
   Tmp2 += weight1;
@@ -1763,7 +2362,7 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
   Tmp2 *= this->ComputeDescendantMatrixElement(partition, partitionLength - 1, descendantPosition - 1, position - 1, 
 					       centralCharge12, weight1, weight2, weight,
 					       precomputedDescendantMatrixElement, precomputedDescendantMatrixElementMaxLeftPLevel,
-					       precomputedDescendantMatrixElementMaxRightPLevel, basis);
+					       precomputedDescendantMatrixElementMaxRightPLevel, basis, temporaryOccupationNumber);
   for (int i = partitionLength - 1; i >= position; --i)
     partition[i] = partition[i - 1];
   partition[position - 1] = Store;

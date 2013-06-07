@@ -331,14 +331,15 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::ExtractBlock(SparseRealMatrix& matrix, i
 {
   double Tmp;
 
-  int NbrK1 = this->NbrIndicesPerPLevel[pLevel1] / this->NbrNValuesPerPLevel[pLevel1];
-  int NbrK2 = this->NbrIndicesPerPLevel[pLevel2] / this->NbrNValuesPerPLevel[pLevel2];
+  int NbrK1 = this->GetBondIndexRange(pLevel1, q1);
+  int NbrK2 = this->GetBondIndexRange(pLevel2, q2);
   SparseRealMatrix TmpMatrix (NbrK1, NbrK2);
   for (int k1 = 0; k1 < NbrK1; ++k1)
     {
       for (int k2 = 0; k2 < NbrK2; ++k2)
 	{
-	  matrix.GetMatrixElement(this->GetMatrixIndex(pLevel1, k1, q1), this->GetMatrixIndex(pLevel2, k2, q2), Tmp);
+	  matrix.GetMatrixElement(this->GetBondIndexWithFixedChargeAndPLevel(k1, pLevel1, q1), 
+				  this->GetBondIndexWithFixedChargeAndPLevel(k2, pLevel2, q2), Tmp);
 	  if (Tmp != 0.0)
 	    TmpMatrix.SetMatrixElement(k1, k2, Tmp);
 	}
