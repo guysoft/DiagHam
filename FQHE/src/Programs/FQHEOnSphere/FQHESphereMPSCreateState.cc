@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "file that describes the root configuration");
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the root partition instead of using the reference-file", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*OutputGroup) += new BooleanOption ('\n', "normalize-jack", "use the Jack normalization, forcing the first component to be 1");
@@ -93,8 +94,14 @@ int main(int argc, char** argv)
       return 0;
     }
 
-  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
-    return -1;
+  if ((Manager.GetInteger("nbr-fluxquanta") <= 0) && (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, NbrFluxQuanta, ReferenceState) == false))
+    {
+      return -1;
+    }
+  if (Manager.GetInteger("nbr-fluxquanta") > 0)
+    {
+      NbrFluxQuanta = Manager.GetInteger("nbr-fluxquanta");
+    }
 
   bool CylinderFlag = Manager.GetBoolean("normalize-cylinder");
   double AspectRatio = Manager.GetDouble("aspect-ratio");

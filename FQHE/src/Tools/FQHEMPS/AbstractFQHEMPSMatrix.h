@@ -138,12 +138,24 @@ class AbstractFQHEMPSMatrix
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix
-  // pLevel1 = tuncation level of the block left indices
+  // pLevel1 = truncation level of the block left indices
   // q1 = charge index of the block left indices
-  // pLevel1 = tuncation level of the block right indices
+  // pLevel1 = truncation level of the block right indices
   // q2 = charge index of the block left indices
   // return value = block corresponding to the quantum numbers
   virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
+
+  // extract a block with fixed quantum numbers of a given matrix written the MPS basis
+  //
+  // matrix = reference on the matrix
+  // pLevel1 = truncation level of the block left indices
+  // cftSector1 = CFT sector of the blck left indices
+  // q1 = charge index of the block left indices
+  // pLevel1 = truncation level of the block right indices
+  // cftSector2 = CFT sector of the blck right indices
+  // q2 = charge index of the block left indices
+  // return value = block corresponding to the quantum numbers
+  virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int cftSector1, int q1, int pLevel2, int cftSector2, int q2);
 
   // get the range for the bond index when fixing the tuncation level and the charge index
   //

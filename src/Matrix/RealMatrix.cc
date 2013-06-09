@@ -1035,6 +1035,18 @@ RealMatrix RealMatrix::DuplicateAndTranspose ()
   return TmpMatrix;
 }
 
+// evaluate matrix trace
+//
+// return value = matrix trace 
+
+double RealMatrix::Tr ()
+{
+  double Tmp = 0.0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    Tmp += this->Columns[i][i];
+  return Tmp;
+}
+
 // evaluate matrix determinant (skrewing up matrix elements)
 //
 // return value = matrix determinant 

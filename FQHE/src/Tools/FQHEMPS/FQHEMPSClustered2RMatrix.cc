@@ -2537,8 +2537,6 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 	}
       else
 	{
-	  TmpMinQ = this->NbrNValue - 1;
-	  TmpMaxQ = 0;    
 	  for (int Q = 0; Q < this->NbrNValue; ++Q)
 	    {
 	      int QPrime = Q;
@@ -2622,7 +2620,7 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 		{
 		  if (TmpP > TmpMaxP2)
 		    TmpMaxP2 = TmpP;	    
-		  TmpP -= QPrime - NValueShift;
+		  TmpP -= (QPrime / 2) - NValueShift;
 		  QPrime += (QValue - 2);
 		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		    {
@@ -2645,6 +2643,52 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 	}
       else
 	{
+	  for (int Q = 1; Q < this->NbrNValue; Q += 2)
+	    {
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue - 2);
+		  TmpP += QPrime / 2 - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue - 2);
+		      TmpP += (QPrime - this->RIndex) / 2 - NValueShift;
+		    }
+		}
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime - this->RIndex) / 2 - NValueShift;
+		  QPrime += (QValue - 2);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime / 2) - NValueShift;
+		      QPrime += (QValue - 2);
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	    
+		}
+	    }
+	  minQ = TmpMinQ;
+	  maxQ = TmpMaxQ;
 	}
     }
   cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   

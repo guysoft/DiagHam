@@ -361,7 +361,7 @@ RealVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultip
 			  for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
 			    {
 			      int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-			      int TmpIndex3 = SearchInArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
+			      int TmpIndex3 = SearchInUnsortedArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
 			      if (TmpIndex3 >= 0)
 				Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[LocalShift + TmpIndex3];
 			    }
@@ -526,7 +526,7 @@ ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMul
 			  for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
 			    {
 			      int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-			      int TmpIndex3 = SearchInArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
+			      int TmpIndex3 = SearchInUnsortedArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
 			      if (TmpIndex3 >= 0)
 				Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[LocalShift + TmpIndex3];
 			    }
@@ -692,7 +692,7 @@ long TensorProductSparseMatrixSelectedBlockHamiltonian::PartialFastMultiplicatio
 			      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
 				{
 				  int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-				  int TmpIndex3 = SearchInArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
+				  int TmpIndex3 = SearchInUnsortedArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], LocalBlockIndices, LocalBlockSize);
 				  if ((TmpIndex3 >= 0) && (TmpRightMatrix.MatrixElements[l] != 0.0))
 				    {
 //				      TmpNonZeroMatrixElements[TmpNbrNonZeroMatrixElements] = Tmp2 * TmpRightMatrix.MatrixElements[l];
@@ -799,7 +799,7 @@ void TensorProductSparseMatrixSelectedBlockHamiltonian::PartialEnableFastMultipl
 			      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
 				{
 				  int TmpIndex2 = TmpIndex + TmpRightMatrix.ColumnIndices[l];
-				  int TmpIndex3 = SearchInArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], 
+				  int TmpIndex3 = SearchInUnsortedArray<long>(TmpIndex + TmpRightMatrix.ColumnIndices[l], 
 								      LocalBlockIndices, LocalBlockSize);
 				  if ((TmpIndex3 >= 0) && (TmpRightMatrix.MatrixElements[l] != 0.0))
 				    {

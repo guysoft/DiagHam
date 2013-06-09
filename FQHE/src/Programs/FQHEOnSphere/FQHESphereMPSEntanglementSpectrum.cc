@@ -503,6 +503,7 @@ int main(int argc, char** argv)
 	    }
 	}
 
+      double EntanglementEntropy = 0.0;
       for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 	{
 	  for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
@@ -513,13 +514,17 @@ int main(int argc, char** argv)
 	      if ((QValue >= LocalMinQValue) && (QValue <= LocalMaxQValue))
 		{
 		  for (int i = 0; i < EntanglementSpectrumDimension[QValue - MinQValue][PLevel]; ++i)
-		    File << "0 " << QValue << " " << PLevel << " " << PLevel << " " 
-			 <<  (EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)  
-			 <<  " " << (-log(EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)) <<endl;
+		    {
+		      File << "0 " << QValue << " " << PLevel << " " << PLevel << " " 
+			   <<  (EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)  
+			   <<  " " << (-log(EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)) <<endl;
+		      EntanglementEntropy -= (log(EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA)
+					      * EntanglementSpectrum[QValue - MinQValue][PLevel][i] / TotalTraceThoA);
+		    }
 		}
 	    }
 	}
-
+      cout << "S_A=" << EntanglementEntropy << endl;
       cout << "Tr(rho_A)=" << TotalTraceThoA << endl;
       delete[] TmpLeftFactors;
       delete[] TmpRightFactors;

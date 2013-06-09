@@ -215,13 +215,15 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		{
 		  if (this->Options->GetString("import-bmatrices") != 0)
 		    {
-		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), this->Options->GetString("import-bmatrices"), 
+		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), 
+							       this->Options->GetString("import-bmatrices"), 
 							       CylinderFlag, Kappa);
 		    }
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
+							       this->Options->GetString("matrices-cft"), !(this->Options->GetBoolean("use-nonrational")), 
+							       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	      else
@@ -245,7 +247,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		  if (this->Options->GetString("import-bmatrices") != 0)
 		    {
 		      MPSMatrix = new FQHEMPSN1SuperconformalMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-								    this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+								    this->Options->GetString("import-bmatrices"), this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa);
 		    }
 		  else
 		    {
@@ -255,7 +257,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 			  return 0;
 			}
 		      MPSMatrix = new FQHEMPSN1SuperconformalMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
-								    CylinderFlag, Kappa, architecture);
+								    this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	      else

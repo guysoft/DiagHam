@@ -190,6 +190,38 @@ SparseRealMatrix AbstractFQHEMPSMatrix::ExtractBlock(SparseRealMatrix& matrix, i
   return TmpMatrix;
 }
 
+// extract a block with fixed quantum numbers of a given matrix written the MPS basis
+//
+// matrix = reference on the matrix
+// pLevel1 = truncation level of the block left indices
+// cftSector1 = CFT sector of the blck left indices
+// q1 = charge index of the block left indices
+// pLevel1 = truncation level of the block right indices
+// cftSector2 = CFT sector of the blck right indices
+// q2 = charge index of the block left indices
+// return value = block corresponding to the quantum numbers
+
+SparseRealMatrix AbstractFQHEMPSMatrix::ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int cftSector1, int q1, int pLevel2, int cftSector2, int q2)
+{
+  int BlockNbrRow = this->GetBondIndexRange(pLevel1, q1, cftSector1);
+  int BlockNbrColumn = this->GetBondIndexRange(pLevel2, q2, cftSector2);
+  SparseRealMatrix TmpMatrix(BlockNbrRow, BlockNbrColumn);
+  double Tmp = 0.0;
+  for (int i = 0; i < BlockNbrRow; ++i)
+    {
+      for (int j = 0; j < BlockNbrColumn; ++j)
+	{
+	  matrix.GetMatrixElement(this->GetBondIndexWithFixedChargePLevelCFTSector(i, pLevel1, q1, cftSector1),
+				  this->GetBondIndexWithFixedChargePLevelCFTSector(j, pLevel2, q2, cftSector2), Tmp);
+	  if (Tmp != 0.0)
+	    {
+	      TmpMatrix.SetMatrixElement(i, j, Tmp);
+	    }
+	}
+    }
+  return TmpMatrix;
+}
+
 // get the charge index range at a given truncation level
 // 
 // pLevel = tuncation level

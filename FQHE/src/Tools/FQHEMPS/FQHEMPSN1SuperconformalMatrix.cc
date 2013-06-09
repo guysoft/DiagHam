@@ -61,15 +61,17 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix()
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
 // fileName = name of the file that contains the state description
+// trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
-FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag, double kappa, 
+FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName,  bool trimChargeIndices, bool cylinderFlag, double kappa, 
 							     AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->PLevel = pLevel;
@@ -160,16 +162,18 @@ FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int pLevel, int nbr
 // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
 // pLevel = |P| level truncation
 // fileName = name of the file that contains the B matrices
+// trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 
-FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag, double kappa)
+FQHEMPSN1SuperconformalMatrix::FQHEMPSN1SuperconformalMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName,  bool trimChargeIndices, bool cylinderFlag, double kappa)
 {
   this->RIndex = rIndex;
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->LoadMatrices(fileName);
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
@@ -512,27 +516,27 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
   NValueShift = 2 * this->PLevel - 1;
   QValueDenominator = 1;
 
-  this->ComputeLinearizedIndexArrays();
+  int MatrixSize = this->ComputeLinearizedIndexArrays();
      
-  this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn())) * this->NbrNValue;
-  for (int i = 1; i <= this->PLevel; ++i)
-    {
-      this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
-      this->StartingIndexPerPLevel[i] = new int [i + 1];      
-      this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
-      int Tmp = 0;
-      int Tmp2;
-      for (int j = 0; j < i; ++j)
-	{
-	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn()) * this->NbrNValue;
-	  this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
-	  Tmp += Tmp2;
-	}
-      Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn()) * this->NbrNValue;
-      this->NbrIndicesPerPLevel[i] =  Tmp;
-    }
+//   this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn())) * this->NbrNValue;
+//   for (int i = 1; i <= this->PLevel; ++i)
+//     {
+//       this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
+//       this->StartingIndexPerPLevel[i] = new int [i + 1];      
+//       this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
+//       int Tmp = 0;
+//       int Tmp2;
+//       for (int j = 0; j < i; ++j)
+// 	{
+// 	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn()) * this->NbrNValue;
+// 	  this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
+// 	  Tmp += Tmp2;
+// 	}
+//       Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn()) * this->NbrNValue;
+//       this->NbrIndicesPerPLevel[i] =  Tmp;
+//     }
   
-  int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
+//   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
   cout << "B matrix size = " << MatrixSize << endl;
 
   cout << "computing Psi matrix elements" << endl;
@@ -697,7 +701,7 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 	  RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductIdentity[2 * (i - p) + 3];
 	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
 	    {	      
-	      for (int j = 1; j < this->NbrNValue; ++j)
+	      for (int j = this->NInitialValuePerPLevelCFTSector[i][0] + 1; j <= this->NLastValuePerPLevelCFTSector[i][0]; ++j)
 		{
 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
 		    {
@@ -706,6 +710,12 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1)];
 			}
 		    }
+		}
+	    }
+	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
+	    {	      
+	      for (int j = this->NInitialValuePerPLevelCFTSector[i][1] + 1; j <= this->NLastValuePerPLevelCFTSector[i][1]; ++j)
+		{
 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 		    {
 		      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex2)
@@ -733,7 +743,7 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 	  RealSymmetricMatrix& TmpScalarProductPsi = ScalarProductIdentity[2 * (i - p) + 3];
 	  for (int ChargedIndex = 0; ChargedIndex < TmpSpaceCharged->GetHilbertSpaceDimension(); ++ChargedIndex)
 	    {	      
-	      for (int j = 1; j < this->NbrNValue; ++j)
+	      for (int j = this->NInitialValuePerPLevelCFTSector[i][0] + 1; j <= this->NLastValuePerPLevelCFTSector[i][0]; ++j)
 		{
 		  TmpSpaceNeutral = SupersymmetricU1BosonBasis[2 * (i - p)];
 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentityLeft.GetNbrColumn(); ++NeutralIndex1)
@@ -758,6 +768,9 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
  							    this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 			}
 		    }
+		}
+	      for (int j = this->NInitialValuePerPLevelCFTSector[i][1] + 1; j <= this->NLastValuePerPLevelCFTSector[i][1]; ++j)
+		{
 		  TmpSpaceNeutral = SupersymmetricU1BosonBasis[2 * (i - p) + 3];
 		  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsiLeft.GetNbrColumn(); ++NeutralIndex1)
 		    {
@@ -777,15 +790,15 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			    Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
 								     + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 								     + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1),
- 							    this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+							this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
 			}
 		    }
 		}
 	    }
 	}
     }
-
+  
   // B^[1]  matrix evaluation
   for (int i = 0; i < MatrixSize; ++i)
     TmpNbrElementPerRow[i] = 0;
@@ -820,20 +833,28 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 			  int N1;
 			  N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
 			  N1 = N2 + QValue - 1;
-			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
 			    {
-			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 				{
-				  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1)];
+				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+				    {
+				      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1)];
+				    }
 				}
 			    }
 			  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
 			  N1 = N2 + QValue - 1;
-			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
-			    {
-			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
+			    { 
+			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 				{
-				  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1)];
+				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+				    {
+				      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1)];
+				    }
 				}
 			    }
 			}
@@ -842,8 +863,8 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 	    }
 	}
     }
-
-
+    
+    
   BMatrices[1] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
 
   for (int i = 0; i <= this->PLevel; ++i)
@@ -869,61 +890,68 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
 		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
 			{	      
 			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			  BosonOnDiskShort* TmpSpaceNeutral1 = SupersymmetricU1BosonBasis[2 * (i - p)];
+			  BosonOnDiskShort* TmpSpaceNeutral2 = SupersymmetricU1BosonBasis[2 * (j - q) + 3];
 			  int N2;
 			  int N1;
 			  N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
 			  N1 = N2 + QValue - 1;
-			  BosonOnDiskShort* TmpSpaceNeutral1 = SupersymmetricU1BosonBasis[2 * (i - p)];
-			  BosonOnDiskShort* TmpSpaceNeutral2 = SupersymmetricU1BosonBasis[2 * (j - q) + 3];
-			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
-			    {
-			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
+			    { 
+			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 				{
-				  double Tmp = 0.0;
-				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
 				    {
-				      double Tmp1 = 0.0;			      
-				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				      double Tmp = 0.0;
+				      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
 					{
-					  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+					  double Tmp1 = 0.0;			      
+					  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+					    {
+					      Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+					    }
+					  Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
 					}
-				      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
-				    }
-				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
-				  if (this->CylinderFlag)
-				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
-										   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
-										   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1),
-								this->Get2RMatrixIndexV2(j, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+				      Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				      if (this->CylinderFlag)
+					Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+										       + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
+										       + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
+				      BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1),
+								    this->Get2RMatrixIndexV2(j, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+				    }				  
 				}
-
 			    }
 			  TmpSpaceNeutral1 = SupersymmetricU1BosonBasis[2 * (i - p) + 3];
 			  TmpSpaceNeutral2 = SupersymmetricU1BosonBasis[2 * (j - q)];
 			  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
 			  N1 = N2 + QValue - 1;
-			  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
-			    {
-			      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
+			    { 
+			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 				{
-				  double Tmp = 0.0;
-				  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
 				    {
-				      double Tmp1 = 0.0;			      
-				      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+				      double Tmp = 0.0;
+				      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
 					{
-					  Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+					  double Tmp1 = 0.0;			      
+					  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+					    {
+					      Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+					    }
+					  Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
 					}
-				      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+				      Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+				      if (this->CylinderFlag)
+					Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+										       + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
+										       + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
+				      BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1),
+								    this->Get2RMatrixIndexV2(j, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 				    }
-				  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
-				  if (this->CylinderFlag)
-				    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
-										   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
-										   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1),
-								this->Get2RMatrixIndexV2(j, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 				}
 			    }
 			}
@@ -2167,13 +2195,13 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
 // return value = matrix element
   
 LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long* partition, int partitionLength, 
-								       int descendantPosition, int position, 
-								       LongRational& centralCharge12, LongRational& weight1, 
-								       LongRational& weight2, LongRational& weight,
-								       LongRationalMatrix** precomputedDescendantMatrixElement, 
-								       int precomputedDescendantMatrixElementMaxLeftPLevel, 
-								       int precomputedDescendantMatrixElementMaxRightPLevel, 
-								       BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
+									    int descendantPosition, int position, 
+									    LongRational& centralCharge12, LongRational& weight1, 
+									    LongRational& weight2, LongRational& weight,
+									    LongRationalMatrix** precomputedDescendantMatrixElement, 
+									    int precomputedDescendantMatrixElementMaxLeftPLevel, 
+									    int precomputedDescendantMatrixElementMaxRightPLevel, 
+									    BosonOnDiskShort** basis, unsigned long* temporaryOccupationNumber)
 {
   if (partitionLength == 0)
     {
@@ -2368,31 +2396,6 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
   partition[position - 1] = Store;
   Tmp1 += Tmp2;
   return Tmp1;
-}
-
-// get the range for the bond index when fixing the tuncation level and the charge index
-//
-// pLevel = tuncation level of the block
-// qValue = charge index of the block
-// return value = range for the bond index with fixed tuncation level and charge index
-
-int FQHEMPSN1SuperconformalMatrix::GetBondIndexRange(int pLevel, int qValue)
-{
-  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue))
-    return 0;
-  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValue;  
-}
-
-// get the bond index for a fixed truncation level and the charge index 
-//
-// localIndex = bond index in the pLevel and qValue restricted range
-// pLevel = tuncation level of the block
-// qValue = charge index of the block
-// return value = bond index in the full bond index range
-
-int FQHEMPSN1SuperconformalMatrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
-{
-  return (this->TotalStartingIndexPerPLevel[pLevel] + (localIndex * this->NbrNValue + qValue));
 }
 
 // load the specific informations from the file header

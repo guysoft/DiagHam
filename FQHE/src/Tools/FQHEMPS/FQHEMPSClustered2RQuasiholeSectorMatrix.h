@@ -135,6 +135,14 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // padding = assume that the state has the estra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding);
 
+  // compute the charge index range at a given truncation level
+  // 
+  // pLevel = tuncation level
+  // cftSector = CFT sector
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ);
+
  protected:
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states

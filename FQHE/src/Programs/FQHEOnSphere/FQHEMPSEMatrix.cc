@@ -203,18 +203,23 @@ int main(int argc, char** argv)
   
   TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = 0;
   TensorProductSparseMatrixHamiltonian* EHamiltonian = 0;
+  int PTruncationLevel = MPSMatrix->GetTruncationLevel();
+  int NbrCFTSectors = MPSMatrix->GetNbrCFTSectors();
   if (Manager.GetBoolean("diagonal-block"))
     {
       long EffectiveDimension = 0l;
-      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+      for (int PLevel = 0; PLevel <= PTruncationLevel; ++PLevel)
 	{
-	  int MinQValue = 0;
-	  int MaxQValue = 0;
-	  MPSMatrix->GetChargeIndexRange(PLevel, MinQValue, MaxQValue);
-	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	  for (int i = 0; i < NbrCFTSectors; ++i)
 	    {
-	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue);
-	      EffectiveDimension += Tmp * Tmp;
+	      int MinQValue = 0;
+	      int MaxQValue = 0;
+	      MPSMatrix->GetChargeIndexRange(PLevel, i, MinQValue, MaxQValue);
+	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+		{
+		  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue, i);
+		  EffectiveDimension += Tmp * Tmp;
+		}
 	    }
 	}
       
@@ -230,27 +235,32 @@ int main(int argc, char** argv)
       
       long* EffectiveBlockIndices = new long [EffectiveDimension];
       EffectiveDimension = 0l;
-      for (int PLevel = 0; PLevel <= Manager.GetInteger("p-truncation"); ++PLevel)
+      for (int PLevel = 0; PLevel <= PTruncationLevel; ++PLevel)
 	{
-	  int MinQValue = 0;
-	  int MaxQValue = 0;
-	  MPSMatrix->GetChargeIndexRange(PLevel, MinQValue, MaxQValue);
-	  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue);
-	  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+	  for (int l = 0; l < NbrCFTSectors; ++l)
 	    {
-	      for (int i = 0; i < Tmp; ++i)
+	      int MinQValue = 0;
+	      int MaxQValue = 0;
+	      MPSMatrix->GetChargeIndexRange(PLevel, l, MinQValue, MaxQValue);
+	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue, l);
+	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 		{
-		  long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue));
-		  BlockIndexProductTableNbrElements[Tmp2] = Tmp;
-		  BlockIndexProductTableShift[Tmp2] = EffectiveDimension;
-		  BlockIndexProductTable[Tmp2] = new long[Tmp];
-		  long* TmpBlockIndexProductTable = BlockIndexProductTable[Tmp2];
-		  Tmp2 *= TmpBMatrixDimension;
-		  for (int j = 0; j < Tmp; ++j)
+		  for (int i = 0; i < Tmp; ++i)
 		    {
-		      TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
-		      EffectiveBlockIndices[EffectiveDimension] = TmpBlockIndexProductTable[j];		      
-		      ++EffectiveDimension;
+		      //		      long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue));
+		      long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, PLevel, QValue, l));
+		      BlockIndexProductTableNbrElements[Tmp2] = Tmp;
+		      BlockIndexProductTableShift[Tmp2] = EffectiveDimension;
+		      BlockIndexProductTable[Tmp2] = new long[Tmp];
+		      long* TmpBlockIndexProductTable = BlockIndexProductTable[Tmp2];
+		      Tmp2 *= TmpBMatrixDimension;
+		      for (int j = 0; j < Tmp; ++j)
+			{
+			  //			  TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
+			  TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, PLevel, QValue, l);
+			  EffectiveBlockIndices[EffectiveDimension] = TmpBlockIndexProductTable[j];		      
+			  ++EffectiveDimension;
+			}
 		    }
 		}
 	    }

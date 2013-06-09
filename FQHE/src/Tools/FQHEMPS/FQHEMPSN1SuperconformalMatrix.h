@@ -63,9 +63,10 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // fileName = name of the file that contains the state description
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0, 
+  FQHEMPSN1SuperconformalMatrix(int pLevel, int nbrBMatrices, char* fileName,  bool trimChargeIndices, bool cylinderFlag = false, double kappa = 1.0, 
 				AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
@@ -74,9 +75,10 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
   // fileName = name of the file that contains the B matrices
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSN1SuperconformalMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSN1SuperconformalMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices, bool cylinderFlag = false, double kappa = 1.0);
 
   // destructor
   //
@@ -87,31 +89,6 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
-
-  // extract a block with fixed quantum numbers of a given matrix written the MPS basis
-  //
-  // matrix = reference on the matrix
-  // pLevel1 = tuncation level of the block left indices
-  // q1 = charge index of the block left indices
-  // pLevel1 = tuncation level of the block right indices
-  // q2 = charge index of the block left indices
-  // return value = block corresponding to the quantum numbers
-//  virtual SparseRealMatrix ExtractBlock(SparseRealMatrix& matrix, int pLevel1, int q1, int pLevel2, int q2);
-
-  // get the range for the bond index when fixing the tuncation level and the charge index
-  //
-  // pLevel = tuncation level of the block
-  // qValue = charge index of the block
-  // return value = range for the bond index with fixed tuncation level and charge index
-  virtual int GetBondIndexRange(int pLevel, int qValue);
-
-  // get the bond index for a fixed truncation level and the charge index 
-  //
-  // localIndex = bond index in the pLevel and qValue restricted range
-  // pLevel = tuncation level of the block
-  // qValue = charge index of the block
-  // return value = bond index in the full bond index range
-  virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
 
  protected:
 

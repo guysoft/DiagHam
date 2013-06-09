@@ -63,6 +63,19 @@ using std::ofstream;
 RealDiagonalMatrix FQHEMPSEvaluatePartialEntanglementSpectrum(AbstractFQHEMPSMatrix* mPSMatrix, SparseRealMatrix& leftOverlapMatrix, SparseRealMatrix& rightOverlapMatrix, 
 						       int leftPSector, int leftQSector, int rightPSector, int rightQSector, double eigenvalueError);
 
+// compute the entanglement spectrum from the overlap matrices of the left and right parts
+// 
+// mPSMatrix = pointer tothe MPS matrix
+// leftOverlapMatrix= reference on the left overlap matrix
+// rightOverlapMatrix= reference on the right overlap matrix
+// leftPSector = P sector that has to be selected for the left part
+// leftCFTSector = CFT sector that has to be selected for the left part
+// leftQSector = Q sector that has to be selected for the left part
+// rightPSector = P sector that has to be selected for the right part
+// rightCFTSector = CFT sector that has to be selected for the right part
+// rightQSector = Q sector that has to be selected for the right part
+// eigenvalueError = relative error on the eigenvalues below which an eigenvalue is considered to be equal to zero
+RealDiagonalMatrix FQHEMPSEvaluatePartialEntanglementSpectrum(AbstractFQHEMPSMatrix* mPSMatrix, SparseRealMatrix& leftOverlapMatrix, SparseRealMatrix& rightOverlapMatrix, int leftPSector, int leftCFTSector, int leftQSector, int rightPSector, int rightCFTSector, int rightQSector, double eigenvalueError);
 
 
 int main(int argc, char** argv)
@@ -93,6 +106,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "orbital-es", "compute the orbital entanglement spectrum");
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-orbitals", "number of orbitals for the A part (i negative, use (N_phi+1) / 2)", -1);
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the root partition instead of using the reference-file", 0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "left-eigenstate", "file containing the transfer matrix left eigenstate");
+  (*SystemGroup) += new SingleStringOption  ('\n', "right-eigenstate", "file containing the transfer matrix right eigenstate");
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
@@ -160,7 +175,8 @@ int main(int argc, char** argv)
   MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
   NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, Manager.GetBoolean("use-padding"));
   NbrEigenstates = MPSMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
-
+  int PLevel = MPSMatrix->GetTruncationLevel();
+  int NbrCFTSectors = MPSMatrix->GetNbrCFTSectors();
   ofstream File;
   File.precision(14);
   ofstream File2;
@@ -234,12 +250,161 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("infinite-cylinder"))
     {
+      if (Manager.GetString("left-eigenstate") == 0)
+	{
+	  cout << "The transfer matrix left eigenstate has to be provided in infinite-cylinder mode" << endl;
+	  return 0;
+	}
+      if (Manager.GetString("right-eigenstate") == 0)
+	{
+	  cout << "The transfer matrix right eigenstate has to be provided in infinite-cylinder mode" << endl;
+	  return 0;
+	}
+      ComplexVector LeftEigenstate;
+      ComplexVector RightEigenstate;
+      if (LeftEigenstate.ReadVector(Manager.GetString("left-eigenstate")) == false)
+	{
+	  cout << "can't read " << Manager.GetString("left-eigenstate") << endl;
+	  return 0;
+	}      
+      if (LeftEigenstate.GetVectorDimension() != (BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow()))
+	{
+	  cout << "error, left eigenstate does not have the expected dimension" << endl;
+	  return 0;
+	}
+      if (RightEigenstate.ReadVector(Manager.GetString("right-eigenstate")) == false)
+	{
+	  cout << "can't read " << Manager.GetString("right-eigenstate") << endl;
+	  return 0;
+	}
+      if (RightEigenstate.GetVectorDimension() != (BMatrices[0].GetNbrRow() * BMatrices[0].GetNbrRow()))
+	{
+	  cout << "error, right eigenstate does not have the expected dimension" << endl;
+	  return 0;
+	}
+      Complex Factor = EuclidianScalarProduct(LeftEigenstate, RightEigenstate);
+      double InvFactor = 1.0 / Factor.Re;
+      RealMatrix TmpFullLeftOverlapMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow(), true);
+      RealMatrix TmpFullRightOverlapMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow(), true);
+      int TmpDimension = BMatrices[0].GetNbrRow();
+      for (int i = 0; i < TmpDimension; ++i)
+	for (int j = 0; j < TmpDimension; ++j)
+	  {
+	    TmpFullLeftOverlapMatrix.SetMatrixElement(i, j, InvFactor * LeftEigenstate[i * TmpDimension + j].Re); 
+	    TmpFullRightOverlapMatrix.SetMatrixElement(i, j, InvFactor * RightEigenstate[i * TmpDimension + j].Re); 
+	  }
+      if (TmpFullLeftOverlapMatrix.Tr() < 0.0)
+	TmpFullLeftOverlapMatrix *= -1.0;
+      if (TmpFullRightOverlapMatrix.Tr() < 0.0)
+	TmpFullRightOverlapMatrix *= -1.0;
+      if (TmpFullLeftOverlapMatrix.IsSymmetric())
+	{
+	  cout << "TmpFullLeftOverlapMatrix is symmetric" << endl;
+	}
+      if (TmpFullRightOverlapMatrix.IsSymmetric())
+	{
+	  cout << "TmpFullRightOverlapMatrix is symmetric" << endl;
+	}
+      SparseRealMatrix FullLeftOverlapMatrix (TmpFullLeftOverlapMatrix);
+      SparseRealMatrix FullRightOverlapMatrix (TmpFullRightOverlapMatrix);
+      cout << FullLeftOverlapMatrix << endl;
+      cout << FullRightOverlapMatrix << endl;
+      double Error = 1e-13;
+      double LeftEigenvalueError = 0.0;
+      double RightEigenvalueError = 0.0;
+      LeftEigenvalueError = Error;
+      RightEigenvalueError = Error;
+      double TotalTraceThoA = 0;
+      if (Manager.GetBoolean("orbital-es"))
+	{
+	  double*** EntanglementSpectrum = new double**[PLevel + 1];
+	  int** EntanglementSpectrumDimension = new int*[PLevel + 1];
+	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+	    {
+	      int LocalMinQValue;
+	      int LocalMaxQValue;
+	      MPSMatrix->GetChargeIndexRange(CurrentPLevel, LocalMinQValue, LocalMaxQValue);
+	      if (LocalMinQValue <=  LocalMaxQValue)
+		{
+		  EntanglementSpectrumDimension[CurrentPLevel] = new int[LocalMaxQValue - LocalMinQValue + 1];
+		  EntanglementSpectrum[CurrentPLevel] = new double*[LocalMaxQValue - LocalMinQValue + 1];	      
+		}
+	      else
+		{
+		  EntanglementSpectrum[CurrentPLevel] = 0;
+		}
+	      cout << "range = " << LocalMinQValue << " " << LocalMaxQValue << endl;
+	      for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+		{
+		  cout << "computing sector P=" << CurrentPLevel<< " Q=" << LocalQValue << endl;
+		  RealDiagonalMatrix TmpRhoADiag = FQHEMPSEvaluatePartialEntanglementSpectrum(MPSMatrix, FullLeftOverlapMatrix, FullRightOverlapMatrix, 
+											      CurrentPLevel, LocalQValue, CurrentPLevel, LocalQValue, Error);
+		  EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
+		  if (TmpRhoADiag.GetNbrRow() > 0)
+		    {
+		      for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
+			{
+			  if (TmpRhoADiag[i] > 0.0)
+			    EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]++;
+			}
+		      if (EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] > 0)
+			{
+			  EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue] = new double[EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]];
+			  EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
+			  for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
+			    {
+			      if (TmpRhoADiag[i] > 0.0)
+				{
+				  EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]] = TmpRhoADiag[i];
+				  EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]++;
+				  TotalTraceThoA += TmpRhoADiag[i];
+				}
+			    }
+			  SortArrayDownOrdering<double>(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue],
+							EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]);
+			}
+		    }
+		}
+	    }
+	  
+	  
+	  double EntanglementEntropy = 0.0;
+	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+	    {
+	      int LocalMinQValue;
+	      int LocalMaxQValue;
+	      MPSMatrix->GetChargeIndexRange(CurrentPLevel, LocalMinQValue, LocalMaxQValue);
+	      for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+		{
+		  for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]; ++i)
+		    {
+		      File <<  LocalQValue << " " << LocalQValue << " " 
+			   << CurrentPLevel << " "
+			   <<  (EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)  
+			   <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)) << endl;
+		      EntanglementEntropy -= (log(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)
+					      * EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA);
+		    }
+		}
+	    }
+	  cout << "S_A=" << EntanglementEntropy << endl;
+	  File2 << "inf" << " " << EntanglementEntropy << " 1" << endl;
+	}
+      File.close();
+      File2.close();
+      
+      cout << "Tr(rho_A)=" << TotalTraceThoA << endl;
       return 0;
     }
-
+  
+  
   int QValue = 3;
-  int PLevel = Manager.GetInteger("p-truncation");
-
+  
+  cout << "MPSRowIndex = " << MPSRowIndex << endl;
+  cout << "MPSColumnIndex = " << MPSColumnIndex << endl;
+  
+  SparseRealMatrix FullLeftOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
+  SparseRealMatrix FullRightOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
 
   long MaxTmpMatrixElements = (((long) BMatrices[0].GetNbrRow()) * 
 				((long) BMatrices[0].GetNbrRow() / 1l));
@@ -247,27 +412,6 @@ int main(int argc, char** argv)
   double* TmpMatrixElements = new double [MaxTmpMatrixElements];
   int* TmpColumnIndices = new int [MaxTmpMatrixElements];
   double* TmpElements = new double [BMatrices[0].GetNbrRow()];
-
-  cout << "MPSRowIndex = " << MPSRowIndex << endl;
-  cout << "MPSColumnIndex = " << MPSColumnIndex << endl;
-  
-//   SparseRealMatrix TmpNormalizationMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
-//   TmpNormalizationMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);  
-//   for (int i = 0; i <= NbrFluxQuanta; ++i)
-//     {
-//       SparseRealMatrix TmpMatrix2;
-//       SparseRealMatrix TmpMatrix3;
-//       TmpMatrix2 = Conjugate(ConjugateBMatrices[0], TmpNormalizationMatrix, BMatrices[0], 
-// 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-//       TmpMatrix3 = Conjugate(ConjugateBMatrices[1], TmpNormalizationMatrix, BMatrices[1], 
-// 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-//       TmpNormalizationMatrix  = TmpMatrix2 + TmpMatrix3;
-//     }
-//   double Normalization;
-//   TmpNormalizationMatrix.GetMatrixElement(MPSColumnIndex, MPSColumnIndex, Normalization);
-//   cout << "Normalization = " << Normalization << endl;
-
-  SparseRealMatrix FullLeftOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
   FullLeftOverlapMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);  
   int MaxNbrFluxQuantaA = PLevel + QValue * (Na - 1) + ((QValue - 1) / 2);
   if (MaxNbrFluxQuantaA > NbrFluxQuanta)
@@ -290,10 +434,6 @@ int main(int argc, char** argv)
     {
       SparseRealMatrix TmpMatrix2;
       SparseRealMatrix TmpMatrix3;
-//       TmpMatrix2 = Conjugate(ConjugateBMatrices[0], FullLeftOverlapMatrix, BMatrices[0], 
-// 			     TmpMatrixElements, TmpColumnIndices, TmpElements); 
-//       TmpMatrix3 = Conjugate(ConjugateBMatrices[1], FullLeftOverlapMatrix, BMatrices[1], 
-// 			     TmpMatrixElements, TmpColumnIndices, TmpElements);  
       TmpMatrix2 = Conjugate(&(ConjugateBMatrices[0]), &FullLeftOverlapMatrix, &(BMatrices[0]), 
 			     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
       TmpMatrix3 = Conjugate(&(ConjugateBMatrices[1]), &FullLeftOverlapMatrix, &(BMatrices[1]), 
@@ -301,7 +441,6 @@ int main(int argc, char** argv)
       FullLeftOverlapMatrix = TmpMatrix2 + TmpMatrix3;
     }
 
-  SparseRealMatrix FullRightOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
   FullRightOverlapMatrix.SetMatrixElement(MPSColumnIndex, MPSColumnIndex, 1.0);  
   int MaxNbrFluxQuantaB = PLevel + QValue * (NbrParticles - Na - 1)+ ((QValue - 1) / 2);
   if (MaxNbrFluxQuantaB > NbrFluxQuanta)
@@ -408,6 +547,8 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
+
+
       int NaturalNa = 2 * ((MaxNbrFluxQuantaA + 1) / 4);
       if (((MaxNbrFluxQuantaA + 1) % 4) > 0)
 	++NaturalNa;
@@ -655,6 +796,124 @@ RealDiagonalMatrix FQHEMPSEvaluatePartialEntanglementSpectrum(AbstractFQHEMPSMat
   SparseRealMatrix RightOverlapMatrix = mPSMatrix->ExtractBlock(rightOverlapMatrix, rightPSector, rightQSector,
 								rightPSector, rightQSector);
   SparseRealMatrix LeftOverlapMatrix = mPSMatrix->ExtractBlock(leftOverlapMatrix, leftPSector, leftQSector, leftPSector, leftQSector);
+  RealDiagonalMatrix TmpRhoADiag;
+  if ((LeftOverlapMatrix.GetNbrRow() > 0) && (RightOverlapMatrix.GetNbrRow() > 0) && 
+      (LeftOverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l) && (RightOverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l))
+    {
+      cout << "scalar product matrix for the left part : " << endl;
+      RealSymmetricMatrix SymLeftOverlapMatrix (LeftOverlapMatrix);
+      RealMatrix TmpLeftBasis(SymLeftOverlapMatrix.GetNbrRow(), SymLeftOverlapMatrix.GetNbrRow());
+      TmpLeftBasis.SetToIdentity();
+      RealDiagonalMatrix TmpLeftDiag;
+#ifdef __LAPACK__
+      SymLeftOverlapMatrix.LapackDiagonalize(TmpLeftDiag, TmpLeftBasis);
+#else
+      SymLeftOverlapMatrix.Diagonalize(TmpLeftDiag, TmpLeftBasis);
+#endif
+      double LocalLeftEigenvalueError = 0.0;
+      for (int i = 0; i < TmpLeftDiag.GetNbrColumn(); ++i)
+	if (TmpLeftDiag(i, i) > LocalLeftEigenvalueError)
+	  LocalLeftEigenvalueError = TmpLeftDiag(i, i);
+      LocalLeftEigenvalueError *= eigenvalueError;
+      int NbrZeroLeftEigenvalues = 0;
+      for (int i = 0; i < TmpLeftDiag.GetNbrRow(); ++i)
+	{
+	  if (TmpLeftDiag(i, i) < LocalLeftEigenvalueError)
+	    {
+	      ++NbrZeroLeftEigenvalues;	    
+	    }
+	}
+      cout << "nbr non zero eigenvalues = " << (TmpLeftDiag.GetNbrRow() - NbrZeroLeftEigenvalues) << " (full dim = " << TmpLeftDiag.GetNbrRow() << ")" << endl;
+      
+      RealSymmetricMatrix SymRightOverlapMatrix (RightOverlapMatrix);
+      RealMatrix TmpRightBasis(SymRightOverlapMatrix.GetNbrRow(), SymRightOverlapMatrix.GetNbrRow());
+      RealDiagonalMatrix TmpRightDiag;
+      TmpRightBasis.SetToIdentity();
+#ifdef __LAPACK__
+      SymRightOverlapMatrix.LapackDiagonalize(TmpRightDiag, TmpRightBasis);
+#else
+      SymRightOverlapMatrix.Diagonalize(TmpRightDiag, TmpRightBasis);
+#endif
+      int NbrZeroRightEigenvalues = 0;
+      cout << "scalar product matrix for the right part : " << endl;
+      double LocalRightEigenvalueError = 0.0;
+      for (int i = 0; i < TmpRightDiag.GetNbrColumn(); ++i)
+	if (TmpRightDiag(i, i) > LocalRightEigenvalueError)
+	  LocalRightEigenvalueError = TmpRightDiag(i, i);
+      LocalRightEigenvalueError *= eigenvalueError;
+      for (int i = 0; i < TmpRightDiag.GetNbrRow(); ++i)
+	{
+	  if (TmpRightDiag(i, i) < LocalRightEigenvalueError)
+	    {
+	      ++NbrZeroRightEigenvalues;	    
+	    }
+	}
+      cout << "nbr non zero eigenvalues = " << (TmpRightDiag.GetNbrRow() - NbrZeroRightEigenvalues) << " (full dim = " << TmpRightDiag.GetNbrRow() << ")"  << endl;
+      if ((NbrZeroLeftEigenvalues < SymLeftOverlapMatrix.GetNbrRow()) && (NbrZeroRightEigenvalues < SymRightOverlapMatrix.GetNbrRow()))
+	{
+	  RealMatrix TruncatedLeftBasis (TmpLeftDiag.GetNbrRow(), TmpLeftDiag.GetNbrRow() -  NbrZeroLeftEigenvalues, true);
+	  NbrZeroLeftEigenvalues = 0;
+	  for (int i = 0; i < TmpLeftBasis.GetNbrColumn(); ++i)
+	    {
+	      if (TmpLeftDiag(i, i) > LocalLeftEigenvalueError)
+		{
+		  TruncatedLeftBasis[NbrZeroLeftEigenvalues].Copy(TmpLeftBasis[i]);
+		  TruncatedLeftBasis[NbrZeroLeftEigenvalues] *= sqrt(TmpLeftDiag(i, i));
+		  ++NbrZeroLeftEigenvalues;
+		}
+	    }
+	  
+	  RealMatrix TruncatedRightBasis (TmpRightDiag.GetNbrRow(), TmpRightDiag.GetNbrRow() -  NbrZeroRightEigenvalues, true);
+	  NbrZeroRightEigenvalues = 0;
+	  for (int i = 0; i < TmpRightBasis.GetNbrColumn(); ++i)
+	    {
+	      if (TmpRightDiag(i, i) > LocalRightEigenvalueError)
+		{
+		  TruncatedRightBasis[NbrZeroRightEigenvalues].Copy(TmpRightBasis[i]);
+		  TruncatedRightBasis[NbrZeroRightEigenvalues] *= sqrt(TmpRightDiag(i, i));
+		  ++NbrZeroRightEigenvalues;
+		}
+	    }
+	  
+	  RealMatrix TmpEntanglementMatrix = TruncatedLeftBasis.DuplicateAndTranspose();
+	  TmpEntanglementMatrix.Multiply(TruncatedRightBasis);
+#ifdef __LAPACK__
+	  double* TmpValues = TmpEntanglementMatrix.SingularValueDecomposition();
+	  int TmpDimension = TmpEntanglementMatrix.GetNbrColumn();
+	  if (TmpDimension > TmpEntanglementMatrix.GetNbrRow())
+	    {
+	      TmpDimension = TmpEntanglementMatrix.GetNbrRow();
+	    }
+	  for (int i = 0; i < TmpDimension; ++i)
+	    {
+	      TmpValues[i] *= TmpValues[i];
+	    }
+	  TmpRhoADiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+#endif		
+	}
+    }
+  return TmpRhoADiag;
+}
+
+// compute the entanglement spectrum from the overlap matrices of the left and right parts
+// 
+// mPSMatrix = pointer tothe MPS matrix
+// leftOverlapMatrix= reference on the left overlap matrix
+// rightOverlapMatrix= reference on the right overlap matrix
+// leftPSector = P sector that has to be selected for the left part
+// leftCFTSector = CFT sector that has to be selected for the left part
+// leftQSector = Q sector that has to be selected for the left part
+// rightPSector = P sector that has to be selected for the right part
+// rightCFTSector = CFT sector that has to be selected for the right part
+// rightQSector = Q sector that has to be selected for the right part
+// eigenvalueError = relative error on the eigenvalues below which an eigenvalue is considered to be equal to zero
+
+RealDiagonalMatrix FQHEMPSEvaluatePartialEntanglementSpectrum(AbstractFQHEMPSMatrix* mPSMatrix, SparseRealMatrix& leftOverlapMatrix, SparseRealMatrix& rightOverlapMatrix, int leftPSector, int leftCFTSector, int leftQSector, int rightPSector, int rightCFTSector, int rightQSector, double eigenvalueError)
+{
+  SparseRealMatrix RightOverlapMatrix = mPSMatrix->ExtractBlock(rightOverlapMatrix, rightPSector, rightCFTSector, rightQSector,
+								rightPSector, rightCFTSector, rightQSector);
+  SparseRealMatrix LeftOverlapMatrix = mPSMatrix->ExtractBlock(leftOverlapMatrix, leftPSector, leftCFTSector, leftQSector, 
+							       leftPSector, leftCFTSector, leftQSector);
   RealDiagonalMatrix TmpRhoADiag;
   if ((LeftOverlapMatrix.GetNbrRow() > 0) && (RightOverlapMatrix.GetNbrRow() > 0) && 
       (LeftOverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l) && (RightOverlapMatrix.ComputeNbrNonZeroMatrixElements() > 0l))

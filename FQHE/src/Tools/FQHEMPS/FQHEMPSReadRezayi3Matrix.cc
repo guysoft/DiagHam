@@ -50,20 +50,27 @@ FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix()
 // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic MR at nu=1/2)  
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+// useRational = use arbitrary precision numbers for all the CFT calculations
+// trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
-FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool cylinderFlag, double kappa, 
+FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool useRational, 
+						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
 						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->UseRationalFlag = useRational;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->RIndex = 2;
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->TransferMatrixDegeneracy = 5;
+  this->NbrCFTSectors = 4;
   this->CreateBMatrices(0, architecture);
 }
 
@@ -72,12 +79,15 @@ FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel
 // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+// useRational = use arbitrary precision numbers for all the CFT calculations
+// trimChargeIndices = trim the charge indices
 // cftDirectory = path to the directory where all the pure CFT matrices are stored
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
-FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag, double kappa, 
+FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational, 
+						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
 						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
@@ -85,8 +95,12 @@ FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel
   this->RIndex = 2;
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
+  this->UseRationalFlag = useRational;
+  this->UniformChargeIndexRange = !trimChargeIndices;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->TransferMatrixDegeneracy = 5;
+  this->NbrCFTSectors = 4;
   this->CreateBMatrices(cftDirectory, architecture);
 }
 
@@ -105,6 +119,8 @@ FQHEMPSReadRezayi3Matrix::FQHEMPSReadRezayi3Matrix(int laughlinIndex, int pLevel
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->TransferMatrixDegeneracy = 5;
+  this->NbrCFTSectors = 4;
   this->LoadMatrices(fileName);
 }
 

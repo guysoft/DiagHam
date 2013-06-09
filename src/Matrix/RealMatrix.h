@@ -343,6 +343,11 @@ class RealMatrix : public Matrix
   // return value = transposed matrix
   RealMatrix DuplicateAndTranspose();
     
+  // evaluate matrix trace
+  //
+  // return value = matrix trace 
+  virtual double Tr ();
+
   // evaluate matrix determinant (skrewing up matrix elements)
   //
   // return value = matrix determinant 
