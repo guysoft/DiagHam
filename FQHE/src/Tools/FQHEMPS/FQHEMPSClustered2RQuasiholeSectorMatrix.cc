@@ -98,7 +98,7 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
       this->NbrCFTSectors = 1;
     }
   this->BMatrixOutputName = new char[256]; 
-  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
+  sprintf(this->BMatrixOutputName, "clustered_k_2_qh_r_%d", this->RIndex);
   this->CreateBMatrices(0, architecture);
 }
 
@@ -145,7 +145,7 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
       this->NbrCFTSectors = 1;
     }
   this->BMatrixOutputName = new char[256]; 
-  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
+  sprintf(this->BMatrixOutputName, "clustered_k_2_qh_r_%d", this->RIndex);
   this->CreateBMatrices(cftDirectory, architecture);
 }
 
@@ -263,7 +263,7 @@ FQHEMPSClustered2RQuasiholeSectorMatrix::FQHEMPSClustered2RQuasiholeSectorMatrix
   this->SquareMatrixElementNormalization = LongRational(1, 2);
   this->TransferMatrixDegeneracy = this->RIndex + 2;
   this->BMatrixOutputName = new char[256]; 
-  sprintf(this->BMatrixOutputName, "clustered_k_2_r_%d", this->RIndex);
+  sprintf(this->BMatrixOutputName, "clustered_k_2_qh_r_%d", this->RIndex);
 }
 
 // destructor
