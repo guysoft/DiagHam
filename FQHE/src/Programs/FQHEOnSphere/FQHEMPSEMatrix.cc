@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   Manager += ArnoldiGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "consider only the block diagonal in P and Q");
+  (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "consider only the block diagonal in P, CFT sector and Q");
   (*SystemGroup) += new BooleanOption  ('\n', "right-eigenstates", "compute the right eigenstates");
   (*SystemGroup) += new BooleanOption  ('\n', "left-eigenstates", "compute the left eigenstates");
   
@@ -273,10 +273,23 @@ int main(int argc, char** argv)
       long Memory = Manager.GetInteger("ematrix-memory") << 20;
        if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-     ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
-										   EffectiveDimension, EffectiveBlockIndices, 
-										   BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
-										   Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
+      if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
+	{
+	  ETransposeHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients, 
+											EffectiveDimension, EffectiveBlockIndices, 
+											BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+											Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
+	}
+      if (Manager.GetBoolean("left-eigenstates") == true)
+	{
+	  SparseRealMatrix* ConjugateSparseBMatrices = new SparseRealMatrix[NbrBMatrices];
+	  for (int i = 0; i < NbrBMatrices; ++i)
+	    ConjugateSparseBMatrices[i] = SparseBMatrices[i].Transpose();
+	  EHamiltonian = new TensorProductSparseMatrixSelectedBlockHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseBMatrices, Coefficients, 
+									       EffectiveDimension, EffectiveBlockIndices, 
+									       BlockIndexProductTable, BlockIndexProductTableNbrElements, BlockIndexProductTableShift, 
+									       Architecture.GetArchitecture(), Manager.GetInteger("ematrix-memory") << 20);    
+	}
     }
   else
     {
@@ -288,9 +301,6 @@ int main(int argc, char** argv)
 	  SparseRealMatrix* ConjugateSparseBMatrices = new SparseRealMatrix[NbrBMatrices];
 	  for (int i = 0; i < NbrBMatrices; ++i)
 	    ConjugateSparseBMatrices[i] = SparseBMatrices[i].Transpose();
-	  RealMatrix Test1(SparseBMatrices[1]);
-	  RealMatrix Test2(ConjugateSparseBMatrices[1]);
-
 	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseBMatrices, Coefficients); 
 	}
      }
