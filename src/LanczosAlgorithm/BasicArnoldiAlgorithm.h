@@ -82,6 +82,8 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   bool HighEnergyFlag;
   // flag to compute the left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   bool LeftFlag;
+  // sort the eigenvalues only with respect to their real part
+  bool SortEigenvalueRealPartFlag;
 
   // array used to store temporary scalar products
   double* TemporaryCoefficients;
@@ -100,8 +102,9 @@ class BasicArnoldiAlgorithm : public AbstractLanczosAlgorithm
   // highEnergy = true if the higher energy part of the spectrum has to be computed instead of the lower energy part
   // leftFlag= compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+  // sortRealFlag = sort the eigenvalues only with respect to their real part
   BasicArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter = 100,
-			bool highEnergy = false, bool leftFlag = false, bool strongConvergence = false);
+			bool highEnergy = false, bool leftFlag = false, bool strongConvergence = false, bool sortRealFlag = false);
 
   // copy constructor
   //

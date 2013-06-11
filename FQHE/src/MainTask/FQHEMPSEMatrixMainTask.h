@@ -92,6 +92,10 @@ class FQHEMPSEMatrixMainTask: public AbstractMainTask
   long ArnoldiMemory;
   // use the implicitly restarted Arnoldi algorithm
   bool ImplicitlyRestartedFlag;
+  // sort the eigenvalues only with respect to their real part
+  bool SortEigenvalueRealPartFlag;
+  // eigenvalue precision
+  double EigenvaluePrecision;
 
   // if non zero, store the E matrix spectrum in this file
   char* EigenstateFileName;

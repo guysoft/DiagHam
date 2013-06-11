@@ -64,9 +64,10 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm()
 // highEnergy = true if the higher energy part of the spectrum has to be computed instead of the lower energy part
 // leftFlag= compute left eigenvalues/eigenvectors instead of right eigenvalues/eigenvectors
 // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
+// sortRealFlag = sort the eigenvalues only with respect to their real part
 
 BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter, 
-					     bool highEnergy, bool leftFlag, bool strongConvergence) 
+					     bool highEnergy, bool leftFlag, bool strongConvergence, bool sortRealFlag) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -89,6 +90,7 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(AbstractArchitecture* architecture,
   this->Architecture = architecture;
   this->Flag.Initialize();
   this->StrongConvergenceFlag = strongConvergence;
+  this->SortEigenvalueRealPartFlag = sortRealFlag;
   this->PreviousLastWantedEigenvalue = 0.0;
   this->ComplexPreviousWantedEigenvalues = new Complex [this->NbrEigenvalue];
   for (int i = 0; i < this->NbrEigenvalue; ++i)
@@ -117,6 +119,7 @@ BasicArnoldiAlgorithm::BasicArnoldiAlgorithm(const BasicArnoldiAlgorithm& algori
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->EigenvectorPrecision = algorithm.EigenvectorPrecision;
   this->StrongConvergenceFlag = algorithm.StrongConvergenceFlag;
+  this->SortEigenvalueRealPartFlag = algorithm.SortEigenvalueRealPartFlag;
   this->ComplexDiagonalizedMatrix = algorithm.ComplexDiagonalizedMatrix;
   this->ReducedMatrix = algorithm.ReducedMatrix;
   this->ComplexPreviousWantedEigenvalues = new Complex [this->NbrEigenvalue];
@@ -232,11 +235,20 @@ Vector* BasicArnoldiAlgorithm::GetEigenstates(int nbrEigenstates)
 #else
   cout << "lapack is required for BasicArnoldiAlgorithm" << endl;
 #endif
-  if (this->HighEnergyFlag == false)
-    SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true, 1e-10);
+  if (this->SortEigenvalueRealPartFlag == false)
+    {
+      if (this->HighEnergyFlag == false)
+	SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, true, 1e-10);
+      else
+	SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, true, 1e-10);
+    }
   else
-    SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, true, 1e-10);
-
+    {
+      if (this->HighEnergyFlag == false)
+	SortedDiagonalizedMatrix.SortMatrixUpOrder(TmpEigenvector, false, 1e-10);
+      else
+	SortedDiagonalizedMatrix.SortMatrixDownOrder(TmpEigenvector, false, 1e-10);
+    }
   Complex* TmpCoefficents = new Complex [SortedDiagonalizedMatrix.GetNbrColumn()];
   for (int i = 0; i < nbrEigenstates; ++i)
     {
@@ -320,10 +332,20 @@ void BasicArnoldiAlgorithm::RunLanczosAlgorithm (int nbrIter)
       for (int i = 0; i < this->NbrEigenvalue; ++i)
 	this->ComplexPreviousWantedEigenvalues[i] = this->ComplexDiagonalizedMatrix[i];
       this->Diagonalize();
-      if (this->HighEnergyFlag == false)
-	this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true, 1e-10);
+      if (this->SortEigenvalueRealPartFlag == false)
+	{
+	  if (this->HighEnergyFlag == false)
+	    this->ComplexDiagonalizedMatrix.SortMatrixUpOrder(true, 1e-10);
+	  else
+	    this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true, 1e-10);
+	}
       else
-	this->ComplexDiagonalizedMatrix.SortMatrixDownOrder(true, 1e-10);
+	{
+	  if (this->HighEnergyFlag == false)
+	    this->ComplexDiagonalizedMatrix.SortMatrixUpOrder();
+	  else
+	    this->ComplexDiagonalizedMatrix.SortMatrixDownOrder();
+	}
     }
   else
     {

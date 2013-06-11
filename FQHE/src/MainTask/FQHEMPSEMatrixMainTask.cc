@@ -125,6 +125,16 @@ FQHEMPSEMatrixMainTask::FQHEMPSEMatrixMainTask(OptionManager* options, AbstractH
   this->LeftFlag = leftFlag;    
   this->SortingError = sortingError;
 
+  this->SortEigenvalueRealPartFlag = false;
+  if ((*options)["sort-real"] != 0)
+    {
+      this->SortEigenvalueRealPartFlag = options->GetBoolean("sort-real");
+    }
+  this->EigenvaluePrecision = MACHINE_PRECISION;
+  if (((*options)["arnoldi-precision"] != 0) && (options->GetDouble("arnoldi-precision") > 0.0))
+    {
+      this->EigenvaluePrecision = options->GetDouble("arnoldi-precision");
+    }
   this->ShowIterationTime = false;
   if ((*options)["show-itertime"] != 0)
     {
@@ -259,7 +269,7 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
 	    {
 	      if (this->ImplicitlyRestartedFlag == false)
 		{
-		  Arnoldi = new BasicArnoldiAlgorithm (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
+		  Arnoldi = new BasicArnoldiAlgorithm (Architecture, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false, this->SortEigenvalueRealPartFlag);
 		}
 	      else
 		{
@@ -271,6 +281,7 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
 		  Arnoldi = new ImplicitlyRestartedArnoldiAlgorithm (Architecture, this->NbrEigenvalues, TmpMemory, this->NbrEigenvalues, this->MaxNbrIterArnoldi, true, false, false);
 		}
 	    }
+	  Arnoldi->SetEigenvaluePrecision(this->EigenvaluePrecision);
 	  Arnoldi->SetHamiltonian(this->Hamiltonian);
 	  Arnoldi->InitializeLanczosAlgorithm();
 	  Arnoldi->RunLanczosAlgorithm(this->NbrEigenvalues);

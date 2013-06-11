@@ -242,7 +242,14 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("orbital-es"))
     {
-      File << "# l_a    N    Lz    lambda" << endl;
+      if (Manager.GetBoolean("infinite-cylinder"))
+	{
+	  File << "# x    Q    P    lambda    -ln(lambda)" << endl;
+	}
+      else
+	{
+	  File << "# l_a    N    Lz    lambda" << endl;
+	}
     }
   else
     {
@@ -300,9 +307,35 @@ int main(int argc, char** argv)
 	}
       else
 	{
+	  int TmpBlockDimension = 0;
 	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 	    {
-	      int TmpBlockPosition = 0;
+	      for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
+		{
+		  int MinQValue = 0;
+		  int MaxQValue = 0;
+		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+		  for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
+		    {
+		      int TmpLocalDimension = MPSMatrix->GetBondIndexRange(CurrentPLevel, QValue, CurrentCFTSector);
+		      TmpBlockDimension += TmpLocalDimension * TmpLocalDimension;
+		    }
+		}
+	    }
+	  if (LeftEigenstate.GetVectorDimension() != TmpBlockDimension)
+	    {
+	      cout << "error, left eigenstate does not have the expected dimension" << endl;
+	      return 0;
+	    }
+	  if (RightEigenstate.GetVectorDimension() != TmpBlockDimension)
+	    {
+	      cout << "error, right eigenstate does not have the expected dimension" << endl;
+	      return 0;
+	    }
+
+	  int TmpBlockPosition = 0;
+	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+	    {
 	      for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 		{
 		  int MinQValue = 0;
@@ -317,11 +350,11 @@ int main(int argc, char** argv)
 			  for (int j = 0; j < TmpLocalDimension; ++j)
 			    {
 			      int Tmp2 = MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, CurrentPLevel, QValue, CurrentCFTSector);
-			      TmpFullLeftOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * LeftEigenstate[TmpBlockPosition + (i * TmpLocalDimension + j)].Re); 
-			      TmpFullRightOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * RightEigenstate[TmpBlockPosition + (i * TmpLocalDimension + j)].Re); 
+			      TmpFullLeftOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * LeftEigenstate[TmpBlockPosition].Re); 
+			      TmpFullRightOverlapMatrix.SetMatrixElement(Tmp1, Tmp2, InvFactor * RightEigenstate[TmpBlockPosition].Re); 
+			      ++TmpBlockPosition;
 			    }
 			}
-		      TmpBlockPosition += TmpLocalDimension * TmpLocalDimension;
 		    }
 		}
 	    }
@@ -404,24 +437,42 @@ int main(int argc, char** argv)
 	    }
 	  
 	  
+	  int GlobalMinQValue = 100000;
+	  int GlobalMaxQValue = 0;
+	  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+	    {
+	      for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
+		{
+		  int MinQValue = 0;
+		  int MaxQValue = 0;
+		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+		  if (MinQValue < GlobalMinQValue)
+		    GlobalMinQValue = MinQValue;
+		  if (MaxQValue > GlobalMaxQValue)
+		    GlobalMaxQValue = MaxQValue;		  
+		}
+	    }
 	  double EntanglementEntropy = 0.0;
 	  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 	    {
-	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+	      for (int LocalQValue =  GlobalMinQValue; LocalQValue <= GlobalMaxQValue; ++LocalQValue)
 		{
-		  int LocalMinQValue;
-		  int LocalMaxQValue;
-		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, LocalMinQValue, LocalMaxQValue);
-		  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+		  for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 		    {
-		      for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]; ++i)
+		      int LocalMinQValue;
+		      int LocalMaxQValue;
+		      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, LocalMinQValue, LocalMaxQValue);
+		      if ((LocalQValue >= LocalMinQValue) && (LocalQValue <= LocalMaxQValue))
 			{
-			  File << CurrentCFTSector  << " " << LocalQValue << " " 
-			       << CurrentPLevel << " "
-			       <<  (EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)  
-			       <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)) << endl;
-			  EntanglementEntropy -= (log(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)
-						  * EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA);
+			  for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]; ++i)
+			    {
+			      File << CurrentCFTSector  << " " << LocalQValue << " " 
+				   << CurrentPLevel << " "
+				   <<  (EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)  
+				   <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)) << endl;
+			      EntanglementEntropy -= (log(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)
+						      * EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA);
+			    }
 			}
 		    }
 		}

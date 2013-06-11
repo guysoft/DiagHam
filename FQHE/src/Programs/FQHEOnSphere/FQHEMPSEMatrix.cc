@@ -90,6 +90,8 @@ int main(int argc, char** argv)
   (*ArnoldiGroup) += new BooleanOption  ('\n', "implicitly-restarted", "use the implicitly restarted Arnoldi algorithm", false); 
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "nbr-excited", "number of eigenvalues to compute above the groundstate", 0);
   (*ArnoldiGroup) += new  SingleIntegerOption ('\n', "nbr-eigenstates", "number of eigenvalues to compute (if set to zero, this number will be deduced from the state and nbr-excited)", 0);
+  (*ArnoldiGroup) += new BooleanOption  ('\n', "sort-real", "sort the eigenvalues with respect to their real part instead of their norm", false); 
+  (*ArnoldiGroup) += new SingleDoubleOption ('\n', "arnoldi-precision", "define Arnoldi precision for eigenvalues (0 if automatically defined by the program)", 0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
