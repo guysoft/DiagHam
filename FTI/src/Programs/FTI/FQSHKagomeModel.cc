@@ -216,7 +216,7 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
       bool ExportOneBody = false;
-      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("export-onebodytheta") == true))
+      if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("export-onebodytheta") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true))
 	ExportOneBody = true;
       
       if (TiltedFlag == false)
