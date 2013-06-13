@@ -1081,7 +1081,7 @@ int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
      Theta[ky][1] = min(theta1, theta2); 
    }
   }
-  
+//   double referenceLine = 0.9267 + theta[0][0];
   for (int ky = 0; ky < this->NbrSiteY  - 1; ++ ky)
   {
     distancePlus = abs(Theta[ky][0] - Theta[ky + 1][0]);
@@ -1106,19 +1106,23 @@ int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
     }
   }
 //   cout << ModPiPlus << " " << ModPiMoins << endl;
-  for (int ky = 1 ; ky < this->NbrSiteY/2 - 1; ++ky)
+  for (int ky = 0 ; ky < this->NbrSiteY/2 ; ++ky)
   {
 //     cout << ky << " " << Theta[ky][0] << " " << Theta[ky][1] << endl;
     for (int i = 0; i <= ModPiPlus; ++i)
     {
 //       cout << Theta[ky + 1][0] - (referenceLine + i*2*M_PI) << " " << Theta[ky][0] - (referenceLine + i*2*M_PI) << " " << (Theta[ky + 1][1] - (referenceLine - i*2*M_PI)) << " " << (Theta[ky][1] - (referenceLine - i*2*M_PI)) << endl;
       if ((Theta[ky + 1][0] - (referenceLine + i*2*M_PI)) * (Theta[ky][0] - (referenceLine + i*2*M_PI)) < 0)
+      {
 	z2Invariant += 1;
+      }
     }
     for (int i = 0; i <= ModPiMoins; ++i)
     {
       if ((Theta[ky + 1][1] - (referenceLine - i*2*M_PI)) * (Theta[ky][1] - (referenceLine - i*2*M_PI)) < 0)
+      {
 	z2Invariant += 1;
+      }
     }
   }
   return (z2Invariant % 2); 
