@@ -374,7 +374,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		{
 		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, CentralCharge12, 
 							 WeightW,
-							 RationalScalarProductW,  i- 1);
+							 RationalScalarProductW + 3,  i - 1);
 		  Operation1.ApplyOperation(architecture);
 		  RationalScalarProductW[3 + i] = Operation1.GetRationalMatrixElements();
 		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
@@ -386,7 +386,7 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 		{
 		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, CentralCharge12Numerical,
 							 WeightWNumerical,
-							 ScalarProductW,  i- 1);
+							 ScalarProductW + 3,  i- 1);
 		  Operation1.ApplyOperation(architecture);
 		  ScalarProductW[3 + i] = Operation1.GetOverlapMatrix();
 		  if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
