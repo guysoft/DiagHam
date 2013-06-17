@@ -82,9 +82,9 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // constructor from two MPS matrices (the number of B matrices has to be identical for all of them)
   //
   // matrix = MPS matrix
-  // qPeriodicity = periodicity of the charge sector, if set to zero, guess it from the filling factor
   // qSector = Q sector that has to be selected (from 0 to qPeriodicity-1)
-  FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qPeriodicity = 0, int qSector = 0);
+  // qPeriodicity = periodicity of the charge sector, if set to zero, guess it from the filling factor
+  FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qSector = 0, int qPeriodicity = 0);
 
   // destructor
   //

@@ -56,10 +56,10 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix()
 // constructor from two MPS matrices (the number of B matrices has to be identical for all of them)
 //
 // matrix = MPS matrix
-// qPeriodicity = if set to zero, guess it from the filling factor
 // qSector = Q sector that has to be selected (from 0 to qPeriodicity-1)
+// qPeriodicity = if set to zero, guess it from the filling factor
 
-FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qPeriodicity, int qSector)
+FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matrix, int qSector, int qPeriodicity)
 {
   this->MPSMatrix = matrix;
   this->QPeriodicity = qPeriodicity;
@@ -100,6 +100,7 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
       this->MPSMatrix->GetChargeIndexRange(p, MinQ, MaxQ);
       if ((MinQ % this->QPeriodicity) != 0)
 	MinQ += this->QPeriodicity - (MinQ % this->QPeriodicity);
+      //      MinQ += this->QSector;
       for (int l = 0; l < this->NbrCFTSectors; ++l)
 	{
 	  int LocalMinQ;
@@ -143,6 +144,7 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
       this->MPSMatrix->GetChargeIndexRange(p, MinQ, MaxQ);
       if ((MinQ % this->QPeriodicity) != 0)
 	MinQ += this->QPeriodicity - (MinQ % this->QPeriodicity);
+      //      MinQ += this->QSector;
       int MinQ1, MaxQ1, MinQ2, MaxQ2;
       this->MPSMatrix->GetChargeIndexRange(p, 0, MinQ1, MaxQ1);
       this->MPSMatrix->GetChargeIndexRange(p, 1, MinQ2, MaxQ2);     

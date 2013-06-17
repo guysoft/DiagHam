@@ -582,90 +582,182 @@ int main(int argc, char** argv)
     }
 
 
-//   FullLeftOverlapMatrix.PrintNonZero(cout) << endl;
-//   FullRightOverlapMatrix.PrintNonZero(cout) << endl;
-//  cout << NormalizationMatrix << endl;
-
   if (Manager.GetBoolean("orbital-es"))
     {
-      double*** EntanglementSpectrum = new double**[PLevel + 1];
-      int** EntanglementSpectrumDimension = new int*[PLevel + 1];
+      double**** EntanglementSpectrum = new double***[PLevel + 1];
+      int*** EntanglementSpectrumDimension = new int**[PLevel + 1];
       for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 	{
-	  int LocalMinQValue;
-	  int LocalMaxQValue;
-	  MPSMatrix->GetChargeIndexRange(CurrentPLevel, LocalMinQValue, LocalMaxQValue);
-	  if (LocalMinQValue <=  LocalMaxQValue)
+	  EntanglementSpectrumDimension[CurrentPLevel] = new int*[NbrCFTSectors];
+	  EntanglementSpectrum[CurrentPLevel] = new double**[NbrCFTSectors];	      	      
+	  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 	    {
-	      EntanglementSpectrumDimension[CurrentPLevel] = new int[LocalMaxQValue - LocalMinQValue + 1];
-	      EntanglementSpectrum[CurrentPLevel] = new double*[LocalMaxQValue - LocalMinQValue + 1];	      
-	    }
-	  else
-	    {
-	      EntanglementSpectrum[CurrentPLevel] = 0;
-	    }
-	  cout << "range = " << LocalMinQValue << " " << LocalMaxQValue << endl;
-	  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
-	    {
-	      cout << "computing sector P=" << CurrentPLevel<< " Q=" << LocalQValue << endl;
-	      RealDiagonalMatrix TmpRhoADiag = FQHEMPSEvaluatePartialEntanglementSpectrum(MPSMatrix, FullLeftOverlapMatrix, FullRightOverlapMatrix, 
-											  CurrentPLevel, LocalQValue, CurrentPLevel, LocalQValue, Error);
-	      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
-	      if (TmpRhoADiag.GetNbrRow() > 0)
+	      int LocalMinQValue;
+	      int LocalMaxQValue;
+	      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, LocalMinQValue, LocalMaxQValue);
+	      if (LocalMinQValue <=  LocalMaxQValue)
 		{
-		  for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
+		  EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector] = new int[LocalMaxQValue - LocalMinQValue + 1];
+		  EntanglementSpectrum[CurrentPLevel][CurrentCFTSector] = new double*[LocalMaxQValue - LocalMinQValue + 1];	      
+		}
+	      else
+		{
+		  EntanglementSpectrum[CurrentPLevel][CurrentCFTSector] = 0;
+		}
+	      for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+		{
+		  cout << "computing sector P=" << CurrentPLevel<< " CFT=" << CurrentCFTSector << " Q=" << LocalQValue << endl;
+		  RealDiagonalMatrix TmpRhoADiag = FQHEMPSEvaluatePartialEntanglementSpectrum(MPSMatrix, FullLeftOverlapMatrix, FullRightOverlapMatrix, 
+											      CurrentPLevel, CurrentCFTSector, LocalQValue, 
+											      CurrentPLevel, CurrentCFTSector, LocalQValue, Error);
+		  EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] = 0;
+		  if (TmpRhoADiag.GetNbrRow() > 0)
 		    {
-		      if (TmpRhoADiag[i] > 0.0)
-			EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]++;
-		    }
-		  if (EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] > 0)
-		    {
-		      EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue] = new double[EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]];
-		      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
 		      for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
 			{
 			  if (TmpRhoADiag[i] > 0.0)
-			    {
-			      EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]] = TmpRhoADiag[i];
-			      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]++;
-			      TotalTraceThoA += TmpRhoADiag[i];
-			    }
+			    EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]++;
 			}
-		      SortArrayDownOrdering<double>(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue],
-						    EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]);
+		      if (EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] > 0)
+			{
+			  EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] = new double[EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]];
+			  EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue] = 0;
+			  for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
+			    {
+			      if (TmpRhoADiag[i] > 0.0)
+				{
+				  EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]] = TmpRhoADiag[i];
+				  EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]++;
+				  TotalTraceThoA += TmpRhoADiag[i];
+				}
+			    }
+			  SortArrayDownOrdering<double>(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue],
+							EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]);
+			}
 		    }
 		}
 	    }
 	}
-
-
-      int NaturalNa = 2 * ((MaxNbrFluxQuantaA + 1) / 4);
-      if (((MaxNbrFluxQuantaA + 1) % 4) > 0)
-	++NaturalNa;
-      if (((MaxNbrFluxQuantaA + 1) % 4) >= 3)
-	++NaturalNa;
-      cout << "NaturalNa = " << NaturalNa << endl;
-      cout << MPSRowIndex << endl; 
-      double EntanglementEntropy = 0.0;
+      
+      
+      int GlobalMinQValue = 100000;
+      int GlobalMaxQValue = 0;
       for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 	{
-	  int LocalMinQValue;
-	  int LocalMaxQValue;
-	  MPSMatrix->GetChargeIndexRange(CurrentPLevel, LocalMinQValue, LocalMaxQValue);
-	  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+	  for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
 	    {
-	      for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]; ++i)
+	      int MinQValue = 0;
+	      int MaxQValue = 0;
+	      MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+	      if (MinQValue < GlobalMinQValue)
+		GlobalMinQValue = MinQValue;
+	      if (MaxQValue > GlobalMaxQValue)
+		GlobalMaxQValue = MaxQValue;		  
+	    }
+	}
+      double EntanglementEntropy = 0.0;
+      for (int CurrentCFTSector = 0; CurrentCFTSector < NbrCFTSectors; ++CurrentCFTSector)
+	{
+	  for (int LocalQValue =  GlobalMinQValue; LocalQValue <= GlobalMaxQValue; ++LocalQValue)
+	    {
+	      for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
 		{
-		  File << (MaxNbrFluxQuantaA + 1) << " " << LocalQValue << " " 
-		    //		     << (((MPSRowIndex - LocalQValue - 1)/ 2) + NaturalNa) << " " 
-		       << CurrentPLevel << " "
-		       <<  (EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)  
-		       <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)) << endl;
-		  EntanglementEntropy -= (log(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)
-					  * EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA);
+		  int LocalMinQValue;
+		  int LocalMaxQValue;
+		  MPSMatrix->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, LocalMinQValue, LocalMaxQValue);
+		  if ((LocalQValue >= LocalMinQValue) && (LocalQValue <= LocalMaxQValue))
+		    {
+		      for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue]; ++i)
+			{
+			  File << CurrentCFTSector  << " " << LocalQValue << " " 
+			       << CurrentPLevel << " "
+			       <<  (EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)  
+			       <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)) << endl;
+			  EntanglementEntropy -= (log(EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)
+						  * EntanglementSpectrum[CurrentPLevel][CurrentCFTSector][LocalQValue - LocalMinQValue][i] / TotalTraceThoA);
+			}
+		    }
 		}
 	    }
 	}
+//       double*** EntanglementSpectrum = new double**[PLevel + 1];
+//       int** EntanglementSpectrumDimension = new int*[PLevel + 1];
+//       for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+// 	{
+// 	  int LocalMinQValue;
+// 	  int LocalMaxQValue;
+// 	  MPSMatrix->GetChargeIndexRange(CurrentPLevel, LocalMinQValue, LocalMaxQValue);
+// 	  if (LocalMinQValue <=  LocalMaxQValue)
+// 	    {
+// 	      EntanglementSpectrumDimension[CurrentPLevel] = new int[LocalMaxQValue - LocalMinQValue + 1];
+// 	      EntanglementSpectrum[CurrentPLevel] = new double*[LocalMaxQValue - LocalMinQValue + 1];	      
+// 	    }
+// 	  else
+// 	    {
+// 	      EntanglementSpectrum[CurrentPLevel] = 0;
+// 	    }
+// 	  cout << "range = " << LocalMinQValue << " " << LocalMaxQValue << endl;
+// 	  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+// 	    {
+// 	      cout << "computing sector P=" << CurrentPLevel<< " Q=" << LocalQValue << endl;
+// 	      RealDiagonalMatrix TmpRhoADiag = FQHEMPSEvaluatePartialEntanglementSpectrum(MPSMatrix, FullLeftOverlapMatrix, FullRightOverlapMatrix, 
+// 											  CurrentPLevel, LocalQValue, CurrentPLevel, LocalQValue, Error);
+// 	      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
+// 	      if (TmpRhoADiag.GetNbrRow() > 0)
+// 		{
+// 		  for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
+// 		    {
+// 		      if (TmpRhoADiag[i] > 0.0)
+// 			EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]++;
+// 		    }
+// 		  if (EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] > 0)
+// 		    {
+// 		      EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue] = new double[EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]];
+// 		      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue] = 0;
+// 		      for (int i = 0 ; i < TmpRhoADiag.GetNbrRow(); ++i)
+// 			{
+// 			  if (TmpRhoADiag[i] > 0.0)
+// 			    {
+// 			      EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]] = TmpRhoADiag[i];
+// 			      EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]++;
+// 			      TotalTraceThoA += TmpRhoADiag[i];
+// 			    }
+// 			}
+// 		      SortArrayDownOrdering<double>(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue],
+// 						    EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]);
+// 		    }
+// 		}
+// 	    }
+// 	}
+
+
+//       int NaturalNa = 2 * ((MaxNbrFluxQuantaA + 1) / 4);
+//       if (((MaxNbrFluxQuantaA + 1) % 4) > 0)
+// 	++NaturalNa;
+//       if (((MaxNbrFluxQuantaA + 1) % 4) >= 3)
+// 	++NaturalNa;
+//       cout << "NaturalNa = " << NaturalNa << endl;
+//       cout << MPSRowIndex << endl; 
+//       double EntanglementEntropy = 0.0;
+//       for (int CurrentPLevel = 0; CurrentPLevel <= PLevel; ++CurrentPLevel)
+// 	{
+// 	  int LocalMinQValue;
+// 	  int LocalMaxQValue;
+// 	  MPSMatrix->GetChargeIndexRange(CurrentPLevel, LocalMinQValue, LocalMaxQValue);
+// 	  for (int LocalQValue =  LocalMinQValue; LocalQValue <= LocalMaxQValue; ++LocalQValue)
+// 	    {
+// 	      for (int i = 0; i < EntanglementSpectrumDimension[CurrentPLevel][LocalQValue - LocalMinQValue]; ++i)
+// 		{
+// 		  File << (MaxNbrFluxQuantaA + 1) << " " << LocalQValue << " " 
+// 		    //		     << (((MPSRowIndex - LocalQValue - 1)/ 2) + NaturalNa) << " " 
+// 		       << CurrentPLevel << " "
+// 		       <<  (EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)  
+// 		       <<  " " << (-log(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)) << endl;
+// 		  EntanglementEntropy -= (log(EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA)
+// 					  * EntanglementSpectrum[CurrentPLevel][LocalQValue - LocalMinQValue][i] / TotalTraceThoA);
+// 		}
+// 	    }
+// 	}
       cout << "S_A=" << EntanglementEntropy << endl;
       File2 << (MaxNbrFluxQuantaA + 1) << " " << EntanglementEntropy << " 1" << endl;
     }

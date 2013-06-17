@@ -2481,11 +2481,11 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
     }
   minQ = 0;
   maxQ = this->NbrNValue - 1;
+  int TmpMinQ = this->NbrNValue - 1;
+  int TmpMaxQ = 0;    
 
   if ((this->RIndex & 1) == 0)
     {
-      int TmpMinQ = this->NbrNValue - 1;
-      int TmpMaxQ = 0;    
       int NValueShift = this->PLevel;
       int QValue = 1 + (this->RIndex / 2);
       if (cftSector == 0) 
@@ -2583,13 +2583,9 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 		}
 	    }
 	}
-      minQ = TmpMinQ;
-      maxQ = TmpMaxQ;
     }
   else
     {
-      int TmpMinQ = this->NbrNValue - 1;
-      int TmpMaxQ = 0;    
       int NValueShift = this->PLevel;
       int QValue = this->RIndex + 2;
       if (cftSector == 0)
@@ -2638,8 +2634,6 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 		    TmpMaxQ = Q;	    
 		}
 	    }
-	  minQ = TmpMinQ;
-	  maxQ = TmpMaxQ;
 	}
       else
 	{
@@ -2687,11 +2681,11 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 		    TmpMaxQ = Q;	    
 		}
 	    }
-	  minQ = TmpMinQ;
-	  maxQ = TmpMaxQ;
 	}
     }
-  cout << "range at " << pLevel << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   
+  minQ = TmpMinQ;
+  maxQ = TmpMaxQ;
+  cout << "range at p=" << pLevel << ", x=" << cftSector << " : " << minQ << " " << maxQ << " (" << this->NbrNValue << ")" << endl;   
 }
 
 // get the number of particles that fit the root configuration once the number of flux quanta is fixed

@@ -115,7 +115,8 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new SingleStringOption  ('\n', "cft", "use a file that described the CFT to be used");
   (*SystemGroup) += new BooleanOption  ('\n', "quasihole-sector", "look at the quasihole sector for the (k=2,r) series of clustered states");
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
-  (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "consider only the block diagonal in P and Q");
+  (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "use a group of B matrices to fix the charge sector");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "qsector-value", "charge sector to consider when using the --fixed-qsector option");
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
   (*SystemGroup) += new BooleanOption  ('\n', "use-nonrational", "use double numbers instead of rational numbers for CFT calcaultions");
   (*PrecalculationGroup) += new SingleStringOption('\n', "import-bmatrices", "import the B matrices from a given binary file instead of computing them");
@@ -280,7 +281,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	}
       if (this->Options->GetBoolean("fixed-qsector") == true)
 	{
-	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSFixedQSectorMatrix(MPSMatrix);
+	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSFixedQSectorMatrix(MPSMatrix, this->Options->GetInteger("qsector-value"));
 	  MPSMatrix = MPSMatrix2;	  
 	  NbrBMatrices = MPSMatrix->GetNbrMatrices();
 	}
