@@ -374,3 +374,13 @@ int AbstractFQHEMPSMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool 
     return ((NbrParticles / Denominator) + 1);
 }
 
+// get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+//
+// cftSector = index of the CFT sector
+// return value = Q sector shift
+
+int AbstractFQHEMPSMatrix::GetQValueCFTSectorShift(int cftSector)
+{
+  return 0;
+}
+

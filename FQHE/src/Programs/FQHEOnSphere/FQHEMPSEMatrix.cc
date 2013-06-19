@@ -244,12 +244,11 @@ int main(int argc, char** argv)
 	      int MinQValue = 0;
 	      int MaxQValue = 0;
 	      MPSMatrix->GetChargeIndexRange(PLevel, l, MinQValue, MaxQValue);
-	      long Tmp = MPSMatrix->GetBondIndexRange(PLevel, MaxQValue, l);
 	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 		{
+		  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue, l);
 		  for (int i = 0; i < Tmp; ++i)
 		    {
-		      //		      long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(i, PLevel, QValue));
 		      long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, PLevel, QValue, l));
 		      BlockIndexProductTableNbrElements[Tmp2] = Tmp;
 		      BlockIndexProductTableShift[Tmp2] = EffectiveDimension;
@@ -258,7 +257,6 @@ int main(int argc, char** argv)
 		      Tmp2 *= TmpBMatrixDimension;
 		      for (int j = 0; j < Tmp; ++j)
 			{
-			  //			  TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargeAndPLevel(j, PLevel, QValue);
 			  TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, PLevel, QValue, l);
 			  EffectiveBlockIndices[EffectiveDimension] = TmpBlockIndexProductTable[j];		      
 			  ++EffectiveDimension;

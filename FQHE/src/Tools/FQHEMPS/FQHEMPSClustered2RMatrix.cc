@@ -2268,6 +2268,20 @@ int FQHEMPSClustered2RMatrix::ComputeLinearizedIndexArrays()
   return TotalIndex;
 }
 
+// get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+//
+// cftSector = index of the CFT sector
+// return value = Q sector shift
+
+int FQHEMPSClustered2RMatrix::GetQValueCFTSectorShift(int cftSector)
+{
+  if ((this->RIndex & 1) == 1)
+    return 0;
+  if (cftSector == 0)
+    return 0;
+  return ((this->RIndex + 2) / 2);
+}
+
 // get the range for the bond index when fixing the tuncation level and the charge index
 //
 // pLevel = tuncation level of the block

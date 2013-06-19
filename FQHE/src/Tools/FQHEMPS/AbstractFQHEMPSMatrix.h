@@ -135,6 +135,12 @@ class AbstractFQHEMPSMatrix
   // return value = number of CFT sectors
   virtual int GetNbrCFTSectors();
 
+  // get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+  //
+  // cftSector = index of the CFT sector
+  // return value = Q sector shift
+  virtual int GetQValueCFTSectorShift(int cftSector);
+
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix

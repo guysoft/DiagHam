@@ -1811,9 +1811,48 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 
 int FQHEMPSReadRezayi3Matrix::GetBondIndexRange(int pLevel, int qValue)
 {
-  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < 0) || (qValue >= this->NbrNValue))
+  if ((pLevel < 0) || (pLevel > this->PLevel))
     return 0;
-  return this->NbrIndicesPerPLevel[pLevel] / this->NbrNValue;  
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][0]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][0]))
+    {
+      int Tmp = this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]];
+      if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][3]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][3]))
+	Tmp += this->NbrIndexPerPLevelCFTSectorQValue[pLevel][3][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][3]];
+      if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][1]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][1]))
+	Tmp += this->NbrIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]];
+      if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][2]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][2]))
+	Tmp += this->NbrIndexPerPLevelCFTSectorQValue[pLevel][2][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][2]];
+      return Tmp;
+    }
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][1]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][1]))
+    {
+      int Tmp = this->NbrIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]];
+      if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][2]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][2]))
+	Tmp += this->NbrIndexPerPLevelCFTSectorQValue[pLevel][2][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][2]];
+      return Tmp;
+    }
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][2]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][2]))
+    return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][2][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][2]];
+  return 0;
+}
+
+// get the range for the bond index when fixing the tuncation level, charge and CFT sector index
+//
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// cftSector = CFT sector index of the block
+// return value = range for the bond index with fixed tuncation level, charge and CFT sector index
+
+int FQHEMPSReadRezayi3Matrix::GetBondIndexRange(int pLevel, int qValue, int cftSector)
+{
+  if ((pLevel < 0) || (pLevel > this->PLevel) || (qValue < this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]) || 
+      (qValue > this->NLastValuePerPLevelCFTSector[pLevel][cftSector]) || (cftSector > 2) ||  (cftSector < 0))
+    return 0;
+  if  (cftSector == 0)
+    return (this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]]
+	    + this->NbrIndexPerPLevelCFTSectorQValue[pLevel][3][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][3]]);
+  else
+    return this->NbrIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]];
 }
 
 // get the bond index for a fixed truncation level and the charge index 
@@ -1825,7 +1864,78 @@ int FQHEMPSReadRezayi3Matrix::GetBondIndexRange(int pLevel, int qValue)
 
 int FQHEMPSReadRezayi3Matrix::GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue)
 {
-  return (this->TotalStartingIndexPerPLevel[pLevel] + (localIndex * this->NbrNValue + qValue));
+  if ((qValue >= this->NInitialValuePerPLevelCFTSector[pLevel][0]) && (qValue <= this->NLastValuePerPLevelCFTSector[pLevel][0]))
+    {
+      if (localIndex < this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]])
+	{	  
+	  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]]  + localIndex);
+	}
+      else
+	{
+	  return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]]  
+		  + (localIndex - this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]]));
+	}
+    }
+  else
+    {
+      return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][1][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][1]] + localIndex);
+    }
+}
+
+// get the bond index for a fixed truncation level, charge and CFT sector index
+//
+// localIndex = bond index in the pLevel and qValue and cftSector restricted range
+// pLevel = tuncation level of the block
+// qValue = charge index of the block
+// cftSector = CFT sector index of the block
+// return value = bond index in the full bond index range
+
+int FQHEMPSReadRezayi3Matrix::GetBondIndexWithFixedChargePLevelCFTSector(int localIndex, int pLevel, int qValue, int cftSector)
+{
+  if (cftSector != 0)
+    return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]]  + localIndex);
+  else
+    {
+      if (localIndex < this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]])
+	return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][cftSector][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][cftSector]]  + localIndex);
+      else
+	return (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][3][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][3]] + localIndex - this->NbrIndexPerPLevelCFTSectorQValue[pLevel][0][qValue - this->NInitialValuePerPLevelCFTSector[pLevel][0]]);
+    }
+}
+
+
+// get the charge index range at a given truncation level
+// 
+// pLevel = tuncation level
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSReadRezayi3Matrix::GetChargeIndexRange (int pLevel, int& minQ, int& maxQ)
+{
+  minQ = this->NInitialValuePerPLevelCFTSector[pLevel][0];
+  maxQ = this->NLastValuePerPLevelCFTSector[pLevel][0];
+  if (this->NInitialValuePerPLevelCFTSector[pLevel][1] < minQ)
+    minQ = this->NInitialValuePerPLevelCFTSector[pLevel][1];
+  if (this->NLastValuePerPLevelCFTSector[pLevel][1] > maxQ)
+    maxQ = this->NLastValuePerPLevelCFTSector[pLevel][1];  
+  if (this->NInitialValuePerPLevelCFTSector[pLevel][2] < minQ)
+    minQ = this->NInitialValuePerPLevelCFTSector[pLevel][2];
+  if (this->NLastValuePerPLevelCFTSector[pLevel][2] > maxQ)
+    maxQ = this->NLastValuePerPLevelCFTSector[pLevel][2];  
+  return;
+}
+
+// get the charge index range at a given truncation level and in a given CFT sector
+// 
+// pLevel = tuncation level
+// cftSector = CFT sector
+// minQ = reference on the lowest charge index
+// maxQ = reference on the lowest charge index
+
+void FQHEMPSReadRezayi3Matrix::GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ)
+{
+  minQ = this->NInitialValuePerPLevelCFTSector[pLevel][cftSector];
+  maxQ = this->NLastValuePerPLevelCFTSector[pLevel][cftSector];
 }
 
 // get the boundary indices of the MPS representation

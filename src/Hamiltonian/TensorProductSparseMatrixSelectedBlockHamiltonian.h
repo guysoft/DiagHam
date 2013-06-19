@@ -37,6 +37,7 @@
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/RealMatrix.h"
 
 
 using std::ostream;
@@ -54,6 +55,9 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
 
   // linearized indices that define the selected block 
   long* BlockIndices;
+
+  int* InvertBlockIndices;
+
   // selected block size
   int BlockSize;
 
@@ -82,7 +86,6 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
 
   // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
   int PrecalculationShift;
-
 
  public:
 

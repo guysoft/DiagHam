@@ -62,16 +62,18 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   int PLevel;
 
   // number of N (i.e. charge) values per  truncation level
-  int* NbrNValuesPerPLevel;
+  int** NbrNValuesPerPLevelCFTSector;
   // initial N (i.e. charge) value per  truncation level
-  int* NInitialValuePerPLevel;
+  int** NInitialValuePerPLevelCFTSector;
   // last N (i.e. charge) value per  truncation level
-  int* NLastValuePerPLevel;
-  // first linearized index for each truncation level and charge sector
-  int** TotalStartingIndexPerPLevelAndQSector;
-  // number of linearized index per truncation level and charge sector
-  int** NbrIndicesPerPLevelAndQSector;
-  int*** GlobalIndexMapper;
+  int** NLastValuePerPLevelCFTSector;
+
+  // first linearized index for each truncation level, CFT sector, Q sector
+  int*** StartingIndexPerPLevelCFTSectorQValue;
+  // number of linearized indices for each truncation level, CFT sector, Q sector
+  int*** NbrIndexPerPLevelCFTSectorQValue;
+
+  int**** GlobalIndexMapper;
 
  public:
   
@@ -93,6 +95,11 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // create the B matrices for the block state
   //
   virtual void CreateBMatrices ();
+
+  // get the number of CFT sectors invloved on the MPS
+  //
+  // return value = number of CFT sectors
+  virtual int GetNbrCFTSectors();
 
   // get the name describing the B matrices 
   // 
@@ -122,6 +129,14 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // return value = range for the bond index with fixed tuncation level and charge index
   virtual int GetBondIndexRange(int pLevel, int qValue);
 
+  // get the range for the bond index when fixing the tuncation level, charge and CFT sector index
+  //
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // cftSector = CFT sector index of the block
+  // return value = range for the bond index with fixed tuncation level and charge index
+  virtual int GetBondIndexRange(int pLevel, int qValue, int cftSector);
+
   // get the bond index for a fixed truncation level and the charge index 
   //
   // localIndex = bond index in the pLevel and qValue restricted range
@@ -130,6 +145,15 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // return value = bond index in the full bond index range
   virtual int GetBondIndexWithFixedChargeAndPLevel(int localIndex, int pLevel, int qValue);
 
+  // get the bond index for a fixed truncation level, charge and CFT sector index
+  //
+  // localIndex = bond index in the pLevel and qValue restricted range
+  // pLevel = tuncation level of the block
+  // qValue = charge index of the block
+  // cftSector = CFT sector index of the block
+  // return value = bond index in the full bond index range
+  virtual int GetBondIndexWithFixedChargePLevelCFTSector(int localIndex, int pLevel, int qValue, int cftSector);
+
   // get the charge index range
   // 
   // pLevel = tuncation level
@@ -137,7 +161,14 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
 
-  
+  // get the charge index range at a given truncation level and in a given CFT sector
+  // 
+  // pLevel = tuncation level
+  // cftSector = CFT sector
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ);
+
   // get the boundary indices of the MPS representation
   //
   // rowIndex = matrix row index
@@ -173,6 +204,15 @@ inline int FQHEMPSFixedQSectorMatrix::GetTransferMatrixLargestEigenvalueDegenera
 inline int FQHEMPSFixedQSectorMatrix::GetTruncationLevel()
 {
   return this->PLevel;
+}
+
+// get the number of CFT sectors invloved on the MPS
+//
+// return value = number of CFT sectors
+
+inline int FQHEMPSFixedQSectorMatrix::GetNbrCFTSectors()
+{
+  return this->NbrCFTSectors;
 }
 
 #endif
