@@ -65,6 +65,9 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
   double GammaY;
   // nearest neighbor density-density potential strength
   
+  // use model with time reversal symmetry
+  bool TimeReversal;
+  
 
  public:
 
@@ -83,7 +86,7 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelTimeReversalKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices);
+  TightBindingModelTimeReversalKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool timeReversalFlag, bool storeOneBodyMatrices);
 
   // destructor
   //

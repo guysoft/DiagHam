@@ -77,6 +77,9 @@ class TightBindingModelTimeReversalKagomeLatticeTilted : public Abstract2DTightB
   double** ProjectedMomenta;
   //second coordinate in momentum space of the second spanning vector of the reciprocal lattice
   int Offset;
+  
+  // use model with time reversal symmetry
+  bool TimeReversal;
 
  public:
 
@@ -95,7 +98,7 @@ class TightBindingModelTimeReversalKagomeLatticeTilted : public Abstract2DTightB
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelTimeReversalKagomeLatticeTilted(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset,double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices);
+  TightBindingModelTimeReversalKagomeLatticeTilted(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset,double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool timeReversalFlag, bool storeOneBodyMatrices);
 
   // destructor
   //

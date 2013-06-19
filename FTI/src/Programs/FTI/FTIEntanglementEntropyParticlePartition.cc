@@ -212,6 +212,7 @@ int main(int argc, char** argv)
 		  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 		  return -1;
 		}
+// 		cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << NbrSiteZ << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalKz[i] << " " << TotalSpin << " " << Statistics << endl;
 	    }
 	}
     }
@@ -228,7 +229,7 @@ int main(int argc, char** argv)
 	      cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
 	      return -1;
 	    }
-	  cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << NbrSiteZ << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalKz[i] << endl;
+// 	  cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << NbrSiteZ << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalKz[i]  << endl;
 	}
     }
 

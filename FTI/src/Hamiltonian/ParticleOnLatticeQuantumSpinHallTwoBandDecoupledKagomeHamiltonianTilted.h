@@ -60,6 +60,8 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted : 
   double WPotential;
   // use flat band model
   bool FlatBand;
+  // use two copies of Kagome with time reversal symmetry
+  bool TimeReversal;
   
   Abstract2DTightBindingModel* TightBindingModel;
 
@@ -77,7 +79,7 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted : 
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential,Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double vPotential, double wPotential,Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, bool timeReversalFlag, long memory = -1);
 
   // destructor
   //

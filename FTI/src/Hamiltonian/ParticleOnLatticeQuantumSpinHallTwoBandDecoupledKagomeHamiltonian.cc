@@ -69,7 +69,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, bool timeReversalFlag, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -88,6 +88,7 @@ ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ParticleOnLat
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->FlatBand = flatBandFlag;
+  this->TimeReversal = timeReversalFlag;
 
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -942,7 +943,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeO
 	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * TmpDiag(0, 0);
 	  }
 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " " << TmpDiag(2, 2) << endl;
-		
+	
+	if (this->TimeReversal == true)
+	{
 	KX = 0.5 * this->KxFactor * (((double) -kx) + this->GammaX);
 	KY = 0.5 * this->KyFactor * (((double) -ky) + this->GammaY);
 	HAB = Complex(-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
@@ -967,12 +970,15 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ComputeO
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, Conj(HAB));
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 2, Conj(HAC));
 	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, Conj(HBC));
+	
 	TmpMatrix.SetToIdentity();
 #ifdef __LAPACK__
 	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
 	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
+	}
+	
 	for (int i = 0; i < 3; ++i)
 	  for (int j = 0; j < 3; ++j)
 	    oneBodyBasis[Index][2 * i + 1][3 + j] = TmpMatrix[i][j];

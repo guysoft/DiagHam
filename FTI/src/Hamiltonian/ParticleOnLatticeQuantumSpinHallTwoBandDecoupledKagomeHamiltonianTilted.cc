@@ -63,7 +63,7 @@ using std::ostream;
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, bool timeReversalFlag, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -76,6 +76,8 @@ ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::Particl
   this->HamiltonianShift = 0.0;
   
   this->FlatBand = flatBandFlag;
+  this->TimeReversal = timeReversalFlag;
+  
 
   this->UPotential = uPotential;
   this->VPotential = vPotential;
@@ -899,7 +901,12 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::Co
 	int IndexInv = this->TightBindingModel->GetLinearizedMomentumIndex(((this->NbrSiteX - kx) % this->NbrSiteX), ((this->NbrSiteY - ky) % this->NbrSiteY));
 	for (int i = 0; i < 3; ++i)
 	  for (int j = 0; j < 3; ++j)
-	    oneBodyBasis[Index][2 * i + 1][3 + j] = Conj (this->TightBindingModel->GetOneBodyMatrix(IndexInv)[i][j]);
+	  {
+	    if (this->TimeReversal == true)
+	      oneBodyBasis[Index][2 * i + 1][3 + j] = Conj (this->TightBindingModel->GetOneBodyMatrix(IndexInv)[i][j]);
+	    else
+	      oneBodyBasis[Index][2 * i + 1][3 + j] = this->TightBindingModel->GetOneBodyMatrix(Index)[i][j];
+	  }
 	if (this->FlatBand == false)
 	  {
 	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, IndexInv);

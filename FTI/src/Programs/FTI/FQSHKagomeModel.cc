@@ -85,7 +85,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytheta", "export the one-body topological information (phase of the eigenvalues of the D matrix) in an ASCII text file");
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the kagome lattice");
-  (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the checkerboard lattice");
+  (*SystemGroup) += new BooleanOption ('\n', "break-timereversal", "use model with two identical copies of the kagome model without time reversal invariance");
+  (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the kagome lattice");
   (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -121,6 +122,10 @@ int main(int argc, char** argv)
   int ny2 = Manager.GetInteger("ny2");
   int offset = Manager.GetInteger("offset");
   bool TiltedFlag = true;
+  bool TimeReversalFlag = true;
+  if (Manager.GetBoolean("break-timereversal"))
+    TimeReversalFlag = false;
+  
   if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
      TiltedFlag = false;
   else
@@ -224,14 +229,14 @@ int main(int argc, char** argv)
 	  TightBindingModel = new TightBindingModelTimeReversalKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 									      Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 									      Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
 	}
       else
 	{
 	  TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 										    Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 										    Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-										    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+										    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
 	}
       /*
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);*/
@@ -299,14 +304,14 @@ int main(int argc, char** argv)
 									 Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 									 Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 									 Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-									 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 0, true);
+									 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 0, TimeReversalFlag, true);
     }
   else
     {
       TightBindingModel = new TightBindingModelTimeReversalKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 										Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
 										Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-										Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 0, true);
+										Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 0, TimeReversalFlag, true);
     }
 
   bool FirstRunFlag = true;
@@ -377,7 +382,7 @@ int main(int argc, char** argv)
 													  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
 													  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
 													  Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-													  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+													  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), TimeReversalFlag, Memory);
 		    }
 		  else
 		    {
@@ -386,7 +391,7 @@ int main(int argc, char** argv)
 										    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
 		      Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,
 														Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), TightBindingModel, 		     
-														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), TimeReversalFlag, Memory);
 		    }
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, Sz);

@@ -51,7 +51,7 @@
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
-TightBindingModelTimeReversalKagomeLatticeTilted::TightBindingModelTimeReversalKagomeLatticeTilted(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+TightBindingModelTimeReversalKagomeLatticeTilted::TightBindingModelTimeReversalKagomeLatticeTilted(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool timeReversalFlag, bool storeOneBodyMatrices)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -74,6 +74,7 @@ TightBindingModelTimeReversalKagomeLatticeTilted::TightBindingModelTimeReversalK
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->TimeReversal = timeReversalFlag;
   this->ProjectedMomenta = new double* [this->NbrStatePerBand];
   for (int i = 0; i < this->NbrStatePerBand; ++i)
     this->ProjectedMomenta[i] = new double [2];
@@ -146,9 +147,18 @@ void TightBindingModelTimeReversalKagomeLatticeTilted::CoreComputeBandStructure(
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
 	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-	TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
-	TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
-	TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
+	if (this->TimeReversal == true)
+	{
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
+	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
+	}
+	else
+	{
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, HAB);
+	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, HAC);
+	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, HBC);
+	}
 
 	
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
