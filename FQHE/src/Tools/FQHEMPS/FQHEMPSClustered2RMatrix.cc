@@ -2431,25 +2431,68 @@ void FQHEMPSClustered2RMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& colu
 
 bool FQHEMPSClustered2RMatrix::LoadHeader (ifstream& file)
 {
-  int HeaderSize = 0;
-  ReadLittleEndian(file, HeaderSize);
-  ReadLittleEndian(file, this->PLevel);
-  ReadLittleEndian(file, this->LaughlinIndex);
-  ReadLittleEndian(file, this->RIndex);
-  ReadLittleEndian(file, this->NbrNValue);
-  ReadLittleEndian(file, this->CylinderFlag);
-  ReadLittleEndian(file, this->Kappa);
-  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
-  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  for (int i = 0; i <= this->PLevel; ++i)
+    int HeaderSize = 0;
+    ReadLittleEndian(file, HeaderSize);
+    ReadLittleEndian(file, this->PLevel);
+    ReadLittleEndian(file, this->LaughlinIndex);
+    ReadLittleEndian(file, this->RIndex);
+    ReadLittleEndian(file, this->NbrCFTSectors);
+    ReadLittleEndian(file, this->NbrNValue);
+    ReadLittleEndian(file, this->CylinderFlag);
+    ReadLittleEndian(file, this->Kappa);
+    ReadLittleEndian(file, this->UniformChargeIndexRange);
+
+    this->NeutralSectorDimension = new int*[this->NbrCFTSectors];
+    for (int x = 0; x < this->NbrCFTSectors; ++x)
+        this->NeutralSectorDimension[x] = new int[this->PLevel + 1];
+
+    this->U1BasisDimension = new int[this->PLevel + 1];
+    this->NbrNValuesPerPLevelCFTSector = new int*[this->PLevel + 1];
+    this->NInitialValuePerPLevelCFTSector = new int*[this->PLevel + 1];
+    this->NLastValuePerPLevelCFTSector = new int*[this->PLevel + 1];
+    this->StartingIndexPerPLevelCFTSectorQValue = new int**[this->PLevel + 1];
+    this->NbrIndexPerPLevelCFTSectorQValue = new int**[this->PLevel + 1];
+    this->StartingIndexPerPLevelCFTSectorQValueU1Sector = new int***[this->PLevel + 1];
+    this->NbrIndexPerPLevelCFTSectorQValueU1Sector = new int***[this->PLevel + 1];
+    for (int p = 0; p <= this->PLevel; ++p)
     {
-      ReadLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
+        ReadLittleEndian(file, this->U1BasisDimension[p]);
+
+        this->NbrNValuesPerPLevelCFTSector[p] = new int[this->NbrCFTSectors];
+        this->NInitialValuePerPLevelCFTSector[p] = new int[this->NbrCFTSectors];
+        this->NLastValuePerPLevelCFTSector[p] = new int[this->NbrCFTSectors];
+        this->StartingIndexPerPLevelCFTSectorQValue[p] = new int*[this->NbrCFTSectors];
+        this->NbrIndexPerPLevelCFTSectorQValue[p] = new int*[this->NbrCFTSectors];
+        this->StartingIndexPerPLevelCFTSectorQValueU1Sector[p] = new int**[this->NbrCFTSectors];
+        this->NbrIndexPerPLevelCFTSectorQValueU1Sector[p] = new int**[this->NbrCFTSectors];
+        for (int x = 0; x < this->NbrCFTSectors; ++x)
+        {
+            ReadLittleEndian(file, this->NeutralSectorDimension[x][p]);
+
+            ReadLittleEndian(file, this->NbrNValuesPerPLevelCFTSector[p][x]);
+            ReadLittleEndian(file, this->NInitialValuePerPLevelCFTSector[p][x]);
+            ReadLittleEndian(file, this->NLastValuePerPLevelCFTSector[p][x]);
+
+            this->StartingIndexPerPLevelCFTSectorQValue[p][x] = new int[this->NbrNValuesPerPLevelCFTSector[p][x]];
+            this->NbrIndexPerPLevelCFTSectorQValue[p][x] = new int[this->NbrNValuesPerPLevelCFTSector[p][x]];
+            this->StartingIndexPerPLevelCFTSectorQValueU1Sector[p][x] = new int*[this->NbrNValuesPerPLevelCFTSector[p][x]];
+            this->NbrIndexPerPLevelCFTSectorQValueU1Sector[p][x] = new int*[this->NbrNValuesPerPLevelCFTSector[p][x]];
+            for (int n = 0; n < this->NbrNValuesPerPLevelCFTSector[p][x]; ++n)
+            {
+                ReadLittleEndian(file, this->StartingIndexPerPLevelCFTSectorQValue[p][x][n]);
+                ReadLittleEndian(file, this->NbrIndexPerPLevelCFTSectorQValue[p][x][n]);
+                this->StartingIndexPerPLevelCFTSectorQValueU1Sector[p][x][n] = new int[p + 1];
+                this->NbrIndexPerPLevelCFTSectorQValueU1Sector[p][x][n] = new int[p + 1];
+                for (int k = 0; k <= p; ++k)
+                {
+                    ReadLittleEndian(file, this->StartingIndexPerPLevelCFTSectorQValueU1Sector[p][x][n][k]);
+                    ReadLittleEndian(file, this->NbrIndexPerPLevelCFTSectorQValueU1Sector[p][x][n][k]);
+                }
+            }
+        }
     }
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      ReadLittleEndian(file, this->NbrIndicesPerPLevel[i]);
-    }
-  return true;
+
+    return true;
 }
 
 // save the specific informations to the file header 
@@ -2459,23 +2502,49 @@ bool FQHEMPSClustered2RMatrix::LoadHeader (ifstream& file)
 
 bool FQHEMPSClustered2RMatrix::SaveHeader (ofstream& file)
 {
-  int HeaderSize = (this->PLevel + 1) * (2 * sizeof(int)) + (sizeof(int) * 4) + sizeof(bool) + sizeof(double);
-  WriteLittleEndian(file, HeaderSize);
-  WriteLittleEndian(file, this->PLevel);
-  WriteLittleEndian(file, this->LaughlinIndex);
-  WriteLittleEndian(file, this->RIndex);
-  WriteLittleEndian(file, this->NbrNValue);
-  WriteLittleEndian(file, this->CylinderFlag);
-  WriteLittleEndian(file, this->Kappa);
-  for (int i = 0; i <= this->PLevel; ++i)
+    int HeaderSize = sizeof(int) * 6 + sizeof(char) * 2 + sizeof(double);
+    for (int p = 0; p <= this->PLevel; ++p)
     {
-      WriteLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
+        HeaderSize += sizeof(int);
+        for (int x = 0; x < this->NbrCFTSectors; ++x)
+            HeaderSize += sizeof(int) * (4 + this->NbrNValuesPerPLevelCFTSector[p][x] * (2 + (p + 1) * 2));
     }
-  for (int i = 0; i <= this->PLevel; ++i)
+
+    WriteLittleEndian(file, HeaderSize);
+    WriteLittleEndian(file, this->PLevel);
+    WriteLittleEndian(file, this->LaughlinIndex);
+    WriteLittleEndian(file, this->RIndex);
+    WriteLittleEndian(file, this->NbrCFTSectors);
+    WriteLittleEndian(file, this->NbrNValue);
+    WriteLittleEndian(file, this->CylinderFlag);
+    WriteLittleEndian(file, this->Kappa);
+    WriteLittleEndian(file, this->UniformChargeIndexRange);
+
+    for (int p = 0; p <= this->PLevel; ++p)
     {
-      WriteLittleEndian(file, this->NbrIndicesPerPLevel[i]);
+        WriteLittleEndian(file, this->U1BasisDimension[p]);
+
+        for (int x = 0; x < this->NbrCFTSectors; ++x)
+        {
+            WriteLittleEndian(file, this->NeutralSectorDimension[x][p]);
+
+            WriteLittleEndian(file, this->NbrNValuesPerPLevelCFTSector[p][x]);
+            WriteLittleEndian(file, this->NInitialValuePerPLevelCFTSector[p][x]);
+            WriteLittleEndian(file, this->NLastValuePerPLevelCFTSector[p][x]);
+            for (int n = 0; n < this->NbrNValuesPerPLevelCFTSector[p][x]; ++n)
+            {
+                WriteLittleEndian(file, this->StartingIndexPerPLevelCFTSectorQValue[p][x][n]);
+                WriteLittleEndian(file, this->NbrIndexPerPLevelCFTSectorQValue[p][x][n]);
+                for (int k = 0; k <= p; ++k)
+                {
+                    WriteLittleEndian(file, this->StartingIndexPerPLevelCFTSectorQValueU1Sector[p][x][n][k]);
+                    WriteLittleEndian(file, this->NbrIndexPerPLevelCFTSectorQValueU1Sector[p][x][n][k]);
+                }
+            }
+        }
     }
-  return true;
+
+    return true;
 }
 
 // compute the charge index range at a given truncation level

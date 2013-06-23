@@ -63,6 +63,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "full-basis", "express the final vector in the full Haldane basis for the given root partition");
   (*SystemGroup) += new BooleanOption  ('\n', "use-padding", "root partitions use the extra zero padding");
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the root partition instead of using the reference-file", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "row-index", "manually specify the MPS row index (overrides default)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "column-index", "manually specify the MPS column index (overrides default)", -1);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new BooleanOption ('n', "normalize-sphere", "express the MPS in the normalized sphere basis");
   (*OutputGroup) += new BooleanOption ('\n', "normalize-jack", "use the Jack normalization, forcing the first component to be 1");
@@ -180,6 +182,11 @@ int main(int argc, char** argv)
   int MaxQ;
   MPSMatrix->GetChargeIndexRange(0, MinQ, MaxQ);
   MPSMatrix->GetMatrixBoundaryIndices(MPSRowIndex, MPSColumnIndex, Manager.GetBoolean("use-padding"));
+  if (Manager.GetInteger("row-index") != -1)
+      MPSRowIndex = Manager.GetInteger("row-index");
+  if (Manager.GetInteger("column-index") != -1)
+      MPSColumnIndex = Manager.GetInteger("column-index");
+
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 
