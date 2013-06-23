@@ -1382,6 +1382,25 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   delete[] MultiplicityFactor;
 }
 
+// get the filling factor of the state associated the B matrices 
+// 
+// numerator = reference on the filling factor numerator
+// denominator = reference on the filling factor denominator
+
+void FQHEMPSClustered2RQuasiholeSectorMatrix::GetFillingFactor(int& numerator, int& denominator)
+{
+  if (((this->RIndex & 1) == 0) && (this->SelfDualFlag == true))
+    {
+      numerator = 1;
+      denominator = 1 + (this->RIndex / 2);
+    }
+  else
+    {
+      numerator = 2;
+      denominator = 2 + this->RIndex;
+    }
+}
+
 
 // get the boundary indices of the MPS representation
 //

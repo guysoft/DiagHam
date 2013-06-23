@@ -50,10 +50,13 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+  // useRational = use arbitrary precision numbers for all the CFT calculations
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 1, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 1, bool useRational = true, 
+					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor 
   //
@@ -61,10 +64,13 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // useRational = use arbitrary precision numbers for all the CFT calculations
+  // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool cylinderFlag = false, double kappa = 1.0, 
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational = true, 
+					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
@@ -90,6 +96,20 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
+
+  // get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+  //
+  // cftSector = index of the CFT sector
+  // return value = Q sector shift
+  virtual int GetQValueCFTSectorShift(int cftSector);
+
+  // compute the charge index range at a given truncation level
+  // 
+  // pLevel = tuncation level
+  // cftSector = CFT sector
+  // minQ = reference on the lowest charge index
+  // maxQ = reference on the lowest charge index
+  virtual void ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ);
 
  protected:
 

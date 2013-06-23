@@ -128,6 +128,12 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
 
+  // get the filling factor of the state associated the B matrices 
+  // 
+  // numerator = reference on the filling factor numerator
+  // denominator = reference on the filling factor denominator
+  virtual void GetFillingFactor(int& numerator, int& denominator);
+
   // get the boundary indices of the MPS representation
   //
   // rowIndex = matrix row index

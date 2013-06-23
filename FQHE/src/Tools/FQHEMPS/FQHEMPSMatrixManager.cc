@@ -237,7 +237,9 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSReadRezayi3QuasiholeSectorMatrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-									      this->Options->GetString("matrices-cft"), CylinderFlag, Kappa, architecture);
+									      this->Options->GetString("matrices-cft"), 
+									      !(this->Options->GetBoolean("use-nonrational")), 
+									      this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 		    }
 		}
 	    }
