@@ -289,7 +289,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   double WeightPrimaryFieldMatrixElementNumerical = this->WeightPrimaryFieldMatrixElement.GetNumericalValue();
   long* Partition = new long[2 * (this->PLevel + 1)];
   unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
-  this->TemporaryOccupationNumber = new unsigned long [this->PLevel + 2];
 
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductSigma = new RealSymmetricMatrix[this->PLevel + 1];
@@ -361,308 +360,36 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		sprintf (TmpScalarProductPhiFileName, "%s/cft_%s_num_scalarproducts_phi_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
 	    }
 	}
-      if ((cftDirectory != 0) && (IsFile(TmpScalarProductSigmaFileName)))
-	{		
-	  if (this->UseRationalFlag == true)
-	    {
-	      RationalScalarProductSigma[i].ReadMatrix(TmpScalarProductSigmaFileName);
-	    }
-	  else
-	    {
-	      ScalarProductSigma[i].ReadMatrix(TmpScalarProductSigmaFileName);
-	    }
-	}
-      else
-	{
-	  if (this->UseRationalFlag == true)
-	    {
-	      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, CentralCharge12, 
-						     this->WeightSigma,
-						     RationalScalarProductSigma,  i- 1);
-	      Operation1.ApplyOperation(architecture);
-	      RationalScalarProductSigma[i] = Operation1.GetRationalMatrixElements();
-	      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-		{
-		  RationalScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
-		}
-	    }
-	  else
-	    {
-	      FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, CentralCharge12Numerical, 
-						     WeightSigmaNumerical,
-						     ScalarProductSigma,  i- 1);
-	      Operation1.ApplyOperation(architecture);
-	      ScalarProductSigma[i] = Operation1.GetOverlapMatrix();
-	      if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-		{
-		  ScalarProductSigma[i].WriteMatrix(TmpScalarProductSigmaFileName);
-		}
-	    }
-	}
+      this->ComputeFullScalarProductMatrix(cftDirectory, TmpScalarProductSigmaFileName, architecture, RationalScalarProductSigma, ScalarProductSigma, i, U1BosonBasis,
+					   CentralCharge12, CentralCharge12Numerical, this->WeightSigma, WeightSigmaNumerical, "sigma",
+					   OrthogonalBasisSigmaLeft, OrthogonalBasisSigmaRight, RationalMultiplicityFactor, MultiplicityFactor);
       if (this->SelfDualFlag == false)
 	{
-	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductPhiFileName)))
-	    {
-	      if (this->UseRationalFlag == true)
-		{
-		  RationalScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
-		}
-	      else
-		{
-		  ScalarProductPhi[i].ReadMatrix(TmpScalarProductPhiFileName);
-		}
-	    }
-	  else
-	    {
-	      if (this->UseRationalFlag == true)
-		{
-		  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12, 
-							 this->WeightPhi,
-							 RationalScalarProductPhi,  i - 1);
-		  Operation2.ApplyOperation(architecture);
-		  RationalScalarProductPhi[i] = Operation2.GetRationalMatrixElements();
-		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-		    {
-		      RationalScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
-		    }
-		}
-	      else
-		{
-		  FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, CentralCharge12Numerical, 
-							 WeightPhiNumerical,
-							 ScalarProductPhi,  i - 1);
-		  Operation2.ApplyOperation(architecture);
-		  ScalarProductPhi[i] = Operation2.GetOverlapMatrix();
-		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-		    {
-		      ScalarProductPhi[i].WriteMatrix(TmpScalarProductPhiFileName);
-		    }
-		}
-	    }
+	  this->ComputeFullScalarProductMatrix(cftDirectory, TmpScalarProductPhiFileName, architecture, RationalScalarProductPhi, ScalarProductPhi, i, U1BosonBasis,
+					       CentralCharge12, CentralCharge12Numerical, this->WeightPhi, WeightPhiNumerical, "phi",
+					       OrthogonalBasisPhiLeft, OrthogonalBasisPhiRight, RationalMultiplicityFactor, MultiplicityFactor);
 	}
       
-      RealSymmetricMatrix TmpMatrix;
-      if (this->UseRationalFlag == true)
- 	{
- 	  LongRationalMatrix TmpRationalMatrix(RationalScalarProductSigma[i].GetNbrRow(), RationalScalarProductSigma[i].GetNbrColumn());
-   	  for (int k = 0; k < RationalScalarProductSigma[i].GetNbrRow(); ++k)
-   	    for (int l = 0; l < RationalScalarProductSigma[i].GetNbrColumn(); ++l)
-   	      {
-   		TmpRationalMatrix[l][k] = RationalScalarProductSigma[i][l][k] * (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
-   	      }
- 	  TmpMatrix = TmpRationalMatrix;
-  	}
-      else
-	{
-	  TmpMatrix = RealSymmetricMatrix (ScalarProductSigma[i].GetNbrRow(), ScalarProductSigma[i].GetNbrColumn());
-	  for (int k = 0; k < ScalarProductSigma[i].GetNbrRow(); ++k)
-	    for (int l = k; l < ScalarProductSigma[i].GetNbrColumn(); ++l)
-	      {
-		double Tmp;
-		ScalarProductSigma[i].GetMatrixElement(k, l, Tmp);
-		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
-		TmpMatrix.SetMatrixElement(k, l, Tmp);
-	      }
-	}
-      
-      RealMatrix TmpBasis(U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension());
-      TmpBasis.SetToIdentity();
-      RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-      TmpMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
-#else
-      TmpMatrix.Diagonalize(TmpDiag, TmpBasis);
-#endif
-      double Error = 0.0;
-      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	if (fabs(TmpDiag(n, n)) > Error)
-	  Error = fabs(TmpDiag(n, n));
-      Error *= 1e-14;
-      if (Error < 1e-14)
-	Error = 1e-14;
-      int Count  = 0;
-      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	{
-	  if (fabs(TmpDiag(n, n)) < Error)
-	    ++Count;
-	}
-      cout << "nbr of null vectors identity sector = " << Count << " (" << (U1BosonBasis[i]->GetHilbertSpaceDimension() - Count) << " non null vectors)" << endl;
-      if (Count < U1BosonBasis[i]->GetHilbertSpaceDimension())
-	{
-	  OrthogonalBasisSigmaLeft[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count, true);
-	  OrthogonalBasisSigmaRight[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count, true);
-	  Count = 0;
-	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	    if (fabs(TmpDiag(n, n)) > Error)
-	      {
-		OrthogonalBasisSigmaLeft[i][Count].Copy(TmpBasis[n]);
-		OrthogonalBasisSigmaRight[i][Count].Copy(TmpBasis[n]);
-		if (TmpDiag(n, n) > 0)
-		  {
-		    OrthogonalBasisSigmaLeft[i][Count] /=  sqrt(TmpDiag(n, n));
-		    OrthogonalBasisSigmaRight[i][Count] /=  sqrt(TmpDiag(n, n));
-		  }
-		else
-		  {
-		    OrthogonalBasisSigmaLeft[i][Count] /=  sqrt(-TmpDiag(n, n));
-		    OrthogonalBasisSigmaRight[i][Count] /=  -sqrt(-TmpDiag(n, n));
-		  }
-		++Count;
-	      }
-	}
-      else
-	{
-	  OrthogonalBasisSigmaLeft[i] = RealMatrix();
-	  OrthogonalBasisSigmaRight[i] = RealMatrix();
-	}
-
-      if (this->SelfDualFlag == false)
-	{
-	  if (this->UseRationalFlag == true)
-	    {
-	      LongRationalMatrix TmpRationalMatrix2(RationalScalarProductPhi[i].GetNbrRow(), RationalScalarProductPhi[i].GetNbrColumn());
-	      for (int k = 0; k < RationalScalarProductPhi[i].GetNbrRow(); ++k)
-		for (int l = 0; l < RationalScalarProductPhi[i].GetNbrColumn(); ++l)
-		  {
-		    TmpRationalMatrix2[l][k] = RationalScalarProductPhi[i][l][k] * (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
-		  }
-	      TmpMatrix = TmpRationalMatrix2;
-	    }
-	  else
-	    {
-	      TmpMatrix = RealSymmetricMatrix (ScalarProductPhi[i].GetNbrRow(), ScalarProductPhi[i].GetNbrColumn());
-	      for (int k = 0; k < ScalarProductPhi[i].GetNbrRow(); ++k)
-		for (int l = k; l < ScalarProductPhi[i].GetNbrColumn(); ++l)
-		  {
-		    double Tmp;
-		    ScalarProductPhi[i].GetMatrixElement(k, l, Tmp);
-		    Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
-		    TmpMatrix.SetMatrixElement(k, l, Tmp);
-		  }
-	    }
-	  TmpBasis.SetToIdentity();
-#ifdef __LAPACK__
-	  TmpMatrix.LapackDiagonalize(TmpDiag, TmpBasis);
-#else
-	  TmpMatrix.Diagonalize(TmpDiag, TmpBasis);
-#endif
-	  Error = 0.0;
-	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	    if (fabs(TmpDiag(n, n)) > Error)
-	      Error = fabs(TmpDiag(n, n));
-	  Error *= 1e-14;
-	  if (Error < 1e-14)
-	    Error = 1e-14;
-	  Count  = 0;
-	  for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-	    if (fabs(TmpDiag(n, n)) < Error)
-	      ++Count;
-	  cout << "nbr of null vectors Phi sector = " << Count << " (" << (U1BosonBasis[i]->GetHilbertSpaceDimension() - Count) << " non null vectors)" << endl;
-	  if (Count < U1BosonBasis[i]->GetHilbertSpaceDimension())
-	    {
-	      OrthogonalBasisPhiLeft[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count);
-	      OrthogonalBasisPhiRight[i] = RealMatrix (U1BosonBasis[i]->GetHilbertSpaceDimension(), U1BosonBasis[i]->GetHilbertSpaceDimension() - Count);
-	      Count = 0;
-	      for (int n = 0; n < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++n)
-		if (fabs(TmpDiag(n, n)) > Error)
-		  {
-		    OrthogonalBasisPhiLeft[i][Count].Copy(TmpBasis[n]);
-		    OrthogonalBasisPhiRight[i][Count].Copy(TmpBasis[n]);
-		    if (TmpDiag(n, n) > 0)
-		      {
-			OrthogonalBasisPhiLeft[i][Count] /=  sqrt(TmpDiag(n, n));
-			OrthogonalBasisPhiRight[i][Count] /=  sqrt(TmpDiag(n, n));
-		      }
-		    else
-		      {
-			OrthogonalBasisPhiLeft[i][Count] /=  sqrt(-TmpDiag(n, n));
-			OrthogonalBasisPhiRight[i][Count] /=  -sqrt(-TmpDiag(n, n));
-		      }
-		    ++Count;
-		  }
-	    }
-	  else
-	    {
-	      OrthogonalBasisPhiLeft[i] = RealMatrix();
-	      OrthogonalBasisPhiRight[i] = RealMatrix();
-	    }
-	}
       cout << "---------------------------------" << endl;
     }
-  for (int i = 0; i <= this->PLevel; ++i)
+
+  this->RescaleFullScalarProductMatrix(RationalScalarProductSigma, ScalarProductSigma, RationalMultiplicityFactor, MultiplicityFactor);
+  if (this->SelfDualFlag == false)
     {
-      if (this->UseRationalFlag == true)
- 	{
-    	  for (int k = 0; k < RationalScalarProductSigma[i].GetNbrRow(); ++k)
-   	    for (int l = 0; l < RationalScalarProductSigma[i].GetNbrColumn(); ++l)
-   	      {
-   		RationalScalarProductSigma[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
-   	      }
- 	  ScalarProductSigma[i] = RationalScalarProductSigma[i];
-  	}
-      else
-	{
-	  for (int k = 0; k < ScalarProductSigma[i].GetNbrRow(); ++k)
-	    for (int l = k; l < ScalarProductSigma[i].GetNbrColumn(); ++l)
-	      {
-		double Tmp;
-		ScalarProductSigma[i].GetMatrixElement(k, l, Tmp);
-		Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
-		ScalarProductSigma[i].SetMatrixElement(k, l, Tmp);
-	      }
-	}
-      if (this->SelfDualFlag == false)
-	{
-	  if (this->UseRationalFlag == true)
-	    {
-	      for (int k = 0; k < RationalScalarProductPhi[i].GetNbrRow(); ++k)
-		for (int l = 0; l < RationalScalarProductPhi[i].GetNbrColumn(); ++l)
-		  {
-		    RationalScalarProductPhi[i][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[i][l]);
-		  }
-	      ScalarProductPhi[i] = RationalScalarProductPhi[i];
-	    }
-	  else
-	    {
-	      for (int k = 0; k < ScalarProductPhi[i].GetNbrRow(); ++k)
-		for (int l = k; l < ScalarProductPhi[i].GetNbrColumn(); ++l)
-		  {
-		    double Tmp;
-		    ScalarProductPhi[i].GetMatrixElement(k, l, Tmp);
-		    Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[i][l]);
-		    ScalarProductPhi[i].SetMatrixElement(k, l, Tmp);
-		  }
-	    }
-	}
-   }
-  this->StartingIndexPerPLevel = new int* [this->PLevel + 1];
-  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
-  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  this->IdentityBasisDimension = new int [this->PLevel + 1];
-  this->PsiBasisDimension = new int [this->PLevel + 1];
+      this->RescaleFullScalarProductMatrix(RationalScalarProductPhi, ScalarProductPhi, RationalMultiplicityFactor, MultiplicityFactor);
+    }
+
   this->U1BasisDimension = new int [this->PLevel + 1];	
   this->NeutralSectorDimension = new int* [this->NbrCFTSectors];
   for (int i = 0; i < this->NbrCFTSectors; ++i)
     this->NeutralSectorDimension[i] = new int [this->PLevel + 1];
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->IdentityBasisDimension[i] = OrthogonalBasisSigmaLeft[i].GetNbrColumn();
       this->NeutralSectorDimension[0][i] = OrthogonalBasisSigmaLeft[i].GetNbrColumn();
       if (this->SelfDualFlag == false)
-	{
-	  this->PsiBasisDimension[i] = OrthogonalBasisPhiLeft[i].GetNbrColumn();
 	  this->NeutralSectorDimension[1][i] = OrthogonalBasisPhiLeft[i].GetNbrColumn();
-	}
-      else
-	{
-	  this->PsiBasisDimension[i] = 0.0;
-	}
       this->U1BasisDimension[i] = U1BosonBasis[i]->GetHilbertSpaceDimension();
     }
-  this->TotalStartingIndexPerPLevel[0] = 0;
-  this->StartingIndexPerPLevel[0] = new int [1];
-  this->StartingIndexPerPLevel[0][0] = 0;
-
   
   int NValueShift;
   int QValue;
@@ -689,46 +416,6 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
     }
 
   int MatrixSize = this->ComputeLinearizedIndexArrays();
-
-  if (this->SelfDualFlag == false)
-    {
-      this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[0].GetNbrColumn() + OrthogonalBasisPhiLeft[0].GetNbrColumn())) * this->NbrNValue;
-    }
-  else
-    {
-      this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * OrthogonalBasisSigmaLeft[0].GetNbrColumn()) * this->NbrNValue;
-    }
-  for (int i = 1; i <= this->PLevel; ++i)
-    {
-      this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
-      this->StartingIndexPerPLevel[i] = new int [i + 1];      
-      this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
-      int Tmp = 0;
-      int Tmp2;
-      if (this->SelfDualFlag == false)
-	{
-	  for (int j = 0; j < i; ++j)
-	    {
-	      Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[i - j].GetNbrColumn() + OrthogonalBasisPhiLeft[i - j].GetNbrColumn()) * this->NbrNValue;
-	      this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
-	      Tmp += Tmp2;
-	    }
-	  Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisSigmaLeft[0].GetNbrColumn() + OrthogonalBasisPhiLeft[0].GetNbrColumn()) * this->NbrNValue;
-	}
-      else
-	{
-	  for (int j = 0; j < i; ++j)
-	    {
-	      Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * OrthogonalBasisSigmaLeft[i - j].GetNbrColumn() * this->NbrNValue;
-	      this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
-	      Tmp += Tmp2;
-	    }
-	  Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * OrthogonalBasisSigmaLeft[0].GetNbrColumn() * this->NbrNValue;
-	}
-
-      this->NbrIndicesPerPLevel[i] =  Tmp;
-    }
-  
   cout << "B matrix size = " << MatrixSize << endl;
 
   cout << "computing Psi matrix elements" << endl;
@@ -765,138 +452,40 @@ void FQHEMPSClustered2RQuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		    }
 		}
 	    }
-	  if ((cftDirectory != 0) && (IsFile(TmpScalarProductSigmaFileName)))
+	  if (this->SelfDualFlag == false)
 	    {
-	      if (this->UseRationalFlag == true)
-		{
-		  RationalMatrixPsi01[i][j].ReadMatrix(TmpScalarProductSigmaFileName);
-		}
-	      else
-		{
-		  MatrixPsi01[i][j].ReadMatrix(TmpScalarProductSigmaFileName);
-		}
+	      this->ComputeFullMatrixElements(cftDirectory, TmpScalarProductSigmaFileName, architecture, 
+					      RationalMatrixPsi01, MatrixPsi01, i, j, U1BosonBasis, 
+					      CentralCharge12, CentralCharge12Numerical, 
+					      this->WeightSigma, WeightSigmaNumerical, 
+					      this->WeightPhi, WeightPhiNumerical,
+					      this->WeightPrimaryFieldMatrixElement, WeightPrimaryFieldMatrixElementNumerical);
+	      this->ComputeFullMatrixElements(cftDirectory, TmpScalarProductPhiFileName, architecture, 
+					      RationalMatrixPsi10, MatrixPsi10, i, j, U1BosonBasis, 
+					      CentralCharge12, CentralCharge12Numerical, 
+					      this->WeightPhi, WeightPhiNumerical, 
+					      this->WeightSigma, WeightSigmaNumerical,
+					      this->WeightPrimaryFieldMatrixElement, WeightPrimaryFieldMatrixElementNumerical);
 	    }
 	  else
 	    {
-	      if (this->UseRationalFlag == true)
-		{
-		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12, 
-							 this->WeightSigma, this->WeightPhi, this->WeightPrimaryFieldMatrixElement,
-							 RationalMatrixPsi01,  i - 1, j);
-		  Operation1.ApplyOperation(architecture);
-		  RationalMatrixPsi01[i][j] = Operation1.GetRationalMatrixElements();
-		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-		    {
-		      RationalMatrixPsi01[i][j].WriteMatrix(TmpScalarProductSigmaFileName);
-		    }
-		}
-	      else
-		{
-		  FQHEMPSEvaluateCFTOperation Operation1(this, U1BosonBasis, i, j, CentralCharge12Numerical, 
-							 WeightSigmaNumerical, WeightPhiNumerical, WeightPrimaryFieldMatrixElementNumerical,
-							 MatrixPsi01,  i - 1, j);
-		  Operation1.ApplyOperation(architecture);
-		  MatrixPsi01[i][j] = Operation1.GetMatrixElements();
-		  if  ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-		    {
-		      MatrixPsi01[i][j].WriteMatrix(TmpScalarProductSigmaFileName);
-		    }
-		}
-	    }
-	  if (this->SelfDualFlag == false)
-	    {
-	      if ((cftDirectory != 0) && (IsFile(TmpScalarProductPhiFileName)))
-		{
-		  if (this->UseRationalFlag == true)
-		    {
-		      RationalMatrixPsi10[i][j].ReadMatrix(TmpScalarProductPhiFileName);
-		    }
-		  else
-		    {
-		      MatrixPsi10[i][j].ReadMatrix(TmpScalarProductPhiFileName);
-		    }
-		}
-	      else
-		{
-		  if (this->UseRationalFlag == true)
-		    {
-		      FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, j, CentralCharge12, 
-							     this->WeightPhi, this->WeightSigma, this->WeightPrimaryFieldMatrixElement,
-							     RationalMatrixPsi10,  i - 1, j);
-		      Operation2.ApplyOperation(architecture);
-		      RationalMatrixPsi10[i][j] = Operation2.GetRationalMatrixElements();
-		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-			{
-			  RationalMatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);
-			}
-		    }
-		  else
-		    {
-		      FQHEMPSEvaluateCFTOperation Operation2(this, U1BosonBasis, i, j, CentralCharge12Numerical, 
-							     WeightPhiNumerical, WeightSigmaNumerical, WeightPrimaryFieldMatrixElementNumerical,
-							     MatrixPsi10,  i - 1, j);
-		      Operation2.ApplyOperation(architecture);
-		      MatrixPsi10[i][j] = Operation2.GetMatrixElements();
-		      if ((cftDirectory != 0) && (architecture->CanWriteOnDisk() == true))
-			{
-			  MatrixPsi10[i][j].WriteMatrix(TmpScalarProductPhiFileName);
-			}
-		    }
-		}
+	      this->ComputeFullMatrixElements(cftDirectory, TmpScalarProductSigmaFileName, architecture, 
+					      RationalMatrixPsi01, MatrixPsi01, i, j, U1BosonBasis, 
+					      CentralCharge12, CentralCharge12Numerical, 
+					      this->WeightSigma, WeightSigmaNumerical, 
+					      this->WeightSigma, WeightSigmaNumerical,
+					      this->WeightPrimaryFieldMatrixElement, WeightPrimaryFieldMatrixElementNumerical);
 	    }
 	}
     }
-  for (int j = 0; j <= this->PLevel; ++j)
+
+
+  this->RescaleFullMatrixElements(RationalMatrixPsi01, MatrixPsi01, RationalMultiplicityFactor, MultiplicityFactor, this->MatrixElementNormalization);
+  if (this->SelfDualFlag == false)
     {
-      for (int i = 0; i <= this->PLevel; ++i)
-	{
-	  if (this->UseRationalFlag == true)
-	    {
-	      for (int k = 0; k < RationalMatrixPsi01[i][j].GetNbrRow(); ++k)
-		for (int l = 0; l < RationalMatrixPsi01[i][j].GetNbrColumn(); ++l)
-		  {
-		    RationalMatrixPsi01[i][j][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[j][l]);
-		  }
-	      MatrixPsi01[i][j] = RationalMatrixPsi01[i][j];
-	      if (this->SelfDualFlag == false)
-		{
-		  for (int k = 0; k < RationalMatrixPsi10[i][j].GetNbrRow(); ++k)
-		    for (int l = 0; l < RationalMatrixPsi10[i][j].GetNbrColumn(); ++l)
-		      {
-			RationalMatrixPsi10[i][j][l][k] *= (RationalMultiplicityFactor[i][k] * RationalMultiplicityFactor[j][l]);
-		      }
-		  MatrixPsi10[i][j] = RationalMatrixPsi10[i][j];
-		}
-	    }
-	  else
-	    {
-	      for (int k = 0; k < MatrixPsi01[i][j].GetNbrRow(); ++k)
-		for (int l = 0; l < MatrixPsi01[i][j].GetNbrColumn(); ++l)
-		  {
-		    double Tmp;
-		    MatrixPsi01[i][j].GetMatrixElement(k, l, Tmp);
-		    Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[j][l]);
-		    MatrixPsi01[i][j].SetMatrixElement(k, l, Tmp);
-		  }
-	      if (this->SelfDualFlag == false)
-		{
-		  for (int k = 0; k < MatrixPsi10[i][j].GetNbrRow(); ++k)
-		    for (int l = 0; l < MatrixPsi10[i][j].GetNbrColumn(); ++l)
-		      {
-			double Tmp;
-			MatrixPsi10[i][j].GetMatrixElement(k, l, Tmp);
-			Tmp *= (MultiplicityFactor[i][k] * MultiplicityFactor[j][l]);
-			MatrixPsi10[i][j].SetMatrixElement(k, l, Tmp);
-		      }
-		}
-	    }
-	  MatrixPsi01[i][j] *= this->MatrixElementNormalization;
-	  if (this->SelfDualFlag == false)
-	    {
-	      MatrixPsi10[i][j] *= this->MatrixElementNormalization;
-	    }
-	}
+      this->RescaleFullMatrixElements(RationalMatrixPsi10, MatrixPsi10, RationalMultiplicityFactor, MultiplicityFactor, this->MatrixElementNormalization);
     }
+
   cout << "building B matrices" << endl;
 
 

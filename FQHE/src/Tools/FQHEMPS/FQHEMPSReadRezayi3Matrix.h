@@ -110,6 +110,12 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory = 0, AbstractArchitecture* architecture = 0);
 
+  // get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+  //
+  // cftSector = index of the CFT sector
+  // return value = Q sector shift
+  virtual int GetQValueCFTSectorShift(int cftSector);
+
   // get the range for the bond index when fixing the tuncation level and the charge index
   //
   // pLevel = tuncation level of the block

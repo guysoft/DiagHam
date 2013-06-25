@@ -92,17 +92,17 @@ class FQHEMPSN1SuperconformalMatrix : public FQHEMPSClustered2RMatrix
 
  protected:
 
-  // load the specific informations from the file header
-  // 
-  // file = reference on the input file stream
-  // return value = true if no error occurred  
-  virtual bool LoadHeader (ifstream& file);
+  //// load the specific informations from the file header
+  //// 
+  //// file = reference on the input file stream
+  //// return value = true if no error occurred  
+  //virtual bool LoadHeader (ifstream& file);
 
-  // save the specific informations to the file header 
-  // 
-  // file = reference on the output file stream
-  // return value = true if no error occurred  
-  virtual bool SaveHeader (ofstream& file);
+  //// save the specific informations to the file header 
+  //// 
+  //// file = reference on the output file stream
+  //// return value = true if no error occurred  
+  //virtual bool SaveHeader (ofstream& file);
 
   // compute the scalar product matrices of the Virasoro descendant
   // 

@@ -211,7 +211,6 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
   InvCentralCharge3 /= this->CentralCharge;
   long* Partition = new long[2 * (this->EffectivePLevel + 1) + 1];
   unsigned long* TmpPartition = new unsigned long [this->EffectivePLevel + 2];
-  this->TemporaryOccupationNumber = new unsigned long [this->EffectivePLevel + 2];
 
   double CentralCharge12Numerical = CentralCharge12.GetNumericalValue();
   double InvCentralCharge3Numerical = InvCentralCharge3.GetNumericalValue();
@@ -486,26 +485,16 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
  	}
      }
 
-  this->StartingIndexPerPLevel = new int* [this->PLevel + 1];
-  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
-  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  this->IdentityBasisDimension = new int [this->PLevel + 1];
-  this->PsiBasisDimension = new int [this->PLevel + 1];
   this->U1BasisDimension = new int [this->PLevel + 1];	
   this->NeutralSectorDimension = new int* [this->NbrCFTSectors];
   for (int i = 0; i < this->NbrCFTSectors; ++i)
     this->NeutralSectorDimension[i] = new int [this->PLevel + 1];
   for (int i = 0; i <= this->PLevel; ++i)
     {
-      this->IdentityBasisDimension[i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
       this->NeutralSectorDimension[0][i] = OrthogonalBasisIdentityLeft[i].GetNbrColumn();
       this->NeutralSectorDimension[1][i] = OrthogonalBasisPsiLeft[i].GetNbrColumn();
       this->U1BasisDimension[i] = U1BosonBasis[i]->GetHilbertSpaceDimension();
     }
-  this->TotalStartingIndexPerPLevel[0] = 0;
-  this->StartingIndexPerPLevel[0] = new int [1];
-  this->StartingIndexPerPLevel[0][0] = 0;
-
   
   int NValueShift;
   int QValue;
@@ -517,26 +506,6 @@ void FQHEMPSN1SuperconformalMatrix::CreateBMatrices (char* cftDirectory, Abstrac
   QValueDenominator = 1;
 
   int MatrixSize = this->ComputeLinearizedIndexArrays();
-     
-//   this->NbrIndicesPerPLevel[0] = (U1BosonBasis[0]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn())) * this->NbrNValue;
-//   for (int i = 1; i <= this->PLevel; ++i)
-//     {
-//       this->TotalStartingIndexPerPLevel[i] = this->TotalStartingIndexPerPLevel[i - 1] + this->NbrIndicesPerPLevel[i - 1];
-//       this->StartingIndexPerPLevel[i] = new int [i + 1];      
-//       this->StartingIndexPerPLevel[i][0] = this->TotalStartingIndexPerPLevel[i];
-//       int Tmp = 0;
-//       int Tmp2;
-//       for (int j = 0; j < i; ++j)
-// 	{
-// 	  Tmp2 = U1BosonBasis[j]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[i - j].GetNbrColumn() + OrthogonalBasisPsiLeft[i - j].GetNbrColumn()) * this->NbrNValue;
-// 	  this->StartingIndexPerPLevel[i][j + 1] = Tmp2 + this->StartingIndexPerPLevel[i][j];
-// 	  Tmp += Tmp2;
-// 	}
-//       Tmp += U1BosonBasis[i]->GetHilbertSpaceDimension() * (OrthogonalBasisIdentityLeft[0].GetNbrColumn() + OrthogonalBasisPsiLeft[0].GetNbrColumn()) * this->NbrNValue;
-//       this->NbrIndicesPerPLevel[i] =  Tmp;
-//     }
-  
-//   int MatrixSize = this->NbrIndicesPerPLevel[this->PLevel] + this->TotalStartingIndexPerPLevel[this->PLevel];
   cout << "B matrix size = " << MatrixSize << endl;
 
   cout << "computing Psi matrix elements" << endl;
@@ -2396,59 +2365,5 @@ LongRational FQHEMPSN1SuperconformalMatrix::ComputeDescendantMatrixElement (long
   partition[position - 1] = Store;
   Tmp1 += Tmp2;
   return Tmp1;
-}
-
-// load the specific informations from the file header
-// 
-// file = reference on the input file stream
-// return value = true if no error occurred  
-
-bool FQHEMPSN1SuperconformalMatrix::LoadHeader (ifstream& file)
-{
-  int HeaderSize = 0;
-  ReadLittleEndian(file, HeaderSize);
-  ReadLittleEndian(file, this->PLevel);
-  ReadLittleEndian(file, this->LaughlinIndex);
-  ReadLittleEndian(file, this->RIndex);
-  ReadLittleEndian(file, this->NbrNValue);
-  ReadLittleEndian(file, this->CylinderFlag);
-  ReadLittleEndian(file, this->Kappa);
-  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
-  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      ReadLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
-    }
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      ReadLittleEndian(file, this->NbrIndicesPerPLevel[i]);
-    }
-  return true;
-}
-
-// save the specific informations to the file header 
-// 
-// file = reference on the output file stream
-// return value = true if no error occurred  
-
-bool FQHEMPSN1SuperconformalMatrix::SaveHeader (ofstream& file)
-{
-  int HeaderSize = (this->PLevel + 1) * (2 * sizeof(int)) + (sizeof(int) * 4) + sizeof(bool) + sizeof(double);
-  WriteLittleEndian(file, HeaderSize);
-  WriteLittleEndian(file, this->PLevel);
-  WriteLittleEndian(file, this->LaughlinIndex);
-  WriteLittleEndian(file, this->RIndex);
-  WriteLittleEndian(file, this->NbrNValue);
-  WriteLittleEndian(file, this->CylinderFlag);
-  WriteLittleEndian(file, this->Kappa);
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      WriteLittleEndian(file, this->TotalStartingIndexPerPLevel[i]);
-    }
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      WriteLittleEndian(file, this->NbrIndicesPerPLevel[i]);
-    }
-  return true;
 }
 

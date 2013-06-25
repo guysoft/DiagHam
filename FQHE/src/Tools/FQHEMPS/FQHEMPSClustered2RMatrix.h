@@ -57,12 +57,6 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // number of CFT sectors
   int NbrCFTSectors;
 
-  // indicate the first linearized index for fixed of the total p-level and the U(1) p-level
-  int** StartingIndexPerPLevel;
-  // number of non-zero vectors for the identity descendants at a given level 
-  int* IdentityBasisDimension;
-  // number of non-zero vectors for the psi  descendants at a given level 
-  int* PsiBasisDimension;
   // number of U(1) mode at a given level 
   int* U1BasisDimension;		  
 
@@ -72,9 +66,6 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   int** NInitialValuePerPLevelCFTSector;
   // last N (i.e. charge) value per  truncation level
   int** NLastValuePerPLevelCFTSector;
-
-  // a temporary array to store a partition in the occupation number basis
-  unsigned long* TemporaryOccupationNumber;
 
   // value of the central charge
   LongRational CentralCharge;
@@ -436,6 +427,79 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // return value = linearized index
   virtual int Get2RReducedMatrixIndex(int chargedPartitionIndex, int chargeSectorDimension, 
 				      int fieldIndex, int neutralPartitionIndex, int nbrIdentityDescendant, int globalIndexShift);
+
+  // compute the scalar product matrix at a given level
+  //
+  // cftDirectory = an optional path to the directory where all the CFT matrices are stored
+  // scalarProductFileName = optional file name of the scalar porduct matrix if the CFT matrix storage is used
+  // architecture = architecture to use for precalculation
+  // pLevel = |P| truncation level 
+  // u1BosonBasis = basis that related the partitions to their index
+  // rationalScalarProduct = matrices where scalar product matrix elements are stored (rational version)
+  // scalarProduct = matrices where scalar product matrix elements are stored (double version)
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // centralCharge12Numerical = double accuracy version of centralCharge12
+  // weight = weight of the primary field that is considered
+  // weightNumerical = double accuracy version of weight
+  // sectorName = CFT sector name 
+  // orthogonalBasisLeft = left transformation matrices related to the complete orthogonal basis 
+  // orthogonalBasisRight = right transformation matrices related to the complete orthogonal basis 
+  // rationalMultiplicityFactor = array that contains the multiplicity factors
+  // multiplicityFactor = double accuracy version of rationalMultiplicityFactor
+  void ComputeFullScalarProductMatrix(char* cftDirectory, char* scalarProductFileName, AbstractArchitecture* architecture,
+				      LongRationalMatrix* rationalScalarProduct, RealSymmetricMatrix* scalarProduct,
+				      int pLevel, BosonOnDiskShort** u1BosonBasis, 
+				      LongRational& centralCharge12, double centralCharge12Numerical, 
+				      LongRational& weight, double weightNumerical,
+				      const char* sectorName,
+				      RealMatrix* orthogonalBasisLeft, RealMatrix* orthogonalBasisRight,
+				      LongRational** rationalMultiplicityFactor, double** multiplicityFactor);
+
+  // rescale the scalar product matrix at all levels
+  //
+  // rationalScalarProduct = matrices where scalar product matrix elements are stored (rational version)
+  // scalarProduct = matrices where scalar product matrix elements are stored (double version)
+  // rationalMultiplicityFactor = array that contains the multiplicity factors
+  // multiplicityFactor = double accuracy version of rationalMultiplicityFactor
+  void RescaleFullScalarProductMatrix(LongRationalMatrix* rationalScalarProduct, RealSymmetricMatrix* scalarProduct,
+				      LongRational** rationalMultiplicityFactor, double** multiplicityFactor);
+
+  // compute the matrix elements of a primary field at a given level
+  //
+  // cftDirectory = an optional path to the directory where all the CFT matrices are stored
+  // matrixElementsFileName = optional file name of the scalar porduct matrix if the CFT matrix storage is used
+  // architecture = architecture to use for precalculation
+  // pLevelLeft = |P| truncation level for the left state
+  // pLevelRight = |P| truncation level for the right state
+  // u1BosonBasis = basis that related the partitions to their index
+  // rationalMatrixelements = matrices where matrix elements are stored (rational version)
+  // matrixElements = matrices where matrix elements are stored (double version)
+  // centralCharge12 = reference on the value of the central charge divided by 12
+  // centralCharge12Numerical = double accuracy version of centralCharge12
+  // weightLeftState = weight of the left state primary field
+  // weightLeftStateNumerical = double accuracy version of weightLeftState
+  // weightRightState = weight of the left state primary field
+  // weightRightStateNumerical = double accuracy version of weightRightState
+  // weightPrimaryFieldMatrixElement = weight of primary field whose matrix elements are computed
+  // weightPrimaryFieldMatrixElementNumerical = double accuracy version of weightPrimaryFieldMatrixElement
+  void ComputeFullMatrixElements(char* cftDirectory, char* matrixElementsFileName, AbstractArchitecture* architecture,
+				 LongRationalMatrix** rationalMatrixElements, RealMatrix** matrixElements,
+				 int pLevelLeft, int pLevelRight, BosonOnDiskShort** u1BosonBasis, 
+				 LongRational& centralCharge12, double centralCharge12Numerical, 
+				 LongRational& weightLeftState, double weightLeftStateNumerical,
+				 LongRational& weightRightState, double weightRightStateNumerical,
+				 LongRational& weightPrimaryFieldMatrixElement, double weightPrimaryFieldMatrixElementNumerical);
+
+  // rescale the matrix elements at all levels
+  //
+  // rationalMatrixElements = matrices where scalar product matrix elements are stored (rational version)
+  // matrixElements = matrices where scalar product matrix elements are stored (double version)
+  // rationalMultiplicityFactor = array that contains the multiplicity factors
+  // multiplicityFactor = double accuracy version of rationalMultiplicityFactor
+  // globalFactor = global rescaling factor
+  void RescaleFullMatrixElements(LongRationalMatrix** rationalMatrixElements, RealMatrix** matrixElements,
+				 LongRational** rationalMultiplicityFactor, double** multiplicityFactor,
+				 double globalFactor);
 
 };
 

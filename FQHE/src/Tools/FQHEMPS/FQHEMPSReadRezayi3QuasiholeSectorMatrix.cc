@@ -157,7 +157,6 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
   double WeightEpsilonNumerical = WeightEpsilon.GetNumericalValue();
   long* Partition = new long[2 * (this->PLevel + 1)];
   unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
-  this->TemporaryOccupationNumber = new unsigned long [this->PLevel + 2];
 
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
   RealSymmetricMatrix* ScalarProductSigma = new RealSymmetricMatrix[this->PLevel + 1];
@@ -1054,14 +1053,6 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 
   SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
 
-  int** StartingIndexPerPLevel = new int* [this->PLevel + 1];
-  this->TotalStartingIndexPerPLevel = new int [this->PLevel + 1];
-  this->NbrIndicesPerPLevel = new int [this->PLevel + 1];
-  this->TotalStartingIndexPerPLevel[0] = 0;
-  StartingIndexPerPLevel[0] = new int [1];
-  StartingIndexPerPLevel[0][0] = 0;
-
-  
   int NValueShift;
   int QValue;
   int QValueDenominator;
