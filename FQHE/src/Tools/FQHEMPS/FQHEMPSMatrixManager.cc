@@ -38,6 +38,7 @@
 #include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeSectorMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3QuasiholeSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
@@ -292,7 +293,25 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
     {
       if (this->Options->GetBoolean("k-2") == true)
 	{
-	  MPSMatrix = 0;
+          if (this->Options->GetString("import-bmatrices") != 0)
+            {
+              MPSMatrix = new FQHEMPSClustered2RQuasiholeMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"),
+                                                                this->Options->GetString("import-bmatrices"), CylinderFlag, Kappa);
+            }
+          else
+            {
+              if (this->Options->GetString("cft") != 0)
+                {
+                  MPSMatrix = new FQHEMPSClustered2RQuasiholeMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
+                                                                    CylinderFlag, Kappa, architecture);
+                }
+              else
+                {
+                  MPSMatrix = new FQHEMPSClustered2RQuasiholeMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+                                                                    this->Options->GetString("matrices-cft"), !(this->Options->GetBoolean("use-nonrational")),
+                                                                    this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+                }
+            }
 	}
       else
 	{
