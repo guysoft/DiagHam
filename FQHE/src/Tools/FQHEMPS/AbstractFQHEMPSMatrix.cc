@@ -54,6 +54,9 @@ AbstractFQHEMPSMatrix::AbstractFQHEMPSMatrix()
   this->RealBMatrices = 0;
   this->ComplexBMatrices = 0;
   this->QuasiholeBMatrices = 0;
+  this->PhysicalIndices = new unsigned long[2];
+  this->PhysicalIndices[0] = 0x0ul;
+  this->PhysicalIndices[1] = 0x1ul;
 }
 
 // destructor

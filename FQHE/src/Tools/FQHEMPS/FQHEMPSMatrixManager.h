@@ -48,11 +48,15 @@ class FQHEMPSMatrixManager
   // pointer to the option manager
   OptionManager* Options;
 
+  // indicates that the MPS matrix will be used to compute a transfer matrix
+  bool EMatrixFlag;
+
  public:
   
   // default constructor 
   //
-  FQHEMPSMatrixManager();
+  // eMatrixFlag = indicates that the MPS matrix will be used to compute a transfer matrix
+  FQHEMPSMatrixManager(bool eMatrixFlag = false);
 
   // destructor
   //
@@ -71,6 +75,20 @@ class FQHEMPSMatrixManager
   // return value = pointer to the MPS matrice class 
   AbstractFQHEMPSMatrix* GetMPSMatrices(int nbrFluxQuanta = 0, AbstractArchitecture* architecture = 0);
 
+  // get the MPS matrice class defined by the running options for the right part of the transfer matrix
+  //
+  // nbrFluxQuanta = number of flux quanta
+  // architecture = architecture to use for precalculation
+  // return value = pointer to the MPS matrice class 
+  AbstractFQHEMPSMatrix* GetRightMPSMatrices(int nbrFluxQuanta = 0, AbstractArchitecture* architecture = 0);
+
+  // get the MPS matrice class defined by the running options for the right part of the transfer matrix
+  //
+  // nbrFluxQuanta = number of flux quanta
+  // architecture = architecture to use for precalculation
+  // return value = pointer to the MPS matrice class 
+  AbstractFQHEMPSMatrix* GetLeftMPSMatrices(int nbrFluxQuanta = 0, AbstractArchitecture* architecture = 0);
+
   // get the cylinder perimeter (in magnetic length unit) if the cylinder geometry if used
   //
   // nbrFluxQuanta = number of flux quanta
@@ -78,6 +96,16 @@ class FQHEMPSMatrixManager
   double GetCylinderPerimeter(int nbrFluxQuanta = 0);
 
  protected:
+
+  // get the MPS matrice class defined by the running options and additional external parameters
+  //
+  // quasiholeSectorFlag = use the quasihole sector
+  // topologicalSectorValue = select a specific topological sector when grouping B matrices
+  // importBMatrices = import the B matrices from a file
+  // nbrFluxQuanta = number of flux quanta
+  // architecture = architecture to use for precalculation
+  // return value = pointer to the MPS matrice class  
+  AbstractFQHEMPSMatrix* GetMPSMatrices(bool quasiholeSectorFlag, int topologicalSectorValue, char* importBMatrices, int nbrFluxQuanta, AbstractArchitecture* architecture);
 
 };
 

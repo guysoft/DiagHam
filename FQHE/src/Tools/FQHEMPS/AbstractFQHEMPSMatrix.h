@@ -54,6 +54,9 @@ class AbstractFQHEMPSMatrix
   // number of B matrices
   int NbrBMatrices;
 
+  // arrar that describes all the physical indices
+  unsigned long* PhysicalIndices;
+
   // array where the B matrices are stored (for real matrices)
   SparseRealMatrix* RealBMatrices;
 
@@ -239,6 +242,11 @@ class AbstractFQHEMPSMatrix
   // padding = assume that the state has the extra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
+  // get the array of physical indices
+  //
+  // return value  = array of physical indices
+  virtual unsigned long* GetPhysicalIndices();
+
  protected:
 
   // load the specific informations from the file header
@@ -321,6 +329,15 @@ inline int AbstractFQHEMPSMatrix::GetTruncationLevel()
 inline int AbstractFQHEMPSMatrix::GetNbrCFTSectors()
 {
   return 1;
+}
+
+// get the array of physical indices
+//
+// return value  = array of physical indices
+
+inline unsigned long* AbstractFQHEMPSMatrix::GetPhysicalIndices()
+{
+  return this->PhysicalIndices;
 }
 
 #endif

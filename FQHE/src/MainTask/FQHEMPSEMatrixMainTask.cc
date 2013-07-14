@@ -384,11 +384,11 @@ int FQHEMPSEMatrixMainTask::ExecuteMainTask()
       File.open(this->EigenstateFileName, ios::binary | ios::out);
       if (this->EigenstateFileHeader != 0)
 	File << "# "<< this->EigenstateFileHeader << endl;
-      File << "# E |E|" << endl;
+      File << "# E |E| arg(E)/pi" << endl;
       File.precision(14);
       for (int i = 0; i < LocalNbrEigenvalues; ++i)
 	{
-	  File << TmpEigenvalues[i] << " " << Norm(TmpEigenvalues[i]) << endl;
+	  File << TmpEigenvalues[i] << " " << Norm(TmpEigenvalues[i]) << " " << (Arg(TmpEigenvalues[i]) / M_PI) << endl;
 	}
       File.close();
     }

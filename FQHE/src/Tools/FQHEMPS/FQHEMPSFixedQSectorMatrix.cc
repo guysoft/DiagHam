@@ -194,12 +194,15 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
   delete[] TmpSparseGroupBMatrices;
   delete[] GlobalIndices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   this->NbrBMatrices = 0;
+  this->PhysicalIndices[1] = 0x1ul;
   for (int i = 0; i < NbrGroupBMatrices; ++i)
     {
       if (TmpSparseGroupBMatrices2[i].GetNbrRow() > 0)
 	{
 	  this->RealBMatrices[this->NbrBMatrices] = TmpSparseGroupBMatrices2[i];
+	  this->PhysicalIndices[this->NbrBMatrices] = (unsigned long) i;
 	  ++this->NbrBMatrices;
 	}
       else

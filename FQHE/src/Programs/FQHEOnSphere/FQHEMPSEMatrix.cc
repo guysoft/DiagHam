@@ -61,7 +61,7 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
 
   ArchitectureManager Architecture;
-  FQHEMPSMatrixManager MPSMatrixManager;
+  FQHEMPSMatrixManager MPSMatrixManager(true);
 
   MPSMatrixManager.AddOptionGroup(&Manager);
   OptionGroup* SystemGroup = Manager.GetOptionGroup("system options");
@@ -113,28 +113,57 @@ int main(int argc, char** argv)
 
   int LandauLevel = 0;
 
-  AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
-  if (Manager.GetBoolean("only-export"))
-    {
-      return 0;
-    }
+  AbstractFQHEMPSMatrix* MPSLeftMatrix = MPSMatrixManager.GetLeftMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
+  AbstractFQHEMPSMatrix* MPSRightMatrix = MPSMatrixManager.GetRightMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
 
   
   int MPSRowIndex = 0;
   int MPSColumnIndex = 0;
 
-  SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
-  int NbrBMatrices = MPSMatrix->GetNbrMatrices();
-  cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
-  int NbrEigenstates = MPSMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
+  SparseRealMatrix* TmpSparseBMatrices = MPSLeftMatrix->GetMatrices();
+  SparseRealMatrix* TmpSparseRightBMatrices = MPSRightMatrix->GetMatrices();
+  int NbrBMatrices = 0;
+
+  for (int i = 0; i < MPSLeftMatrix->GetNbrMatrices(); ++i)
+    {
+      if (SearchInArray<unsigned long>(MPSLeftMatrix->GetPhysicalIndices()[i], MPSRightMatrix->GetPhysicalIndices(), MPSRightMatrix->GetNbrMatrices()) >= 0)
+	++NbrBMatrices;
+    }
+  SparseRealMatrix* SparseBMatrices = new SparseRealMatrix[NbrBMatrices];
+  SparseRealMatrix* SparseRightBMatrices = new SparseRealMatrix[NbrBMatrices];
+  NbrBMatrices = 0;
+  for (int i = 0; i < MPSLeftMatrix->GetNbrMatrices(); ++i)
+    {
+      int TmpIndex = SearchInArray<unsigned long>(MPSLeftMatrix->GetPhysicalIndices()[i], MPSRightMatrix->GetPhysicalIndices(), MPSRightMatrix->GetNbrMatrices());
+      if (TmpIndex >= 0)
+	{
+	  SparseBMatrices[NbrBMatrices] = TmpSparseBMatrices[i];
+	  SparseRightBMatrices[NbrBMatrices] = TmpSparseRightBMatrices[TmpIndex];
+	  ++NbrBMatrices;
+	}
+    }
+
+  cout << "Left B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
+  cout << "Right B matrix size = " << SparseRightBMatrices[0].GetNbrRow() << "x" << SparseRightBMatrices[0].GetNbrColumn() << endl;
+
+  char* StateName = 0;
+  if (strcmp(MPSLeftMatrix->GetName(), MPSRightMatrix->GetName()) == 0)
+    {
+      StateName = new char [strlen(MPSLeftMatrix->GetName()) + 1];
+      strcpy(StateName, MPSLeftMatrix->GetName());
+    }
+  else
+    {
+      StateName = new char [strlen(MPSLeftMatrix->GetName()) + strlen(MPSRightMatrix->GetName()) + 2];
+      sprintf (StateName, "%s_%s", MPSLeftMatrix->GetName(), MPSRightMatrix->GetName());
+    }
+
+  int NbrEigenstates = MPSLeftMatrix->GetTransferMatrixLargestEigenvalueDegeneracy();
   NbrEigenstates += Manager.GetInteger("nbr-excited");
   if (Manager.GetInteger("nbr-eigenstates") > 0)
     {
       NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
     }
-
-  char* StateName = new char [256];
-  strcpy(StateName, MPSMatrix->GetName());
 
   double EnergyShift = 0.0;
   if (Manager.GetBoolean("power-method") == true)
@@ -193,20 +222,19 @@ int main(int argc, char** argv)
 
   double Error = 1e-13;
   
-  SparseRealMatrix* SparseTransposeBMatrices = new SparseRealMatrix[NbrBMatrices];
   double* Coefficients = new double[NbrBMatrices];
   for (int i = 0; i < NbrBMatrices; ++i)
     {
       Coefficients[i] = 1.0;
-      SparseTransposeBMatrices[i] = SparseBMatrices[i].Transpose();
     }
-  
+
   int TmpBMatrixDimension = SparseBMatrices[0].GetNbrRow();
+  int TmpRightBMatrixDimension = SparseRightBMatrices[0].GetNbrRow();
   
   TensorProductSparseMatrixHamiltonian* ETransposeHamiltonian = 0;
   TensorProductSparseMatrixHamiltonian* EHamiltonian = 0;
-  int PTruncationLevel = MPSMatrix->GetTruncationLevel();
-  int NbrCFTSectors = MPSMatrix->GetNbrCFTSectors();
+  int PTruncationLevel = MPSLeftMatrix->GetTruncationLevel();
+  int NbrCFTSectors = MPSLeftMatrix->GetNbrCFTSectors();
   if (Manager.GetBoolean("diagonal-block"))
     {
       long EffectiveDimension = 0l;
@@ -216,10 +244,10 @@ int main(int argc, char** argv)
 	    {
 	      int MinQValue = 0;
 	      int MaxQValue = 0;
-	      MPSMatrix->GetChargeIndexRange(PLevel, i, MinQValue, MaxQValue);
+	      MPSLeftMatrix->GetChargeIndexRange(PLevel, i, MinQValue, MaxQValue);
 	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 		{
-		  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue, i);
+		  long Tmp = MPSLeftMatrix->GetBondIndexRange(PLevel, QValue, i);
 		  EffectiveDimension += Tmp * Tmp;
 		}
 	    }
@@ -243,13 +271,13 @@ int main(int argc, char** argv)
 	    {
 	      int MinQValue = 0;
 	      int MaxQValue = 0;
-	      MPSMatrix->GetChargeIndexRange(PLevel, l, MinQValue, MaxQValue);
+	      MPSLeftMatrix->GetChargeIndexRange(PLevel, l, MinQValue, MaxQValue);
 	      for (int QValue = MinQValue; QValue <= MaxQValue; ++QValue)
 		{
-		  long Tmp = MPSMatrix->GetBondIndexRange(PLevel, QValue, l);
+		  long Tmp = MPSLeftMatrix->GetBondIndexRange(PLevel, QValue, l);
 		  for (int i = 0; i < Tmp; ++i)
 		    {
-		      long Tmp2 = ((long) MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, PLevel, QValue, l));
+		      long Tmp2 = ((long) MPSLeftMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, PLevel, QValue, l));
 		      BlockIndexProductTableNbrElements[Tmp2] = Tmp;
 		      BlockIndexProductTableShift[Tmp2] = EffectiveDimension;
 		      BlockIndexProductTable[Tmp2] = new long[Tmp];
@@ -257,7 +285,7 @@ int main(int argc, char** argv)
 		      Tmp2 *= TmpBMatrixDimension;
 		      for (int j = 0; j < Tmp; ++j)
 			{
-			  TmpBlockIndexProductTable[j] = Tmp2 + MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, PLevel, QValue, l);
+			  TmpBlockIndexProductTable[j] = Tmp2 + MPSLeftMatrix->GetBondIndexWithFixedChargePLevelCFTSector(j, PLevel, QValue, l);
 			  EffectiveBlockIndices[EffectiveDimension] = TmpBlockIndexProductTable[j];		      
 			  ++EffectiveDimension;
 			}
@@ -293,15 +321,19 @@ int main(int argc, char** argv)
     }
   else
     {
-      Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpBMatrixDimension));
+      Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension));
       if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
-	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseBMatrices, Coefficients); 
+	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseRightBMatrices, Coefficients); 
       if (Manager.GetBoolean("left-eigenstates") == true)
 	{
 	  SparseRealMatrix* ConjugateSparseBMatrices = new SparseRealMatrix[NbrBMatrices];
+	  SparseRealMatrix* ConjugateSparseRightBMatrices = new SparseRealMatrix[NbrBMatrices];
 	  for (int i = 0; i < NbrBMatrices; ++i)
-	    ConjugateSparseBMatrices[i] = SparseBMatrices[i].Transpose();
-	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseBMatrices, Coefficients); 
+	    {
+	      ConjugateSparseBMatrices[i] = SparseBMatrices[i].Transpose();
+	      ConjugateSparseRightBMatrices[i] = SparseRightBMatrices[i].Transpose();
+	    }
+	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseRightBMatrices, Coefficients); 
 	}
      }
   if (Manager.GetBoolean("power-method") == true)

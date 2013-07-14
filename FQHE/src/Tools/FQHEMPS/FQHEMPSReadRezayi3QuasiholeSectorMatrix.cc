@@ -1780,9 +1780,9 @@ int FQHEMPSReadRezayi3QuasiholeSectorMatrix::GetQValueCFTSectorShift(int cftSect
     case 0:
       return 0;
     case 1:
-      return 1;
+      return 0;
     case 2:
-      return 1;
+      return 0;
     default:
       return 0;
     }

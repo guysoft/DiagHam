@@ -159,10 +159,10 @@ Complex TensorProductSparseMatrixHamiltonian::MatrixElement (ComplexVector& V1, 
 RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
-  int IndexStep = this->LeftMatrices[0].GetNbrColumn();
+  int IndexStep = this->RightMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent - 1;
-  int AMatrixLastIndex = LastComponent / this->LeftMatrices[0].GetNbrRow();
-  int BMatrixLastIndex = LastComponent % this->LeftMatrices[0].GetNbrRow();
+  int AMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+  int BMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
   long TmpARowPointer;
   long TmpARowLastPointer;
   long TmpBRowPointer;
@@ -171,8 +171,8 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-      int AMatrixStartingIndex = firstComponent / this->LeftMatrices[0].GetNbrRow();
-      int BMatrixStartingIndex = firstComponent % this->LeftMatrices[0].GetNbrRow();
+      int AMatrixStartingIndex = firstComponent / this->RightMatrices[0].GetNbrRow();
+      int BMatrixStartingIndex = firstComponent % this->RightMatrices[0].GetNbrRow();
       int TotalIndex = firstComponent;
       for (; AMatrixStartingIndex <=  AMatrixLastIndex; ++AMatrixStartingIndex)
 	{
@@ -226,10 +226,10 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
 
 RealVector* TensorProductSparseMatrixHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
-  int IndexStep = this->LeftMatrices[0].GetNbrColumn();
+  int IndexStep = this->RightMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent - 1;
-  int AMatrixLastIndex = LastComponent / this->LeftMatrices[0].GetNbrRow();
-  int BMatrixLastIndex = LastComponent % this->LeftMatrices[0].GetNbrRow();
+  int AMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+  int BMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
   long TmpARowPointer;
   long TmpARowLastPointer;
   long TmpBRowPointer;
@@ -239,8 +239,8 @@ RealVector* TensorProductSparseMatrixHamiltonian::LowLevelMultipleAddMultiply(Re
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-      int AMatrixStartingIndex = firstComponent / this->LeftMatrices[0].GetNbrRow();
-      int BMatrixStartingIndex = firstComponent % this->LeftMatrices[0].GetNbrRow();
+      int AMatrixStartingIndex = firstComponent / this->RightMatrices[0].GetNbrRow();
+      int BMatrixStartingIndex = firstComponent % this->RightMatrices[0].GetNbrRow();
       int TotalIndex = firstComponent;
       for (; AMatrixStartingIndex <=  AMatrixLastIndex; ++AMatrixStartingIndex)
 	{
@@ -305,10 +305,10 @@ RealVector* TensorProductSparseMatrixHamiltonian::LowLevelMultipleAddMultiply(Re
 ComplexVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
-  int IndexStep = this->LeftMatrices[0].GetNbrColumn();
+  int IndexStep = this->RightMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent - 1;
-  int AMatrixLastIndex = LastComponent / this->LeftMatrices[0].GetNbrRow();
-  int BMatrixLastIndex = LastComponent % this->LeftMatrices[0].GetNbrRow();
+  int AMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+  int BMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
   long TmpARowPointer;
   long TmpARowLastPointer;
   long TmpBRowPointer;
@@ -317,8 +317,8 @@ ComplexVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(Complex
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-      int AMatrixStartingIndex = firstComponent / this->LeftMatrices[0].GetNbrRow();
-      int BMatrixStartingIndex = firstComponent % this->LeftMatrices[0].GetNbrRow();
+      int AMatrixStartingIndex = firstComponent / this->RightMatrices[0].GetNbrRow();
+      int BMatrixStartingIndex = firstComponent % this->RightMatrices[0].GetNbrRow();
       int TotalIndex = firstComponent;
       for (; AMatrixStartingIndex <=  AMatrixLastIndex; ++AMatrixStartingIndex)
 	{
@@ -372,10 +372,10 @@ ComplexVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(Complex
 
 ComplexVector* TensorProductSparseMatrixHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent)
 {
-  int IndexStep = this->LeftMatrices[0].GetNbrColumn();
+  int IndexStep = this->RightMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent - 1;
-  int AMatrixLastIndex = LastComponent / this->LeftMatrices[0].GetNbrRow();
-  int BMatrixLastIndex = LastComponent % this->LeftMatrices[0].GetNbrRow();
+  int AMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+  int BMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
   long TmpARowPointer;
   long TmpARowLastPointer;
   long TmpBRowPointer;
@@ -385,8 +385,8 @@ ComplexVector* TensorProductSparseMatrixHamiltonian::LowLevelMultipleAddMultiply
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-      int AMatrixStartingIndex = firstComponent / this->LeftMatrices[0].GetNbrRow();
-      int BMatrixStartingIndex = firstComponent % this->LeftMatrices[0].GetNbrRow();
+      int AMatrixStartingIndex = firstComponent / this->RightMatrices[0].GetNbrRow();
+      int BMatrixStartingIndex = firstComponent % this->RightMatrices[0].GetNbrRow();
       int TotalIndex = firstComponent;
       for (; AMatrixStartingIndex <=  AMatrixLastIndex; ++AMatrixStartingIndex)
 	{
