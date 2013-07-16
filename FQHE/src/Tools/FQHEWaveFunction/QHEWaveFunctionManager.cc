@@ -636,7 +636,7 @@ Abstract1DComplexFunction* QHEWaveFunctionManager::GetWaveFunction()
 	      int N= this->Options->GetInteger("nbr-particles");
 	      TwoThirdUnpolarizedCF* rst = new TwoThirdUnpolarizedCF(N);
 	      rst->AdaptAverageMCNorm();
-	      return rst;
+              return rst;
 	    }
 	  if ((strcmp (this->Options->GetString("test-wavefunction"), "nass") == 0))
 	    {
