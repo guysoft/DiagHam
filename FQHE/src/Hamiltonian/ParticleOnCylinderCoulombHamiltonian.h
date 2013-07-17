@@ -73,13 +73,14 @@ class ParticleOnCylinderCoulombHamiltonian : public AbstractQHEOnCylinderHamilto
   // fillingFactor = filling factor of the FQHE state
   // landauLevel = LL index
   // confinement = amplitude of the quadratic confinement potential
+  // lineCharge = use line charge instead of parabolic confinement
   // electricFieldParameter = amplitude of the electric field along the cylinder
   // bFielfParameter = amplitude of the magnetic field (to set the energy scale)
   // deltaV1 = tweak of V1 pseudopotential
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double fillingFactor, int landauLevel, double confinement, double electricFieldParameter, double bFieldParameter, double deltaV1,
+  ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double fillingFactor, int landauLevel, double confinement, bool lineCharge, double electricFieldParameter, double bFieldParameter, double deltaV1,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
@@ -103,7 +104,11 @@ class ParticleOnCylinderCoulombHamiltonian : public AbstractQHEOnCylinderHamilto
 
   double Integrand(double qx, void *p);
 
+  double LineChargeIntegrand(double x, void *p);
+
   double CoulombMatrixElement(double xj14, double xj13, double &error);
+
+  double LineChargeMatrixElement(int index, int NbrParticles, int MaxMomentum, double Length, double Height, double &error);
 
  protected:
  

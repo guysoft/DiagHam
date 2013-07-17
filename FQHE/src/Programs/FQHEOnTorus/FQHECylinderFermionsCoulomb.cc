@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
   (*SystemGroup) += new SingleIntegerOption ('\n', "landau-level", "Landau level index", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "filling-factor", "value of the filling factor in thermodynamic limit", 0.0);
+  (*SystemGroup) += new BooleanOption ('\n', "line-charge", "consider line charge instead of parabolic confinement potential", false);
   (*SystemGroup) += new SingleDoubleOption ('\n', "confinement-potential", "amplitude of the quadratic confinement potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "electric-field", "parameter for the value of the electric field applied along the cylinder (a=eEl_B^2/hbar omega_c)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "b-field", "parameter for the value of the magnetic field [in T] when also the electric field is present (needed to set the scale for the kinetic term)", 0.0);
@@ -119,6 +120,11 @@ int main(int argc, char** argv)
       cout << "Assuming quadratic confining potential sum_m (a*X_m^2) c_m^+ c_m " << endl;
       cout << "where X_m=2pi m/L and a = " << Confinement << endl;
     }
+
+  bool LineCharge = false;
+  if (((BooleanOption*) Manager["line-charge"])->GetBoolean() == true)
+    LineCharge = true;
+
 
   double FillingFactor = ((SingleDoubleOption*) Manager["filling-factor"])->GetDouble();
   if (FillingFactor == 0.0)
@@ -202,7 +208,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderCoulombHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, FillingFactor, LLIndex, Confinement, ElectricFieldParameter, BFieldParameter, DeltaV1, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderCoulombHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, FillingFactor, LLIndex, Confinement, LineCharge, ElectricFieldParameter, BFieldParameter, DeltaV1, Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);

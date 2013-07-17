@@ -69,12 +69,13 @@ class ParticleOnCylinderPseudopotentialHamiltonian : public AbstractQHEOnCylinde
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
   // confinement = amplitude of the quadratic confinement potential
+  // lineCharge = use line charge instead of parabolic confinement
   // nbrPseudopotentials = number of pseudopotentials
   // pseudopotentials = array containing values of pseudopotentials 
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderPseudopotentialHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, int nbrPseudopotentials, double* pseudopotentials,
+  ParticleOnCylinderPseudopotentialHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double confinement, bool lineCharge, int nbrPseudopotentials, double* pseudopotentials,
 					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
@@ -98,7 +99,12 @@ class ParticleOnCylinderPseudopotentialHamiltonian : public AbstractQHEOnCylinde
 
   double Integrand(double qx, void *p);
 
+  double LineChargeIntegrand(double qx, void *p);
+
   double PseudopotentialMatrixElement(double xj14, double xj13, int nbrPseudopotentials, double* pseudopotentials, Polynomial* laguerrePolynomials, double &error);
+
+  double LineChargeMatrixElement(int index, int MaxMomentum, double Length, double Height, double &error);
+
 
  protected:
  

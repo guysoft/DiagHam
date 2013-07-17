@@ -64,6 +64,7 @@ using std::ostream;
 // fillingFactor = filling factor of the FQHE state
 // landauLevel = LL index
 // confinement = amplitude of the quadratic confinement potential
+// lineCharge = use line charge instead of parabolic confinement
 // electricFieldParameter = amplitude of the electric field along the cylinder
 // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
 // deltaV1 = tweak of V1 pseudopotential
@@ -72,7 +73,7 @@ using std::ostream;
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum,
-										   double ratio, double fillingFactor, int landauLevel, double confinement, double electricFieldParameter, double bFieldParameter, double deltaV1, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+										   double ratio, double fillingFactor, int landauLevel, double confinement, bool lineCharge, double electricFieldParameter, double bFieldParameter, double deltaV1, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -114,19 +115,36 @@ ParticleOnCylinderCoulombHamiltonian::ParticleOnCylinderCoulombHamiltonian(Parti
     {
       Complex Factor;
       double kappa = sqrt(2.0 * M_PI /(this->NbrLzValue * this->Ratio));
+      double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+      double Height = sqrt(2.0 * M_PI * this->NbrLzValue / this->Ratio);
+
       for (int i = 0; i < this->NbrLzValue; ++i)
         { 
-           //Parabolic confinement   
-           Factor.Re = this->Confinement * pow(kappa * (i - 0.5 * this->MaxMomentum), 2.0);
-           Factor.Im = 0.0;
-           //Realistic confinement
-           //double Height = sqrt(2.0 * M_PI * this->NbrLzValue / this->Ratio);
-           //Factor.Re = 0.5 * this->Confinement * (2.0 - tanh(i) + tanh((double)i - Height));
-           //Factor.Im = 0.0;
+
+         if (lineCharge == false)
+           {
+             //Parabolic confinement     
+             Factor.Re = this->Confinement * pow(kappa * (i - 0.5 * this->MaxMomentum), 2.0);
+             Factor.Im = 0.0;
+           }
+         else
+          {
+             double error;
+
+             //Realistic confinement
+             Factor.Re = this->Confinement * this->LineChargeMatrixElement(i, this->NbrParticles, this->MaxMomentum, Length, Height, error);
+             Factor.Im = 0.0;
+             if (fabs(error) > 1e-6)
+               cout << "Insufficient accuracy in line charge " << endl;
+           } 
+
            //add the contribution from electric field
            Factor.Re += 0.194 * sqrt(this->MagneticField) * ((this->ElectricField/(1.0 + this->ElectricField)) * kappa * kappa * ((double)i - 0.5 * this->MaxMomentum) * ((double)i - 0.5 * this->MaxMomentum)); 
            Factor.Im += 0.0;
 	   this->OneBodyInteractionFactors[i] += Factor;
+
+           if (Norm(Factor) != 0.0)
+             cout << "One body: i= " << i << " " << this->OneBodyInteractionFactors[i] << endl;
         }
     }
 
@@ -481,6 +499,40 @@ double SingularIntegrand(double qx, void *p)
 
 }
 
+namespace LineChargeMatEl
+{
+
+struct f_params {
+  int index;
+  int Ne;
+  int Nphi;
+  double L;
+  double H;
+};
+
+double LineChargeIntegrand(double x, void *p)
+{
+  f_params &params= *reinterpret_cast<f_params *>(p);
+
+  double Xm = (params.index - 0.5 * params.Nphi) * 2.0 * M_PI/params.L;
+
+  double LogNum, LogDen, IntegrandPos, IntegrandNeg;
+
+  LogNum = x - 0.5 * params.H + sqrt(pow(x - 0.5 * params.H, 2.0) + pow(params.L/(2.0 * M_PI),2.0));
+  LogDen = x + 0.5 * params.H + sqrt(pow(x + 0.5 * params.H, 2.0) + pow(params.L/(2.0 * M_PI),2.0));
+
+  IntegrandPos = exp(-pow(x - Xm,2.0)) * log(fabs(LogNum/LogDen));
+
+  LogNum = -x - 0.5 * params.H + sqrt(pow(-x - 0.5 * params.H, 2.0) + pow(params.L/(2.0 * M_PI),2.0));
+  LogDen = -x + 0.5 * params.H + sqrt(pow(-x + 0.5 * params.H, 2.0) + pow(params.L/(2.0 * M_PI),2.0));
+
+  IntegrandNeg = exp(-pow(-x - Xm,2.0)) * log(fabs(LogNum/LogDen));
+
+  return ( ((IntegrandPos + IntegrandNeg) * params.Nphi ) / (sqrt(M_PI) ) );
+}
+
+}
+
 
 #endif
 
@@ -551,3 +603,42 @@ double ParticleOnCylinderCoulombHamiltonian::CoulombMatrixElement(double xj14, d
 #endif
 }
 
+double ParticleOnCylinderCoulombHamiltonian::LineChargeMatrixElement(int index, int NbrParticles, int MaxMomentum, double Length, double Height, double &error)
+{
+#ifdef HAVE_GSL
+
+  gsl_integration_workspace *work_ptr =
+    gsl_integration_workspace_alloc (1000000);
+
+  double lower_limit = 0.0;
+  double abs_error = 1.0e-10;
+  double rel_error = 1.0e-10;
+  double result, finalresult;
+
+  LineChargeMatEl::f_params params;
+  params.index = index;
+  params.Ne = NbrParticles;
+  params.Nphi = MaxMomentum;
+  params.L = Length;
+  params.H = Height;
+
+  gsl_function F;
+
+  F.function = &LineChargeMatEl::LineChargeIntegrand;
+  F.params = reinterpret_cast<void *>(&params);
+    
+  gsl_integration_qagiu (&F, lower_limit,
+			 abs_error, rel_error, 10000, work_ptr, &result,
+			 &error);
+
+  finalresult = result;
+
+  gsl_integration_workspace_free (work_ptr);
+  
+  //cout << "result          = " << result << endl;
+  //cout << "estimated error = " << error << endl;
+  //cout << "intervals =  " << work_ptr->size << endl;
+
+  return finalresult;
+#endif
+}

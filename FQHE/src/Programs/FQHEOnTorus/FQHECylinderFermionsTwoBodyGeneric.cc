@@ -74,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-ky", "number of Ky values to evaluate", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the height and length of the cylinder (LH=2pi r N_{orb})", 1.0);
   (*SystemGroup) += new SingleIntegerOption ('\n', "landau-level", "Landau level index", 0);
+  (*SystemGroup) += new BooleanOption ('\n', "line-charge", "consider line charge instead of parabolic confinement potential", false);
   (*SystemGroup) += new SingleDoubleOption ('\n', "confinement-potential", "amplitude of the quadratic confinement potential", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "coulomb");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
@@ -117,6 +118,9 @@ int main(int argc, char** argv)
       cout << "Assuming quadratic confining potential sum_m (a*X_m^2) c_m^+ c_m " << endl;
       cout << "where X_m=2pi m/L and a = " << Confinement << endl;
     }
+  bool LineCharge = false;
+  if (((BooleanOption*) Manager["line-charge"])->GetBoolean() == true)
+    LineCharge = true;
 
   double* PseudoPotentials;
   int NbrPseudoPotentials = 0;
@@ -200,7 +204,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderPseudopotentialHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Confinement, NbrPseudoPotentials, PseudoPotentials, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderPseudopotentialHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Confinement, LineCharge, NbrPseudoPotentials, PseudoPotentials, Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
