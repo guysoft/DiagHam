@@ -111,6 +111,10 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   unsigned ProdATemporaryStateNbrUp;
   // temporary storage for monomial decompositions - should convert to unsigned at some point
   unsigned long* TemporaryMonomials;
+
+    // target space for operations leaving the Hilbert-space
+  BosonOnSphereWithSpin *TargetSpace;
+
   
  public:
 
@@ -170,6 +174,17 @@ class BosonOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = pointer to the new subspace
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
+
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
+  
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
+
 
 
     // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
