@@ -75,6 +75,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->Flag.Initialize();
+  this->TargetSpace = this;
   this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
   this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
   this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
@@ -141,6 +142,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
   this->TemporaryState = new unsigned [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned [this->NbrLzValue];
   this->Flag.Initialize();
+  this->TargetSpace = this;
   this->StateDescription = new unsigned* [this->HilbertSpaceDimension];
   this->StateLzMaxUp = new unsigned [this->HilbertSpaceDimension];
   this->StateLzMaxDown = new unsigned [this->HilbertSpaceDimension];
@@ -221,7 +223,10 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz(const BosonOnSphereWithSp
   this->SubspaceRestriction=bosons.SubspaceRestriction;
   this->SubspaceSz=bosons.SubspaceSz;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
-
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
 }
 
 // destructor
@@ -315,6 +320,10 @@ BosonOnSphereWithSpinAllSz& BosonOnSphereWithSpinAllSz::operator = (const BosonO
 	}
       delete this->KeptCoordinates;
     }
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->TotalLz = bosons.TotalLz;
@@ -393,6 +402,25 @@ AbstractHilbertSpace* BosonOnSphereWithSpinAllSz::ExtractSubspace (AbstractQuant
   return 0;
 }
 
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void BosonOnSphereWithSpinAllSz::SetTargetSpace(ParticleOnSphereWithSpin* targetSpace)
+{
+  this->TargetSpace = (BosonOnSphereWithSpinAllSz*) targetSpace;
+}
+
+// return Hilbert space dimension of the target space
+//
+// return value = Hilbert space dimension
+
+int BosonOnSphereWithSpinAllSz::GetTargetHilbertSpaceDimension()
+{
+  return this->TargetSpace->HilbertSpaceDimension;
+}
+
+
 // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
 //
 // index = index of the state on which the operator has to be applied
@@ -405,7 +433,7 @@ AbstractHilbertSpace* BosonOnSphereWithSpinAllSz::ExtractSubspace (AbstractQuant
 
 int BosonOnSphereWithSpinAllSz::AddAddAdAd (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  return this->HilbertSpaceDimension;
+  return this->TargetSpace->HilbertSpaceDimension;
 }
 
 // apply a^+_m1_u a^+_m2_u a_n1_u a_n2_u operator to a given state (with m1+m2=n1+n2, only spin up)
@@ -420,7 +448,7 @@ int BosonOnSphereWithSpinAllSz::AddAddAdAd (int index, int m1, int m2, int n1, i
 
 int BosonOnSphereWithSpinAllSz::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  return this->HilbertSpaceDimension;
+  return this->TargetSpace->HilbertSpaceDimension;
 }
 
 // apply a^+_d_m1 a^+_u_m2 a_d_n1 a_u_n2 operator to a given state (with m1+m2=n1+n2)
@@ -435,7 +463,7 @@ int BosonOnSphereWithSpinAllSz::AduAduAuAu (int index, int m1, int m2, int n1, i
 
 int BosonOnSphereWithSpinAllSz::AddAduAdAu (int index, int m1, int m2, int n1, int n2, double& coefficient)
 {
-  return this->HilbertSpaceDimension;
+  return this->TargetSpace->HilbertSpaceDimension;
 }
 
 // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
@@ -465,7 +493,7 @@ int BosonOnSphereWithSpinAllSz::AduAdu (int m1, int m2, double& coefficient)
 //       NewLzSzMax+=1;
 //     }
 //   else NewLzSzMax<<=1;
-  return this->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp + 2);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp + 2);
 }
 
 // apply a^+_m1_d a^+_m2_d operator to the state produced using AdAd method (without destroying it)
@@ -487,7 +515,7 @@ int BosonOnSphereWithSpinAllSz::AddAdd (int m1, int m2, double& coefficient)
   CoherenceIndex *= (this->TemporaryState[m1] & 0xffff);
   coefficient = this->CoherenceFactors[CoherenceIndex];
 
-  return this->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp);
 }
 
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAd method (without destroying it)
@@ -508,7 +536,7 @@ int BosonOnSphereWithSpinAllSz::AduAdd (int m1, int m2, double& coefficient)
   //coefficient *= (this->TemporaryState[m1] >> 16);
   CoherenceIndex *= (this->TemporaryState[m1] >> 16);
   coefficient = this->CoherenceFactors[CoherenceIndex];
-  return this->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp + 1);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, ProdATemporaryStateNbrUp + 1);
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
@@ -653,7 +681,7 @@ int BosonOnSphereWithSpinAllSz::ProdAd (int* m, int* spinIndices, int nbrIndices
 	++TemporaryStateNbrUp;
       }
   coefficient = sqrt((double) TmpCoefficient);
-  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
 
@@ -721,7 +749,7 @@ int BosonOnSphereWithSpinAllSz::AduAu (int index, int m, int n, double& coeffici
   if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       coefficient=0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] >> 16);
   int CoherenceIndex = (this->TemporaryState[n] >> 16);
@@ -731,7 +759,7 @@ int BosonOnSphereWithSpinAllSz::AduAu (int index, int m, int n, double& coeffici
   //TmpCoefficient *= (this->TemporaryState[m] >> 16);
   CoherenceIndex *= (this->TemporaryState[m] >> 16);  
   coefficient = this->CoherenceFactors[CoherenceIndex];
-  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
 // apply a^+_m_d a_n_d operator to a given state 
@@ -751,7 +779,7 @@ int BosonOnSphereWithSpinAllSz::AddAd (int index, int m, int n, double& coeffici
   if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       coefficient=0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
   int CoherenceIndex = (this->TemporaryState[n] & 0xffff);
@@ -760,7 +788,7 @@ int BosonOnSphereWithSpinAllSz::AddAd (int index, int m, int n, double& coeffici
   //TmpCoefficient *= (this->TemporaryState[m] & 0xffff);
   CoherenceIndex *= (this->TemporaryState[m] & 0xffff);
   coefficient = this->CoherenceFactors[CoherenceIndex];
-  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
 // apply a^+_m_u a_n_d operator to a given state 
@@ -780,7 +808,7 @@ int BosonOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffici
   if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       coefficient=0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
   int CoherenceIndex = (this->TemporaryState[n] & 0xffff);
@@ -790,7 +818,7 @@ int BosonOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffici
   //TmpCoefficient *= (this->TemporaryState[m] >> 16);
   CoherenceIndex *= (this->TemporaryState[m] >> 16);
   coefficient = this->CoherenceFactors[CoherenceIndex];
-  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp + 1);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp + 1);
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
@@ -809,7 +837,7 @@ int BosonOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coeffici
   if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
       coefficient=0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] >> 16);
   int CoherenceIndex = (this->TemporaryState[n] >> 16);
@@ -820,7 +848,7 @@ int BosonOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coeffici
   CoherenceIndex *= (this->TemporaryState[m]) & 0xffff;
   // coefficient *= this->CoherenceFactors[(this->TemporaryState[n] >> 16)*(this->TemporaryState[m]& 0xffff)];
   coefficient = this->CoherenceFactors[CoherenceIndex];
-  return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp - 1);
+  return this->TargetSpace->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp - 1);
 }
 
 

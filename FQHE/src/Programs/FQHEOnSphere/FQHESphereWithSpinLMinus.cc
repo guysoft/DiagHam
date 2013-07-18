@@ -81,6 +81,8 @@ int main(int argc, char** argv)
   int PairParity = Manager.GetInteger("pair-parity");
   int NbrLMinus = Manager.GetInteger("nbr-lm");
   bool FermionFlag = false;
+  if (Manager.GetBoolean("all-sz"))
+    TotalSz = -1;
   if (Manager.GetString("statistics") == 0)
     FermionFlag = true;
   if (FQHEOnSphereWithSpinFindSystemInfoFromVectorFileName(Manager.GetString("input-file"), NbrParticles, LzMax, Lz, TotalSz, FermionFlag) == false)
@@ -107,7 +109,7 @@ int main(int argc, char** argv)
       cout << "Lz and (NbrParticles * LzMax) must have the same parity" << endl;
       return -1;           
     }
-  if ((NbrParticles&1) != (TotalSz&1))
+  if ((Manager.GetBoolean("all-sz")==false)&&((NbrParticles&1) != (TotalSz&1)))
     {
       cout << "Sz and NbrParticles must have the same parity" << endl;
       return -1;
@@ -305,7 +307,13 @@ int main(int argc, char** argv)
 	  delete InitialSpace;
 	  InitialSpace = TargetSpace;
 	  InitialVector = TargetVector;
-	  InitialVector/=InitialVector.Norm();
+	  double Norm = InitialVector.Norm();
+	  if (Norm >0.0)
+	    InitialVector/=Norm;
+	  else
+	    {
+	      cout << "Cannot normalize target vector - zero vector found."<<endl;
+	    }
 	}
     }
   char *OutputName;

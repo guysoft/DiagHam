@@ -91,7 +91,6 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-
   // apply a^+_m_u a_n_d operator to a given state 
   //
   // index = index of the state on which the operator has to be applied

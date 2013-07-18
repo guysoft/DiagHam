@@ -123,6 +123,8 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   // subspace for this restriction
   int SubspaceSz;
 
+  // target space for operations leaving the Hilbert-space
+  BosonOnSphereWithSpinAllSz *TargetSpace;
   
  public:
 
@@ -193,8 +195,17 @@ class BosonOnSphereWithSpinAllSz :  public ParticleOnSphereWithSpin
   virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 						 SubspaceSpaceConverter& converter);
 
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
+  
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
 
-    // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
+  // apply a^+_m1_d a^+_m2_d a_n1_d a_n2_d operator to a given state (with m1+m2=n1+n2, only spin down)
   //
   // index = index of the state on which the operator has to be applied
   // m1 = first index for creation operator (spin down)
