@@ -47,6 +47,19 @@
 bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
 				       double*& oneBodyPseudopotentialUpUp, double*& oneBodyPseudopotentialDownDown);
 
+// get pseudopototentials for particles on sphere with SU(2) spin from file, including a tunneling term
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = reference on twice the maximum Lz value
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
+// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyPotentialUpDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// return value = true if no error occured
+bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
+				       double*& oneBodyPseudopotentialUpUp, double*& oneBodyPseudopotentialDownDown, double*& oneBodyPseudopotentialUpDown);
+
 // get pseudopototentials for particles on sphere with SU(2) spin from file including all possible interaction terms
 // 
 // fileName = name of the file that contains the pseudopotantial description

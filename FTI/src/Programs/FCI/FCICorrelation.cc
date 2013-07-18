@@ -43,7 +43,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHEChernInsulatorCorrelation" , "0.01");
+  OptionManager Manager ("FCICorrelation" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PlotOptionGroup = new OptionGroup ("plot options");  
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHEChernInsulatorCorrelation -h" << endl;
+      cout << "see man page for option syntax or type FCICorrelation -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
     }
   if (Manager.GetString("state") == 0)
     {
-      cout << "FQHEChernInsulatorCorrelation requires an input state" << endl;
+      cout << "FCICorrelation requires an input state" << endl;
       return -1;
     }
   if (IsFile(Manager.GetString("state")) == false)

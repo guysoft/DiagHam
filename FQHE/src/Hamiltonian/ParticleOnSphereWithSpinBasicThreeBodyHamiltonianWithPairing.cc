@@ -253,7 +253,7 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWi
 ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax,
                                                                                                          double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum, double alpha, 
                                                                                                          double** pseudoPotential,
-                                                                                                         double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
+                                                                                                         double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
                                                                                                          AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag,
                                                                                                          char* precalculationFileName)
 {
@@ -274,11 +274,11 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWi
         this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
     }  
  
-  if ((onebodyPotentialUpUp == 0) || (onebodyPotentialDownDown == 0))
+  if ((onebodyPotentialUpUp == 0) || (onebodyPotentialDownDown == 0)) 
     {
       this->OneBodyTermFlag = false;
       this->OneBodyInteractionFactorsupup = 0;
-      this->OneBodyInteractionFactorsdowndown = 0;      
+      this->OneBodyInteractionFactorsdowndown = 0;
     }
   else
     {
@@ -291,8 +291,18 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWi
           this->OneBodyInteractionFactorsdowndown[i] = onebodyPotentialDownDown[i];
         }
     }
-  // don't have tunnelling implemented either way, here!
-  this->OneBodyInteractionFactorsupdown = 0;
+
+  if (onebodyPotentialUpDown != 0)
+    {
+      this->OneBodyInteractionFactorsupdown = new double [this->NbrLzValue];
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	{
+	  this->OneBodyInteractionFactorsupdown[i] = onebodyPotentialUpDown[i];
+	  cout << "Set this->OneBodyInteractionFactorsupdown["<<i<<"]="<<this->OneBodyInteractionFactorsupdown[i]<<endl;
+	}
+    }
+  else
+    this->OneBodyInteractionFactorsupdown = 0;
  
   this->FullTwoBodyFlag = true;
 

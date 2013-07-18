@@ -255,7 +255,7 @@ BosonOnSphereWithSpinAllSz::~BosonOnSphereWithSpinAllSz ()
       if (this->LookUpTableShift != 0)
 	{
 	  delete[] this->LookUpTableShift;
-	  for (int i = 0; i < this->NbrLzValue; ++i)
+	  for (int i = 0; i < NbrBosons + LzMax; ++i)
 	    delete[] this->LookUpTable[i];
 	  delete[] this->LookUpTable;
 	}
@@ -703,6 +703,7 @@ double BosonOnSphereWithSpinAllSz::AddAd (int index, int m)
     }
 }
 
+
 // apply a^+_m_u a_n_u operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
@@ -719,7 +720,8 @@ int BosonOnSphereWithSpinAllSz::AduAu (int index, int m, int n, double& coeffici
 
   if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
-      return 0.0;
+      coefficient=0.0;
+      return this->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] >> 16);
   int CoherenceIndex = (this->TemporaryState[n] >> 16);
@@ -728,7 +730,7 @@ int BosonOnSphereWithSpinAllSz::AduAu (int index, int m, int n, double& coeffici
   this->TemporaryState[m] += 0x10000;
   //TmpCoefficient *= (this->TemporaryState[m] >> 16);
   CoherenceIndex *= (this->TemporaryState[m] >> 16);  
-  coefficient *= this->CoherenceFactors[CoherenceIndex];
+  coefficient = this->CoherenceFactors[CoherenceIndex];
   return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
@@ -748,7 +750,8 @@ int BosonOnSphereWithSpinAllSz::AddAd (int index, int m, int n, double& coeffici
 
   if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
-      return 0.0;
+      coefficient=0.0;
+      return this->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
   int CoherenceIndex = (this->TemporaryState[n] & 0xffff);
@@ -756,7 +759,7 @@ int BosonOnSphereWithSpinAllSz::AddAd (int index, int m, int n, double& coeffici
   ++this->TemporaryState[m];
   //TmpCoefficient *= (this->TemporaryState[m] & 0xffff);
   CoherenceIndex *= (this->TemporaryState[m] & 0xffff);
-  coefficient *= this->CoherenceFactors[CoherenceIndex];
+  coefficient = this->CoherenceFactors[CoherenceIndex];
   return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp);
 }
 
@@ -776,7 +779,8 @@ int BosonOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffici
 
   if ((n > CurrentLzMaxDown) || ((TemporaryState[n] & 0xffff) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
-      return 0.0;
+      coefficient=0.0;
+      return this->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] & 0xffff);
   int CoherenceIndex = (this->TemporaryState[n] & 0xffff);
@@ -785,7 +789,7 @@ int BosonOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffici
   this->TemporaryState[m] += 0x10000;
   //TmpCoefficient *= (this->TemporaryState[m] >> 16);
   CoherenceIndex *= (this->TemporaryState[m] >> 16);
-  coefficient *= this->CoherenceFactors[CoherenceIndex];
+  coefficient = this->CoherenceFactors[CoherenceIndex];
   return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp + 1);
 }
 
@@ -804,7 +808,8 @@ int BosonOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coeffici
 		       TemporaryState, CurrentLzMaxUp, CurrentLzMaxDown, TemporaryStateNbrUp);
   if ((n > CurrentLzMaxUp) || ((TemporaryState[n] >> 16) == 0)) // || ((State[n] & 0xffff) == 0)) // shift for up, mask for down
     {
-      return 0.0;
+      coefficient=0.0;
+      return this->HilbertSpaceDimension;
     }
   //double TmpCoefficient = (this->TemporaryState[n] >> 16);
   int CoherenceIndex = (this->TemporaryState[n] >> 16);
@@ -814,7 +819,7 @@ int BosonOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coeffici
   //TmpCoefficient *= (this->TemporaryState[m]) & 0xffff;
   CoherenceIndex *= (this->TemporaryState[m]) & 0xffff;
   // coefficient *= this->CoherenceFactors[(this->TemporaryState[n] >> 16)*(this->TemporaryState[m]& 0xffff)];
-  coefficient *= this->CoherenceFactors[CoherenceIndex];
+  coefficient = this->CoherenceFactors[CoherenceIndex];
   return this->FindStateIndex(this->TemporaryState, TemporaryStateNbrUp - 1);
 }
 

@@ -32,6 +32,7 @@ TightBindingModelChiralCubicLattice.cc \
 TightBindingModelFCCLattice.cc \
 TightBindingModelHopfCubicLattice.cc \
 TightBindingModelHofstadterSquare.cc \
+TightBindingModelHofstadterTriangularQuarter.cc \
 TightBindingModelThirringOnKagome.cc \
 TightBindingModelOFLSquareLattice.cc \
 TightBindingModelOFLTriangularLattice.cc \

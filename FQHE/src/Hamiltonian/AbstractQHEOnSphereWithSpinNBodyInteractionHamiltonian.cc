@@ -342,7 +342,9 @@ long AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonian::PartialFastMultipli
   
   if (this->FullTwoBodyFlag == true)
     EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
-  
+
+  EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
+      
   for (int k = 3; k <= this->MaxNBody; ++k)
     if (this->NBodyFlags[k] == true)
       EvaluateMNNBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, k, Memory);

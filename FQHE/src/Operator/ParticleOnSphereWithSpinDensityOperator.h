@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREDENSITYOPERATOR_H
-#define PARTICLEONSPHEREDENSITYOPERATOR_H
+#ifndef PARTICLEONSPHEREWITHSPINDENSITYOPERATOR_H
+#define PARTICLEONSPHEREWITHSPINDENSITYOPERATOR_H
 
 
 #include "config.h"

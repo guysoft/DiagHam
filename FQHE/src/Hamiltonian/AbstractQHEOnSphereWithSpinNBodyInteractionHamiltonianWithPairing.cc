@@ -335,16 +335,12 @@ long AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonianWithPairing::PartialF
 {
   long Memory = 0;
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+  int Dim = TmpParticles->GetHilbertSpaceDimension();
   int LastComponent = lastComponent + firstComponent;
+  int Index;
+  double Coefficient;
   
-  if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
-    {
-      for (int i = firstComponent; i < LastComponent; ++i)
-	{
-	  ++Memory;
-	  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-	}
-    }
+  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   
   if (this->FullTwoBodyFlag == true)
     this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
@@ -372,6 +368,7 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonianWithPairing::PartialE
   double* TmpCoefficientArray;
   long ColumnIndex;
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+  int Dim = TmpParticles->GetHilbertSpaceDimension();
 
   firstComponent -= this->PrecalculationShift;
   LastComponent -= this->PrecalculationShift;
@@ -396,19 +393,7 @@ void AbstractQHEOnSphereWithSpinNBodyInteractionHamiltonianWithPairing::PartialE
 	  {
 	    this->EvaluateMNNBodyFastMultiplicationComponent(TmpParticles, i, k, TmpIndexArray, TmpCoefficientArray, ColumnIndex);
 	  }
-      if ((this->OneBodyInteractionFactorsdowndown != 0) || (this->OneBodyInteractionFactorsupup != 0))
-	{
-	  double TmpDiagonal = 0.0;
-	  if (this->OneBodyInteractionFactorsupup != 0)
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsupup[j] * TmpParticles->AduAu(i + this->PrecalculationShift, j);
-	  if (this->OneBodyInteractionFactorsdowndown != 0)
-	    for (int j = 0; j <= this->LzMax; ++j) 
-	      TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * TmpParticles->AddAd(i + this->PrecalculationShift, j);
-	  TmpIndexArray[ColumnIndex] = i + this->PrecalculationShift;
-	  TmpCoefficientArray[ColumnIndex] = TmpDiagonal;
-	  ++ColumnIndex;	  
-	}
+      this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i, TmpIndexArray, TmpCoefficientArray, ColumnIndex);
       ++Pos;
     }
   delete TmpParticles;

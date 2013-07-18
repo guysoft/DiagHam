@@ -158,7 +158,6 @@ int main(int argc, char** argv)
       return -1;
     }
 
-
   unsigned long MemorySpace = 9l << 20;
   char* OutputName;
   if (FermionFlag==true)

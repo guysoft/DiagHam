@@ -64,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "l2-factor", "multiplicative factor in front of an optional L^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "s2-factor", "multiplicative factor in front of an optional S^2 operator than can be added to the Hamiltonian", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "pairing", "add a pair hopping term to the Hamiltonian in all-sz mode", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "tunneling", "add a single-particle tunneling term to the Hamiltonian in all-sz mode", 0.0);
   // (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -121,6 +122,7 @@ int main(int argc, char** argv)
 
   double* OneBodyPotentialUpUp = 0;
   double* OneBodyPotentialDownDown = 0;
+  double* OneBodyPotentialUpDown = 0;
   double** PseudoPotentials  = 0;
 
   double** ThreeBodyPotentials = new double* [4];
@@ -305,7 +307,7 @@ int main(int argc, char** argv)
 
 
       if ((InteractionDefinition["Pseudopotentials"] != 0) || (InteractionDefinition["PseudopotentialsUpUp"] != 0)
-          || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0) || (InteractionDefinition["PseudopotentialsPairTunneling"] != 0))
+          || (InteractionDefinition["PseudopotentialsDownDown"] != 0) || (InteractionDefinition["PseudopotentialsUpDown"] != 0) || (InteractionDefinition["PseudopotentialsPairTunneling"] != 0) || ( InteractionDefinition["OneBodyPotentialUpUp"] != 0) || ( InteractionDefinition["OneBodyPotentialDownDown"] != 0) || ( InteractionDefinition["OneBodyPotentialUpDown"] != 0) )
         {
           PseudoPotentials  = new double*[4];
           for (int i = 0; i < 4; ++i)
@@ -315,9 +317,33 @@ int main(int argc, char** argv)
                 PseudoPotentials[i][j] = 0.0;
             };
           if (FQHESphereSU2GetPseudopotentials(Manager.GetString("interaction-file"), LzMax, PseudoPotentials,
-                                               OneBodyPotentialUpUp, OneBodyPotentialDownDown) == false)
+                                               OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown) == false)
             return -1;
+	  if ((OneBodyPotentialUpDown!=NULL) && (PairParity>=0))
+	    {
+	      cout << "OneBodyPotentialUpDown overrides pair-parity!"<<endl;
+	      PairParity = -1;
+	    }
         }
+    }
+
+  if (Manager.GetDouble("tunneling") != 0.0)
+    {
+      if (OneBodyPotentialUpDown==0)
+	{
+	  OneBodyPotentialUpDown = new double[LzMax + 1];
+	  for (int i=0; i<=LzMax; ++i)
+	    OneBodyPotentialUpDown[i] = Manager.GetDouble("tunneling");
+	  if (PairParity>=0)
+	    {
+	      cout << "OneBodyPotentialUpDown overrides pair-parity!"<<endl;
+	      PairParity = -1;
+	    }
+	}
+      else
+	{
+	  cout << "Attention, OneBodyPotentialUpDown already set in pseudopotential-file. Ignoring argument --tunneling" <<endl;
+	}
     }
   
   char* OutputBaseName = new char [256 + strlen(Manager.GetString("interaction-name"))];
@@ -325,8 +351,13 @@ int main(int argc, char** argv)
     {
       if (PairParity>=0)
 	sprintf (OutputBaseName, "bosons_sphere_su2_%s_parity_%d_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), PairParity, Manager.GetDouble("pairing"),NbrParticles, LzMax);
-      else  
-	sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
+      else
+	{
+	  if (Manager.GetDouble("tunneling") != 0.0)
+	    sprintf (OutputBaseName, "bosons_sphere_su2_%s_t_%g_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("tunneling"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
+	  else
+	    sprintf (OutputBaseName, "bosons_sphere_su2_%s_pp_%g_n_%d_2s_%d_lz", Manager.GetString("interaction-name"), Manager.GetDouble("pairing"),NbrParticles, LzMax);
+	}
     }
   else
     sprintf (OutputBaseName, "bosons_sphere_su2_%s_n_%d_2s_%d_sz_%d_lz", Manager.GetString("interaction-name"), NbrParticles, LzMax, SzTotal);
@@ -380,7 +411,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (PseudoPotentials == 0)
+	  if ((PseudoPotentials == 0)&&(OneBodyPotentialUpUp == 0)&&(OneBodyPotentialDownDown == 0)&&(OneBodyPotentialUpDown == 0))
 	    {
 	      
 	      Hamiltonian = new ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials, Manager.GetDouble("pairing"), 
@@ -390,8 +421,9 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
+	      cout << "creating PairingHamiltonian with OneBodyPotentialUpDown="<<OneBodyPotentialUpDown<<endl;
 	      Hamiltonian = new ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials, Manager.GetDouble("pairing"), 
-											     PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown,
+											     PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown,
 											     Architecture.GetArchitecture(),
 											     Memory, DiskCacheFlag,
 											     LoadPrecalculationFileName);

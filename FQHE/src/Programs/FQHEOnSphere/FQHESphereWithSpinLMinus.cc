@@ -19,7 +19,9 @@
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include "HilbertSpace/BosonOnSphereWithSpin.h"
+#include "HilbertSpace/BosonOnSphereWithSpinAllSz.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnSphereWithSpinAllSz.h"
 //#include "HilbertSpace/FermionOnSphereUnlimited.h"
 
 #include <iostream>
@@ -50,6 +52,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('l', "lzmax", "twice the maximum momentum for a single particle (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('s', "sz", "twice the total sz value of the system for the initial state", 0);
+  (*SystemGroup) += new BooleanOption  ('A', "all-sz", "use Hilbert-space comprising all sz sectors", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "with all-sz: parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
+
   (*SystemGroup) += new SingleIntegerOption  ('z', "lz", "twice the total lz value of the system for the initial state", 0);
   (*SystemGroup) += new SingleStringOption  ('S', "statistics", "particle statistics (boson or fermion, try to guess it from file name if not defined)");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-lm", "number of time the L- operator has to be applied", 1);
@@ -73,6 +78,7 @@ int main(int argc, char** argv)
   int LzMax = Manager.GetInteger("lzmax");
   int Lz = Manager.GetInteger("lz");
   int TotalSz = Manager.GetInteger("sz");
+  int PairParity = Manager.GetInteger("pair-parity");
   int NbrLMinus = Manager.GetInteger("nbr-lm");
   bool FermionFlag = false;
   if (Manager.GetString("statistics") == 0)
@@ -115,38 +121,55 @@ int main(int argc, char** argv)
       return -1;
     }
 	
-  long MemorySpace = 9l << 20;
+  unsigned long MemorySpace = 9ul << 20;
   ParticleOnSphereWithSpin* InitialSpace;
   ParticleOnSphereWithSpin* TargetSpace;
   if (FermionFlag == true)
     {
+      if (Manager.GetBoolean("all-sz")==false)
+	{
 #ifdef __64_BITS__
-      if (LzMax <= 31)
-	{
-	  InitialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
-	}
-      else
-	{
-	  // InitialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
-	  cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
-	  exit(-1);
-	}
+	  if (LzMax <= 31)
+	    {
+	      InitialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
+	    }
+	  else
+	    {
+	      // InitialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	      cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
+	      exit(-1);
+	    }
 #else
-      if (LzMax <= 15)
-	{
-	  InitialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
+	  if (LzMax <= 15)
+	    {
+	      InitialSpace = new FermionOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz, MemorySpace);
+	    }
+	  else
+	    {
+	      // InitialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
+	      cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
+	      exit(-1);
+	    }
+#endif
 	}
       else
 	{
-	  // InitialSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax, MemorySpace);
-	  cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
-	  exit(-1);
+	  InitialSpace = new FermionOnSphereWithSpinAllSz (NbrParticles, Lz, LzMax, MemorySpace);
 	}
-#endif
     }
   else
     {
-      InitialSpace = new BosonOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz);
+      if (Manager.GetBoolean("all-sz")==false)
+	{
+	  InitialSpace = new BosonOnSphereWithSpin(NbrParticles, Lz, LzMax, TotalSz);
+	}
+      else
+	{
+	  if (PairParity>=0)
+	    InitialSpace = new BosonOnSphereWithSpinAllSz(NbrParticles, Lz, LzMax, PairParity, MemorySpace);
+	  else
+	    InitialSpace = new BosonOnSphereWithSpinAllSz(NbrParticles, Lz, LzMax, MemorySpace);
+	}
     }
   if (Manager.GetBoolean("lplus")==false)
     {
@@ -154,33 +177,48 @@ int main(int argc, char** argv)
 	{
 	  if (FermionFlag == true)
 	    {
+	      if (Manager.GetBoolean("all-sz")==false)
+		{
 #ifdef __64_BITS__
-	      if (LzMax <= 31)
-		{
-		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
-		}
-	      else
-		{
-		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
-		  cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
-		  exit(-1);
-		}
+		  if (LzMax <= 31)
+		    {
+		      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+		    }
+		  else
+		    {
+		      // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
+		      cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
+		      exit(-1);
+		    }
 #else
-	      if (LzMax <= 15)
-		{
-		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+		  if (LzMax <= 15)
+		    {
+		      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+		    }
+		  else
+		    {
+		      // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
+		      cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
+		      exit(-1);
+		    }
+#endif
 		}
 	      else
 		{
-		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax - (2 * i), TotalSz, MemorySpace);
-		  cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
-		  exit(-1);
+		  TargetSpace = new FermionOnSphereWithSpinAllSz (NbrParticles, Lz - (2 * i), LzMax, MemorySpace);
 		}
-#endif
 	    }
 	  else
 	    {
-	      TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz);
+	      if (Manager.GetBoolean("all-sz")==false)
+		TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz - (2 * i), LzMax, TotalSz, MemorySpace);
+	      else
+		{
+		  if (PairParity>=0)
+		    TargetSpace = new BosonOnSphereWithSpinAllSz(NbrParticles, Lz - (2 * i), LzMax, PairParity, MemorySpace);
+		  else
+		    TargetSpace = new BosonOnSphereWithSpinAllSz(NbrParticles, Lz - (2 * i), LzMax, MemorySpace);
+		}
 	    }
 	  InitialSpace->SetTargetSpace(TargetSpace);
 	  TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());
@@ -203,33 +241,49 @@ int main(int argc, char** argv)
 	{
 	  if (FermionFlag == true)
 	    {
+	      if (Manager.GetBoolean("all-sz")==false)
+		{
+		  
 #ifdef __64_BITS__
-	      if (LzMax <= 31)
-		{
-		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz, MemorySpace);
-		}
-	      else
-		{
-		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax + (2 * i), TotalSz, MemorySpace);
-		  cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
-		  exit(-1);
-		}
+		  if (LzMax <= 31)
+		    {
+		      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz, MemorySpace);
+		    }
+		  else
+		    {
+		      // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax + (2 * i), TotalSz, MemorySpace);
+		      cout << "Fermions with Spin not defined yet for LzMax > 31"<<endl;
+		      exit(-1);
+		    }
 #else
-	      if (LzMax <= 15)
-		{
-		  TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz, MemorySpace);
+		  if (LzMax <= 15)
+		    {
+		      TargetSpace = new FermionOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz, MemorySpace);
+		    }
+		  else
+		    {
+		      // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax + (2 * i), TotalSz, MemorySpace);
+		      cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
+		      exit(-1);
+		    }
+#endif
 		}
 	      else
 		{
-		  // TargetSpace = new FermionOnSphereUnlimited(NbrParticles, Lz, LzMax + (2 * i), TotalSz, MemorySpace);
-		  cout << "Fermions with Spin not defined yet for LzMax > 15, consider using a 64 bit machine!"<<endl;
-		  exit(-1);
+		  TargetSpace = new FermionOnSphereWithSpinAllSz (NbrParticles, Lz + (2 * i), LzMax, MemorySpace);
 		}
-#endif
 	    }
 	  else
 	    {
-	      TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz);
+	      if (Manager.GetBoolean("all-sz")==false)
+		TargetSpace = new BosonOnSphereWithSpin(NbrParticles, Lz + (2 * i), LzMax, TotalSz);
+	      else
+		{
+		  if (PairParity>=0)
+		    TargetSpace = new BosonOnSphereWithSpinAllSz(NbrParticles, Lz + (2 * i), LzMax, PairParity, MemorySpace);
+		  else
+		    TargetSpace = new BosonOnSphereWithSpinAllSz(NbrParticles, Lz + (2 * i), LzMax, MemorySpace);
+		}
 	    }
 	  InitialSpace->SetTargetSpace(TargetSpace);
 	  TargetVector = RealVector(TargetSpace->GetHilbertSpaceDimension());

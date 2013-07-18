@@ -55,6 +55,29 @@ using std::string;
 bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
 				       double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown)
 {
+  double *TmpOneBodyPseudopotentialUpDown=NULL;
+
+  bool Rst = FQHESphereSU2GetPseudopotentials (fileName, lzMax, pseudoPotentials,
+					       oneBodyPotentialUpUp, oneBodyPotentialDownDown, TmpOneBodyPseudopotentialUpDown);
+  if (TmpOneBodyPseudopotentialUpDown!=NULL)
+    delete[] TmpOneBodyPseudopotentialUpDown;
+  return Rst;
+}
+
+
+// get pseudopototentials for particles on sphere with SU(2) spin from file, including a tunneling term
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// lzMax = reference on twice the maximum Lz value
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// onebodyPotentialUpUp =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin up, null pointer if none
+// onebodyPotentialDownDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// onebodyPotentialUpDown =  one-body potential (sorted from component on the lowest Lz state to component on the highest Lz state) for particles with spin down, null pointer if none
+// return value = true if no error occured
+bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseudoPotentials,
+				       double*& oneBodyPseudopotentialUpUp, double*& oneBodyPseudopotentialDownDown, double*& oneBodyPseudopotentialUpDown)
+{
   ConfigurationParser InteractionDefinition;
   if (InteractionDefinition.Parse(fileName) == false)
     {
@@ -183,7 +206,7 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
 	return false;
       }
   // end all-sz insertion
-  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', oneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', oneBodyPseudopotentialUpUp, TmpNbrPseudoPotentials) == true)
     {
       if (TmpNbrPseudoPotentials != (lzMax + 1))
 	{
@@ -191,7 +214,7 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
 	  return false;
 	}
     }
-  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialDownDown", ' ', oneBodyPotentialDownDown, TmpNbrPseudoPotentials) == true)
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialDownDown", ' ', oneBodyPseudopotentialDownDown, TmpNbrPseudoPotentials) == true)
     {
       if (TmpNbrPseudoPotentials != (lzMax + 1))
 	{
@@ -199,9 +222,16 @@ bool FQHESphereSU2GetPseudopotentials (char* fileName, int lzMax, double** pseud
 	  return false;
 	}
     }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpDown", ' ', oneBodyPseudopotentialUpDown, TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != (lzMax + 1))
+	{
+	  cout << "OneBodyPotentialUpDown has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
   return true;
 }
-
 
 // get pseudopototentials for particles on sphere with two landau levels
 // 

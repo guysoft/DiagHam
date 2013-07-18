@@ -112,7 +112,7 @@ class ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing : public Abst
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(ParticleOnSphereWithSpin* particles, int nbrParticles, int lzmax,
 						    double** threeBodyPseudoPotential, int* maxRelativeAngularMomentum,
-						    double alpha, double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown,
+							       double alpha, double** pseudoPotential, double* onebodyPotentialUpUp, double* onebodyPotentialDownDown, double* onebodyPotentialUpDown,
 						    AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false,
 						    char* precalculationFileName = 0);
 

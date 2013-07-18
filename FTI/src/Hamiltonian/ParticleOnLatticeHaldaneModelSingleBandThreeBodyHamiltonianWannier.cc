@@ -1702,8 +1702,8 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
 	  double kxl=((double)kx + this->GammaX) * this->KxFactor;
 	  //int Index = (kx * this->NbrSiteY) + ky;
 
-	  Complex B1 = - this->NNHoping * Complex(1 + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
-	  Complex B2 = - this->NextNextNNHoping * Complex(2* cos(kxl) + cos(kxl+2*kyl),  sin(kxl+2*kyl));
+	  Complex B1 = - this->NNHoping * Complex(1. + cos(kxl+kyl) + cos(kyl), + sin(kxl+kyl) + sin(kyl));
+	  Complex B2 = - this->NextNextNNHoping * Complex(2.* cos(kxl) + cos(kxl+2.*kyl),  sin(kxl+2.*kyl));
 	  double d0 = - 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(kxl) + cos(kyl) + cos(kxl+kyl));
 	  double d3 = - 2.0 * this->NextNNHoping * sin(this->HaldanePhase) * (sin(kxl) + sin(kyl) - sin(kxl+kyl)) + this->MuS;
 
@@ -1754,7 +1754,7 @@ void ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonianWannier::Compute
     {
       double ArgTemp = Arg(CA[ky+1][0]*Conj(CA[ky][0])+CB[ky+1][0]*Conj(CB[ky][0]));
       BerryConnectionY[ky]=ArgTemp;
-      BerryConnectionYCumSum[ky]= TempThetaX ;
+      BerryConnectionYCumSum[ky]= TempThetaX;
       TempThetaX += ArgTemp;
 #ifdef VERBOSE_ONEBODY
       cout << "ky = " << ky << " : Ay = " << ArgTemp << endl;
