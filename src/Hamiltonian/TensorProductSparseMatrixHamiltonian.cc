@@ -72,6 +72,10 @@ TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int n
   long HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();
   this->HilbertSpace = new UndescribedHilbertSpace(HamiltonianDimension);
   this->LeftHamiltonianVectorMultiplicationFlag = true;
+  
+//   this->TemporaryArray = new double*[HamiltonianDimension];
+//   for (int i = 0; i < HamiltonianDimension; ++i)
+//     this->TemporaryArray[i] = 0;
 }
 
 // destructor
@@ -161,51 +165,86 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
 {
   int IndexStep = this->RightMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent - 1;
-  int AMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
-  int BMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
+  int LeftMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+  int RightMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
   long TmpARowPointer;
   long TmpARowLastPointer;
   long TmpBRowPointer;
   long TmpBRowLastPointer;
+  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
+  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
+  double** LocalTemporaryMatrix = new double*[RightMatrixDimension];
+  for (int j = 0; j < RightMatrixDimension; ++j)
+    LocalTemporaryMatrix[j] = new double [LeftMatrixDimension];
+
+  // using a global array does not seems to improve the speed
+  //  int Lim = firstComponent + RightMatrixDimension;
+  //for (int i = firstComponent; i < Lim; ++i)
+  //  if (this->TemporaryArray[i] == 0)
+  //    this->TemporaryArray[i] = new double[LeftMatrixDimension];
+  //double** LocalTemporaryMatrix = this->TemporaryArray + firstComponent;
+
   for (int i = 0; i < this->NbrTensorProducts; ++i)
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-      int AMatrixStartingIndex = firstComponent / this->RightMatrices[0].GetNbrRow();
-      int BMatrixStartingIndex = firstComponent % this->RightMatrices[0].GetNbrRow();
-      int TotalIndex = firstComponent;
-      for (; AMatrixStartingIndex <=  AMatrixLastIndex; ++AMatrixStartingIndex)
+      for (int j = 0; j < RightMatrixDimension; ++j)
+	for (int k = 0; k < LeftMatrixDimension; ++k)
+	  LocalTemporaryMatrix[j][k] = 0.0;
+      for (int j = 0; j < RightMatrixDimension; ++j)
 	{
-	  TmpARowPointer = TmpLeftMatrix.RowPointers[AMatrixStartingIndex];
-	  if (TmpARowPointer >= 0l)
+	  double* Tmp2 = LocalTemporaryMatrix[j];
+	  TmpBRowPointer = TmpRightMatrix.RowPointers[j];
+	  if (TmpBRowPointer >= 0l)
 	    {
-	      TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[AMatrixStartingIndex];
-	      int TmpBMatrixLastIndex = TmpRightMatrix.GetNbrRow() - 1;
-	      if (AMatrixStartingIndex == AMatrixLastIndex)
-		TmpBMatrixLastIndex = BMatrixLastIndex;
-	      for (; BMatrixStartingIndex <= TmpBMatrixLastIndex; ++BMatrixStartingIndex)
+	      TmpBRowLastPointer = TmpRightMatrix.RowLastPointers[j];
+	      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
 		{
-		  TmpBRowPointer = TmpRightMatrix.RowPointers[BMatrixStartingIndex];
-		  if (TmpBRowPointer >= 0l)
+		  double Tmp = TmpRightMatrix.MatrixElements[l];
+		  int TmpIndex = TmpRightMatrix.ColumnIndices[l];
+		  for (int k = 0; k < LeftMatrixDimension; ++k)
 		    {
-		      TmpBRowLastPointer = TmpRightMatrix.RowLastPointers[BMatrixStartingIndex];
-		      double Tmp= 0.0;
-		      for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
-			{
-			  double Tmp2 = TmpLeftMatrix.MatrixElements[k] * this->Coefficients[i];
-			  int TmpIndex = TmpLeftMatrix.ColumnIndices[k] * IndexStep;
-			  for (long j = TmpBRowPointer; j <= TmpBRowLastPointer; ++j)
-			    {
-			      Tmp += Tmp2 * TmpRightMatrix.MatrixElements[j] * vSource[TmpIndex + TmpRightMatrix.ColumnIndices[j]];
-			    }
-			}
-		      vDestination[AMatrixStartingIndex * IndexStep + BMatrixStartingIndex] += Tmp;
+		      Tmp2[k] += Tmp * vSource[k * IndexStep + TmpIndex];
 		    }
 		}
 	    }
-	  BMatrixStartingIndex = 0;
+	}
+      for (int j = 0; j < RightMatrixDimension; ++j)
+	for (int k = 0; k < LeftMatrixDimension; ++k)
+	  LocalTemporaryMatrix[j][k] *= this->Coefficients[i];
+
+      int TmpRightMatrixLastIndex = TmpRightMatrix.GetNbrRow() - 1;
+      double Tmp = 0.0;      
+      int LeftMatrixStartingIndex = firstComponent / RightMatrixDimension;
+      int RightMatrixStartingIndex = firstComponent % RightMatrixDimension;
+      int TotalIndex = firstComponent;
+      for (; LeftMatrixStartingIndex <=  LeftMatrixLastIndex; ++LeftMatrixStartingIndex)
+	{
+	  TmpARowPointer = TmpLeftMatrix.RowPointers[LeftMatrixStartingIndex];
+	  if (TmpARowPointer >= 0l)
+	    {
+	      TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[LeftMatrixStartingIndex];
+	      int TmpRightMatrixLastIndex = TmpRightMatrix.GetNbrRow() - 1;
+	      if (LeftMatrixStartingIndex == LeftMatrixLastIndex)
+		TmpRightMatrixLastIndex = RightMatrixLastIndex;
+	      for (; RightMatrixStartingIndex <= TmpRightMatrixLastIndex; ++RightMatrixStartingIndex)
+		{
+		  double Tmp = 0.0;
+		  double* Tmp2 = LocalTemporaryMatrix[RightMatrixStartingIndex];
+		  for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
+		    {
+		      Tmp += TmpLeftMatrix.MatrixElements[k] * Tmp2[TmpLeftMatrix.ColumnIndices[k]];
+		    }
+		  vDestination[LeftMatrixStartingIndex * IndexStep + RightMatrixStartingIndex] += Tmp;
+		}
+	    }
+	  RightMatrixStartingIndex = 0;
 	}
     }
+  for (int j = 0; j < RightMatrixDimension; ++j)
+    delete[] LocalTemporaryMatrix[j];
+  delete[] LocalTemporaryMatrix;
+  
   if (this->HamiltonianShift != 0.0)
     {
       for (int i = firstComponent; i < LastComponent; ++i)

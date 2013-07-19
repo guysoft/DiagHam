@@ -630,6 +630,28 @@ RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixRealSpaceParti
   return PartialDensityMatrix;
 }
 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. The density matrix is only evaluated in a given Lz sector.
+// 
+// nbrFermionSector = number of particles that belong to the subsytem 
+// lzSector = Lz sector in which the density matrix has to be evaluated 
+// nbrOrbitalA = number of orbitals that have to be kept for the A part
+// weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
+// nbrOrbitalB = number of orbitals that have to be kept for the B part
+// weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+RealSymmetricMatrix ParticleOnSphere::EvaluatePartialDensityMatrixGenericRealSpacePartition (int nbrFermionSector, int lzSector, int nbrOrbitalA, double* weightOrbitalA, 
+											     int nbrOrbitalB, double* weightOrbitalB, RealVector& groundState, 
+											     AbstractArchitecture* architecture)
+{
+  cout << "warning, EvaluatePartialDensityMatrixGenericRealSpacePartition not implemented" << endl;
+  RealSymmetricMatrix PartialDensityMatrix;
+  return PartialDensityMatrix;
+}
+
+
 // core part of the evaluation density matrix real space partition calculation
 // 
 // minIndex = first index to consider in complementary Hilbert space

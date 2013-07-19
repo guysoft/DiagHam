@@ -80,6 +80,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-cylindercut", "x coordinate of the cut on the cylinder", 0);
   (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
 
+  (*SystemGroup) += new SingleStringOption  ('\n', "realspace-generic", "use a generic real space partition instead of particle partition (geometrical weight has to be provided through this external file)");
+
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension)");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
   (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
@@ -299,6 +301,45 @@ int main(int argc, char** argv)
 	}
     }
 
+  double* WeightAOrbitals = 0;
+  double* WeightBOrbitals = 0;
+  int NbrAOrbitals = LzMax + 1;
+  int NbrBOrbitals = LzMax + 1;
+  if (Manager.GetString("realspace-generic") != 0)
+    {
+      ConfigurationParser RealSpaceWeights;
+      if (RealSpaceWeights.Parse(Manager.GetString("realspace-generic")) == false)
+	{
+	  RealSpaceWeights.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      double* TmpSquareWeights = 0;
+      int TmpNbrOrbitals = 0;
+      if (RealSpaceWeights.GetAsDoubleArray("OrbitalSquareWeights", ' ', TmpSquareWeights, TmpNbrOrbitals) == false)
+	{
+	  cout << "OrbitalSquareWeights is not defined or as a wrong value" << endl;
+	  return -1;
+	}
+      NbrAOrbitals = (LzMax + 1 + TmpNbrOrbitals) / 2;
+      WeightAOrbitals = new double [NbrAOrbitals];
+      for (int i = 0; i < (NbrAOrbitals - TmpNbrOrbitals); ++i)
+	WeightAOrbitals[i] = 1.0;
+      for (int i = NbrAOrbitals - TmpNbrOrbitals; i < NbrAOrbitals; ++i)
+	{
+	  WeightAOrbitals[i] = sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
+	}
+      NbrBOrbitals = LzMax + 1 - NbrAOrbitals;
+      WeightBOrbitals = new double [NbrBOrbitals];
+      for (int i = 0; i < TmpNbrOrbitals; ++i)
+	{
+	  WeightBOrbitals[i] = sqrt(1.0 - TmpSquareWeights[i]);
+	}
+      for (int i = TmpNbrOrbitals; i < NbrBOrbitals; ++i)
+	{
+	  WeightBOrbitals[i] = 1.0;
+	}      
+    }
+
   if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
@@ -418,9 +459,24 @@ int main(int argc, char** argv)
 	      if (SVDFlag == false)
 		{
                   if (RealSpaceCutCylinder == false)
-		     PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
+		    {
+		      if (WeightAOrbitals == 0)
+			{
+			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+													   Manager.GetDouble("realspace-theta-top"), 
+													   Manager.GetDouble("realspace-theta-bot"), 
+													   Manager.GetDouble("realspace-phi-range"), GroundStates[0]);
+			}
+		      else
+			{
+			  PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixGenericRealSpacePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+														  NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals, 
+														  GroundStates[0]);
+			}
+		    }
                   else //cylinder
-                     PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionCylinder(SubsystemNbrParticles, SubsystemTotalLz, Perimeter, Height, Manager.GetDouble("realspace-cylindercut"), GroundStates[0]);
+		    PartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrixRealSpacePartitionCylinder(SubsystemNbrParticles, SubsystemTotalLz, Perimeter, Height, 
+													     Manager.GetDouble("realspace-cylindercut"), GroundStates[0]);
 		}
 	      else
 		{
