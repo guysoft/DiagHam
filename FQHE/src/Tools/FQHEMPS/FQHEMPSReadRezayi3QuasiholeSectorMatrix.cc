@@ -718,7 +718,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		    sprintf (TmpMatrixElementSigmaPhiFileName, "%s/cft_readrezayi3_num_matrixelement_sigmaphi_level_%d_%d.dat", cftDirectory, i, (1 + j));
 		}
 	    }
-	  if ((cftDirectory != 0) && (IsFile(TmpMatrixElementSigmaEpsilonFileName)))
+	  if ((cftDirectory != 0) && (IsFile(TmpMatrixElementEpsilonSigmaFileName)))
 	    {
 	      if (this->UseRationalFlag == true)
 		{
@@ -756,7 +756,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
 		    }
 		}
 	    }
-	  if ((cftDirectory != 0) && (IsFile(TmpMatrixElementEpsilonSigmaFileName)))
+	  if ((cftDirectory != 0) && (IsFile(TmpMatrixElementSigmaEpsilonFileName)))
 	    {
 	      if (this->UseRationalFlag == true)
 		{
