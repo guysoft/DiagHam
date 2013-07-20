@@ -63,7 +63,7 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // global shift to apply to the diagonal matrix elements
   double HamiltonianShift;
 
-  //  double** TemporaryArray;
+  double*** TemporaryArray;
 
  public:
 

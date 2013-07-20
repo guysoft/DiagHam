@@ -33,6 +33,7 @@
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
+#include "Architecture/MonoProcessorArchitecture.h"
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
 
@@ -243,15 +244,20 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
   long *SegmentIndices=0;
   int TmpNbrThreads = architecture->GetNbrThreads();
   bool CleanUp = false;
+  long TmpMinimumIndex = 0;
+  long TmpMaximumIndex = 0;
+  architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
+  this->FirstComponent = (int) TmpMinimumIndex;  
+  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
   if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
     {
       SegmentIndices = new long[TmpNbrThreads+1];
       CleanUp = true;
       int Step = this->NbrComponent / TmpNbrThreads;
-      SegmentIndices[0]=this->FirstComponent;
-      for (int i=0; i<TmpNbrThreads; ++i)
-	SegmentIndices[i]=this->FirstComponent+i*Step;
-      SegmentIndices[TmpNbrThreads]=this->FirstComponent+this->NbrComponent;
+      SegmentIndices[0] = this->FirstComponent;
+      for (int i = 0; i < TmpNbrThreads; ++i)
+	SegmentIndices[i] = this->FirstComponent + i * Step;
+      SegmentIndices[TmpNbrThreads] = this->FirstComponent + this->NbrComponent;
     }
 //   else
 //     {
