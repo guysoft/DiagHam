@@ -1359,6 +1359,11 @@ class AbstractHamiltonian
   virtual Vector* HermitianMultipleAddMultiply(Vector* vSources, Vector* vDestinations, int nbrVectors,
 					       int firstComponent, int nbrComponent);
 
+  // test if the hamiltonian is compatible with the hamiltonian-vector multiplication operations
+  //
+  // return value = true if compatible (otherwise, any parallelization will be disable for these operations)
+  virtual bool IsHamiltonianVectorOperationCompatible();
+  
  protected:
 
   // test the amount of memory needed for fast multiplication algorithm
@@ -1387,4 +1392,13 @@ class AbstractHamiltonian
   
 };
 
+// test if the hamiltonian is compatible with the hamiltonian-vector multiplication operations
+//
+// return value = true if compatible (otherwise, any parallelization will be disable for these operations)
+  
+inline bool AbstractHamiltonian::IsHamiltonianVectorOperationCompatible()
+{
+  return true;
+}
+  
 #endif

@@ -227,7 +227,6 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
       this->Hamiltonian->Multiply((*(this->SourceVector)), (*(this->DestinationVector)), this->FirstComponent, 
 				  this->NbrComponent);
     }
-  
   gettimeofday (&(TotalEndingTime2), 0);
   this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
@@ -241,6 +240,11 @@ bool VectorHamiltonianMultiplyOperation::RawApplyOperation()
 
 bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
+  if (this->Hamiltonian->IsHamiltonianVectorOperationCompatible() == false)
+    {
+      this->RawApplyOperation();
+      return true;
+    }
   long *SegmentIndices=0;
   int TmpNbrThreads = architecture->GetNbrThreads();
   bool CleanUp = false;

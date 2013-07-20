@@ -323,7 +323,8 @@ int main(int argc, char** argv)
     {
       Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension));
       if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
-	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseRightBMatrices, Coefficients); 
+	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseRightBMatrices, Coefficients,
+									 Architecture.GetArchitecture()); 
       if (Manager.GetBoolean("left-eigenstates") == true)
 	{
 	  SparseRealMatrix* ConjugateSparseBMatrices = new SparseRealMatrix[NbrBMatrices];
@@ -333,7 +334,7 @@ int main(int argc, char** argv)
 	      ConjugateSparseBMatrices[i] = SparseBMatrices[i].Transpose();
 	      ConjugateSparseRightBMatrices[i] = SparseRightBMatrices[i].Transpose();
 	    }
-	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseRightBMatrices, Coefficients); 
+	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseRightBMatrices, Coefficients, Architecture.GetArchitecture()); 
 	}
      }
   if (Manager.GetBoolean("power-method") == true)

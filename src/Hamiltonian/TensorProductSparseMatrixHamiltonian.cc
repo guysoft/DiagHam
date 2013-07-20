@@ -33,6 +33,7 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "HilbertSpace/UndescribedHilbertSpace.h"
+#include "Architecture/ArchitectureOperation/VectorTensorMultiplicationCoreOperation.h"
 
 
 #include <iostream>
@@ -55,8 +56,9 @@ TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian()
 // leftMatrices = left matrices of each tensor product
 // rightMatrices = right matrices of each tensor product
 // coefficients = coefficients of the ensor product linear combination
+// architecture = architecture to use for precalculation
 
-TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients)
+TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients, AbstractArchitecture* architecture)
 {
   this->NbrTensorProducts = nbrTensorProducts;
   this->LeftMatrices = new SparseRealMatrix[this->NbrTensorProducts];
@@ -69,13 +71,17 @@ TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int n
       this->Coefficients[i] = coefficients[i];
     }
   this->HamiltonianShift = 0.0;
+  this->Architecture = architecture;
   long HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();
   this->HilbertSpace = new UndescribedHilbertSpace(HamiltonianDimension);
   this->LeftHamiltonianVectorMultiplicationFlag = true;
   
-  this->TemporaryArray = new double**[HamiltonianDimension];
-  for (int i = 0; i < HamiltonianDimension; ++i)
-     this->TemporaryArray[i] = 0;
+  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
+  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
+  this->TemporaryArray = new double*[RightMatrixDimension];
+  for (int i = 0; i < RightMatrixDimension; ++i)
+    this->TemporaryArray[i] = new double[LeftMatrixDimension];
+
 }
 
 // destructor
@@ -86,25 +92,9 @@ TensorProductSparseMatrixHamiltonian::~TensorProductSparseMatrixHamiltonian()
   if (this->LeftMatrices != 0)
     {
       int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
-      int HamiltonianDimension = this->LeftMatrices[0].GetNbrRow() * this->RightMatrices[0].GetNbrRow();
-      for (int i = 0; i < this->NbrTensorProducts; ++i)
-	{
-	  if (this->TemporaryArray[i] != 0)
-	    {
-	      for (int j = 0; j < RightMatrixDimension; ++j)
-		delete[] this->TemporaryArray[i][j];
-	      delete[] this->TemporaryArray[i];
-	    }
-	}
-//       for (int i = 0; i < HamiltonianDimension; ++i)
-// 	{
-// 	  if (this->TemporaryArray[i] != 0)
-// 	    {
-// 	      for (int j = 0; j < RightMatrixDimension; ++j)
-// 		delete[] this->TemporaryArray[i][j];
-// 	      delete[] this->TemporaryArray[i];
-// 	    }
-// 	}
+      for (int j = 0; j < RightMatrixDimension; ++j)
+	delete[] this->TemporaryArray[j];
+      delete[] this->TemporaryArray;
       delete[] this->LeftMatrices;
       delete[] this->RightMatrices;
       delete[] this->Coefficients;
@@ -184,6 +174,8 @@ Complex TensorProductSparseMatrixHamiltonian::MatrixElement (ComplexVector& V1, 
 RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 								      int firstComponent, int nbrComponent)
 {
+  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
+  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
   int IndexStep = this->RightMatrices[0].GetNbrColumn();
   int LastComponent = firstComponent + nbrComponent - 1;
   int LeftMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
@@ -192,41 +184,16 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
   long TmpARowLastPointer;
   long TmpBRowPointer;
   long TmpBRowLastPointer;
-  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
-  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
 
-  if (this->TemporaryArray[firstComponent] == 0)
-    {
-      this->TemporaryArray[firstComponent] = new double*[RightMatrixDimension];
-      for (int i = 0; i < RightMatrixDimension; ++i)
-	this->TemporaryArray[firstComponent][i] = new double[LeftMatrixDimension];
-    }
-  double** LocalTemporaryMatrix = this->TemporaryArray[firstComponent];
+  double** LocalTemporaryMatrix = this->TemporaryArray;
 
   for (int i = 0; i < this->NbrTensorProducts; ++i)
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
-      for (int j = 0; j < RightMatrixDimension; ++j)
-	{
-	  TmpBRowPointer = TmpRightMatrix.RowPointers[j];
-	  if (TmpBRowPointer >= 0l)
-	    {
-	      double* Tmp2 = LocalTemporaryMatrix[j];
-	      for (int k = 0; k < LeftMatrixDimension; ++k)
-		Tmp2[k] = 0.0;
-	      TmpBRowLastPointer = TmpRightMatrix.RowLastPointers[j];
-	      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
-		{
-		  double Tmp = TmpRightMatrix.MatrixElements[l] * this->Coefficients[i];
-		  int TmpIndex = TmpRightMatrix.ColumnIndices[l];
-		  for (int k = 0; k < LeftMatrixDimension; ++k)
-		    {
-		      Tmp2[k] += Tmp * vSource[k * IndexStep + TmpIndex];
-		    }
-		}
-	    }
-	}
+
+      VectorTensorMultiplicationCoreOperation Operation(this, i, vSource);
+      Operation.ApplyOperation(this->Architecture);
 
       int TmpRightMatrixLastIndex = TmpRightMatrix.GetNbrRow() - 1;
       double Tmp = 0.0;      
@@ -555,3 +522,43 @@ ComplexVector* TensorProductSparseMatrixHamiltonian::ConjugateLowLevelMultipleMu
   return this->LowLevelMultipleMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 }
 
+// core part of the tensor-multiplication
+//
+// tensorIndex = index of tensore to consider
+// localTemporaryArray = temporary array used to store the partial multiplication
+// vSource = vector to be multiplied
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+
+void TensorProductSparseMatrixHamiltonian::LowLevelAddMultiplyTensorCore(int tensorIndex, double** localTemporaryArray, RealVector& vSource, 
+									 int firstComponent, int nbrComponent)
+{
+  int IndexStep = this->RightMatrices[tensorIndex].GetNbrColumn();
+  int LastComponent = firstComponent + nbrComponent - 1;
+  long TmpBRowPointer;
+  long TmpBRowLastPointer;
+  int RightMatrixDimension = this->RightMatrices[tensorIndex].GetNbrRow();
+  int LeftMatrixDimension = this->LeftMatrices[tensorIndex].GetNbrRow();
+  SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[tensorIndex];
+  SparseRealMatrix& TmpRightMatrix = this->RightMatrices[tensorIndex];
+  for (int j = firstComponent; j <= LastComponent; ++j)
+    {
+      TmpBRowPointer = TmpRightMatrix.RowPointers[j];
+      if (TmpBRowPointer >= 0l)
+	{
+	  double* Tmp2 = localTemporaryArray[j];
+	  for (int k = 0; k < LeftMatrixDimension; ++k)
+	    Tmp2[k] = 0.0;
+	  TmpBRowLastPointer = TmpRightMatrix.RowLastPointers[j];
+	  for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
+	    {
+	      double Tmp = TmpRightMatrix.MatrixElements[l] * this->Coefficients[tensorIndex];
+	      int TmpIndex = TmpRightMatrix.ColumnIndices[l];
+	      for (int k = 0; k < LeftMatrixDimension; ++k)
+		{
+		  Tmp2[k] += Tmp * vSource[k * IndexStep + TmpIndex];
+		}
+	    }
+	}
+    }
+}

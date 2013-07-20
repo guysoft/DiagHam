@@ -195,6 +195,16 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   // nbrComponent  = number of components that has to be precalcualted
   virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
   
+  // core part of the tensor-multiplication
+  //
+  // tensorIndex = index of tensore to consider
+  // localTemporaryArray = temporary array used to store the partial multiplication
+  // vSource = vector to be multiplied
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  virtual void LowLevelAddMultiplyTensorCore(int tensorIndex, double** localTemporaryArray,
+					     RealVector& vSource, int firstComponent, int nbrComponent);
+
 };
 
 #endif

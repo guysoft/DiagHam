@@ -46,6 +46,8 @@ class Matrix;
 class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
 {
 
+  friend class VectorTensorMultiplicationCoreOperation;
+
  protected:
 
   // Hilbert space assocaited to the Hamiltonian 
@@ -63,7 +65,12 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // global shift to apply to the diagonal matrix elements
   double HamiltonianShift;
 
-  double*** TemporaryArray;
+
+  // a temporary array used to perform the tensor-vector multiplication (thread safe)
+  double** TemporaryArray;
+  
+  // pointer to the architecture
+  AbstractArchitecture* Architecture;
 
  public:
 
@@ -77,7 +84,8 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // leftMatrices = left matrices of each tensor product
   // rightMatrices = right matrices of each tensor product
   // coefficients = coefficients of the ensor product linear combination
-  TensorProductSparseMatrixHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients);
+  // architecture = architecture to use for precalculation
+  TensorProductSparseMatrixHamiltonian(int nbrTensorProducts, SparseRealMatrix* leftMatrices,  SparseRealMatrix* rightMatrices, double* coefficients, AbstractArchitecture* architecture);
 
   // destructor
   //
@@ -213,6 +221,23 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   //
   virtual bool IsConjugate();
 
+  // test if the hamiltonian is compatible with the hamiltonian-vector multiplication operations
+  //
+  // return value = true if compatible (otherwise, any parallelization will be disable for these operations)
+  virtual bool IsHamiltonianVectorOperationCompatible();
+  
+ protected:
+
+  // core part of the tensor-multiplication
+  //
+  // tensorIndex = index of tensore to consider
+  // localTemporaryArray = temporary array used to store the partial multiplication
+  // vSource = vector to be multiplied
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  virtual void LowLevelAddMultiplyTensorCore(int tensorIndex, double** localTemporaryArray,
+					     RealVector& vSource, int firstComponent, int nbrComponent);
+
 
 };
 
@@ -224,4 +249,13 @@ inline bool TensorProductSparseMatrixHamiltonian::IsConjugate()
   return true;
 }
 
+// test if the hamiltonian is compatible with the hamiltonian-vector multiplication operations
+//
+// return value = true if compatible (otherwise, any parallelization will be disable for these operations)
+  
+inline bool TensorProductSparseMatrixHamiltonian::IsHamiltonianVectorOperationCompatible()
+{
+  return false;
+}
+  
 #endif
