@@ -73,11 +73,8 @@ TensorProductSparseMatrixHamiltonian::TensorProductSparseMatrixHamiltonian(int n
   this->HilbertSpace = new UndescribedHilbertSpace(HamiltonianDimension);
   this->LeftHamiltonianVectorMultiplicationFlag = true;
   
-//   this->TemporaryArray = new double**[HamiltonianDimension];
-//   for (int i = 0; i < HamiltonianDimension; ++i)
-//      this->TemporaryArray[i] = 0;
-  this->TemporaryArray = new double**[this->NbrTensorProducts];
-  for (int i = 0; i < this->NbrTensorProducts; ++i)
+  this->TemporaryArray = new double**[HamiltonianDimension];
+  for (int i = 0; i < HamiltonianDimension; ++i)
      this->TemporaryArray[i] = 0;
 }
 
@@ -202,7 +199,7 @@ RealVector& TensorProductSparseMatrixHamiltonian::LowLevelAddMultiply(RealVector
     {
       this->TemporaryArray[firstComponent] = new double*[RightMatrixDimension];
       for (int i = 0; i < RightMatrixDimension; ++i)
-	  this->TemporaryArray[firstComponent][i] = new double[LeftMatrixDimension];
+	this->TemporaryArray[firstComponent][i] = new double[LeftMatrixDimension];
     }
   double** LocalTemporaryMatrix = this->TemporaryArray[firstComponent];
 
