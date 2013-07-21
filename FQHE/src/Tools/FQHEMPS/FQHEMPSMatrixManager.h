@@ -51,6 +51,10 @@ class FQHEMPSMatrixManager
   // indicates that the MPS matrix will be used to compute a transfer matrix
   bool EMatrixFlag;
 
+  // storage of the MPS matrices 
+  AbstractFQHEMPSMatrix* RightBMatrix;
+  AbstractFQHEMPSMatrix* LeftBMatrix;
+
  public:
   
   // default constructor 

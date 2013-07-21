@@ -21,4 +21,5 @@ HamiltonianFullDiagonalizeOperation.cc \
 SparseMatrixMatrixMultiplyOperation.cc \
 GenericHamiltonianPrecalculationOperation.cc \
 MultipleOperatorMatrixElementOperation.cc \
-VectorTensorMultiplicationCoreOperation.cc
+VectorTensorMultiplicationCoreOperation.cc \
+VectorSparseTensorMultiplyOperation.cc

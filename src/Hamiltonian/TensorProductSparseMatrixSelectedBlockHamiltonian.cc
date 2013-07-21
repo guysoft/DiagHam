@@ -39,6 +39,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/GenericHamiltonianPrecalculationOperation.h"
 #include "Architecture/ArchitectureOperation/VectorTensorMultiplicationCoreOperation.h"
+#include "Architecture/ArchitectureOperation/VectorSparseTensorMultiplyOperation.h"
 
 
 #include <iostream>
@@ -360,25 +361,9 @@ RealVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultip
       VectorTensorMultiplicationCoreOperation Operation(this, i, vSource);
       Operation.ApplyOperation(this->Architecture);
 
-      for (int j = firstComponent; j < LastComponent; ++j)
-	{
-	  TmpARowPointer = TmpLeftMatrix.RowPointers[this->BlockIndices[j] / IndexStep];
-	  if (TmpARowPointer >= 0l)
-	    {
-	      TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[this->BlockIndices[j] / IndexStep];
-	      int TmpRightMatrixIndex = this->BlockIndices[j] % IndexStep;
-	      if (TmpRightMatrix.RowPointers[TmpRightMatrixIndex] >= 0l)
-		{
-		  double Tmp = 0.0;
-		  double* Tmp2 = LocalTemporaryMatrix[TmpRightMatrixIndex];
-		  for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
-		    {
-		      Tmp += TmpLeftMatrix.MatrixElements[k] * Tmp2[TmpLeftMatrix.ColumnIndices[k]];
-		    }
-		  vDestination[j] += Tmp;
-		}
-	    }
-	}
+      VectorSparseTensorMultiplyOperation Operation2(this, i, &vDestination, true);
+      Operation2.ApplyOperation(this->Architecture);
+
     }
 
   if (this->HamiltonianShift != 0.0)
@@ -982,6 +967,84 @@ void TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultiplyTenso
 		  if (TmpIndex2 >= 0)
 		    Tmp2[k] += Tmp * vSource[TmpIndex2];
 		}
+	    }
+	}
+    }
+}
+
+// core part of the tensor-multiplication (second part computing the final result for one tensor product)
+//
+// tensorIndex = index of tensore to consider
+// localTemporaryArray = temporary array used to store the partial multiplication
+// vDestination = vector where the result will be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+
+void TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultiplyTensorCoreDestination(int tensorIndex, double** localTemporaryArray, 
+												 RealVector& vDestination, 
+												 int firstComponent, int nbrComponent)
+{
+  int IndexStep = this->RightMatrices[tensorIndex].GetNbrColumn();
+  int LastComponent = firstComponent + nbrComponent - 1;
+  long TmpARowPointer;
+  long TmpARowLastPointer;
+  SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[tensorIndex];
+  SparseRealMatrix& TmpRightMatrix = this->RightMatrices[tensorIndex];
+  for (int j = firstComponent; j <= LastComponent; ++j)
+    {
+      TmpARowPointer = TmpLeftMatrix.RowPointers[this->BlockIndices[j] / IndexStep];
+      if (TmpARowPointer >= 0l)
+	{
+	  TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[this->BlockIndices[j] / IndexStep];
+	  int TmpRightMatrixIndex = this->BlockIndices[j] % IndexStep;
+	  if (TmpRightMatrix.RowPointers[TmpRightMatrixIndex] >= 0l)
+	    {
+	      double Tmp = 0.0;
+	      double* Tmp2 = localTemporaryArray[TmpRightMatrixIndex];
+	      for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
+		{
+		  Tmp += TmpLeftMatrix.MatrixElements[k] * Tmp2[TmpLeftMatrix.ColumnIndices[k]];
+		}
+	      vDestination[j] += Tmp;
+	    }
+	}
+    }
+}
+
+// core part of the tensor-multiplication (second part computing the final result for one tensor product)
+//
+// tensorIndex = index of tensore to consider
+// localTemporaryArray = temporary array used to store the partial multiplication
+// vDestination = vector where the result will be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+
+void TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultiplyTensorCoreDestination(int tensorIndex, Complex** localTemporaryArray, 
+												 ComplexVector& vDestination, 
+												 int firstComponent, int nbrComponent)
+{
+  int IndexStep = this->RightMatrices[tensorIndex].GetNbrColumn();
+  int LastComponent = firstComponent + nbrComponent - 1;
+  long TmpARowPointer;
+  long TmpARowLastPointer;
+  SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[tensorIndex];
+  SparseRealMatrix& TmpRightMatrix = this->RightMatrices[tensorIndex];
+  for (int j = firstComponent; j <= LastComponent; ++j)
+    {
+      TmpARowPointer = TmpLeftMatrix.RowPointers[this->BlockIndices[j] / IndexStep];
+      if (TmpARowPointer >= 0l)
+	{
+	  TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[this->BlockIndices[j] / IndexStep];
+	  int TmpRightMatrixIndex = this->BlockIndices[j] % IndexStep;
+	  if (TmpRightMatrix.RowPointers[TmpRightMatrixIndex] >= 0l)
+	    {
+	      Complex Tmp = 0.0;
+	      Complex* Tmp2 = localTemporaryArray[TmpRightMatrixIndex];
+	      for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
+		{
+		  Tmp += TmpLeftMatrix.MatrixElements[k] * Tmp2[TmpLeftMatrix.ColumnIndices[k]];
+		}
+	      vDestination[j] += Tmp;
 	    }
 	}
     }

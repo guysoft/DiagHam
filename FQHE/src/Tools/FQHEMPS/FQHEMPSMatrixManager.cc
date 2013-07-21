@@ -66,6 +66,8 @@ FQHEMPSMatrixManager::FQHEMPSMatrixManager(bool eMatrixFlag)
 {
   this->Options = 0;
   this->EMatrixFlag = eMatrixFlag;
+  this->RightBMatrix = 0;
+  this->LeftBMatrix = 0;
 }
 
 // destructor
@@ -437,13 +439,22 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetRightMPSMatrices(int nbrFluxQuan
 {
   if (this->EMatrixFlag == false)
     {
-      return this->GetMPSMatrices(nbrFluxQuanta, architecture);
+      this->RightBMatrix = this->GetMPSMatrices(nbrFluxQuanta, architecture);
     }
   else
     {
-      return this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), this->Options->GetInteger("qsectorright-value"), 
-				  this->Options->GetString("import-rightbmatrices"), nbrFluxQuanta, architecture);
+      if ((this->Options->GetInteger("qsectorleft-value") != this->Options->GetInteger("qsectorright-value")) || (this->LeftBMatrix == 0))
+	{
+	  this->RightBMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), 
+						    this->Options->GetInteger("qsectorright-value"), 
+						    this->Options->GetString("import-rightbmatrices"), nbrFluxQuanta, architecture);
+	}
+      else
+	{
+	  return this->LeftBMatrix;
+	}
     }
+  return this->RightBMatrix;
 }
  
 // get the MPS matrice class defined by the running options for the right part of the transfer matrix
@@ -456,13 +467,22 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetLeftMPSMatrices(int nbrFluxQuant
 {
   if (this->EMatrixFlag == false)
     {
-      return this->GetMPSMatrices(nbrFluxQuanta, architecture);
+      this->LeftBMatrix = this->GetMPSMatrices(nbrFluxQuanta, architecture);
     }
   else
     {
-      return this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), this->Options->GetInteger("qsectorleft-value"), 
-				  this->Options->GetString("import-leftbmatrices"), nbrFluxQuanta, architecture);
+      if ((this->Options->GetInteger("qsectorleft-value") != this->Options->GetInteger("qsectorright-value")) || (this->RightBMatrix == 0))
+	{
+	  this->LeftBMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), 
+						   this->Options->GetInteger("qsectorleft-value"), 
+						   this->Options->GetString("import-leftbmatrices"), nbrFluxQuanta, architecture);
+	}
+      else
+	{
+	  return this->RightBMatrix;
+	}
     }
+  return this->LeftBMatrix;
 }
 
 // get the cylinder perimeter (in magnetic length unit) if the cylinder geometry if used

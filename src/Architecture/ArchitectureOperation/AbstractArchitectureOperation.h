@@ -60,6 +60,7 @@ class AbstractArchitectureOperation
       MultipleComplexScalarProduct = 0x20,
       MultipleVectorHamiltonianMultiply = 0x40,
       HamiltonianFullDiagonalize = 0x41,
+      VectorSparseTensorMultiply = 0x42,
       Generic = 0x100,
       HamiltonianPrecalculation = 0x200,
       GenericHamiltonianParticlePrecalculation = 0x300,

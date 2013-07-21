@@ -51,6 +51,8 @@ class AbstractArchitecture;
 class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSparseMatrixHamiltonian
 {
 
+  friend class VectorSparseTensorMultiplyOperation;
+
  protected:
 
   // linearized indices that define the selected block 
@@ -214,6 +216,26 @@ class TensorProductSparseMatrixSelectedBlockHamiltonian : public TensorProductSp
   // nbrComponent = number of components to evaluate
   virtual void LowLevelAddMultiplyTensorCore(int tensorIndex, Complex** localTemporaryArray,
 					     ComplexVector& vSource, int firstComponent, int nbrComponent);
+
+  // core part of the tensor-multiplication (second part computing the final result for one tensor product)
+  //
+  // tensorIndex = index of tensore to consider
+  // localTemporaryArray = temporary array used to store the partial multiplication
+  // vDestination = vector where the result will be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  virtual void LowLevelAddMultiplyTensorCoreDestination(int tensorIndex, double** localTemporaryArray, RealVector& vDestination, 
+							int firstComponent, int nbrComponent);
+
+  // core part of the tensor-multiplication (second part computing the final result for one tensor product)
+  //
+  // tensorIndex = index of tensore to consider
+  // localTemporaryArray = temporary array used to store the partial multiplication
+  // vDestination = vector where the result will be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  virtual void LowLevelAddMultiplyTensorCoreDestination(int tensorIndex, Complex** localTemporaryArray, ComplexVector& vDestination, 
+							int firstComponent, int nbrComponent);
 
 
 };
