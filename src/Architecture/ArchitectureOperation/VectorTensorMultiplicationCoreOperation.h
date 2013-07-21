@@ -37,6 +37,7 @@
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Vector/RealVector.h"
+#include "Vector/ComplexVector.h"
 #include "Hamiltonian/TensorProductSparseMatrixHamiltonian.h"
 
 
@@ -51,6 +52,8 @@ class VectorTensorMultiplicationCoreOperation: public AbstractPrecalculationOper
 
   // vector to be multiplied
   RealVector VectorSource;
+  // vector to be multiplied (complex version)
+  ComplexVector ComplexVectorSource;
 
   // index of tensor to consider
   int TensorIndex;
@@ -64,6 +67,14 @@ class VectorTensorMultiplicationCoreOperation: public AbstractPrecalculationOper
   // vSource = vector to be multiplied
   VectorTensorMultiplicationCoreOperation(TensorProductSparseMatrixHamiltonian* tensorHamiltonian, 
 					  int tensorIndex, RealVector& vSource);
+
+  // constructor 
+  //
+  // hamiltonian = pointer to the tensor hamiltonian
+  // tensorIndex = index of tensor to consider
+  // vSource = vector to be multiplied
+  VectorTensorMultiplicationCoreOperation(TensorProductSparseMatrixHamiltonian* tensorHamiltonian, 
+					  int tensorIndex, ComplexVector& vSource);
 
   // copy constructor 
   //

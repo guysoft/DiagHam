@@ -68,6 +68,8 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
 
   // a temporary array used to perform the tensor-vector multiplication (thread safe)
   double** TemporaryArray;
+  // a temporary array used to perform the tensor-vector multiplication (thread safe, complex version)
+  Complex** ComplexTemporaryArray;
   
   // pointer to the architecture
   AbstractArchitecture* Architecture;
@@ -227,6 +229,10 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   virtual bool IsHamiltonianVectorOperationCompatible();
   
  protected:
+  
+  // initialize the temporary arrays
+  //
+  void InitializeTemporaryArrays();
 
   // core part of the tensor-multiplication
   //
@@ -237,6 +243,16 @@ class TensorProductSparseMatrixHamiltonian : public AbstractHamiltonian
   // nbrComponent = number of components to evaluate
   virtual void LowLevelAddMultiplyTensorCore(int tensorIndex, double** localTemporaryArray,
 					     RealVector& vSource, int firstComponent, int nbrComponent);
+
+  // core part of the tensor-multiplication
+  //
+  // tensorIndex = index of tensore to consider
+  // localTemporaryArray = temporary array used to store the partial multiplication
+  // vSource = vector to be multiplied
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  virtual void LowLevelAddMultiplyTensorCore(int tensorIndex, Complex** localTemporaryArray,
+					     ComplexVector& vSource, int firstComponent, int nbrComponent);
 
 
 };

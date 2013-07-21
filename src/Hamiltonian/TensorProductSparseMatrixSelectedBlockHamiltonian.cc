@@ -80,12 +80,7 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
   this->LeftHamiltonianVectorMultiplicationFlag = true;
   this->BlockIndices = blockIndices;
   long TmpMatrixSize = this->LeftMatrices[0].GetNbrRow();
-  long HamiltonianDimension =  TmpMatrixSize * TmpMatrixSize;
-  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
-  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
-  this->TemporaryArray = new double*[RightMatrixDimension];
-  for (int i = 0; i < RightMatrixDimension; ++i)
-    this->TemporaryArray[i] = new double[LeftMatrixDimension];
+  this->InitializeTemporaryArrays();
   this->ExternalBlockIndexProductTable = false;
   this->BlockIndexProductTable = new long* [TmpMatrixSize];
   this->BlockIndexProductTableNbrElements = new int [TmpMatrixSize];
@@ -214,12 +209,7 @@ TensorProductSparseMatrixSelectedBlockHamiltonian::TensorProductSparseMatrixSele
   this->BlockIndices = blockIndices;
   this->BlockSize = blockSize;
   long TmpMatrixSize = this->LeftMatrices[0].GetNbrRow();
-  int HamiltonianDimension = TmpMatrixSize * TmpMatrixSize;
-  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
-  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
-  this->TemporaryArray = new double*[RightMatrixDimension];
-  for (int i = 0; i < RightMatrixDimension; ++i)
-    this->TemporaryArray[i] = new double[LeftMatrixDimension];
+  this->InitializeTemporaryArrays();
   long FullEMatrixSize = ((long) TmpMatrixSize) *  ((long) TmpMatrixSize);
   this->InvertBlockIndices = new int [FullEMatrixSize];
   for (long i = 0l; i < FullEMatrixSize; ++i)
@@ -510,9 +500,17 @@ ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMul
 	}
       return vDestination;
     }
-  int IndexStep = this->LeftMatrices[0].GetNbrColumn();
-  int AMatrixLastIndex = LastComponent / this->LeftMatrices[0].GetNbrRow();
-  int BMatrixLastIndex = LastComponent % this->LeftMatrices[0].GetNbrRow();
+
+
+  int IndexStep = this->RightMatrices[0].GetNbrColumn();
+  int LeftMatrixLastIndex = LastComponent / this->RightMatrices[0].GetNbrRow();
+  int RightMatrixLastIndex = LastComponent % this->RightMatrices[0].GetNbrRow();
+
+  int RightMatrixDimension = this->RightMatrices[0].GetNbrRow();
+  int LeftMatrixDimension = this->LeftMatrices[0].GetNbrRow();
+
+
+  Complex** LocalTemporaryMatrix = this->ComplexTemporaryArray;
 
   long TmpARowPointer;
   long TmpARowLastPointer;
@@ -522,34 +520,31 @@ ComplexVector& TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMul
     {
       SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[i];
       SparseRealMatrix& TmpRightMatrix = this->RightMatrices[i];
+
+      VectorTensorMultiplicationCoreOperation Operation(this, i, vSource);
+      Operation.ApplyOperation(this->Architecture);
+
       for (int j = firstComponent; j < LastComponent; ++j)
 	{
 	  TmpARowPointer = TmpLeftMatrix.RowPointers[this->BlockIndices[j] / IndexStep];
 	  if (TmpARowPointer >= 0l)
 	    {
 	      TmpARowLastPointer = TmpLeftMatrix.RowLastPointers[this->BlockIndices[j] / IndexStep];
-	      TmpBRowPointer = TmpRightMatrix.RowPointers[this->BlockIndices[j] % IndexStep];
-	      if (TmpBRowPointer >= 0l)
+	      int TmpRightMatrixIndex = this->BlockIndices[j] % IndexStep;
+	      if (TmpRightMatrix.RowPointers[TmpRightMatrixIndex] >= 0l)
 		{
-		  TmpBRowLastPointer = TmpRightMatrix.RowLastPointers[this->BlockIndices[j] % IndexStep];
-		  Complex Tmp= 0.0;
+		  Complex Tmp = 0.0;
+		  Complex* Tmp2 = LocalTemporaryMatrix[TmpRightMatrixIndex];
 		  for (long k = TmpARowPointer; k <= TmpARowLastPointer; ++k)
 		    {
-		      int TmpLeftMatrixColumnIndex = TmpLeftMatrix.ColumnIndices[k];
-		      double Tmp2 = TmpLeftMatrix.MatrixElements[k] * this->Coefficients[i];
-		      int* TmpInvertBlockIndices = this->InvertBlockIndices + (((long) TmpLeftMatrixColumnIndex) * IndexStep);
-		      for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
-			{
-			  int TmpIndex3 = TmpInvertBlockIndices[TmpRightMatrix.ColumnIndices[l]];
-			  if (TmpIndex3 >= 0)
-			    Tmp += Tmp2 * TmpRightMatrix.MatrixElements[l] * vSource[TmpIndex3];
-			}
+		      Tmp += TmpLeftMatrix.MatrixElements[k] * Tmp2[TmpLeftMatrix.ColumnIndices[k]];
 		    }
 		  vDestination[j] += Tmp;
 		}
 	    }
 	}
     }
+
   if (this->HamiltonianShift != 0.0)
     {
       for (int i = firstComponent; i < LastComponent; ++i)
@@ -927,6 +922,50 @@ void TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultiplyTenso
   for (int j = firstComponent; j <= LastComponent; ++j)
     {
       double* Tmp2 = localTemporaryArray[j];
+      TmpBRowPointer = TmpRightMatrix.RowPointers[j];
+      if (TmpBRowPointer >= 0l)
+	{
+	  for (int k = 0; k < LeftMatrixDimension; ++k)
+	    Tmp2[k] = 0.0;
+	  TmpBRowLastPointer = TmpRightMatrix.RowLastPointers[j];
+	  for (long l = TmpBRowPointer; l <= TmpBRowLastPointer; ++l)
+	    {
+	      double Tmp = TmpRightMatrix.MatrixElements[l] * this->Coefficients[tensorIndex];
+	      int TmpIndex = TmpRightMatrix.ColumnIndices[l];
+	      for (int k = 0; k < LeftMatrixDimension; ++k)
+		{
+		  int TmpIndex2 = this->InvertBlockIndices[k * IndexStep + TmpIndex];
+		  if (TmpIndex2 >= 0)
+		    Tmp2[k] += Tmp * vSource[TmpIndex2];
+		}
+	    }
+	}
+    }
+}
+
+// core part of the tensor-multiplication
+//
+// tensorIndex = index of tensor to consider
+// localTemporaryArray = temporary array used to store the partial multiplication
+// vSource = vector to be multiplied
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+
+void TensorProductSparseMatrixSelectedBlockHamiltonian::LowLevelAddMultiplyTensorCore(int tensorIndex, Complex** localTemporaryArray, 
+										      ComplexVector& vSource, 
+										      int firstComponent, int nbrComponent)
+{
+  int IndexStep = this->RightMatrices[tensorIndex].GetNbrColumn();
+  int LastComponent = firstComponent + nbrComponent - 1;
+  long TmpBRowPointer;
+  long TmpBRowLastPointer;
+  int RightMatrixDimension = this->RightMatrices[tensorIndex].GetNbrRow();
+  int LeftMatrixDimension = this->LeftMatrices[tensorIndex].GetNbrRow();
+  SparseRealMatrix& TmpLeftMatrix = this->LeftMatrices[tensorIndex];
+  SparseRealMatrix& TmpRightMatrix = this->RightMatrices[tensorIndex];
+  for (int j = firstComponent; j <= LastComponent; ++j)
+    {
+      Complex* Tmp2 = localTemporaryArray[j];
       TmpBRowPointer = TmpRightMatrix.RowPointers[j];
       if (TmpBRowPointer >= 0l)
 	{

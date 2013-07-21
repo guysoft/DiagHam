@@ -6,7 +6,8 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//              class of abstract hamiltonian precalculation operation        //
+//                   class of operation for the core part of                  //
+//                         vector tensor multplication                        //
 //                                                                            //
 //                        last modification : 20/07/2013                      //
 //                                                                            //
@@ -36,8 +37,9 @@
 
 // constructor
 //
-// tensorHamiltonian =
-// tensorIndex = 
+// hamiltonian = pointer to the tensor hamiltonian
+// tensorIndex = index of tensor to consider
+// vSource = vector to be multiplied
 
 VectorTensorMultiplicationCoreOperation::VectorTensorMultiplicationCoreOperation(TensorProductSparseMatrixHamiltonian* tensorHamiltonian, 
 										 int tensorIndex, RealVector& vSource)
@@ -50,6 +52,27 @@ VectorTensorMultiplicationCoreOperation::VectorTensorMultiplicationCoreOperation
   this->LargeNbrComponent = (long) this->NbrComponent;
   this->OperationType = AbstractArchitectureOperation::GenericHamiltonianParticlePrecalculation;
   this->VectorSource = vSource;
+  this->ComplexVectorSource = ComplexVector();
+}
+  
+// constructor
+//
+// hamiltonian = pointer to the tensor hamiltonian
+// tensorIndex = index of tensor to consider
+// vSource = vector to be multiplied
+
+VectorTensorMultiplicationCoreOperation::VectorTensorMultiplicationCoreOperation(TensorProductSparseMatrixHamiltonian* tensorHamiltonian, 
+										 int tensorIndex, ComplexVector& vSource)
+{
+  this->TensorHamiltonian = tensorHamiltonian;
+  this->TensorIndex = tensorIndex;
+  this->FirstComponent = 0;
+  this->NbrComponent = this->TensorHamiltonian->RightMatrices[this->TensorIndex].GetNbrRow();
+  this->LargeFirstComponent = 0l;
+  this->LargeNbrComponent = (long) this->NbrComponent;
+  this->OperationType = AbstractArchitectureOperation::GenericHamiltonianParticlePrecalculation;
+  this->ComplexVectorSource = vSource;
+  this->VectorSource = RealVector();
 }
   
 // copy constructor
@@ -66,6 +89,7 @@ VectorTensorMultiplicationCoreOperation::VectorTensorMultiplicationCoreOperation
   this->TensorHamiltonian = operation.TensorHamiltonian;
   this->TensorIndex = operation.TensorIndex;
   this->VectorSource = operation.VectorSource;
+  this->ComplexVectorSource = operation.ComplexVectorSource;
 }
   
 // destructor
@@ -90,6 +114,15 @@ AbstractArchitectureOperation* VectorTensorMultiplicationCoreOperation::Clone()
 
 bool VectorTensorMultiplicationCoreOperation::RawApplyOperation()
 {
-  this->TensorHamiltonian->LowLevelAddMultiplyTensorCore(this->TensorIndex, this->TensorHamiltonian->TemporaryArray, this->VectorSource, 
-							 this->FirstComponent, this->NbrComponent);
+  if (this->VectorSource.GetVectorDimension() > 0)
+    {
+      this->TensorHamiltonian->LowLevelAddMultiplyTensorCore(this->TensorIndex, this->TensorHamiltonian->TemporaryArray, this->VectorSource, 
+							     this->FirstComponent, this->NbrComponent);
+    }
+  else
+    {
+      this->TensorHamiltonian->LowLevelAddMultiplyTensorCore(this->TensorIndex, this->TensorHamiltonian->ComplexTemporaryArray, 
+							     this->ComplexVectorSource, 
+							     this->FirstComponent, this->NbrComponent);
+    }
 }
