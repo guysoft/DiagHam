@@ -308,6 +308,7 @@ int main(int argc, char** argv)
 	  InitialSpace = TargetSpace;
 	  InitialVector = TargetVector;
 	  double Norm = InitialVector.Norm();
+	  cout << "Amplitude before normalization: "<<Norm<<endl;
 	  if (Norm >0.0)
 	    InitialVector/=Norm;
 	  else

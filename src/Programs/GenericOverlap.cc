@@ -39,6 +39,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "conjugate", "Conjugate the second (complex) number");
   (*SystemGroup) += new BooleanOption  ('\n', "discard-sign", "compute sum_i |v1_i * v2_i| instead of sum_i v1_i * v2_i");
   (*SystemGroup) += new BooleanOption  ('x', "no-cross", "calculate only overlap of 1st vector with all others");
+  (*SystemGroup) += new SingleDoubleOption  ('t', "threshold", "apply threshold and display only those overlaps exceeding this value",0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "sum", "sum all computed overlaps");
   (*SystemGroup) += new BooleanOption  ('\n', "no-square", "calculate only the scalar products");
   (*SystemGroup) += new BooleanOption  ('n', "normalize", "normalize vectors before calculating any overlaps");
@@ -60,6 +61,8 @@ int main(int argc, char** argv)
 
   bool QuietFlag = Manager.GetBoolean("quiet");
   bool Scalar = Manager.GetBoolean("scalar-product");
+
+  double Threshold = Manager.GetDouble("threshold");
   
   int NbrVectors;
   char** VectorFiles = 0;
@@ -164,7 +167,10 @@ int main(int argc, char** argv)
 	      if (Scalar==false)
 		{
 		  if (QuietFlag == false)
-		    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+		    {
+		      if (SqrNorm(sp)>=Threshold)
+			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+		    }
 		  else
 		    cout << SqrNorm(sp) << endl;
 		}
@@ -172,10 +178,13 @@ int main(int argc, char** argv)
 		{
 		  if (QuietFlag == false)
 		    {
-		      if (Manager.GetBoolean("polar"))
-			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << Norm(sp)<<"*Exp("<< Arg(sp)/M_PI<< " I Pi)" << endl;
-		      else
-			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << sp << endl;
+		      if (Norm(sp)>=Threshold)
+			{
+			  if (Manager.GetBoolean("polar"))
+			    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << Norm(sp)<<"*Exp("<< Arg(sp)/M_PI<< " I Pi)" << endl;
+			  else
+			    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << sp << endl;
+			}
 		    }
 		  else
 		    cout << sp.Re << " " << sp.Im << endl;
@@ -223,14 +232,20 @@ int main(int argc, char** argv)
 	      if (Scalar==false)
 		{
 		  if (QuietFlag == false)
-		    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+		    {
+		      if (SqrNorm(sp)>=Threshold)
+			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
+		    }
 		  else
 		    cout << SqrNorm(sp) << endl;
 		}
 	      else
 		{
 		  if (QuietFlag == false)
-		    cout << "<"<<i<<"|"<<j<<"> = " << sp.Re << endl;
+		    {
+		      if (fabs(sp.Re)>=Threshold)
+			cout << "<"<<i<<"|"<<j<<"> = " << sp.Re << endl;
+		    }
 		  else
 		    cout << sp.Re << endl;
 		}
