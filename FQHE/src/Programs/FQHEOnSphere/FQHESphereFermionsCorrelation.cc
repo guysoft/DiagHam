@@ -372,6 +372,9 @@ int main(int argc, char** argv)
          }
         cout<<endl;
 
+       OperatorMatrixElementOperation* Operation;
+       ParticleOnSphereDensityDensityOperator* DensityDensityOperator;
+
 	//double S = 0.5 * (double)LzMax;
        ClebschGordanCoefficients CoeffLLS(LzMax, LzMax);  
        for (int L = 0; L <= LzMax; ++L)
@@ -382,11 +385,17 @@ int main(int argc, char** argv)
             for (int j = 0; j <= LzMax; ++j)
 	     {        
                double Factor = (LzMax + 1.0) * pow(-1.0, 2*LzMax - i - j) * CoeffLLS.GetCoefficient(((j << 1) - LzMax), -((j << 1) - LzMax), L << 1) * CoeffLLS.GetCoefficient(((i << 1) - LzMax), -((i << 1) - LzMax), L << 1);
-               ParticleOnSphereDensityDensityOperator Operator (Space, i, j, i, j);
-               SumIJ +=  Factor * Operator.MatrixElement(State, State);
+
+               DensityDensityOperator = new ParticleOnSphereDensityDensityOperator(Space, i, j, i, j);
+               Operation = new OperatorMatrixElementOperation (DensityDensityOperator, State, State);          
+               Operation->ApplyOperation(Architecture.GetArchitecture());               
+
+               SumIJ +=  Factor * Operation->GetScalar();
                if (i != j)
                  SumIJ += Factor * DensityMatEl[j]; 
-                
+
+               delete DensityDensityOperator;
+               delete Operation;
 	     }
            }     
          cout << L <<" "<< -(1.0/(double)(LzMax + 1)) * SumIJ.Re << " " << -(1.0/(double)(LzMax + 1)) * SumIJ.Im <<endl;
