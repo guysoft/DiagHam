@@ -196,7 +196,7 @@ BosonOnLatticeKy::BosonOnLatticeKy(const BosonOnLatticeKy& bosons)
 
 BosonOnLatticeKy::~BosonOnLatticeKy ()
 {
-  /*if (this->HilbertSpaceDimension != 0) 
+  if (this->HilbertSpaceDimension != 0) 
     {
       if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
 	{
@@ -222,7 +222,7 @@ BosonOnLatticeKy::~BosonOnLatticeKy ()
 	  delete[] this->Minors;
 	}
       delete this->KeptCoordinates;
-    }*/
+    }
 }
 
 // assignement (without duplicating datas)
@@ -1428,7 +1428,7 @@ HermitianMatrix BosonOnLatticeKy::EvaluatePartialDensityMatrixParticlePartition 
   
   if (nbrParticleSector == this->NbrBosons)
     {
-      if (kySector = this->Ky)
+      if (kySector == this->Ky)
 	{
 	  HermitianMatrix TmpDensityMatrix(1, true);
 	  TmpDensityMatrix(0, 0) = 1.0;

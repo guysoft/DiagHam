@@ -338,6 +338,10 @@ int main(int argc, char** argv)
 	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
 	}
     }
+  for (int i = 0; i < NbrSpaces; ++i)
+    delete Spaces[i];
+  delete [] Spaces;
+  delete [] GroundStates;
   File.close();
   return 0;
 }

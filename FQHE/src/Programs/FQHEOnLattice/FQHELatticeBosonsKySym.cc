@@ -79,7 +79,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHELatticeBosons" , "0.01");  
+  OptionManager Manager ("FQHELatticeBosonsKySym" , "0.01");  
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -142,7 +142,11 @@ int main(int argc, char** argv)
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
 
-  if (Manager.GetString("energy-expectation") != 0 ) Memory = 0x0l;
+  if (Manager.GetString("energy-expectation") != NULL )
+    {
+      cout << "Not using memory storage in \"energy-expectation\" mode."<<endl;
+      Memory = 0x0l;
+    }
 
   int NbrFluxValues = 1;
   if (NbrFluxQuanta == -1)
