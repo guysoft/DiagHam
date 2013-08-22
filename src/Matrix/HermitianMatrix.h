@@ -410,6 +410,17 @@ class HermitianMatrix : public Matrix
   // return value = reference on real matrix consisting of eigenvalues
   RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, double err = 1e-7, int maxIter = 50);
 
+  // Diagonalize selected eigenvalues of a hermitian matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // nMin = index of lowest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+  // nMax = index of highest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real matrix consisting of eigenvalues
+  RealDiagonalMatrix& LapackPartialDiagonalize (RealDiagonalMatrix& M, int nMin=0, int nMax=0, double err=1e-7, int maxIter=50);
+
+
   // Diagonalize a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
   //
   // M = reference on real diagonal matrix of eigenvalues
@@ -419,13 +430,28 @@ class HermitianMatrix : public Matrix
   // return value = reference on real matrix consisting of eigenvalues
   RealDiagonalMatrix& LapackDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, double err = 1e-7, int maxIter = 50);
 
+  // Diagonalize selected eigenvalues of a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+  //
+  // M = reference on real diagonal matrix of eigenvalues
+  // Q = matrix where transformation matrix has to be stored
+  // nMin = index of lowest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+  // nMax = index of highest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+  // err = absolute error on matrix element
+  // maxIter = maximum number of iteration to fund an eigenvalue
+  // return value = reference on real matrix consisting of eigenvalues
+  RealDiagonalMatrix& LapackPartialDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, int nMin=0, int nMax=0, double err=1e-7, int maxIter=50);
+
+
  private:
   int LapackWorkAreaDimension;
+  int LapackEVsRequested;
+  bool LapackWorkAreaForPartialDiag;
   doublecomplex *LapackMatrix;
   doublecomplex *LapackEVMatrix;
   doublecomplex *LapackWorkingArea;
-  double *LapackRealWorkingArea;  
-
+  double *LapackRealWorkingArea;
+  int *LapackIntWorkingArea;
+  int *LapackFailedToConverge;
 #endif
 
  public:

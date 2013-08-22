@@ -421,7 +421,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      cout << "creating PairingHamiltonian with OneBodyPotentialUpDown="<<OneBodyPotentialUpDown<<endl;
+	      //cout << "creating PairingHamiltonian with OneBodyPotentialUpDown="<<OneBodyPotentialUpDown<<endl;
 	      Hamiltonian = new ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials, Manager.GetDouble("pairing"), 
 											     PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown,
 											     Architecture.GetArchitecture(),

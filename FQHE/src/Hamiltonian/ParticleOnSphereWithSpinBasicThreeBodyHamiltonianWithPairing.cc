@@ -91,6 +91,14 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWi
   this->M1InterValue = 0;
   this->MaxNBody = 3;
 
+  this->PseudoPotentials = new double* [4];
+  for (int j = 0; j < 4; ++j)
+    {
+      this->PseudoPotentials[j] = new double [this->NbrLzValue];
+      for (int i = 0; i < this->NbrLzValue; ++i)
+	this->PseudoPotentials[j][i] = 0.0;
+    }
+
   this->NBodyFlags = new bool [this->MaxNBody + 1];
 
   this->NbrSortedIndicesPerSum = new int** [this->MaxNBody + 1];
@@ -271,7 +279,10 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::ParticleOnSphereWi
     {
       this->PseudoPotentials[j] = new double [this->NbrLzValue];
       for (int i = 0; i < this->NbrLzValue; ++i)
-        this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	if (pseudoPotential!=NULL)
+	  this->PseudoPotentials[j][i] = pseudoPotential[j][this->LzMax - i];
+	else
+	  this->PseudoPotentials[j][i] = 0.0;
     }  
  
   if ((onebodyPotentialUpUp == 0) || (onebodyPotentialDownDown == 0)) 
@@ -449,13 +460,10 @@ ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::~ParticleOnSphereW
   delete[] this->MaxRelativeAngularMomentum;
   delete[] this->NbrThreeBodyPseudoPotentials;
   delete[] this->ThreeBodyPseudoPotentials;
-  if (this->FullTwoBodyFlag == true)
-    {
-      for (int i = 0; i < 4; ++i)
-        delete[] this->PseudoPotentials[i];
-      delete[] this->PseudoPotentials;
-    }
-
+  for (int i = 0; i < 4; ++i)
+    delete[] this->PseudoPotentials[i];
+  delete[] this->PseudoPotentials;
+  
   delete [] this->NBodyFlags;
 
   // rough job deleting only outer arrays...
@@ -566,6 +574,8 @@ void ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::EvaluatePairi
 		    this->InteractionFactorsPairing[i][Index] *= 2.0;
 		  if (m3 != m4)
 		    this->InteractionFactorsPairing[i][Index] *= 2.0;
+
+		  cout << "PairingTerm["<<m1<<", "<<m2<<", "<<m3<<", "<<m4<<"]="<<this->InteractionFactorsPairing[i][Index]<<endl;
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}

@@ -842,7 +842,7 @@ double Abstract2DTightBindingModel::ComputeBerryCurvature(int band, char* fileNa
   ofstream File;
   File.open(fileName);
   this->WriteASCIIHeader(File, '#');
-  File << "# kx    ky    Berry_curvature";
+  File << "# kx    ky    Berry_curvature\n";
   double Fluctations = 0.0;
   for (long LinearizedMomentumIndex = 0l; LinearizedMomentumIndex < this->NbrStatePerBand; ++LinearizedMomentumIndex)
     {

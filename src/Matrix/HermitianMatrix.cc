@@ -40,10 +40,17 @@
 
 #ifdef __LAPACK__
 
-extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const int* dimension, const doublecomplex* matrix, const double *eigenvalues, const doublecomplex *eigenvectors, const int* leadingDimension, const doublecomplex *work, const doublereal *rwork, const int* information );
-
+extern "C" void FORTRAN_NAME(zhpev)(const char* jobz, const char* uplo, const int* dimension, const doublecomplex* matrixAP, const double *eigenvalues, const doublecomplex *eigenvectors, const int* leadingDimension, const doublecomplex *work, const doublereal *rwork, const int* information );
+extern "C" void FORTRAN_NAME(zhpevx)(const char* jobz, const char* range, const char* uplo, const int* dimensionN, const doublecomplex* matrixAP, const double *lowerBoundVL, const double *upperBoundVU, const int* lowerIndexIL, const int* upperIndexIU, const double *errorABSTOL, const int* nbrFoundM, const double *eigenvaluesW, const doublecomplex *eigenvectorsZ, const int* leadingDimensionLDZ, const doublecomplex *work, const doublereal *rwork, const int* iwork, const int* ifail, const int* information);
 #endif
 
+/* zhpevx workspace requirements:
+   WORK    (workspace) COMPLEX*16 array, dimension (2*N)
+   
+   RWORK   (workspace) DOUBLE PRECISION array, dimension (7*N)
+   
+   IWORK   (workspace) INTEGER array, dimension (5*N)
+*/
 
 using std::cout;
 using std::endl;
@@ -65,6 +72,9 @@ HermitianMatrix::HermitianMatrix()
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
 #ifdef __LAPACK__
   this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
 }
 
@@ -101,6 +111,9 @@ HermitianMatrix::HermitianMatrix(int dimension, bool zero)
     }
 #ifdef __LAPACK__
   this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
 }
 
@@ -124,7 +137,10 @@ HermitianMatrix::HermitianMatrix(double* diagonal, double* realOffDiagonal, doub
   this->Increment = (this->TrueNbrRow - this->NbrRow);
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
 #ifdef __LAPACK__
-   this->LapackWorkAreaDimension=0;
+  this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
 }
 
@@ -146,6 +162,9 @@ HermitianMatrix::HermitianMatrix(const HermitianMatrix& M)
   this->MatrixType = Matrix::ComplexElements | Matrix::Hermitian;
 #ifdef __LAPACK__
   this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
 }
 
@@ -157,6 +176,9 @@ HermitianMatrix::HermitianMatrix(const RealTriDiagonalSymmetricMatrix& M)
 {
 #ifdef __LAPACK__
   this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
 }
 
@@ -199,6 +221,9 @@ HermitianMatrix::HermitianMatrix(const ComplexMatrix& M)
     }
 #ifdef __LAPACK__
   this->LapackWorkAreaDimension=0;
+  this->LapackEVsRequested=0;
+  this->LapackEVMatrix=NULL;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
 }
 
@@ -222,6 +247,11 @@ HermitianMatrix::~HermitianMatrix()
       delete [] LapackWorkingArea;
       delete [] LapackRealWorkingArea;
       if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+      if (this->LapackWorkAreaForPartialDiag)
+	{
+	  delete [] this->LapackIntWorkingArea;
+	  delete [] this->LapackFailedToConverge;
+	}
     }
 #endif
 }
@@ -251,7 +281,20 @@ HermitianMatrix& HermitianMatrix::operator = (const HermitianMatrix& M)
   this->TrueNbrColumn = M.TrueNbrColumn;
   this->Increment = (this->TrueNbrRow - this->NbrRow);
 #ifdef __LAPACK__
+  if (this->LapackWorkAreaDimension>0)
+    {
+      delete [] LapackMatrix;
+      delete [] LapackWorkingArea;
+      delete [] LapackRealWorkingArea;
+      if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+      if (this->LapackWorkAreaForPartialDiag)
+	{
+	  delete [] this->LapackIntWorkingArea;
+	  delete [] this->LapackFailedToConverge;
+	}
+    }
   this->LapackWorkAreaDimension=0;
+  this->LapackWorkAreaForPartialDiag=false;
 #endif
   return *this;
 }
@@ -1733,13 +1776,19 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
 	  delete [] LapackMatrix;
 	  delete [] LapackWorkingArea;
 	  delete [] LapackRealWorkingArea;
-	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
+	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+	  if (this->LapackWorkAreaForPartialDiag)
+	    {
+	      delete [] LapackIntWorkingArea;
+	      delete [] this->LapackFailedToConverge;
+	    }
 	}      
       this->LapackMatrix = new doublecomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
       this->LapackEVMatrix = NULL;	  
       this->LapackWorkingArea = new doublecomplex [2*this->NbrRow-1];
       this->LapackRealWorkingArea = new double [3*this->NbrRow-2];
       this->LapackWorkAreaDimension=this->NbrRow;
+      this->LapackWorkAreaForPartialDiag=false;
     }
   
   int Information = 0;  
@@ -1763,6 +1812,85 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, d
   return M;
 }
 
+
+// Diagonalize a complex skew symmetric matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix of eigenvalues
+// nMin = index of lowest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+// nMax = index of highest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackPartialDiagonalize (RealDiagonalMatrix& M, int nMin, int nMax, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  Complex Tmp;
+  if ((this->LapackWorkAreaDimension<this->NbrRow)||(this->LapackWorkAreaForPartialDiag==false))
+    {
+      if (this->LapackWorkAreaDimension>0)
+	{
+	  delete [] LapackMatrix;
+	  delete [] LapackWorkingArea;
+	  delete [] LapackRealWorkingArea;
+	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+	  if (this->LapackWorkAreaForPartialDiag)
+	    {
+	      delete [] this->LapackIntWorkingArea;
+	      delete [] this->LapackFailedToConverge;
+	    }
+	}      
+      this->LapackMatrix = new doublecomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
+      this->LapackEVMatrix = NULL;	  
+      this->LapackWorkingArea = new doublecomplex [2*this->NbrRow];
+      this->LapackRealWorkingArea = new double [7*this->NbrRow];
+      this->LapackIntWorkingArea = new int [5*this->NbrRow];
+      this->LapackFailedToConverge = new int [this->NbrRow];
+      this->LapackWorkAreaDimension=this->NbrRow;
+      this->LapackWorkAreaForPartialDiag=true;
+    }
+  
+  int Information = 0;
+  const char* Jobz = "N";
+  const char* Range = "I";
+  const char* UpperLower = "U";
+  ++nMin;
+  ++nMax;
+  if (nMin<1) nMin=1;
+  if (nMax>this->NbrRow) nMax=this->NbrRow;
+  int NbrFound=0;
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  LapackMatrix[TotalIndex].r = Tmp.Re;
+	  LapackMatrix[TotalIndex].i = Tmp.Im;
+	  ++TotalIndex;
+	}
+      LapackMatrix[TotalIndex].r = this->DiagonalElements[j];
+      LapackMatrix[TotalIndex].i = 0.0;
+      ++TotalIndex;      
+    }
+  FORTRAN_NAME(zhpevx)(Jobz, Range, UpperLower, &this->NbrRow, LapackMatrix, /*const double *lowerBoundVL*/ NULL, /*const double *upperBoundVU*/ NULL, &nMin, &nMax, &err, &NbrFound, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, LapackIntWorkingArea, LapackFailedToConverge, &Information);
+  if (Information<0)
+    {
+      cout << "Illegal argument no. "<<-Information<<" in call to zhpevx"<<endl;
+      std::exit(1);
+    }
+  if (Information>0)
+    {
+      cout << Information << " eigenvalues failed to converge in call to zhpevx; their indices are: "<<this->LapackFailedToConverge[0];
+      for (int i=1; i<Information; ++i)
+	cout <<", "<<this->LapackFailedToConverge[i];
+      cout <<endl;
+    }
+  
+  return M;
+}
+
+
 // Diagonalize a complex skew symmetric matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
 //
 // M = reference on real diagonal matrix of eigenvalues
@@ -1784,13 +1912,19 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
 	  delete [] LapackMatrix;
 	  delete [] LapackWorkingArea;
 	  delete [] LapackRealWorkingArea;
-	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;	  
+	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+	  if (this->LapackWorkAreaForPartialDiag)
+	    {
+	      delete [] this->LapackIntWorkingArea;
+	      delete [] this->LapackFailedToConverge;
+	    }
 	}
       this->LapackMatrix = new doublecomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
       this->LapackEVMatrix = NULL;
       this->LapackWorkingArea = new doublecomplex [2*this->NbrRow-1];
       this->LapackRealWorkingArea = new double [3*this->NbrRow-2];
       this->LapackWorkAreaDimension=this->NbrRow;
+      this->LapackWorkAreaForPartialDiag=false;
     }
   if (LapackEVMatrix==NULL)
     LapackEVMatrix = new doublecomplex[((long) this->NbrRow) * ((long) this->NbrRow)];
@@ -1823,6 +1957,108 @@ RealDiagonalMatrix& HermitianMatrix::LapackDiagonalize (RealDiagonalMatrix& M, C
 	++TotalIndex;
       }
   return M;  
+}
+
+// Diagonalize selected eigenvalues of a hermitian matrix and evaluate transformation matrix using the LAPACK library (modifying current matrix)
+//
+// M = reference on real diagonal matrix of eigenvalues
+// Q = matrix where transformation matrix has to be stored
+// nMin = index of lowest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+// nMax = index of highest eigenvalue to be calculated (numbered in C-conventions, from 0,...,d-1)
+// err = absolute error on matrix element
+// maxIter = maximum number of iteration to fund an eigenvalue
+// return value = reference on real matrix consisting of eigenvalues
+RealDiagonalMatrix& HermitianMatrix::LapackPartialDiagonalize (RealDiagonalMatrix& M, ComplexMatrix& Q, int nMin, int nMax, double err, int maxIter)
+{
+  if (M.GetNbrRow() != this->NbrRow)
+    M.Resize(this->NbrRow, this->NbrColumn);
+  if (Q.GetNbrRow() != this->NbrRow)
+    Q.Resize(this->NbrRow, nMax-nMin+1);
+  Complex Tmp;
+  if ((this->LapackWorkAreaDimension<this->NbrRow)||(this->LapackWorkAreaForPartialDiag==false))
+    {
+      if (this->LapackWorkAreaDimension>0)
+	{
+	  delete [] LapackMatrix;
+	  delete [] LapackWorkingArea;
+	  delete [] LapackRealWorkingArea;
+	  if (LapackEVMatrix!=0) delete [] LapackEVMatrix;
+	  if (this->LapackWorkAreaForPartialDiag)
+	    {
+	      delete [] this->LapackIntWorkingArea;
+	      delete [] this->LapackFailedToConverge;
+	    }
+	}      
+      this->LapackMatrix = new doublecomplex [((long) this->NbrRow) * ((long) (this->NbrRow+1)) / 2l];
+      this->LapackEVMatrix = NULL;	  
+      this->LapackWorkingArea = new doublecomplex [2*this->NbrRow];
+      this->LapackRealWorkingArea = new double [7*this->NbrRow];
+      this->LapackIntWorkingArea = new int [5*this->NbrRow];
+      this->LapackFailedToConverge = new int [this->NbrRow];
+      this->LapackWorkAreaDimension=this->NbrRow;
+      this->LapackWorkAreaForPartialDiag=true;
+    }
+  if ((LapackEVMatrix!=NULL)&&(LapackEVsRequested<nMax-nMin+1))
+    {
+      delete [] LapackEVMatrix;
+      LapackEVMatrix=NULL;
+    }
+  if (LapackEVMatrix==NULL)
+    {
+      LapackEVsRequested=nMax-nMin+1;
+      LapackEVMatrix = new doublecomplex[((long) this->NbrRow) * ((long) this->LapackEVsRequested)];
+    }
+  int Information = 0;
+  const char* Jobz = "V";
+  const char* Range = "I";
+  const char* UpperLower = "U";
+  ++nMin;
+  ++nMax;
+  if (nMin<1) nMin=1;
+  if (nMax>this->NbrRow) nMax=this->NbrRow;
+  int NbrFound=0;
+  long TotalIndex = 0l;
+  for (int j = 0; j < this->NbrRow; ++j)
+    {
+      for (int i = 0; i < j; ++i)
+	{
+	  this->GetMatrixElement(i,j,Tmp);
+	  LapackMatrix[TotalIndex].r = Tmp.Re;
+	  LapackMatrix[TotalIndex].i = Tmp.Im;
+	  ++TotalIndex;
+	}
+      LapackMatrix[TotalIndex].r = this->DiagonalElements[j];
+      LapackMatrix[TotalIndex].i = 0.0;
+      ++TotalIndex;      
+    }
+  FORTRAN_NAME(zhpevx)(Jobz, Range, UpperLower, &this->NbrRow, LapackMatrix, /*const double *lowerBoundVL*/ NULL, /*const double *upperBoundVU*/ NULL, &nMin, &nMax, &err, &NbrFound, M.DiagonalElements, LapackEVMatrix, &this->NbrRow, LapackWorkingArea, LapackRealWorkingArea, LapackIntWorkingArea, LapackFailedToConverge, &Information);
+  if (Information<0)
+    {
+      cout << "Illegal argument no. "<<-Information<<" in call to zhpevx"<<endl;
+      std::exit(1);
+    }
+
+  if (Information>0)
+    {
+      cout << Information << " eigenvalues failed to converge in call to zhpevx; their indices are: "<<this->LapackFailedToConverge[0];
+      for (int i=1; i<Information; ++i)
+	cout <<", "<<this->LapackFailedToConverge[i];
+      cout <<endl;
+    }
+
+
+  TotalIndex=0;
+  for (int i = 0; i < nMax-nMin+1; ++i)
+    for (int j = 0; j < this->NbrRow; ++j)
+      {
+	Tmp.Re = LapackEVMatrix[TotalIndex].r;
+	Tmp.Im = -LapackEVMatrix[TotalIndex].i;
+	Q.SetMatrixElement(j, i, Tmp); // second index is the column index (numbering the state)
+	++TotalIndex;
+      }
+
+  
+  return M;
 }
 
 #endif
