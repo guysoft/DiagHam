@@ -530,7 +530,7 @@ RealSymmetricMatrix FermionOnDisk::EvaluatePartialDensityMatrixRealSpacePartitio
   
   if (nbrFermionSector == this->NbrFermions)
     {
-			if (lzSector == this->ShiftedTotalLz)
+      if (lzSector == this->ShiftedTotalLz)
 	{
 	  RealSymmetricMatrix TmpDensityMatrix(this->HilbertSpaceDimension, true);
 	  unsigned long* TmpMonomial1 = new unsigned long [this->NbrFermions];

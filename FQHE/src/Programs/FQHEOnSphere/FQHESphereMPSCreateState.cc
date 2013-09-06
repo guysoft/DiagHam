@@ -186,7 +186,7 @@ int main(int argc, char** argv)
       MPSRowIndex = Manager.GetInteger("row-index");
   if (Manager.GetInteger("column-index") != -1)
       MPSColumnIndex = Manager.GetInteger("column-index");
-
+  cout << "MPSRowIndex=" << MPSRowIndex << " MPSColumnIndex=" << MPSColumnIndex << endl;
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
 

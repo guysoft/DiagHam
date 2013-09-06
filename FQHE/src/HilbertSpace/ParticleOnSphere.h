@@ -470,6 +470,19 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient = false);
 
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state, using particle partition. 
+  // The entanglement matrix is only evaluated in a given Lz sector and both A and B are resticted to a given number of orbitals
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated
+  // nbrOrbitalA = number of orbitals that have to be kept for the A part (starting from the leftmost orbital)
+  // nbrOrbitalA = number of orbitals that have to be kept for the B part (starting from the rightmost orbital)
+  // groundState = reference on the total system ground state
+  // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
+  // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition(int nbrFermionSector, int lzSector, int nbrOrbitalA, int nbrOrbitalB, 
+									RealVector& groundState, bool removeBinomialCoefficient);
+
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
   // and computed from precalculated particle entanglement matrix
   // 
@@ -492,6 +505,21 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // xcut = x-coordinate of the cut   // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
   // return value = reference on the entanglement matrix
   virtual RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrixCylinder (int nbrBosonSector, int lzSector, double perimeter, double height, double xcut, RealMatrix& entanglementMatrix);
+
+  // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using a generic real space partition. 
+  // The entanglement matrix is only evaluated in a given Lz sector and computed from precalculated particle entanglement matrix
+  // 
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // nbrOrbitalA = number of orbitals that have to be kept for the A part
+  // weightOrbitalA = weight of each orbital in the A part (starting from the leftmost orbital)
+  // nbrOrbitalB = number of orbitals that have to be kept for the B part
+  // weightOrbitalB = weight of each orbital in the B part (starting from the leftmost orbital)
+  // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
+  // return value = reference on the entanglement matrix
+  virtual RealMatrix& EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, 
+													 int nbrOrbitalA, double* weightOrbitalA, 
+													 int nbrOrbitalB, double* weightOrbitalB, RealMatrix& entanglementMatrix);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector
   // and computed from precalculated entanglement matrix
@@ -829,5 +857,29 @@ class ParticleOnSphere :  public AbstractQHEParticle
   //return value = dimension of the corresponding subspace  
   virtual int GetSymmetryDimension(int state);
 };
+
+// convert the Lz value from the sphere geometry to the disk geometry
+// 
+// lzValue = twice the Lz value on the sphere geometry
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = Lz on the disk geometry
+
+inline int ConvertLzFromSphereToDisk (int lzValue, int nbrParticles, int nbrFluxQuanta)
+{
+  return ((lzValue + (nbrParticles * nbrFluxQuanta)) >> 1);
+}
+
+// convert the Lz value from the disk geometry to the sphere geometry
+// 
+// lzValue = Lz value on the disk geometry
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// return value = twice the Lz on the sphere geometry
+
+inline int ConvertLzFromDiskToSphere (int lzValue, int nbrParticles, int nbrFluxQuanta)
+{
+  return ((2 * lzValue) - (nbrParticles * nbrFluxQuanta));
+}
 
 #endif

@@ -1242,6 +1242,23 @@ void RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealDiagonalMat
 double* RealMatrix::SingularValueDecomposition()
 {
 #ifdef HAVE_LAPACK
+  if ((this->NbrColumn == 1) || (this->NbrRow == 1))
+    {
+      double* SigmaMatrix = new double[1];
+      SigmaMatrix[0] = 0.0;
+      if (this->NbrColumn == 1)
+	{
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    SigmaMatrix[0] += this->Columns[0][i] * this->Columns[0][i];
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrColumn; ++i)
+	    SigmaMatrix[0] += this->Columns[i][0] * this->Columns[i][0];
+	}
+      SigmaMatrix[0] = sqrt(SigmaMatrix[0]);
+      return SigmaMatrix;
+    }
   int MinDimension = this->NbrColumn;
   if (this->NbrColumn > this->NbrRow)
     MinDimension = this->NbrRow;

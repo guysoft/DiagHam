@@ -320,6 +320,11 @@ int main(int argc, char** argv)
 	  cout << "OrbitalSquareWeights is not defined or as a wrong value" << endl;
 	  return -1;
 	}
+      if (TmpNbrOrbitals > (LzMax + 1))
+	{
+	  cout << "error, the number of weights (" << TmpNbrOrbitals << ") cannot exceed the number of orbitals (" << (LzMax + 1) << ")" << endl;
+	  return -1;
+	}
       NbrAOrbitals = (LzMax + 1 + TmpNbrOrbitals) / 2;
       WeightAOrbitals = new double [NbrAOrbitals];
       for (int i = 0; i < (NbrAOrbitals - TmpNbrOrbitals); ++i)
@@ -328,7 +333,7 @@ int main(int argc, char** argv)
 	{
 	  WeightAOrbitals[i] = sqrt(TmpSquareWeights[i - NbrAOrbitals + TmpNbrOrbitals]);
 	}
-      NbrBOrbitals = LzMax + 1 - NbrAOrbitals;
+      NbrBOrbitals = (LzMax + 1 + TmpNbrOrbitals) / 2;
       WeightBOrbitals = new double [NbrBOrbitals];
       for (int i = 0; i < TmpNbrOrbitals; ++i)
 	{
@@ -339,6 +344,9 @@ int main(int argc, char** argv)
 	  WeightBOrbitals[i] = 1.0;
 	}      
     }
+
+  cout << "number of orbitals in A = " << NbrAOrbitals << endl;
+  cout << "number of orbitals in B = " << NbrBOrbitals << endl;
 
   if (DensityMatrixFileName != 0)
     {
@@ -401,8 +409,8 @@ int main(int argc, char** argv)
       double DensitySum = 0.0;
       
       int ComplementarySubsystemNbrParticles = NbrParticles - SubsystemNbrParticles;
-      int SubsystemMaxTotalLz = SubsystemNbrParticles * LzMax - (SubsystemNbrParticles * (SubsystemNbrParticles - 1));
-      int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * LzMax - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles - 1));
+      int SubsystemMaxTotalLz = SubsystemNbrParticles * (NbrAOrbitals - 1) - (SubsystemNbrParticles * (SubsystemNbrParticles - 1));
+      int ComplementaryMaxTotalLz = ComplementarySubsystemNbrParticles * (NbrBOrbitals - 1) - (ComplementarySubsystemNbrParticles * (ComplementarySubsystemNbrParticles - 1));
       cout << "SubsystemMaxTotalLz = " << SubsystemMaxTotalLz << "    ComplementaryMaxTotalLz = " << ComplementaryMaxTotalLz << endl;
       while (SubsystemMaxTotalLz > ComplementaryMaxTotalLz)
 	SubsystemMaxTotalLz -= 2;
@@ -482,11 +490,25 @@ int main(int argc, char** argv)
 		{
                   if (RealSpaceCutCylinder == false)
                     {
-		       PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
-		       if(PartialEntanglementMatrix.GetNbrRow() != 0)
-		         {
-		           Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
-		         }
+		      if (WeightAOrbitals == 0)
+			{
+			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, GroundStates[0],true);
+			  if(PartialEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[0]->EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz,Manager.GetDouble("realspace-theta-top"), Manager.GetDouble("realspace-theta-bot"), Manager.GetDouble("realspace-phi-range"), PartialEntanglementMatrix);
+			    }
+			}
+		      else
+			{
+			  PartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalLz, 
+														    NbrAOrbitals, NbrBOrbitals, GroundStates[0], true);
+			  if(PartialEntanglementMatrix.GetNbrRow() != 0)
+			    {
+			      Spaces[0]->EvaluateEntanglementMatrixGenericRealSpacePartitionFromParticleEntanglementMatrix(SubsystemNbrParticles, SubsystemTotalLz, 
+															   NbrAOrbitals, WeightAOrbitals, NbrBOrbitals, WeightBOrbitals, 
+															   PartialEntanglementMatrix);
+			    }
+			}
                      }
                   else //cylinder
                     {
