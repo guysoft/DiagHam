@@ -285,312 +285,101 @@ FQHEMPSClustered2RQuasiholeMatrix::~FQHEMPSClustered2RQuasiholeMatrix()
 
 void FQHEMPSClustered2RQuasiholeMatrix::CreateBMatrices(char* cftDirectory, AbstractArchitecture* architecture)
 {
-    LongRational CentralCharge12 (this->CentralCharge);
-    cout << "central charge = " << CentralCharge12 << endl;
-    CentralCharge12 /= 12l;
-    double CentralCharge12Numerical = CentralCharge12.GetNumericalValue();
+    int nbrSectors = 4;
+    char* sectorNames[4] = {"identity", "psi", "sigma", "phi"};
+    LongRational weights[4] = {this->WeightIdentity, this->WeightPsi, this->WeightSigma, this->WeightPhi};
+    if (this->SelfDualFlag)
+        nbrSectors = 3;
 
-    double WeightIdentityNumerical = this->WeightIdentity.GetNumericalValue();
-    double WeightPsiNumerical = this->WeightPsi.GetNumericalValue();
-    double WeightSigmaNumerical = this->WeightSigma.GetNumericalValue();
-    double WeightPhiNumerical = this->WeightPhi.GetNumericalValue();
+    int nbrChannels = (this->SelfDualFlag) ? 4 : 6;
+    int* leftSectors = new int[nbrChannels];
+    int* rightSectors = new int[nbrChannels];
+    double* globalFactors = new double[nbrChannels];
 
-    BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
-    LongRational** RationalMultiplicityFactor = new LongRational*[this->PLevel + 1];
-    double** MultiplicityFactor = new double*[this->PLevel + 1];
-    unsigned long* TmpPartition = new unsigned long [this->PLevel + 2];
-    for (int i = 0; i <= this->PLevel; ++i)
+    if (this->SelfDualFlag)
     {
-        U1BosonBasis[i] = new BosonOnDiskShort(i, i, this->PLevel + 1);
-        RationalMultiplicityFactor[i] = new LongRational[U1BosonBasis[i]->GetHilbertSpaceDimension()];
-        MultiplicityFactor[i] = new double[U1BosonBasis[i]->GetHilbertSpaceDimension()];
-        for (int j = 0; j < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
-        {
-            U1BosonBasis[i]->GetOccupationNumber(j, TmpPartition);
-            RationalMultiplicityFactor[i][j] = 1l;
-            MultiplicityFactor[i][j] = 1.0;
-            for (int k = 1; k <= i; ++k)
-            {
-                if (TmpPartition[k] > 1ul)
-                {
-                    RationalMultiplicityFactor[i][j].FactorialDivide(TmpPartition[k]);
-                    double Tmp = 1.0;
-                    for (unsigned long l = 2l; l <= TmpPartition[k]; ++l)
-                        Tmp *=  (double) l;
-                    MultiplicityFactor[i][j] /= Tmp;
-                }
-            }
-        }
+        // <σ|σ|1>
+        leftSectors[0] = 2;
+        rightSectors[0] = 0;
+        globalFactors[0] = 1.0;
+
+        // <σ|σ|ψ>
+        leftSectors[1] = 2;
+        rightSectors[1] = 1;
+        globalFactors[1] = 1.0 / M_SQRT2;
+
+        // <1|σ|σ>
+        leftSectors[2] = 0;
+        rightSectors[2] = 2;
+        globalFactors[2] = 1.0;
+
+        // <ψ|σ|σ>
+        leftSectors[3] = 1;
+        rightSectors[3] = 2;
+        globalFactors[3] = 1.0 / M_SQRT2;
     }
-    delete[] TmpPartition;
-
-    RealSymmetricMatrix* ScalarProductIdentity = new RealSymmetricMatrix[this->PLevel + 1];
-    RealSymmetricMatrix* ScalarProductPsi = new RealSymmetricMatrix[this->PLevel + 1];
-    RealSymmetricMatrix* ScalarProductSigma = new RealSymmetricMatrix[this->PLevel + 1];
-    RealSymmetricMatrix* ScalarProductPhi = new RealSymmetricMatrix[this->PLevel + 1];
-    LongRationalMatrix* RationalScalarProductIdentity = new LongRationalMatrix[this->PLevel + 1];
-    LongRationalMatrix* RationalScalarProductPsi = new LongRationalMatrix[this->PLevel + 1];
-    LongRationalMatrix* RationalScalarProductSigma = new LongRationalMatrix[this->PLevel + 1];
-    LongRationalMatrix* RationalScalarProductPhi = new LongRationalMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisIdentityLeft = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisIdentityRight = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisPsiLeft = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisPsiRight = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisSigmaLeft = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisSigmaRight = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisPhiLeft = new RealMatrix[this->PLevel + 1];
-    RealMatrix* OrthogonalBasisPhiRight = new RealMatrix[this->PLevel + 1];
-
-    cout << "computing vacuum sector scalar products" << endl;
-    cout << "weight: " << this->WeightIdentity << " " << this->WeightPsi << endl;
-    char* TmpScalarProductIdentityFileName = 0;
-    char* TmpScalarProductPsiFileName = 0;
-    if (cftDirectory != 0)
-    {
-        TmpScalarProductIdentityFileName = new char[512 + strlen(cftDirectory)];
-        TmpScalarProductPsiFileName = new char[512 + strlen(cftDirectory)];
-    }
-    for (int i = 0; i <= this->PLevel; ++i)
-    {
-        cout << "Level = " <<  i << endl;
-        if (cftDirectory != 0)
-        {
-            if (this->UseRationalFlag == true)
-            {
-                sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-                sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_scalarproducts_psi_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-            }
-            else
-            {
-                sprintf (TmpScalarProductIdentityFileName, "%s/cft_%s_num_scalarproducts_identity_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-                sprintf (TmpScalarProductPsiFileName, "%s/cft_%s_num_scalarproducts_psi_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-            }
-        }
-        this->ComputeFullScalarProductMatrix(cftDirectory, TmpScalarProductIdentityFileName, architecture, RationalScalarProductIdentity, ScalarProductIdentity, i, U1BosonBasis,
-                CentralCharge12, CentralCharge12Numerical, this->WeightIdentity, WeightIdentityNumerical, "identity",
-                OrthogonalBasisIdentityLeft, OrthogonalBasisIdentityRight, RationalMultiplicityFactor, MultiplicityFactor);
-        this->ComputeFullScalarProductMatrix(cftDirectory, TmpScalarProductPsiFileName, architecture, RationalScalarProductPsi, ScalarProductPsi, i, U1BosonBasis,
-                CentralCharge12, CentralCharge12Numerical, this->WeightPsi, WeightPsiNumerical, "psi",
-                OrthogonalBasisPsiLeft, OrthogonalBasisPsiRight, RationalMultiplicityFactor, MultiplicityFactor);
-        cout << "---------------------------------" << endl;
-    }
-    delete[] TmpScalarProductIdentityFileName;
-    delete[] TmpScalarProductPsiFileName;
-    this->RescaleFullScalarProductMatrix(RationalScalarProductIdentity, ScalarProductIdentity, RationalMultiplicityFactor, MultiplicityFactor);
-    this->RescaleFullScalarProductMatrix(RationalScalarProductPsi, ScalarProductPsi, RationalMultiplicityFactor, MultiplicityFactor);
-
-    cout << "computing quasihole sector scalar products" << endl;
-    cout << "weight: " << this->WeightSigma << " " << this->WeightPhi << endl;
-    char* TmpScalarProductSigmaFileName = 0;
-    char* TmpScalarProductPhiFileName = 0;
-    if (cftDirectory != 0)
-    {
-        TmpScalarProductSigmaFileName = new char[512 + strlen(cftDirectory)];
-        TmpScalarProductPhiFileName = new char[512 + strlen(cftDirectory)];
-    }
-    for (int i = 0; i <= this->PLevel; ++i)
-    {
-        cout << "Level = " <<  i << endl;
-        if (cftDirectory != 0)
-        {
-            if (this->UseRationalFlag == true)
-            {
-                sprintf (TmpScalarProductSigmaFileName, "%s/cft_%s_scalarproducts_sigma_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-                if (this->SelfDualFlag == false)
-                    sprintf (TmpScalarProductPhiFileName, "%s/cft_%s_scalarproducts_phi_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-            }
-            else
-            {
-                sprintf (TmpScalarProductSigmaFileName, "%s/cft_%s_num_scalarproducts_sigma_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-                if (this->SelfDualFlag == false)
-                    sprintf (TmpScalarProductPhiFileName, "%s/cft_%s_num_scalarproducts_phi_level_%d.dat", cftDirectory, this->BMatrixOutputName, i);
-            }
-        }
-        this->ComputeFullScalarProductMatrix(cftDirectory, TmpScalarProductSigmaFileName, architecture, RationalScalarProductSigma, ScalarProductSigma, i, U1BosonBasis,
-                CentralCharge12, CentralCharge12Numerical, this->WeightSigma, WeightSigmaNumerical, "sigma",
-                OrthogonalBasisSigmaLeft, OrthogonalBasisSigmaRight, RationalMultiplicityFactor, MultiplicityFactor);
-        if (this->SelfDualFlag == false)
-        {
-            this->ComputeFullScalarProductMatrix(cftDirectory, TmpScalarProductPhiFileName, architecture, RationalScalarProductPhi, ScalarProductPhi, i, U1BosonBasis,
-                    CentralCharge12, CentralCharge12Numerical, this->WeightPhi, WeightPhiNumerical, "phi",
-                    OrthogonalBasisPhiLeft, OrthogonalBasisPhiRight, RationalMultiplicityFactor, MultiplicityFactor);
-        }
-
-        cout << "---------------------------------" << endl;
-    }
-    delete[] TmpScalarProductSigmaFileName;
-    delete[] TmpScalarProductPhiFileName;
-    this->RescaleFullScalarProductMatrix(RationalScalarProductSigma, ScalarProductSigma, RationalMultiplicityFactor, MultiplicityFactor);
-    if (this->SelfDualFlag == false)
-        this->RescaleFullScalarProductMatrix(RationalScalarProductPhi, ScalarProductPhi, RationalMultiplicityFactor, MultiplicityFactor);
-
-    cout << "computing Sigma matrix elements" << endl;
-    RealMatrix** MatrixSigmaIdentitySigma = new RealMatrix*[this->PLevel + 1];
-    RealMatrix** MatrixSigmaSigmaIdentity = new RealMatrix*[this->PLevel + 1];
-    RealMatrix** MatrixSigmaPsiSigma = new RealMatrix*[this->PLevel + 1];
-    RealMatrix** MatrixSigmaSigmaPsi = new RealMatrix*[this->PLevel + 1];
-    LongRationalMatrix** RationalMatrixSigmaIdentitySigma = new LongRationalMatrix*[this->PLevel + 1];
-    LongRationalMatrix** RationalMatrixSigmaSigmaIdentity = new LongRationalMatrix*[this->PLevel + 1];
-    LongRationalMatrix** RationalMatrixSigmaPsiSigma = new LongRationalMatrix*[this->PLevel + 1];
-    LongRationalMatrix** RationalMatrixSigmaSigmaPsi = new LongRationalMatrix*[this->PLevel + 1];
-
-    for (int i = 0; i <= this->PLevel; ++i)
-    {
-        MatrixSigmaIdentitySigma[i] = new RealMatrix[this->PLevel + 1];
-        MatrixSigmaSigmaIdentity[i] = new RealMatrix[this->PLevel + 1];
-        MatrixSigmaPsiSigma[i] = new RealMatrix[this->PLevel + 1];
-        MatrixSigmaSigmaPsi[i] = new RealMatrix[this->PLevel + 1];
-        RationalMatrixSigmaIdentitySigma[i] = new LongRationalMatrix[this->PLevel + 1];
-        RationalMatrixSigmaSigmaIdentity[i] = new LongRationalMatrix[this->PLevel + 1];
-        RationalMatrixSigmaPsiSigma[i] = new LongRationalMatrix[this->PLevel + 1];
-        RationalMatrixSigmaSigmaPsi[i] = new LongRationalMatrix[this->PLevel + 1];
-    }
-
-    char* TmpMatrixSigmaIdentitySigmaFileName = 0;
-    char* TmpMatrixSigmaSigmaIdentityFileName = 0;
-    char* TmpMatrixSigmaPsiSigmaFileName = 0;
-    char* TmpMatrixSigmaSigmaPsiFileName = 0;
-    if (cftDirectory != 0)
-    {
-        TmpMatrixSigmaIdentitySigmaFileName = new char[512 + strlen(cftDirectory)];;
-        TmpMatrixSigmaSigmaIdentityFileName = new char[512 + strlen(cftDirectory)];;
-        TmpMatrixSigmaPsiSigmaFileName = new char[512 + strlen(cftDirectory)];;
-        TmpMatrixSigmaSigmaPsiFileName = new char[512 + strlen(cftDirectory)];;
-    }
-
-    // FIXME: not sure how to handle the non-self-dual case...
-    if (this->SelfDualFlag == false)
-    {
-        cout << "only the self-dual case is implemented." << endl;
-        exit(1);
-    }
-
-    char* TmpFilenameHeader = 0;
-    if (cftDirectory != 0)
-    {
-        TmpFilenameHeader = new char[512 + strlen(cftDirectory)];
-        if (this->UseRationalFlag == true)
-            sprintf(TmpFilenameHeader, "%s/cft_%s_matrixelement", cftDirectory, this->BMatrixOutputName);
-        else
-            sprintf(TmpFilenameHeader, "%s/cft_%s_num_matrixelement", cftDirectory, this->BMatrixOutputName);
-    }
-    for (int j = 0; j <= this->PLevel; ++j)
-    {
-        for (int i = 0; i <= this->PLevel; ++i)
-        {
-            cout << "Levels = " <<  i << " " << j << endl;
-            if (cftDirectory != 0)
-            {
-                sprintf(TmpMatrixSigmaIdentitySigmaFileName, "%s_identitysigma_level_%d_%d.dat", TmpFilenameHeader, i, j);
-                sprintf(TmpMatrixSigmaSigmaIdentityFileName, "%s_sigmaidentity_level_%d_%d.dat", TmpFilenameHeader, i, j);
-                sprintf(TmpMatrixSigmaPsiSigmaFileName, "%s_psisigma_level_%d_%d.dat", TmpFilenameHeader, i, j);
-                sprintf(TmpMatrixSigmaSigmaPsiFileName, "%s_sigmapsi_level_%d_%d.dat", TmpFilenameHeader, i, j);
-            }
-
-            this->ComputeFullMatrixElements(cftDirectory, TmpMatrixSigmaIdentitySigmaFileName, architecture,
-                    RationalMatrixSigmaIdentitySigma, MatrixSigmaIdentitySigma, i, j, U1BosonBasis,
-                    CentralCharge12, CentralCharge12Numerical,
-                    this->WeightIdentity, WeightIdentityNumerical,
-                    this->WeightSigma, WeightSigmaNumerical,
-                    this->WeightSigma, WeightSigmaNumerical);
-            this->ComputeFullMatrixElements(cftDirectory, TmpMatrixSigmaSigmaIdentityFileName, architecture,
-                    RationalMatrixSigmaSigmaIdentity, MatrixSigmaSigmaIdentity, i, j, U1BosonBasis,
-                    CentralCharge12, CentralCharge12Numerical,
-                    this->WeightSigma, WeightSigmaNumerical,
-                    this->WeightIdentity, WeightIdentityNumerical,
-                    this->WeightSigma, WeightSigmaNumerical);
-
-            this->ComputeFullMatrixElements(cftDirectory, TmpMatrixSigmaPsiSigmaFileName, architecture,
-                    RationalMatrixSigmaPsiSigma, MatrixSigmaPsiSigma, i, j, U1BosonBasis,
-                    CentralCharge12, CentralCharge12Numerical,
-                    this->WeightPsi, WeightPsiNumerical,
-                    this->WeightSigma, WeightSigmaNumerical,
-                    this->WeightSigma, WeightSigmaNumerical);
-            this->ComputeFullMatrixElements(cftDirectory, TmpMatrixSigmaSigmaPsiFileName, architecture,
-                    RationalMatrixSigmaSigmaPsi, MatrixSigmaSigmaPsi, i, j, U1BosonBasis,
-                    CentralCharge12, CentralCharge12Numerical,
-                    this->WeightSigma, WeightSigmaNumerical,
-                    this->WeightPsi, WeightPsiNumerical,
-                    this->WeightSigma, WeightSigmaNumerical);
-        }
-    }
-    this->RescaleFullMatrixElements(RationalMatrixSigmaIdentitySigma, MatrixSigmaIdentitySigma, RationalMultiplicityFactor, MultiplicityFactor, 1.0);
-    this->RescaleFullMatrixElements(RationalMatrixSigmaSigmaIdentity, MatrixSigmaSigmaIdentity, RationalMultiplicityFactor, MultiplicityFactor, 1.0);
-    this->RescaleFullMatrixElements(RationalMatrixSigmaPsiSigma, MatrixSigmaPsiSigma, RationalMultiplicityFactor, MultiplicityFactor, 1.0 / M_SQRT2);
-    this->RescaleFullMatrixElements(RationalMatrixSigmaSigmaPsi, MatrixSigmaSigmaPsi, RationalMultiplicityFactor, MultiplicityFactor, 1.0 / M_SQRT2);
-
-
-    if (cftDirectory != 0)
-        sprintf(TmpFilenameHeader, "%s/cft_%s_finalmatrixelement", cftDirectory, this->BMatrixOutputName);
     else
     {
-        TmpFilenameHeader = new char[512];
-        TmpMatrixSigmaIdentitySigmaFileName = new char[512];
-        TmpMatrixSigmaSigmaIdentityFileName = new char[512];
-        TmpMatrixSigmaPsiSigmaFileName = new char[512];
-        TmpMatrixSigmaSigmaPsiFileName = new char[512];
-        sprintf(TmpFilenameHeader, "cft_%s_finalmatrixelement", this->BMatrixOutputName);
+        // <σ|σ|1>
+        leftSectors[0] = 2;
+        rightSectors[0] = 0;
+        globalFactors[0] = 1.0;
+
+        // <φ|σ|ψ>
+        leftSectors[1] = 3;
+        rightSectors[1] = 1;
+        globalFactors[1] = 1.0 / M_SQRT2; // FIXME
+
+        // <1|σ|σ>
+        leftSectors[2] = 0;
+        rightSectors[2] = 2;
+        globalFactors[2] = 1.0;
+
+        // <φ|σ|σ>
+        leftSectors[3] = 3;
+        rightSectors[3] = 2;
+        globalFactors[3] = 1.0 / M_SQRT2; // FIXME
+
+        // <σ|σ|φ>
+        leftSectors[4] = 2;
+        rightSectors[4] = 3;
+        globalFactors[4] = 1.0 / M_SQRT2; // FIXME
+
+        // <ψ|σ|φ>
+        leftSectors[5] = 1;
+        rightSectors[5] = 3;
+        globalFactors[5] = 1.0 / M_SQRT2; // FIXME
     }
+
+    RealMatrix*** Matrices = this->ComputeMatrixElements(cftDirectory, architecture, "sigma", this->WeightSigma,
+            nbrSectors, sectorNames, weights,
+            nbrChannels, leftSectors, rightSectors, globalFactors);
+
+    char* TmpFileName = new char[512];
     for (int i = 0; i <= this->PLevel; ++i)
     {
-        OrthogonalBasisIdentityLeft[i].Transpose();
-        OrthogonalBasisSigmaLeft[i].Transpose();
-        OrthogonalBasisPsiLeft[i].Transpose();
         for (int j = 0; j <= this->PLevel; ++j)
         {
-            sprintf(TmpMatrixSigmaIdentitySigmaFileName, "%s_identitysigma_level_%d_%d.dat", TmpFilenameHeader, i, j);
-            sprintf(TmpMatrixSigmaSigmaIdentityFileName, "%s_sigmaidentity_level_%d_%d.dat", TmpFilenameHeader, i, j);
-            sprintf(TmpMatrixSigmaPsiSigmaFileName, "%s_psisigma_level_%d_%d.dat", TmpFilenameHeader, i, j);
-            sprintf(TmpMatrixSigmaSigmaPsiFileName, "%s_sigmapsi_level_%d_%d.dat", TmpFilenameHeader, i, j);
-            ((OrthogonalBasisIdentityLeft[i] * MatrixSigmaIdentitySigma[i][j]) * OrthogonalBasisSigmaRight[j]).WriteMatrix(TmpMatrixSigmaIdentitySigmaFileName);
-            ((OrthogonalBasisSigmaLeft[i] * MatrixSigmaSigmaIdentity[i][j]) * OrthogonalBasisIdentityRight[j]).WriteMatrix(TmpMatrixSigmaSigmaIdentityFileName);
-            ((OrthogonalBasisPsiLeft[i] * MatrixSigmaPsiSigma[i][j]) * OrthogonalBasisSigmaRight[j]).WriteMatrix(TmpMatrixSigmaPsiSigmaFileName);
-            ((OrthogonalBasisSigmaLeft[i] * MatrixSigmaSigmaPsi[i][j]) * OrthogonalBasisPsiRight[j]).WriteMatrix(TmpMatrixSigmaSigmaPsiFileName);
+            for (int c = 0; c < nbrChannels; ++c)
+            {
+                sprintf(TmpFileName, "cft_%s_finalmatrixelement_%s%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i, j);
+                Matrices[c][i][j].WriteMatrix(TmpFileName);
+            }
         }
     }
-    delete[] TmpFilenameHeader;
-    delete[] TmpMatrixSigmaIdentitySigmaFileName;
-    delete[] TmpMatrixSigmaSigmaIdentityFileName;
-    delete[] TmpMatrixSigmaPsiSigmaFileName;
-    delete[] TmpMatrixSigmaSigmaPsiFileName;
+    delete[] TmpFileName;
 
-    delete[] ScalarProductIdentity;
-    delete[] ScalarProductPsi;
-    delete[] ScalarProductSigma;
-    delete[] ScalarProductPhi;
-    for (int i = 0; i <= this->PLevel; ++i)
+    delete[] leftSectors;
+    delete[] rightSectors;
+    delete[] globalFactors;
+
+    for (int c = 0; c < nbrChannels; ++c)
     {
-        delete U1BosonBasis[i];
-        delete[] RationalMultiplicityFactor[i];
-        delete[] MultiplicityFactor[i];
-        delete[] MatrixSigmaIdentitySigma[i];
-        delete[] MatrixSigmaSigmaIdentity[i];
-        delete[] MatrixSigmaPsiSigma[i];
-        delete[] MatrixSigmaSigmaPsi[i];
-        delete[] RationalMatrixSigmaIdentitySigma[i];
-        delete[] RationalMatrixSigmaSigmaIdentity[i];
-        delete[] RationalMatrixSigmaPsiSigma[i];
-        delete[] RationalMatrixSigmaSigmaPsi[i];
+        for (int i = 0; i <= this->PLevel; ++i)
+            delete[] Matrices[c][i];
+        delete[] Matrices[c];
     }
-    delete[] U1BosonBasis;
-    delete[] OrthogonalBasisIdentityLeft;
-    delete[] OrthogonalBasisPsiLeft;
-    delete[] OrthogonalBasisSigmaLeft;
-    delete[] OrthogonalBasisPhiLeft;
-    delete[] OrthogonalBasisIdentityRight;
-    delete[] OrthogonalBasisPsiRight;
-    delete[] OrthogonalBasisSigmaRight;
-    delete[] OrthogonalBasisPhiRight;
-    delete[] RationalMultiplicityFactor;
-    delete[] MultiplicityFactor;
-    delete[] MatrixSigmaIdentitySigma;
-    delete[] MatrixSigmaSigmaIdentity;
-    delete[] MatrixSigmaPsiSigma;
-    delete[] MatrixSigmaSigmaPsi;
-    delete[] RationalMatrixSigmaIdentitySigma;
-    delete[] RationalMatrixSigmaSigmaIdentity;
-    delete[] RationalMatrixSigmaPsiSigma;
-    delete[] RationalMatrixSigmaSigmaPsi;
+    delete[] Matrices;
 }
 
 bool FQHEMPSClustered2RQuasiholeMatrix::SaveMatrices(char* fileName)
@@ -598,3 +387,4 @@ bool FQHEMPSClustered2RQuasiholeMatrix::SaveMatrices(char* fileName)
     cout << "there's no B matrices to save" << endl;
     return true;
 }
+

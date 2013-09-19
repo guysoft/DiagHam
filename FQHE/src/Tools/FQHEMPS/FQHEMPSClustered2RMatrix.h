@@ -501,6 +501,24 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 				 LongRational** rationalMultiplicityFactor, double** multiplicityFactor,
 				 double globalFactor);
 
+    // compute the matrix elements for a primary field
+    //
+    // cftDirectory = an optional path to the directory where all the CFT matrices are stored
+    // architecture = architecture to use for precalculation
+    // fieldName = name of the primary field whose matrix elements are computed
+    // fieldWeight = weight of the primary field whose matrix elements are computed
+    // nbrSectors = number of conformal families in the basis states
+    // sectorNames = name of each primary field in the basis states
+    // weights = weight of each primary field in the basis states
+    // nbrChannels = number of fusion channels to evaluate
+    // leftSectors = the index of the left state for each channel
+    // rightSectors = the index of the right state for each channel
+    // globalFactors = OPE structure coefficients
+    //
+    // return value = blocks of the matrices in each fusion channel, organized by descendant levels
+    RealMatrix*** ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture, char* fieldName, LongRational fieldWeight,
+            int nbrSectors, char** sectorNames, LongRational* weights,
+            int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors);
 };
 
   

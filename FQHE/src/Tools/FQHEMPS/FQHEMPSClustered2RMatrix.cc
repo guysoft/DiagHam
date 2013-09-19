@@ -2677,3 +2677,205 @@ void FQHEMPSClustered2RMatrix::RescaleFullMatrixElements(LongRationalMatrix** ra
 	}
     }
 }
+
+// compute the matrix elements for a primary field
+//
+// cftDirectory = an optional path to the directory where all the CFT matrices are stored
+// architecture = architecture to use for precalculation
+// fieldName = name of the primary field whose matrix elements are computed
+// fieldWeight = weight of the primary field whose matrix elements are computed
+// nbrSectors = number of conformal families in the basis states
+// sectorNames = name of each primary field in the basis states
+// weights = weight of each primary field in the basis states
+// nbrChannels = number of fusion channels to evaluate
+// leftSectors = the index of the left state for each channel
+// rightSectors = the index of the right state for each channel
+// globalFactors = OPE structure coefficients
+//
+// return value = blocks of the matrices in each fusion channel, organized by descendant levels
+RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture, char* fieldName, LongRational fieldWeight,
+        int nbrSectors, char** sectorNames, LongRational* weights,
+        int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors)
+{
+    LongRational CentralCharge12 (this->CentralCharge);
+    cout << "central charge = " << CentralCharge12 << endl;
+    CentralCharge12 /= 12l;
+    double CentralCharge12Numerical = CentralCharge12.GetNumericalValue();
+
+    double fieldWeightNumerical = fieldWeight.GetNumericalValue();
+    double* weightsNumerical = new double[nbrSectors];
+    for (int s = 0; s < nbrSectors; ++s)
+        weightsNumerical[s] = weights[s].GetNumericalValue();
+
+    BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
+    LongRational** RationalMultiplicityFactor = new LongRational*[this->PLevel + 1];
+    double** MultiplicityFactor = new double*[this->PLevel + 1];
+    unsigned long* TmpPartition = new unsigned long[this->PLevel + 2];
+    for (int i = 0; i <= this->PLevel; ++i)
+    {
+        U1BosonBasis[i] = new BosonOnDiskShort(i, i, this->PLevel + 1);
+        RationalMultiplicityFactor[i] = new LongRational[U1BosonBasis[i]->GetHilbertSpaceDimension()];
+        MultiplicityFactor[i] = new double[U1BosonBasis[i]->GetHilbertSpaceDimension()];
+        for (int j = 0; j < U1BosonBasis[i]->GetHilbertSpaceDimension(); ++j)
+        {
+            U1BosonBasis[i]->GetOccupationNumber(j, TmpPartition);
+            RationalMultiplicityFactor[i][j] = 1l;
+            MultiplicityFactor[i][j] = 1.0;
+            for (int k = 1; k <= i; ++k)
+            {
+                if (TmpPartition[k] > 1ul)
+                {
+                    RationalMultiplicityFactor[i][j].FactorialDivide(TmpPartition[k]);
+                    double Tmp = 1.0;
+                    for (unsigned long l = 2l; l <= TmpPartition[k]; ++l)
+                        Tmp *=  (double) l;
+                    MultiplicityFactor[i][j] /= Tmp;
+                }
+            }
+        }
+    }
+    delete[] TmpPartition;
+
+    RealSymmetricMatrix** ScalarProducts = new RealSymmetricMatrix*[nbrSectors];
+    LongRationalMatrix** RationalScalarProducts = new LongRationalMatrix*[nbrSectors];
+    RealMatrix** OrthogonalBasesLeft = new RealMatrix*[nbrSectors];
+    RealMatrix** OrthogonalBasesRight = new RealMatrix*[nbrSectors];
+    for (int s = 0; s < nbrSectors; ++s)
+    {
+        ScalarProducts[s] = new RealSymmetricMatrix[this->PLevel + 1];
+        RationalScalarProducts[s] = new LongRationalMatrix[this->PLevel + 1];
+        OrthogonalBasesLeft[s] = new RealMatrix[this->PLevel + 1];
+        OrthogonalBasesRight[s] = new RealMatrix[this->PLevel + 1];
+    }
+
+    cout << "computing scalar products" << endl;
+    for (int s = 0; s < nbrSectors; ++s)
+        cout << sectorNames[s] << ", h = " << weights[s] << endl;
+
+    char* TmpFileName = 0;
+    if (cftDirectory != 0)
+        TmpFileName = new char[512 + strlen(cftDirectory)];
+
+    for (int i = 0; i <= this->PLevel; ++i)
+    {
+        cout << "Level = " <<  i << endl;
+        for (int s = 0; s < nbrSectors; ++s)
+        {
+            if (cftDirectory != 0)
+            {
+                if (this->UseRationalFlag == true)
+                    sprintf(TmpFileName, "%s/cft_%s_scalarproducts_%s_level_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[s], i);
+                else
+                    sprintf(TmpFileName, "%s/cft_%s_num_scalarproducts_%s_level_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[s], i);
+            }
+            this->ComputeFullScalarProductMatrix(cftDirectory, TmpFileName, architecture, RationalScalarProducts[s], ScalarProducts[s], i, U1BosonBasis,
+                    CentralCharge12, CentralCharge12Numerical, weights[s], weightsNumerical[s], sectorNames[s],
+                    OrthogonalBasesLeft[s], OrthogonalBasesRight[s], RationalMultiplicityFactor, MultiplicityFactor);
+        }
+        cout << "---------------------------------" << endl;
+    }
+    for (int s = 0; s < nbrSectors; ++s)
+        this->RescaleFullScalarProductMatrix(RationalScalarProducts[s], ScalarProducts[s], RationalMultiplicityFactor, MultiplicityFactor);
+
+    for (int i = 0; i <= this->PLevel; ++i)
+        for (int s = 0; s < nbrSectors; ++s)
+            OrthogonalBasesLeft[s][i].Transpose();
+
+    cout << "computing matrix elements for " << fieldName << ", with h = " << fieldWeight << ", in channels:" << endl;
+    for (int c = 0; c < nbrChannels; ++c)
+        cout << " <" << sectorNames[leftSectors[c]] << "|" << fieldName << "|" << sectorNames[rightSectors[c]] << ">";
+    cout << endl;
+
+    RealMatrix*** Matrices = new RealMatrix**[nbrChannels];
+    LongRationalMatrix*** RationalMatrices = new LongRationalMatrix**[nbrChannels];
+    for (int c = 0; c < nbrChannels; ++c)
+    {
+        Matrices[c] = new RealMatrix*[this->PLevel + 1];
+        RationalMatrices[c] = new LongRationalMatrix*[this->PLevel + 1];
+
+        for (int i = 0; i <= this->PLevel; ++i)
+        {
+            Matrices[c][i] = new RealMatrix[this->PLevel + 1];
+            RationalMatrices[c][i] = new LongRationalMatrix[this->PLevel + 1];
+        }
+    }
+
+    for (int j = 0; j <= this->PLevel; ++j)
+    {
+        for (int i = 0; i <= this->PLevel; ++i)
+        {
+            cout << "Levels = " <<  i << " " << j << endl;
+            for (int c = 0; c < nbrChannels; ++c)
+            {
+                if (cftDirectory != 0)
+                {
+                    if (this->UseRationalFlag == true)
+                        sprintf(TmpFileName, "%s/cft_%s_matrixelement_%s%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i, j);
+                    else
+                        sprintf(TmpFileName, "%s/cft_%s_num_matrixelement_%s%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i, j);
+                }
+
+                this->ComputeFullMatrixElements(cftDirectory, TmpFileName, architecture,
+                        RationalMatrices[c], Matrices[c], i, j, U1BosonBasis,
+                        CentralCharge12, CentralCharge12Numerical,
+                        weights[leftSectors[c]], weightsNumerical[leftSectors[c]],
+                        weights[rightSectors[c]], weightsNumerical[rightSectors[c]],
+                        fieldWeight, fieldWeightNumerical);
+            }
+        }
+    }
+    for (int c = 0; c < nbrChannels; ++c)
+        this->RescaleFullMatrixElements(RationalMatrices[c], Matrices[c], RationalMultiplicityFactor, MultiplicityFactor, globalFactors[c]);
+
+    for (int i = 0; i <= this->PLevel; ++i)
+    {
+        for (int j = 0; j <= this->PLevel; ++j)
+        {
+            for (int c = 0; c < nbrChannels; ++c)
+            {
+                Matrices[c][i][j] = ((OrthogonalBasesLeft[leftSectors[c]][i] * Matrices[c][i][j]) * OrthogonalBasesRight[rightSectors[c]][j]);
+
+                if (cftDirectory != 0)
+                {
+                    sprintf(TmpFileName, "%s/cft_%s_finalmatrixelement_%s%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i, j);
+                    Matrices[c][i][j].WriteMatrix(TmpFileName);
+                }
+            }
+        }
+    }
+
+    delete[] TmpFileName;
+
+    delete[] weightsNumerical;
+    for (int i = 0; i <= this->PLevel; ++i)
+    {
+        delete U1BosonBasis[i];
+        delete[] RationalMultiplicityFactor[i];
+        delete[] MultiplicityFactor[i];
+    }
+    delete[] U1BosonBasis;
+    delete[] RationalMultiplicityFactor;
+    delete[] MultiplicityFactor;
+
+    for (int s = 0; s < nbrSectors; ++s)
+    {
+        delete[] ScalarProducts[s];
+        delete[] RationalScalarProducts[s];
+        delete[] OrthogonalBasesLeft[s];
+        delete[] OrthogonalBasesRight[s];
+    }
+    delete[] ScalarProducts;
+    delete[] RationalScalarProducts;
+    delete[] OrthogonalBasesLeft;
+    delete[] OrthogonalBasesRight;
+
+    for (int c = 0; c < nbrChannels; ++c)
+    {
+        for (int i = 0; i <= this->PLevel; ++i)
+            delete[] RationalMatrices[c][i];
+        delete[] RationalMatrices[c];
+    }
+    delete[] RationalMatrices;
+
+    return Matrices;
+}
