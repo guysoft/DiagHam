@@ -65,8 +65,19 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
 
   double *LLLGammaX;
   double *LLLGammaY;
-  
+    
+  //first coordinate of the first spanning vector for a tilted lattice
+  int Nx1;
+  //second coordinate of the first spanning vector for a tilted lattice
+  int Ny1;
+  //first coordinate of the second spanning vector for a tilted lattice
+  int Nx2;
+  //second coordinate of the second spanning vector for a tilted lattice
+  int Ny2;
+  //array of projected momenta
   double** ProjectedMomenta;
+  //second coordinate in momentum space of the second spanning vector of the reciprocal lattice for a tilted lattice
+  int Offset;
 
  public:
 
@@ -270,7 +281,12 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // output = reference on the output stream
   // return value  = reference on the output stream
   virtual ofstream& WriteHeader(ofstream& output);
-
+  
+   
+  //computes all the values of the momentum projected and stores them in a double array
+  //
+  virtual void ComputeAllProjectedMomenta();
+  
 };
 
 // get the linearized momentum index
@@ -418,12 +434,10 @@ inline double Abstract2DTightBindingModel::ComputeCurvatureSinglePlaquette(int k
   //ky = second coordinate of the given point in the Brillouin zone
   //latticeComponent = index of the lattice vector along which the projection is to be performed
   //return value = projected momentum
+   
+  
   inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, int latticeComponent)
   {
-    if (latticeComponent == 0)
-      return 2.0 * M_PI * ((double) kx) / ((double) this->NbrSiteX);
-    else
-      return 2.0 * M_PI * ((double) ky) / ((double) this->NbrSiteY);
+    return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
   }
-
 #endif

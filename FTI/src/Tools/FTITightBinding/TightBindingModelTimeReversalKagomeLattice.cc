@@ -34,7 +34,8 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
-
+using std::cout;
+using std::endl;
 // default constructor
 //
 // nbrSiteX = number of sites in the x direction
@@ -61,9 +62,11 @@ TightBindingModelTimeReversalKagomeLattice::TightBindingModelTimeReversalKagomeL
   this->NextNNHopping = t2;
   this->NNSpinOrbit = lambda1;
   this->NextNNSpinOrbit = lambda2;
-  this->MixingTerm12 = mixingTerm12;
-  this->MixingTerm13 = mixingTerm13;
-  this->MixingTerm23 = mixingTerm23;
+//   double phi = 0;
+  double phi = M_PI/4;
+  this->MixingTerm12 = mixingTerm12*Phase(phi);
+  this->MixingTerm13 = mixingTerm13*Phase(phi);
+  this->MixingTerm23 = mixingTerm23*Phase(phi);
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->NbrBands = 6;

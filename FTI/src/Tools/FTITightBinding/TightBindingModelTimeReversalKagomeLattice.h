@@ -51,11 +51,11 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
   double NextNNSpinOrbit;
   
   // mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
-  double MixingTerm12;
+  Complex MixingTerm12;
   // mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
-  double MixingTerm13;
+  Complex MixingTerm13;
   // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
-  double MixingTerm23;
+  Complex MixingTerm23;
 
   // four times the sublattice staggered chemical potential 
   double MuS;

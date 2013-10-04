@@ -6,7 +6,7 @@
 
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLatticeTilted.h"
-#include "Tools/FTITightBinding/TightBindingModelKagomeLatticeTilted.h"
+#include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
 
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.h"
@@ -470,7 +470,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      TightBindingModel = new TightBindingModelKagomeLatticeTilted (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+		      TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 										    Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
 										    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
 		      Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,

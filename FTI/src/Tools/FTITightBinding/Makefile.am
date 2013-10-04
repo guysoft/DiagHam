@@ -42,6 +42,5 @@ TightBindingModelTimeReversalKagomeLattice.cc \
 TightBindingModelTimeReversalCheckerboardLattice.cc \
 TightBindingModelTimeReversalBHZLattice.cc \
 TightBindingModelBHZLattice.cc \
-TightBindingModelKagomeLatticeTilted.cc \
 TightBindingModelTimeReversalKagomeLatticeTilted.cc \
 TightBindingModelOFLGenericLattice.cc

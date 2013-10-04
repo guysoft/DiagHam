@@ -53,18 +53,7 @@ class TightBindingModelKagomeLatticeTilted : public Abstract2DTightBindingModel
   // four times the sublattice staggered chemical potential 
   double MuS;
   
-  //first coordinate of the first spanning vector of the tilted lattice
-  int Nx1;
-  //second coordinate of the first spanning vector of the tilted lattice
-  int Ny1;
-  //first coordinate of the second spanning vector of the tilted lattice
-  int Nx2;
-  //second coordinate of the second spanning vector of the tilted lattice
-  int Ny2;
-  //array of projected momenta
-  double** ProjectedMomenta;
-  //second coordinate in momentum space of the second spanning vector of the reciprocal lattice
-  int Offset;
+  
  public:
 
   // default constructor
@@ -96,22 +85,8 @@ class TightBindingModelKagomeLatticeTilted : public Abstract2DTightBindingModel
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
   
-  //computes all the values of the momentum projected and stores them in a double array
-  //
-  virtual void ComputeAllProjectedMomenta();
   
-  //Computes value of projected momentum along the lattice directions
-  //
-  //kx = first coordinate of the given point in the Brillouin zone
-  //ky = second coordinate of the given point in the Brillouin zone
-  //latticeComponent = index of the lattice vector along which the projection is to be performed
-  //return value = projected momentum
-  virtual double GetProjectedMomentum(int kx, int ky, int latticeComponent);
-
 };
 
-  inline double TightBindingModelKagomeLatticeTilted::GetProjectedMomentum(int kx, int ky, int latticeComponent)
-  {
-    return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
-  }
+ 
 #endif

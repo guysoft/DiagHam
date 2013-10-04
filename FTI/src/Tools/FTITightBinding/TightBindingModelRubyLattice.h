@@ -72,6 +72,15 @@ class TightBindingModelRubyLattice : public Abstract2DTightBindingModel
   TightBindingModelRubyLattice(int nbrSiteX, int nbrSiteY, double tr, double ti, double t1r, double t1i, double t4, double mus, 
 			       double gammaX, double gammaY, 
 			       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  
+  // constructor for tilted lattice
+  //
+  //nx1 = first coordinate of the first spanning vector for a tilted lattice
+  //ny1 = second coordinate of the first spanning vector for a tilted lattice
+  //nx2 = first coordinate of the second spanning vector for a tilted lattice
+  //ny2 = second coordinate of the second spanning vector for a tilted lattice
+  //offset = second coordinate in momentum space of the second spanning vector of the reciprocal lattice for a tilted lattice
+  TightBindingModelRubyLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double tr, double ti, double t1r, double t1i, double t4, double mus, double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
   // destructor
   //

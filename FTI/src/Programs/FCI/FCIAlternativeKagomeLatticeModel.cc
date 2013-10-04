@@ -7,7 +7,7 @@
 #include "Hamiltonian/ParticleOnLatticeAlternativeKagomeLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeAlternativeKagomeLatticeSingleBandThreeBodyHamiltonian.h"
 #include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
-#include "Tools/FTITightBinding/TightBindingModelKagomeLatticeTilted.h"
+#include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-	  TightBindingModel = new TightBindingModelKagomeLatticeTilted (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+	  TightBindingModel = new TightBindingModelKagomeLattice (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
 						   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
 	}
         if (Manager.GetBoolean("singleparticle-chernnumber") == true)
@@ -241,7 +241,7 @@ int main(int argc, char** argv)
 	}
     else
 	{
-	  TightBindingModel = new TightBindingModelKagomeLatticeTilted (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+	  TightBindingModel = new TightBindingModelKagomeLattice (NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
 						   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
 	}
 

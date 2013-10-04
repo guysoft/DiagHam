@@ -66,6 +66,12 @@ Abstract2DTightBindingModel::Abstract2DTightBindingModel()
   this->Chern = NULL;
   this->LLLGammaX = NULL;
   this->LLLGammaY = NULL;
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;
+  this->Offset = 0;
+  this->ProjectedMomenta = 0;
 }
 
 // destructor
@@ -77,6 +83,8 @@ Abstract2DTightBindingModel::~Abstract2DTightBindingModel()
   delete[] this->Chern;
   delete[] this->LLLGammaX;
   delete[] this->LLLGammaY;
+  if (this->ProjectedMomenta != 0)
+    delete[] this->ProjectedMomenta;
 }
 
 // write an header that describes the tight binding model
@@ -1126,4 +1134,24 @@ int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
     }
   }
   return (z2Invariant % 2); 
+}
+
+//computes all the values of the projected momentum and stores them in a double array
+//
+void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
+{
+ double projectedMomentum1;
+ double projectedMomentum2;
+ for (int kx = 0; kx < this->NbrSiteX; ++kx)
+ {
+   for (int ky = 0; ky < this->NbrSiteY; ++ky)
+   {
+     int kx_trans = kx + this->Offset*ky;
+     int ky_trans = ky;
+     projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+     projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
+     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
+   }
+ }
 }
