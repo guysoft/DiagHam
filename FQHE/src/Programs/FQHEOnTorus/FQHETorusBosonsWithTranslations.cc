@@ -8,6 +8,7 @@
 
 #include "Hamiltonian/ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -69,6 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption   ('R', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 
 					      -1);
+  (*SystemGroup) += new SingleDoubleOption   ('\n', "angle", "angle between the two fundamental cycles of the torus in pi units (0 if rectangular)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('L', "landau-level", "Landau-level to be simulated", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "file describing the interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
@@ -152,22 +154,35 @@ int main(int argc, char** argv)
     {
       XRatio = Manager.GetDouble("ratio");
     }
+
+  double Angle = Manager.GetDouble("angle");
+
   long Memory = Manager.GetInteger("memory") << 20;
 
   char* OutputName = new char [512];
+  char* SuffixOutputName = new char [256];
+  if (Angle == 0.0)    
+    {
+      sprintf (SuffixOutputName, "n_%d_2s_%d_ratio_%.6f.dat", NbrBosons, MaxMomentum, XRatio);
+    }  
+  else
+    {
+      sprintf (SuffixOutputName, "n_%d_2s_%d_ratio_%.6f_angle_%.6f.dat", NbrBosons, MaxMomentum, XRatio, Angle);
+    }  
+
   if (NbrPseudopotentials > 0)
     {
-      sprintf (OutputName, "bosons_torus_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, XRatio);
+      sprintf (OutputName, "bosons_torus_%s_%s", InteractionName, SuffixOutputName);
     }
   else
     {
       if (LandauLevel > 0)
-	sprintf (OutputName, "bosons_torus_coulomb_l_%d_n_%d_2s_%d_ratio_%f.dat", LandauLevel, NbrBosons, MaxMomentum, XRatio);
+	sprintf (OutputName, "bosons_torus_coulomb_l_%d_%s", LandauLevel, SuffixOutputName);
       else
 	if (LandauLevel < 0)
-	  sprintf (OutputName, "bosons_torus_graphene_l_%d_n_%d_2s_%d_ratio_%f.dat", -LandauLevel, NbrBosons, MaxMomentum, XRatio);
+	  sprintf (OutputName, "bosons_torus_graphene_l_%d_%s", -LandauLevel, SuffixOutputName);
 	else
-	  sprintf (OutputName, "bosons_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrBosons, MaxMomentum, XRatio);
+	  sprintf (OutputName, "bosons_torus_coulomb_%s", SuffixOutputName);
     }
 
   int MomentumModulo = FindGCD(NbrBosons, MaxMomentum);
@@ -338,15 +353,21 @@ int main(int argc, char** argv)
       BosonOnTorusWithMagneticTranslationsShort* TotalSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrBosons, MaxMomentum, XMomentum, YMomentum);
       Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
-       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, 
- 													   NbrBosons, MaxMomentum, XMomentum, XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
- 													   Architecture.GetArchitecture(), 
- 													   Memory, LoadPrecalculationFile);
-      
-       //      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian (TotalSpace, 
-       //													   NbrBosons, MaxMomentum, XMomentum, XRatio, Architecture.GetArchitecture(), 
-       //											 Memory, LoadPrecalculationFile);
-
+      AbstractQHEHamiltonian* Hamiltonian = 0;
+      if (Angle == 0.0)
+	{
+	  Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian (TotalSpace, NbrBosons, MaxMomentum, XMomentum, XRatio, 
+										       HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, 
+										       !Manager.GetBoolean("add-wigner"),
+										       Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+	}
+      else
+	{
+          Hamiltonian = new ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrBosons, MaxMomentum, XMomentum, 
+											     XRatio, Angle * M_PI, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, 
+											     !Manager.GetBoolean("add-wigner"),
+											     Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+	}
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	
 	{

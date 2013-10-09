@@ -91,16 +91,16 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHETorusFermionsWithTranslations -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int XMomentum = ((SingleIntegerOption*) Manager["x-momentum"])->GetInteger();
-  int YMomentum = ((SingleIntegerOption*) Manager["y-momentum"])->GetInteger();
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int XMomentum = Manager.GetInteger("x-momentum");
+  int YMomentum = Manager.GetInteger("y-momentum");
   char *LoadPrecalculationFile=Manager.GetString("load-precalculation");
   int LandauLevel=0;
   int NbrPseudopotentials=0;
@@ -152,9 +152,9 @@ int main(int argc, char** argv)
       HaveCoulomb=true;
     }
   double XRatio = NbrFermions / 4.0;
-  if (((SingleDoubleOption*) Manager["ratio"])->GetDouble() > 0)
+  if (Manager.GetDouble("ratio") > 0)
     {
-      XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+      XRatio = Manager.GetDouble("ratio");
     }
 
   double Angle = Manager.GetDouble("angle");
@@ -162,19 +162,28 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* OutputName = new char [512];
+  char* SuffixOutputName = new char [256];
+  if (Angle == 0.0)    
+    {
+      sprintf (SuffixOutputName, "n_%d_2s_%d_ratio_%.6f.dat", NbrFermions, MaxMomentum, XRatio);
+    }  
+  else
+    {
+      sprintf (SuffixOutputName, "n_%d_2s_%d_ratio_%.6f_angle_%.6f.dat", NbrFermions, MaxMomentum, XRatio, Angle);
+    }  
   if (NbrPseudopotentials>0)
     {
-      sprintf (OutputName, "fermions_torus_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, XRatio);
+      sprintf (OutputName, "fermions_torus_%s_%s", InteractionName, SuffixOutputName);
     }
   else
     {
       if (LandauLevel>0)
-	sprintf (OutputName, "fermions_torus_coulomb_l_%d_n_%d_2s_%d_ratio_%f.dat", LandauLevel, NbrFermions, MaxMomentum, XRatio);
+	sprintf (OutputName, "fermions_torus_coulomb_l_%d_%s", LandauLevel, SuffixOutputName);
       else
 	if (LandauLevel<0)
-	  sprintf (OutputName, "fermions_torus_graphene_l_%d_n_%d_2s_%d_ratio_%f.dat", -LandauLevel, NbrFermions, MaxMomentum, XRatio);
+	  sprintf (OutputName, "fermions_torus_graphene_l_%d_%s", -LandauLevel, SuffixOutputName);
 	else
-	  sprintf (OutputName, "fermions_torus_coulomb_n_%d_2s_%d_ratio_%f.dat", NbrFermions, MaxMomentum, XRatio);
+	  sprintf (OutputName, "fermions_torus_coulomb_%s", SuffixOutputName);
     }
 
   if (Manager.GetString("eigenvalue-file")!=0)
