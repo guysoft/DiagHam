@@ -67,6 +67,11 @@ TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbr
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  
+  this->ComputeAllProjectedMomenta();
 
   double a = 1 + sqrt(3);
 
@@ -217,8 +222,8 @@ void TightBindingModelRubyLattice::CoreComputeBandStructure(long minStateIndex, 
 	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
 	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	    {
-	      KX = this->KxFactor * (((double) kx) + this->GammaX);
-	      KY = this->KyFactor * (((double) ky) + this->GammaY);
+	      KX = this->GetProjectedMomentum(kx, ky, 0);
+	      KY = this->GetProjectedMomentum(kx, ky, 1);
 	      
 	      Complex PhaseX = Phase(KX);
 	      Complex PhaseXY = Phase(KX + KY);

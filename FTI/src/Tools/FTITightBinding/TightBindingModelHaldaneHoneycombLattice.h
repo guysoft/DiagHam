@@ -69,6 +69,27 @@ class TightBindingModelHaldaneHoneycombLattice : public Abstract2DTightBindingMo
 					   double gammaX, double gammaY, 
 					   AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
   
+  
+  // constructor for the tilted lattice
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  //nx1 = first coordinate of the first spanning vector for a tilted lattice
+  //ny1 = second coordinate of the first spanning vector for a tilted lattice
+  //nx2 = first coordinate of the second spanning vector for a tilted lattice
+  //ny2 = second coordinate of the second spanning vector for a tilted lattice
+  //offset = second coordinate in momentum space of the second spanning vector of the reciprocal lattice for a tilted lattice
+  // t1 = hoping amplitude between neareast neighbor sites
+  // t2 = hoping amplitude between next neareast neighbor sites
+  // phi =  Haldane phase on next neareast neighbor hopping
+  // mus = sublattice chemical potential on A sites
+  // gammaX = boundary condition twisting angle along x
+  // gammaY = boundary condition twisting angle along y
+  // architecture = pointer to the architecture
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelHaldaneHoneycombLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double phi, double mus, 
+					   double gammaX, double gammaY, 
+					   AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
   // destructor
   //
   ~TightBindingModelHaldaneHoneycombLattice();

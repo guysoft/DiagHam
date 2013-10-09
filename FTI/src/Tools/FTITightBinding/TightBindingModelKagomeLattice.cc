@@ -66,6 +66,12 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   this->NbrBands = 3;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  
+  this->ComputeAllProjectedMomenta();
+  
 
   if (storeOneBodyMatrices == true)
     {

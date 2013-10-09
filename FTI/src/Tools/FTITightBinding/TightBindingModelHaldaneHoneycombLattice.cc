@@ -64,6 +64,12 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
   this->GammaY = gammaY;
   this->NbrBands = 2;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  
+  this->ComputeAllProjectedMomenta();
+
 
   this->EmbeddingX = RealVector(this->NbrBands, true);
   this->EmbeddingX[0] = 1.0 / 6;
@@ -93,6 +99,76 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
   this->ComputeBandStructure();
 }
 
+
+// constructor for the tilted lattice
+//
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+//nx1 = first coordinate of the first spanning vector for a tilted lattice
+//ny1 = second coordinate of the first spanning vector for a tilted lattice
+//nx2 = first coordinate of the second spanning vector for a tilted lattice
+//ny2 = second coordinate of the second spanning vector for a tilted lattice
+//offset = second coordinate in momentum space of the second spanning vector of the reciprocal lattice for a tilted lattice
+// t1 = hoping amplitude between neareast neighbor sites
+// t2 = hoping amplitude between next neareast neighbor sites
+// phi =  Haldane phase on next neareast neighbor hopping
+// mus = sublattice chemical potential on A sites
+// gammaX = boundary condition twisting angle along x
+// gammaY = boundary condition twisting angle along y
+// architecture = pointer to the architecture
+// storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+
+TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double phi, double mus, 
+										   double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+{
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->NNHoping = t1;
+  this->NextNNHoping = t2;
+  this->HaldanePhase = phi;
+  this->MuS = mus;
+  this->TwistAngle = 2 * M_PI / 3;
+  this->GammaX = gammaX;
+  this->GammaY = gammaY;
+  this->NbrBands = 2;
+  this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+
+  this->EmbeddingX = RealVector(this->NbrBands, true);
+  this->EmbeddingX[0] = 1.0 / 6;
+  this->EmbeddingX[1] = -1.0 / 6;
+  this->EmbeddingY = RealVector(this->NbrBands, true);
+  this->EmbeddingY[0] = 1.0 / 3;
+  this->EmbeddingY[1] = - 1.0 / 3;
+  this->Inversion = ComplexMatrix(this->NbrBands, this->NbrBands, true);
+  for (int i = 0; i < this->NbrBands; ++i)
+      this->Inversion[i][1 - i] = 1.0;
+
+  this->Architecture = architecture;
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  
+  this->ComputeAllProjectedMomenta();
+
+  if (storeOneBodyMatrices == true)
+    {
+      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
+    }
+  else
+    {
+      this->OneBodyBasis = 0;
+    }
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+    }
+  this->ComputeBandStructure();
+}
+
+
 // destructor
 //
 
@@ -119,8 +195,8 @@ void TightBindingModelHaldaneHoneycombLattice::CoreComputeBandStructure(long min
 	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
 	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	    {
-	      double x = 2.0 * M_PI *((double) kx + this->GammaX) / this->NbrSiteX;
-              double y = 2.0 * M_PI * ((double) ky + this->GammaY) / this->NbrSiteY;
+	      double x = this->GetProjectedMomentum(kx, ky, 0);
+              double y = this->GetProjectedMomentum(kx, ky, 1);
 
 	      Complex B1 = this->NNHoping * Complex(1 + cos(x+y) + cos(y), + sin(x+y) + sin(y));
 	      double d0 = 2.0 * this->NextNNHoping * cos(this->HaldanePhase) * (cos(x) + cos(y) + cos(x+y));

@@ -1146,8 +1146,8 @@ void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
  {
    for (int ky = 0; ky < this->NbrSiteY; ++ky)
    {
-     int kx_trans = kx + this->Offset*ky;
-     int ky_trans = ky;
+     double kx_trans = kx + this->Offset*ky + this->GammaX;
+     double ky_trans = ky + this->GammaY;
      projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
      projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
