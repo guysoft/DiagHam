@@ -127,7 +127,12 @@ ParticleOnTorusCoulombHamiltonian::~ParticleOnTorusCoulombHamiltonian()
   delete[] this->M3Value;
   if (this->FastMultiplicationFlag == true)
     {
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
+      long MinIndex;
+      long MaxIndex;
+      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+      int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+      for (int i = 0; i < ReducedSpaceDimension; ++i)
 	{
 	  delete[] this->InteractionPerComponentIndex[i];
 	  delete[] this->InteractionPerComponentCoefficient[i];
