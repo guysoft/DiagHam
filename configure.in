@@ -91,6 +91,8 @@ fi
 
 AM_CONDITIONAL(BUILD_LAPACK, test X${HAVE_PKG_LAPACK} = Xyes)
 
+
+
 AC_ARG_ENABLE(lapack-only, [AC_HELP_STRING([--enable-lapack-only],[use LAPACK routines instead of DiagHam ones])], [USE_PKG_LAPACK_ONLY=$enableval],[USE_PKG_LAPACK_ONLY=no])
 AC_MSG_CHECKING(whether we are using only LAPACK routines)
 AC_MSG_RESULT([${USE_PKG_LAPACK_ONLY}])
@@ -98,6 +100,7 @@ AC_MSG_RESULT([${USE_PKG_LAPACK_ONLY}])
 if test X${USE_PKG_LAPACK_ONLY} = Xyes; then
   AC_DEFINE(HAVE_LAPACK_ONLY,,[define if we are using LAPACK only])
 fi
+
 
 #
 # Finding GSL libraries
@@ -367,6 +370,27 @@ fi
 
 AM_CONDITIONAL(BUILD_SCALAPACK, test X${HAVE_PKG_SCALAPACK} = Xyes)
 
+dnl check for intel mkl 
+
+AC_ARG_ENABLE(intelmkl, [AC_HELP_STRING([--enable-intelmkl],[using intel-mkl librairies for LAPACK support])], [HAVE_PKG_INTELMKL=$enableval],[HAVE_PKG_INTELMKL=no])
+
+AC_MSG_CHECKING(whether we are using INTEL-MKL)
+AC_MSG_RESULT([${HAVE_PKG_INTELMKL}])
+
+ AC_ARG_WITH(intelmkl-libdir,
+  [AC_HELP_STRING([--with-intelmkl-libdir=DIR],[INTEL MKL library directory @<:@INTELMKLROOT/lib@:>@])],
+  [
+  INTELMKL_LIBDIR=${withval}
+  AC_MSG_CHECKING(user-defined INTELMKL library directory)
+  AC_MSG_RESULT([${INTELMKL_LIBDIR}])
+  ])
+ 
+if test X${HAVE_PKG_INTELMKL} = Xyes; then
+  AC_CHECK_LIB([mkl_intel_ilp64],fftw_execute,INTELMKL_LIBS="-L${INTELMKL_LIBDIR} -lmkl_intel_thread -lmkl_core -openmp -lmkl_intel_ilp64",
+  AC_MSG_ERROR([Cannot find Intel Math Kernel Library >= 6.0]),[-L${INTELMKL_LIBDIR} -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -openmp -liomp5  --lpthread])
+  AC_DEFINE(HAVE_LAPACK,,[define if we are using LAPACK])
+fi
+
 
 
 dnl check byte ordering
@@ -538,6 +562,7 @@ AC_SUBST(FORTRAN2C_LIBS)
 AC_SUBST(BZ2_LIBS)
 AC_SUBST(GMP_LIBS)
 AC_SUBST(FFTW_LIBS)
+AC_SUBST(INTELMKL_LIBS)
 AC_SUBST(MAYBE_QUANTUMDOTS)
 AC_SUBST(MAYBE_SPIN)
 AC_SUBST(MAYBE_FQHE)
