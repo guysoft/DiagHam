@@ -1,1 +1,1 @@
-SUBDIRS=Architecture Hamiltonian Tools Programs
+SUBDIRS=Architecture Hamiltonian Operator Tools Programs
