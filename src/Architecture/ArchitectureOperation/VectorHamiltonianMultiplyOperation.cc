@@ -245,15 +245,18 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(SMP
       this->RawApplyOperation();
       return true;
     }
-  long *SegmentIndices=0;
+  long* SegmentIndices = 0;
   int TmpNbrThreads = architecture->GetNbrThreads();
   bool CleanUp = false;
-  long TmpMinimumIndex = 0;
-  long TmpMaximumIndex = 0;
+  long TmpMinimumIndex = 0l;
+  long TmpMaximumIndex = 0l;
   architecture->GetTypicalRange(TmpMinimumIndex, TmpMaximumIndex);
-  this->FirstComponent = (int) TmpMinimumIndex;  
-  this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
-  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices)==false)
+  if (TmpMaximumIndex >= 0l)
+    {
+      this->FirstComponent = (int) TmpMinimumIndex;  
+      this->NbrComponent = (int) (TmpMaximumIndex - TmpMinimumIndex + 1l);
+    }
+  if (Hamiltonian->GetLoadBalancing(TmpNbrThreads, SegmentIndices) == false)
     {
       SegmentIndices = new long[TmpNbrThreads+1];
       CleanUp = true;
@@ -362,7 +365,9 @@ bool VectorHamiltonianMultiplyOperation::ArchitectureDependentApplyOperation(Sim
    if (architecture->VerboseMode())
      gettimeofday (&TotalStartingTime, 0);
    if (architecture->GetLocalArchitecture()->GetArchitectureID() == AbstractArchitecture::SMP)
-     this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+     {
+       this->ArchitectureDependentApplyOperation((SMPArchitecture*) architecture->GetLocalArchitecture());
+     }
    else
      this->RawApplyOperation();
    if (architecture->VerboseMode())

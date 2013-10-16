@@ -145,7 +145,7 @@ RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSour
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnTorusHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-								  int firstComponent, int nbrComponent)
+							       int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();

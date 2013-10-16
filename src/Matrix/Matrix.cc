@@ -461,7 +461,7 @@ bool Matrix::ReadMatrix (char* fileName)
 int Matrix::Rank(double accuracy)
 {
   cout << "warning : rank calculation is not implemented for this type of matrix" << endl;
-  return 0;
+  return -1;
 }
 
 // test if a matrix is diagonal

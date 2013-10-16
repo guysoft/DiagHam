@@ -276,6 +276,12 @@ class LongRationalMatrix : public Matrix
   // return value = permanent associated to the matrix
   LongRational Permanent();
 
+  // evaluate matrix rank
+  //
+  // accuracy = numerical accuracy used to define linearly dependence 
+  // return value = rank
+  virtual int Rank(double accuracy = MACHINE_PRECISION);
+
   // write matrix in a file 
   //
   // file = reference on the output file stream

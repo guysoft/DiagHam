@@ -71,6 +71,7 @@ SMPArchitecture::SMPArchitecture(int nbrThreads, char* logFile)
 {
   this->ArchitectureID = AbstractArchitecture::SMP;
   this->NbrThreads = nbrThreads;
+  this->HilbertSpaceDimension = 0;
   if (logFile != 0)
     {
       this->VerboseModeFlag = true;

@@ -40,6 +40,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "MathTools/LongRational.h"
 #include "Vector/LongRationalVector.h"
+#include "Matrix/LongRationalMatrix.h"
 
 #include <iostream>
 #include <map>
@@ -347,6 +348,15 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = entanglement matrix of the subsytem
   virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
   
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual LongRationalMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int lzSector, LongRationalVector& groundState);
+  
 // reconstruct a state that contains only a certain subset of Schmidt eigenvalues of the given ground state
 // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
 // nbrBosonSector = number of particles that belong to the subsytem 
@@ -458,6 +468,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // removeBinomialCoefficient = remove additional binomial coefficient in case the particle entanglement matrix has to be used for real space cut
   // return value = entanglement matrix of the subsytem (return a wero dimension matrix if the entanglement matrix is equal to zero)
   virtual RealMatrix EvaluatePartialEntanglementMatrixParticlePartition (int nbrBosonSector, int lzSector, RealVector& groundState, bool removeBinomialCoefficient = false);
+
 
   // evaluate a entanglement matrix of a subsystem of the whole system described by a given ground state, using real space partition. The entanglement matrix is only evaluated in a given Lz sector.
   // and computed from precalculated particle entanglement matrix

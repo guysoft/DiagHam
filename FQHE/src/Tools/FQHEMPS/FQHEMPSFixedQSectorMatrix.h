@@ -92,6 +92,11 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   //
   ~FQHEMPSFixedQSectorMatrix();
   
+  // get the number of orbitals that associated to a set of B matrices
+  //
+  // return value = number oforbitals
+  virtual int GetNbrOrbitals();
+
   // create the B matrices for the block state
   //
   virtual void CreateBMatrices ();
@@ -177,6 +182,15 @@ class FQHEMPSFixedQSectorMatrix : public AbstractFQHEMPSMatrix
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
 };
+
+// get the number of orbitals that associated to a set of B matrices
+//
+// return value = number oforbitals
+
+inline int FQHEMPSFixedQSectorMatrix::GetNbrOrbitals()
+{
+  return this->BMatrixGroupSize;
+}
 
 // get the filling factor of the state associated the B matrices 
 // 

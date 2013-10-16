@@ -686,6 +686,68 @@ LongRational LongRationalMatrix::Determinant ()
   return TmpDet;
 }
 
+// evaluate matrix rank
+//
+// accuracy = numerical accuracy used to define linearly dependence 
+// return value = rank
+
+int LongRationalMatrix::Rank(double accuracy)
+{
+  cout << "dim = " << this->NbrRow << " " <<  this->NbrColumn << endl;
+  cout << (*this) << endl;
+  int ReducedDim = this->NbrColumn;
+  if (ReducedDim > this->NbrRow)
+    ReducedDim = this->NbrRow;
+  --ReducedDim;
+  LongRational Pivot;
+  LongRational Factor;
+  int PivotPos = 0;
+  for (int k = 0; k < ReducedDim; ++k)
+    {
+      PivotPos = k;
+      while ((PivotPos < this->NbrColumn) && (this->Columns[PivotPos][k].IsZero()))
+	{
+	  ++PivotPos;
+	}
+      if (PivotPos < this->NbrColumn)
+	{
+	  if (PivotPos != k)
+	    {
+	      LongRationalVector TmpColumn3(this->Columns[k]);
+	      this->Columns[k] = this->Columns[PivotPos];
+	      this->Columns[PivotPos] = TmpColumn3;	  
+	    }
+	  Pivot = 1l / this->Columns[k][k];       
+	  for (int i = k + 1; i < this->NbrColumn; ++i)
+	    {
+	      LongRationalVector& TmpColumn = this->Columns[i];
+	      LongRationalVector& TmpColumn2 = this->Columns[k];
+	      if (TmpColumn[k].IsZero() == false)
+		{
+		  Factor = Pivot * TmpColumn[k];
+		  for (int j = k; j < this->NbrRow; ++j)
+		    {
+		      TmpColumn[j] -= TmpColumn2[j] * Factor;
+		    }
+		}
+	    }
+	}
+    }
+  int Rank = 0;
+  ++ReducedDim;
+  for (int k = 0; k < ReducedDim; ++k)
+    {
+      bool Flag = true;
+      for (int i = k; (i < this->NbrRow) && (Flag == true); ++i)
+	Flag = this->Columns[k][i].IsZero();
+      if (Flag == false)
+	++Rank;
+    }
+//  cout << (*this) << endl;
+//  cout << "rank = " << Rank << endl;
+  return Rank;
+}
+
 // evaluate permanent associated to the (square) matrix using Ryser algorithm
 //
 // return value = permanent associated to the matrix

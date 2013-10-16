@@ -506,8 +506,8 @@ RationalVector& BosonOnSphereHaldaneBasisShort::GenerateJackPolynomial(RationalV
 	      jack[i] = (Coefficient * InvAlpha) / (RhoRoot - Rho);
 	      //	      Rational TmpR = TmpNumerators[i].PolynomialEvaluate(InvAlpha) / TmpDenominators[i].PolynomialEvaluate(InvAlpha);
 	      //	      cout << jack[i] << " " << TmpR << endl;
-	      cout << jack[i] << " ";
-	      this->PrintStateMonomial(cout, i) << endl;
+	      // cout << jack[i] << " ";
+	      // this->PrintStateMonomial(cout, i) << endl;
 	    }
 	}
       if ((i & CounterMask) == 0l)

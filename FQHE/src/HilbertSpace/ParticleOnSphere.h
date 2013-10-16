@@ -42,6 +42,7 @@
 
 class LongRationalVector;
 class LongRational;
+class LongRationalMatrix;
 class AbstractArchitecture;
 class SparseRealMatrix;
 class SparseComplexMatrix;
@@ -339,6 +340,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // lzSector = Lz sector in which the density matrix has to be evaluated 
   // return value = entanglement matrix of the subsytem
   virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int lzSector, RealVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Lz sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // lzSector = Lz sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual LongRationalMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int lzSector, LongRationalVector& groundState);
   
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particle. The geometrical cut is a stripe.
   // 

@@ -62,7 +62,7 @@ long AbstractArchitecture::GetLocalMemory()
 
 void AbstractArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
 {
-  minIndex = 0;
+  minIndex = 0l;
   maxIndex = this->HilbertSpaceDimension - 1;
 }
   

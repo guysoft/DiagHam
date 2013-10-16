@@ -231,7 +231,7 @@ class Matrix
   //
   // accuracy = numerical accuracy used to define linearly dependence 
   // return value = rank
-  virtual int Rank(double accuracy);
+  virtual int Rank(double accuracy = MACHINE_PRECISION);
 
   // test if a matrix is diagonal
   //

@@ -93,6 +93,11 @@ class AbstractFQHEMPSMatrix
   // return value = number of B matrices
   virtual int GetNbrMatrices();
 
+  // get the number of orbitals that associated to a set of B matrices
+  //
+  // return value = number oforbitals
+  virtual int GetNbrOrbitals();
+
   // get the array where the matrices are stored
   //
   // return value = pointer to the array
@@ -279,6 +284,15 @@ inline int AbstractFQHEMPSMatrix::GetNbrMatrices()
 inline SparseRealMatrix* AbstractFQHEMPSMatrix::GetMatrices()
 {
   return this->RealBMatrices;
+}
+
+// get the number of orbitals that associated to a set of B matrices
+//
+// return value = number oforbitals
+
+inline int AbstractFQHEMPSMatrix::GetNbrOrbitals()
+{
+  return 1;
 }
 
 // compute P, N from the linearized index of the B matrix for the Laughlin states
