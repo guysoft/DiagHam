@@ -74,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('L', "landau-level", "Landau-level to be simulated", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "interaction-file", "file describing the interaction");
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the full reduced Brillouin zone", false);
   (*SystemGroup) += new BooleanOption  ('\n', "add-wigner", "consider the energy contribution from the Wigner crystal", false);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
@@ -210,7 +211,7 @@ int main(int argc, char** argv)
   int *Multiplicities = NULL;
   int CenterX=0, CenterY=0;
 
-  if (GenerateMomenta==false)
+  if (GenerateMomenta == false)
     {
       NbrMomenta=1;
       XMomenta = new int[1];
@@ -232,122 +233,142 @@ int main(int argc, char** argv)
 		XMomenta[Pos]=XMomentum;
 		YMomenta[Pos]=YMomentum2;
 		++Pos;
-		cout << "Pos="<<Pos<<endl;
 	      }
 	}
       else // determine inequivalent states in BZ
 	{
-	  if (NbrFermions&1)
+	  if (Manager.GetBoolean("full-reducedbz"))
 	    {
-	      CenterX=0;
-	      CenterY=0;
+	      int Pos=0;
+	      XMaxMomentum = MomentumModulo;
+	      YMaxMomentum = MomentumModulo;
+	      NbrMomenta = MomentumModulo * MomentumModulo;
+	      XMomenta = new int[NbrMomenta];
+	      YMomenta = new int[NbrMomenta];
+	      for (; XMomentum < XMaxMomentum; ++XMomentum)
+		{
+		  for (int YMomentum2 = YMomentum; YMomentum2 < YMaxMomentum; ++YMomentum2)
+		    {
+		      XMomenta[Pos] = XMomentum;
+		      YMomenta[Pos] = YMomentum2;
+		      ++Pos;
+		    }
+		}
 	    }
 	  else
 	    {
-	      if ((NbrFermions/MomentumModulo*MaxMomentum/MomentumModulo)&1) // p*q odd?
-		{
-		  CenterX=MomentumModulo/2;
-		  CenterY=MomentumModulo/2;
-		}
-	      else
+	      if (NbrFermions&1)
 		{
 		  CenterX=0;
 		  CenterY=0;
 		}
-	    }
-	  if (XRatio == 1.0)
-	    {
-	      NbrMomenta=0;
-	      for (int Kx = CenterX; Kx<=CenterX+MomentumModulo/2; ++Kx)
-		for (int Ky= (Kx-CenterX)+CenterY; Ky<=CenterY+MomentumModulo/2; ++Ky)
-		  {
-		    ++NbrMomenta;
-		  }
-	      int Pos=0;
-	      XMomenta = new int[NbrMomenta];
-	      YMomenta = new int[NbrMomenta];
-	      Multiplicities = new int[NbrMomenta];
-	      for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
-		for (int Ky= Kx; Ky<=MomentumModulo/2; ++Ky, ++Pos)
-		  {
-		    XMomenta[Pos]=CenterX+Kx;
-		    YMomenta[Pos]=CenterY+Ky;
-		    if (Kx==0)
+	      else
+		{
+		  if ((NbrFermions/MomentumModulo*MaxMomentum/MomentumModulo)&1) // p*q odd?
+		    {
+		      CenterX=MomentumModulo/2;
+		      CenterY=MomentumModulo/2;
+		    }
+		  else
+		    {
+		      CenterX=0;
+		      CenterY=0;
+		    }
+		}
+	      if (XRatio == 1.0)
+		{
+		  NbrMomenta=0;
+		  for (int Kx = CenterX; Kx<=CenterX+MomentumModulo/2; ++Kx)
+		    for (int Ky= (Kx-CenterX)+CenterY; Ky<=CenterY+MomentumModulo/2; ++Ky)
 		      {
-			if (Ky==0)
-			  Multiplicities[Pos]=1; // BZ center
-			else if (Ky==MomentumModulo/2)
-			  Multiplicities[Pos]=2;
-			else Multiplicities[Pos]=4;
+			++NbrMomenta;
 		      }
-		    else if (Kx==MomentumModulo/2)
+		  int Pos=0;
+		  XMomenta = new int[NbrMomenta];
+		  YMomenta = new int[NbrMomenta];
+		  Multiplicities = new int[NbrMomenta];
+		  for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
+		    for (int Ky= Kx; Ky<=MomentumModulo/2; ++Ky, ++Pos)
 		      {
-			Multiplicities[Pos]=1; // BZ corner
-		      }
-		    else
-		      {
-			if (Ky==Kx) // diagonal ?
+			XMomenta[Pos]=CenterX+Kx;
+			YMomenta[Pos]=CenterY+Ky;
+			if (Kx==0)
 			  {
-			    Multiplicities[Pos]=4; 
+			    if (Ky==0)
+			      Multiplicities[Pos]=1; // BZ center
+			    else if (Ky==MomentumModulo/2)
+			      Multiplicities[Pos]=2;
+			    else Multiplicities[Pos]=4;
+			  }
+			else if (Kx==MomentumModulo/2)
+			  {
+			    Multiplicities[Pos]=1; // BZ corner
 			  }
 			else
 			  {
-			    if (Ky==MomentumModulo/2)
-			      Multiplicities[Pos]=4;
-			    else
-			      Multiplicities[Pos]=8;
-			  }
-		      }
-		  }
-	    }
-	  else // rectangular torus
-	    {
-	      NbrMomenta=(MomentumModulo/2+1)*(MomentumModulo/2+1);
-	      int Pos=0;
-	      XMomenta = new int[NbrMomenta];
-	      YMomenta = new int[NbrMomenta];
-	      Multiplicities = new int[NbrMomenta];
-	      for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
-		for (int Ky= 0; Ky<=MomentumModulo/2; ++Ky, ++Pos)
-		  {
-		    XMomenta[Pos]=CenterX+Kx;
-		    YMomenta[Pos]=CenterY+Ky;
-		    if (Kx==0)
-		      {
-			if (Ky==0)
-			  Multiplicities[Pos]=1; // BZ center
-			else // on Gamma->X]
-			  Multiplicities[Pos]=2;
-		      }
-		    else
-		      {
-			if (Ky==0)
-			  Multiplicities[Pos]=2;
-			else
-			  {
-			    if (Kx==MomentumModulo/2)
+			    if (Ky==Kx) // diagonal ?
 			      {
-				if (Ky==MomentumModulo/2) // BZ corner?
-				  Multiplicities[Pos]=1;
-				else
-				  Multiplicities[Pos]=2;
+				Multiplicities[Pos]=4; 
 			      }
 			    else
 			      {
-				if (Ky==MomentumModulo/2) // on edge?
-				  Multiplicities[Pos]=2;
-				else
+				if (Ky==MomentumModulo/2)
 				  Multiplicities[Pos]=4;
+				else
+				  Multiplicities[Pos]=8;
 			      }
 			  }
 		      }
-		  }
+		}
+	      else // rectangular torus
+		{
+		  NbrMomenta=(MomentumModulo/2+1)*(MomentumModulo/2+1);
+		  int Pos=0;
+		  XMomenta = new int[NbrMomenta];
+		  YMomenta = new int[NbrMomenta];
+		  Multiplicities = new int[NbrMomenta];
+		  for (int Kx = 0; Kx<=MomentumModulo/2; ++Kx)
+		    for (int Ky= 0; Ky<=MomentumModulo/2; ++Ky, ++Pos)
+		      {
+			XMomenta[Pos]=CenterX+Kx;
+			YMomenta[Pos]=CenterY+Ky;
+			if (Kx==0)
+			  {
+			    if (Ky==0)
+			      Multiplicities[Pos]=1; // BZ center
+			    else // on Gamma->X]
+			      Multiplicities[Pos]=2;
+			  }
+			else
+			  {
+			    if (Ky==0)
+			      Multiplicities[Pos]=2;
+			    else
+			      {
+				if (Kx==MomentumModulo/2)
+				  {
+				    if (Ky==MomentumModulo/2) // BZ corner?
+				      Multiplicities[Pos]=1;
+				    else
+				      Multiplicities[Pos]=2;
+				  }
+				else
+				  {
+				    if (Ky==MomentumModulo/2) // on edge?
+				      Multiplicities[Pos]=2;
+				    else
+				      Multiplicities[Pos]=4;
+				  }
+			      }
+			  }
+		      }
+		}
 	    }
 	}
     }
   
   bool FirstRun=true;
-  for (int Pos=0;Pos<NbrMomenta; ++Pos)
+  for (int Pos = 0; Pos < NbrMomenta; ++Pos)
     {
       XMomentum=XMomenta[Pos];
       YMomentum=YMomenta[Pos];
