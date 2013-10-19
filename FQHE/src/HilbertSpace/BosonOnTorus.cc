@@ -50,6 +50,7 @@ using std::endl;
 
 BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->MaxMomentum = maxMomentum;
@@ -88,6 +89,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum)
 
 BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstraint)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->MaxMomentum = maxMomentum;
@@ -131,6 +133,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
 BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int hilbertSpaceDimension, 
 			    int** stateDescription, int* stateMaxMomentum)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->MaxMomentum = maxMomentum;
@@ -170,6 +173,7 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int hilbertSpaceDime
 BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
 			    int** stateDescription, int* stateMaxMomentum)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->MaxMomentum = maxMomentum;
@@ -204,6 +208,10 @@ BosonOnTorus::BosonOnTorus (int nbrBosons, int maxMomentum, int momentumConstrai
 
 BosonOnTorus::BosonOnTorus(const BosonOnTorus& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->MaxMomentum = bosons.MaxMomentum;
@@ -265,6 +273,10 @@ BosonOnTorus& BosonOnTorus::operator = (const BosonOnTorus& bosons)
       delete[] this->StateMaxMomentum;
       delete[] this->TemporaryState;
     }
+  if (this->TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->MaxMomentum = bosons.MaxMomentum;
@@ -285,6 +297,15 @@ BosonOnTorus& BosonOnTorus::operator = (const BosonOnTorus& bosons)
 AbstractHilbertSpace* BosonOnTorus::Clone()
 {
   return new BosonOnTorus(*this);
+}
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void BosonOnTorus::SetTargetSpace(ParticleOnTorus* targetSpace)
+{
+  this->TargetSpace = (BosonOnTorus*) targetSpace;
 }
 
 // get momemtum value of a given state
@@ -423,6 +444,43 @@ int BosonOnTorus::AdAdAA (int index, int m1, int m2, int n1, int n2, double& coe
   int DestIndex = this->FindStateIndex(this->TemporaryState, NewLzMax);
   return DestIndex;
 }
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int BosonOnTorus::AdA (int index, int m, int n, double& coefficient)
+{
+  int CurrentLzMax = this->StateMaxMomentum[index];
+  int* State = this->StateDescription[index];
+  if ((n > CurrentLzMax) || (State[n] == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = CurrentLzMax;
+  if (NewLzMax < m)
+    NewLzMax = m;
+  int i = 0;
+  for (; i <= CurrentLzMax; ++i)
+    this->TemporaryState[i] = State[i];
+  for (; i <= NewLzMax; ++i)
+    this->TemporaryState[i] = 0;
+  coefficient = this->TemporaryState[n];
+  --this->TemporaryState[n];
+  ++this->TemporaryState[m];
+  coefficient *= this->TemporaryState[m];
+  coefficient = sqrt(coefficient);
+  while (this->TemporaryState[NewLzMax] == 0)
+    --NewLzMax;
+  int DestIndex = this->TargetSpace->FindStateIndex(this->TemporaryState, NewLzMax);
+  return DestIndex;
+}
+
 
 // return matrix representation of the annihilation operator a_i
 //

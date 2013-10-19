@@ -1,5 +1,6 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Vector/ComplexVector.h"
 
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
@@ -20,10 +21,13 @@
 #include "Architecture/SMPArchitecture.h"
 
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
 
 #include "GeneralTools/ListIterator.h"
+#include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -86,6 +90,8 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
+
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -158,6 +164,50 @@ int main(int argc, char** argv)
 
       AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusGenericHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, NbrPseudoPotentials, PseudoPotentials,
 										   Architecture.GetArchitecture(), Memory);
+
+      if (Manager.GetString("energy-expectation") != 0 )
+	{
+          cout<<"Warning: assumes input vector is complex, while Hamiltonian is real."<<endl;
+
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  ComplexVector InputState;
+ 	  if (InputState.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+          RealVector InputStateRe (InputState.GetVectorDimension(), true);
+          RealVector InputStateIm (InputState.GetVectorDimension(), true);
+          for (int i = 0; i < InputState.GetVectorDimension(); i++)
+            {
+                Complex Tmp = InputState[i];
+                InputStateRe[i] = Tmp.Re;
+                InputStateIm[i] = Tmp.Im;
+            }
+
+	  if (InputState.GetVectorDimension()!=Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  RealVector TmpStateRe(Space->GetHilbertSpaceDimension(), true);
+	  RealVector TmpStateIm(Space->GetHilbertSpaceDimension(), true);
+
+	  VectorHamiltonianMultiplyOperation OperationRe (Hamiltonian, &InputStateRe, &TmpStateRe);
+	  OperationRe.ApplyOperation(Architecture.GetArchitecture());
+	  VectorHamiltonianMultiplyOperation OperationIm (Hamiltonian, &InputStateIm, &TmpStateIm);
+	  OperationIm.ApplyOperation(Architecture.GetArchitecture());
+
+	  Complex EnergyValue = InputStateRe * TmpStateRe + InputStateIm * TmpStateIm;
+          cout << "<Energy>= " << EnergyValue.Re << " " << EnergyValue.Im << endl;
+	  return 0;
+	}
+
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);

@@ -63,6 +63,7 @@ BosonOnTorusShort::BosonOnTorusShort ()
 
 BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->KyMax = maxMomentum;
@@ -110,6 +111,7 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
 
 BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int momentumConstraint)
 {
+  this->TargetSpace = this;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->KyMax = maxMomentum;
@@ -157,6 +159,10 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
 
 BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
 {
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrBosons = bosons.NbrBosons;
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->KyMax = bosons.KyMax;
@@ -210,6 +216,10 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
       delete[] this->LookUpTable;
       delete[] this->LookUpTableShift;
     }
+  if (this->TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   delete[] this->TemporaryState;
   delete[] this->ProdATemporaryState;
   this->NbrBosons = bosons.NbrBosons;
@@ -239,6 +249,15 @@ BosonOnTorusShort& BosonOnTorusShort::operator = (const BosonOnTorusShort& boson
 AbstractHilbertSpace* BosonOnTorusShort::Clone()
 {
   return new BosonOnTorusShort(*this);
+}
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void BosonOnTorusShort::SetTargetSpace(ParticleOnTorus* targetSpace)
+{
+  this->TargetSpace = (BosonOnTorusShort*) targetSpace;
 }
 
 // get momemtum value of a given state
@@ -445,29 +464,31 @@ double BosonOnTorusShort::AdA (int index, int m)
 
 int BosonOnTorusShort::AdA (int index, int m, int n, double& coefficient)
 {
-  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index], this->TemporaryState, this->TemporaryStateKyMax);
-  if ((this->TemporaryStateKyMax < n)  || (this->TemporaryState[n] == 0))
-    { 
+  int CurrentLzMax = this->StateKyMax[index];
+  if (n > CurrentLzMax)
+    {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;      
+      return this->TargetSpace->HilbertSpaceDimension;
+    }    
+  this->FermionToBoson(this->StateDescription[index], CurrentLzMax + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+  if ((n > CurrentLzMax) || (this->TemporaryState[n] == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
-  coefficient = (double) this->TemporaryState[n];
+  this->TemporaryStateKyMax = CurrentLzMax;
+  if (this->TemporaryStateKyMax < m)
+    this->TemporaryStateKyMax = m;
+  for (int i = CurrentLzMax + 1; i <= this->TemporaryStateKyMax; ++i)
+    this->TemporaryState[i] = 0;
+  coefficient = this->TemporaryState[n];
   --this->TemporaryState[n];
-  if ((this->TemporaryStateKyMax == n) && (this->TemporaryState[n] == 0))
-    {
-      while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
-	--this->TemporaryStateKyMax;
-    }
-  if (this->TemporaryStateKyMax < m) 
-    {
-      for (int i = this->TemporaryStateKyMax + 1; i <= m; ++i)
-	this->TemporaryState[i] = 0;
-      this->TemporaryStateKyMax = m;
-    }
   ++this->TemporaryState[m];
-  coefficient *= (double) this->TemporaryState[m];
-  coefficient = sqrt(coefficient);  
-  return this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+  coefficient *= this->TemporaryState[m];
+  coefficient = sqrt(coefficient);
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0x0ul)
+    --this->TemporaryStateKyMax;
+  return this->TargetSpace->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
 }
 
 // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)

@@ -425,6 +425,6 @@ double ParticleOnTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1,
       Sum += Coefficient;
       N2 -= this->MaxMomentum;
     }
-  return (Sum / (4.0 * M_PI * this->MaxMomentum));
+  return (Sum / this->MaxMomentum);
 }
 

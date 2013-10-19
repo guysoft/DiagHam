@@ -81,6 +81,10 @@ class BosonOnTorus :  public ParticleOnTorus
   // temporary state used when applying operators
   int* TemporaryState;
 
+  // pointer to the target space when an index is require after applying basic operation
+  BosonOnTorus* TargetSpace;
+
+
  public:
 
   // basic constructor
@@ -137,6 +141,11 @@ class BosonOnTorus :  public ParticleOnTorus
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  void SetTargetSpace(ParticleOnTorus* targetSpace);
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -177,6 +186,15 @@ class BosonOnTorus :  public ParticleOnTorus
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient);
+
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AdA (int index, int m, int n, double& coefficient);
 
   // return matrix representation of the annihilation operator a_i
   //

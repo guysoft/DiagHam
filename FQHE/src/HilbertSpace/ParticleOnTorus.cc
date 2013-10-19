@@ -39,7 +39,6 @@ ParticleOnTorus::~ParticleOnTorus ()
 {
 }
 
-
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
 // 
 // nbrBosonSector = number of particles that belong to the subsytem 

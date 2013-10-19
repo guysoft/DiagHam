@@ -90,6 +90,10 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // temporary state used when applying ProdA operator
   unsigned long* ProdATemporaryState;
    int ProdATemporaryStateKyMax;
+
+  // pointer to the target space when an index is require after applying basic operation
+  BosonOnTorusShort* TargetSpace;
+
  
  public:
 
@@ -129,6 +133,11 @@ class BosonOnTorusShort :  public ParticleOnTorus
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
+
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  void SetTargetSpace(ParticleOnTorus* targetSpace);
 
   // get the particle statistic 
   //

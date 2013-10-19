@@ -51,6 +51,7 @@ using std::endl;
 
 FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->KyMax = maxMomentum;
@@ -90,6 +91,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum)
 
 FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumConstraint)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->KyMax = maxMomentum;
@@ -127,6 +129,10 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumCo
 
 FermionOnTorus::FermionOnTorus(const FermionOnTorus& fermions)
 {
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
@@ -156,6 +162,7 @@ FermionOnTorus::FermionOnTorus(const FermionOnTorus& fermions)
 FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpaceDimension, 
 				unsigned long* stateDescription, int* stateKyMax)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->KyMax = maxMomentum;
@@ -197,6 +204,7 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpa
 FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumConstraint, int hilbertSpaceDimension, 
 				unsigned long* stateDescription, int* stateKyMax)
 {
+  this->TargetSpace = this;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->KyMax = maxMomentum;
@@ -264,6 +272,10 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
 	delete[] this->LookUpTable[i];
       delete[] this->LookUpTable;
     }
+  if (this->TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
@@ -290,6 +302,15 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
 AbstractHilbertSpace* FermionOnTorus::Clone()
 {
   return new FermionOnTorus(*this);
+}
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void FermionOnTorus::SetTargetSpace(ParticleOnTorus* targetSpace)
+{
+  this->TargetSpace = (FermionOnTorus*) targetSpace;
 }
 
 // return a list of all possible quantum numbers 
@@ -499,6 +520,62 @@ double FermionOnTorus::AdA (int index, int m)
     return 0.0;
   else
     return 1.0;
+}
+
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+// attention: check sign returned by this function!
+int FermionOnTorus::AdA (int index, int m, int n, double& coefficient)
+{
+  int StateLzMax = this->StateKyMax[index];
+  unsigned long State = this->StateDescription[index];
+  if ((n > StateLzMax) || ((State & (((unsigned long) (0x1)) << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = StateLzMax;
+  unsigned long TmpState = State;
+  coefficient = this->SignLookUpTable[(TmpState >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  TmpState &= ~(((unsigned long) (0x1)) << n);
+  if ((TmpState != 0x0ul))
+    {
+      while ((TmpState >> NewLzMax) == 0)
+	--NewLzMax;
+    }
+  else
+    NewLzMax = 0;
+  if ((TmpState & (((unsigned long) (0x1)) << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLzMax)
+    {
+      NewLzMax = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (((unsigned long) (0x1)) << m);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
 // return matrix representation of the annihilation operator a_i
