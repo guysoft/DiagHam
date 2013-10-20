@@ -344,6 +344,7 @@ double ParticleOnTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1,
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
+  double TwoPIOnM = 2.0 * M_PI / ((double) this->MaxMomentum);
   double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
   double Sum = 0.0;
   double N2 = (double) (m1 - m4);
@@ -360,7 +361,7 @@ double ParticleOnTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1,
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
 	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
 	  Precision = Coefficient;
 	}
@@ -379,7 +380,7 @@ double ParticleOnTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1,
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
 	  Precision = 2.0 * exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
@@ -398,7 +399,7 @@ double ParticleOnTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1,
 	  TmpInteraction = 0.0;
 	  for (int i=0; i< this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
 	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
 	  Precision = Coefficient;
 	}
@@ -417,7 +418,7 @@ double ParticleOnTorusGenericHamiltonian::EvaluateInteractionCoefficient(int m1,
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(PIOnM * Q2);
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
 	  Precision = 2.0 *  exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
