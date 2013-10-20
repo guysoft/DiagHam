@@ -437,8 +437,9 @@ double ParticleOnTorusCoulombHamiltonian::GetVofQ(double Q2_half)
       Result = this->FormFactor(Q2_half);
       Result *= Result;
       Result /= sqrt(Q2);
+      return Result * exp(-Q2_half);
     }
-  return Result * exp(-Q2_half);
+  else return 0.0;
 }
 //   double Sum = 0;
 //   double N1;
