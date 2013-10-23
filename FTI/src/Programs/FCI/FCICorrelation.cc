@@ -22,6 +22,7 @@
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -110,7 +111,11 @@ int main(int argc, char** argv)
       return -1;
     }
   cout << "N=" << NbrParticles << " Nx=" << NbrSiteX << " Ny=" << NbrSiteY << " kx=" << MomentumX << " ky=" << MomentumY << " m=" << Mass << endl; 
-  FermionOnSquareLatticeMomentumSpace* Space = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, MomentumX, MomentumY);
+  ParticleOnSphere* Space = 0;
+  if (Statistics == true)
+    Space = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, MomentumX, MomentumY);
+  else
+    Space = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, MomentumX, MomentumY);
   ComplexVector ComplexState;
   if (ComplexState.ReadVector (Manager.GetString("state")) == false)
     {
