@@ -66,10 +66,6 @@ Abstract2DTightBindingModel::Abstract2DTightBindingModel()
   this->Chern = NULL;
   this->LLLGammaX = NULL;
   this->LLLGammaY = NULL;
-  this->Nx1 = this->NbrSiteX;
-  this->Ny1 = 0;
-  this->Nx2 = 0;
-  this->Ny2 = this->NbrSiteY;
   this->Offset = 0;
   this->ProjectedMomenta = 0;
 }
@@ -1150,6 +1146,9 @@ void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
      double ky_trans = ky + this->GammaY;
      projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
      projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+//     cout << kx << " " << ky << " " << this->GetLinearizedMomentumIndex(kx, ky) << endl;
+//     cout << projectedMomentum1 << endl;
+//     cout << projectedMomentum2 << endl;
      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
    }

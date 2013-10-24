@@ -1094,6 +1094,7 @@ int FermionOnSphere::CheckOrder (int* m, int* n, int nbrIndices)
 int FermionOnSphere::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+//   cout << this->LookUpTableShift[lzmax] << endl;
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;

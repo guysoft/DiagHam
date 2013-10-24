@@ -351,7 +351,8 @@ void ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::EvaluateInteractionFac
 
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
+  Complex Tmp = 2.0 * cos (0.5 * (this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 0) - this->TightBindingModel->GetProjectedMomentum(k1a, k1b, 0)));
+//   Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
   //Complex Tmp = Phase (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
   return Tmp;
 }
@@ -366,7 +367,8 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
+  Complex Tmp = 2.0 * cos (0.5 * (this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 1) - this->TightBindingModel->GetProjectedMomentum(k1a, k1b, 1)));
+//   Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
   //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
   return Tmp;
 }
@@ -385,7 +387,8 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
 {
-  Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
+  Complex Tmp = 2.0 * cos (0.5 * (this->TightBindingModel->GetProjectedMomentum(k3a, k3b, 0) - this->TightBindingModel->GetProjectedMomentum(k1a, k1b, 0) + this->TightBindingModel->GetProjectedMomentum(k4a, k4b, 1) - this->TightBindingModel->GetProjectedMomentum(k2a, k2b, 1)));
+//   Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
   //Complex Tmp = Phase(0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
   return Tmp;
 }
@@ -414,7 +417,8 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
+  return Phase(0.5 * (this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0) - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0) ));
+//   return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
 }
 
 // compute the matrix element for on-site two body interaction involving C sites
@@ -431,6 +435,7 @@ Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatri
 
 Complex ParticleOnLatticeKagomeLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
+  return Phase(0.5 * (this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1) - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1) ));
+//   return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
 }
 

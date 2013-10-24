@@ -436,7 +436,7 @@ inline double Abstract2DTightBindingModel::ComputeCurvatureSinglePlaquette(int k
   //return value = projected momentum
    
   
-  inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, int latticeComponent)
+ inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, int latticeComponent)
   {
     return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
   }

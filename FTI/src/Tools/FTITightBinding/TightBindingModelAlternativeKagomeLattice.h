@@ -71,6 +71,23 @@ public:
     TightBindingModelAlternativeKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mus,
             double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
 
+    
+    // constructor for tilted lattice
+    //
+    // nbrSiteX = number of sites in the x direction
+    // nbrSiteY = number of sites in the y direction
+    // t1 = real part of the hopping amplitude between neareast neighbor sites
+    // t2 = real part of the hopping amplitude between next neareast neighbor sites
+    // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
+    // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
+    // mus = sublattice chemical potential on A1 sites
+    // gammaX = boundary condition twisting angle along x
+    // gammaY = boundary condition twisting angle along y
+    // architecture = pointer to the architecture
+    // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+    TightBindingModelAlternativeKagomeLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mus,
+            double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+
     // destructor
     //
     ~TightBindingModelAlternativeKagomeLattice();

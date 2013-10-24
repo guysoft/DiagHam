@@ -1,1 +1,5 @@
 SUBDIRS=
+
+noinst_LIBRARIES=libFTIOperator.a
+
+libFTIOperator_a_SOURCES=ParticleOnLatticeProjectedDensityOperator.cc

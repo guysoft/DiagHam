@@ -53,6 +53,10 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NNHoping = t1;
@@ -123,6 +127,11 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->Nx1 = nx1;
+  this->Ny1 = ny1;
+  this->Nx2 = nx2;
+  this->Ny2 = ny2;
+  this->Offset = offset;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NNHoping = t1;

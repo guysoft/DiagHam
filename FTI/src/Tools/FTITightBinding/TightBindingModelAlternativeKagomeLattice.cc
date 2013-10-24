@@ -56,6 +56,10 @@ TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLat
 {
     this->NbrSiteX = nbrSiteX;
     this->NbrSiteY = nbrSiteY;
+    this->Nx1 = this->NbrSiteX;
+    this->Ny1 = 0;
+    this->Nx2 = 0;
+    this->Ny2 = this->NbrSiteY;
     this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
     this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
     this->NNHopping = t1;
@@ -69,6 +73,79 @@ TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLat
 
     this->NbrBands = 3;
     this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+    
+    this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+    for (int i = 0; i < this->NbrStatePerBand; ++i)
+      this->ProjectedMomenta[i] = new double [2];
+  
+  
+    this->ComputeAllProjectedMomenta();
+
+    this->EmbeddingX = RealVector(this->NbrBands, true);
+    this->EmbeddingX[1] = 0.5;
+    this->EmbeddingY = RealVector(this->NbrBands, true);
+    this->EmbeddingY[2] = 0.5;
+    this->Inversion = ComplexMatrix(this->NbrBands, this->NbrBands, true);
+    for (int i = 0; i < this->NbrBands; ++i)
+        this->Inversion[i][i] = 1.0;
+
+    this->Architecture = architecture;
+
+    if (storeOneBodyMatrices == true)
+        this->OneBodyBasis = new ComplexMatrix[this->NbrStatePerBand];
+    else
+        this->OneBodyBasis = 0;
+    this->EnergyBandStructure = new double*[this->NbrBands];
+    for (int i = 0; i < this->NbrBands; ++i)
+        this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+    this->ComputeBandStructure();
+}
+
+
+// constructor for tilted lattice
+//
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// t1 = real part of the hopping amplitude between neareast neighbor sites
+// t2 = real part of the hopping amplitude between next neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
+// lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
+// mus = sublattice chemical potential on A1 sites
+// gammaX = boundary condition twisting angle along x
+// gammaY = boundary condition twisting angle along y
+// architecture = pointer to the architecture
+// storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+
+TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mus,
+        double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+{
+    this->NbrSiteX = nbrSiteX;
+    this->NbrSiteY = nbrSiteY;
+    this->Nx1 = nx1;
+    this->Ny1 = ny1;
+    this->Nx2 = nx2;
+    this->Ny2 = ny2;
+    this->Offset = offset;
+    this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+    this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+    this->NNHopping = t1;
+    this->NextNNHopping = t2;
+    this->NNSpinOrbit = lambda1;
+    this->NextNNSpinOrbit = lambda2;
+    this->MuS = mus;
+    this->TwistAngle = M_PI / 3;
+    this->GammaX = gammaX;
+    this->GammaY = gammaY;
+
+    this->NbrBands = 3;
+    this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+    
+    this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+    for (int i = 0; i < this->NbrStatePerBand; ++i)
+	this->ProjectedMomenta[i] = new double [2];
+  
+  
+    this->ComputeAllProjectedMomenta();
 
     this->EmbeddingX = RealVector(this->NbrBands, true);
     this->EmbeddingX[1] = 0.5;
@@ -109,11 +186,11 @@ void TightBindingModelAlternativeKagomeLattice::CoreComputeBandStructure(long mi
     long MaxStateIndex = minStateIndex + nbrStates;
     for (int kx = 0; kx < this->NbrSiteX; ++kx)
     {
-        double x = this->KxFactor * (kx + this->GammaX);
         for (int ky = 0; ky < this->NbrSiteY; ++ky)
         {
-            double y = this->KyFactor * (ky + this->GammaY);
             int Index = this->GetLinearizedMomentumIndex(kx, ky);
+	    double x = this->ProjectedMomenta[Index] [0];
+	    double y = this->ProjectedMomenta[Index] [1];
             if ((Index >= minStateIndex) && (Index < MaxStateIndex))
             {
                 Complex nnBA = Complex(-this->NNHopping, -this->NNSpinOrbit) * (1 + Phase(x));

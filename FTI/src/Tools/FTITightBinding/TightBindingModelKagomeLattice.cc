@@ -35,6 +35,17 @@
 #include "Matrix/RealDiagonalMatrix.h"
 
 
+#include <iostream>
+#include <cstring>
+#include <stdlib.h>
+#include <math.h>
+#include <fstream>
+
+using std::cout;
+using std::endl;
+using std::ios;
+using std::ofstream;
+
 // default constructor
 //
 // nbrSiteX = number of sites in the x direction
@@ -54,6 +65,10 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NNHopping = t1;
@@ -72,7 +87,7 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   
   this->ComputeAllProjectedMomenta();
   
-
+     
   if (storeOneBodyMatrices == true)
     {
       this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
@@ -134,7 +149,12 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   for (int i = 0; i < this->NbrStatePerBand; ++i)
     this->ProjectedMomenta[i] = new double [2];
   
+  
   this->ComputeAllProjectedMomenta();
+//   cout << "ok" << endl;
+//   for (int i = 0; i < this->NbrSiteX; ++i)
+//     for (int j = 0; j < this->NbrSiteY; ++j)
+//       cout << this->GetLinearizedMomentumIndex(i,j) << " " << this->GetProjectedMomentum(i, j, 0) << " " << this->GetProjectedMomentum(i, j, 1) << endl;
   
   if (storeOneBodyMatrices == true)
     {
@@ -178,21 +198,22 @@ void TightBindingModelKagomeLattice::CoreComputeBandStructure(long minStateIndex
 	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
 	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	    {
-	      KX = this->GetProjectedMomentum(kx, ky, 0);
-	      KY = this->GetProjectedMomentum(kx, ky, 1);
+	      KX = this->ProjectedMomenta[Index] [0];
+	      KY = this->ProjectedMomenta[Index] [1];
+
 	      Complex HAB (-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
-	      HAB *= cos (KX);
+	      HAB *= cos (KX*0.5);
 	      Complex HAC(-2.0 * this->NNHopping, 2.0 * this->NNSpinOrbit);
-	      HAC *= cos (KY);
+	      HAC *= cos (KY*0.5);
 	      Complex HBC(-2.0 * this->NNHopping, -2.0 * this->NNSpinOrbit);
-	      HBC *= cos(KX - KY);
+	      HBC *= cos((KX - KY)*0.5);
 	      
 	      Complex HAB2 (-2.0 * this->NextNNHopping, 2.0 * this->NextNNSpinOrbit);
-	      HAB2 *= cos (KX - 2.0 * KY);
+	      HAB2 *= cos ((KX - 2.0 * KY)*0.5);
 	      Complex HAC2 (-2.0 * this->NextNNHopping, -2.0 * this->NextNNSpinOrbit);
-	      HAC2 *= cos (2.0 * KX - KY);
+	      HAC2 *= cos ((2.0 * KX - KY)*0.5);
 	      Complex HBC2 (-2.0 * this->NextNNHopping, 2.0  *  this->NextNNSpinOrbit);
-	      HBC2 *= cos (KX + KY);
+	      HBC2 *= cos ((KX + KY)*0.5);
 	      
 	      HAB += HAB2;
 	      HAC += HAC2;
