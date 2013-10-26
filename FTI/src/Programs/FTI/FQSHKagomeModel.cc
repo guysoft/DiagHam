@@ -11,6 +11,7 @@
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -466,16 +467,28 @@ int main(int argc, char** argv)
 													  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
 													  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
 													  Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-													  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), TimeReversalFlag, Memory);
+													  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {
 		      TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-										    Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
-										    Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
-		      Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,
-														Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), TightBindingModel, 		     
-														Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), TimeReversalFlag, Memory);
+									      Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
+									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+		      if (Manager.GetBoolean("three-body") == true)
+			{
+			  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+														       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),
+														       TightBindingModel, Manager.GetBoolean("flat-band"), TimeReversalFlag, 
+														       Architecture.GetArchitecture(), Memory);
+			}
+		      else
+			{
+			  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,
+														    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+														    Manager.GetDouble("w-potential"), TightBindingModel,
+														    Manager.GetBoolean("flat-band"), TimeReversalFlag, 
+														    Architecture.GetArchitecture(), Memory);
+			}
 		    }
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, Sz);

@@ -5,7 +5,7 @@
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
-//                          class author: Yinghai Wu                          //
+//                          class author: Ying-Hai Wu                         //
 //                                                                            //
 //                  class of Hofstadter model with any Chern number           //
 //                            and two body interaction                        //
@@ -534,6 +534,8 @@ Complex HofstadterWithAnyChernModelThreeBodyHamiltonian::ThreeBodyMatrixElementC
             }
             
             // no inter-color term
+            
+            Result+=Intra;
         }
     }
     

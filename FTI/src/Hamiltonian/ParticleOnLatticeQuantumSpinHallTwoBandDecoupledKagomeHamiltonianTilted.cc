@@ -58,12 +58,18 @@ using std::ostream;
 // uPotential = strength of the repulsive two body neareast neighbor interaction
 // vPotential = strength of the repulsive on site two body interaction between opposite spins
 // wPotential = strength of the repulsive two body neareast neighbor interaction between opposite spins
+// tightBindingModel = pointer to the tight binding model of the first copy (must be in Bloch form)
 // flatBandFlag = use flat band model
+// timeReversalFlag = apply thge time reversal symmetry on the second copy of the tight binding model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, bool timeReversalFlag, long memory)
+ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, 
+																		 int nbrParticles, int nbrSiteX, 
+																		 int nbrSiteY, double uPotential, 
+																		 double vPotential, double wPotential, 
+																		 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, bool timeReversalFlag, 
+																		 AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
