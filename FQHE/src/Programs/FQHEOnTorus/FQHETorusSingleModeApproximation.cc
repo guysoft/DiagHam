@@ -177,7 +177,8 @@ int main(int argc, char** argv)
       RealVector TmpState(TargetSpace->GetHilbertSpaceDimension());
       for (int m = 0; m < MaxMomentum; ++m)
 	{
-	  ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + ResultingYMomentum) % MaxMomentum, m);
+	  cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
+	  ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
 	  TmpOperator.Multiply(InputState, TmpState);
 	  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
 	  sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, m);

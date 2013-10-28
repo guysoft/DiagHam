@@ -82,6 +82,7 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateKyMax = new int [this->HilbertSpaceDimension];
   cout << this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0) << endl;
+  
 #ifdef TEST_BOSONONTORUS_SHORT
   for (int i = 0; i<this->HilbertSpaceDimension; ++i)
     this->PrintState(cout,i)<<endl;
@@ -133,7 +134,7 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum, int moment
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0, 0);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 #ifdef TEST_BOSONONTORUS_SHORT
-  for (int i = 0; i<this->HilbertSpaceDimension; ++i)
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
     this->PrintState(cout,i)<<endl;
 #endif
   this->GenerateLookUpTable(1000000);
