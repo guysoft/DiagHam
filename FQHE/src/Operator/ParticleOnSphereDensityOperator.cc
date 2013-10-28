@@ -261,7 +261,7 @@ Complex ParticleOnSphereDensityOperator::PartialMatrixElement (ComplexVector& V1
 	}
       else
 	{
-	  int TmpIndex;
+	  long TmpIndex;
 	  double TmpCoefficient = 0.0;
 	  for (long i = firstComponent; i < Dim; ++i)
 	    {
@@ -296,6 +296,18 @@ ComplexVector& ParticleOnSphereDensityOperator::LowLevelAddMultiply(ComplexVecto
 	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
 	    }
 	}
+      else
+	{
+	  int TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  int Last = firstComponent + nbrComponent;;
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		vDestination[TmpIndex] += vSource[i] * TmpCoefficient;
+	    }
+	}
     }
   else
     {
@@ -305,6 +317,18 @@ ComplexVector& ParticleOnSphereDensityOperator::LowLevelAddMultiply(ComplexVecto
 	  for (long i = firstComponent; i < Last; ++i)
 	    {
 	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
+	    }
+	}
+      else
+	{
+	  long TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  long Last = ((long) firstComponent) + ((long) nbrComponent);
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		vDestination[TmpIndex] += vSource[i] * TmpCoefficient;
 	    }
 	}
     }
