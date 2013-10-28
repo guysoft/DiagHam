@@ -11,6 +11,8 @@
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
 
+#include "Operator/ParticleOnSphereDensityOperator.h"
+
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithDiskStorage.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
@@ -80,14 +82,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
   (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum momentum for a single particle", 18);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "sma");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "sma");
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "total momentum in the y direction of the ground state (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "kx", "momentum along x direction of the density operator (negative if none)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "ky", "momentum along y direction of the density operator (negative if none)", -1);
-
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ky", "momentum along y direction of the density operator (negative if none)", -1);  
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
-					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 
-					      -1);
+					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
+  (*SystemGroup) += new BooleanOption ('\n', "compute-bilinears", "compute the action of all the bilinear operators on the ground state");
   (*SystemGroup) += new SingleDoubleOption   ('c', "costheta", "cosine of the angle between the sides of torus (between 0 and 1, 0 for rectangular cell)", 0.0);
   (*MiscGroup) += new SingleStringOption('\n', "ground-state", "name of the file containing the ground state vector upon which rho_k acts");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
@@ -99,28 +100,28 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type QHEBosonsDelta -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int YMomentum = ((SingleIntegerOption*) Manager["y-momentum"])->GetInteger();
-  int Kx = ((SingleIntegerOption*) Manager["kx"])->GetInteger();
-  int Ky = ((SingleIntegerOption*) Manager["ky"])->GetInteger();
-  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
-  double CosTheta = ((SingleDoubleOption*) Manager["costheta"])->GetDouble();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int YMomentum = Manager.GetInteger("y-momentum");
+  int Kx = Manager.GetInteger("kx");
+  int Ky = Manager.GetInteger("ky");
+  double XRatio = Manager.GetDouble("ratio");
+  double CosTheta = Manager.GetDouble("costheta");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
 
   int ResultingYMomentum = (YMomentum + Ky) % MaxMomentum; 
 
-  char* OutputNameLz = new char [512];
+  char* OutputNamePrefix = new char [512];
   ParticleOnTorus* TotalSpace = 0;
   ParticleOnTorus* TargetSpace = 0;
-  if (((BooleanOption*) Manager["boson"])->GetBoolean() == true)
+  if (Manager.GetBoolean("boson") == true)
     {
 #ifdef  __64_BITS__
       if ((MaxMomentum + NbrParticles - 1) < 63)
@@ -138,8 +139,7 @@ int main(int argc, char** argv)
 	    TargetSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, ResultingYMomentum);
             ((BosonOnTorus*)TotalSpace)->SetTargetSpace(TargetSpace);
 	  }
-
-        sprintf (OutputNameLz, "bosons_sma_n_%d_2s_%d_ky_%d.0.vec", NbrParticles, MaxMomentum, ResultingYMomentum);
+      sprintf (OutputNamePrefix, "bosons_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
     }
   else
     {
@@ -147,21 +147,10 @@ int main(int argc, char** argv)
       TargetSpace = new FermionOnTorus (NbrParticles, MaxMomentum, ResultingYMomentum);
       ((FermionOnTorus*)TotalSpace)->SetTargetSpace(TargetSpace);
 
-      sprintf (OutputNameLz, "fermions_sma_n_%d_2s_%d_ky_%d.0.vec", NbrParticles, MaxMomentum, ResultingYMomentum);
+      sprintf (OutputNamePrefix, "fermions_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
     }
 
 
-
-
-  cout << "*******************************************************************"<<endl;
-  cout << " Calculating Psi_k = rho_k Psi_0, where rho_k = sum_i exp(ik.R_i) " << endl;
-  cout << " Ground state is at Ky= " << YMomentum << " Resulting state is at Ky= " << ResultingYMomentum << endl;
-  cout << "*******************************************************************"<<endl;
-
-  cout << " Target Hilbert space dimension = " << TargetSpace->GetHilbertSpaceDimension() << endl;
-
-  cout << " Groundstate Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
- 
   Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
   char* StateFileName = Manager.GetString("ground-state");
@@ -177,6 +166,37 @@ int main(int argc, char** argv)
       cout << "error while reading " << StateFileName << endl;
       return -1;
     }
+  if (InputState.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
+    {
+      cout << "error: vector and Hilbert-space have unequal dimensions " << InputState.GetVectorDimension() << " "<< TotalSpace->GetHilbertSpaceDimension() << endl;
+      return -1;
+    }
+
+  if (Manager.GetBoolean("compute-bilinears"))
+    {
+      RealVector TmpState(TargetSpace->GetHilbertSpaceDimension());
+      for (int m = 0; m < MaxMomentum; ++m)
+	{
+	  ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + ResultingYMomentum) % MaxMomentum, m);
+	  TmpOperator.Multiply(InputState, TmpState);
+	  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+	  sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, m);
+	  TmpState.WriteVector(OutputNameLz);
+	}
+      return 0;
+    }
+
+
+
+  cout << "*******************************************************************"<<endl;
+  cout << " Calculating Psi_k = rho_k Psi_0, where rho_k = sum_i exp(ik.R_i) " << endl;
+  cout << " Ground state is at Ky= " << YMomentum << " Resulting state is at Ky= " << ResultingYMomentum << endl;
+  cout << "*******************************************************************"<<endl;
+
+  cout << " Target Hilbert space dimension = " << TargetSpace->GetHilbertSpaceDimension() << endl;
+
+  cout << " Groundstate Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
+ 
   ComplexVector State(InputState.GetVectorDimension(), true);
   for (int i = 0; i < InputState.GetVectorDimension(); i++)
    {
@@ -187,11 +207,6 @@ int main(int argc, char** argv)
    }
   
 
-  if (State.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
-    {
-      cout << "error: vector and Hilbert-space have unequal dimensions "<<State.GetVectorDimension() << " "<< TotalSpace->GetHilbertSpaceDimension() << endl;
-      return -1;
-    }
 
   double InvRatio = 1.0 / XRatio;
   double SinTheta = sqrt(1.0 - CosTheta * CosTheta);
@@ -238,6 +253,8 @@ int main(int argc, char** argv)
     cout << "Warning: Norm " << TmpNorm << endl;
   
 
+  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+  sprintf (OutputNameLz, "%s.0.vec", OutputNamePrefix);
   TmpState.WriteVector(OutputNameLz);
 
    

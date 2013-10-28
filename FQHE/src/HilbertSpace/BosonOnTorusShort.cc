@@ -168,7 +168,7 @@ BosonOnTorusShort::BosonOnTorusShort(const BosonOnTorusShort& bosons)
   this->KyMax = bosons.KyMax;
   this->NbrKyValue = bosons.NbrKyValue;
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
   this->MomentumModulo = bosons.MomentumModulo;
   this->StateKyMax = bosons.StateKyMax;

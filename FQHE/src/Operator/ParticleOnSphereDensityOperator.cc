@@ -192,23 +192,46 @@ RealVector& ParticleOnSphereDensityOperator::LowLevelAddMultiply(RealVector& vSo
 {
   if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
     {
+      int Last = firstComponent + nbrComponent;;
       if (this->OperatorIndexDagger == this->OperatorIndex)
 	{
-	  int Last = firstComponent + nbrComponent;;
 	  for (int i = firstComponent; i < Last; ++i)
 	    {
 	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
+	      cout << i << " " <<  vSource[i] << " " << this->Particle->AdA(i, this->OperatorIndex) << " " << vDestination[i] << endl;
+	    }
+	}
+      else
+	{
+	  int TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		vDestination[TmpIndex] +=  vSource[i] * TmpCoefficient;
 	    }
 	}
     }
   else
     {
+      long Last = ((long) firstComponent) + ((long) nbrComponent);
       if (this->OperatorIndexDagger == this->OperatorIndex)
 	{
-	  long Last = ((long) firstComponent) + ((long) nbrComponent);
 	  for (long i = firstComponent; i < Last; ++i)
 	    {
 	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
+	    }
+	}
+      else
+	{
+	  long TmpIndex;
+	  double TmpCoefficient = 0.0;
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
+	      if (TmpCoefficient != 0.0)
+		vDestination[TmpIndex] +=  vSource[i] * TmpCoefficient;
 	    }
 	}
     }
