@@ -43,4 +43,5 @@ TightBindingModelTimeReversalCheckerboardLattice.cc \
 TightBindingModelTimeReversalBHZLattice.cc \
 TightBindingModelBHZLattice.cc \
 TightBindingModelTimeReversalKagomeLatticeTilted.cc \
-TightBindingModelOFLGenericLattice.cc
+TightBindingModelOFLGenericLattice.cc \
+TightBindingModelCylinderTwoOrbitalSquareLattice.cc

@@ -57,6 +57,11 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian
   // strength of the repulsive on site three body interaction between opposite spins
   double VPotential;
 
+  // strength of the repulsive on site two body interaction between identical spins
+  double TwoBodyUPotential;
+  // strength of the repulsive on site two body interaction between opposite spins
+  double TwoBodyVPotential;
+
   // use flat band model
   bool FlatBand;
   // use two copies of Kagome with time reversal symmetry
@@ -119,6 +124,36 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian
 						int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
 						int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
 						int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
+  
+  // compute the transformation basis contribution to the interaction matrix element
+  // 
+  // oneBodyBasis = array of transformation basis matrices
+  // momentumIndex1 = compact momentum index of the first creation operator
+  // momentumIndex2 = compact momentum index of the second creation operator
+  // momentumIndex3 = compact momentum index of the third creation operator
+  // momentumIndex4 = compact momentum index of the first annihilation operator
+  // momentumIndex5 = compact momentum index of the second annihiliation operator
+  // momentumIndex6 = compact momentum index of the third annihiliation operator
+  // energyIndex1 = energy index of the first creation operator
+  // energyIndex2 = energy index of the second creation operator
+  // energyIndex3 = energy index of the third creation operator
+  // energyIndex4 = energy index of the first annihilation operator
+  // energyIndex5 = energy index of the second annihiliation operator
+  // energyIndex6 = energy index of the third annihiliation operator
+  // siteIndex1 = site index of the first creation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+  // siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+  // siteIndex3 = site index of the third creation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+  // siteIndex4 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+  // siteIndex5 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+  // siteIndex6 = site index of the third annihiliation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+  Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+						int momentumIndex1, int momentumIndex2, int momentumIndex3, 
+						int momentumIndex4, int momentumIndex5, int momentumIndex6, 
+						int energyIndex1, int energyIndex2, int energyIndex3, 
+						int energyIndex4, int energyIndex5, int energyIndex6,
+						int siteIndex1, int siteIndex2, int siteIndex3, 
+						int siteIndex4, int siteIndex5, int siteIndex6);
+
 
 };
 
@@ -144,6 +179,41 @@ inline Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHa
 																 int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
 {
   return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
+}
+
+// compute the transformation basis contribution to the interaction matrix element
+// 
+// oneBodyBasis = array of transformation basis matrices
+// momentumIndex1 = compact momentum index of the first creation operator
+// momentumIndex2 = compact momentum index of the second creation operator
+// momentumIndex3 = compact momentum index of the third creation operator
+// momentumIndex4 = compact momentum index of the first annihilation operator
+// momentumIndex5 = compact momentum index of the second annihiliation operator
+// momentumIndex6 = compact momentum index of the third annihiliation operator
+// energyIndex1 = energy index of the first creation operator
+// energyIndex2 = energy index of the second creation operator
+// energyIndex3 = energy index of the third creation operator
+// energyIndex4 = energy index of the first annihilation operator
+// energyIndex5 = energy index of the second annihiliation operator
+// energyIndex6 = energy index of the third annihiliation operator
+// siteIndex1 = site index of the first creation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+// siteIndex2 = site index of the second creation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+// siteIndex3 = site index of the third creation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+// siteIndex4 = site index of the first annihilation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+// siteIndex5 = site index of the second annihiliation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+// siteIndex6 = site index of the third annihiliation operator (0=Aup, 1=Bup, 2=Cup, 3=Adown, 4=Bdown, 5=Cdown)
+
+inline Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+																 int momentumIndex1, int momentumIndex2, int momentumIndex3, 
+																 int momentumIndex4, int momentumIndex5, int momentumIndex6, 
+																 int energyIndex1, int energyIndex2, int energyIndex3, 
+																 int energyIndex4, int energyIndex5, int energyIndex6,
+																 int siteIndex1, int siteIndex2, int siteIndex3, 
+																 int siteIndex4, int siteIndex5, int siteIndex6)
+{
+  return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4] * 
+	  Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex5][energyIndex5][siteIndex5] * 
+	  Conj(oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3]) * oneBodyBasis[momentumIndex6][energyIndex6][siteIndex6]);
 }
 
 
