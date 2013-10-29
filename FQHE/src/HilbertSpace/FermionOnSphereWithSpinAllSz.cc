@@ -293,6 +293,7 @@ int FermionOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffi
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
+  unsigned long TmpState2=TmpState;
   if (NewHighestBit == n)
     while ((NewHighestBit > 0)&&((TmpState >> NewHighestBit) == 0))
       --NewHighestBit;
@@ -316,7 +317,8 @@ int FermionOnSphereWithSpinAllSz::AduAd (int index, int m, int n, double& coeffi
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m);
-  return this->FindStateIndex(TmpState, NewHighestBit);
+//  return this->FindStateIndex(TmpState, NewHighestBit);
+  return this->FindStateIndex(TmpState,NewHighestBit);
 }
 
 // apply a^+_m_d a_n_u operator to a given state 
@@ -373,7 +375,8 @@ int FermionOnSphereWithSpinAllSz::AddAu (int index, int m, int n, double& coeffi
 #endif
     }
   TmpState |= (((unsigned long) (0x1)) << m);
-  return this->FindStateIndex(TmpState, NewHighestBit);
+//  return this->FindStateIndex(TmpState, NewHighestBit);
+  return this->FindStateIndex(TmpState,NewHighestBit);
 }
   
 
@@ -613,5 +616,201 @@ double FermionOnSphereWithSpinAllSz::MeanSzValue(RealVector& state)
   return (FinalState*state);
 }
 
+// Artificially extend a state of a U(1) Hilbert space to a SU(2) space with all sz sectors
+//
+// state = state that needs to be projected
+// u1space = U(1) space of the input state
+// return value = input state expression in the SU(2) basis
 
+ComplexVector FermionOnSphereWithSpinAllSz::U1ToSU2AllSz(ComplexVector& state, FermionOnSphere& u1space)
+{
+  ComplexVector FinalState(this->GetHilbertSpaceDimension(), true);
+  FinalState.ClearVector();
+  int U1Dimension=state.GetVectorDimension();
+  unsigned long U1BasisState;
+  unsigned long SU2BasisState;
+  unsigned long TmpState;
+
+  for (int j = 0; j < U1Dimension; ++j)    
+    {
+      U1BasisState = u1space.StateDescription[j];
+      SU2BasisState = 0x0ul;
+
+      // Print U1BasisState
+//      cout << "U1BasisState number " << j << ": " << bitset<sizeof(unsigned long)*8>(U1BasisState) << " -> SU2BasisState: ";
+      for(int k = 0; k < this->NbrLzValue; ++k)
+      {
+	TmpState = U1BasisState % 2; 
+	SU2BasisState += TmpState << (2*k+1);
+	U1BasisState >>= 1;
+      }
+      // Print SU2BasisState
+//      cout << bitset<sizeof(unsigned long)*8>(SU2BasisState) << endl;
+      
+      int TmpLzMax = this->NbrLzValue << 1;
+      while ((SU2BasisState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax; //TmpLzMax = maximum Lz with non zero occupation in TmpState
+
+//      int index = this->CarefulFindStateIndex(SU2BasisState,-1);
+      int index = this->FindStateIndex(SU2BasisState,TmpLzMax);
+      FinalState[index]=state[j];
+    }
+  
+//  FinalState /= FinalState.Norm();
+  return FinalState;  
+}
+
+// Artificially extend a state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+//
+// state = state that needs to be projected
+// su2space = SU(2) space with fixed sz of the input state
+// return value = input state expression in the SU(2) basis
+
+ComplexVector FermionOnSphereWithSpinAllSz::SU2ToSU2AllSz(ComplexVector& state, FermionOnSphereWithSpin& su2space)
+{
+  ComplexVector FinalState(this->GetHilbertSpaceDimension(), true);
+  FinalState.ClearVector();
+  int SU2Dimension=state.GetVectorDimension();
+  unsigned long SU2BasisState;
+  unsigned long TmpState;
+
+  for (int j = 0; j < SU2Dimension; ++j)    
+    {
+      SU2BasisState = su2space.StateDescription[j];
+     
+      int TmpLzMax = this->NbrLzValue << 1;
+      while ((SU2BasisState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax; //TmpLzMax = maximum Lz with non zero occupation in TmpState
+
+//      int index = this->CarefulFindStateIndex(SU2BasisState,-1);
+      int index = this->FindStateIndex(SU2BasisState,TmpLzMax);
+      FinalState[index]=state[j];
+    }
+  
+//  FinalState /= FinalState.Norm();
+  return FinalState;  
+}
+
+// convert a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+//
+// initialState = state to transform  
+// targetState = vector where the transformed state has to be stored
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+
+void FermionOnSphereWithSpinAllSz::TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis)
+{
+  int* TmpMomentumIndices = new int [this->NbrFermions];
+  int* TmpSpinIndices = new int [this->NbrFermions];
+  int* TmpSpinIndices2 = new int [this->NbrFermions];
+  targetState.ClearVector();
+//  int Dim = initialState.GetVectorDimension();
+  // ith state of the basis
+//  for (int i = 0; i < 1; ++i)
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      unsigned long Tmp;
+      int TmpIndex = 0;
+      for (int j = this->LzMax; j >= 0; --j)
+	{
+	  Tmp = (TmpState >> (j << 1)) & 0x3ul;;
+	  if ((Tmp & 0x2ul) != 0x0ul) // If there is a particle with momentum j and spin down in the ith state of the basis 
+	    {
+	      TmpMomentumIndices[TmpIndex] = j; // An array which gathers all momenta
+	      TmpSpinIndices[TmpIndex] = 1; // An array which gathers all spins: 1 = down
+	      ++TmpIndex;
+	    }
+	  if ((Tmp & 0x1ul) != 0x0ul) // If there is a particle with momentum j and spin up in the ith state of the basis  
+	    {
+	      TmpMomentumIndices[TmpIndex] = j;// An array which gathers all momenta
+	      TmpSpinIndices[TmpIndex] = 0;// An array which gathers all spins: 0 = up
+	      ++TmpIndex;
+	    }	  
+	}	
+	// Print state an arrays
+//	cout << "Basis state number = " <<  i << ": " << bitset<sizeof(unsigned long)*8>(this->StateDescription[i]) << endl;
+//	cout << "Momentum indices: " << endl;
+//	for( int k = 0; k < this->NbrFermions ; ++k) 
+//	  cout << TmpMomentumIndices[k] << " ";
+//	cout <<endl;
+//	cout << "SpinIndices: " << endl;
+//	for( int k = 0; k < this->NbrFermions ; ++k) 
+//	  cout << TmpSpinIndices[k] << " ";
+//	cout <<endl;
+
+	// initialState[i]: coefficient of the state to be transformed on the ith vector of the basis, has to multiply the final state
+      this->TransformOneBodyBasisRecursive(targetState, initialState[i], 0, TmpMomentumIndices, TmpSpinIndices, TmpSpinIndices2, oneBodyBasis);
+    }
+  delete[] TmpMomentumIndices;
+  delete[] TmpSpinIndices;
+  delete[] TmpSpinIndices2;
+}
+
+// recursive part of the convertion from a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+//
+// targetState = vector where the transformed state has to be stored
+// coefficient = current coefficient to assign
+// position = current particle consider in the n-body state
+// momentumIndices = array that gives the momentum partition of the initial n-body state
+// initialSpinIndices = array that gives the spin dressing the initial n-body state
+// currentSpinIndices = array that gives the spin dressing the current transformed n-body state
+// oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+
+void FermionOnSphereWithSpinAllSz::TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+								int position, int* momentumIndices, int* initialSpinIndices, int* currentSpinIndices, ComplexMatrix* oneBodyBasis) 
+{
+//   cout << position << " : " << endl;
+//   for (int i = 0; i < position; ++i)
+//     cout << currentSpinIndices[i] << " ";
+//   cout << endl;
+  if (position == this->NbrFermions)
+    {
+      unsigned long TmpState = 0x0ul;
+      unsigned long TmpState2;
+      unsigned long Mask = 0x0ul;
+      unsigned long MaskSign = 0x0ul;
+      for (int i = 0; i < this->NbrFermions; ++i)
+	{
+	  Mask = 0x1ul << ((momentumIndices[i] << 1) + currentSpinIndices[i]); // Mask = 00...0100...0 : one fermion state in the second quantized basis
+	  if ((TmpState & Mask) != 0x0ul)
+	    return;
+	  // SignMask computation -----------------------------------
+	  TmpState2 = TmpState & (Mask - 0x1ul); 
+#ifdef __64_BITS__
+	  TmpState2 ^= TmpState2 >> 32;
+#endif
+	  TmpState2 ^= (TmpState2 >> 16);
+	  TmpState2 ^= (TmpState2 >> 8);
+	  TmpState2 ^= (TmpState2 >> 4);
+	  TmpState2 ^= (TmpState2 >> 2);
+	  MaskSign ^= (TmpState2 ^ (TmpState2 >> 1)) & 0x1ul;
+	  // End of SignMask computation -----------------------------------
+
+	  TmpState |= Mask; //set bit corresponding to the current fermion state to 1 in TmpState
+	}
+      int TmpLzMax = this->NbrLzValue << 1;
+      while ((TmpState >> TmpLzMax) == 0x0ul)
+	--TmpLzMax; //TmpLzMax = maximum Lz with non zero occupation in TmpState
+      int Index = this->FindStateIndex(TmpState, TmpLzMax);
+      if (Index < this->HilbertSpaceDimension)
+	{
+	  if (MaskSign == 0ul)
+	    {
+	      targetState[Index] += coefficient;
+	    }
+	  else
+	    {
+	      targetState[Index] -= coefficient;
+	    }
+	}
+      return;      
+    }
+  else
+    {
+      currentSpinIndices[position] = 0;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSpinIndices[position]][1]), position + 1, momentumIndices, initialSpinIndices, currentSpinIndices, oneBodyBasis);
+      currentSpinIndices[position] = 1;
+      this->TransformOneBodyBasisRecursive(targetState, coefficient * (oneBodyBasis[momentumIndices[position]][1 - initialSpinIndices[position]][0]), position + 1, momentumIndices, initialSpinIndices, currentSpinIndices, oneBodyBasis);
+    }
+}
 

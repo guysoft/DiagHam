@@ -91,6 +91,7 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+
   // apply a^+_m_u a_n_d operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -135,6 +136,39 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // state = given state
   virtual double MeanSzValue(RealVector& state);
 
+  // Artificially extend a state of a U(1) Hilbert space to a SU(2) space with all sz sectors
+  //
+  // state = state that needs to be projected
+  // u1space = U(1) space of the input state
+  // return value = input state expression in the SU(2) basis
+  ComplexVector U1ToSU2AllSz(ComplexVector& state, FermionOnSphere& u1space);
+
+  // Artificially extend a state of a SU(2) Hilbert space with fixed Sz to a SU(2) space with all sz sectors
+  //
+  // state = state that needs to be projected
+  // su2space = SU(2) space with fixed sz of the input state
+  // return value = input state expression in the SU(2) basis
+  ComplexVector SU2ToSU2AllSz(ComplexVector& state, FermionOnSphereWithSpin& su2space);
+
+  // convert a state from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+  //
+  // initialState = state to transform  
+  // targetState = vector where the transformed state has to be stored
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  void TransformOneBodyBasis(ComplexVector& initialState, ComplexVector& targetState, ComplexMatrix* oneBodyBasis);
+
+  // recursive part of the convertion from a SU(2) basis to another one, transforming the one body basis in each momentum sector
+  //
+  // targetState = vector where the transformed state has to be stored
+  // coefficient = current coefficient to assign
+  // position = current particle consider in the n-body state
+  // momentumIndices = array that gives the momentum partition of the initial n-body state
+  // initialSU2Indices = array that gives the spin dressing the initial n-body state
+  // currentSU2Indices = array that gives the spin dressing the current transformed n-body state
+  // oneBodyBasis = array that gives the unitary matrices associated to each one body transformation, one per momentum sector
+  void TransformOneBodyBasisRecursive(ComplexVector& targetState, Complex coefficient,
+								  int position, int* momentumIndices, int* initialSU2Indices, int* currentSU2Indices, ComplexMatrix* oneBodyBasis);
+
 
  protected:
 
@@ -156,7 +190,7 @@ class FermionOnSphereWithSpinAllSz :  public FermionOnSphereWithSpin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int lzMax, int totalLz, long pos);
-
+  
 };
 
 #endif

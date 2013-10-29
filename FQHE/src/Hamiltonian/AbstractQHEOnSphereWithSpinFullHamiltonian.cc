@@ -173,7 +173,6 @@ long AbstractQHEOnSphereWithSpinFullHamiltonian::PartialFastMultiplicationMemory
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
   int LastComponent = lastComponent + firstComponent;
   this->EvaluateMNTwoBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
-  this->EvaluateMNOneBodyFastMultiplicationMemoryComponent(TmpParticles, firstComponent, LastComponent, Memory);
   delete TmpParticles;
   return Memory;
 }

@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "AbstractZDensityProfile.h"
+#include "TriangularWellEigenfunction.h"
 
 // evalute pseudopotentials for coulomb interaction in a given Landau level
 //
@@ -133,6 +134,15 @@ double** Evaluate2LLSphereDeltaPseudopotentials(int nbrFlux, bool quiet);
 // quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
 // return value = array that conatins the pseudopotentials
 double** Evaluate2LLSphereCoulombPseudopotentials(int nbrFlux, bool quiet);
+
+// evalute pseudopotentials for Coulomb interaction, with triangular quantum well confinement, on Sphere 
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// width = width of the well, in units of the magnetic length
+// slope = slope of the triangular well, in energy unit per length unit
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// return value = array that contains the pseudopotentials
+double* EvaluateTriangularWellPseudopotentials(int nbrFlux, int landauLevel, double bias, double slope, int* pseudospins, int nbrPointsInteg, bool quiet);
 
 
 #endif //PSEUDOPOTENTIALS_H

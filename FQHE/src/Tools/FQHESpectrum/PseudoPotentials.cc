@@ -18,10 +18,11 @@
 #include <cstdlib>
 #include <string>
 
-
+using std::abs;
 using std::cout;
 using std::endl;
 using std::string;
+using std::sin;
 
 // evalute pseudopotentials for coulomb interaction in a given Landau level
 //
@@ -833,5 +834,85 @@ double** Evaluate2LLSphereCoulombPseudopotentials(int nbrFlux, bool quiet)
 	
   delete [] CGArray;
 	     
+  return Pseudopotentials;
+}
+
+
+
+// evaluate pseudopotentials for triangular well on sphere using the midpoint method
+//
+// nbrFlux = number of flux quanta (i.e. twice the maximum momentum on LLL)
+// width = thickness of the quantum well in units of the magnetic length
+// bias = bias of the quantum well in magnetic energy unit
+// quiet = indicate whether Coulomb Pseudopotentials should be printed on screen
+// pseudospins = array that contains pseudospins (0 for up, 1 for down) ordered as written below
+// return value = array that contains pseudopotentials
+
+double* EvaluateTriangularWellPseudopotentials(int nbrFlux, int landauLevel, double width, double bias, int* pseudospins, int nbrPointsInteg, bool quiet)
+{
+  cout.precision(14);
+
+  int MaxMomentum = nbrFlux + (landauLevel << 1);
+  double* Pseudopotentials = new double [MaxMomentum+1];
+  int m;
+  for ( m=0; m <= MaxMomentum; ++m ) Pseudopotentials[m]=0; 
+
+  // One has to compute \int_0^w dz1 \int_0^w dz2 Psi_p1(z1) Psi_p2(z2) Vm(z1-z2) Psi_p3(z1) Psi_p4(z2)
+  // the index (1/2) being the pseudospin, i.e. the confinement subband number here
+  // and Vm(z) is the mth pseudopotential of the bilayer with distance z
+  double delta_z= width / nbrPointsInteg;
+  double z,Vm;
+  double integrand1,integrand2;
+  
+  double z1,z2;
+  double* V;
+  int i,j;
+  if ( bias == 0 )  // Square quantum well: \psi_n(z)=\sqrt(2/w)\sin(n\pi x/w)
+  {
+    for ( i=0; i < nbrPointsInteg; ++i )
+    {
+      z1=(i+0.5)*delta_z;
+      integrand1=sin(M_PI*z1/width*(1.+pseudospins[0]))*sin(M_PI*z1/width*(1.+pseudospins[2]));
+      for ( j=0; j < nbrPointsInteg; ++j )
+        {
+          z2=(j+0.5)*delta_z;
+	  integrand2=sin(M_PI*z2/width*(1.+pseudospins[1]))*sin(M_PI*z2/width*(1.+pseudospins[3]));
+          z=abs(z1-z2);
+          V = EvaluatePseudopotentials(nbrFlux, landauLevel, z, true);// Bilayer pseudopotentials
+	  for ( m=0; m <= MaxMomentum; ++m) Pseudopotentials[m] += integrand1*integrand2*V[m] ;
+        }
+      //for ( m=0; m < nbrFlux; ++m) Pseudopotentials[m] *= integrand1 ;
+    }
+  
+    for ( m=0; m <= MaxMomentum; ++m) Pseudopotentials[m] *= 4*delta_z*delta_z/width/width ;
+  }
+  else
+  {
+    TriangularWellEigenfunction Well(width, bias);
+
+    for ( i=0; i < nbrPointsInteg; ++i )
+      {
+	z1=(i+0.5)*delta_z;
+	integrand1=Well.Eigenfunction(z1,pseudospins[0])*Well.Eigenfunction(z1,pseudospins[2]);
+	for ( j=0; j < nbrPointsInteg; ++j )
+	  {
+	    z2=(j+0.5)*delta_z;
+	    integrand2=Well.Eigenfunction(z2,pseudospins[1])*Well.Eigenfunction(z2,pseudospins[3]);
+	    z=abs(z1-z2);
+	    V = EvaluatePseudopotentials(nbrFlux, landauLevel, z, true);// Bilayer pseudopotentials
+	    for ( m=0; m <= MaxMomentum; ++m) Pseudopotentials[m] += integrand1*integrand2*V[m] ;
+	  }
+	//for ( m=0; m < nbrFlux; ++m) Pseudopotentials[m] *= integrand1 ;
+      }
+    
+    for ( m=0; m <= MaxMomentum; ++m) Pseudopotentials[m] *= delta_z*delta_z ;
+  }
+
+  if (quiet == false) 
+    {
+       for ( m=0; m <= MaxMomentum; ++m) 
+         cout << "V[" << m << "] = " << Pseudopotentials[m] << endl;	
+    }
+
   return Pseudopotentials;
 }
