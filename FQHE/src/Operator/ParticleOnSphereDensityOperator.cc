@@ -198,7 +198,6 @@ RealVector& ParticleOnSphereDensityOperator::LowLevelAddMultiply(RealVector& vSo
 	  for (int i = firstComponent; i < Last; ++i)
 	    {
 	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
-	      cout << i << " " <<  vSource[i] << " " << this->Particle->AdA(i, this->OperatorIndex) << " " << vDestination[i] << endl;
 	    }
 	}
       else

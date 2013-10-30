@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     }
 
   bool QuietFlag = Manager.GetBoolean("quiet");
-  bool Scalar = Manager.GetBoolean("scalar-product");
+  bool Scalar = Manager.GetBoolean("scalar-product") | Manager.GetBoolean("no-square");
 
   double Threshold = Manager.GetDouble("threshold");
   
@@ -115,15 +115,15 @@ int main(int argc, char** argv)
     for (int i=0; i<NbrVectors; ++i)    
       cout << "File "<<i<<"  "<<VectorFiles[i]<<endl;
 
-  Complex sp=0.0;
 
   int MaxVectors=(Manager.GetBoolean("no-cross")?1:NbrVectors);
 
   bool HaveComplex=Manager.GetBoolean("complex");
-  double TotalOverlap = 0.0;
   
   if (HaveComplex)
     {      
+      Complex sp = 0.0;
+      Complex TotalOverlap = 0.0;
       ComplexVector State1, State2;
       for (int i=0; i<MaxVectors; ++i)
 	{
@@ -163,8 +163,15 @@ int main(int argc, char** argv)
 		else
 		  for (int i=0; i<State1.GetVectorDimension(); ++i)
 		    sp+= Conj(State1[i])*State2[i];
-	      TotalOverlap += SqrNorm(sp);
-	      if (Scalar==false)
+	      if (Scalar == false)
+		{
+		  TotalOverlap += SqrNorm(sp);
+		}
+	      else
+		{
+		  TotalOverlap += sp;
+		}
+	      if (Scalar == false)
 		{
 		  if (QuietFlag == false)
 		    {
@@ -191,11 +198,30 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
+      if (Manager.GetBoolean("sum") == true)
+	{
+	  if (Scalar == false)
+	    {
+	      if (QuietFlag == false)
+		cout << "Total overlap = " << TotalOverlap.Re << endl;
+	      else
+		cout << TotalOverlap.Re << endl;
+	    }
+	  else
+	    {
+	      if (QuietFlag == false)
+		cout << "Total overlap = " << TotalOverlap << endl;
+	      else
+		cout << TotalOverlap << endl;
+	    }
+	}
     }
   else // real vectors
     {
+      double TotalOverlap = 0.0;
+      double sp = 0.0;
       RealVector State1, State2;
-      for (int i=0; i<MaxVectors; ++i)
+      for (int i=0; i < MaxVectors; ++i)
 	{
 	  if (State1.ReadVector (VectorFiles[i]) == false)
 	    {
@@ -228,12 +254,19 @@ int main(int argc, char** argv)
 		  sp+=fabs(State1[i]*State2[i]);
 	      else
 		sp = State1 *State2 ;
-	      TotalOverlap += SqrNorm(sp);
-	      if (Scalar==false)
+	      if (Scalar == false)
+		{
+		  TotalOverlap += SqrNorm(sp);
+		}
+	      else
+		{
+		  TotalOverlap += sp;
+		}
+	      if (Scalar == false)
 		{
 		  if (QuietFlag == false)
 		    {
-		      if (SqrNorm(sp)>=Threshold)
+		      if (SqrNorm(sp) >= Threshold)
 			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
 		    }
 		  else
@@ -243,22 +276,22 @@ int main(int argc, char** argv)
 		{
 		  if (QuietFlag == false)
 		    {
-		      if (fabs(sp.Re)>=Threshold)
-			cout << "<"<<i<<"|"<<j<<"> = " << sp.Re << endl;
+		      if (fabs(sp)>=Threshold)
+			cout << "<"<<i<<"|"<<j<<"> = " << sp << endl;
 		    }
 		  else
-		    cout << sp.Re << endl;
+		    cout << sp << endl;
 		}
 
 	    }
 	}
-    }
-  if (Manager.GetBoolean("sum") == true)
-    {
-      if (QuietFlag == false)
-	cout << "Total overlap = " << TotalOverlap << endl;
-      else
-	cout << TotalOverlap << endl;
+      if (Manager.GetBoolean("sum") == true)
+	{
+	  if (QuietFlag == false)
+	    cout << "Total overlap = " << TotalOverlap << endl;
+	  else
+	    cout << TotalOverlap << endl;
+	}
     }
   return 0;
 }

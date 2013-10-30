@@ -43,6 +43,8 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include "Tools/FQHEFiles/FQHEOnTorusFileTools.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <math.h>
@@ -51,11 +53,13 @@
 #include <fstream>
 #include <cstring> 
 
+
 using std::cout;
 using std::cin;
 using std::endl;
 using std::ofstream;
 using std::ios;
+
 
 int main(int argc, char** argv)
 {
@@ -80,10 +84,10 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistics (default value))");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
-  (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum momentum for a single particle", 18);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (override autodetection from input file name if non zero)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('l', "max-momentum", "maximum momentum for a single particle (override autodetection from input file name if non zero)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "total momentum in the y direction of the ground state (negative if none or override autodetection from input file name if greater or equal to zero)", -1);
   (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "sma");
-  (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "total momentum in the y direction of the ground state (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "kx", "momentum along x direction of the density operator (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky", "momentum along y direction of the density operator (negative if none)", -1);  
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
@@ -109,19 +113,49 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles");
   int MaxMomentum = Manager.GetInteger("max-momentum");
   int YMomentum = Manager.GetInteger("y-momentum");
+  bool Statistics = true;
+  if (Manager.GetBoolean("boson") == true)
+    {
+      Statistics = false;
+    }
+  if (FQHEOnTorusFindSystemInfoFromVectorFileName(Manager.GetString("ground-state"),
+						  NbrParticles, MaxMomentum, YMomentum, Statistics) == false)
+    {
+      cout << "error while retrieving system parameters from file name " << Manager.GetString("ground-state") << endl;
+      return -1;
+    }
+  cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Ky=" << YMomentum << " ";
+  if (Statistics == false)
+    {
+      cout << "bosons";
+    }
+  else
+    {
+      cout << "fermions";
+    }
+  cout << endl;
+
   int Kx = Manager.GetInteger("kx");
   int Ky = Manager.GetInteger("ky");
+  if (Manager.GetBoolean("compute-bilinears") == true)
+    {
+      if (Ky < 0)
+	{
+	  Ky = 0;
+	}
+    }
+  int ResultingYMomentum = (YMomentum + Ky) % MaxMomentum; 
+
   double XRatio = Manager.GetDouble("ratio");
   double CosTheta = Manager.GetDouble("costheta");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
 
-  int ResultingYMomentum = (YMomentum + Ky) % MaxMomentum; 
-
   char* OutputNamePrefix = new char [512];
   ParticleOnTorus* TotalSpace = 0;
   ParticleOnTorus* TargetSpace = 0;
-  if (Manager.GetBoolean("boson") == true)
+  
+  if (Statistics == false)
     {
 #ifdef  __64_BITS__
       if ((MaxMomentum + NbrParticles - 1) < 63)

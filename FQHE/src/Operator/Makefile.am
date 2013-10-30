@@ -26,4 +26,5 @@ ParticleOnLatticeMomentumOperator.cc \
 ParticleOnSphereWithSpinSzParityOperator.cc \
 ParticleOnLatticeVacancyOperator.cc \
 ParticleOnTorusKxOperator.cc \
-ParticleOnSquareLatticeWithSpinBandDensityOperator.cc
+ParticleOnSquareLatticeWithSpinBandDensityOperator.cc \
+ParticleOnSphereSpinOperator.cc

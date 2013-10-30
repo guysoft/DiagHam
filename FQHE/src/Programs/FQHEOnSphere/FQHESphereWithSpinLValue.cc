@@ -20,6 +20,7 @@
 
 #include "Operator/ParticleOnSphereSquareTotalMomentumOperator.h"
 #include "Operator/ParticleOnSphereWithSpinSzParityOperator.h"
+#include "Operator/ParticleOnSphereSpinOperator.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (0 if it has to be guessed from file name)", 0);
   (*SystemGroup) += new BooleanOption  ('A', "all-sz", "assume a hilbert space including all sz values");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-parity", "parity for N_up as compared to int(N/2) (0=same, 1=different, -1=none)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "show-all", "show all S^2_i average values");
   (*SystemGroup) += new SingleStringOption  ('\n', "statistics", "particle statistics (bosons or fermions, try to guess it from file name if not defined)");
   (*SystemGroup) += new BooleanOption  ('\n', "no-spin", "do not compute the S^2 value of the state");
   (*SystemGroup) += new BooleanOption  ('\n', "no-szparity", "do not compute the parity under the Sz<->-Sz symmetry");
@@ -352,15 +354,20 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("no-spin") == false)
     {
       bool fixedSz = !(Manager.GetBoolean("all-sz"));
+      if(!(Manager.GetBoolean("show-all")))
+      {
       ParticleOnSphereWithSpinS2Hamiltonian Hamiltonian2 (Space, NbrParticles, LzMax, TotalLz, TotalSz, Architecture.GetArchitecture(), 1.0, 0, fixedSz);
+//	ParticleOnSphereWithSpinS2Hamiltonian Hamiltonian2 (Space, NbrParticles, LzMax, TotalLz, TotalSz, Architecture.GetArchitecture(), 1.0, -1, false, 0, fixedSz);
       VectorHamiltonianMultiplyOperation Operation2 (&Hamiltonian2, &State, &TmpState);
       Operation2.ApplyOperation(Architecture.GetArchitecture());
       L2Value = TmpState * State;
       RawTmpAngularMomentum = 0.5 * (sqrt (((double)4.0 * L2Value) + (double) 1.0) - 1.0);
       cout << "<S^2> = " << L2Value << endl
 	   << "<S> = " << RawTmpAngularMomentum << endl;
+      }
     }
-  if ((Manager.GetBoolean("all-sz"))||((Manager.GetBoolean("no-szparity") == false)&&(TotalSz==0)))
+//  if ((Manager.GetBoolean("all-sz"))||((Manager.GetBoolean("no-szparity") == false)&&(TotalSz==0)))
+  if ( (Manager.GetBoolean("no-szparity") == false) && (TotalSz==0) && (!Manager.GetBoolean("all-sz")) )
     {
       Complex Tmp;
       if (SzSymmetrizedBasis == false)
@@ -381,6 +388,48 @@ int main(int argc, char** argv)
 	}
       cout  << "<P_sz> = " << Tmp.Re << endl;      
     }
+  if (Manager.GetBoolean("all-sz"))
+    {
+      Complex Tmp;
+            
+      cout << "====================================" << endl;
+
+      ParticleOnSphereSpinOperator SxOperator(Space, 0, LzMax);
+      Tmp = SxOperator.MatrixElement(State,State);
+      cout << "<S_x> = " << Tmp.Re << endl;
+
+      ParticleOnSphereSpinOperator SyOperator(Space, 1, LzMax);
+      Tmp = SyOperator.MatrixElement(State,State);
+      cout << "Im(<S_y>) = " << Tmp.Im << endl;
+      
+      ParticleOnSphereSpinOperator SzOperator(Space, 2, LzMax);
+      Tmp = SzOperator.MatrixElement(State,State);
+      cout << "<S_z> = " << Tmp.Re << endl;
+
+      cout << "====================================" << endl;
+      
+      if(Manager.GetBoolean("show-all"))
+      {
+	Complex Sx2 = SxOperator.PartialMatrixElementSquare(State,State,0,Space->GetHilbertSpaceDimension());
+	cout << "<S_x^2> = " << Sx2.Re << endl;
+	
+	Complex Sy2 = SyOperator.PartialMatrixElementSquare(State,State,0,Space->GetHilbertSpaceDimension());
+	cout << "<S_y^2> = " << Sy2.Re << endl;
+	
+	Complex Sz2 = SzOperator.PartialMatrixElementSquare(State,State,0,Space->GetHilbertSpaceDimension());
+	cout << "<S_z^2> = " << Sz2.Re << endl;
+	
+	cout << "====================================" << endl;
+
+	double S2=Sx2.Re+Sy2.Re+Sz2.Re;
+	cout << "<S^2> = " << S2 << endl;
+	double RawS = 0.5 * (sqrt (((double)4.0 * S2) + (double) 1.0) - 1.0);
+	cout << "<S> = " << RawS << endl;
+      }
+      
+    }
+
+
   delete Space;
   return 0;
 }
