@@ -207,6 +207,7 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
   this->ShowHamiltonian = false;
   if (((*options)["show-hamiltonian"] != 0) && (options->GetBoolean("show-hamiltonian") == true))
     {
+      this->ShowHamiltonian = true;
       if (this->ReducedHilbertSpaceDescription == 0)
 	{
 	  ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
