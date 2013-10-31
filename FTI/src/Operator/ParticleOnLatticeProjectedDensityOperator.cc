@@ -139,12 +139,15 @@ ComplexVector& ParticleOnLatticeProjectedDensityOperator::LowLevelAddMultiply(Co
 	oneBodyBasisCoefficient += Conj(LocalBasisK[0][alpha]) * LocalBasisKPlusQ[0][alpha];
 // 	oneBodyBasisCoefficient += Conj(LocalBasisK[alpha][0]) * LocalBasisKPlusQ[alpha][0];
       }
-      
+      cout <<  kx << " " << ky << " " << ((kx + this->Kx) % NbrSiteX) << " " << ((ky + this->Ky) % NbrSiteY) << " : " << ((oneBodyBasisCoefficient.Re)*(oneBodyBasisCoefficient.Re) + (oneBodyBasisCoefficient.Im)*(oneBodyBasisCoefficient.Im)) << endl;
       for (int i = firstComponent; i < Last; ++i)
       {
 	Index = this->ParticleSource->AdA(i, LinearizedK, LinearizedKPlusQ, Coefficient);
 	if (Index < this->ParticleDestination->GetHilbertSpaceDimension())
 	{
+// 	  cout << kx << " " << ky << " " << ((kx + this->Kx) % NbrSiteX) << " " << ((ky + this->Ky) % NbrSiteY) << " : ";
+// 	  this->ParticleSource->PrintState(cout, i) << " -> " ;
+// 	  this->ParticleDestination->PrintState(cout, Index) << endl;
 	  vDestination[Index] += oneBodyBasisCoefficient*Coefficient*vSource[i]/(NbrSiteX * NbrSiteY);
 	}
       }

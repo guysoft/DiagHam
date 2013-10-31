@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                    class of generic 2D tight binding model                 // //                                                                            //
+//                    class of generic 2D tight binding model                 //                                                                          //
 //                        last modification : 03/10/2012                      //
 //                                                                            //
 //                                                                            //
