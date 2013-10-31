@@ -40,12 +40,11 @@ using std::cout;
 using std::endl;
 
 
-// constructor from default datas
+// constructor from default data
 //
 // particle = hilbert space associated to the particles
-// index = index of the density operator
 
-ParticleOnTorusKxOperator::ParticleOnTorusKxOperator(ParticleOnTorus* particle, int index)
+ParticleOnTorusKxOperator::ParticleOnTorusKxOperator(ParticleOnTorus* particle)
 {
   this->Particle= (ParticleOnTorus*) (particle->Clone());
 }
@@ -114,50 +113,11 @@ int ParticleOnTorusKxOperator::GetHilbertSpaceDimension ()
 Complex ParticleOnTorusKxOperator::PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent)
 {
   double Element = 0.0;
-  if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
+  int Last = firstComponent + nbrComponent;
+  for (int i = firstComponent; i < Last; ++i)
     {
-      int Dim = firstComponent + nbrComponent;
-      if (this->OperatorIndexDagger == this->OperatorIndex)
-	{
-	  for (int i = firstComponent; i < Dim; ++i)
-	    {
-	      Element += V1[i] * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
-	    }
-	}
-      else
-	{
-	  int TmpIndex;
-	  double TmpCoefficient = 0.0;
-	  for (int i = firstComponent; i < Dim; ++i)
-	    {
-	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
-	      if (TmpCoefficient != 0.0)
-		Element += V1[TmpIndex] * V2[i] * TmpCoefficient;
-	    }
-	}
+      Element += V1[this->Particle->ApplyXMagneticTranslation(i)] * V2[i];
     }
-  else
-    {
-      long Dim = firstComponent + nbrComponent;
-      if (this->OperatorIndexDagger == this->OperatorIndex)
-	{
-	  for (long i = firstComponent; i < Dim; ++i)
-	    {
-	      Element += V1[i] * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
-	    }
-	}
-      else
-	{
-	  int TmpIndex;
-	  double TmpCoefficient = 0.0;
-	  for (long i = firstComponent; i < Dim; ++i)
-	    {
-	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
-	      if (TmpCoefficient != 0.0)
-		Element += V1[TmpIndex] * V2[i] * TmpCoefficient;
-	    }
-	}
-     }
   return Complex(Element);
 }
   
@@ -172,53 +132,47 @@ Complex ParticleOnTorusKxOperator::PartialMatrixElement (RealVector& V1, RealVec
 Complex ParticleOnTorusKxOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
 {
   Complex Element = 0.0;
+  int Last = firstComponent + nbrComponent;
+  for (int i = firstComponent; i < Last; ++i)
+    {
+      Element += Conj(V1[this->Particle->ApplyXMagneticTranslation(i)]) * V2[i];
+    }
+  return Element;
+}
+  
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& ParticleOnTorusKxOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+							      int firstComponent, int nbrComponent)
+{
   if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
     {
-      int Dim = firstComponent + nbrComponent;
-      if (this->OperatorIndexDagger == this->OperatorIndex)
+      int Last = firstComponent + nbrComponent;;
+      for (int i = firstComponent; i < Last; ++i)
 	{
-	  for (int i = firstComponent; i < Dim; ++i)
-	    {
-	      Element += Conj(V1[i]) * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
-	    }
-	}
-      else
-	{
-	  int TmpIndex;
-	  double TmpCoefficient = 0.0;
-	  for (int i = firstComponent; i < Dim; ++i)
-	    {
-	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
-	      if (TmpCoefficient != 0.0)
-		Element += Conj(V1[TmpIndex]) * V2[i] * TmpCoefficient;
-	    }
+	  vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
 	}
     }
   else
     {
-      long Dim = firstComponent + nbrComponent;
-      if (this->OperatorIndexDagger == this->OperatorIndex)
+      long Last = ((long) firstComponent) + ((long) nbrComponent);
+      for (long i = firstComponent; i < Last; ++i)
 	{
-	  for (long i = firstComponent; i < Dim; ++i)
-	    {
-	      Element += Conj(V1[i]) * V2[i] * this->Particle->AdA(i, this->OperatorIndex);
-	    }
+	  vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
 	}
-      else
-	{
-	  int TmpIndex;
-	  double TmpCoefficient = 0.0;
-	  for (long i = firstComponent; i < Dim; ++i)
-	    {
-	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
-	      if (TmpCoefficient != 0.0)
-		Element += Conj(V1[TmpIndex]) * V2[i] * TmpCoefficient;
-	    }
-	}
-     }
-  return Element;
+    }
+  return vDestination;
 }
   
+
+
 // multiply a vector by the current operator for a given range of indices 
 // and store result in another vector
 //
@@ -233,24 +187,18 @@ ComplexVector& ParticleOnTorusKxOperator::LowLevelAddMultiply(ComplexVector& vSo
 {
   if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
     {
-      if (this->OperatorIndexDagger == this->OperatorIndex)
+      int Last = firstComponent + nbrComponent;;
+      for (int i = firstComponent; i < Last; ++i)
 	{
-	  int Last = firstComponent + nbrComponent;;
-	  for (int i = firstComponent; i < Last; ++i)
-	    {
-	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
-	    }
+	  vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
 	}
     }
   else
     {
-      if (this->OperatorIndexDagger == this->OperatorIndex)
+      long Last = ((long) firstComponent) + ((long) nbrComponent);
+      for (long i = firstComponent; i < Last; ++i)
 	{
-	  long Last = ((long) firstComponent) + ((long) nbrComponent);
-	  for (long i = firstComponent; i < Last; ++i)
-	    {
-	      vDestination[i] += vSource[i] * this->Particle->AdA(i, this->OperatorIndex);
-	    }
+	  vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
 	}
     }
   return vDestination;

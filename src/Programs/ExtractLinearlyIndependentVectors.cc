@@ -52,8 +52,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "check-only", "check how many vectors are linearly independent without extracting the basis");
   (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are consider as linearly independent", 1e-10);
   (*SystemGroup) += new  SingleStringOption ('\n', "vector-prefix", "prefix to use for each vector of the basis", "vector");
-  (*SystemGroup) += new  SingleStringOption ('\n', "export-overlap", "export the overlap matrix (in text mode)");
-  (*SystemGroup) += new  SingleStringOption ('\n', "export-binoverlap", "export the overlap matrix (in binary mode)");
+  (*SystemGroup) += new  SingleStringOption ('\n', "export-overlap", "optional file name to export the overlap matrix (in text mode)");
+  (*SystemGroup) += new  SingleStringOption ('\n', "export-binoverlap", "optional file name to export the overlap matrix (in binary mode)");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif

@@ -51,25 +51,12 @@ class ParticleOnTorusKxOperator : public AbstractOperator
   // hilbert space associated to the particles
   ParticleOnTorus* Particle;
   
-  // index of the creation operator that is part of the density operator (i.e. a+_i)
-  int OperatorIndexDagger;
-  // index of the annihilation operator that is part of the density operator (i.e. a_i)
-  int OperatorIndex;
-  
  public:
   
-  // constructor from default datas
+  // constructor from default data
   //
   // particle = hilbert space associated to the particles
-  // index = index of the density operator
-  ParticleOnTorusKxOperator(ParticleOnTorus* particle, int index);
-
-  // constructor when dealing with two different Hilbert spaces
-  //
-  // particle = hilbert space associated to the right hand state (target space has to be fixed to the hilbert space associated to the left hand state)
-  // indexDagger = index of the creation operator that is part of the density operator
-  // index = index of the annihilation operator that is part of the density operator
-  ParticleOnTorusKxOperator(ParticleOnTorus* particle, int indexDagger, int index);
+  ParticleOnTorusKxOperator(ParticleOnTorus* particle);
 
   // copy constructor
   //
@@ -118,6 +105,17 @@ class ParticleOnTorusKxOperator : public AbstractOperator
   // return value = corresponding matrix element
   Complex PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent);
 
+  // multiply a vector by the current operator for a given range of indices 
+  // and store result in another vector
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+				  int firstComponent, int nbrComponent);
+  
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
   //
