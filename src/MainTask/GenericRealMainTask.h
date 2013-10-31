@@ -119,6 +119,8 @@ class GenericRealMainTask: public AbstractMainTask
   bool ScalapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;  
+  // show the hamiltonian
+  bool ShowHamiltonian;
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
   double LanczosPrecision;
   // use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm to get the ground state

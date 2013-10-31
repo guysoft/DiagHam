@@ -204,11 +204,15 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
     {
       this->ComputeEnergyFlag = false;
     }
+  this->ShowHamiltonian = false;
   if (((*options)["show-hamiltonian"] != 0) && (options->GetBoolean("show-hamiltonian") == true))
     {
-      ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-      this->Hamiltonian->GetHamiltonian(HRep);
-      cout << HRep << endl;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  cout << HRep << endl;
+	}
     }  
   if (((*options)["export-hamiltonian"] != 0) && (options->GetString("export-hamiltonian") != 0))
     {
@@ -852,6 +856,8 @@ void GenericComplexMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescript
 	  HRep.SetMatrixElement(i ,j, Tmp);
 	}
     }
+  if (this->ShowHamiltonian == true)
+    cout << HRep << endl;
   delete[] TmpVectors;
   if (TmpHilbertSpaceDimension > 1)
     {

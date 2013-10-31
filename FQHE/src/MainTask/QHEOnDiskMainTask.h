@@ -103,6 +103,8 @@ class QHEOnDiskMainTask: public AbstractMainTask
   bool LapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;
+  // show the hamiltonian
+  bool ShowHamiltonian;
   // compute hamiltonian mean value for each eigenvalue
   bool ComputeEnergyFlag;
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)

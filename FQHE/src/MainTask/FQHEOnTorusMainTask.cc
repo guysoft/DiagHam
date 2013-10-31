@@ -202,20 +202,26 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
     {
       this->ComputeEnergyFlag = false;
     }
+  
+  this->ShowHamiltonian = false;
   if (((*options)["show-hamiltonian"] != 0) && (((BooleanOption*) (*options)["show-hamiltonian"])->GetBoolean() == true))
     {
-      if (RealFlag)  
-       {
-         RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
-         this->Hamiltonian->GetHamiltonian(HRep);
-         cout << HRep << endl;
-       }
-      else
-       {
-         HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
-         this->Hamiltonian->GetHamiltonian(HRep);
-         cout << HRep << endl;
-       } 
+      this->ShowHamiltonian = true;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  if (RealFlag)  
+	    {
+	      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+	      this->Hamiltonian->GetHamiltonian(HRep);
+	      cout << HRep << endl;
+	    }
+	  else
+	    {
+	      HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+	      this->Hamiltonian->GetHamiltonian(HRep);
+	      cout << HRep << endl;
+	    } 
+	}
     }
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {
@@ -1010,6 +1016,8 @@ void FQHEOnTorusMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	}
     }
   delete[] TmpVectors;
+  if (this->ShowHamiltonian == true)
+    cout << HRep << endl;
   if (TmpHilbertSpaceDimension > 1)
     {
 #ifdef __LAPACK__

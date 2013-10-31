@@ -212,11 +212,16 @@ QHEOnSphereMainTask::QHEOnSphereMainTask(OptionManager* options, AbstractHilbert
     {
       this->ComputeEnergyFlag = false;
     }
+  this->ShowHamiltonian = false;
   if (((*options)["show-hamiltonian"] != 0) && (((BooleanOption*) (*options)["show-hamiltonian"])->GetBoolean() == true))
     {
-      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
-      this->Hamiltonian->GetHamiltonian(HRep);
-      cout << HRep << endl;
+      this->ShowHamiltonian = true;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  cout << HRep << endl;
+	}
     }
   if (((*options)["show-basis"] != 0) && (((BooleanOption*) (*options)["show-basis"])->GetBoolean() == true))
     {
@@ -959,6 +964,8 @@ void QHEOnSphereMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	  HRep(i ,j) = Basis[j] * TmpVectors[i];
 	}
     }
+  if (this->ShowHamiltonian == true)
+    cout << HRep << endl;
   delete[] TmpVectors;
   if (TmpHilbertSpaceDimension > 1)
     {

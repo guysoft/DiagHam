@@ -202,11 +202,16 @@ QHEOnDiskMainTask::QHEOnDiskMainTask(OptionManager* options, AbstractHilbertSpac
     {
       this->ComputeEnergyFlag = false;
     }
+  this->ShowHamiltonian = false;
   if (((*options)["show-hamiltonian"] != 0) && (((BooleanOption*) (*options)["show-hamiltonian"])->GetBoolean() == true))
     {
-      RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
-      this->Hamiltonian->GetHamiltonian(HRep);
-      cout << HRep << endl;
+      this->ShowHamiltonian = true;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  RealSymmetricMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  cout << HRep << endl;
+	}
     }
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {

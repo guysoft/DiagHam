@@ -111,6 +111,8 @@ class QHEOnSphereMainTask: public AbstractMainTask
   bool LapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;
+  // show the hamiltonian
+  bool ShowHamiltonian;
   // compute l value for each eigenvalue
   bool ComputeLValueFlag;
   // compute hamiltonian mean value for each eigenvalue

@@ -210,11 +210,16 @@ GenericRealMainTask::GenericRealMainTask(OptionManager* options, AbstractHilbert
     {
       this->ComputeEnergyFlag = false;
     }
+  this->ShowHamiltonian = false;
   if (((*options)["show-hamiltonian"] != 0) && (options->GetBoolean("show-hamiltonian") == true))
     {
-      RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
-      this->Hamiltonian->GetHamiltonian(HRep);
-      cout << HRep << endl;
+      this->ShowHamiltonian = true;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  RealMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  cout << HRep << endl;
+	}
     }  
   if (((*options)["export-hamiltonian"] != 0) && (options->GetString("export-hamiltonian") != 0))
     {
@@ -905,6 +910,8 @@ void GenericRealMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	  HRep.SetMatrixElement(i ,j, Tmp);
 	}
     }
+  if (this->ShowHamiltonian == true)
+    cout << HRep << endl;
   delete[] TmpVectors;
   if (TmpHilbertSpaceDimension > 1)
     {
