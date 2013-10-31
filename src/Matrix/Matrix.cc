@@ -361,10 +361,10 @@ bool Matrix::WriteAsciiMatrix (char* fileName)
 	  for (int j = 0; j < ReducedNbrColumn; ++j)
 	    {
 	      this->GetMatrixElement(i, j, Tmp);
-	      cout << Tmp << " ";
+	      File << Tmp << " ";
 	    }
 	  this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
-	  cout << Tmp << endl;
+	  File << Tmp << endl;
 	}      
     }
   else
@@ -376,10 +376,10 @@ bool Matrix::WriteAsciiMatrix (char* fileName)
 	  for (int j = 0; j < ReducedNbrColumn; ++j)
 	    {
 	      this->GetMatrixElement(i, j, Tmp);
-	      cout << Tmp.Re << " " << Tmp.Im << " ";
+	      File << Tmp.Re << " " << Tmp.Im << " ";
 	    }
 	  this->GetMatrixElement(i, ReducedNbrColumn, Tmp);
-	  cout << Tmp.Re << " " << Tmp.Im << endl;
+	  File << Tmp.Re << " " << Tmp.Im << endl;
 	}      
     }
   File.close();

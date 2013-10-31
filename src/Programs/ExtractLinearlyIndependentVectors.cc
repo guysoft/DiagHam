@@ -52,6 +52,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "check-only", "check how many vectors are linearly independent without extracting the basis");
   (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are consider as linearly independent", 1e-10);
   (*SystemGroup) += new  SingleStringOption ('\n', "vector-prefix", "prefix to use for each vector of the basis", "vector");
+  (*SystemGroup) += new  SingleStringOption ('\n', "export-overlap", "export the overlap matrix (in text mode)");
+  (*SystemGroup) += new  SingleStringOption ('\n', "export-binoverlap", "export the overlap matrix (in binary mode)");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -86,204 +88,222 @@ int main(int argc, char** argv)
       return -1;
     }
 
-if(Manager.GetBoolean("complex") == true)
-{
-  ComplexVector * Basis = new ComplexVector[NbrVectors];
-     HermitianMatrix HRep(NbrVectors);
-  char* DirectoryName = ReducedBasis["Directory"];
-  char* TmpName;
-  for (int i = 0; i < NbrVectors; ++i)
+  if(Manager.GetBoolean("complex") == true)
     {
-      TmpName = VectorFileNames[i];
-      if (DirectoryName != 0)
-	{
-	  TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
-	}
-      cout << "reading vector " << TmpName << endl;
-      if (Basis[i].ReadVector(TmpName) == false)
-	{
-	  cout << "error while reading " << TmpName << endl;
-	  if (DirectoryName != 0)
-	    delete[] DirectoryName;
-	  for (int j = 0; j < NbrVectors; ++j)
-	    delete[] VectorFileNames[j];
-	  delete[] VectorFileNames;
-	  return -1;
-	}
-      if (DirectoryName != 0)
-	delete[] TmpName;
-    }   
-  for (int i = 0; i < NbrVectors; ++i)
-    for (int j = 0; j < NbrVectors; ++j)
-      HRep.SetMatrixElement(i ,j, Basis[j] * Basis[i]);
-  
-  RealDiagonalMatrix TmpDiag (NbrVectors);
-
-
-  if (Manager.GetBoolean("check-only") == true)	
-    {
-#ifdef __LAPACK__
-      if (Manager.GetBoolean("use-lapack") == true)
-	HRep.LapackDiagonalize(TmpDiag);
-      else
-	HRep.Diagonalize(TmpDiag);
-#else
-      HRep.Diagonalize(TmpDiag);
-#endif		  
-      int Count = 0;
+      ComplexVector * Basis = new ComplexVector[NbrVectors];
+      HermitianMatrix HRep(NbrVectors);
+      char* DirectoryName = ReducedBasis["Directory"];
+      char* TmpName;
       for (int i = 0; i < NbrVectors; ++i)
 	{
-	  cout << TmpDiag[i] << " ";
-	  if (fabs(TmpDiag[i]) > Error)
-	    Count++;
+	  TmpName = VectorFileNames[i];
+	  if (DirectoryName != 0)
+	    {
+	      TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
+	    }
+	  cout << "reading vector " << TmpName << endl;
+	  if (Basis[i].ReadVector(TmpName) == false)
+	    {
+	      cout << "error while reading " << TmpName << endl;
+	      if (DirectoryName != 0)
+		delete[] DirectoryName;
+	      for (int j = 0; j < NbrVectors; ++j)
+		delete[] VectorFileNames[j];
+	      delete[] VectorFileNames;
+	      return -1;
+	    }
+	  if (DirectoryName != 0)
+	    delete[] TmpName;
+	}   
+      for (int i = 0; i < NbrVectors; ++i)
+	for (int j = 0; j < NbrVectors; ++j)
+	  HRep.SetMatrixElement(i ,j, Basis[j] * Basis[i]);
+      
+      if (Manager.GetString("export-overlap") != 0)
+	{
+	  HRep.WriteAsciiMatrix(Manager.GetString("export-overlap"));
 	}
-      cout << endl;
-      cout << Count << " linearly independent vectors" << endl;
+      if (Manager.GetString("export-binoverlap") != 0)
+	{
+	  HRep.WriteMatrix(Manager.GetString("export-binoverlap"));
+	}
+
+      RealDiagonalMatrix TmpDiag (NbrVectors);
+      
+      
+      if (Manager.GetBoolean("check-only") == true)	
+	{
+#ifdef __LAPACK__
+	  if (Manager.GetBoolean("use-lapack") == true)
+	    HRep.LapackDiagonalize(TmpDiag);
+	  else
+	    HRep.Diagonalize(TmpDiag);
+#else
+	  HRep.Diagonalize(TmpDiag);
+#endif		  
+	  int Count = 0;
+	  for (int i = 0; i < NbrVectors; ++i)
+	    {
+	      cout << TmpDiag[i] << " ";
+	      if (fabs(TmpDiag[i]) > Error)
+		Count++;
+	    }
+	  cout << endl;
+	  cout << Count << " linearly independent vectors" << endl;
+	}
+      else
+	{
+	  ComplexMatrix TmpEigenvector (NbrVectors, NbrVectors, true);	      
+	  for (int l = 0; l < NbrVectors; ++l)
+	    TmpEigenvector(l, l) = 1.0;
+#ifdef __LAPACK__
+	  if (Manager.GetBoolean("use-lapack") == true)
+	    HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	  else
+	    HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#else
+	  HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#endif
+	  char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
+	  int TmpDimension = Basis[0].GetVectorDimension();
+	  int Count = 0;
+	  for (int i = 0; i < NbrVectors; ++i)
+	    {
+	      cout << TmpDiag[i] << " ";
+	      if (fabs(TmpDiag[i]) > Error)
+		{
+		  ComplexVector TmpVector (TmpDimension, true);
+		  for (int j = 0; j < NbrVectors; ++j)
+		    for (int k = 0; k < TmpDimension; ++k)
+		      {
+			TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
+		      }
+		  TmpVector /= TmpVector.Norm();
+		  sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
+		  TmpVector.WriteVector(OutputVectorFileName);
+		  Count++;
+		}
+	    }
+	  cout << endl;
+	  cout << Count << " linearly independent vectors" << endl;
+	  delete[] OutputVectorFileName;
+	}
+      
+      if (DirectoryName != 0)
+	delete[] DirectoryName;
+      for (int j = 0; j < NbrVectors; ++j)
+	delete[] VectorFileNames[j];
+      delete[] VectorFileNames;
+      return 0;
+      
     }
   else
     {
-      ComplexMatrix TmpEigenvector (NbrVectors, NbrVectors, true);	      
-      for (int l = 0; l < NbrVectors; ++l)
-	TmpEigenvector(l, l) = 1.0;
-#ifdef __LAPACK__
-      if (Manager.GetBoolean("use-lapack") == true)
-	HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
-      else
-	HRep.Diagonalize(TmpDiag, TmpEigenvector);
-#else
-      HRep.Diagonalize(TmpDiag, TmpEigenvector);
-#endif
-      char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
-      int TmpDimension = Basis[0].GetVectorDimension();
-      int Count = 0;
+      RealVector * Basis = new RealVector[NbrVectors];
+      
+      char* DirectoryName = ReducedBasis["Directory"];
+      char* TmpName;
       for (int i = 0; i < NbrVectors; ++i)
 	{
-	  cout << TmpDiag[i] << " ";
-	  if (fabs(TmpDiag[i]) > Error)
-	    {
-	      ComplexVector TmpVector (TmpDimension, true);
-	      for (int j = 0; j < NbrVectors; ++j)
-		for (int k = 0; k < TmpDimension; ++k)
-		  {
-		    TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
-		  }
-	      TmpVector /= TmpVector.Norm();
-	      sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
-	      TmpVector.WriteVector(OutputVectorFileName);
-	      Count++;
-	    }
-	}
-      cout << endl;
-      cout << Count << " linearly independent vectors" << endl;
-      delete[] OutputVectorFileName;
-    }
-
-  if (DirectoryName != 0)
-    delete[] DirectoryName;
-  for (int j = 0; j < NbrVectors; ++j)
-    delete[] VectorFileNames[j];
-  delete[] VectorFileNames;
-  return 0;
-  
-}
-else
-{
-  RealVector * Basis = new RealVector[NbrVectors];
-
-  char* DirectoryName = ReducedBasis["Directory"];
-  char* TmpName;
-  for (int i = 0; i < NbrVectors; ++i)
-    {
-      TmpName = VectorFileNames[i];
-      if (DirectoryName != 0)
-	{
-	  TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
-	}
-      cout << "reading vector " << TmpName << endl;
-      if (Basis[i].ReadVector(TmpName) == false)
-	{
-	  cout << "error while reading " << TmpName << endl;
+	  TmpName = VectorFileNames[i];
 	  if (DirectoryName != 0)
-	    delete[] DirectoryName;
-	  for (int j = 0; j < NbrVectors; ++j)
-	    delete[] VectorFileNames[j];
-	  delete[] VectorFileNames;
-	  return -1;
-	}
-      if (DirectoryName != 0)
-	delete[] TmpName;
-    }
-
-  RealSymmetricMatrix HRep(NbrVectors);
-  for (int i = 0; i < NbrVectors; ++i)
-    for (int j = 0; j < NbrVectors; ++j)
-      HRep(i ,j) = Basis[j] * Basis[i];
-  RealDiagonalMatrix TmpDiag (NbrVectors);
-
-
-  if (Manager.GetBoolean("check-only") == true)	
-    {
-#ifdef __LAPACK__
-      if (Manager.GetBoolean("use-lapack") == true)
-	HRep.LapackDiagonalize(TmpDiag);
-      else
-	HRep.Diagonalize(TmpDiag);
-#else
-      HRep.Diagonalize(TmpDiag);
-#endif		  
-      int Count = 0;
-      for (int i = 0; i < NbrVectors; ++i)
-	{
-	  cout << TmpDiag[i] << " ";
-	  if (fabs(TmpDiag[i]) > Error)
-	    Count++;
-	}
-      cout << endl;
-      cout << Count << " linearly independent vectors" << endl;
-    }
-  else
-    {
-      RealMatrix TmpEigenvector (NbrVectors, NbrVectors, true);	      
-      for (int l = 0; l < NbrVectors; ++l)
-	TmpEigenvector(l, l) = 1.0;
-#ifdef __LAPACK__
-      if (Manager.GetBoolean("use-lapack") == true)
-	HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
-      else
-	HRep.Diagonalize(TmpDiag, TmpEigenvector);
-#else
-      HRep.Diagonalize(TmpDiag, TmpEigenvector);
-#endif
-      char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
-      int TmpDimension = Basis[0].GetVectorDimension();
-      int Count = 0;
-      for (int i = 0; i < NbrVectors; ++i)
-	{
-	  cout << TmpDiag[i] << " ";
-	  if (fabs(TmpDiag[i]) > Error)
 	    {
-	      RealVector TmpVector (TmpDimension, true);
-	      for (int j = 0; j < NbrVectors; ++j)
-		for (int k = 0; k < TmpDimension; ++k)
-		  {
-		    TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
-		  }
-	      TmpVector /= TmpVector.Norm();
-	      sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
-	      TmpVector.WriteVector(OutputVectorFileName);
-	      Count++;
+	      TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
 	    }
+	  cout << "reading vector " << TmpName << endl;
+	  if (Basis[i].ReadVector(TmpName) == false)
+	    {
+	      cout << "error while reading " << TmpName << endl;
+	      if (DirectoryName != 0)
+		delete[] DirectoryName;
+	      for (int j = 0; j < NbrVectors; ++j)
+		delete[] VectorFileNames[j];
+	      delete[] VectorFileNames;
+	      return -1;
+	    }
+	  if (DirectoryName != 0)
+	    delete[] TmpName;
 	}
-      cout << endl;
-      cout << Count << " linearly independent vectors" << endl;
-      delete[] OutputVectorFileName;
+      
+      RealSymmetricMatrix HRep(NbrVectors);
+      for (int i = 0; i < NbrVectors; ++i)
+	for (int j = 0; j < NbrVectors; ++j)
+	  HRep(i ,j) = Basis[j] * Basis[i];
+      if (Manager.GetString("export-overlap") != 0)
+	{
+	  HRep.WriteAsciiMatrix(Manager.GetString("export-overlap"));
+	}
+      if (Manager.GetString("export-binoverlap") != 0)
+	{
+	  HRep.WriteMatrix(Manager.GetString("export-binoverlap"));
+	}
+      RealDiagonalMatrix TmpDiag (NbrVectors);
+      
+      
+      if (Manager.GetBoolean("check-only") == true)	
+	{
+#ifdef __LAPACK__
+	  if (Manager.GetBoolean("use-lapack") == true)
+	    HRep.LapackDiagonalize(TmpDiag);
+	  else
+	    HRep.Diagonalize(TmpDiag);
+#else
+	  HRep.Diagonalize(TmpDiag);
+#endif		  
+	  int Count = 0;
+	  for (int i = 0; i < NbrVectors; ++i)
+	    {
+	      cout << TmpDiag[i] << " ";
+	      if (fabs(TmpDiag[i]) > Error)
+		Count++;
+	    }
+	  cout << endl;
+	  cout << Count << " linearly independent vectors" << endl;
+	}
+      else
+	{
+	  RealMatrix TmpEigenvector (NbrVectors, NbrVectors, true);	      
+	  for (int l = 0; l < NbrVectors; ++l)
+	    TmpEigenvector(l, l) = 1.0;
+#ifdef __LAPACK__
+	  if (Manager.GetBoolean("use-lapack") == true)
+	    HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	  else
+	    HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#else
+	  HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#endif
+	  char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
+	  int TmpDimension = Basis[0].GetVectorDimension();
+	  int Count = 0;
+	  for (int i = 0; i < NbrVectors; ++i)
+	    {
+	      cout << TmpDiag[i] << " ";
+	      if (fabs(TmpDiag[i]) > Error)
+		{
+		  RealVector TmpVector (TmpDimension, true);
+		  for (int j = 0; j < NbrVectors; ++j)
+		    for (int k = 0; k < TmpDimension; ++k)
+		      {
+			TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
+		      }
+		  TmpVector /= TmpVector.Norm();
+		  sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
+		  TmpVector.WriteVector(OutputVectorFileName);
+		  Count++;
+		}
+	    }
+	  cout << endl;
+	  cout << Count << " linearly independent vectors" << endl;
+	  delete[] OutputVectorFileName;
+	}
+      
+      if (DirectoryName != 0)
+	delete[] DirectoryName;
+      for (int j = 0; j < NbrVectors; ++j)
+	delete[] VectorFileNames[j];
+      delete[] VectorFileNames;
+      return 0;
     }
-
-  if (DirectoryName != 0)
-    delete[] DirectoryName;
-  for (int j = 0; j < NbrVectors; ++j)
-    delete[] VectorFileNames[j];
-  delete[] VectorFileNames;
   return 0;
-}
 }
