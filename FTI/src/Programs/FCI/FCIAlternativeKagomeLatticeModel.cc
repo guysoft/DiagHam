@@ -93,18 +93,19 @@ int main(int argc, char** argv)
 #ifdef __SCALAPACK__
     (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
+    (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
     (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
     if (Manager.ProceedOptions(argv, argc, cout) == false)
-    {
+      {
         cout << "see man page for option syntax or type FQHEAlternativeKagomeLatticeModel -h" << endl;
         return -1;
-    }
+      }
     if (Manager.GetBoolean("help") == true)
-    {
+      {
         Manager.DisplayHelp (cout);
         return 0;
-    }
+      }
 
     int NbrParticles = Manager.GetInteger("nbr-particles"); 
     int NbrSiteX = Manager.GetInteger("nbr-sitex"); 
