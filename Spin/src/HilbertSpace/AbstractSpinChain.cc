@@ -32,6 +32,8 @@
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 
 
 // virtual destructor
@@ -87,4 +89,29 @@ RealSymmetricMatrix AbstractSpinChain::EvaluatePartialDensityMatrix (int nbrSite
 {
   return RealSymmetricMatrix();
 }
-	
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+RealMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+{
+  return RealMatrix();
+}	
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix AbstractSpinChain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  return ComplexMatrix();
+}

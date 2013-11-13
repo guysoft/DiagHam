@@ -30,7 +30,8 @@
 
 #include "Matrix/ComplexMatrix.h"
 #include "Vector/ComplexVector.h"
-
+#include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealMatrix.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -40,6 +41,12 @@ using std::cout;
 
 
 #ifdef HAVE_LAPACK
+
+// binding to the LAPACK zgesdd function
+//
+extern "C" void FORTRAN_NAME(zgesdd)(const char* jobz, const int* nbrRow, const int* nbrColumn, const doublecomplex* matrix, const int* leadingDimension,
+				     const double* singularValues, const doublecomplex* uMatrix, const int* uLeadingDimension, const doublecomplex* vMatrix, 
+				     const int* vLeadingDimension, const doublecomplex* workingArea, const int* workingAreaSize, const double* workingAreaR, const int* workingAreaInteger, const int* information);
 
 // binding to the LAPACK zgetrf routine for LU decomposition and back-substitution
 //
@@ -155,6 +162,65 @@ ComplexMatrix::ComplexMatrix(ComplexVector* columns, int nbrColumn)
   this->TrueNbrRow = this->NbrRow;
   this->TrueNbrColumn = this->NbrColumn;  
   this->MatrixType = Matrix::ComplexElements;
+}
+
+// constructor for one dimensional array
+//
+// array = one dimensional array where the matrix elements are stored (all components of the first column, then all components of the second column,...)
+// nbrRow = number of rows
+// nbrColumn = number of columns
+// columnOrder = elements in array are ordered column-wise  (all components of the first column, then all components of the second column,...)
+
+ComplexMatrix::ComplexMatrix(doublecomplex* array, int nbrRow, int nbrColumn, bool columnOrder)
+{
+  if (columnOrder == true)
+   {
+     this->Flag.Initialize();
+     this->NbrColumn = nbrColumn;
+     this->NbrRow = nbrRow;
+     this->TrueNbrRow = this->NbrRow;
+     this->TrueNbrColumn = this->NbrColumn;
+     this->Columns = new ComplexVector [this->NbrColumn];
+     for (int i = 0; i < this->NbrColumn; i++)
+      {
+        this->Columns[i] = ComplexVector (this->NbrRow);
+      }
+  
+     long Index = 0;
+     for (int j = 0; j < this->NbrRow; j++)
+       for (int i = 0; i < this->NbrColumn; i++)
+        {
+          this->Columns[i][j].Re = array[Index].r;
+          this->Columns[i][j].Im = array[Index].i;
+          Index++; 
+        }
+
+     this->MatrixType = Matrix::ComplexElements;
+   }
+  else //order by rows instead
+   {
+     this->Flag.Initialize();
+     this->NbrColumn = nbrColumn;
+     this->NbrRow = nbrRow;
+     this->TrueNbrRow = this->NbrRow;
+     this->TrueNbrColumn = this->NbrColumn;
+     this->Columns = new ComplexVector [this->NbrColumn];
+     for (int i = 0; i < this->NbrColumn; i++)
+      {
+        this->Columns[i] = ComplexVector (this->NbrRow);
+      }
+  
+     long Index = 0;
+     for (int i = 0; i < this->NbrRow; i++)
+       for (int j = 0; j < this->NbrColumn; j++)
+        {
+         this->Columns[i][j].Re = array[Index].r;
+         this->Columns[i][j].Im = array[Index].i;
+         Index++;
+        }
+
+     this->MatrixType = Matrix::ComplexElements;
+   }
 }
 
 #ifdef __MPI__
@@ -1180,7 +1246,7 @@ ComplexMatrix& ComplexMatrix::HermitianTranspose ()
       this->NbrRow = this->NbrColumn;
       this->NbrColumn = Tmp;
       this->TrueNbrRow = this->NbrRow;
-      this->TrueNbrColumn = this->NbrColumn;      
+      this->TrueNbrColumn = this->NbrColumn;
     }
   return *this;
 }
@@ -1747,6 +1813,208 @@ Complex ComplexMatrix::LapackDeterminant ()
 #endif
 
 
+// compute singular value decomposition U D V^t
+// 
+// uMatrix = reference on the U matrix
+// vMatrix = reference on the V matrix
+// truncatedUVFlag = if false, set JOBZ = 'A' (returns full U, V matrices)
+// return value = pointer on the diagonal elements of D
+
+double* ComplexMatrix::SingularValueDecomposition(ComplexMatrix& uMatrix, ComplexMatrix& vMatrix, bool truncatedUVFlag)
+{
+#ifdef HAVE_LAPACK
+  int MinDimension = this->NbrColumn;
+  int MaxDimension = this->NbrRow;
+  if (this->NbrColumn > this->NbrRow)
+    {
+      MinDimension = this->NbrRow;
+      MaxDimension = this->NbrColumn;
+    }
+  double* SigmaMatrix = new double[MinDimension];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = -1;
+  doublecomplex TmpWorkingArea;
+  int TmpIntegerWorkingArea;
+  char Jobz;
+  if (truncatedUVFlag == false)
+     Jobz = 'A';
+  else
+     Jobz = 'S';
+
+  doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrColumn];
+
+  Complex *TmpColumn;
+  for (int j=0;j<this->NbrColumn;++j)
+    {
+      TmpColumn=this->Columns[j].Components;
+      for (int i=0; i<this->NbrRow;++i)
+	{
+	  TmpMatrix[i+j*this->NbrRow].r=TmpColumn[i].Re;
+	  TmpMatrix[i+j*this->NbrRow].i=TmpColumn[i].Im;
+	}
+    }
+
+  doublecomplex* TmpUMatrix = new doublecomplex [this->NbrRow * this->NbrRow];
+  for (int i = 0; i < (this->NbrRow * this->NbrRow); ++i)
+   {
+    TmpUMatrix[i].r = 0.0;
+    TmpUMatrix[i].i = 0.0;
+   }
+  doublecomplex* TmpVMatrix = new doublecomplex [this->NbrColumn * this->NbrColumn];
+  for (int i = 0; i < (this->NbrColumn * this->NbrColumn); ++i)
+   {
+    TmpVMatrix[i].r = 0.0;
+    TmpVMatrix[i].i = 0.0;
+   }
+
+  int SizeLDU = this->NbrRow;
+  int SizeLDVT;
+  if (truncatedUVFlag == false)
+    SizeLDVT = this->NbrColumn;
+  else 
+    SizeLDVT = MinDimension;
+
+  int RWorkDim, LRWorkDim;
+
+  LRWorkDim = MinDimension;
+  if ((5*MinDimension+7) > (2*MaxDimension+2*MinDimension+1))
+     LRWorkDim *= (5*MinDimension+7);
+  else
+     LRWorkDim *= (2*MaxDimension+2*MinDimension+1);
+
+  if (LRWorkDim > 1)
+     RWorkDim = LRWorkDim;
+  else
+     RWorkDim = 1;
+
+  double* TmpRWork = new double[RWorkDim];
+
+  FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, &TmpWorkingArea, &WorkingAreaSize, TmpRWork, &TmpIntegerWorkingArea, &Information); 
+
+  WorkingAreaSize = (int) TmpWorkingArea.r;
+  doublecomplex* WorkingArea = new doublecomplex [WorkingAreaSize];
+  IntegerWorkingAreaSize = 8 * MinDimension;
+  int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
+
+  FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, WorkingArea, &WorkingAreaSize, TmpRWork, IntegerWorkingArea, &Information);
+
+  uMatrix = ComplexMatrix(TmpUMatrix, this->NbrRow, this->NbrRow, false);
+  vMatrix = ComplexMatrix(TmpVMatrix, this->NbrColumn, this->NbrColumn, false);
+  delete[] TmpUMatrix;
+  delete[] TmpVMatrix;
+  delete[] WorkingArea;
+  delete[] IntegerWorkingArea;
+  delete[] TmpRWork;
+  return SigmaMatrix;
+#else
+  return 0;
+#endif
+}
+
+// compute singular value decomposition U D V^t
+// 
+// uMatrix = reference on the U matrix
+// diagonal = reference on the diagonal D matrix
+// vMatrix = reference on the V matrix
+// truncatedUVFlag = if false, set JOBZ = 'A' (returns full U, V matrices)
+
+void ComplexMatrix::SingularValueDecomposition(ComplexMatrix& uMatrix, RealDiagonalMatrix& diagonal, ComplexMatrix& vMatrix, bool truncatedUVFlag)
+{
+  double* TmpDiag = this->SingularValueDecomposition(uMatrix, vMatrix, truncatedUVFlag);
+  diagonal = RealDiagonalMatrix(TmpDiag, uMatrix.NbrColumn);
+}
+
+// compute the diagonal part of the singular value decomposition U D V^t
+// 
+// return value = pointer on the diagonal elements of D
+
+double* ComplexMatrix::SingularValueDecomposition()
+{
+#ifdef HAVE_LAPACK
+  if ((this->NbrColumn == 1) || (this->NbrRow == 1))
+    {
+      double* SigmaMatrix = new double[1];
+      Complex Tmp(0.0, 0.0);
+      SigmaMatrix[0] = 0.0;
+      if (this->NbrColumn == 1)
+	{
+	  for (int i = 0; i < this->NbrRow; ++i)
+           { 
+             Tmp = this->Columns[0][i] * this->Columns[0][i];
+	     SigmaMatrix[0] += Tmp.Re;
+           }
+	}
+      else
+	{
+          Complex Tmp(0.0, 0.0);
+	  for (int i = 0; i < this->NbrColumn; ++i)
+           {
+             Tmp = this->Columns[i][0] * this->Columns[i][0];
+	     SigmaMatrix[0] += Tmp.Re;
+           }
+	}
+      SigmaMatrix[0] = sqrt(SigmaMatrix[0]);
+      return SigmaMatrix;
+    }
+  int MinDimension = this->NbrColumn;
+  int MaxDimension = this->NbrRow;
+  if (this->NbrColumn > this->NbrRow)
+    {
+      MinDimension = this->NbrRow;
+      MaxDimension = this->NbrColumn;
+    }
+
+  double* SigmaMatrix = new double[MinDimension];
+  int Information = 0;
+  int WorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = -1;
+  doublecomplex TmpWorkingArea;
+  int TmpIntegerWorkingArea;
+  char Jobz = 'N';
+
+  doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrColumn];
+
+  Complex *TmpColumn;
+  for (int j=0;j<this->NbrColumn;++j)
+    {
+      TmpColumn=this->Columns[j].Components;
+      for (int i=0; i<this->NbrRow;++i)
+	{
+	  TmpMatrix[i+j*this->NbrRow].r=TmpColumn[i].Re;
+	  TmpMatrix[i+j*this->NbrRow].i=TmpColumn[i].Im;
+	}
+    }
+
+  doublecomplex* TmpUMatrix = new doublecomplex [this->NbrColumn];
+  doublecomplex* TmpVMatrix = new doublecomplex [this->NbrRow];
+
+  int RWorkDim, LRWorkDim;
+
+  LRWorkDim = 5*MinDimension;
+
+  if (LRWorkDim > 1)
+     RWorkDim = LRWorkDim;
+  else
+     RWorkDim = 1;
+
+  double* TmpRWork = new double[RWorkDim];
+
+  int DummySize = 1;
+  FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, TmpRWork, &TmpIntegerWorkingArea, &Information);
+  WorkingAreaSize = (int) TmpWorkingArea.r;
+  doublecomplex* WorkingArea = new doublecomplex [WorkingAreaSize];
+  IntegerWorkingAreaSize = 8 * MinDimension;
+  int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
+  FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, TmpRWork, IntegerWorkingArea, &Information);
+  delete[] TmpUMatrix;
+  delete[] TmpVMatrix;
+  delete[] TmpRWork;
+  return SigmaMatrix;
+#else
+  return 0;
+#endif
+}
 
 // Diagonalize an hermitian matrix (modifying current matrix)
 //

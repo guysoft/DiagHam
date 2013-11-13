@@ -35,12 +35,13 @@
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Vector/RealVector.h"
+#include "Matrix/ComplexMatrix.h"
 
 
 class Matrix;
 class AbstractArchitecture;
 class RealSymmetricMatrix;
-
+class ComplexMatrix;
 
 class AbstractSpinChain : public AbstractHilbertSpace
 {
@@ -169,6 +170,26 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 	
 };
 

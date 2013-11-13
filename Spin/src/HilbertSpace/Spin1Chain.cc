@@ -1021,7 +1021,7 @@ ostream& Spin1Chain::PrintState (ostream& Str, int state)
     return Str;
   unsigned long tmp;
   unsigned long StateDescription = this->ChainDescription[state];  
-  Str << this->FindStateIndex(StateDescription) << " : ";
+  //Str << this->FindStateIndex(StateDescription) << " : ";
   for (int j = 0; j < this->ChainLength; j++)
     {
       tmp = StateDescription & 0x00000003;

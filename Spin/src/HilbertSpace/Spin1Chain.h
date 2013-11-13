@@ -261,7 +261,7 @@ class Spin1Chain : public AbstractSpinChain
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
-	
+
  private:
 
   // constructor from pre-constructed datas

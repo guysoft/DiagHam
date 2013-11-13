@@ -89,8 +89,7 @@ int main(int argc, char** argv)
       if (Manager.GetString("state") == 0)
         {
 	  for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
-	    Space->PrintState(cout, i) << endl;;
-	  cout << endl;
+	    Space->PrintState(cout, i) << endl;
 	}
       else
        {
@@ -102,7 +101,7 @@ int main(int argc, char** argv)
 	    }
           for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	     if (fabs(State[i]) > Error)
-	        Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+	        Space->PrintState(cout, i) << " : "  << State[i] << endl;
         }
      }
    else //periodic bc
@@ -128,8 +127,7 @@ int main(int argc, char** argv)
       if (Manager.GetString("state") == 0)
         {
 	  for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
-	    Space->PrintState(cout, i) << endl;;
-	  cout << endl;
+	    Space->PrintState(cout, i) << endl;
 	}
       else
        {
@@ -141,7 +139,7 @@ int main(int argc, char** argv)
 	    }
           for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	     if (fabs(State[i]) > Error)
-	        Space->PrintState(cout, i) << " : "  << State[i] << endl;;
+	        Space->PrintState(cout, i) << " : "  << State[i] << endl;
         }
 
 

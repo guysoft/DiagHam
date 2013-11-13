@@ -87,6 +87,14 @@ class ComplexMatrix : public Matrix
   // nbrColumn = number of columns
   ComplexMatrix(ComplexVector* columns, int nbrColumn);
 
+  // constructor for one dimensional array
+  //
+  // array = one dimensional array where the matrix elements are stored
+  // nbrRow = number of rows
+  // nbrColumn = number of columns
+  // columnOrder = elements in array are ordered column-wise  (all components of the first column, then all components of the second column,...)
+  ComplexMatrix(doublecomplex* array, int nbrRow, int nbrColumn, bool columnOrder = true);
+
 #ifdef __MPI__
   // constructor from informations sent using MPI
   //
@@ -531,6 +539,26 @@ class ComplexMatrix : public Matrix
   // Q = matrix where transformation matrix has to be stored
   // return value = reference on real tridiagonal symmetric matrix
   ComplexDiagonalMatrix& Diagonalize (ComplexDiagonalMatrix& M, ComplexMatrix& Q);
+
+  // compute singular value decomposition U D V^t
+  // 
+  // uMatrix = reference on the U matrix
+  // vMatrix = reference on the V matrix
+  // truncatedUVFlag = if false, set JOBZ = 'A' (returns full U, V matrices)
+  // return value = pointer on the diagonal elements of D
+  double* SingularValueDecomposition(ComplexMatrix& uMatrix, ComplexMatrix& vMatrix, bool truncatedUVFlag = true);
+
+  // compute singular value decomposition U D V^t
+  // 
+  // uMatrix = reference on the U matrix
+  // diagonal = reference on the diagonal D matrix
+  // vMatrix = reference on the V matrix
+  void SingularValueDecomposition(ComplexMatrix& uMatrix, RealDiagonalMatrix& diagonal, ComplexMatrix& vMatrix, bool truncatedUVFlag = true);
+
+  // compute the diagonal part of the singular value decomposition U D V^t
+  // 
+  // return value = pointer on the diagonal elements of D
+  double* SingularValueDecomposition();
 
 #ifdef __LAPACK__
 
