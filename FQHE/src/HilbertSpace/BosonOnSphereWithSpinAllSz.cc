@@ -128,7 +128,7 @@ BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int total
 //
 BosonOnSphereWithSpinAllSz::BosonOnSphereWithSpinAllSz (int nbrBosons, int totalLz, int lzMax, int szParity, unsigned long memory)
 {
-  cout << "BosonOnSphereWithSpinAllSz"<<endl;
+  cout << "BosonOnSphereWithSpinAllSz with pair parity"<<endl;
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = totalLz;

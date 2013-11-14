@@ -114,7 +114,7 @@ int main(int argc, char** argv)
       cout << "This value of the spin z projection cannot be achieved with this particle number!" << endl;
       return -1;
     }
-  if ((NbrParticles&1)!=(SzTotal&1))
+  if (((NbrParticles&1)!=(SzTotal&1))&&(AllSz==false))
     {
       cout << "NbrParticles and SzTotal need to be of the same parity."<<endl;
       return -1;
@@ -413,7 +413,6 @@ int main(int argc, char** argv)
 	{
 	  if ((PseudoPotentials == 0)&&(OneBodyPotentialUpUp == 0)&&(OneBodyPotentialDownDown == 0)&&(OneBodyPotentialUpDown == 0))
 	    {
-	      
 	      Hamiltonian = new ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials, Manager.GetDouble("pairing"), 
 											     Architecture.GetArchitecture(),
 											     Memory, DiskCacheFlag,
@@ -421,7 +420,7 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      //cout << "creating PairingHamiltonian with OneBodyPotentialUpDown="<<OneBodyPotentialUpDown<<endl;
+	      // cout << "creating PairingHamiltonian with OneBodyPotentialUpDown="<<OneBodyPotentialUpDown<<endl;
 	      Hamiltonian = new ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing(Space, NbrParticles, LzMax, ThreeBodyPotentials, NbrThreeBodyPseudoPotentials, Manager.GetDouble("pairing"), 
 											     PseudoPotentials, OneBodyPotentialUpUp, OneBodyPotentialDownDown, OneBodyPotentialUpDown,
 											     Architecture.GetArchitecture(),
