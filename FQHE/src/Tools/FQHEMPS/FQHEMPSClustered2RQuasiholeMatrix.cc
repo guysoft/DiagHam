@@ -338,12 +338,12 @@ void FQHEMPSClustered2RQuasiholeMatrix::CreateBMatrices(char* cftDirectory, Abst
         // <φ|σ|σ>
         leftSectors[3] = 3;
         rightSectors[3] = 2;
-        globalFactors[3] = 1.0 / M_SQRT2; // FIXME
+        globalFactors[3] = 1.0; // FIXME
 
         // <σ|σ|φ>
         leftSectors[4] = 2;
         rightSectors[4] = 3;
-        globalFactors[4] = 1.0 / M_SQRT2; // FIXME
+        globalFactors[4] = 1.0; // FIXME
 
         // <ψ|σ|φ>
         leftSectors[5] = 1;

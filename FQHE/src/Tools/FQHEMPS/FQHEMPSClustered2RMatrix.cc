@@ -2504,7 +2504,13 @@ void FQHEMPSClustered2RMatrix::ComputeFullScalarProductMatrix(char* cftDirectory
       if (fabs(TmpDiag(n, n)) < Error)
 	++Count;
     }
-  cout << "nbr of null vectors " << sectorName << " sector = " << Count << " (" << (u1BosonBasis[pLevel]->GetHilbertSpaceDimension() - Count) << " non null vectors)" << endl;
+
+  int CountNegative = 0;
+  for (int n = 0; n < u1BosonBasis[pLevel]->GetHilbertSpaceDimension(); ++n)
+      if ((fabs(TmpDiag(n, n)) >= Error) && (TmpDiag(n, n) < 0))
+          ++CountNegative;
+
+  cout << "nbr of null vectors " << sectorName << " sector = " << Count << " (" << (u1BosonBasis[pLevel]->GetHilbertSpaceDimension() - Count) << " non null vectors)" << " and " << CountNegative << " negatives" << endl;
   if (Count < u1BosonBasis[pLevel]->GetHilbertSpaceDimension())
     {
       orthogonalBasisLeft[pLevel] = RealMatrix (u1BosonBasis[pLevel]->GetHilbertSpaceDimension(), u1BosonBasis[pLevel]->GetHilbertSpaceDimension() - Count, true);
