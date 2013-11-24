@@ -68,6 +68,7 @@ Abstract2DTightBindingModel::Abstract2DTightBindingModel()
   this->LLLGammaY = NULL;
   this->Offset = 0;
   this->ProjectedMomenta = 0;
+  this->Inversion = ComplexMatrix();
 }
 
 // destructor
@@ -92,6 +93,24 @@ ofstream& Abstract2DTightBindingModel::WriteHeader(ofstream& output)
 {
   int Dimension = 2;
   int HeaderSize = (((this->NbrBands + 2) * Dimension + 1) * sizeof(double)) + ((Dimension + 1) * sizeof(int));
+  if (this->Inversion.GetNbrRow() == 0)
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	for (int j = 0; j < this->NbrBands; ++j)
+          {
+	    Complex TmpInversion = (i == j);
+	    WriteLittleEndian(output, TmpInversion);
+          }
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	for (int j = 0; j < this->NbrBands; ++j)
+          {
+	    Complex TmpInversion = this->Inversion[i][j];
+	    WriteLittleEndian(output, TmpInversion);
+          }
+    }
   WriteLittleEndian(output, HeaderSize);
   WriteLittleEndian(output, Dimension);
   WriteLittleEndian(output, this->NbrSiteX);

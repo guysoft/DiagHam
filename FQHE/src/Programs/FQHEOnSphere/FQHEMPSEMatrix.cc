@@ -80,6 +80,7 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
   (*OutputGroup) += new BooleanOption  ('\n', "show-ematrix", "show the transfer matrix");
+  (*OutputGroup) += new BooleanOption  ('\n', "ematrix-dimonly", "only compute the dimension of the transfer matrix");
   (*ArnoldiGroup) += new SingleIntegerOption  ('\n', "full-diag", 
 					       "maximum Hilbert space dimension for which full diagonalization is applied", 1000);
   (*ArnoldiGroup) += new BooleanOption  ('\n', "disk", "enable disk storage for the Arnoldi algorithm", false);
@@ -252,7 +253,11 @@ int main(int argc, char** argv)
 		}
 	    }
 	}
-      
+      if (Manager.GetBoolean("ematrix-dimonly") == true)
+	{
+	  cout << "E matrix effective dimension = " << EffectiveDimension << "( vs " << (SparseBMatrices[0].GetNbrRow() * SparseBMatrices[0].GetNbrRow()) << ")" << endl;
+	  return 0;
+	}
       cout << "computing effective E matrix indices " << endl;
       long** BlockIndexProductTable = new long* [TmpBMatrixDimension];
       int* BlockIndexProductTableNbrElements = new int [TmpBMatrixDimension];
@@ -321,7 +326,12 @@ int main(int argc, char** argv)
     }
   else
     {
-      Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension));
+       if (Manager.GetBoolean("ematrix-dimonly") == true)
+	{
+	  cout << "E matrix dimension = " << (((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension)) << ")" << endl;
+	  return 0;
+	}
+     Architecture.GetArchitecture()->SetDimension(((long) TmpBMatrixDimension) * ((long) TmpRightBMatrixDimension));
       if ((Manager.GetBoolean("right-eigenstates") == true) || (Manager.GetBoolean("left-eigenstates") == false))
 	ETransposeHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, SparseBMatrices, SparseRightBMatrices, Coefficients,
 									 Architecture.GetArchitecture()); 

@@ -207,7 +207,7 @@ int main(int argc, char** argv)
     {
       double TmpValue;
       KxRep.GetMatrixElement(0, 0, TmpValue);
-      cout << TmpValue << " " << 0.0 << " " << fabs(TmpValue) << " ";
+      cout << TmpValue << " " << fabs(TmpValue) << " ";
       if (TmpValue < 0.0)
 	{
 	  cout << M_PI << " " << (MomentumModulo / 2.0) << " " << (MomentumModulo / 2.0) << endl;
@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 	  cout << TmpValue << " " << Norm(TmpValue) << " " << Arg(TmpValue);
 	  double TmpValue2 = Arg(TmpValue);
 	  if (TmpValue2 < 0.0)
-	    TmpValue2 += M_PI;
+	    TmpValue2 += 2.0 * M_PI;
 	  TmpValue2 *= Factor;
 	  cout << " " << TmpValue2 << " " << round(TmpValue2) << endl;
 	}      

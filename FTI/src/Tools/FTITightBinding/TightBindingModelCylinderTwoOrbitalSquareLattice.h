@@ -78,6 +78,14 @@ public:
     //
     ~TightBindingModelCylinderTwoOrbitalSquareLattice();
 
+    // compute the real space entanglement spectrum of a full band
+    // 
+    // outputFile = name of the output file where the spectrum has to be stored
+    // minEnergy = lowest energy of the full band
+    // maxEnergy = highest energy of the full band
+    // nbrSiteYA = number of site to keep for the A part along the y direction    
+    virtual void ComputeRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA);
+
 protected :
 
     // compute the band structure

@@ -79,6 +79,9 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //second coordinate in momentum space of the second spanning vector of the reciprocal lattice for a tilted lattice
   int Offset;
 
+  // unitary & involutory matrix where the (a, b) element Iab appears in: I|x,y,a> = sum_b Iab |-x-d_ax,-y-d_ay,b>
+  ComplexMatrix Inversion;
+
  public:
 
   // default constructor

@@ -35,6 +35,13 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "MathTools/BinomialCoefficients.h"
+
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
 
 
 // default constructor
@@ -67,7 +74,6 @@ TightBindingModelCylinderTwoOrbitalSquareLattice::TightBindingModelCylinderTwoOr
     this->NbrStatePerBand = this->NbrSiteX;
 
     this->EmbeddingX = RealVector(this->NbrBands, true);
-    this->Inversion = ComplexMatrix(this->NbrBands, this->NbrBands, true);
 
     this->Architecture = architecture;
 
@@ -98,22 +104,44 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::CoreComputeBandStructure(
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
   long MaxStateIndex = minStateIndex + nbrStates;
+  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
     {
       double x = this->KxFactor * (kx + this->GammaX);
-      double y = 0.0;
       int Index = kx;
-
       if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	{
-	  Complex B1 = 2.0 * Complex(this->NNHoppingInterX * sin(this->FoldingFactor * x), - this->NNHoppingInterY * sin(this->FoldingFactor * y));
-	  double d3 = this->MuS - 2.0 * this->NNHoppingIntra * (cos(x) + cos(y));
-          
-	  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+	  TmpOneBodyHamiltonian.ClearMatrix();
+	  double B1 = 2.0 * this->NNHoppingInterX * sin(this->FoldingFactor * x);
+	  double d3 = this->MuS - 2.0 * this->NNHoppingIntra * cos(x);
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
 	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
 	  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, - d3);
-	  
+	  for (int y = 1; y < this->NbrSiteY; ++y)
+	    {
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * y, 2 * y, + d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * y, 2 * y + 1, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * y + 1, 2 * y + 1, - d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (y - 1), 2 * y, - this->NNHoppingIntra);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (y - 1) + 1, 2 * y + 1,  this->NNHoppingIntra);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (y - 1), 2 * y + 1, this->NNHoppingInterY);
+	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (y - 1) + 1, 2 * y, -this->NNHoppingInterY);
+	    }
+//     turn on periodic boundary conditions
+// 	  if (this->NbrSiteY > 2)
+// 	    {
+// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1), 0, - this->NNHoppingIntra);
+// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1) + 1, 1,  this->NNHoppingIntra);
+// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1), 1, this->NNHoppingInterY);
+// 	      TmpOneBodyHamiltonian.SetMatrixElement(2 * (this->NbrSiteY - 1) + 1, 0, -this->NNHoppingInterY);
+// 	    }
+// 	  else
+// 	    {
+// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1), 0, -this->NNHoppingIntra);
+// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1) + 1, 1, this->NNHoppingIntra);
+// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1), 1, this->NNHoppingInterY);
+// 	      TmpOneBodyHamiltonian.AddToMatrixElement(2 * (this->NbrSiteY - 1) + 1, 0, this->NNHoppingInterY);
+// 	    }
 	  if (this->OneBodyBasis != 0)
 	    {
 	      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
@@ -141,4 +169,91 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::CoreComputeBandStructure(
 	    }
 	}
     }
+}
+
+
+// compute the real space entanglement spectrum of a full band
+// 
+// outputFile = name of the output file where the spectrum has to be stored
+// minEnergy = lowest energy of the full band
+// maxEnergy = highest energy of the full band
+// nbrSiteYA = number of site to keep for the A part along the y direction    
+
+void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA)
+{
+  if (this->HaveOneBodyBasis() == false)
+    {
+      cout << "error, the tight binding model does not provide the one body basis" << endl;
+    }
+  int* MinIndex = new int[this->NbrSiteX];
+  int* MaxIndex = new int[this->NbrSiteX];
+  long TotalNbrStates = 0l;
+  double** Weights = new double* [this->NbrSiteX];
+  int* NbrKeptWeights = new int [this->NbrSiteX];
+  int** KeptWeights = new int* [this->NbrSiteX];
+  cout << "nbrSiteYA " << nbrSiteYA << endl;
+  int TwiceNbrSiteYA = 2 * nbrSiteYA;
+  for (int Index = 0; Index < this->NbrSiteX; ++Index)
+    {
+      MinIndex[Index] = this->NbrBands;
+      MaxIndex[Index] = -1;
+      for (int i = 0; i < this->NbrBands; ++i)
+	{
+	  if ((this->EnergyBandStructure[i][Index] >= minEnergy) && (this->EnergyBandStructure[i][Index] <= maxEnergy))
+	    {
+	      ++TotalNbrStates;
+	      if (MinIndex[Index] > i)
+		{
+		  MinIndex[Index] = i;
+		}
+	      if (MaxIndex[Index] < i)
+		{
+		  MaxIndex[Index] = i;
+		}
+	    }
+	}
+      NbrKeptWeights[Index] = 0;
+      if (MaxIndex[Index] >= MinIndex[Index])
+	{
+	  Weights[Index] = new double [MaxIndex[Index] - MinIndex[Index] + 1];
+	  KeptWeights[Index] = new int [MaxIndex[Index] - MinIndex[Index] + 1];
+	  for (int i = MinIndex[Index]; i <= MaxIndex[Index]; ++i)
+	    {
+	      double Tmp = 0.0;
+	      for (int j = 0; j < TwiceNbrSiteYA; ++j)
+		{
+		  Tmp += SqrNorm(this->OneBodyBasis[Index][i][j]);
+		}
+ 	      Weights[Index][i - MinIndex[Index]] = Tmp;
+// 	      if (((1.0 - Weights[Index][i - MinIndex[Index]]) != 0.0) && ((1.0 - Weights[Index][i - MinIndex[Index]]) != 1.0))
+ 		{
+		  KeptWeights[Index][NbrKeptWeights[Index]] = i - MinIndex[Index];
+		  NbrKeptWeights[Index]++;
+		}
+	    }
+	}
+      else
+	{
+	  Weights[Index] = 0;
+	}
+    }
+  cout << "nbr of states in the Slater determinant = " <<   TotalNbrStates << endl;
+  cout << "nbr of states with a non zero weight : " << endl; 
+  ofstream File;
+  File.open(outputFile);
+  File << "# kx  weight_A " << endl;
+  for (int Index = 0; Index < this->NbrSiteX; ++Index)
+    {
+      cout << "total nbr of states in the kx=" << Index << " sector : " << NbrKeptWeights[Index] << endl;
+      for (int i = 0; i < NbrKeptWeights[Index]; ++i)
+	{
+	  File << Index << " " << Weights[Index][KeptWeights[Index][i]] << endl;
+	}
+      delete[] KeptWeights[Index];
+      delete[] Weights[Index];
+    }  
+  File.close();
+  delete[] NbrKeptWeights;
+  delete[] KeptWeights;
+  delete[] Weights;
 }

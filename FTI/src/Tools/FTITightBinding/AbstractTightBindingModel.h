@@ -55,9 +55,6 @@ class AbstractTightBindingModel
   // number of states per band
   long NbrStatePerBand;
 
-  // unitary & involutory matrix where the (a, b) element Iab appears in: I|x,y,a> = sum_b Iab |-x-d_ax,-y-d_ay,b>
-  ComplexMatrix Inversion;
-
   // pointer to the architecture
   AbstractArchitecture* Architecture;
 

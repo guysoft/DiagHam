@@ -64,11 +64,11 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
   ReadLittleEndian(File, this->NbrStatePerBand);
   this->Inversion.Resize(this->NbrBands, this->NbrBands);
   for (int i = 0; i < this->NbrBands; ++i)
-      for (int j = 0; j < this->NbrBands; ++j)
+    for (int j = 0; j < this->NbrBands; ++j)
       {
-          Complex TmpInversion = 0.0;
-          ReadLittleEndian(File, TmpInversion);
-          this->Inversion[i][j] = TmpInversion;
+	Complex TmpInversion = 0.0;
+	ReadLittleEndian(File, TmpInversion);
+	this->Inversion[i][j] = TmpInversion;
       }
   int HeaderSize = -1;
   ReadLittleEndian(File, HeaderSize);

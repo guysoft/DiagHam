@@ -34,6 +34,13 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
+
 // default constructor
 //
 // nbrSiteX = number of sites in the x direction
@@ -96,52 +103,51 @@ TightBindingModelTwoOrbitalSquareLattice::~TightBindingModelTwoOrbitalSquareLatt
 
 void TightBindingModelTwoOrbitalSquareLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
-    if (nbrStates == 0l)
-        nbrStates = this->NbrStatePerBand;
-    long MaxStateIndex = minStateIndex + nbrStates;
-    for (int kx = 0; kx < this->NbrSiteX; ++kx)
+  if (nbrStates == 0l)
+    nbrStates = this->NbrStatePerBand;
+  long MaxStateIndex = minStateIndex + nbrStates;
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
     {
-        double x = this->KxFactor * (kx + this->GammaX);
-        for (int ky = 0; ky < this->NbrSiteY; ++ky)
-        {
-            double y = this->KyFactor * (ky + this->GammaY);
-            int Index = this->GetLinearizedMomentumIndex(kx, ky);
-            if ((Index >= minStateIndex) && (Index < MaxStateIndex))
-            {
-                Complex B1 = 2.0 * Complex(this->NNHoppingInterX * sin(this->FoldingFactor * x), - this->NNHoppingInterY * sin(this->FoldingFactor * y));
-                double d3 = this->MuS - 2.0 * this->NNHoppingIntra * (cos(x) + cos(y));
-                
-                HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-                TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
-                TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-                TmpOneBodyHamiltonian.SetMatrixElement(1, 1, - d3);
-
-                if (this->OneBodyBasis != 0)
-                {
-                    ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
-                    TmpMatrix.SetToIdentity();
-                    RealDiagonalMatrix TmpDiag;
+      double x = this->KxFactor * (kx + this->GammaX);
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	{
+	  double y = this->KyFactor * (ky + this->GammaY);
+	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
+	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
+	    {
+	      Complex B1 = 2.0 * Complex(this->NNHoppingInterX * sin(this->FoldingFactor * x), - this->NNHoppingInterY * sin(this->FoldingFactor * y));
+	      double d3 = this->MuS - 2.0 * this->NNHoppingIntra * (cos(x) + cos(y));
+	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, + d3);
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, - d3);
+	      
+	      if (this->OneBodyBasis != 0)
+		{
+		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+		  TmpMatrix.SetToIdentity();
+		  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-                    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-                    TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-                    this->OneBodyBasis[Index] = TmpMatrix;
-                    for (int i = 0; i < this->NbrBands; ++i)
-                        this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-                }
-                else
-                {
-                    RealDiagonalMatrix TmpDiag;
+		  this->OneBodyBasis[Index] = TmpMatrix;
+		  for (int i = 0; i < this->NbrBands; ++i)
+		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		}
+	      else
+		{
+		  RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-                    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
-                    TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif
-                    for (int i = 0; i < this->NbrBands; ++i)
-                        this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-                }
-            }
-        }
+		  for (int i = 0; i < this->NbrBands; ++i)
+		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		}
+	    }
+	}
     }
 }

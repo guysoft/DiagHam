@@ -75,6 +75,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
+  (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-entspectrum", "compute the real space entanglement spectrum for a filled band");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -118,7 +119,17 @@ int main(int argc, char** argv)
       sprintf (StatisticPrefix, "bosons");
     }
 
-  char* FilePrefix = new char [512];
+  char* SystemName = new char [512];
+  if (Manager.GetBoolean("cylinder-geometry") == false)
+    {
+      sprintf (SystemName, "twoorbitals");
+    }
+  else
+    {
+      sprintf (SystemName, "cylinder_twoorbitals");
+    }
+
+  char* FilePrefix = new char [512 +strlen(SystemName)];
   int lenFilePrefix=0;
   if (Manager.GetBoolean("single-band") == false)
     {
@@ -128,13 +139,13 @@ int main(int argc, char** argv)
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false))
-          lenFilePrefix += sprintf (FilePrefix, "%s_singleband_twoorbitals_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
+	lenFilePrefix += sprintf (FilePrefix, "%s_singleband_%s_n_%d_x_%d_y_%d", StatisticPrefix, SystemName, NbrParticles, NbrSiteX, NbrSiteY);
       else
       {
 	  if (Manager.GetBoolean("three-body") == true)
-              lenFilePrefix += sprintf (FilePrefix, "%s_singleband_threebody_twoorbitals_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "%s_singleband_threebody_%s_n_%d_x_%d_y_%d", StatisticPrefix, SystemName, NbrParticles, NbrSiteX, NbrSiteY);
           else
-              lenFilePrefix += sprintf (FilePrefix, "%s_singleband_fourbody_twoorbitals_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSiteX, NbrSiteY);
+              lenFilePrefix += sprintf (FilePrefix, "%s_singleband_fourbody_%s_n_%d_x_%d_y_%d", StatisticPrefix, SystemName, NbrParticles, NbrSiteX, NbrSiteY);
       }
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) && Manager.GetBoolean("flat-band") == false)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_w_%f", Manager.GetDouble("w-potential"));
@@ -166,7 +177,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetBoolean("singleparticle-spectrum") == true)
     {
-      if ("cylinder-geometry" == false)
+      if (Manager.GetBoolean("cylinder-geometry") == false)
 	{
 	  bool ExportOneBody = false;
 	  if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
@@ -201,10 +212,33 @@ int main(int argc, char** argv)
       else
 	{
 	  bool ExportOneBody = false;
+	  if (Manager.GetBoolean("singleparticle-entspectrum") == true)
+	    {
+	      ExportOneBody = true;
+	    }
 	  TightBindingModelCylinderTwoOrbitalSquareLattice TightBindingModel(NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), 
 									     Manager.GetInteger("folding"), Manager.GetDouble("mu-s"), 
 									     Manager.GetDouble("gamma-x"), Architecture.GetArchitecture(), ExportOneBody);
 	  TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
+	  if (Manager.GetBoolean("singleparticle-entspectrum") == true)
+	    {
+	      double** DensityEigenvalues = 0;
+	      int* NbrDensityEigenvalues = 0;
+	      double MinEnergy = -7.0;
+	      double MaxEnergy = -0.2;
+	      char* EntanglementSpectrumOutputFile;
+	      if (Manager.GetString("eigenvalue-file")!=0)
+		{
+		  EntanglementSpectrumOutputFile = new char [strlen(Manager.GetString("eigenvalue-file")) + 16];
+		  sprintf(EntanglementSpectrumOutputFile, "%s.full.ent", Manager.GetString("eigenvalue-file"));
+		}
+	      else
+		{
+		  EntanglementSpectrumOutputFile = new char [strlen(FilePrefix) + 16];
+		  sprintf (EntanglementSpectrumOutputFile, "%s.full.ent", FilePrefix);
+		}
+	      TightBindingModel.ComputeRealSpaceEntanglementSpectrum(EntanglementSpectrumOutputFile, MinEnergy, MaxEnergy, NbrSiteY / 2);
+	    }
 	}
       return 0;
   }

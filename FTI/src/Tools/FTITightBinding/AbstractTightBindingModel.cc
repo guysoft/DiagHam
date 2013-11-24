@@ -46,7 +46,6 @@ using std::endl;
 
 AbstractTightBindingModel::AbstractTightBindingModel()
 {
-  this->Inversion = ComplexMatrix();
   this->Architecture = 0;
 }
 
@@ -325,24 +324,6 @@ bool AbstractTightBindingModel::WriteBandStructure(char* fileName)
   File.open(fileName, ios::binary | ios::out);
   WriteLittleEndian(File, this->NbrBands);
   WriteLittleEndian(File, this->NbrStatePerBand);
-  if (this->Inversion.GetNbrRow() == 0)
-  {
-      for (int i = 0; i < this->NbrBands; ++i)
-          for (int j = 0; j < this->NbrBands; ++j)
-          {
-              Complex TmpInversion = (i == j);
-              WriteLittleEndian(File, TmpInversion);
-          }
-  }
-  else
-  {
-      for (int i = 0; i < this->NbrBands; ++i)
-          for (int j = 0; j < this->NbrBands; ++j)
-          {
-              Complex TmpInversion = this->Inversion[i][j];
-              WriteLittleEndian(File, TmpInversion);
-          }
-  }
   this->WriteHeader(File);
   for (int kx = 0; kx < this->NbrStatePerBand; ++kx)
     for (int i = 0; i < this->NbrBands; ++i)

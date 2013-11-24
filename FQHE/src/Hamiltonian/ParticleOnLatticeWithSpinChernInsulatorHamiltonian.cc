@@ -162,10 +162,16 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
       if (this->NbrInterSectorIndicesPerSum[i] > 0)
 	delete[] this->InterSectorIndicesPerSum[i];
     }
-  delete[] this->NbrIntraSectorIndicesPerSum;
-  delete[] this->IntraSectorIndicesPerSum;
-  delete[] this->NbrInterSectorIndicesPerSum;
-  delete[] this->InterSectorIndicesPerSum;
+  if (this->NbrIntraSectorSums > 0)
+    {
+      delete[] this->NbrIntraSectorIndicesPerSum;
+      delete[] this->IntraSectorIndicesPerSum;
+    }
+  if (this->NbrInterSectorSums > 0)
+    {
+      delete[] this->NbrInterSectorIndicesPerSum;
+      delete[] this->InterSectorIndicesPerSum;
+    }
   if (this->FastMultiplicationFlag == true)
     {
       long MinIndex;

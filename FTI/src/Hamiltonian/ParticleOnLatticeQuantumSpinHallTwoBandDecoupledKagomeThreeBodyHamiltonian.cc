@@ -193,18 +193,17 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
   this->NbrSpinSectors[this->MaxNBody] = 4;
   this->SpinIndices[this->MaxNBody] = new int*[this->NbrSpinSectors[this->MaxNBody]];
   this->SpinIndicesShort[this->MaxNBody] = new int[NbrSpinSectors[this->MaxNBody]];
-  int TmpNbrOperators = 4;
   this->SpinIndicesShort[this->MaxNBody][0] = 0x0;
   this->SpinIndicesShort[this->MaxNBody][1] = 0x7 | (0x7<<3);
   this->SpinIndicesShort[this->MaxNBody][2] = 0x4 | (0x4<<3);
   this->SpinIndicesShort[this->MaxNBody][3] = 0x3 | (0x3<<3);
   for (int i = 0; i < this->NbrSpinSectors[this->MaxNBody]; ++i)
     {
-      this->SpinIndices[this->MaxNBody][i] = new int[TmpNbrOperators];
       int Lim = 2 * this->MaxNBody;
+      this->SpinIndices[this->MaxNBody][i] = new int[Lim];
       for (int k = 0; k < Lim; ++k)
 	{	  
-	  this->SpinIndices[this->MaxNBody][i][k] =  (~(this->SpinIndicesShort[this->MaxNBody][i] >> k)) & 1;
+	  this->SpinIndices[this->MaxNBody][i][k] =  ((this->SpinIndicesShort[this->MaxNBody][i] >> k)) & 1;
 	}
     }
   
@@ -215,8 +214,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
   this->NBodyInteractionFactors[this->MaxNBody] = new Complex**[NbrSpinSectors[this->MaxNBody]];
 
 
+ 
   if (this->FullTwoBodyFlag == true)
-    {
+    {      
       this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
       this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -250,7 +250,6 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 		this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = (kx2 * this->NbrSiteY) + ky2;
 		++this->NbrInterSectorIndicesPerSum[TmpSum];    
 	      }
-      
       if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
 	{
 	  cout << "ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian not implemented for fermions" << endl;
@@ -415,6 +414,11 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	    }
 	}
     }
+  else
+    {
+      this->NbrIntraSectorSums = 0;
+      this->NbrInterSectorSums = 0;
+    }
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
       cout << "ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian not implemented for fermions" << endl;
@@ -425,7 +429,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	{
 	  this->NbrNBodySpinMomentumSectorSum[this->MaxNBody][s] = this->NbrSiteX * this->NbrSiteY;
 	  this->NbrNBodySpinMomentumSectorIndicesPerSum[this->MaxNBody][s] = new int[this->NbrNBodySpinMomentumSectorSum[this->MaxNBody][s]];
-	  this->NBodySpinMomentumSectorIndicesPerSum[this->MaxNBody][s] = new int*[this->NbrNBodySpinMomentumSectorSum[3][s]];
+	  this->NBodySpinMomentumSectorIndicesPerSum[this->MaxNBody][s] = new int*[this->NbrNBodySpinMomentumSectorSum[this->MaxNBody][s]];
 	}
       int** Permutations = 0; 
       double* PermutationSign = 0; 
@@ -440,8 +444,10 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
       for (int s = 0; s < 2; ++s)
 	{
 	  int* TmpSpinIndices = this->SpinIndices[this->MaxNBody][s];
-	  NbrNBodySpinMomentumSectorSum[this->MaxNBody][s] = this->NbrSiteX * this->NbrSiteY;
-	  int TmpNbrNBodySpinMomentumSectorSums = NbrNBodySpinMomentumSectorSum[this->MaxNBody][s];
+	  cout << "Spin indices : " << TmpSpinIndices[0] << " "  << TmpSpinIndices[1] << " "  << TmpSpinIndices[2] << " " 
+	       << TmpSpinIndices[3] << " "  << TmpSpinIndices[4] << " "  << TmpSpinIndices[5] << endl;
+ 	  NbrNBodySpinMomentumSectorSum[this->MaxNBody][s] = this->NbrSiteX * this->NbrSiteY;
+	  int TmpNbrNBodySpinMomentumSectorSums = this->NbrNBodySpinMomentumSectorSum[this->MaxNBody][s];
 	  int* TmpNbrNBodySpinMomentumSectorIndicesPerSum = this->NbrNBodySpinMomentumSectorIndicesPerSum[this->MaxNBody][s];
 
 	  for (int i = 0; i < TmpNbrNBodySpinMomentumSectorSums; ++i)
@@ -457,7 +463,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 			int Index2 = (kx2 * this->NbrSiteY) + ky2;
 			int Index3 = (kx3 * this->NbrSiteY) + ky3;
 			if ((Index1 <= Index2) && (Index2 <= Index3))
-			  ++TmpNbrNBodySpinMomentumSectorIndicesPerSum[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];    
+			  ++TmpNbrNBodySpinMomentumSectorIndicesPerSum[this->TightBindingModel->GetLinearizedMomentumIndex(kx1 + kx2 + kx3, ky1 + ky2 + ky3)];    
 
 		      }
 	  int ** TmpNBodySpinMomentumSectorIndicesPerSum = this->NBodySpinMomentumSectorIndicesPerSum[this->MaxNBody][s];
@@ -481,7 +487,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 			int Index3 = (kx3 * this->NbrSiteY) + ky3;
 			if ((Index1 <= Index2) && (Index2 <= Index3))
 			  {
-			    int TmpSum = (((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY);
+			    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex(kx1 + kx2 + kx3, ky1 + ky2 + ky3);
 			    TmpNBodySpinMomentumSectorIndicesPerSum[TmpSum][TmpNbrNBodySpinMomentumSectorIndicesPerSum[TmpSum] * 3] = Index1;
 			    TmpNBodySpinMomentumSectorIndicesPerSum[TmpSum][1 + (TmpNbrNBodySpinMomentumSectorIndicesPerSum[TmpSum] * 3)] = Index2;
 			    TmpNBodySpinMomentumSectorIndicesPerSum[TmpSum][2 + (TmpNbrNBodySpinMomentumSectorIndicesPerSum[TmpSum] * 3)] = Index3;
@@ -503,7 +509,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	    }
 
 	  this->NBodyInteractionFactors[this->MaxNBody][s] = new Complex* [TmpNbrNBodySpinMomentumSectorSums];
-	  Complex **TmpNBodyInteractionFactors = this->NBodyInteractionFactors[this->MaxNBody][s];
+	  Complex** TmpNBodyInteractionFactors = this->NBodyInteractionFactors[this->MaxNBody][s];
 
 	  for (int i = 0; i < TmpNbrNBodySpinMomentumSectorSums; ++i)
 	    {
@@ -528,48 +534,31 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 		      TmpAAAIn2[k] = 0.0;
 		      TmpAAAOut2[k] = 0.0;
 		    }
-
+		  double SymmetryFactor = 1.0;
+		  if ((IndexIn[0] == IndexIn[1]) && (IndexIn[0] == IndexIn[2]))
+		    {
+		      SymmetryFactor = 1.0 / 6.0;
+		    }
+		  else
+		    {
+		      if ((IndexIn[0] == IndexIn[1]) || (IndexIn[0] == IndexIn[2]) || (IndexIn[1] == IndexIn[2]))
+			{
+			  SymmetryFactor = 0.5;
+			}
+		    }
 		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		    {
 		      int* TmpPerm = Permutations[l1];
-		      Complex SumTmpAAAIn2[6];
-		      Complex SumTmpAAAOut2[6];
 		      for (int k = 0; k < 6; ++k)
 			{
-			  SumTmpAAAIn2[k] = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[1]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[2]]][s][k]);
-			  SumTmpAAAOut2[k] = OneBodyBasis[IndexIn[TmpPerm[0]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[1]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[2]]][s][k];
-			}
-		      if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) && (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]))
-			{
-			  for (int k = 0; k < 6; ++k)
-			    {
-			      SumTmpAAAIn2[k] /= 6.0;
-			      SumTmpAAAOut2[k] /= 6.0;
-			    }
-			}
-		      else
-			{
-			  if ((IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[1]]) || 
-			      (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]]) || 
-			      (IndexIn[TmpPerm[0]] == IndexIn[TmpPerm[2]]))
-			    {
-			      for (int k = 0; k < 6; ++k)
-				{
-				  SumTmpAAAIn2[k] *= 0.5;
-				  SumTmpAAAOut2[k] *= 0.5;
-				}
-			    }
-			}
-		      for (int k = 0; k < 6; ++k)
-			{
-			  TmpAAAIn2[k] += SumTmpAAAIn2[k];
-			  TmpAAAOut2[k] += SumTmpAAAOut2[k];
-			}
+			  TmpAAAIn2[k] += Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[1]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[2]]][s][k]);
+			  TmpAAAOut2[k] += OneBodyBasis[IndexIn[TmpPerm[0]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[1]]][s][k] * OneBodyBasis[IndexIn[TmpPerm[2]]][s][k];
+			}		  
 		    }
 		  for (int k = 0; k < 6; ++k)
 		    {
-		      TmpAAAIn[j1][k] =  TmpAAAIn2[k];
-		      TmpAAAOut[j1][k] = TmpAAAOut2[k];
+		      TmpAAAIn[j1][k] =  TmpAAAIn2[k] * SymmetryFactor;
+		      TmpAAAOut[j1][k] = TmpAAAOut2[k] * SymmetryFactor;
 		    }
 		}
 
@@ -577,9 +566,10 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 		{
 		  for (int j2 = 0; j2 < TmpNbrNBodySpinMomentumSectorIndicesPerSum[i]; ++j2)
 		    {
+		      TmpNBodyInteractionFactors[i][Index] = 0.0;
 		      for (int k = 0; k < 6; ++k)
 			{
-			  TmpNBodyInteractionFactors[i][Index] = 2.0 * ThreeBodyUFactor * TmpAAAIn[j1][k] * TmpAAAOut[j2][k];
+			  TmpNBodyInteractionFactors[i][Index] += 2.0 * ThreeBodyUFactor * TmpAAAIn[j1][k] * TmpAAAOut[j2][k];
 			}
 		      TotalNbrInteractionFactors++;
 		      ++Index;
@@ -625,9 +615,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 		    int Index2 = (kx2 * this->NbrSiteY) + ky2;
 		    int Index3 = (kx3 * this->NbrSiteY) + ky3;
 		    if (Index2 <= Index3)
-		      ++TmpNbrNBodySpinMomentumSectorIndicesPerSumUpDownDown[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];
+		      ++TmpNbrNBodySpinMomentumSectorIndicesPerSumUpDownDown[this->TightBindingModel->GetLinearizedMomentumIndex(kx1 + kx2 + kx3, ky1 + ky2 + ky3)];
 		    if (Index1 <= Index2)
-		      ++TmpNbrNBodySpinMomentumSectorIndicesPerSumUpUpDown[(((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY)];    
+		      ++TmpNbrNBodySpinMomentumSectorIndicesPerSumUpUpDown[this->TightBindingModel->GetLinearizedMomentumIndex(kx1 + kx2 + kx3, ky1 + ky2 + ky3)];    
 		  }
       
       int** TmpNBodySpinMomentumSectorIndicesPerSumUpDownDown = this->NBodySpinMomentumSectorIndicesPerSum[3][2];
@@ -658,7 +648,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 		    int Index3 = (kx3 * this->NbrSiteY) + ky3;
 		    if (Index2 <= Index3)
 		      {
-			int TmpSum = (((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY);
+			int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex(kx1 + kx2 + kx3, ky1 + ky2 + ky3);
 			TmpNBodySpinMomentumSectorIndicesPerSumUpDownDown[TmpSum][TmpNbrNBodySpinMomentumSectorIndicesPerSumUpDownDown[TmpSum] * 3] = Index1;
 			TmpNBodySpinMomentumSectorIndicesPerSumUpDownDown[TmpSum][1 + (TmpNbrNBodySpinMomentumSectorIndicesPerSumUpDownDown[TmpSum] * 3)] = Index2;
 			TmpNBodySpinMomentumSectorIndicesPerSumUpDownDown[TmpSum][2 + (TmpNbrNBodySpinMomentumSectorIndicesPerSumUpDownDown[TmpSum] * 3)] = Index3;
@@ -666,7 +656,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 		      }
 		    if (Index1 <= Index2)
 		      {
-			int TmpSum = (((kx1 + kx2 + kx3) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2 + ky3) % this->NbrSiteY);
+			int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex(kx1 + kx2 + kx3, ky1 + ky2 + ky3);
 			TmpNBodySpinMomentumSectorIndicesPerSumUpUpDown[TmpSum][TmpNbrNBodySpinMomentumSectorIndicesPerSumUpUpDown[TmpSum] * 3] = Index1;
 			TmpNBodySpinMomentumSectorIndicesPerSumUpUpDown[TmpSum][1 + (TmpNbrNBodySpinMomentumSectorIndicesPerSumUpUpDown[TmpSum] * 3)] = Index2;
 			TmpNBodySpinMomentumSectorIndicesPerSumUpUpDown[TmpSum][2 + (TmpNbrNBodySpinMomentumSectorIndicesPerSumUpUpDown[TmpSum] * 3)] = Index3;
@@ -687,8 +677,8 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
       Complex** TmpAAAOut = new Complex*[TmpLargestSector];
       for (int k = 0; k < TmpLargestSector; ++k)
 	{
-	  TmpAAAIn[k] = new Complex[6];
-	  TmpAAAOut[k] = new Complex[6];
+	  TmpAAAIn[k] = new Complex[3];
+	  TmpAAAOut[k] = new Complex[3];
 	}
 
       // up-down-down contribution
@@ -718,52 +708,41 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	      IndexIn[1] = TmpNBodySpinMomentumSectorIndicesPerSumUpDownDown[i][(j1 * 3) + 1];
 	      IndexIn[2] = TmpNBodySpinMomentumSectorIndicesPerSumUpDownDown[i][(j1 * 3) + 2];
 	      KxIn[0] = IndexIn[0] / this->NbrSiteY;
-   KyIn[0] = IndexIn[0] % this->NbrSiteY;
+	      KyIn[0] = IndexIn[0] % this->NbrSiteY;
 	      KxIn[1] = IndexIn[1] / this->NbrSiteY;
 	      KyIn[1] = IndexIn[1] % this->NbrSiteY;
 	      KxIn[2] = IndexIn[2] / this->NbrSiteY;
 	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
 
-	      Complex TmpAAAIn2[6];
-	      Complex TmpAAAOut2[6];
-	      for (int k = 0; k < 6; ++k)
+	      Complex TmpAAAIn2[3];
+	      Complex TmpAAAOut2[3];
+	      for (int k = 0; k < 3; ++k)
 		{
 		  TmpAAAIn2[k] = 0.0;
 		  TmpAAAOut2[k] = 0.0;
 		}
+	      double SymmetryFactor = 1.0;
+	      if (IndexIn[1] == IndexIn[2])
+		{
+		  SymmetryFactor = 0.5;
+		}
 	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		{
 		  int* TmpPerm = Permutations[l1];
-		  Complex SumTmpAAAIn2[6];
-		  Complex SumTmpAAAOut2[6];
-		  for (int k = 0; k < 6; ++k)
+		  for (int k = 0; k < 3; ++k)
 		    {
-		      SumTmpAAAIn2[k] = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][TmpSpinIndicesUpDownDown[3]][k] * 
-					     OneBodyBasis[IndexIn[TmpPerm[1]]][TmpSpinIndicesUpDownDown[4]][k] * 
-					     OneBodyBasis[IndexIn[TmpPerm[2]]][TmpSpinIndicesUpDownDown[5]][k]);
-		      SumTmpAAAOut2[k] = (OneBodyBasis[IndexIn[TmpPerm[0]]][TmpSpinIndicesUpDownDown[0]][k] * 
-					  OneBodyBasis[IndexIn[TmpPerm[1]]][TmpSpinIndicesUpDownDown[1]][k] * 
-					  OneBodyBasis[IndexIn[TmpPerm[2]]][TmpSpinIndicesUpDownDown[2]][k]);
-		    }
-				  
-		  if (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])
-		    {
-		      for (int k = 0; k < 6; ++k)
-			{
-			  SumTmpAAAIn2[k] *= 0.5;
-			  SumTmpAAAOut2[k] *= 0.5;
-			}
-		    }
-		  for (int k = 0; k < 6; ++k)
-		    {
-		      TmpAAAIn2[k] += SumTmpAAAIn2[k];
-		      TmpAAAOut2[k] += SumTmpAAAOut2[k];
+		      TmpAAAIn2[k] += Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][k] * 
+					   OneBodyBasis[IndexIn[TmpPerm[1]]][1][k + 3] * 
+					   OneBodyBasis[IndexIn[TmpPerm[2]]][1][k + 3]);
+		      TmpAAAOut2[k] += (OneBodyBasis[IndexIn[TmpPerm[0]]][0][k] * 
+					OneBodyBasis[IndexIn[TmpPerm[1]]][1][k + 3] * 
+					OneBodyBasis[IndexIn[TmpPerm[2]]][1][k + 3]);
 		    }
 		}
-	      for (int k = 0; k < 6; ++k)
+	      for (int k = 0; k < 3; ++k)
 		{
-		  TmpAAAIn[j1][k] =  TmpAAAIn2[k];
-		  TmpAAAOut[j1][k] = TmpAAAOut2[k];
+		  TmpAAAIn[j1][k] =  SymmetryFactor * TmpAAAIn2[k];
+		  TmpAAAOut[j1][k] = SymmetryFactor * TmpAAAOut2[k];
 		}
 	    }
 
@@ -772,10 +751,11 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	      for (int j2 = 0; j2 < TmpNbrNBodySpinMomentumSectorIndicesPerSumUpDownDown[i]; ++j2)
 		{
 		  TmpNBodyInteractionFactorsUpDownDown[i][Index] = 0.0;
-		  for (int k = 0; k < 6; ++k)
+		  for (int k = 0; k < 3; ++k)
 		    {		  
 		      TmpNBodyInteractionFactorsUpDownDown[i][Index] += 2.0 * ThreeBodyVFactor * (TmpAAAIn[j1][k] * TmpAAAOut[j2][k]);
 		    }							    
+		  cout << "upupdown :" << i << " " << j1 << " " << j2  << " " << TotalNbrInteractionFactors << " : " <<  TmpNBodyInteractionFactorsUpDownDown[i][Index] << endl;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -793,6 +773,8 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
       Permutations[1][2] = 2;
 
       int* TmpSpinIndicesUpUpDown = this->SpinIndices[3][3];
+      cout << "Spin indices : " << TmpSpinIndicesUpUpDown[0] << " "  << TmpSpinIndicesUpUpDown[1] << " "  << TmpSpinIndicesUpUpDown[2] << " " 
+	   << TmpSpinIndicesUpUpDown[3] << " "  << TmpSpinIndicesUpUpDown[4] << " "  << TmpSpinIndicesUpUpDown[5] << endl;
       this->NBodyInteractionFactors[3][3] = new Complex* [TmpNbrNBodySpinMomentumSectorSumsUpUpDown];
       Complex** TmpNBodyInteractionFactorsUpUpDown = this->NBodyInteractionFactors[3][3]; 
 
@@ -812,45 +794,41 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	      KxIn[2] = IndexIn[2] / this->NbrSiteY;
 	      KyIn[2] = IndexIn[2] % this->NbrSiteY;
 
-	      Complex TmpAAAIn2[6];
-	      Complex TmpAAAOut2[6];
-	      for (int k = 0; k < 6; ++k)
+	      Complex TmpAAAIn2[3];
+	      Complex TmpAAAOut2[3];
+	      for (int k = 0; k < 3; ++k)
 		{
 		  TmpAAAIn2[k] = 0.0;
 		  TmpAAAOut2[k] = 0.0;
 		}
+	      double SymmetryFactor = 1.0;
+	      if (IndexIn[0] == IndexIn[1])
+		{
+		  SymmetryFactor = 0.5;
+		}
 	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		{
 		  int* TmpPerm = Permutations[l1];
-		  Complex SumTmpAAAIn2[6];
-		  Complex SumTmpAAAOut2[6];
-		  for (int k = 0; k < 6; ++k)
+		  for (int k = 0; k < 3; ++k)
 		    {
-		      SumTmpAAAIn2[k] = Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][TmpSpinIndicesUpUpDown[3]][k] * 
-					     OneBodyBasis[IndexIn[TmpPerm[1]]][TmpSpinIndicesUpUpDown[4]][k] * 
-					     OneBodyBasis[IndexIn[TmpPerm[2]]][TmpSpinIndicesUpUpDown[5]][k]);
-		      SumTmpAAAOut2[k] = (OneBodyBasis[IndexIn[TmpPerm[0]]][TmpSpinIndicesUpUpDown[0]][k] * 
-					  OneBodyBasis[IndexIn[TmpPerm[1]]][TmpSpinIndicesUpUpDown[1]][k] * 
-					  OneBodyBasis[IndexIn[TmpPerm[2]]][TmpSpinIndicesUpUpDown[2]][k]);
-		    }
-		  if (IndexIn[TmpPerm[1]] == IndexIn[TmpPerm[2]])
-		    {
-		      for (int k = 0; k < 6; ++k)
-			{
-			  SumTmpAAAIn2[k] *= 0.5;
-			  SumTmpAAAOut2[k] *= 0.5;
-			}
-		    }
-		  for (int k = 0; k < 6; ++k)
-		    {
-		      TmpAAAIn2[k] += SumTmpAAAIn2[k];
-		      TmpAAAOut2[k] += SumTmpAAAOut2[k];
+		      TmpAAAIn2[k] += Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][0][k] * 
+					   OneBodyBasis[IndexIn[TmpPerm[1]]][0][k] * 
+					   OneBodyBasis[IndexIn[TmpPerm[2]]][1][k + 3]);
+		      TmpAAAOut2[k] += (OneBodyBasis[IndexIn[TmpPerm[0]]][0][k] * 
+					OneBodyBasis[IndexIn[TmpPerm[1]]][0][k] * 
+					OneBodyBasis[IndexIn[TmpPerm[2]]][1][k + 3]);
+// 		      TmpAAAIn2[k] += Conj(OneBodyBasis[IndexIn[TmpPerm[0]]][TmpSpinIndicesUpUpDown[3]][k] * 
+// 					   OneBodyBasis[IndexIn[TmpPerm[1]]][TmpSpinIndicesUpUpDown[4]][k] * 
+// 					   OneBodyBasis[IndexIn[TmpPerm[2]]][TmpSpinIndicesUpUpDown[5]][k + 3]);
+// 		      TmpAAAOut2[k] += (OneBodyBasis[IndexIn[TmpPerm[0]]][TmpSpinIndicesUpUpDown[0]][k] * 
+// 					OneBodyBasis[IndexIn[TmpPerm[1]]][TmpSpinIndicesUpUpDown[1]][k] * 
+// 					OneBodyBasis[IndexIn[TmpPerm[2]]][TmpSpinIndicesUpUpDown[2]][k + 3]);
 		    }
 		}
-	      for (int k = 0; k < 6; ++k)
+	      for (int k = 0; k < 3; ++k)
 		{
-		  TmpAAAIn[j1][k] =  TmpAAAIn2[k];
-		  TmpAAAOut[j1][k] = TmpAAAOut2[k];
+		  TmpAAAIn[j1][k] =  SymmetryFactor * TmpAAAIn2[k];
+		  TmpAAAOut[j1][k] = SymmetryFactor * TmpAAAOut2[k];
 		}
 	    }
 	  
@@ -859,10 +837,11 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian:
 	      for (int j2 = 0; j2 < TmpNbrNBodySpinMomentumSectorIndicesPerSumUpUpDown[i]; ++j2)
 		{
 		  TmpNBodyInteractionFactorsUpUpDown[i][Index] = 0.0;
-		  for (int k = 0; k < 6; ++k)
+		  for (int k = 0; k < 3; ++k)
 		    {		  
 		      TmpNBodyInteractionFactorsUpUpDown[i][Index] += 2.0 * ThreeBodyVFactor * (TmpAAAIn[j1][k] * TmpAAAOut[j2][k]); 
 		    }
+		  cout << "upupdown :" << i << " " << j1 << " " << j2  << " " << TotalNbrInteractionFactors << " : " <<  TmpNBodyInteractionFactorsUpUpDown[i][Index] << endl;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}

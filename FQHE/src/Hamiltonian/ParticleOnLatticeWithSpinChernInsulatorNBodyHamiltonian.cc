@@ -63,18 +63,23 @@ ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian::~ParticleOnLatticeWithS
   //cout << "ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian::~ParticleOnLatticeWithSpinChernInsulatorNBodyHamiltonian"<<endl;
   for (int k=0; k<=MaxNBody; ++k)
     {
-      if (NBodyFlags[k])
+      if (this->NBodyFlags[k])
 	{
-	  for (int i=0; i<NbrSpinSectors[k];++i)
+	  for (int i = 0; i < this->NbrSpinSectors[k]; ++i)
 	    {
-	      for (int m=0; m<this->NbrNBodySpinMomentumSectorSum[k][i]; ++m)
-		delete [] this->NBodyInteractionFactors[k][i][m];
-	      for (int m=0; m<k*this->NbrNBodySpinMomentumSectorSum[k][i]; ++m)
-		delete [] this->NBodySpinMomentumSectorIndicesPerSum[k][i][m];
-	      delete [] this->NBodyInteractionFactors[k][i];
-	      delete [] this->NBodySpinMomentumSectorIndicesPerSum[k][i];
-	      delete [] this->NbrNBodySpinMomentumSectorIndicesPerSum[k][i];
-	      delete [] this->SpinIndices[k][i];
+	      for (int m = 0; m < this->NbrNBodySpinMomentumSectorSum[k][i]; ++m)
+		delete[] this->NBodyInteractionFactors[k][i][m];
+	      if (this->NbrNBodySpinMomentumSectorSum[k][i] != 0)
+		{
+		  for (int m = 0; m < this->NbrNBodySpinMomentumSectorSum[k][i]; ++m)
+		    {
+		      delete[] this->NBodySpinMomentumSectorIndicesPerSum[k][i][m];
+		    }
+		}
+	      delete[] this->NBodyInteractionFactors[k][i];
+	      delete[] this->NBodySpinMomentumSectorIndicesPerSum[k][i];
+	      delete[] this->NbrNBodySpinMomentumSectorIndicesPerSum[k][i];
+	      delete[] this->SpinIndices[k][i];
 	    }
 	  delete [] this->NbrNBodySpinMomentumSectorSum[k];
 	  delete [] this->NBodyInteractionFactors[k];
