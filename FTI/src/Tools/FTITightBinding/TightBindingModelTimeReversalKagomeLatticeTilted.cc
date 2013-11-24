@@ -34,6 +34,8 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
+using std::cout;
+using std::endl;
 
 // default constructor
 //
@@ -125,8 +127,8 @@ void TightBindingModelTimeReversalKagomeLatticeTilted::CoreComputeBandStructure(
 
 	HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
 	
-	KX = this->GetProjectedMomentum(kx, ky, 0);
-	KY = this->GetProjectedMomentum(kx, ky, 1);
+	KX = this->ProjectedMomenta[Index][0];
+	KY = this->ProjectedMomenta[Index][1];
 	Complex HAB (-this->NNHopping, -this->NNSpinOrbit);
 	HAB *= 1 + Phase(KX);
 	Complex HAC(-this->NNHopping, this->NNSpinOrbit);
@@ -135,8 +137,8 @@ void TightBindingModelTimeReversalKagomeLatticeTilted::CoreComputeBandStructure(
 	HBC *= 1 + Phase(KY - KX);
 
 		
-	double InvKX = -this->GetProjectedMomentum(kx, ky, 0);
-	double InvKY = -this->GetProjectedMomentum(kx, ky, 1);
+	double InvKX = -this->ProjectedMomenta[Index][0];
+	double InvKY = -this->ProjectedMomenta[Index][1];
 	Complex InvHAB = Complex(- this->NNHopping, - this->NNSpinOrbit);
 	InvHAB *= 1 + Phase(InvKX);
 	Complex InvHAC = Complex(- this->NNHopping,  this->NNSpinOrbit);
@@ -209,8 +211,8 @@ void TightBindingModelTimeReversalKagomeLatticeTilted::ComputeAllProjectedMoment
  {
    for (int ky = 0; ky < this->NbrSiteY; ++ky)
    {
-     int kx_trans = kx + this->Offset*ky;
-     int ky_trans = ky;
+     double kx_trans = kx + this->Offset*ky + this->GammaX;
+     double ky_trans = ky + this->GammaY;
      projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
      projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
      this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
