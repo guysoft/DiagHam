@@ -66,8 +66,11 @@ SpinChainLongRangeHamiltonian::SpinChainLongRangeHamiltonian(AbstractSpinChain* 
       this->J[i] = j[i];
       this->Jz[i] = jz[i];
       this->HalfJ[i] = j[i] * 0.5;
-      this->Hz[i] = hz[i];
     }
+
+  for (int i = 0; i < this->NbrSpin; i++)
+      this->Hz[i] = hz[i];
+
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
@@ -160,10 +163,10 @@ Complex SpinChainLongRangeHamiltonian::MatrixElement (RealVector& V1, RealVector
 	     {
 	        pos = this->Chain->SmiSpj(j, k, i, coef);
 	        if (pos != dim)
-	           x+= V1[pos] * this->HalfJ[k-j] * coef * V2[i];
+	           x+= V1[pos] * this->HalfJ[k-j-1] * coef * V2[i];
 	        pos = this->Chain->SmiSpj(k, j, i, coef);
 	        if (pos != dim)
-	           x+= V1[pos] * this->HalfJ[k-j] * coef * V2[i];
+	           x+= V1[pos] * this->HalfJ[k-j-1] * coef * V2[i];
 	     }
 
       // SzSz contributions
@@ -235,12 +238,12 @@ RealVector& SpinChainLongRangeHamiltonian::LowLevelMultiply(RealVector& vSource,
  	        pos = this->Chain->SmiSpj(j, k, i, coef);
 	        if (pos != dim)
 	          {
-	             vDestination[pos] += this->HalfJ[k-j] * coef * TmpValue;
+	             vDestination[pos] += this->HalfJ[k-j-1] * coef * TmpValue;
 	          }
      	        pos = this->Chain->SmiSpj(k, j, i, coef);
 	        if (pos != dim)
 	          {
-	             vDestination[pos] += this->HalfJ[k-j] * coef * TmpValue;
+	             vDestination[pos] += this->HalfJ[k-j-1] * coef * TmpValue;
 	          }
 	      }
 
@@ -300,12 +303,12 @@ RealVector& SpinChainLongRangeHamiltonian::LowLevelAddMultiply(RealVector& vSour
 	       pos = this->Chain->SmiSpj(j, k, i, coef);
 	       if (pos != dim)
 	         {
-	           vDestination[pos] += this->HalfJ[k-j] * coef * TmpValue;
+	           vDestination[pos] += this->HalfJ[k-j-1] * coef * TmpValue;
 	         }
 	       pos = this->Chain->SmiSpj(k, j, i, coef);
 	       if (pos != dim)
 	        {
-	           vDestination[pos] += this->HalfJ[k-j] * coef * TmpValue;
+	           vDestination[pos] += this->HalfJ[k-j-1] * coef * TmpValue;
 	        }
 	     }
 
@@ -433,7 +436,7 @@ void SpinChainLongRangeHamiltonian::EvaluateDiagonalMatrixElements()
       for (int j = 0; j < (this->NbrSpin - 1); j++)
 	  for (int k = j + 1; k < this->NbrSpin; ++k)
  	     {
-	        this->SzSzContributions[i] += this->Jz[k-j] * this->Chain->SziSzj(j, k, i);
+	        this->SzSzContributions[i] += this->Jz[k-j-1] * this->Chain->SziSzj(j, k, i);
 	     }
     }
 }

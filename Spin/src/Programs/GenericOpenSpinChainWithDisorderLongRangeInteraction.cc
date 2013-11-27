@@ -18,6 +18,7 @@
 #include "MainTask/GenericRealMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/ConfigurationParser.h"
 
 #include "Options/Options.h"
 
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "random-field", "assume random field sum_i h_i S_i^z");
   (*SystemGroup) += new  SingleDoubleOption ('w', "randomfield-uniform", "random field h_i is drawn from uniform distribution [-W,W]", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('g', "randomfield-gaussian", "random field h_i is drawn from Gaussian distribution with a given variance", 0.0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "disorder-file", "file describing the disorder potential");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
 #ifdef __LAPACK__
@@ -106,11 +108,11 @@ int main(int argc, char** argv)
   double InteractionExponent = Manager.GetDouble("interaction-exponent");
 
   double* JValues = new double [NbrSpins - 1];
-  JValues[0] = Manager.GetDouble("j-value");
+  double ConstantJ = Manager.GetDouble("j-value");
 
-  for (int i = 1; i < (NbrSpins - 1); ++i)
+  for (int i = 0; i < (NbrSpins - 1); ++i)
     {
-      JValues[i] = JValues[0]/pow((double)i, InteractionExponent);
+      JValues[i] = ConstantJ/pow(i + 1.0, InteractionExponent);
       cout << "J["<<i<<"]="<<JValues[i]<<endl;
     }
   cout<<endl;
@@ -119,41 +121,65 @@ int main(int argc, char** argv)
   double TmpDeltaJz = Manager.GetDouble("djz-value");
   for (int i = 0; i < (NbrSpins - 1); ++i)
    {
-     JzValues[i] = JValues[i] + TmpDeltaJz;
+     JzValues[i] = (ConstantJ + TmpDeltaJz)/pow(i + 1.0, InteractionExponent);
      cout<<"Jz["<<i<<"]="<<JzValues[i]<<endl;
    }
   cout<<endl;
 
-  const gsl_rng_type * T;
-  gsl_rng * rng;
-  
-  // select random number generator 
-  rng = gsl_rng_alloc (gsl_rng_mt19937);
-
-  long seed = time (NULL) * getpid();
-  gsl_rng_set (rng, seed);
-
   double* HValues = new double [NbrSpins];
+  int TmpNbrDisorderTerms;
 
-  for (int i = 0; i < NbrSpins; i++)
+  if (Manager.GetString("disorder-file") == 0)
     {
-      if (Manager.GetBoolean("random-field"))
-        {
-          if (fabs(Manager.GetDouble("randomfield-uniform")) > 0.0)
-            {
-               HValues[i] = gsl_ran_flat (rng, -fabs(Manager.GetDouble("randomfield-uniform")), fabs(Manager.GetDouble("randomfield-uniform")));
-            }
-          else if (fabs(Manager.GetDouble("randomfield-gaussian")) > 0.0)  
-           {
-               HValues[i] = gsl_ran_gaussian (rng, fabs(Manager.GetDouble("randomfield-gaussian")));
-           } 
-        }
-      else
-        HValues[i] = 0.0;
-      cout<<"h["<<i<<"]="<<HValues[i]<<endl;
-    } 
+       const gsl_rng_type * T;
+       gsl_rng * rng;
+  
+       // select random number generator 
+       rng = gsl_rng_alloc (gsl_rng_mt19937);
 
-  gsl_rng_free (rng);
+       long seed = time (NULL) * getpid();
+       gsl_rng_set (rng, seed);
+
+      for (int i = 0; i < NbrSpins; i++)
+       {
+         if (Manager.GetBoolean("random-field"))
+           {
+             if (fabs(Manager.GetDouble("randomfield-uniform")) > 0.0)
+               {
+                  HValues[i] = gsl_ran_flat (rng, -fabs(Manager.GetDouble("randomfield-uniform")), fabs(Manager.GetDouble("randomfield-uniform")));
+               }
+             else if (fabs(Manager.GetDouble("randomfield-gaussian")) > 0.0)  
+              {
+                 HValues[i] = gsl_ran_gaussian (rng, fabs(Manager.GetDouble("randomfield-gaussian")));
+              } 
+          }
+         else
+           HValues[i] = 0.0;
+         cout<<"h["<<i<<"]="<<HValues[i]<<endl;
+        } 
+
+      gsl_rng_free (rng);
+    }
+  else
+    {
+      ConfigurationParser DisorderDefinition;
+      if (DisorderDefinition.Parse(Manager.GetString("disorder-file")) == false)
+	{
+	  DisorderDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	}
+      if (DisorderDefinition.GetAsDoubleArray("Disorder", ' ', HValues, TmpNbrDisorderTerms) == true)
+	{
+	  if (TmpNbrDisorderTerms != NbrSpins)
+	    {
+	      cout << "Invalid number of disorder terms" << endl;
+	      return -1;	  
+	    }
+	}
+
+      for (int i = 0; i < NbrSpins; i++)
+        cout<<"h["<<i<<"]="<<HValues[i]<<endl;
+    }
 
 
   int MaxSzValue = NbrSpins * SpinValue;
@@ -200,6 +226,13 @@ int main(int argc, char** argv)
       FirstRun = false;
       delete Chain;
       delete[] TmpSzString;
+      delete[] TmpEigenstateString;
     }
+  delete[] OutputFileName;
+  delete[] CommentLine;
+  delete[] JValues;
+  delete[] FullOutputFileName;
+  delete[] JzValues;
+  delete[] HValues; 
   return 0;
 }

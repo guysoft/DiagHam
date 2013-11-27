@@ -211,6 +211,7 @@ Spin1_2Chain::~Spin1_2Chain ()
   if ((this->Flag.Shared() == false) && (this->Flag.Used() == true) && (this->ChainLength != 0))
     {
       delete[] this->StateDescription;
+      delete[] this->LookUpTable;
     }
 }
 

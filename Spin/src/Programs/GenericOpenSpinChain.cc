@@ -147,6 +147,12 @@ int main(int argc, char** argv)
       FirstRun = false;
       delete Chain;
       delete[] TmpSzString;
+      delete[] TmpEigenstateString;
     }
+  delete[] OutputFileName;
+  delete[] CommentLine;
+  delete[] JValues;
+  delete[] FullOutputFileName;
+  delete[] JzValues;
   return 0;
 }

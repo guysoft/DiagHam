@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption ('\n', "random-field", "assume random field sum_i h_i S_i^z");
   (*SystemGroup) += new  SingleDoubleOption ('w', "randomfield-uniform", "random field h_i is drawn from uniform distribution [-W,W]", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('g', "randomfield-gaussian", "random field h_i is drawn from Gaussian distribution with a given variance", 0.0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "disorder-file", "file describing the dsiorder potential");
+  (*SystemGroup) += new  SingleStringOption ('\n', "disorder-file", "file describing the disorder potential");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
 
 #ifdef __LAPACK__
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
   for (int i = 0; i < (NbrSpins - 1); ++i)
     JzValues[i] = JValues[i] + TmpDeltaJz;
 
-  double* HValues = 0;
+  double* HValues = new double [NbrSpins];
   int TmpNbrDisorderTerms;
 
   if (Manager.GetString("disorder-file") == 0)
@@ -125,8 +125,6 @@ int main(int argc, char** argv)
 
        long seed = time (NULL) * getpid();
        gsl_rng_set (rng, seed);
-
-       double* HValues = new double [NbrSpins];
 
       for (int i = 0; i < NbrSpins; i++)
        {
@@ -169,7 +167,6 @@ int main(int argc, char** argv)
         cout<<"h["<<i<<"]="<<HValues[i]<<endl;
     }
 
-
   int MaxSzValue = NbrSpins * SpinValue;
   int InitalSzValue = MaxSzValue & 1;
   if (Manager.GetInteger("initial-sz") > 1)
@@ -201,12 +198,14 @@ int main(int argc, char** argv)
 	    return -1;
 	  }
 	}
-      
+
       SpinChainWithDisorderHamiltonian Hamiltonian (Chain, NbrSpins, JValues, JzValues, HValues);
+
       char* TmpSzString = new char[64];
       sprintf (TmpSzString, "%d", InitalSzValue);
       char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
       sprintf (TmpEigenstateString, "%s_sz_%d", OutputFileName, InitalSzValue);
+
       GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
 			       FirstRun, TmpEigenstateString);
       MainTaskOperation TaskOperation (&Task);
@@ -214,6 +213,13 @@ int main(int argc, char** argv)
       FirstRun = false;
       delete Chain;
       delete[] TmpSzString;
+      delete[] TmpEigenstateString;
     }
+  delete[] OutputFileName;
+  delete[] CommentLine;
+  delete[] JValues;
+  delete[] FullOutputFileName;
+  delete[] JzValues;
+  delete[] HValues; 
   return 0;
 }

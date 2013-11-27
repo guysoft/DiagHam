@@ -483,9 +483,10 @@ else //Complex problem
       cout << "Filename: " << GroundStateFiles[i] << " N= " << NbrSpins << " Sz= " << TotalSz[i] << " spin= " << SpinValue << endl;
     }
 
-  Spaces = new AbstractSpinChain* [NbrSpaces];
+ 
+ Spaces = new AbstractSpinChain* [NbrSpaces];
 
-  if (DensityMatrixFileName != 0)
+ if (DensityMatrixFileName != 0)
     {
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 

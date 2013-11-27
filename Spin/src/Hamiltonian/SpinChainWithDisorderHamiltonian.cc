@@ -67,8 +67,12 @@ SpinChainWithDisorderHamiltonian::SpinChainWithDisorderHamiltonian(AbstractSpinC
       this->J[i] = j[i];
       this->Jz[i] = jz[i];
       this->HalfJ[i] = j[i] * 0.5;
-      this->Hz[i] = hz[i];
     }
+
+  for (int i = 0; i < this->NbrSpin; i++)
+    this->Hz[i] = hz[i];
+
+
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
