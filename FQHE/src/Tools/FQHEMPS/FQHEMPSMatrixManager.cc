@@ -42,6 +42,7 @@
 #include "Tools/FQHEMPS/FQHEMPSClustered2RQuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3Matrix.h"
 #include "Tools/FQHEMPS/FQHEMPSReadRezayi3QuasiholeSectorMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSReadRezayi3QuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinQuasiholeMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSBlockMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSN1SuperconformalMatrix.h"
@@ -459,7 +460,9 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	{
 	  if (this->Options->GetBoolean("rr-3") == true)
 	    {
-	      MPSMatrix = 0;
+              MPSMatrix = new FQHEMPSReadRezayi3QuasiholeMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices,
+                                                                this->Options->GetString("matrices-cft"), !(this->Options->GetBoolean("use-nonrational")),
+                                                                this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 	    }
 	  else
 	    {

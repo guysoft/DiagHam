@@ -11,6 +11,7 @@ FQHEMPSLaughlinQuasiholeMatrix.cc \
 FQHEMPSClustered2RQuasiholeSectorMatrix.cc \
 FQHEMPSClustered2RQuasiholeMatrix.cc \
 FQHEMPSReadRezayi3QuasiholeSectorMatrix.cc \
+FQHEMPSReadRezayi3QuasiholeMatrix.cc \
 FQHEMPSBlockMatrix.cc \
 FQHEMPSN1SuperconformalMatrix.cc \
 FQHEMPSFixedQSectorMatrix.cc \
