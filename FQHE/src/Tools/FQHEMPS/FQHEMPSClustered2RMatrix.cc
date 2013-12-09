@@ -2697,11 +2697,12 @@ void FQHEMPSClustered2RMatrix::RescaleFullMatrixElements(LongRationalMatrix** ra
 // leftSectors = the index of the left state for each channel
 // rightSectors = the index of the right state for each channel
 // globalFactors = OPE structure coefficients
+// outputIntermediate = whether to output rational scalar products and matrix elements
 //
 // return value = blocks of the matrices in each fusion channel, organized by descendant levels
 RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture, char* fieldName, LongRational fieldWeight,
         int nbrSectors, char** sectorNames, LongRational* weights,
-        int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors)
+        int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors, bool outputIntermediate)
 {
     LongRational CentralCharge12 (this->CentralCharge);
     cout << "central charge = " << CentralCharge12 << endl;
@@ -2765,9 +2766,7 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
     for (int s = 0; s < nbrSectors; ++s)
         cout << sectorNames[s] << ", h = " << weights[s] << endl;
 
-    char* TmpFileName = 0;
-    if (cftDirectory != 0)
-        TmpFileName = new char[512 + strlen(cftDirectory)];
+    char* TmpFileName = new char[1024];
 
     for (int i = 0; i <= this->PLevel; ++i)
     {
@@ -2799,6 +2798,22 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
     }
     for (int s = 0; s < nbrSectors; ++s)
         this->RescaleFullScalarProductMatrix(RationalScalarProducts[s], ScalarProducts[s], RationalMultiplicityFactor, MultiplicityFactor);
+
+    if (outputIntermediate && this->UseRationalFlag && architecture->CanWriteOnDisk())
+    {
+        for (int i = 0; i <= this->PLevel; ++i)
+        {
+            for (int s = 0; s < nbrSectors; ++s)
+            {
+                int o = StartingLevels[s];
+                if (i + o > this->PLevel)
+                    continue;
+
+                sprintf(TmpFileName, "cft_%s_rescaledscalarproducts_%s_level_%d.dat", this->BMatrixOutputName, sectorNames[s], i + o);
+                RationalScalarProducts[s][i].WriteMatrix(TmpFileName);
+            }
+        }
+    }
 
     for (int i = 0; i <= this->PLevel; ++i)
         for (int s = 0; s < nbrSectors; ++s)
@@ -2879,6 +2894,27 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
         }
         for (int c = 0; c < nbrChannels; ++c)
             this->RescaleFullMatrixElements(RationalMatrices[c], Matrices[c], RationalMultiplicityFactor, MultiplicityFactor, globalFactors[c]);
+
+        if (outputIntermediate && this->UseRationalFlag && architecture->CanWriteOnDisk())
+        {
+            for (int j = 0; j <= this->PLevel; ++j)
+            {
+                for (int i = 0; i <= this->PLevel; ++i)
+                {
+                    for (int c = 0; c < nbrChannels; ++c)
+                    {
+                        int l = StartingLevels[leftSectors[c]];
+                        int r = StartingLevels[rightSectors[c]];
+                        if ((i + l > this->PLevel) || (j + r > this->PLevel))
+                            continue;
+
+                        sprintf(TmpFileName, "cft_%s_rescaledmatrixelement_%s%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i + l, j + r);
+                        RationalMatrices[c][i][j].WriteMatrix(TmpFileName); // OPE structure constants (globalFactors) are not included here
+                    }
+                }
+            }
+        }
+
 
         for (int i = 0; i <= this->PLevel; ++i)
         {

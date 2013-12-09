@@ -514,11 +514,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
     // leftSectors = the index of the left state for each channel
     // rightSectors = the index of the right state for each channel
     // globalFactors = OPE structure coefficients
+    // outputIntermediate = whether to output rescaled rational scalar products and matrix elements
     //
     // return value = blocks of the matrices in each fusion channel, organized by descendant levels
     RealMatrix*** ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture, char* fieldName, LongRational fieldWeight,
             int nbrSectors, char** sectorNames, LongRational* weights,
-            int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors);
+            int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors, bool outputIntermediate = false);
 };
 
   
