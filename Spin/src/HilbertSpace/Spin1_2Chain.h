@@ -113,42 +113,42 @@ class Spin1_2Chain : public AbstractSpinChain
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  AbstractHilbertSpace* Clone();
+  virtual AbstractHilbertSpace* Clone();
 
   // re-initialize chain with another total Sz component
   //
   // sz = twice the value of total Sz component
   // return value = reference on current chain  
-  Spin1_2Chain& Reinitialize(int sz);
+  virtual Spin1_2Chain& Reinitialize(int sz);
 
   // return Hilbert space dimension
   //
   // return value = Hilbert space dimension
-  int GetHilbertSpaceDimension() {return this->HilbertSpaceDimension;};
+  virtual int GetHilbertSpaceDimension() {return this->HilbertSpaceDimension;};
 
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
-  List<AbstractQuantumNumber*> GetQuantumNumbers ();
+  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
 
   // return quantum number associated to a given state
   //
   // index = index of the state
   // return value = pointer to corresponding quantum number
-  AbstractQuantumNumber* GetQuantumNumber (int index);
+  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
 
   // return value of spin projection on (Oz) for a given state
   //
   // index = index of the state to test
   // return value = spin projection on (Oz)
-  int TotalSz (int index);
+  virtual int TotalSz (int index);
 
   // return matrix representation of Sx
   //
   // i = operator position
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  Matrix& Sxi (int i, Matrix& M);
+  virtual Matrix& Sxi (int i, Matrix& M);
 
   // return matrix representation of i * Sy
   //
@@ -162,7 +162,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // i = operator position
   // M = matrix where representation has to be stored
   // return value = corresponding matrix
-  Matrix& Szi (int i, Matrix& M);
+  virtual Matrix& Szi (int i, Matrix& M);
 
   // return index of resulting state from application of S+_i operator on a given state
   //
@@ -170,7 +170,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S+_i operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int Spi (int i, int state, double& coefficient);
+  virtual int Spi (int i, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i operator on a given state
   //
@@ -178,7 +178,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S-_i operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int Smi (int i, int state, double& coefficient);
+  virtual int Smi (int i, int state, double& coefficient);
 
   // return index of resulting state from application of Sz_i operator on a given state
   //
@@ -186,7 +186,13 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on Sz_i operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int Szi (int i, int state, double& coefficient);
+  virtual int Szi (int i, int state, double& coefficient);
+
+  // compute the parity (prod_i Sz_i) for a given state
+  //
+  // state = index of the state to be applied on Sz_i operator
+  // return value = total Sz value
+  virtual unsigned long Parity (int state);
 
   // return index of resulting state from application of P_ij operator on a given state
   //
@@ -194,7 +200,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // j = second position
   // state = index of the state to be applied on P_ij operator
   // return value = index of resulting state
-  int Pij (int i, int j, int state);
+  virtual int Pij (int i, int j, int state);
 
   // return eigenvalue of Sz_i Sz_j associated to a given state
   //
@@ -202,7 +208,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // j = second position
   // state = index of the state to consider
   // return value = corresponding eigenvalue
-  double SziSzj (int i, int j, int state);
+  virtual double SziSzj (int i, int j, int state);
   
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
@@ -211,7 +217,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S-_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int SmiSpj (int i, int j, int state, double& coefficient);
+  virtual int SmiSpj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S+_i S+_j operator on a given state
   //
@@ -220,7 +226,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S+_i S+_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int SpiSpj (int i, int j, int state, double& coefficient);
+  virtual int SpiSpj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i S-_j operator on a given state
   //
@@ -229,7 +235,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S-_i S-_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int SmiSmj (int i, int j, int state, double& coefficient);
+  virtual int SmiSmj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S+_i Sz_j operator on a given state
   //
@@ -238,7 +244,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S+_i Sz_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int SpiSzj (int i, int j, int state, double& coefficient);
+  virtual int SpiSzj (int i, int j, int state, double& coefficient);
 
   // return index of resulting state from application of S-_i Sz_j operator on a given state
   //
@@ -247,41 +253,41 @@ class Spin1_2Chain : public AbstractSpinChain
   // state = index of the state to be applied on S-_i Sz_j operator
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
-  int SmiSzj (int i, int j, int state, double& coefficient);
+  virtual int SmiSzj (int i, int j, int state, double& coefficient);
 
   // translate a state assuming the system have periodic boundary conditions (increasing the site index)
   //
   // nbrTranslations = number of translations to apply
   // state = index of the state to translate 
   // return value = index of resulting state
-  int TranslateState (int nbrTranslations, int state);
+  virtual int TranslateState (int nbrTranslations, int state);
 
   // extract subspace with a fixed quantum number
   //
   // q = quantum number value
   // converter = reference on subspace-space converter to use
   // return value = pointer to the new subspace
-  AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter);
+  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter);
 
   // find state index
   //
   // state = state description
   // return value = corresponding index
-  int FindStateIndex(unsigned long state);
+  virtual int FindStateIndex(unsigned long state);
 
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
-  ostream& PrintState (ostream& Str, int state);
+  virtual ostream& PrintState (ostream& Str, int state);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition.
   // 
   // nbrSpinUp = number of spin up that belong to the subsytem 
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-  RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, RealVector& groundState);
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, RealVector& groundState);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
   // 
@@ -320,7 +326,7 @@ class Spin1_2Chain : public AbstractSpinChain
   // sitePosition = site on chain where spin has to be changed
   // currentStateDescription = description of current state
   // return value = number of generated states
-  int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription);
+  virtual int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription);
 
   // generate Spin 1/2 states for a given total spin projection Sz
   //
@@ -329,14 +335,14 @@ class Spin1_2Chain : public AbstractSpinChain
   // currentStateDescription = description of current state
   // currentSz = total Sz value of current state
   // return value = number of generated states
-  int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription, int currentSz);
+  virtual int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription, int currentSz);
 
   // evaluate Hilbert space dimension
   //
   // nbrSpins = number of spins
   // sz = twice the z projection of the total momentum
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
+  virtual int EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
 
 };
 

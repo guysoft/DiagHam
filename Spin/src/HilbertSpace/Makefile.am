@@ -13,4 +13,5 @@ Spin1ChainWithTranslations.cc \
 ThierryChain.cc \
 AbstractSUNSpinCollection.cc \
 GenericSUNSpinCollection.cc \
-Potts3Chain.cc
+Potts3Chain.cc \
+Spin1_2ChainFull.cc

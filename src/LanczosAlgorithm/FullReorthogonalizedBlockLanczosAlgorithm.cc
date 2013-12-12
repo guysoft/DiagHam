@@ -66,9 +66,9 @@ FullReorthogonalizedBlockLanczosAlgorithm::FullReorthogonalizedBlockLanczosAlgor
   this->MaximumNumberIteration = maxIter;
   this->NbrEigenvalue = nbrEigenvalue;
   if ((this->MaximumNumberIteration % this->BlockSize) != 0)
-    this->MaximumNumberIteration = ((this->MaximumNumberIteration / this->BlockSize) + 2) * this->BlockSize;
+    this->MaximumNumberIteration = ((this->MaximumNumberIteration / this->BlockSize) + 3) * this->BlockSize;
   else
-    this->MaximumNumberIteration += this->BlockSize;
+    this->MaximumNumberIteration += 2 * this->BlockSize;
   this->LanczosVectors = new RealVector [this->MaximumNumberIteration];
   this->TemporaryCoefficients = new double [this->MaximumNumberIteration];
 

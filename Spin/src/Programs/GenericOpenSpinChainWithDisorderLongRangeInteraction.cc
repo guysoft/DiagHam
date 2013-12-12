@@ -29,6 +29,8 @@
 #include <math.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 
 using std::cout;

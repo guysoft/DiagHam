@@ -74,6 +74,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new BooleanOption  ('\n', "haffnian", "use the haffnian three-body hamiltonian instead of the hardcore three-body hamiltonian");
   (*SystemGroup) += new SingleDoubleOption ('\n', "twobody-delta", "strength of the two body delta interaction (0 if no  delta interaction  has to be added)", 0.0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "threebodydelta");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -92,17 +93,17 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHETorusBosonsThreeBodyDelta -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
-  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int Momentum = Manager.GetInteger("ky-momentum");
+  double XRatio = Manager.GetDouble("ratio");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   
@@ -111,7 +112,8 @@ int main(int argc, char** argv)
     {
       if (Manager.GetDouble("twobody-delta") == 0.0)
 	{
-	  sprintf (OutputNameLz, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f.dat", NbrParticles, MaxMomentum, XRatio);
+	  sprintf (OutputNameLz, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"),
+		   NbrParticles, MaxMomentum, XRatio);
 	}
       else
 	{
@@ -171,14 +173,14 @@ int main(int argc, char** argv)
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [256];
 	  if (Manager.GetBoolean("haffnian") == false)
 	    {
 	      if (Manager.GetDouble("twobody-delta") == 0.0)
 		{
-		  sprintf (EigenvectorName, "bosons_torus_kysym_threebodydelta_n_%d_2s_%d_ratio_%f_ky_%d", NbrParticles, MaxMomentum, XRatio, Momentum);
+		  sprintf (EigenvectorName, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Momentum);
 		}
 	      else
 		{

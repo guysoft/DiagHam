@@ -43,6 +43,41 @@ using std::endl;
 //
 // filename = file name
 // nbrSpins = reference to the number of spins
+// return value = true if no error occured
+
+bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins)
+{
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "_n_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 3;
+      int SizeString = 0;
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '_') && (StrNbrSpins[SizeString] >= '0') 
+	     && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrSpins[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  nbrSpins = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess number of spins from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins
 // spin = reference to twice the spin value per site
 // return value = true if no error occured
 

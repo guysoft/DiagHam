@@ -274,7 +274,6 @@ int BosonOnTorusWithMagneticTranslationsShort::AdAdAA (int index, int m1, int m2
   this->TemporaryStateKyMax =  this->MaxMomentum - 1;
   while (this->TemporaryState[this->TemporaryStateKyMax] == 0x0ul)
     --this->TemporaryStateKyMax;
-  //  cout << "m1=" << m1 << " m2=" << m2  << " n1=" << n1  << " n2=" << n2  << "  " << hex << this->StateDescription[index] << dec << endl;
   unsigned long TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), nbrTranslation);
   if (nbrTranslation < 0)
     {
@@ -284,12 +283,133 @@ int BosonOnTorusWithMagneticTranslationsShort::AdAdAA (int index, int m1, int m2
   int NewMaxMomentum = this->FermionicMaxMomentum;
   while ((TmpState >> NewMaxMomentum) == 0x0ul)
     --NewMaxMomentum;
-  //  cout << hex << TmpState << dec << " " << NewMaxMomentum << endl;
   int TmpIndex = this->FindStateIndex(TmpState, NewMaxMomentum);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
   nbrTranslation *= this->StateShift;
   return TmpIndex;
 }
+
+// apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double BosonOnTorusWithMagneticTranslationsShort::AA (int index, int n1, int n2)
+{
+  this->FermionToBoson(this->StateDescription[index], this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+  if ((n1 > this->ProdATemporaryStateKyMax) || (n2 > this->ProdATemporaryStateKyMax) || (this->ProdATemporaryState[n1] == 0) || 
+      (this->ProdATemporaryState[n2] == 0) || ((n1 == n2) && (this->ProdATemporaryState[n1] == 1)))
+    {
+      return 0.0;
+    }
+  double Coefficient = this->ProdATemporaryState[n2];
+  --this->ProdATemporaryState[n2];
+  Coefficient *= this->ProdATemporaryState[n1];
+  --this->ProdATemporaryState[n1];
+  for (int i = this->ProdATemporaryStateKyMax + 1; i < this->MaxMomentum; ++i)
+    this->ProdATemporaryState[i] = 0;
+  this->ProdATemporaryStateNbrStateInOrbit = this->NbrStateInOrbit[index];
+  return sqrt(Coefficient);
+}
+
+// apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next ProdA call
+//
+// index = index of the state on which the operator has to be applied
+// n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// return value =  multiplicative factor 
+
+double BosonOnTorusWithMagneticTranslationsShort::ProdA (int index, int* n, int nbrIndices)
+{
+  this->FermionToBoson(this->StateDescription[index], this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+  int TmpCoefficient = 1;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      if (n[i] > this->ProdATemporaryStateKyMax)
+	return 0.0;
+      unsigned long& Tmp = this->ProdATemporaryState[n[i]];
+      if (Tmp == 0)
+	return 0.0;
+      TmpCoefficient *= Tmp;
+      --Tmp;
+    }
+  for (int i = this->ProdATemporaryStateKyMax + 1; i < this->MaxMomentum; ++i)
+    this->ProdATemporaryState[i] = 0;
+  this->ProdATemporaryStateNbrStateInOrbit = this->NbrStateInOrbit[index];
+  return sqrt((double) TmpCoefficient);
+}
+
+// apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int BosonOnTorusWithMagneticTranslationsShort::AdAd (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  ++this->TemporaryState[m2];
+  coefficient = this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
+  coefficient = sqrt(coefficient);
+  this->TemporaryStateKyMax = this->MaxMomentum - 1;
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
+    --this->TemporaryStateKyMax;
+  unsigned long TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), nbrTranslation);
+  if (nbrTranslation < 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewMaxMomentum = this->FermionicMaxMomentum;
+  while ((TmpState >> NewMaxMomentum) == 0x0ul)
+    --NewMaxMomentum;
+  int TmpIndex = this->FindStateIndex(TmpState, NewMaxMomentum);
+  coefficient *= this->RescalingFactors[this->ProdATemporaryStateNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+  nbrTranslation *= this->StateShift;  
+  return TmpIndex;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int BosonOnTorusWithMagneticTranslationsShort::ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation)
+{
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    this->TemporaryState[i] = this->ProdATemporaryState[i];
+  int TmpCoefficient = 1;
+  for (int i = 0; i < nbrIndices; ++i)
+    TmpCoefficient *= ++this->TemporaryState[m[i]];
+  coefficient = sqrt((double) TmpCoefficient);
+  this->TemporaryStateKyMax = this->MaxMomentum - 1;
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
+    --this->TemporaryStateKyMax;
+  unsigned long TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), nbrTranslation);
+  if (nbrTranslation < 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewMaxMomentum = this->FermionicMaxMomentum;
+  while ((TmpState >> NewMaxMomentum) == 0x0ul)
+    --NewMaxMomentum;
+  int TmpIndex = this->FindStateIndex(TmpState, NewMaxMomentum);
+  coefficient *= this->RescalingFactors[this->ProdATemporaryStateNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+  nbrTranslation *= this->StateShift;
+  return TmpIndex;
+}
+
 
 // return matrix representation of the annihilation operator a_i
 //

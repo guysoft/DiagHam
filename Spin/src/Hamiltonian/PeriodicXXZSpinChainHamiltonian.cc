@@ -52,7 +52,7 @@ using std::ostream;
 // jz = coupling constants between Sz components
 
 PeriodicXXZSpinChainHamiltonian::PeriodicXXZSpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* jx, 
-						 double* jz)
+								 double* jz)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;

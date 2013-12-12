@@ -38,6 +38,13 @@
 //
 // filename = file name
 // nbrSpins = reference to the number of spins 
+// return value = true if no error occured
+bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins);
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSpins = reference to the number of spins 
 // spin = reference to twice the spin value per site
 // return value = true if no error occured
 bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins, int& spin);

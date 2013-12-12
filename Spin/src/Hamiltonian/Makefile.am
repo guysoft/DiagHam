@@ -31,4 +31,5 @@ HaldaneShastryHamiltonianWithTranslations.cc \
 Potts3ChainHamiltonian.cc \
 SpinChainAKLTHamiltonian.cc \
 SpinChainWithDisorderHamiltonian.cc \
-SpinChainLongRangeHamiltonian.cc
+SpinChainLongRangeHamiltonian.cc \
+SpinChainZ2InteractingHamiltonian.cc

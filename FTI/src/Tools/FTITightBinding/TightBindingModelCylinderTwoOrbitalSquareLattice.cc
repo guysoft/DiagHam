@@ -224,7 +224,18 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeRealSpaceEntanglem
 		{
 		  Tmp += SqrNorm(this->OneBodyBasis[Index][i][j]);
 		}
- 	      Weights[Index][i - MinIndex[Index]] = Tmp;
+// 	      Complex Tmp = 0.0;
+// 	      for (int j = 0; j < TwiceNbrSiteYA; ++j)
+// 		{
+// 		  Tmp += Conj(this->OneBodyBasis[Index][i][j]);
+// 		}
+// 	      Complex Tmp2 = 0.0;
+// 	      for (int j = TwiceNbrSiteYA; j < this->NbrBands; ++j)
+// 		{
+// 		  Tmp2 += Conj(this->OneBodyBasis[Index][i][j]);
+// 		}
+//  	      Weights[Index][i - MinIndex[Index]] = Norm(Tmp) / sqrt(SqrNorm(Tmp) + SqrNorm(Tmp2));
+	      Weights[Index][i - MinIndex[Index]] = sqrt(Tmp);
 // 	      if (((1.0 - Weights[Index][i - MinIndex[Index]]) != 0.0) && ((1.0 - Weights[Index][i - MinIndex[Index]]) != 1.0))
  		{
 		  KeptWeights[Index][NbrKeptWeights[Index]] = i - MinIndex[Index];

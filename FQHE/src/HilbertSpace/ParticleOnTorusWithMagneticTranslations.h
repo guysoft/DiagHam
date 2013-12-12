@@ -78,6 +78,40 @@ class ParticleOnTorusWithMagneticTranslations :  public AbstractHilbertSpace
   // return value = index of the destination state 
   virtual int AdAdAA (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation) = 0;
 
+  // apply a_n1 a_n2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double AA (int index, int n1, int n2);
+
+  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next ProdA call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // return value =  multiplicative factor 
+  virtual double ProdA (int index, int* n, int nbrIndices);
+
+  // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation);
+
   // return matrix representation of the annihilation operator a_i
   //
   // i = operator index

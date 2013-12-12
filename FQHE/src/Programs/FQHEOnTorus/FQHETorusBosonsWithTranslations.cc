@@ -392,7 +392,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("eigenstate"))	
 	{
 	  EigenvectorName = new char [512];
-	  char *TmpName=RemoveExtensionFromFileName(OutputName, ".dat");
+	  char *TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
 	  sprintf (EigenvectorName, "%s_kx_%d_ky_%d", TmpName, XMomentum, YMomentum);
 	  delete [] TmpName;
 	}

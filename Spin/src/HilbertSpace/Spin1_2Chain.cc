@@ -811,6 +811,26 @@ int Spin1_2Chain::SmiSzj (int i, int j, int state, double& coefficient)
   return this->HilbertSpaceDimension;
 }
 
+// compute the parity (prod_i Sz_i) for a given state
+//
+// state = index of the state to be applied on Sz_i operator
+// return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
+
+unsigned long Spin1_2Chain::Parity (int state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+#ifdef __64_BITS__
+  TmpState ^= TmpState >> 32;
+#endif
+  TmpState ^= TmpState >> 16;
+  TmpState ^= TmpState >> 8;
+  TmpState ^= TmpState >> 4;
+  TmpState ^= TmpState >> 2;
+  TmpState ^= TmpState >> 1;
+  return (TmpState & 0x1ul);
+  
+}
+
 // translate a state assuming the system have periodic boundary conditions (increasing the site index)
 //
 // nbrTranslations = number of translations to apply
