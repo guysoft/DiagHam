@@ -1,8 +1,10 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
+#ifdef HAVE_GSL  
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
+#endif
 
 #include "Hamiltonian/SpinChainLongRangeHamiltonian.h"
 
@@ -130,9 +132,14 @@ int main(int argc, char** argv)
 
   double* HValues = new double [NbrSpins];
   int TmpNbrDisorderTerms;
+#ifndef HAVE_GSL  
+  cout << "GSL required. " << endl;
+  exit(1);
+#endif
 
   if (Manager.GetString("disorder-file") == 0)
     {
+#ifdef HAVE_GSL  
        const gsl_rng_type * T;
        gsl_rng * rng;
   
@@ -161,6 +168,7 @@ int main(int argc, char** argv)
         } 
 
       gsl_rng_free (rng);
+#endif
     }
   else
     {

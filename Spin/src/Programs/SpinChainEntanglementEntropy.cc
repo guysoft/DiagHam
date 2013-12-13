@@ -92,28 +92,6 @@ int main(int argc, char** argv)
       return -1;
     }
 
-/*
-  ComplexMatrix M(10, 17);
-  for (int i = 0; i < 10; i++)
-    for (int j = 0; j < 17; j++)
-      {
-        Complex Tmp;
-        Tmp.Re = sqrt(i*i + j*j);
-        Tmp.Im = i * j;
-        M.SetMatrixElement(i,j,Tmp);
-      }
-  cout<<M<<endl;
-
-  ComplexMatrix U(10,10,true);
-  ComplexMatrix V(17,17,true);
-  RealDiagonalMatrix D(10, true);
-
-  M.SingularValueDecomposition(U, D, V, false);
-
-  cout<<"D= "<<D<<endl;
-
-  exit(1);
-*/
   int SpinValue = 0;
   int NbrSpins = 0;
   int SzValue = 0;
