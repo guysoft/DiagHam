@@ -208,6 +208,100 @@ RealVector& SpinChainZ2InteractingHamiltonian::LowLevelAddMultiply(RealVector& v
   return vDestination;
 }
 
+// multiply a set of vectors by the current hamiltonian for a given range of indices 
+// and add result to another set of vectors, low level function (no architecture optimization)
+//
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = pointer to the array of vectors where result has been stored
+
+RealVector* SpinChainZ2InteractingHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
+									   int firstComponent, int nbrComponent)
+{
+  int LastComponent = firstComponent + nbrComponent;
+  int dim = this->Chain->GetHilbertSpaceDimension();
+  double coef;
+  double coef2;
+  int pos;
+  int pos2;
+  int MaxPos = this->NbrSpin - 1;
+  double* TmpValues = new double[nbrVectors];
+  for (int k = 0; k < nbrVectors; ++k)
+    {
+      RealVector& TmpSource = vSources[k];
+      RealVector& TmpDestination = vDestinations[k];
+      for (int i = firstComponent; i < LastComponent; ++i)
+	{
+	  TmpDestination[i] += this->SzSzContributions[i] * TmpSource[i];
+	}
+    }
+  for (int i = firstComponent; i < LastComponent; ++i)
+    {
+      for (int k = 0; k < nbrVectors; ++k)
+	TmpValues[k] = this->JFactor * vSources[k][i];
+      // J part of Hamiltonian      
+      for (int j = 0; j < MaxPos; ++j)
+	{
+	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] += coef * TmpValues[k];
+	    }
+	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] += coef * TmpValues[k];
+	    }
+	  pos = this->Chain->SpiSpj(j, j + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] += coef * TmpValues[k];
+	    }
+	  pos = this->Chain->SmiSmj(j, j + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] += coef * TmpValues[k];
+	    }
+	}
+      if (this->BoundaryCondition != 0.0)
+	{
+	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
+	    }
+	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
+	    }
+	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
+	    }
+	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      for (int k = 0; k < nbrVectors; ++k)
+		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
+	    }
+	}
+    }
+  delete[] TmpValues;
+  return vDestinations;
+}
+
 // evaluate diagonal matrix elements
 // 
 
