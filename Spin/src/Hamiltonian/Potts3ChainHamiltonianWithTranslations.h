@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                        class of Z2 interacting chain                       //
+//            class of Potts 3 chain hamiltonian with translations            //
 //                                                                            //
-//                        last modification : 11/12/2013                      //
+//                        last modification : 01/01/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,13 +28,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPINCHAINZ2INTERACTINGHAMILTONIAN_H
-#define SPINCHAINZ2INTERACTINGHAMILTONIAN_H
+#ifndef POTTS3CHAINHAMILTONIANWITHTRANSLATIONS_H
+#define POTTS3CHAINHAMILTONIANWITHTRANSLATIONS_H
 
 
 #include "config.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Potts3ChainWithTranslations.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
+#include "MathTools/Complex.h"
 
 
 #include <iostream>
@@ -44,64 +45,66 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
+class Potts3ChainHamiltonianWithTranslations : public AbstractHamiltonian
 {
 
  protected:
   
-  // pointer to the Hilbert space of the system
-  Spin1_2Chain* Chain;
+  Potts3ChainWithTranslations* Chain;
 
-  // coupling along the z direction
+  // magnitude of the coupling term
   double JFactor;
-  // Zeeman term
+  // phase of the coupling term (in PI units)
+  double PhiJ; 
+  // complex version of the J coupling
+  Complex JFullFactor;
+  // complex version of the J coupling, for each possible number of translations
+  Complex* JFullFactors;
+  // magnitude of the Zeeman term
   double FFactor;
-  // coupling along the x direction
-  double InteractionStrength;
+  // phase of the Zeeman term (in PI units)
+  double PhiF;  
 
-  // boundary conditions (0 for open chain, 1 for periodic, -1 for antiperiodic)
+
+  // true if the chain is periodic
+  bool PeriodicFlag;
+  // type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
   double BoundaryCondition;
 
-  // number of spins
+  // number of sites
   int NbrSpin;
+  // number of sites minus one
+  int ReducedNbrSpin;
+  // momentum sector
+  int Momentum;
 
-  // precalculation array where the diagonal elements are stored
   double* SzSzContributions;
-  // precalculation array where the parity of each state is stored
-  double* Parities;
+  // constant factors for each state when applying periodic boundary conditions 
+  Complex* BoundaryFactors;
+
 
  public:
 
-  // default constructor
+  // constructor from default datas
   //
-  SpinChainZ2InteractingHamiltonian();
-
-  // constructor
-  //
-  // chain = pointer to the Hilbert space of the system
-  // nbrSpin = number of spins
-  // jFactor = coupling along the z direction
-  // fFactor = Zeeman term
-  // interactionStrength = coupling along the x direction
-  // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
-  SpinChainZ2InteractingHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
-				    double jFactor, double fFactor, double interactionStrength, 
-				    double boundaryCondition = 0.0);
+  // chain = reference on Hilbert space of the associated system
+  // nbrSpin = number of spin
+  // momentum = momentum sector
+  // jFactor = magnitude of the coupling term
+  // phiJ = phase of the coupling term (in PI units)
+  // fFactor = magnitude of the Zeeman term
+  // phiF = phase of the Zeeman term (in PI units)
+  // boundaryCondition = type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
+  Potts3ChainHamiltonianWithTranslations(Potts3ChainWithTranslations* chain, int nbrSpin, int momentum, double jFactor, double phiJ, double fFactor, double phiF, double boundaryCondition);
 
   // destructor
   //
-  ~SpinChainZ2InteractingHamiltonian();
+  ~Potts3ChainHamiltonianWithTranslations();
 
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
-
-  // set chain
-  // 
-  // chain = pointer on Hilbert space of the associated system
-  // return value = reference on current Hamiltonian
-  SpinChainZ2InteractingHamiltonian& SetChain(AbstractSpinChain* chain);
 
   // set Hilbert space
   //
@@ -131,23 +134,11 @@ class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
 
-  // multiply a set of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another set of vectors, low level function (no architecture optimization)
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
-
-
- protected:
+ 
+ private:
  
   // evaluate all matrix elements
   //   

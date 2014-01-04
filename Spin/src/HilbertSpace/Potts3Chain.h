@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractSpinChain.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
 
@@ -46,6 +47,10 @@ class RealMatrix;
 class Matrix;
 class SubspaceSpaceConverter;
 class AbstractQuantumNumber;
+
+
+using std::cout;
+using std::endl;
 
 
 class Potts3Chain : public AbstractSpinChain
@@ -61,10 +66,12 @@ class Potts3Chain : public AbstractSpinChain
   // flag to indicate if Sz is fixed 
   bool FixedQuantumNumberFlag;
   
+  // look-up table
   int* LookUpTable;
-  unsigned long LookUpTableMask;
+  // look-up table size
   int LookUpTableSize;
-  int LookUpPosition;
+  // shift to apply to a state to get the key in th look-up table
+  int LookUpTableShift;
 
  public:
 
@@ -201,6 +208,12 @@ class Potts3Chain : public AbstractSpinChain
   // return value = index of resulting state
   int SmiSzj (int i, int j, int state, double& coefficient);
 
+  // return value the product of the tau_j operators (Q operator) on a given state
+  //
+  // index = index of the state 
+  // return value = Q value (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
+  double QValue (int index);
+
   // translate a state assuming the system have periodic boundary conditions (increasing the site index)
   //
   // nbrTranslations = number of translations to apply
@@ -239,11 +252,10 @@ class Potts3Chain : public AbstractSpinChain
   // fixedQuantumNumberFlag = true if hilbert space is restricted to a given quantum number
   // lookUpTable = look-up table
   // lookUpTableSize = look-Up table size
-  // lookUpTablePosition = last position described by the look-Up table
-  // lookUpTableMask = look-Up table mask  
+  // lookUpTableShift = shift to apply to a state to get the key in th look-up table
   Potts3Chain (long largeHilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
 	       int sz, bool fixedQuantumNumberFlag, int* lookUpTable, int lookUpTableSize, 
-	       int lookUpPosition, unsigned long lookUpTableMask);
+	       int lookUpTableShift);
   
   // evaluate Hilbert space dimension
   //
@@ -274,12 +286,14 @@ class Potts3Chain : public AbstractSpinChain
 //
 // i = position of Sz operator
 // state = index of the state to be applied on Sz_i operator
-// coefficient = reference on double where numerical coefficient has to be stored
+// coefficient = reference on double where numerical coefficient has to be stored (0 for 1.0, 1.0 for exp(i 2 \pi / 3), 2.0 for exp(i 4 \pi / 3)) 
 // return value = index of resulting state
 
 inline int Potts3Chain::Szi (int i, int state, double& coefficient)
 {
-  coefficient = (double) ((this->ChainDescription[state] >> (i << 1)) & 0x3l);
+  //  coefficient = (double) ((this->ChainDescription[state] >> (i << 1)) & 0x3ul);
+  coefficient = (((double) ((this->ChainDescription[state] >> (i << 1)) & 0x1ul))
+		 - ((double) ((this->ChainDescription[state] >> ((i << 1) + 1)) & 0x1ul)));
   return state;
 }
 
@@ -292,11 +306,82 @@ inline int Potts3Chain::Szi (int i, int state, double& coefficient)
 
 inline double Potts3Chain::SziSzj (int i, int j, int state)
 {  
-  return ((double) (((this->ChainDescription[state] >> (i << 1)) & 0x3l)
-		    * ((this->ChainDescription[state] >> (j << 1)) & 0x3l)));
+  return ((double) (((this->ChainDescription[state] >> (i << 1)) & 0x3ul)
+		    * ((this->ChainDescription[state] >> (j << 1)) & 0x3ul)));
 }
 
+// return index of resulting state from application of S-_i S+_j operator on a given state
+//
+// i = position of S- operator
+// j = position of S+ operator
+// state = index of the state to be applied on S-_i S+_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
 
+inline int Potts3Chain::SmiSpj (int i, int j, int state, double& coefficient)
+{  
+  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState2 = tmpState;
+  j <<= 1;
+  tmpState2 >>= j;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << j);
+  switch (tmpState2)
+    {
+    case 0x1ul:
+      tmpState |= 0x2ul << j;
+      break;
+    case 0x0ul:
+      tmpState |= 0x1ul << j;
+      break;
+    }	  
+  i <<= 1;
+  tmpState2 = tmpState;
+  tmpState2 >>= i;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << i);
+  switch (tmpState2)
+    {
+    case 0x2ul:
+      tmpState |= 0x1ul << i;      
+      break;
+    case 0x0ul:
+      tmpState |= 0x2ul << i;      
+      break;
+    }	  
+  return this->FindStateIndex(tmpState);
+}
+
+// return value the product of the tau_j operators (Q operator) on a given state
+//
+// index = index of the state 
+// return value = Q value (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
+
+inline double Potts3Chain::QValue (int index)
+{
+  unsigned long Tmp = 0x0ul;
+  unsigned long Tmp2 = this->ChainDescription[index];
+  for (int i = 0; i < this->ChainLength; ++i)
+    {
+      Tmp += Tmp2 & 0x3ul;
+      Tmp2 >>= 2;
+    }
+  return ((double) (Tmp % 3));
+}
+
+// find state index
+//
+// state = state description
+// return value = corresponding index
+
+inline int Potts3Chain::FindStateIndex(unsigned long state)
+{
+  return SearchInArrayDownOrdering<unsigned long> (state, this->ChainDescription, 
+						   this->HilbertSpaceDimension);
+/*   int TmpShift = this->LookUpTable[state >> this->LookUpTableShift]; */
+/*   return (TmpShift + SearchInArrayDownOrdering<unsigned long> (state, this->ChainDescription + TmpShift, */
+/* 							       this->HilbertSpaceDimension - TmpShift)); */
+}
 
 #endif
 

@@ -33,8 +33,9 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractSpinChain.h"
+#include "HilbertSpace/Potts3Chain.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
+#include "MathTools/Complex.h"
 
 
 #include <iostream>
@@ -49,13 +50,23 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
 
  protected:
   
-  AbstractSpinChain* Chain;
+  Potts3Chain* Chain;
 
-  // array containing the coupling constants between two neighboring sites
-  double* PotentialTerms;
-
-  // array containing the coupling constants for the on-site flip terms
-  double* FlipTerms;
+  // magnitude of the coupling term
+  double JFactor;
+  // phase of the coupling term (in PI units)
+  double PhiJ; 
+  // complex version of the J coupling
+  Complex JFullFactor;
+  // magnitude of the Zeeman term
+  double FFactor;
+  // phase of the Zeeman term (in PI units)
+  double PhiF;  
+  
+  // true if the chain is periodic
+  bool PeriodicFlag;
+  // type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
+  double BoundaryCondition;
 
   // number of sites
   int NbrSpin;
@@ -63,9 +74,9 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   int ReducedNbrSpin;
 
   double* SzSzContributions;
- 
-  // true if the chain is periodic
-  bool PeriodicFlag;
+  // constant factors for each state when applying periodic boundary conditions 
+  Complex* BoundaryFactors;
+
 
  public:
 
@@ -73,10 +84,13 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   //
   // chain = reference on Hilbert space of the associated system
   // nbrSpin = number of spin
-  // potentialTerms = array containing the coupling constants between two neighboring sites
-  // flipTerms = array containing the coupling constants for the on-site flip terms 
+  // jFactor = magnitude of the coupling term
+  // phiJ = phase of the coupling term (in PI units)
+  // fFactor = magnitude of the Zeeman term
+  // phiF = phase of the Zeeman term (in PI units)
   // periodicFlag = true if the chain is periodic
-  Potts3ChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* potentialTerms, double* flipTerms, bool periodicFlag);
+  // boundaryCondition = type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
+  Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, double jFactor, double phiJ, double fFactor, double phiF, bool periodicFlag, double boundaryCondition);
 
   // destructor
   //
@@ -86,12 +100,6 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
-
-  // set chain
-  // 
-  // chain = pointer on Hilbert space of the associated system
-  // return value = reference on current Hamiltonian
-  Potts3ChainHamiltonian& SetChain(AbstractSpinChain* chain);
 
   // set Hilbert space
   //
@@ -113,47 +121,6 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-/*   // evaluate matrix element */
-/*   // */
-/*   // V1 = vector to left multiply with current matrix */
-/*   // V2 = vector to right multiply with current matrix */
-/*   // return value = corresponding matrix element */
-/*   Complex MatrixElement (RealVector& V1, RealVector& V2); */
-  
-/*   // evaluate matrix element */
-/*   // */
-/*   // V1 = vector to left multiply with current matrix */
-/*   // V2 = vector to right multiply with current matrix */
-/*   // return value = corresponding matrix element */
-/*   Complex MatrixElement (ComplexVector& V1, ComplexVector& V2); */
-
-/*   // multiply a vector by the current hamiltonian and store result in another vector */
-/*   // low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector where result has to be stored */
-/*   // return value = reference on vectorwhere result has been stored */
-/*   RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination); */
-
-/*   // multiply a vector by the current hamiltonian for a given range of idinces  */
-/*   // and store result in another vector, low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector where result has to be stored */
-/*   // firstComponent = index of the first component to evaluate */
-/*   // nbrComponent = number of components to evaluate */
-/*   // return value = reference on vector where result has been stored */
-/*   RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination,  */
-/* 			       int firstComponent, int nbrComponent); */
-
-/*   // multiply a vector by the current hamiltonian for a given range of indices  */
-/*   // and add result to another vector, low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector at which result has to be added */
-/*   // return value = reference on vectorwhere result has been stored */
-/*   RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination); */
-
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -162,47 +129,21 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-				  int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+					     int firstComponent, int nbrComponent);
 
-/*   // multiply a vector by the current hamiltonian and store result in another vector */
-/*   // low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector where result has to be stored */
-/*   // return value = reference on vectorwhere result has been stored */
-/*   ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination); */
-
-/*   // multiply a vector by the current hamiltonian for a given range of indices  */
-/*   // and store result in another vector, low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector where result has to be stored */
-/*   // firstComponent = index of the first component to evaluate */
-/*   // nbrComponent = number of components to evaluate */
-/*   // return value = reference on vector where result has been stored */
-/*   ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination,  */
-/* 				  int firstComponent, int nbrComponent); */
-
-/*   // multiply a vector by the current hamiltonian for a given range of indices  */
-/*   // and add result to another vector, low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector at which result has to be added */
-/*   // return value = reference on vectorwhere result has been stored */
-/*   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination); */
-
-/*   // multiply a vector by the current hamiltonian for a given range of indices  */
-/*   // and add result to another vector, low level function (no architecture optimization) */
-/*   // */
-/*   // vSource = vector to be multiplied */
-/*   // vDestination = vector at which result has to be added */
-/*   // firstComponent = index of the first component to evaluate */
-/*   // nbrComponent = number of components to evaluate */
-/*   // return value = reference on vector where result has been stored */
-/*   ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination,  */
-/* 				     int firstComponent, int nbrComponent); */
- 
+  // multiply a set of vectors by the current hamiltonian for a given range of indices 
+  // and store result in another set of vectors, low level function (no architecture optimization)
+  //
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors where result has to be stored
+  // nbrVectors = number of vectors that have to be evaluated together
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = pointer to the array of vectors where result has been stored
+  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						  int firstComponent, int nbrComponent);
+  
  private:
  
   // evaluate all matrix elements

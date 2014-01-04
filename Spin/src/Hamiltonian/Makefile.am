@@ -32,4 +32,6 @@ Potts3ChainHamiltonian.cc \
 SpinChainAKLTHamiltonian.cc \
 SpinChainWithDisorderHamiltonian.cc \
 SpinChainLongRangeHamiltonian.cc \
-SpinChainZ2InteractingHamiltonian.cc
+SpinChainZ2InteractingHamiltonian.cc \
+SpinChainXYZHamiltonian.cc \
+Potts3ChainHamiltonianWithTranslations.cc

@@ -53,14 +53,15 @@ bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins)
     {
       StrNbrSpins += 3;
       int SizeString = 0;
-      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '_') && (StrNbrSpins[SizeString] >= '0') 
+      while ((StrNbrSpins[SizeString] != '\0') && ((StrNbrSpins[SizeString] != '_') || (StrNbrSpins[SizeString] != '.')) && (StrNbrSpins[SizeString] >= '0') 
 	     && (StrNbrSpins[SizeString] <= '9'))
 	++SizeString;
-      if ((StrNbrSpins[SizeString] == '_') && (SizeString != 0))
+      if (((StrNbrSpins[SizeString] != '_') || (StrNbrSpins[SizeString] != '.')) && (SizeString != 0))
 	{
+	  char Tmp = StrNbrSpins[SizeString];
 	  StrNbrSpins[SizeString] = '\0';
 	  nbrSpins = atoi(StrNbrSpins);
-	  StrNbrSpins[SizeString] = '_';
+	  StrNbrSpins[SizeString] = Tmp;
 	  StrNbrSpins += SizeString;
 	}
       else

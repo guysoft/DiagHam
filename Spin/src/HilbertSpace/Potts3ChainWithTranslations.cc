@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                            class of spin 1 chain                           //
+//            class of Potts-3 chain with the translation symmetry            //
 //                                                                            //
-//                        last modification : 04/04/2001                      //
+//                        last modification : 01/01/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "HilbertSpace/Potts3Chain.h"
+#include "HilbertSpace/Potts3ChainWithTranslations.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -49,15 +49,18 @@ using std::endl;
 // default constructor
 //
 
-Potts3Chain::Potts3Chain () 
+Potts3ChainWithTranslations::Potts3ChainWithTranslations () 
 {
   this->Flag.Initialize();
   this->LookUpTable = 0;
   this->LookUpTableSize = 0;
-  this->LookUpTableShift = 0;
+  this->LookUpTableMask = 0;
+  this->LookUpPosition = 0;
   this->HilbertSpaceDimension = 0;
   this->ChainDescription = 0;
   this->ChainLength = 0;
+  this->Momentum = 0;
+  this->ComplementaryStateShift = 0;
   this->Sz = 0;
   this->FixedQuantumNumberFlag = false;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
@@ -66,62 +69,74 @@ Potts3Chain::Potts3Chain ()
 // constructor for complete Hilbert space with no restriction on total spin projection Sz
 //
 // chainLength = number of spin 1
+// momemtum = momentum sector
 // memorySize = memory size in bytes allowed for look-up table
 
-Potts3Chain::Potts3Chain (int chainLength, int memorySize) 
+Potts3ChainWithTranslations::Potts3ChainWithTranslations (int chainLength, int momentum, int memorySize) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
+  this->ComplementaryStateShift = (this->ChainLength - 1) << 1;
   this->FixedQuantumNumberFlag = false;
+  this->Momentum = momentum;
   this->LargeHilbertSpaceDimension = 3l;
   for (int i = 1; i < chainLength; i++)
     this->LargeHilbertSpaceDimension *= 3l;
   
+
+  this->LookUpPosition = 0;
+  this->LookUpTableSize = 4;
+  memorySize >>= 2;
+  this->LookUpTableMask = 0xfffffffc;
+  while ((this->LookUpPosition <= this->ChainLength) && (memorySize >=  4))
+    {
+      this->LookUpTableMask <<= 2;
+      this->LookUpTableSize <<= 2;
+      memorySize >>= 2;
+      this->LookUpPosition++;
+    }
+  this->LookUpTableMask = ~this->LookUpTableMask;
+  this->LookUpTable = new int [this->LookUpTableSize];
+
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->LargeHilbertSpaceDimension = this->GenerateStates (this->ChainLength - 1, 0);
-  if (this->LargeHilbertSpaceDimension >= (1l << 30))
-    this->HilbertSpaceDimension = 0;
-  else
-    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-
-  this->LookUpTableSize = this->ChainLength;
-  if (this->LookUpTableSize > 16)
-    {
-      this->LookUpTableSize = 16;
-    }
-  this->LookUpTableShift = (2 * this->ChainLength) - this->LookUpTableSize;
-  this->LookUpTableSize = 1 << this->LookUpTableSize;
-  this->LookUpTable = new int [this->LookUpTableSize + 1];
-  for (int i = 0; i <= this->LookUpTableSize; ++i)
-    {
-      this->LookUpTable[i] = this->HilbertSpaceDimension;
-    }
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      unsigned long Tmp = this->ChainDescription[i] >> this->LookUpTableShift;
-      if (this->LookUpTable[Tmp] == this->HilbertSpaceDimension)
-	this->LookUpTable[Tmp] = i;
-    }
+  this->GenerateStates();
 }
 
 // constructor for complete Hilbert space corresponding to a given total spin projection Sz
 //
 // chainLength = number of spin 1
 // sz = twice the value of total Sz component
+// momemtum = momentum sector
 // memorySize = memory size in bytes allowed for look-up table
 
-Potts3Chain::Potts3Chain (int chainLength, int sz, int memorySize) 
+Potts3ChainWithTranslations::Potts3ChainWithTranslations (int chainLength, int sz, int momentum, int memorySize) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
+  this->ComplementaryStateShift = (this->ChainLength - 1) << 1;
   this->Sz = sz % 3;
   this->FixedQuantumNumberFlag = true;
+  this->Momentum = momentum;
 
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->ChainLength - 1, this->Sz);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->LookUpPosition = 0;
+  this->LookUpTableSize = 4;
+  memorySize >>= 1;
+  this->LookUpTableMask = 0xfffffffc;
+  while ((this->LookUpPosition < this->ChainLength) && (memorySize >=  4))
+    {
+      this->LookUpTableMask <<= 2;
+      this->LookUpTableSize <<= 2;
+      memorySize >>= 2;
+      this->LookUpPosition++;
+    }
+  this->LookUpTableMask = ~this->LookUpTableMask;
+  this->LookUpTable = new int [this->LookUpTableSize];
 
   this->ChainDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->LargeHilbertSpaceDimension = this->GenerateStates (this->ChainLength - 1, 0, 0);
@@ -129,62 +144,15 @@ Potts3Chain::Potts3Chain (int chainLength, int sz, int memorySize)
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-
-  this->LookUpTableSize = this->ChainLength;
-  if (this->LookUpTableSize > 16)
-    {
-      this->LookUpTableSize = 16;
-    }
-  this->LookUpTableShift = (2 * this->ChainLength) - this->LookUpTableSize;
-  this->LookUpTableSize = 1 << this->LookUpTableSize;
-  this->LookUpTable = new int [this->LookUpTableSize + 1];
-  for (int i = 0; i <= this->LookUpTableSize; ++i)
-    {
-      this->LookUpTable[i] = this->HilbertSpaceDimension;
-    }
-  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-    {
-      unsigned long Tmp = this->ChainDescription[i] >> this->LookUpTableShift;
-      if (this->LookUpTable[Tmp] == this->HilbertSpaceDimension)
-	this->LookUpTable[Tmp] = i;
-    }
+  this->GenerateStates ();
 }
 
-// constructor from pre-constructed datas
-//
-// largehilbertSpaceDimension = Hilbert space dimension
-// chainDescription = array describing states
-// chainLength = number of spin 1
-// sz = twice the value of total Sz component
-// fixedQuantumNumberFlag = true if hilbert space is restricted to a given quantum number
-// lookUpTable = look-up table
-// lookUpTableSize = look-up table size
-// lookUpTableShift = shift to apply to a state to get the key in th look-up table
 
-Potts3Chain::Potts3Chain (long largeHilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
-			  int sz, bool fixedQuantumNumberFlag, int* lookUpTable, int lookUpTableSize, 
-			  int lookUpTableShift)
-{
-  this->Flag.Initialize();
-  this->LookUpTable = lookUpTable;
-  this->LookUpTableShift = lookUpTableShift;
-  this->LookUpTableSize = lookUpTableSize;
-  this->ChainDescription = chainDescription;
-  this->Sz = sz;
-  this->FixedQuantumNumberFlag = fixedQuantumNumberFlag;
-  this->ChainLength = chainLength;
-  this->LargeHilbertSpaceDimension = largeHilbertSpaceDimension;
-  if (this->LargeHilbertSpaceDimension >= (1l << 30))
-    this->HilbertSpaceDimension = 0;
-  else
-    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-}
-  
 // copy constructor (without duplicating datas)
 //
 // chain = reference on chain to copy
 
-Potts3Chain::Potts3Chain (const Potts3Chain& chain) 
+Potts3ChainWithTranslations::Potts3ChainWithTranslations (const Potts3ChainWithTranslations& chain) 
 {
   this->Flag = chain.Flag;
   if (chain.ChainLength != 0)
@@ -192,31 +160,39 @@ Potts3Chain::Potts3Chain (const Potts3Chain& chain)
       this->ChainLength = chain.ChainLength;
       this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
       this->LookUpTable = chain.LookUpTable;
-      this->LookUpTableShift = chain.LookUpTableShift;
+      this->LookUpTableMask = chain.LookUpTableMask;
+      this->LookUpPosition = chain.LookUpPosition;
       this->LookUpTableSize = chain.LookUpTableSize;
       this->ChainDescription = chain.ChainDescription;
       this->Sz = chain.Sz;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;
       this->LargeHilbertSpaceDimension = chain.LargeHilbertSpaceDimension;
-    }
+      this->ComplementaryStateShift = chain.ComplementaryStateShift;
+      this->NbrStateInOrbit = chain.NbrStateInOrbit;
+      this->Momentum = chain.Momentum;
+   }
   else
     {
       this->LookUpTable = 0;
       this->LookUpTableSize = 0;
-      this->LookUpTableShift = 0;
+      this->LookUpTableMask = 0;
+      this->LookUpPosition = 0;
       this->HilbertSpaceDimension = 0;
       this->ChainDescription = 0;
       this->ChainLength = 0;
+      this->NbrStateInOrbit = 0;
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
       this->LargeHilbertSpaceDimension = 0l;
+      this->ComplementaryStateShift = 0;
+      this->Momentum = 0;
     }
 }
 
 // destructor
 //
 
-Potts3Chain::~Potts3Chain () 
+Potts3ChainWithTranslations::~Potts3ChainWithTranslations () 
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -230,7 +206,7 @@ Potts3Chain::~Potts3Chain ()
 // chain = reference on chain to copy
 // return value = reference on current chain
 
-Potts3Chain& Potts3Chain::operator = (const Potts3Chain& chain)
+Potts3ChainWithTranslations& Potts3ChainWithTranslations::operator = (const Potts3ChainWithTranslations& chain)
 {
   if ((this->ChainLength != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -244,23 +220,31 @@ Potts3Chain& Potts3Chain::operator = (const Potts3Chain& chain)
       this->ChainLength = chain.ChainLength;
       this->HilbertSpaceDimension = chain.HilbertSpaceDimension;
       this->LookUpTable = chain.LookUpTable;
-      this->LookUpTableShift = chain.LookUpTableShift;
+      this->LookUpTableMask = chain.LookUpTableMask;
       this->LookUpTableSize = chain.LookUpTableSize;
+      this->LookUpPosition = chain.LookUpPosition;
       this->Sz = chain.Sz;
       this->FixedQuantumNumberFlag = chain.FixedQuantumNumberFlag;
       this->LargeHilbertSpaceDimension = chain.LargeHilbertSpaceDimension;
+      this->ComplementaryStateShift = chain.ComplementaryStateShift;
+      this->NbrStateInOrbit = chain.NbrStateInOrbit;
+      this->Momentum = chain.Momentum;
    }
   else
     {
       this->LookUpTable = 0;
       this->LookUpTableSize = 0;
-      this->LookUpTableShift = 0;
+      this->LookUpTableMask = 0;
+      this->LookUpPosition = 0;
       this->HilbertSpaceDimension = 0;
       this->ChainDescription = 0;
       this->ChainLength = 0;
+      this->NbrStateInOrbit = 0;
       this->Sz = 0;
       this->FixedQuantumNumberFlag = false;
       this->LargeHilbertSpaceDimension = 0l;
+      this->ComplementaryStateShift = 0;
+      this->Momentum = 0;
     }
   return *this;
 }
@@ -269,9 +253,9 @@ Potts3Chain& Potts3Chain::operator = (const Potts3Chain& chain)
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* Potts3Chain::Clone()
+AbstractHilbertSpace* Potts3ChainWithTranslations::Clone()
 {
-  return new Potts3Chain (*this);
+  return new Potts3ChainWithTranslations (*this);
 }
 
 // evaluate Hilbert space dimension
@@ -280,7 +264,7 @@ AbstractHilbertSpace* Potts3Chain::Clone()
 // currentSzValue = state current Sz value 
 // return value = Hilbert space dimension
 
-long Potts3Chain::EvaluateHilbertSpaceDimension(int currentSite, int currentSzValue)
+long Potts3ChainWithTranslations::EvaluateHilbertSpaceDimension(int currentSite, int currentSzValue)
 {
   if (currentSite < 0)
     {
@@ -302,7 +286,7 @@ long Potts3Chain::EvaluateHilbertSpaceDimension(int currentSite, int currentSzVa
 // currentPosition = current position of the state that has to be considered
 // return value = number of generated states
 
-long Potts3Chain::GenerateStates(int currentSite, long currentPosition) 
+long Potts3ChainWithTranslations::GenerateStates(int currentSite, long currentPosition) 
 {
   if (currentSite < 0)
     {
@@ -327,7 +311,7 @@ long Potts3Chain::GenerateStates(int currentSite, long currentPosition)
 // currentPosition = current position of the state that has to be considered
 // return value = number of generated states
 
-long Potts3Chain::GenerateStates(int currentSite, int currentSzValue, long currentPosition) 
+long Potts3ChainWithTranslations::GenerateStates(int currentSite, int currentSzValue, long currentPosition) 
 {
   if (currentSite < 0)
     {
@@ -354,12 +338,59 @@ long Potts3Chain::GenerateStates(int currentSite, int currentSzValue, long curre
   return this->GenerateStates(currentSite - 1, currentSzValue, currentPosition);
 }
 
+// generate all states corresponding to a given momnetum
+//
+
+void Potts3ChainWithTranslations::GenerateStates()
+{
+  unsigned long TmpLargeHilbertSpaceDimension = 0l;
+  int TmpOrbitSize;
+  int TmpNbrTranslation;
+  unsigned long TmpCanonicalForm;
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      TmpCanonicalForm = this->FindCanonicalForm(this->ChainDescription[i], TmpNbrTranslation, TmpOrbitSize);
+      if ((TmpCanonicalForm == this->ChainDescription[i]) && 
+	  (((TmpOrbitSize * this->Momentum) % this->ChainLength) == 0))
+	++TmpLargeHilbertSpaceDimension;
+    }
+  unsigned long* TmpChainDescription = new unsigned long [TmpLargeHilbertSpaceDimension];
+  this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
+  TmpLargeHilbertSpaceDimension = 0l;
+  for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      TmpCanonicalForm = this->FindCanonicalForm(this->ChainDescription[i], TmpNbrTranslation, TmpOrbitSize);
+      if ((TmpCanonicalForm == this->ChainDescription[i]) && 
+	  (((TmpOrbitSize * this->Momentum) % this->ChainLength) == 0))
+	{
+	  TmpChainDescription[TmpLargeHilbertSpaceDimension] = TmpCanonicalForm;
+	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = TmpOrbitSize;
+	  ++TmpLargeHilbertSpaceDimension;
+	}
+    }
+  delete[] this->ChainDescription;
+  this->ChainDescription = TmpChainDescription;
+  this->LargeHilbertSpaceDimension = TmpLargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->RescalingFactors = new double* [this->ChainLength + 1];
+  for (int i = 1; i <= this->ChainLength; ++i)
+    {
+      this->RescalingFactors[i] = new double [this->ChainLength + 1];
+      for (int j = 1; j <= this->ChainLength; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
+    }
+}
 
 // return a list of all possible quantum numbers 
 //
 // return value = pointer to corresponding quantum number
 
-List<AbstractQuantumNumber*> Potts3Chain::GetQuantumNumbers ()
+List<AbstractQuantumNumber*> Potts3ChainWithTranslations::GetQuantumNumbers ()
 {
   List<AbstractQuantumNumber*> TmpList;
   if (this->FixedQuantumNumberFlag == true)
@@ -381,7 +412,7 @@ List<AbstractQuantumNumber*> Potts3Chain::GetQuantumNumbers ()
 // index = index of the state
 // return value = pointer to corresponding quantum number
 
-AbstractQuantumNumber* Potts3Chain::GetQuantumNumber (int index)
+AbstractQuantumNumber* Potts3ChainWithTranslations::GetQuantumNumber (int index)
 { 
   return new SzQuantumNumber (this->TotalSz(index));
 }
@@ -391,7 +422,7 @@ AbstractQuantumNumber* Potts3Chain::GetQuantumNumber (int index)
 // index = index of the state to test
 // return value = twice spin projection on (Oz)
 
-int Potts3Chain::TotalSz (int index)
+int Potts3ChainWithTranslations::TotalSz (int index)
 {
   if (this->FixedQuantumNumberFlag == true)
     return this->Sz;
@@ -402,7 +433,28 @@ int Potts3Chain::TotalSz (int index)
       TmpSz += (State & 0x3ul);
       State >>= 2;
     }
-  return (((int) TmpSz) % 3);
+  TmpSz %= 3;
+  return ((double) TmpSz);
+}
+
+// return value of the value of the sum of the square of spin projection on (Oz) 
+//
+// index = index of the state to test
+// return value = twice spin projection on (Oz)
+
+double Potts3ChainWithTranslations::TotalSzSz (int index)
+{
+  if (this->FixedQuantumNumberFlag == true)
+    return (this->Sz * this->Sz);
+  unsigned long State = this->ChainDescription[index];
+  unsigned long TmpSz = 0l;
+  for (int i = 0; i < this->ChainLength; ++i)
+    {
+      TmpSz += (State & 0x3ul);
+      State >>= 2;
+    }
+  TmpSz %= 3;
+  return ((double) (TmpSz * TmpSz));
 }
 
 // return index of resulting state from application of S+_i S+_j operator on a given state
@@ -411,40 +463,41 @@ int Potts3Chain::TotalSz (int index)
 // j = position of second S+ operator
 // state = index of the state to be applied on S+_i S+_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::SpiSpj (int i, int j, int state, double& coefficient)
+int Potts3ChainWithTranslations::SpiSpj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = tmpState;
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
   j <<= 1;
-  tmpState2 >>= j;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << j);
-  switch (tmpState2)
+  TmpState2 >>= j;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << j);
+  switch (TmpState2)
     {
     case 0x1ul:
-      tmpState |= 0x2ul << j;
+      TmpState |= 0x2ul << j;
       break;
     case 0x0ul:
-      tmpState |= 0x1ul << j;
+      TmpState |= 0x1ul << j;
       break;
     }	  
   i <<= 1;
-  tmpState2 = tmpState;
-  tmpState2 >>= i;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << i);
-  switch (tmpState2)
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
     {
     case 0x1ul:
-      tmpState |= 0x2ul << i;      
+      TmpState |= 0x2ul << i;      
       break;
     case 0x0ul:
-      tmpState |= 0x1ul << i;      
+      TmpState |= 0x1ul << i;      
       break;
     }	  
-  return this->FindStateIndex(tmpState);
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
 }
 
 // return index of resulting state from application of S-_i S-_j operator on a given state
@@ -453,40 +506,67 @@ int Potts3Chain::SpiSpj (int i, int j, int state, double& coefficient)
 // j = position of second S- operator
 // state = index of the state to be applied on S-_i S-_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::SmiSmj (int i, int j, int state, double& coefficient)
+int Potts3ChainWithTranslations::SmiSmj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = tmpState;
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
   j <<= 1;
-  tmpState2 >>= j;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << j);
-  switch (tmpState2)
+  TmpState2 >>= j;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << j);
+  switch (TmpState2)
     {
     case 0x2ul:
-      tmpState |= 0x1ul << j;
+      TmpState |= 0x1ul << j;
       break;
     case 0x0ul:
-      tmpState |= 0x2ul << j;
+      TmpState |= 0x2ul << j;
       break;
     }	  
   i <<= 1;
-  tmpState2 = tmpState;
-  tmpState2 >>= i;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << i);
-  switch (tmpState2)
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
     {
     case 0x2ul:
-      tmpState |= 0x1ul << i;      
+      TmpState |= 0x1ul << i;      
       break;
     case 0x0ul:
-      tmpState |= 0x2ul << i;      
+      TmpState |= 0x2ul << i;      
       break;
     }	  
-  return this->FindStateIndex(tmpState);
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
+}
+
+// return index of resulting state from application of S+_i S+_i operator on a given state
+//
+// i = position of first S+ operator
+// state = index of the state to be applied on S+_i S+_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state
+
+int Potts3ChainWithTranslations::SpiSpi (int i, int state, double& coefficient, int& nbrTranslation)
+{
+  return this->SpiSpj (i, i, state, coefficient, nbrTranslation);
+}
+
+// return index of resulting state from application of S-_i S-_i operator on a given state
+//
+// i = position of the S- operator
+// state = index of the state to be applied on S-_i S-_i operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of resulting state
+
+int Potts3ChainWithTranslations::SmiSmi (int i, int state, double& coefficient, int& nbrTranslation)
+{
+  return this->SmiSmj (i, i, state, coefficient, nbrTranslation);
 }
 
 // return index of resulting state from application of S+_i Sz_j operator on a given state
@@ -495,36 +575,37 @@ int Potts3Chain::SmiSmj (int i, int j, int state, double& coefficient)
 // j = position of Sz operator
 // state = index of the state to be applied on S+_i Sz_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::SpiSzj (int i, int j, int state, double& coefficient)
+int Potts3ChainWithTranslations::SpiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = tmpState;
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
   j <<= 1;
-  tmpState2 >>= j;
-  tmpState2 &= 0x3ul;
-  if (tmpState2 == 0x0ul)
+  TmpState2 >>= j;
+  TmpState2 &= 0x3ul;
+  if (TmpState2 == 0x0ul)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  coefficient = (double) tmpState2;
+  coefficient = (double) TmpState2;
   i <<= 1;
-  tmpState2 = tmpState;
-  tmpState2 >>= i;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << i);
-  switch (tmpState2)
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
     {
     case 0x1ul:
-      tmpState |= 0x2ul << i;      
+      TmpState |= 0x2ul << i;      
       break;
     case 0x0ul:
-      tmpState |= 0x1ul << i;      
+      TmpState |= 0x1ul << i;      
       break;
     }	  
-  return this->FindStateIndex(tmpState);
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
 }
 
 // return index of resulting state from application of S-_i Sz_j operator on a given state
@@ -533,36 +614,37 @@ int Potts3Chain::SpiSzj (int i, int j, int state, double& coefficient)
 // j = position of Sz operator
 // state = index of the state to be applied on S-_i Sz_j operator
 // coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::SmiSzj (int i, int j, int state, double& coefficient)
+int Potts3ChainWithTranslations::SmiSzj (int i, int j, int state, double& coefficient, int& nbrTranslation)
 {
-  unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = tmpState;
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
   j <<= 1;
-  tmpState2 >>= j;
-  tmpState2 &= 0x3ul;
-  if (tmpState2 == 0x0ul)
+  TmpState2 >>= j;
+  TmpState2 &= 0x3ul;
+  if (TmpState2 == 0x0ul)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  coefficient = (double) tmpState2;
+  coefficient = (double) TmpState2;
   i <<= 1;
-  tmpState2 = tmpState;
-  tmpState2 >>= i;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << i);
-  switch (tmpState2)
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
     {
     case 0x2ul:
-      tmpState |= 0x1ul << i;      
+      TmpState |= 0x1ul << i;      
       break;
     case 0x0ul:
-      tmpState |= 0x2ul << i;      
+      TmpState |= 0x2ul << i;      
       break;
     }	  
-  return this->FindStateIndex(tmpState);
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
 }
 
 // return index of resulting state from application of S+_i operator on a given state
@@ -570,27 +652,28 @@ int Potts3Chain::SmiSzj (int i, int j, int state, double& coefficient)
 // i = position of S+ operator
 // state = index of the state to be applied on S+_i operator
 // coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::Spi (int i, int state, double& coefficient)
+int Potts3ChainWithTranslations::Spi (int i, int state, double& coefficient, int& nbrTranslation)
 {
-  unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = tmpState;
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
   i <<= 1;
-  tmpState2 = tmpState;
-  tmpState2 >>= i;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << i);
-  switch (tmpState2)
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
     {
     case 0x1ul:
-      tmpState |= 0x2ul << i;      
+      TmpState |= 0x2ul << i;      
       break;
     case 0x0ul:
-      tmpState |= 0x1ul << i;      
+      TmpState |= 0x1ul << i;      
       break;
     }	  
-  return this->FindStateIndex(tmpState);
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
 }
 
 // return index of resulting state from application of S-_i operator on a given state
@@ -598,36 +681,38 @@ int Potts3Chain::Spi (int i, int state, double& coefficient)
 // i = position of S- operator
 // state = index of the state to be applied on S-_i operator
 // coefficient = reference on double where numerical coefficient has to be stored
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::Smi (int i, int state, double& coefficient)
+int Potts3ChainWithTranslations::Smi (int i, int state, double& coefficient, int& nbrTranslation)
 {
-  unsigned long tmpState = this->ChainDescription[state];
-  unsigned long tmpState2 = tmpState;
+  unsigned long TmpState = this->ChainDescription[state];
+  unsigned long TmpState2 = TmpState;
   i <<= 1;
-  tmpState2 = tmpState;
-  tmpState2 >>= i;
-  tmpState2 &= 0x3ul;
-  tmpState &= ~(0x3ul << i);
-  switch (tmpState2)
+  TmpState2 = TmpState;
+  TmpState2 >>= i;
+  TmpState2 &= 0x3ul;
+  TmpState &= ~(0x3ul << i);
+  switch (TmpState2)
     {
     case 0x2ul:
-      tmpState |= 0x1ul << i;      
+      TmpState |= 0x1ul << i;      
       break;
     case 0x0ul:
-      tmpState |= 0x2ul << i;      
+      TmpState |= 0x2ul << i;      
       break;
     }	  
-  return this->FindStateIndex(tmpState);
+  return this->FindStateIndexAndTransaltion(state, TmpState, nbrTranslation, i, coefficient);
 }
 
 // translate a state assuming the system have periodic boundary conditions (increasing the site index)
 //
 // nbrTranslations = number of translations to apply
 // state = index of the state to translate 
+// nbrTranslations = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of resulting state
 
-int Potts3Chain::TranslateState (int nbrTranslations, int state)
+int Potts3ChainWithTranslations::TranslateState (int nbrTranslations, int state)
 {
   unsigned long TmpState = this->ChainDescription[state];
   TmpState = (((TmpState & (0x3ul << ((this->ChainLength - nbrTranslations) - 1ul)) << 1) << nbrTranslations)
@@ -641,10 +726,10 @@ int Potts3Chain::TranslateState (int nbrTranslations, int state)
 // converter = reference on subspace-space converter to use
 // return value = pointer to the new subspace
 
-AbstractHilbertSpace* Potts3Chain::ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter)
+AbstractHilbertSpace* Potts3ChainWithTranslations::ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter)
 {
 //   if (q.GetQuantumNumberType() != AbstractQuantumNumber::Sz)
-//     return new Potts3Chain();
+//     return new Potts3ChainWithTranslations();
 //   int TmpSz = ((SzQuantumNumber&) q).GetSz();
 //   long LargeHilbertSubspaceDimension = 0l;
 //   int* TmpConvArray = new int [this->LargeHilbertSpaceDimension];
@@ -674,12 +759,25 @@ AbstractHilbertSpace* Potts3Chain::ExtractSubspace (AbstractQuantumNumber& q, Su
 //       ConvArray[i] = TmpConvArray[i];
 //     }
 //   converter = SubspaceSpaceConverter (this->HilbertSpaceDimension, (int) LargeHilbertSubspaceDimension, ConvArray);
-//   return (AbstractSpinChain*) new Potts3Chain (LargeHilbertSubspaceDimension, SubspaceDescription, this->ChainLength,
-// 					       TmpSz, true, SubspaceLookUpTable, this->LookUpTableSize, 
-// 					       this->LookUpPosition, this->LookUpTableMask);
+//   return (AbstractSpinChain*) new Potts3ChainWithTranslations (LargeHilbertSubspaceDimension, SubspaceDescription, this->ChainLength,
+// 							       TmpSz, true, SubspaceLookUpTable, this->LookUpTableSize, 
+// 							       this->LookUpPosition, this->LookUpTableMask);
   return 0;
 }
 
+// find state index
+//
+// state = state description
+// return value = corresponding index
+
+int Potts3ChainWithTranslations::FindStateIndex(unsigned long state)
+{
+  int index = 0;//this->LookUpTable[state & this->LookUpTableMask];
+  unsigned long* TmpState = &(this->ChainDescription[index]);
+  while ((index < this->HilbertSpaceDimension) && (state != *(TmpState++)))
+    ++index;
+  return index;   
+}
 
 // print a given State
 //
@@ -687,7 +785,7 @@ AbstractHilbertSpace* Potts3Chain::ExtractSubspace (AbstractQuantumNumber& q, Su
 // state = ID of the state to print
 // return value = reference on current output stream 
 
-ostream& Potts3Chain::PrintState (ostream& Str, int state)
+ostream& Potts3ChainWithTranslations::PrintState (ostream& Str, int state)
 {
   unsigned long StateDescription = this->ChainDescription[state];  
   for (int j = 0; j < this->ChainLength; ++j)

@@ -45,6 +45,21 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+SpinChainZ2InteractingHamiltonian::SpinChainZ2InteractingHamiltonian()
+{
+  this->Chain = 0;
+  this->NbrSpin = 0;
+  this->SzSzContributions = 0;
+  this->Parities = 0;
+  this->JFactor = 0.0;
+  this->FFactor = 0.0;
+  this->InteractionStrength = 0.0;
+  this->BoundaryCondition = 0.0;
+}
+
 // constructor from default datas
 //
 // chain = reference on Hilbert space of the associated system
