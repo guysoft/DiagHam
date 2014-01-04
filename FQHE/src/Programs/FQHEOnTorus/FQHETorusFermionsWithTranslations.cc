@@ -385,17 +385,17 @@ int main(int argc, char** argv)
 
       AbstractQHEHamiltonian* Hamiltonian;
       if (Angle == 0.0)
-      {
+	{
           Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
-                  XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
-                  Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
-      }
+										      XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+										      Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+	}
       else
-      {
+	{
           Hamiltonian = new ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
-                  XRatio, Angle, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
-                  Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
-      }
+											     XRatio, Angle, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+											     Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+	}
       
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate"))	

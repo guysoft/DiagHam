@@ -428,7 +428,6 @@ bool MultipleVectorHamiltonianMultiplyOperation::RawApplyOperation()
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   gettimeofday (&(TotalStartingTime2), 0);
-
   if (this->RealSourceVectors != 0)
     {
       if (this->UseConjugateFlag == true)

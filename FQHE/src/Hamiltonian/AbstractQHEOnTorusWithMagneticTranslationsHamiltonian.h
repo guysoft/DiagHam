@@ -195,8 +195,8 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-					     int firstComponent, int nbrComponent);
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						     int firstComponent, int nbrComponent);
  
   // return a list of left interaction operators
   //

@@ -3230,7 +3230,7 @@ long AbstractQHEOnSphereHamiltonian::FastMultiplicationMemory(long allowedMemory
 	{
 	  ++this->FastMultiplicationStep;
 	  ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-	  if (this->Particles->GetHilbertSpaceDimension() != (ReducedSpaceDimension * this->FastMultiplicationStep))
+	  if (EffectiveHilbertSpaceDimension != (ReducedSpaceDimension * this->FastMultiplicationStep))
 	    ++ReducedSpaceDimension;
 	  TmpMemory = allowedMemory - (sizeof (int*) + sizeof (int) + sizeof(double*)) * ReducedSpaceDimension;
 	  Memory = 0;

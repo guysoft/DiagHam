@@ -125,6 +125,13 @@ public:
   // return value = reference on the current complex number
   Complex& ConjugateProduct(const Complex& z);
 
+  // apply the operation Conj(z1) * z2
+  // 
+  // z1 = reference on the complex number that will be conjugated and used for the multiplication
+  // z2 = reference on the complex number to use for the multiplication
+  // return value = result of the multiplcation
+  Complex ConjugateProduct(const Complex& z1, const Complex& z2);
+
   // conjugate the number itself and return a reference to self
   Complex& Conjugate();
 
@@ -502,6 +509,17 @@ inline Complex& Complex::ConjugateProduct(const Complex& z)
   this->Im = this->Im * z.Re - this->Re * z.Im;
   this->Re = x;  
   return *this;
+}
+
+// apply the operation Conj(z1) * z2
+// 
+// z1 = reference on the complex number that will be conjugated and used for the multiplication
+// z2 = reference on the complex number to use for the multiplication
+// return value = result of the multiplcation
+
+inline Complex ConjugateProduct(const Complex& z1, const Complex& z2)
+{
+  return Complex((z1.Re * z2.Re) + (z1.Im * z2.Im), (z1.Re * z2.Im) - (z1.Im * z2.Re));
 }
 
 // conjugate the number itself and return a reference to self

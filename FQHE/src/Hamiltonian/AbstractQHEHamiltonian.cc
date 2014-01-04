@@ -115,12 +115,12 @@ RealVector* AbstractQHEHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSou
 // nbrVectors = number of vectors that have to be evaluated together
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
-{
-  for (int i = 0; i < nbrVectors; ++i)
-    this->LowLevelMultiply(vSources[i], vDestinations[i]);
-  return vDestinations;
-}
+// ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+// {
+//   for (int i = 0; i < nbrVectors; ++i)
+//     this->LowLevelMultiply(vSources[i], vDestinations[i]);
+//   return vDestinations;
+// }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and store result in another set of vectors, low level function (no architecture optimization)
@@ -132,14 +132,14 @@ ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(ComplexVector* v
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-								int firstComponent, int nbrComponent)
+// ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+// 								int firstComponent, int nbrComponent)
 
-{
-  for (int i = 0; i < nbrVectors; ++i)
-    this->LowLevelMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
-  return vDestinations;
-}
+// {
+//   for (int i = 0; i < nbrVectors; ++i)
+//     this->LowLevelMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
+//   return vDestinations;
+// }
   
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and add result to another set of vectors, low level function (no architecture optimization)
@@ -149,12 +149,12 @@ ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleMultiply(ComplexVector* v
 // nbrVectors = number of vectors that have to be evaluated together
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
-{
-  for (int i = 0; i < nbrVectors; ++i)
-    this->LowLevelAddMultiply(vSources[i], vDestinations[i]);
-  return vDestinations;
-}
+// ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
+// {
+//   for (int i = 0; i < nbrVectors; ++i)
+//     this->LowLevelAddMultiply(vSources[i], vDestinations[i]);
+//   return vDestinations;
+// }
 
 // multiply a set of vectors by the current hamiltonian for a given range of indices 
 // and add result to another set of vectors, low level function (no architecture optimization)
@@ -166,13 +166,13 @@ ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleAddMultiply(ComplexVector
 // nbrComponent = number of components to evaluate
 // return value = pointer to the array of vectors where result has been stored
 
-ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-								   int firstComponent, int nbrComponent)
-{
-  for (int i = 0; i < nbrVectors; ++i)
-    this->LowLevelAddMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
-  return vDestinations;
-}
+//ComplexVector* AbstractQHEHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int n// brVectors, 
+// 								   int firstComponent, int nbrComponent)
+// {
+//   for (int i = 0; i < nbrVectors; ++i)
+//     this->LowLevelAddMultiply(vSources[i], vDestinations[i], firstComponent, nbrComponent);
+//   return vDestinations;
+// }
 
 
 // save precalculations in a file

@@ -109,7 +109,7 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
   // vDestinations = array of vectors where result has to be stored
   // nbrVectors = number of vectors that have to be evaluated together
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
+//  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and store result in another set of vectors, low level function (no architecture optimization)
@@ -120,8 +120,8 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
+//  virtual ComplexVector* LowLevelMultipleMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+//						  int firstComponent, int nbrComponent);
   
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
@@ -130,7 +130,7 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
   // vDestinations = array of vectors at which result has to be added
   // nbrVectors = number of vectors that have to be evaluated together
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
+//  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
   // and add result to another set of vectors, low level function (no architecture optimization)
@@ -141,8 +141,8 @@ class AbstractQHEHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						     int firstComponent, int nbrComponent);
+//  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+//						     int firstComponent, int nbrComponent);
  
   // save precalculations in a file
   // 

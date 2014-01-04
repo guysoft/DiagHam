@@ -1546,7 +1546,7 @@ void SortArrayDownOrdering(ClassName* array,unsigned long* ulArray, long nbrValu
 }
 
 
-// find an element in a sorted array
+// find an element in a sorted array (from smallest to largest)
 //
 // element = element to find
 // array = sorted array where to search 
@@ -1575,6 +1575,37 @@ int SearchInArray(const ClassName& element, ClassName* array, int nbrValue)
   if (array[EndIndex] == element)
     return EndIndex;
   return -1;
+}
+
+// find an element in a sorted array (from largest to smallest)
+//
+// element = element to find
+// array = sorted array where to search 
+// nbrValue = number of values in array
+// return value = element position (nbrValue if not in the array)
+
+template <class ClassName>
+int SearchInArrayDownOrdering(const ClassName& element, ClassName* array, int nbrValue)
+{
+
+  int StartIndex = 0;
+  int EndIndex = nbrValue - 1;
+  int MidIndex;
+   
+  while((EndIndex - StartIndex) > 1)
+    {       
+      MidIndex = (StartIndex + EndIndex) >> 1;       
+      if(array[MidIndex] > element)
+	StartIndex = MidIndex;
+      else
+	EndIndex = MidIndex;
+    }
+   
+  if (array[StartIndex] == element)
+    return StartIndex;
+  if (array[EndIndex] == element)
+    return EndIndex;
+  return nbrValue;
 }
 
 // find an element in a unsorted array
