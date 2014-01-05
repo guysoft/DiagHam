@@ -108,6 +108,14 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   //
   FQHEMPSClustered2RMatrix();
 
+  // constructor
+  //
+  // pLevel = |P| level truncation
+  // centralCharge = value of the central charge
+  // outputName = name of the theory
+  // useRational = use arbitrary precision numbers for all the CFT calculations
+  FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, char* outputName, bool useRational=true);
+
   // constructor 
   //
   // rindex = r index (i.e. clustered (k=2,r) states) 
@@ -501,6 +509,7 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
 				 LongRational** rationalMultiplicityFactor, double** multiplicityFactor,
 				 double globalFactor);
 
+public:
     // compute the matrix elements for a primary field
     //
     // cftDirectory = an optional path to the directory where all the CFT matrices are stored
@@ -510,16 +519,10 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
     // nbrSectors = number of conformal families in the basis states
     // sectorNames = name of each primary field in the basis states
     // weights = weight of each primary field in the basis states
-    // nbrChannels = number of fusion channels to evaluate
-    // leftSectors = the index of the left state for each channel
-    // rightSectors = the index of the right state for each channel
-    // globalFactors = OPE structure coefficients
-    // outputIntermediate = whether to output rescaled rational scalar products and matrix elements
-    //
-    // return value = blocks of the matrices in each fusion channel, organized by descendant levels
-    RealMatrix*** ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture, char* fieldName, LongRational fieldWeight,
-            int nbrSectors, char** sectorNames, LongRational* weights,
-            int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors, bool outputIntermediate = false);
+    // fusion = OPE structure coefficients
+    // writeIntermediate = whether to output rational scalar products and matrix elements
+    void ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture,
+            char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate = false);
 };
 
   

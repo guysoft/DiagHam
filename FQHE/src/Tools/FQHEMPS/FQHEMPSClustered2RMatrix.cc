@@ -57,6 +57,30 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
   this->UseRationalFlag = true;
 }
 
+// constructor
+//
+// pLevel = |P| level truncation
+// centralCharge = value of the central charge
+// outputName = name of the theory
+// useRational = use arbitrary precision numbers for all the CFT calculations
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, char* outputName, bool useRational)
+{
+    this->PLevel = pLevel;
+    this->CentralCharge = centralCharge;
+    this->BMatrixOutputName = new char[512];
+    sprintf(this->BMatrixOutputName, "%s", outputName);
+    this->UseRationalFlag = useRational;
+
+    this->TotalStartingIndexPerPLevel = 0;
+    this->NbrIndicesPerPLevel = 0;
+    this->NbrNValuesPerPLevel = 0;
+    this->NInitialValuePerPLevel = 0;
+    this->NLastValuePerPLevel = 0;
+    this->RealBMatrices = 0;
+    this->ComplexBMatrices = 0;
+    this->QuasiholeBMatrices = 0;
+}
+
 // constructor 
 //
 // rindex = r index (i.e. clustered (k=2,r) states) 
@@ -2693,30 +2717,24 @@ void FQHEMPSClustered2RMatrix::RescaleFullMatrixElements(LongRationalMatrix** ra
 // nbrSectors = number of conformal families in the basis states
 // sectorNames = name of each primary field in the basis states
 // weights = weight of each primary field in the basis states
-// nbrChannels = number of fusion channels to evaluate
-// leftSectors = the index of the left state for each channel
-// rightSectors = the index of the right state for each channel
-// globalFactors = OPE structure coefficients
-// outputIntermediate = whether to output rational scalar products and matrix elements
-//
-// return value = blocks of the matrices in each fusion channel, organized by descendant levels
-RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture, char* fieldName, LongRational fieldWeight,
-        int nbrSectors, char** sectorNames, LongRational* weights,
-        int nbrChannels, int* leftSectors, int* rightSectors, double* globalFactors, bool outputIntermediate)
+// fusion = OPE structure coefficients, invoked only when fieldWeight != 0
+// writeIntermediate = whether to output rational scalar products and matrix elements
+void FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture,
+        char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate)
 {
-    LongRational CentralCharge12 (this->CentralCharge);
+    LongRational CentralCharge12(this->CentralCharge);
     cout << "central charge = " << CentralCharge12 << endl;
     CentralCharge12 /= 12l;
     double CentralCharge12Numerical = CentralCharge12.GetNumericalValue();
-
     double fieldWeightNumerical = fieldWeight.GetNumericalValue();
+
     double* weightsNumerical = new double[nbrSectors];
     for (int s = 0; s < nbrSectors; ++s)
         weightsNumerical[s] = weights[s].GetNumericalValue();
 
     // descendents are truncated by the total conformal dimension, i.e. "shifted" level
     // all the intermediate matrices are indexed by the actual descendant level
-    // only the FinalMatrices and the filenames are indexed by the shifted descendant level
+    // only the filenames are indexed by the shifted descendant level
     int* StartingLevels = new int[nbrSectors];
     for (int s = 0; s < nbrSectors; ++s)
         StartingLevels[s] = (weightsNumerical[s] > 0) ? ((int) weightsNumerical[s]) : 0;
@@ -2799,7 +2817,7 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
     for (int s = 0; s < nbrSectors; ++s)
         this->RescaleFullScalarProductMatrix(RationalScalarProducts[s], ScalarProducts[s], RationalMultiplicityFactor, MultiplicityFactor);
 
-    if (outputIntermediate && this->UseRationalFlag && architecture->CanWriteOnDisk())
+    if (writeIntermediate && this->UseRationalFlag && architecture->CanWriteOnDisk())
     {
         for (int i = 0; i <= this->PLevel; ++i)
         {
@@ -2819,27 +2837,52 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
         for (int s = 0; s < nbrSectors; ++s)
             OrthogonalBasesLeft[s][i].Transpose();
 
-    RealMatrix*** FinalMatrices;
     if (fieldWeight == 0) // sandwiched field is identity
     {
-        FinalMatrices = new RealMatrix**[nbrSectors];
         for (int s = 0; s < nbrSectors; ++s)
         {
             int o = StartingLevels[s];
-            FinalMatrices[s] = new RealMatrix*[this->PLevel + 1];
-
             for (int i = 0; i <= this->PLevel; ++i)
             {
-                FinalMatrices[s][i] = new RealMatrix[this->PLevel + 1];
-
-                for (int j = 0; j <= this->PLevel; ++j)
-                    FinalMatrices[s][i][j] = ((i != j) || (i < o)) ? RealMatrix() : ((OrthogonalBasesLeft[s][i - o] * ScalarProducts[s][i - o]) * OrthogonalBasesRight[s][j - o]);
+                sprintf(TmpFileName, "cft_%s_final_%s_identity_%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[s], sectorNames[s], i, i);
+                RealMatrix m = (i < o) ? RealMatrix() : ((OrthogonalBasesLeft[s][i - o] * ScalarProducts[s][i - o]) * OrthogonalBasesRight[s][i - o]);
+                m.WriteMatrix(TmpFileName);
             }
         }
-
     }
     else
     {
+        if ((fusion.GetNbrRow() != nbrSectors) || (fusion.GetNbrColumn() != nbrSectors))
+        {
+            cout << "fusion matrix size mismatch!" << endl;
+            exit(1);
+        }
+
+        int nbrChannels = 0;
+        for (int l = 0; l < nbrSectors; ++l)
+            for (int r = 0; r < nbrSectors; ++r)
+                if (fusion[r][l] != 0)
+                    ++nbrChannels;
+
+        int* leftSectors = new int[nbrChannels];
+        int* rightSectors = new int[nbrChannels];
+        double* globalFactors = new double[nbrChannels];
+
+        int channel = 0;
+        for (int l = 0; l < nbrSectors; ++l)
+        {
+            for (int r = 0; r < nbrSectors; ++r)
+            {
+                if (fusion[r][l] != 0)
+                {
+                    leftSectors[channel] = l;
+                    rightSectors[channel] = r;
+                    globalFactors[channel] = fusion[r][l];
+                    ++channel;
+                }
+            }
+        }
+
         cout << "computing matrix elements for " << fieldName << ", with h = " << fieldWeight << ", in channels:" << endl;
         for (int c = 0; c < nbrChannels; ++c)
             cout << " <" << sectorNames[leftSectors[c]] << "|" << fieldName << "|" << sectorNames[rightSectors[c]] << ">";
@@ -2878,9 +2921,9 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
                     if (cftDirectory != 0)
                     {
                         if (this->UseRationalFlag == true)
-                            sprintf(TmpFileName, "%s/cft_%s_matrixelement_%s%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i + l, j + r);
+                            sprintf(TmpFileName, "%s/cft_%s_matrixelement_%s_%s_%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], fieldName, sectorNames[rightSectors[c]], i + l, j + r);
                         else
-                            sprintf(TmpFileName, "%s/cft_%s_num_matrixelement_%s%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i + l, j + r);
+                            sprintf(TmpFileName, "%s/cft_%s_num_matrixelement_%s_%s_%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], fieldName, sectorNames[rightSectors[c]], i + l, j + r);
                     }
 
                     this->ComputeFullMatrixElements(cftDirectory, TmpFileName, architecture,
@@ -2895,7 +2938,7 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
         for (int c = 0; c < nbrChannels; ++c)
             this->RescaleFullMatrixElements(RationalMatrices[c], Matrices[c], RationalMultiplicityFactor, MultiplicityFactor, globalFactors[c]);
 
-        if (outputIntermediate && this->UseRationalFlag && architecture->CanWriteOnDisk())
+        if (writeIntermediate && this->UseRationalFlag && architecture->CanWriteOnDisk())
         {
             for (int j = 0; j <= this->PLevel; ++j)
             {
@@ -2908,45 +2951,26 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
                         if ((i + l > this->PLevel) || (j + r > this->PLevel))
                             continue;
 
-                        sprintf(TmpFileName, "cft_%s_rescaledmatrixelement_%s%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i + l, j + r);
-                        RationalMatrices[c][i][j].WriteMatrix(TmpFileName); // OPE structure constants (globalFactors) are not included here
+                        sprintf(TmpFileName, "cft_%s_rescaledmatrixelement_%s_%s_%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[leftSectors[c]], fieldName, sectorNames[rightSectors[c]], i + l, j + r);
+                        RationalMatrices[c][i][j].WriteMatrix(TmpFileName); // OPE structure constants (globalFactors) are not included in the RationalMatrices
                     }
                 }
             }
         }
 
-
-        for (int i = 0; i <= this->PLevel; ++i)
-        {
-            for (int j = 0; j <= this->PLevel; ++j)
-            {
-                for (int c = 0; c < nbrChannels; ++c)
-                {
-                    Matrices[c][i][j] = ((OrthogonalBasesLeft[leftSectors[c]][i] * Matrices[c][i][j]) * OrthogonalBasesRight[rightSectors[c]][j]);
-
-                    int l = StartingLevels[leftSectors[c]];
-                    int r = StartingLevels[rightSectors[c]];
-                    if ((cftDirectory != 0) && (i + l <= this->PLevel) && (j + r <= this->PLevel))
-                    {
-                        sprintf(TmpFileName, "%s/cft_%s_finalmatrixelement_%s%s_level_%d_%d.dat", cftDirectory, this->BMatrixOutputName, sectorNames[leftSectors[c]], sectorNames[rightSectors[c]], i + l, j + r);
-                        Matrices[c][i][j].WriteMatrix(TmpFileName);
-                    }
-                }
-            }
-        }
-
-        FinalMatrices = new RealMatrix**[nbrChannels];
         for (int c = 0; c < nbrChannels; ++c)
         {
             int l = StartingLevels[leftSectors[c]];
             int r = StartingLevels[rightSectors[c]];
 
-            FinalMatrices[c] = new RealMatrix*[this->PLevel + 1];
             for (int i = 0; i <= this->PLevel; ++i)
             {
-                FinalMatrices[c][i] = new RealMatrix[this->PLevel + 1];
                 for (int j = 0; j <= this->PLevel; ++j)
-                    FinalMatrices[c][i][j] = ((i < l) || (j < r)) ? RealMatrix() : Matrices[c][i - l][j - r];
+                {
+                    sprintf(TmpFileName, "cft_%s_final_%s_%s_%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[leftSectors[c]], fieldName, sectorNames[rightSectors[c]], i, j);
+                    RealMatrix m = ((i < l) || (j < r)) ? RealMatrix() : ((OrthogonalBasesLeft[leftSectors[c]][i - l] * Matrices[c][i - l][j - r]) * OrthogonalBasesRight[rightSectors[c]][j - r]);
+                    m.WriteMatrix(TmpFileName);
+                }
             }
         }
 
@@ -2962,6 +2986,10 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
         }
         delete[] RationalMatrices;
         delete[] Matrices;
+
+        delete[] leftSectors;
+        delete[] rightSectors;
+        delete[] globalFactors;
     }
 
     delete[] TmpFileName;
@@ -2989,5 +3017,5 @@ RealMatrix*** FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory
     delete[] OrthogonalBasesLeft;
     delete[] OrthogonalBasesRight;
 
-    return FinalMatrices;
+    delete[] StartingLevels;
 }
