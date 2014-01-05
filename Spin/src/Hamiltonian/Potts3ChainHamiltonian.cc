@@ -36,6 +36,7 @@
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/Complex.h"
 #include "Output/MathematicaOutput.h"
+#include "GeneralTools/StringTools.h"
 
 #include <iostream>
 
@@ -55,8 +56,9 @@ using std::ostream;
 // phiF = phase of the Zeeman term (in PI units)
 // periodicFlag = true if the chain is periodic
 // boundaryCondition = type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
+// memory = amount of memory that can be used from precalculations (in bytes)
 
-Potts3ChainHamiltonian::Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, double jFactor, double phiJ, double fFactor, double phiF, bool periodicFlag, double boundaryCondition)
+Potts3ChainHamiltonian::Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, double jFactor, double phiJ, double fFactor, double phiF, bool periodicFlag, double boundaryCondition, long memory)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
@@ -69,7 +71,27 @@ Potts3ChainHamiltonian::Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, 
   this->PhiF = phiF;
   this->FFactor = -fFactor;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
-  this->BoundaryFactors = new Complex [this->Chain->GetHilbertSpaceDimension()];
+  this->FastMultiplicationFlag = false;
+  this->NbrInteractionPerComponent = this->ReducedNbrSpin;
+  if (this->PeriodicFlag == true)
+    {
+      this->NbrInteractionPerComponent++;
+    }
+  long RequireMemory = (((long) this->Chain->GetHilbertSpaceDimension()) * 
+			(this->NbrInteractionPerComponent * sizeof(int) + sizeof(double)));
+  cout << "Precalculations requires ";
+  PrintMemorySize (cout, RequireMemory) << endl;
+  if (memory > RequireMemory)
+    {
+      cout << "use fast multiplication" << endl;
+      this->FastMultiplicationFlag = true;
+    }
+  else
+    {
+      cout << "cannot use fast multiplication" << endl;
+      this->FastMultiplicationFlag = false;
+    }
+
   this->EvaluateDiagonalMatrixElements();
 }
 
@@ -79,7 +101,8 @@ Potts3ChainHamiltonian::Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, 
 Potts3ChainHamiltonian::~Potts3ChainHamiltonian() 
 {
   delete[] this->SzSzContributions;
-  delete[] this->BoundaryFactors;
+  if (this->FastMultiplicationFlag == true)
+    delete[] this->InteractionPerComponentIndex;
 }
 
 // set Hilbert space
@@ -89,10 +112,10 @@ Potts3ChainHamiltonian::~Potts3ChainHamiltonian()
 void Potts3ChainHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   delete[] this->SzSzContributions;
-  delete[] this->BoundaryFactors;
+  if (this->FastMultiplicationFlag == true)
+    delete[] this->InteractionPerComponentIndex;
   this->Chain = (Potts3Chain*) hilbertSpace;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
-  this->BoundaryFactors = new Complex [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
 
@@ -137,41 +160,75 @@ ComplexVector& Potts3ChainHamiltonian::LowLevelAddMultiply(ComplexVector& vSourc
 							   int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
-  int pos;
-  for (int i = firstComponent; i < LastComponent; ++i)
+  if (this->FastMultiplicationFlag == true)
     {
-      Complex TmpValue = vSource[i];
-      vDestination[i] += this->SzSzContributions[i] * TmpValue;
-      for (int j = 0; j < this->ReducedNbrSpin; ++j)
+      long Position = (2l * this->NbrInteractionPerComponent) * firstComponent;
+      if (this->PeriodicFlag == true)
 	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      vDestination[pos] += this->JFullFactor * TmpValue;
-	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
+	      Complex TmpValue = vSource[i];
+	      vDestination[i] += this->SzSzContributions[i] * TmpValue;
+	      for (int j = 0; j < this->ReducedNbrSpin; ++j)
+		{
+		  vDestination[this->InteractionPerComponentIndex[Position++]] += this->JFullFactor * TmpValue;
+		  vDestination[this->InteractionPerComponentIndex[Position++]] += ConjugateProduct(this->JFullFactor, TmpValue);
+		}
+	      vDestination[this->InteractionPerComponentIndex[Position++]] += this->BoundaryFactor * TmpValue;
+	      vDestination[this->InteractionPerComponentIndex[Position++]] += ConjugateProduct(this->BoundaryFactor, TmpValue);	    }
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      vDestination[pos] += ConjugateProduct(this->JFullFactor, TmpValue);
+	      Complex TmpValue = vSource[i];
+	      vDestination[i] += this->SzSzContributions[i] * TmpValue;
+	      for (int j = 0; j < this->ReducedNbrSpin; ++j)
+		{
+		  vDestination[this->InteractionPerComponentIndex[Position++]] += this->JFullFactor * TmpValue;
+		  vDestination[this->InteractionPerComponentIndex[Position++]] += ConjugateProduct(this->JFullFactor, TmpValue);
+		}
 	    }
 	}
     }
-  if (this->PeriodicFlag == true)
+  else
     {
+      int dim = this->Chain->GetHilbertSpaceDimension();
+      double coef;
+      int pos;
       for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  Complex TmpValue = vSource[i];
-	  pos = this->Chain->SmiSpj(0, this->ReducedNbrSpin, i, coef);
-	  if (pos != dim)
+	  vDestination[i] += this->SzSzContributions[i] * TmpValue;
+	  for (int j = 0; j < this->ReducedNbrSpin; ++j)
 	    {
-	      vDestination[pos] += this->BoundaryFactors[pos] * TmpValue;
+	      pos = this->Chain->SmiSpj(j, j + 1, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += this->JFullFactor * TmpValue;
+		}
+	      pos = this->Chain->SmiSpj(j + 1, j, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += ConjugateProduct(this->JFullFactor, TmpValue);
+		}
 	    }
-	  pos = this->Chain->SmiSpj(this->ReducedNbrSpin, 0, i, coef);
-	  if (pos != dim)
+	}
+      if (this->PeriodicFlag == true)
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
-	      vDestination[pos] += ConjugateProduct(this->BoundaryFactors[pos], TmpValue);
+	      Complex TmpValue = vSource[i];
+	      pos = this->Chain->SmiSpj(0, this->ReducedNbrSpin, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += this->BoundaryFactor * TmpValue;
+		}
+	      pos = this->Chain->SmiSpj(this->ReducedNbrSpin, 0, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += ConjugateProduct(this->BoundaryFactor, TmpValue);
+		}
 	    }
 	}
     }
@@ -192,59 +249,117 @@ ComplexVector*  Potts3ChainHamiltonian::LowLevelMultipleMultiply(ComplexVector* 
 								 int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
-  int pos;
   Complex* TmpValues = new Complex[nbrVectors];
-  for (int i = firstComponent; i < LastComponent; ++i)
+  if (this->FastMultiplicationFlag == true)
     {
-      for (int k = 0; k < nbrVectors; ++k)
+      long Position = (2l * this->NbrInteractionPerComponent) * firstComponent;
+      int pos1;
+      int pos2;
+      if (this->PeriodicFlag == true)
 	{
-	  TmpValues[k] = vSources[k][i];
-	  vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
-	}
-      for (int j = 0; j < this->ReducedNbrSpin; ++j)
-	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
-		  vDestinations[k][pos] += this->JFullFactor * TmpValues[k];
+		  TmpValues[k] = vSources[k][i];
+		  vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
+		}
+	      for (int j = 0; j < this->ReducedNbrSpin; ++j)
+		{
+		  pos1 = this->InteractionPerComponentIndex[Position++];
+		  pos2 = this->InteractionPerComponentIndex[Position++];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos1] += this->JFullFactor * TmpValues[k];
+		      vDestinations[k][pos2] += ConjugateProduct(this->JFullFactor, TmpValues[k]);
+		    }
+		}
+	      pos1 = this->InteractionPerComponentIndex[Position++];
+	      pos2 = this->InteractionPerComponentIndex[Position++];
+	      for (int k = 0; k < nbrVectors; ++k)
+		{
+		  vDestinations[k][pos1] += this->BoundaryFactor * TmpValues[k];
+		  vDestinations[k][pos2] += ConjugateProduct(this->BoundaryFactor, TmpValues[k]);
 		}
 	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
+	}
+      else
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
-		  vDestinations[k][pos] += ConjugateProduct(this->JFullFactor, TmpValues[k]);
+		  TmpValues[k] = vSources[k][i];
+		  vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
+		}
+	      for (int j = 0; j < this->ReducedNbrSpin; ++j)
+		{
+		  pos1 = this->InteractionPerComponentIndex[Position++];
+		  pos2 = this->InteractionPerComponentIndex[Position++];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos1] += this->JFullFactor * TmpValues[k];
+		      vDestinations[k][pos2] += ConjugateProduct(this->JFullFactor, TmpValues[k]);
+		    }
 		}
 	    }
 	}
     }
-  if (this->PeriodicFlag == true)
+  else
     {
-     for (int i = firstComponent; i < LastComponent; ++i)
+      int dim = this->Chain->GetHilbertSpaceDimension();
+      double coef;
+      int pos;
+      for (int i = firstComponent; i < LastComponent; ++i)
 	{
 	  for (int k = 0; k < nbrVectors; ++k)
 	    {
 	      TmpValues[k] = vSources[k][i];
+	      vDestinations[k][i] += this->SzSzContributions[i] * TmpValues[k];
 	    }
-	  pos = this->Chain->SmiSpj(0, this->ReducedNbrSpin, i, coef);
-	  if (pos != dim)
+	  for (int j = 0; j < this->ReducedNbrSpin; ++j)
 	    {
-	      for (int k = 0; k < nbrVectors; ++k)
+	      pos = this->Chain->SmiSpj(j, j + 1, i, coef);
+	      if (pos != dim)
 		{
-		  vDestinations[k][pos] += this->BoundaryFactors[pos] * TmpValues[k];
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos] += this->JFullFactor * TmpValues[k];
+		    }
+		}
+	      pos = this->Chain->SmiSpj(j + 1, j, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos] += ConjugateProduct(this->JFullFactor, TmpValues[k]);
+		    }
 		}
 	    }
-	  pos = this->Chain->SmiSpj(this->ReducedNbrSpin, 0, i, coef);
-	  if (pos != dim)
+	}
+      if (this->PeriodicFlag == true)
+	{
+	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
 		{
-		  vDestinations[k][pos] += ConjugateProduct(this->BoundaryFactors[pos], TmpValues[k]);
+		  TmpValues[k] = vSources[k][i];
+		}
+	      pos = this->Chain->SmiSpj(0, this->ReducedNbrSpin, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos] += this->BoundaryFactor * TmpValues[k];
+		    }
+		}
+	      pos = this->Chain->SmiSpj(this->ReducedNbrSpin, 0, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      vDestinations[k][pos] += ConjugateProduct(this->BoundaryFactor, TmpValues[k]);
+		}
 		}
 	    }
 	}
@@ -275,8 +390,27 @@ void Potts3ChainHamiltonian::EvaluateDiagonalMatrixElements()
 	  Tmp += CoefficientCosine1 * (CoefficientCosine2 * Coefficient * Coefficient  + 1.0) - (Coefficient * CoefficientSine1 * CoefficientSine2);
 	}
       this->SzSzContributions[i] = Tmp;
-      this->BoundaryFactors[i] = Polar(this->JFactor,
-				       2.0 * M_PI * (this->PhiJ + ((this->BoundaryCondition - 1.0 + this->Chain->QValue(i)) / 3.0)));
+    }
+  this->BoundaryFactor = Polar(this->JFactor,
+			       2.0 * M_PI * (this->PhiJ + ((this->BoundaryCondition - 1.0 + this->Chain->QValue(0)) / 3.0)));
+  if (this->FastMultiplicationFlag == true)
+    {
+      long Position = 0l;
+      double Coef = 0.0;
+      this->InteractionPerComponentIndex = new int[2 * this->NbrInteractionPerComponent * Dimension];
+      for (int i = 0; i < Dimension; ++i)
+	{
+	  for (int j = 0; j < this->ReducedNbrSpin; ++j)
+	    {
+	      this->InteractionPerComponentIndex[Position++] = this->Chain->SmiSpj(j, j + 1, i, Coef);
+	      this->InteractionPerComponentIndex[Position++] = this->Chain->SmiSpj(j + 1, j, i, Coef);
+	    }
+	  if (this->PeriodicFlag == true)
+	    {
+	      this->InteractionPerComponentIndex[Position++] = this->Chain->SmiSpj(0, this->ReducedNbrSpin, i, Coef);
+	      this->InteractionPerComponentIndex[Position++] = this->Chain->SmiSpj(this->ReducedNbrSpin, 0, i, Coef);
+	    }
+	}      
     }
 }
 

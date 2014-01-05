@@ -40,6 +40,7 @@ int main(int argc, char** argv)
 
   // some running options and help
   OptionManager Manager ("Potts3ChainModel" , "0.01");
+  OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
   LanczosManager Lanczos(true);
 
   Manager += SystemGroup;
+  Manager += PrecalculationGroup;
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
   Manager += OutputGroup;
@@ -66,6 +68,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "type of boundary conditions (0 for 1, 1 for exp(2i \\pi / 3) and -1 for exp(-2i \\pi / 3)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "use-momentum", "use the momentum quantum number");
   (*SystemGroup) += new  SingleIntegerOption  ('k', "k-sector", "look at a given momentum sector (-1 if all momentum sectors have to be computed)", -1);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -161,7 +164,7 @@ int main(int argc, char** argv)
       for (; InitalQValue <= MaxQValue; ++InitalQValue)
 	{
 	  Potts3Chain* Chain = new Potts3Chain (NbrSpins, InitalQValue, 1000000);      
-	  Potts3ChainHamiltonian Hamiltonian (Chain, NbrSpins, JValue, PhiJ, FValue, PhiF, Manager.GetBoolean("periodic"), BoundaryCondition);
+	  Potts3ChainHamiltonian Hamiltonian (Chain, NbrSpins, JValue, PhiJ, FValue, PhiF, Manager.GetBoolean("periodic"), BoundaryCondition, ((long) Manager.GetInteger("memory")) << 20);
 	  char* TmpQString = new char[64];
 	  sprintf (TmpQString, "%d", InitalQValue);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];

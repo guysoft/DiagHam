@@ -67,6 +67,8 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   bool PeriodicFlag;
   // type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
   double BoundaryCondition;
+  // constant factor when applying periodic boundary conditions 
+  Complex BoundaryFactor;
 
   // number of sites
   int NbrSpin;
@@ -74,9 +76,13 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   int ReducedNbrSpin;
 
   double* SzSzContributions;
-  // constant factors for each state when applying periodic boundary conditions 
-  Complex* BoundaryFactors;
 
+  // flag for fast multiplication algorithm
+  bool FastMultiplicationFlag;
+  // number of non-null term in the hamiltonian for each state
+  int NbrInteractionPerComponent;
+  // index of the state obtained for each term of the hamiltonian when applying on a given state
+  int* InteractionPerComponentIndex;
 
  public:
 
@@ -90,7 +96,8 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
   // phiF = phase of the Zeeman term (in PI units)
   // periodicFlag = true if the chain is periodic
   // boundaryCondition = type of boundary conditions if the chain is periodic (0 for 1, 1 for exp(i 2 \pi / 3), -1 1 for exp(i 2 \pi / 3)) 
-  Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, double jFactor, double phiJ, double fFactor, double phiF, bool periodicFlag, double boundaryCondition);
+  // memory = amount of memory that can be used from precalculations (in bytes)
+  Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, double jFactor, double phiJ, double fFactor, double phiF, bool periodicFlag, double boundaryCondition, long memory);
 
   // destructor
   //
