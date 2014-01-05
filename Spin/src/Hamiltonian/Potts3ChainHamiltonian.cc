@@ -77,8 +77,8 @@ Potts3ChainHamiltonian::Potts3ChainHamiltonian(Potts3Chain* chain, int nbrSpin, 
     {
       this->NbrInteractionPerComponent++;
     }
-  long RequireMemory = (((long) this->Chain->GetHilbertSpaceDimension()) * 
-			(this->NbrInteractionPerComponent * sizeof(int) + sizeof(double)));
+  long RequireMemory = 2l * (((long) this->Chain->GetHilbertSpaceDimension()) * 
+			     (this->NbrInteractionPerComponent * sizeof(int) + sizeof(double)));
   cout << "Precalculations requires ";
   PrintMemorySize (cout, RequireMemory) << endl;
   if (memory > RequireMemory)
