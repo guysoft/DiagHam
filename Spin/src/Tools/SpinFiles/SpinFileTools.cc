@@ -53,10 +53,9 @@ bool SpinFindSystemInfoFromFileName(char* filename, int& nbrSpins)
     {
       StrNbrSpins += 3;
       int SizeString = 0;
-      while ((StrNbrSpins[SizeString] != '\0') && ((StrNbrSpins[SizeString] != '_') || (StrNbrSpins[SizeString] != '.')) && (StrNbrSpins[SizeString] >= '0') 
-	     && (StrNbrSpins[SizeString] <= '9'))
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
 	++SizeString;
-      if (((StrNbrSpins[SizeString] != '_') || (StrNbrSpins[SizeString] != '.')) && (SizeString != 0))
+      if (SizeString != 0)
 	{
 	  char Tmp = StrNbrSpins[SizeString];
 	  StrNbrSpins[SizeString] = '\0';
@@ -161,8 +160,8 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
       int SizeString = 0;
       if (StrNbrSpins[SizeString] == '-')
 	++SizeString;
-      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '.') && (StrNbrSpins[SizeString] >= '0') 
-	     && (StrNbrSpins[SizeString] <= '9'))
+      while ((StrNbrSpins[SizeString] != '\0') && (StrNbrSpins[SizeString] != '.') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
 	++SizeString;
       if ((StrNbrSpins[SizeString] == '.') && (SizeString != 0))
 	{
@@ -224,3 +223,44 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
     }
   return true;
 }
+
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSites = reference to the number of sites
+// qValue = reference to Zn charge
+// return value = true if no error occured
+
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& qValue)
+{
+  if (SpinFindSystemInfoFromFileName(filename, nbrSites) == false)
+    return false;
+  char* StrNbrSpins;
+  StrNbrSpins = strstr(filename, "_q_");
+  if (StrNbrSpins != 0)
+    {
+      StrNbrSpins += 3;
+      int SizeString = 0;
+      if (StrNbrSpins[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrSpins[SizeString] != '\0') && 
+	     (StrNbrSpins[SizeString] >= '0') && (StrNbrSpins[SizeString] <= '9'))
+	++SizeString;
+      if ((SizeString > 1) || ((SizeString == 1) && (StrNbrSpins[0] != '-')))
+	{
+	  StrNbrSpins[SizeString] = '\0';
+	  qValue = atoi(StrNbrSpins);
+	  StrNbrSpins[SizeString] = '.';
+	  StrNbrSpins += SizeString;
+	}
+      else
+	StrNbrSpins = 0;
+    }
+  if (StrNbrSpins == 0)
+    {
+      cout << "can't guess the total Zn charge from file name " << filename << endl;
+      return false;            
+    }
+  return true; 
+}
+

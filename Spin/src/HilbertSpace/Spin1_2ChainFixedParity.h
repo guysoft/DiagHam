@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                 class of spin 1/2 chain without any Sz contraint           //
+//   class of spin 1/2 chain without any Sz contraint but a fixed Sz parity   //
 //                                                                            //
-//                        last modification : 11/12/2013                      //
+//                        last modification : 06/01/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,12 +28,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN1_2CHAINFULL_H
-#define SPIN1_2CHAINFULL_H
+#ifndef SPIN1_2CHAINFIXEDPARITY_H
+#define SPIN1_2CHAINFIXEDPARITY_H
 
 
 #include "config.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainFull.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
@@ -42,39 +42,41 @@
 using std::ostream;
 
 
-class Spin1_2ChainFull : public Spin1_2Chain
+class Spin1_2ChainFixedParity : public Spin1_2ChainFull
 {
 
  protected:
 
+  // parity of the total (Sz + 1/2) (can be 0 or 1)
+  int SzParity;
 
  public:
 
 
   // default constructor
   //
-  Spin1_2ChainFull ();
+  Spin1_2ChainFixedParity ();
 
   // constructor for complete Hilbert space with no restriction on total spin projection Sz
   //
   // chainLength = number of spin 1/2
-  // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainFull (int chainLength, int memorySize);
+  // parity = parity of the total (Sz + 1/2) (can be 0 or 1)
+  Spin1_2ChainFixedParity (int chainLength, int parity);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  Spin1_2ChainFull (const Spin1_2ChainFull& chain);
+  Spin1_2ChainFixedParity (const Spin1_2ChainFixedParity& chain);
 
   // destructor
   //
-  ~Spin1_2ChainFull ();
+  ~Spin1_2ChainFixedParity ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  Spin1_2ChainFull& operator = (const Spin1_2ChainFull& chain);
+  Spin1_2ChainFixedParity& operator = (const Spin1_2ChainFixedParity& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -108,6 +110,30 @@ class Spin1_2ChainFull : public Spin1_2Chain
   // return value = index of resulting state
   virtual int SmiSmj (int i, int j, int state, double& coefficient);
 
+  // compute the parity (prod_i Sz_i) for a given state
+  //
+  // state = index of the state to be applied on Sz_i operator
+  // return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
+  virtual unsigned long Parity (int state);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+  // 
+  // nbrSites = number of sites that are part of the A subsytem 
+  // szSector = Sz sector in which the density matrix has to be evaluated 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
+
  protected:
 
   // find state index
@@ -123,9 +149,19 @@ class Spin1_2ChainFull : public Spin1_2Chain
 // state = state description
 // return value = corresponding index
 
-inline int Spin1_2ChainFull::FindStateIndex(unsigned long state)
+inline int Spin1_2ChainFixedParity::FindStateIndex(unsigned long state)
 {
-  return ((int) state);    
+  return ((int) (state >> 1));    
+}
+
+// compute the parity (prod_i Sz_i) for a given state
+//
+// state = index of the state to be applied on Sz_i operator
+// return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
+
+inline unsigned long Spin1_2ChainFixedParity::Parity (int state)
+{
+  return (unsigned long) this->SzParity;
 }
 
 #endif

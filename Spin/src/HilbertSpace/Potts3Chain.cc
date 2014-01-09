@@ -30,10 +30,12 @@
 
 #include "HilbertSpace/Potts3Chain.h"
 #include "Matrix/HermitianMatrix.h"
+#include "Matrix/ComplexMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
+#include "Matrix/HermitianMatrix.h"
 #include <iostream>
 
 
@@ -696,4 +698,164 @@ ostream& Potts3Chain::PrintState (ostream& Str, int state)
       StateDescription >>= 2;
     }
   return Str;
+}
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix Potts3Chain::EvaluatePartialDensityMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{ 
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  HermitianMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}
+      
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      if (szSector == this->Sz)
+	{
+	  HermitianMatrix TmpDensityMatrix(1);
+	  TmpDensityMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrix;
+	  return TmpDensityMatrix;	  
+	}      
+    }
+  Potts3Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
+  int ComplementaryQSector = this->Sz - szSector;
+  if (ComplementaryQSector < 0)
+    ComplementaryQSector += 3;
+   if (ComplementaryQSector >= 3)
+    ComplementaryQSector -= 3;
+  Potts3Chain TmpHilbertSpace(this->ChainLength - nbrSites, ComplementaryQSector, 1000000);
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
+  HermitianMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = nbrSites * 2;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+  long TmpNbrNonZeroElements = 0l;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = (TmpHilbertSpace.ChainDescription[MinIndex] << Shift);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  int TmpPos = this->FindStateIndex(TmpState2);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpStatePosition[Pos] = TmpPos;
+	      TmpStatePosition2[Pos] = j;
+	      ++Pos;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]);
+	      for (int k = 0; k < Pos; ++k)
+		{
+		  if (TmpStatePosition2[k] >= Pos2)
+		    {
+		      TmpDensityMatrix.AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]]);
+		    }
+		}
+	    }
+	}
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  return TmpDensityMatrix;
+}
+
+// evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
+// 
+// nbrSites = number of sites that are part of the A subsytem 
+// szSector = Sz sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
+
+ComplexMatrix Potts3Chain::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrSites == 0)
+    {
+      if (szSector == 0)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, 1);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}
+      
+    }
+  if (nbrSites == this->ChainLength)
+    {
+      if (szSector == this->Sz)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, 1);
+	  TmpEntanglementMatrix.SetMatrixElement(0, 0, 1.0);
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;	  
+	}      
+    }
+  Potts3Chain TmpDestinationHilbertSpace(nbrSites, szSector, 1000000);
+  int ComplementaryQSector = this->Sz - szSector;
+  if (ComplementaryQSector < 0)
+    ComplementaryQSector += 3;
+  if (ComplementaryQSector >= 3)
+    ComplementaryQSector -= 3;
+  Potts3Chain TmpHilbertSpace(this->ChainLength - nbrSites, ComplementaryQSector, 1000000);
+  ComplexMatrix TmpEntanglementMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, TmpHilbertSpace.HilbertSpaceDimension, true);
+  int Shift = nbrSites * 2;
+  int MinIndex = 0;
+  int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
+  long TmpNbrNonZeroElements = 0l;
+
+  for (; MinIndex < MaxIndex; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = (TmpHilbertSpace.ChainDescription[MinIndex] << Shift);
+      for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.ChainDescription[j];
+	  int TmpPos = this->FindStateIndex(TmpState2);
+	  if (TmpPos != this->HilbertSpaceDimension)
+	    {
+	      TmpEntanglementMatrix.AddToMatrixElement(j, MinIndex, groundState[TmpPos]);
+	    }
+	}
+    }
+  return TmpEntanglementMatrix;
 }

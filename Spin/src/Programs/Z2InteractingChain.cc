@@ -2,6 +2,7 @@
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
+#include "HilbertSpace/Spin1_2ChainFixedParity.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -55,6 +56,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption('f', "f-value", "", 1.0);
   (*SystemGroup) += new  SingleDoubleOption('v', "v-value", "", 1.0);
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "boundary conditions (0 for open, 1 for periodic, -1 for antiperiodic)", 0);
+  (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -78,29 +80,62 @@ int main(int argc, char** argv)
   double VValue = Manager.GetDouble("v-value");
   int BValue = Manager.GetInteger("boundary-conditions");
   char* OutputFileName = new char [512];
-  char* CommentLine = new char [512];
+  char* CommentLine = new char [1024];
   sprintf (OutputFileName, "z2interactingchain_n_%d_j_%.6f_f_%.6f_v_%.6f_b_%d", NbrSpins, JValue, FValue, VValue, BValue);
-  sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# ", NbrSpins, JValue, FValue, VValue, BValue);
-
+  if (Manager.GetBoolean("no-parity") == true)
+    { 
+      sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# ", NbrSpins, JValue, FValue, VValue, BValue);
+    }
+  else
+    {
+      sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# Q ", NbrSpins, JValue, FValue, VValue, BValue);
+    }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
 
   bool FirstRun = true;
-  Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpins, 1000000);
 
-  if (Chain->GetHilbertSpaceDimension() > 0)
-    {
-      SpinChainZ2InteractingHamiltonian Hamiltonian (Chain, NbrSpins, JValue, FValue, VValue, (double) BValue);
-      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-      sprintf (TmpEigenstateString, "%s", OutputFileName);
-      char TmpEntry = '\0';
-      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, &TmpEntry, CommentLine, 0.0,  FullOutputFileName,
-			       FirstRun, TmpEigenstateString);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      FirstRun = false;
-      delete[] TmpEigenstateString;
+  if (Manager.GetBoolean("no-parity") == true)
+    { 
+      Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpins, 1000000);
+      if (Chain->GetHilbertSpaceDimension() > 0)
+	{
+	  SpinChainZ2InteractingHamiltonian Hamiltonian (Chain, NbrSpins, JValue, FValue, VValue, (double) BValue);
+	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+	  sprintf (TmpEigenstateString, "%s", OutputFileName);
+	  char TmpEntry = '\0';
+	  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, &TmpEntry, CommentLine, 0.0,  FullOutputFileName,
+				   FirstRun, TmpEigenstateString);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  FirstRun = false;
+	  delete[] TmpEigenstateString;
+	}
+      delete Chain;
     }
-  delete Chain;
+  else
+    {
+      int InitalQValue = 0;
+      int MaxQValue = 1;
+      for (; InitalQValue <= MaxQValue; ++InitalQValue)
+	{
+	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitalQValue);
+	  if (Chain->GetHilbertSpaceDimension() > 0)
+	    {	     
+	      SpinChainZ2InteractingHamiltonian Hamiltonian (Chain, NbrSpins, JValue, FValue, VValue, (double) BValue);
+	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
+	      char* TmpQString = new char[64];
+	      sprintf (TmpQString, "%d", InitalQValue);
+	      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
+				       FirstRun, TmpEigenstateString);
+	      MainTaskOperation TaskOperation (&Task);
+	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	      FirstRun = false;
+	      delete[] TmpEigenstateString;
+	    }
+	  delete Chain;
+	}
+    }
   return 0;
 }

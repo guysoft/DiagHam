@@ -15,4 +15,5 @@ AbstractSUNSpinCollection.cc \
 GenericSUNSpinCollection.cc \
 Potts3Chain.cc \
 Spin1_2ChainFull.cc \
-Potts3ChainWithTranslations.cc
+Potts3ChainWithTranslations.cc \
+Spin1_2ChainFixedParity.cc

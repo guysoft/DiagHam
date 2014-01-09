@@ -914,7 +914,6 @@ ostream& Spin1_2Chain::PrintState (ostream& Str, int state)
   if (state >= this->HilbertSpaceDimension)    
     return Str;
   unsigned long Mask = 0x1ul;
-  //Str << this->FindStateIndex(this->StateDescription[state]) << " : ";
   for (int k = 0; k < this->ChainLength; k++)    
     {
       if ((this->StateDescription[state] & Mask) == 0x0ul)

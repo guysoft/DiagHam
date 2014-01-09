@@ -68,4 +68,12 @@ bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz
 // return value = true if no error occured
 bool SpinFindSystemInfoFromVectorFileName(char* filename, int& nbrSpins, int& sz, int& spin, int& momentum);
 
+// try to guess system information from file name
+//
+// filename = file name
+// nbrSites = reference to the number of sites
+// qValue = reference to Zn charge
+// return value = true if no error occured
+bool PottsFindSystemInfoFromVectorFileName(char* filename, int& nbrSites, int& qValue);
+
 #endif
