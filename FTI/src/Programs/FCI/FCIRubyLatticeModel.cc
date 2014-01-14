@@ -13,6 +13,8 @@
 //#include "Hamiltonian/ParticleOnLatticeRubyLatticeSingleBandFiveBodyHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelRubyLattice.h"
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -85,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -271,9 +274,18 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-  TightBindingModelRubyLattice TightBindingModel(NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
+    
+  Abstract2DTightBindingModel* TightBindingModel;
+  if (Manager.GetString("import-onebody") == 0)
+  {
+    TightBindingModel = new TightBindingModelRubyLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
 						 Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
 						 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+  }
+  else
+  {
+   TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+  }
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -313,14 +325,14 @@ int main(int argc, char** argv)
 	    { 
 	      Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 										  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-										  &TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+										  TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 	  else
 	    { 
 	      if (Manager.GetBoolean("three-body") == true)
 		{
  		  Hamiltonian = new ParticleOnLatticeRubyLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-											       Manager.GetDouble("u-potential"), 0.0, &TightBindingModel, 		     
+											       Manager.GetDouble("u-potential"), 0.0, TightBindingModel, 		     
 											       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
@@ -365,6 +377,7 @@ int main(int argc, char** argv)
 	  delete[] ContentPrefix;
 	}
     }
+  delete TightBindingModel;
   return 0;
 }
 
