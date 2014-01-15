@@ -10,6 +10,7 @@
 
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelRubyLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 
@@ -188,12 +189,17 @@ int main(int argc, char** argv)
 //   int ny2 = 4;
 //   int offset = 3;
   
-  int nx1 = 2;
-  int ny1 = 0;
-  int nx2 = -2;
-  int ny2 = 3;
-  int offset = 2;
-//   TightBindingModelAlternativeKagomeLattice TightBindingModel(NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, t1, t2, l1, l2, mu, gammaX, gammaY, Architecture.GetArchitecture(), ExportOneBody); 
+//   double tr = 1;
+//   double ti = 1;
+//   double t1r = -1.4;
+//   double t1i = 2.4;
+//   double t4 = -1.46;
+//   int nx1 = 2;
+//   int ny1 = 5;
+//   int nx2 = -4;
+//   int ny2 = -1;
+//   int offset = 13;
+//   TightBindingModelRubyLattice TightBindingModel(NbrSiteX, NbrSiteY, nx1, ny1, nx2, ny2, offset, tr, ti, t1r, t1i, t4, mu, gammaX, gammaY, Architecture.GetArchitecture(), ExportOneBody); 
 //   cout << MinKx << " " << MinKy << " " << MaxKx << " " << MaxKy << endl;
   AbstractOperator* Projector;
   ParticleOnSphere* SpaceDestination = 0;
@@ -209,8 +215,8 @@ int main(int argc, char** argv)
    for (int ky = MinKy; ky <= MaxKy; ++ky)
    {
     
-    int TotalQx = (TotalKx[0] - kx + NbrSiteX) % NbrSiteX;
-    int TotalQy = (TotalKy[0] - ky + NbrSiteY) % NbrSiteY;
+    int TotalQx = (TotalKx[0] - kx + 2*NbrSiteX) % NbrSiteX;
+    int TotalQy = (TotalKy[0] - ky + 2*NbrSiteY) % NbrSiteY;
     cout << "Total Kx = " << TotalQx << " Total Ky = " << TotalQy << endl;
 //     cout << kx << " " << ky << endl;
 //     cout << TotalKx << " " << TotalKy << " " << TotalQx << " " << TotalQy << endl;
@@ -223,11 +229,14 @@ int main(int argc, char** argv)
     
     char* EigenstateOutputFile;
     char* TmpExtention = new char [512];
-    sprintf (TmpExtention, "_SMA_kx_%d_ky_%d.vec", TotalQx, TotalQy);
+    int QxTwoBrillouinZones = (TotalKx[0] - kx + 2*NbrSiteX) % (2*NbrSiteX);
+    int QyTwoBrillouinZones = (TotalKy[0] - ky + 2*NbrSiteY) % (2*NbrSiteY);
+    sprintf (TmpExtention, "_SMA_kx_%d_ky_%d.vec", QxTwoBrillouinZones, QyTwoBrillouinZones);
     EigenstateOutputFile = ReplaceExtensionToFileName(GroundStateFiles[0], ".vec", TmpExtention);
     ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
     
     Projector->LowLevelAddMultiply(GroundStates[0], EigenstateOutput, 0, SpaceSource->GetHilbertSpaceDimension());
+    EigenstateOutput.Normalize();
     EigenstateOutput.WriteVector(EigenstateOutputFile);
     
     
@@ -263,7 +272,7 @@ int main(int argc, char** argv)
 		int indexDagger = TightBindingModel.GetLinearizedMomentumIndexSafe(kx + Qx0 - TotalKx[i], ky + Qy0 - TotalKy[i]);
 		int index = TightBindingModel.GetLinearizedMomentumIndexSafe(kx, ky);
 		Projector = new ParticleOnSphereDensityOperator(SpaceSource, indexDagger, index);
-	  
+// 		cout << kx << " " << ky << " " << Qx0 << " " << Qy0 << endl;
 		char* EigenstateOutputFile;
 		char* TmpExtention = new char [512];
 		sprintf (TmpExtention, "_bilinear_kx_%d_ky_%d_qx0_%d_qy0_%d.vec", kx, ky, Qx0, Qy0);
@@ -271,6 +280,7 @@ int main(int argc, char** argv)
 		ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
     
 		Projector->LowLevelAddMultiply(GroundStates[i], EigenstateOutput, 0, SpaceSource->GetHilbertSpaceDimension());
+		EigenstateOutput.Normalize();
 		EigenstateOutput.WriteVector(EigenstateOutputFile);
     
     
