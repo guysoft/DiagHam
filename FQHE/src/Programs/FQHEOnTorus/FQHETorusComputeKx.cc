@@ -1,8 +1,13 @@
 #include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
+
+#include "Vector/ComplexVector.h"
 
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
+#include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
+#include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 
 #include "Operator/ParticleOnTorusKxOperator.h"
 
@@ -60,7 +65,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state whose Kx momentum has to be computed");
   (*SystemGroup) += new SingleStringOption('\n', "degenerated-states", "name of the file containing a list of states (override input-state)");
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", "ratio between lengths along the x and y directions", 1);
-  (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+  (*SystemGroup) += new BooleanOption ('\n',  "compute-eigenstate", "compute the eigenstates of th Kx operator in the given basis");
+  (*SystemGroup) += new SingleStringOption ('\n',  "interaction-name", "name that should be inserted in the output file names", "dummy");
+  (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
@@ -133,18 +140,20 @@ int main(int argc, char** argv)
 	{
 	  int TmpNbrParticles = 0;
 	  int TmpMaxMomentum = 0;
-	  int TmpYMomentum = 0;
+	  int TmpYMomentum = -1;
 	  bool TmpStatistics = true;
 	  if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, i),
-							  NbrParticles, MaxMomentum, YMomentum, Statistics) == false)
+							  TmpNbrParticles, TmpMaxMomentum, TmpYMomentum, TmpStatistics) == false)
 	    {
 	      cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, i) << endl;
 	      return -1;
 	    }
 	  if ((TmpNbrParticles != NbrParticles) || (TmpMaxMomentum != MaxMomentum) || 
-	      (TmpYMomentum != YMomentum) || (!Statistics != Statistics))
+	      (TmpYMomentum != YMomentum) || (Statistics != TmpStatistics))
 	    {
-	      cout << "error, " << DegeneratedFile(0, i) << " has different system parameters than " << DegeneratedFile(0, 0) << endl;
+	      cout << "error, " << DegeneratedFile(0, i) << " has different system parameters than " << DegeneratedFile(0, 0) 
+		   << ", N=" << TmpNbrParticles << "(" << NbrParticles << "), N_phi=" << TmpMaxMomentum << "(" << MaxMomentum 
+		   << "), Ky=" << TmpYMomentum << "(" << YMomentum << ")" << endl;
 	    }
 	  if (InputStates[i].ReadVector(DegeneratedFile(0, i)) == false)
 	    {
@@ -159,7 +168,9 @@ int main(int argc, char** argv)
     }
   int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
   ParticleOnTorus* TotalSpace = 0;
-  
+  ParticleOnTorusWithMagneticTranslations** TargetSpaces = 0;
+  char* OutputNamePrefix = new char [256 + strlen(Manager.GetString("interaction-name"))];
+
   if (Statistics == false)
     {
 #ifdef  __64_BITS__
@@ -174,12 +185,24 @@ int main(int argc, char** argv)
 	  {
 	    TotalSpace = new BosonOnTorus(NbrParticles, MaxMomentum, YMomentum);
 	  }
-//      sprintf (OutputNamePrefix, "bosons_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
+      sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+      if (Manager.GetBoolean("compute-eigenstate") == true)
+	{
+	  TargetSpaces = new ParticleOnTorusWithMagneticTranslations*[MomentumModulo];
+	  for (int i = 0; i < MomentumModulo; ++i)
+	    TargetSpaces[i] = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, i, YMomentum);
+	}
     }
   else
     {
       TotalSpace = new FermionOnTorus (NbrParticles, MaxMomentum, YMomentum);
-//      sprintf (OutputNamePrefix, "fermions_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
+      sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+      if (Manager.GetBoolean("compute-eigenstate") == true)
+	{
+	  TargetSpaces = new ParticleOnTorusWithMagneticTranslations*[MomentumModulo];
+	  for (int i = 0; i < MomentumModulo; ++i)
+	    TargetSpaces[i] = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, i, YMomentum);
+	}
     }
   if (InputStates[0].GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
     {
@@ -202,37 +225,134 @@ int main(int argc, char** argv)
 	  KxRep.SetMatrixElement(j, i, (InputStates[j] * TmpVector));
 	}
     }
-  cout << "# eigenvalue Norm Arg (GCD(N,N_phi)*Arg/2pi) Kx round(Kx)" << endl;
+
+  char* OutputName = new char [256 + strlen(OutputNamePrefix)];
+  sprintf (OutputName, "%s_ky_%d.dat", OutputNamePrefix, YMomentum);
+  ofstream File;
+  File.open(OutputName, ios::binary | ios::out);
+  File.precision(14);
+  File << "# eigenvalue Norm Arg (GCD(N,N_phi)*Arg/2pi) Kx round(Kx)" << endl;
   if (NbrInputStates == 1)
     {
       double TmpValue;
       KxRep.GetMatrixElement(0, 0, TmpValue);
-      cout << TmpValue << " " << fabs(TmpValue) << " ";
+      File << TmpValue << " " << fabs(TmpValue) << " ";
       if (TmpValue < 0.0)
 	{
-	  cout << M_PI << " " << (MomentumModulo / 2.0) << " " << (MomentumModulo / 2.0) << endl;
+	  File << M_PI << " " << (MomentumModulo / 2.0) << " " << (MomentumModulo / 2.0) << endl;
 	}
       else
 	{
-	  cout << 0.0 << " " << 0.0 <<  " " << 0 << endl;
+	  File << 0.0 << " " << 0.0 <<  " " << 0 << endl;
+	}
+      if (Manager.GetBoolean("compute-eigenstate") == true)
+	{
+	  char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
+	  ComplexVector TmpVector (InputStates[0], true);
+	  ComplexVector TmpVector2;
+	  if (TmpValue < 0.0)
+	    {
+	      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.0.vec", OutputNamePrefix, (MomentumModulo / 2), YMomentum);
+	      TmpVector2 = TargetSpaces[MomentumModulo / 2]->ConvertToKxKyBasis(TmpVector, TotalSpace);
+
+	    }
+	  else
+	    {
+	      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.0.vec", OutputNamePrefix, 0, YMomentum);
+	      TmpVector2 = TargetSpaces[0]->ConvertToKxKyBasis(TmpVector, TotalSpace);
+	      
+	    }
+	  if (TmpVector2.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }
+	  delete[] VectorOutputName;	  
 	}
     }
   else
     {
-      ComplexDiagonalMatrix Eigenvalues(NbrInputStates, true);
-      KxRep.LapackDiagonalize(Eigenvalues);
-      double Factor = ((double) MomentumModulo) / (2.0 * M_PI);
-      for (int i = 0; i < NbrInputStates; ++i)
+      if (Manager.GetBoolean("compute-eigenstate") == false)
 	{
-	  Complex TmpValue = Eigenvalues[i];
-	  cout << TmpValue << " " << Norm(TmpValue) << " " << Arg(TmpValue);
-	  double TmpValue2 = Arg(TmpValue);
-	  if (TmpValue2 < 0.0)
-	    TmpValue2 += 2.0 * M_PI;
-	  TmpValue2 *= Factor;
-	  cout << " " << TmpValue2 << " " << round(TmpValue2) << endl;
-	}      
+	  ComplexDiagonalMatrix Eigenvalues(NbrInputStates, true);
+	  KxRep.LapackDiagonalize(Eigenvalues);
+	  double Factor = ((double) MomentumModulo) / (2.0 * M_PI);
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    {
+	      Complex TmpValue = Eigenvalues[i];
+	      File << TmpValue << " " << Norm(TmpValue) << " " << Arg(TmpValue);
+	      double TmpValue2 = Arg(TmpValue);
+	      if (TmpValue2 < 0.0)
+		TmpValue2 += 2.0 * M_PI;
+	      TmpValue2 *= Factor;
+	      File << " " << TmpValue2 << " " << round(TmpValue2) << endl;
+	    }      
+	}
+      else
+	{
+	  ComplexDiagonalMatrix Eigenvalues(NbrInputStates, true);
+	  ComplexMatrix Eigenstates(NbrInputStates, NbrInputStates);
+	  KxRep.LapackDiagonalize(Eigenvalues, Eigenstates);
+	  double Factor = ((double) MomentumModulo) / (2.0 * M_PI);
+	  int* NbrStatePerKxSector = new int [MomentumModulo];
+	  int* KxValues = new int [NbrInputStates] ;
+	  for (int i = 0; i < MomentumModulo; ++i)
+	    NbrStatePerKxSector[i] = 0;
+	  for (int i = 0; i < NbrInputStates; ++i)
+	    {
+	      Complex TmpValue = Eigenvalues[i];
+	      File << TmpValue << " " << Norm(TmpValue) << " " << Arg(TmpValue);
+	      double TmpValue2 = Arg(TmpValue);
+	      if (TmpValue2 < 0.0)
+		TmpValue2 += 2.0 * M_PI;
+	      TmpValue2 *= Factor;
+	      int TmpKx = round(TmpValue2);
+	      File << " " << TmpValue2 << " " << TmpKx << endl;
+	      KxValues[i] = TmpKx;
+	      NbrStatePerKxSector[TmpKx]++;
+	    }
+	  ComplexVector** TmpVectors = new ComplexVector*[MomentumModulo];
+	  for (int i = 0; i < MomentumModulo; ++i)
+	    {
+	      TmpVectors[i]  = new ComplexVector[NbrStatePerKxSector[i]];
+	      NbrStatePerKxSector[i] = 0;
+	    }
+	  ComplexVector TmpVector (TotalSpace->GetHilbertSpaceDimension());
+ 	  for (int i = 0; i < NbrInputStates; ++i)
+	    {
+	      Complex TmpValue = Eigenvalues[i];
+	      for (int j = 0; j < TotalSpace->GetHilbertSpaceDimension(); ++j)
+		{
+		  Complex Tmp = 0.0;
+		  for (int k = 0; k < NbrInputStates; ++k)
+		    {
+		      Tmp += Conj(Eigenstates[i][k]) * InputStates[k][j];
+		    }
+		  TmpVector[j] = Tmp;		  
+		}
+	      TmpVectors[KxValues[i]][NbrStatePerKxSector[KxValues[i]]] = (TargetSpaces[KxValues[i]]->ConvertToKxKyBasis(TmpVector, TotalSpace));
+	      NbrStatePerKxSector[KxValues[i]]++;	      
+	    }	  
+	  
+	  for (int i = 0; i < MomentumModulo; ++i)
+	    {
+	      ComplexMatrix TmpMatrix (TmpVectors[i], NbrStatePerKxSector[i]);
+	      TmpMatrix.OrthoNormalizeColumns();
+	      for (int j = 0; j < NbrStatePerKxSector[i]; ++j)
+		{
+		  char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
+		  sprintf (VectorOutputName, "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, i, YMomentum, j);
+		  if (TmpMatrix[j].WriteVector(VectorOutputName) == false)
+		    {
+		      cout << "error, can't write vector " << VectorOutputName << endl;
+		    }
+		  delete[] VectorOutputName;	  	      
+		}
+//	      delete[] TmpVectors[i];
+	    }	  
+	  delete[] TmpVectors;
+	}
     }
+  File.close();
   return 0;
 
 }

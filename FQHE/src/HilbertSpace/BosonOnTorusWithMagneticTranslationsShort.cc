@@ -33,6 +33,7 @@
 #include "config.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
+#include "HilbertSpace/BosonOnTorusShort.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
@@ -1040,4 +1041,29 @@ HermitianMatrix BosonOnTorusWithMagneticTranslationsShort::EvaluatePartialDensit
   }
 }
 
+
+// convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertToKxKyBasis(ComplexVector& state, ParticleOnTorus* space)  
+{
+  BosonOnTorusShort* TmpSpace = (BosonOnTorusShort*) space;
+  ComplexVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      int TmpMaxMomentum = this->FermionicMaxMomentum;
+      while ((TmpState >> TmpMaxMomentum) == 0x0ul)
+	--TmpMaxMomentum;
+      int Pos = TmpSpace->FindStateIndex(TmpState, TmpMaxMomentum);
+      if (Pos < TmpSpace->HilbertSpaceDimension)
+	{
+	  TmpVector[i] = sqrt((double) this->NbrStateInOrbit[i]) * state[Pos];
+	}
+    }
+  return TmpVector;
+}
 

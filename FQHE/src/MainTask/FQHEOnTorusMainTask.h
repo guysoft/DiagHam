@@ -120,6 +120,12 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // file = reference on the output file stream where eigenvalues have to be stored
   void DiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file);
 
+  // do the Hamiltonian diagonalization in a given Hilbert subspace, when the hamiltonian is complex
+  //
+  // subspaceDescription = name of the file that contains the vector files used to describe the Hilbert subspace
+  // file = reference on the output file stream where eigenvalues have to be stored
+  void ComplexDiagonalizeInHilbertSubspace(char* subspaceDescription, ofstream& file);
+
 };
 
 #endif

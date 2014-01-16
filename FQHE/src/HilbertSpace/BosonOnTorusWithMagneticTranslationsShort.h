@@ -377,6 +377,13 @@ public:
   // return value = bosonic state in its fermionic representation
   unsigned long ConvertFromMonomial(unsigned long* initialState);
 
+  // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, ParticleOnTorus* space);
+
 };
 
 // get the particle statistic 

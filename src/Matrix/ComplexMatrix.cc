@@ -1181,11 +1181,11 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
     {
       for (int j = 0; j < i; j++)
 	{
-	  tmp[j] = this->Columns[i] * this->Columns[j];
+	  tmp[j] = this->Columns[j] * this->Columns[i];
 	}
       for (int j = 0; j < i; j++)
 	{
-	  this->Columns[i].AddLinearCombination(tmp[j], this->Columns[j]);
+	  this->Columns[i].AddLinearCombination(-tmp[j], this->Columns[j]);
 	}
       this->Columns[i].Normalize();
     }      

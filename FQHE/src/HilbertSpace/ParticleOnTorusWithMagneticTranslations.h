@@ -34,7 +34,9 @@
 
 #include "config.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/ParticleOnTorus.h"
 #include "Matrix/HermitianMatrix.h"
+#include "Vector/ComplexVector.h"
 
 #include <iostream>
 
@@ -138,6 +140,12 @@ class ParticleOnTorusWithMagneticTranslations :  public AbstractHilbertSpace
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
 								  ComplexVector& groundState, HermitianMatrix* densityMatrix);
 
+  // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, ParticleOnTorus* space);
 
 };
 

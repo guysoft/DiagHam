@@ -133,4 +133,13 @@ long ParticleOnTorusWithMagneticTranslations::EvaluatePartialDensityMatrixPartic
 }
 
 
+// convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
 
+ComplexVector ParticleOnTorusWithMagneticTranslations::ConvertToKxKyBasis(ComplexVector& state, ParticleOnTorus* space)
+{
+  return ComplexVector();
+}

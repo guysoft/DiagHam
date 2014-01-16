@@ -45,6 +45,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
 
   friend class BosonOnSquareLatticeWannierSpace;
   friend class BosonOnTorusWithSpin;
+  friend class BosonOnTorusWithMagneticTranslationsShort;
 
  protected:
 
