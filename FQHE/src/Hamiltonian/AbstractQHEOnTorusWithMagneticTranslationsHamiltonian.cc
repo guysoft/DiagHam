@@ -375,7 +375,6 @@ ComplexVector& AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelAd
 ComplexVector* AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 												  int firstComponent, int nbrComponent)
 {
-  cout << "toto" << endl;
   int LastComponent = firstComponent + nbrComponent;
   int Dim = this->Particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -436,7 +435,6 @@ ComplexVector* AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::LowLevelMu
 	  int TmpNbrInteraction;
 	  double *TmpRe=new double[nbrVectors];
 	  double *TmpIm=new double[nbrVectors];
-	  cout << "toto " << firstComponent << " " << LastComponent << " " << this->PrecalculationShift << endl;
 	  for (int i = firstComponent; i < LastComponent; ++i)
 	    {
 	      TmpNbrInteraction = this->NbrInteractionPerComponent[i - this->PrecalculationShift];
@@ -725,8 +723,9 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EnableFastMultiplica
       ++TotalPos;
    }
 
-  QHEParticlePrecalculationOperation Operation(this, false);
-  Operation.ApplyOperation(this->Architecture);
+//  this->PartialEnableFastMultiplication((int) MinIndex, EffectiveHilbertSpaceDimension);
+   QHEParticlePrecalculationOperation Operation(this, false);
+   Operation.ApplyOperation(this->Architecture);
   
   this->FastMultiplicationFlag = true;
   gettimeofday (&(TotalEndingTime2), 0);
@@ -778,7 +777,7 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  Index = TmpParticles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient, NbrTranslation);
 	  if (Index < this->Particles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[count] = Index;
