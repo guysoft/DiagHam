@@ -220,7 +220,7 @@ int main(int argc, char** argv)
 		Coefficients[i]=Complex(CoefficientsRe[i]);
 	    }
 	  Result *= Coefficients[0];
-	  cout << "d*Vector1 = "<<Result<<endl;
+// 	  cout << "d*Vector1 = "<<Result<<endl;
  	  for (int i = 1; i < Description.GetNbrLines(); ++i)
 	    {
 	      ComplexVector TmpVector;
@@ -230,9 +230,10 @@ int main(int argc, char** argv)
 		  return -1;	      	    
 		}
 	      Result.AddLinearCombination(Coefficients[i], TmpVector);
-	      cout << "+d*Vector"<<i<<" = "<<Result<<endl;
+// 	      cout << "+d*Vector"<<i<<" = "<<Result<<endl;
 	    }
-	  Result /= Result.Norm();
+	  if (!Manager.GetBoolean("no-normalize"))
+	    Result /= Result.Norm();
 	  Result.WriteVector(Manager.GetString("output"));
 	  delete [] Coefficients;
 	  return 0;
