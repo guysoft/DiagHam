@@ -103,6 +103,8 @@ class QHEOnDiskMainTask: public AbstractMainTask
   bool LapackFlag;
   // name of the file that contains the vector files used to describe the Hilbert subspace
   char* ReducedHilbertSpaceDescription;
+  // name of the file where the transformation basis from the Hilbert subspace to the diagonal basis is stored
+  char* ReducedHilbertSpaceExportTransformation;
   // show the hamiltonian
   bool ShowHamiltonian;
   // compute hamiltonian mean value for each eigenvalue

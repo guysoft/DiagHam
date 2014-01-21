@@ -1193,6 +1193,34 @@ ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns ()
   return *this;
 }
 
+// orthonormalize matrix column vectors, computing the transformation matrix to the new orthonormal basis
+//
+// transformation= reference on the transformation matrix
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::OrthoNormalizeColumns (ComplexMatrix& transformation)
+{
+  Complex* tmp = new Complex [this->NbrColumn];
+  transformation = ComplexMatrix (this->NbrColumn, this->NbrColumn, true);
+  transformation.SetToIdentity();
+  for (int i = 0; i < this->NbrColumn; i++)
+    {
+      for (int j = 0; j < i; j++)
+	{
+	  tmp[j] = this->Columns[j] * this->Columns[i];
+	}
+      for (int j = 0; j < i; j++)
+	{
+	  this->Columns[i].AddLinearCombination(-tmp[j], this->Columns[j]);
+	  transformation[i].AddLinearCombination(-tmp[j], transformation[j]);
+	}
+      double TmpNorm = 1.0 / this->Columns[i].Norm();
+      this->Columns[i] *= TmpNorm;
+      transformation[i] *= TmpNorm;
+    }
+  delete[] tmp;
+  return *this;
+}
 
 // get adjoint (hermitian conjugate) matrix 
 //
@@ -1247,6 +1275,66 @@ ComplexMatrix& ComplexMatrix::HermitianTranspose ()
       this->NbrColumn = Tmp;
       this->TrueNbrRow = this->NbrRow;
       this->TrueNbrColumn = this->NbrColumn;
+    }
+  return *this;
+}
+
+// compute the transpose of the current matrix
+//
+// return value = reference on the current matrix
+
+ComplexMatrix& ComplexMatrix::Transpose ()
+{
+  if (this->NbrRow == this->NbrColumn)
+    {
+      Complex tmp;
+      for (int i = 0; i < this->NbrColumn; i++)
+	{
+	  for (int j = i + 1; j < this->NbrColumn; j++)
+	    {
+	      tmp = this->Columns[i].Components[j];
+	      this->Columns[i].Components[j] = Conj(this->Columns[j].Components[i]);
+	      this->Columns[j].Components[i] = Conj(tmp);
+	    }
+	  this->Columns[i].Components[i] = this->Columns[i].Components[i];
+	}
+    }
+  else
+    {
+      ComplexVector* TmpColumns = new ComplexVector [this->NbrRow];
+      for (int i = 0; i < this->NbrRow; i++)
+	{
+	  TmpColumns[i] = ComplexVector(this->NbrColumn);
+	  for (int j = 0; j < this->NbrColumn; j++)
+	    TmpColumns[i][j] = this->Columns[j][i];
+	}
+      if (this->Flag.Shared() == false)
+	{
+	  delete[] this->Columns;
+	}
+      this->Flag.Initialize();
+      this->Columns = TmpColumns;
+      int Tmp = this->NbrRow;
+      this->NbrRow = this->NbrColumn;
+      this->NbrColumn = Tmp;
+      this->TrueNbrRow = this->NbrRow;
+      this->TrueNbrColumn = this->NbrColumn;
+    }
+  return *this;
+}
+
+// compute the complex conjugate of the current matrix
+//
+// return value = reference on the current matrix
+
+ComplexMatrix& ComplexMatrix::ComplexConjugate ()
+{
+  for (int i = 0; i < this->NbrColumn; i++)
+    {
+      for (int j = 0; j < this->NbrRow; j++)
+	{
+	  this->Columns[i].Components[j].Im *= -1.0;
+	}
     }
   return *this;
 }

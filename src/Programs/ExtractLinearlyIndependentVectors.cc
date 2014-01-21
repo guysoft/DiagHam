@@ -54,6 +54,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "vector-prefix", "prefix to use for each vector of the basis", "vector");
   (*SystemGroup) += new  SingleStringOption ('\n', "export-overlap", "optional file name to export the overlap matrix (in text mode)");
   (*SystemGroup) += new  SingleStringOption ('\n', "export-binoverlap", "optional file name to export the overlap matrix (in binary mode)");
+  (*SystemGroup) += new  SingleStringOption ('\n', "export-transformation", "optional file name to export the transformation matrix that convert th original basis into the new one");
+  (*SystemGroup) += new  SingleStringOption ('\n', "export-bintransformation", "optional file name to export the transformation matrix that convert th original basis into the new one");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -178,7 +180,9 @@ int main(int argc, char** argv)
 		      {
 			TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
 		      }
-		  TmpVector /= TmpVector.Norm();
+		  double TmpNorm = TmpVector.Norm();
+		  TmpEigenvector[i] /= TmpNorm;
+		  TmpVector /= TmpNorm;
 		  sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
 		  TmpVector.WriteVector(OutputVectorFileName);
 		  Count++;
@@ -186,6 +190,14 @@ int main(int argc, char** argv)
 	    }
 	  cout << endl;
 	  cout << Count << " linearly independent vectors" << endl;
+	  if (Manager.GetString("export-transformation") != 0)
+	    {
+	      TmpEigenvector.WriteAsciiMatrix(Manager.GetString("export-transformation"));
+	    }
+	  if (Manager.GetString("export-bintransformation") != 0)
+	    {
+	      TmpEigenvector.WriteMatrix(Manager.GetString("export-bintransformation"));
+	    }
 	  delete[] OutputVectorFileName;
 	}
       
@@ -287,7 +299,9 @@ int main(int argc, char** argv)
 		      {
 			TmpVector[k] += TmpEigenvector[i][j] * Basis[j][k];
 		      }
-		  TmpVector /= TmpVector.Norm();
+		  double TmpNorm = TmpVector.Norm();
+		  TmpEigenvector[i] /= TmpNorm;
+		  TmpVector /= TmpNorm;
 		  sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
 		  TmpVector.WriteVector(OutputVectorFileName);
 		  Count++;
@@ -295,6 +309,14 @@ int main(int argc, char** argv)
 	    }
 	  cout << endl;
 	  cout << Count << " linearly independent vectors" << endl;
+	  if (Manager.GetString("export-transformation") != 0)
+	    {
+	      TmpEigenvector.WriteAsciiMatrix(Manager.GetString("export-transformation"));
+	    }
+	  if (Manager.GetString("export-bintransformation") != 0)
+	    {
+	      TmpEigenvector.WriteMatrix(Manager.GetString("export-bintransformation"));
+	    }
 	  delete[] OutputVectorFileName;
 	}
       

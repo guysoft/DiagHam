@@ -391,6 +391,12 @@ class ComplexMatrix : public Matrix
   // return value = reference on current matrix
   ComplexMatrix& OrthoNormalizeColumns ();
 
+  // orthonormalize matrix column vectors, computing the transformation matrix to the new orthonormal basis
+  //
+  // transformation= reference on the transformation matrix
+  // return value = reference on current matrix
+  ComplexMatrix& OrthoNormalizeColumns (ComplexMatrix& transformation);
+
   // get adjoint (hermitian conjugate) matrix 
   //
   // return value = reference on modified matrix
@@ -400,6 +406,16 @@ class ComplexMatrix : public Matrix
   //
   // return value = reference on the current matrix
   ComplexMatrix& HermitianTranspose ();
+
+  // compute the transpose of the current matrix
+  //
+  // return value = reference on the current matrix
+  ComplexMatrix& Transpose ();
+
+  // compute the complex conjugate of the current matrix
+  //
+  // return value = reference on the current matrix
+  ComplexMatrix& ComplexConjugate ();
 
   // compute the number of non-zero matrix elements (zero having strictly zero square norm)
   //

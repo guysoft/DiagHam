@@ -67,6 +67,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", "ratio between lengths along the x and y directions", 1);
   (*SystemGroup) += new BooleanOption ('\n',  "compute-eigenstate", "compute the eigenstates of th Kx operator in the given basis");
   (*SystemGroup) += new SingleStringOption ('\n',  "interaction-name", "name that should be inserted in the output file names", "dummy");
+  (*SystemGroup) += new BooleanOption ('\n',  "no-convertion", "do not convert the final vectors to the (Kx,Ky) n-body basis");
+  (*SystemGroup) += new BooleanOption ('\n',  "export-transformation", "export the transformation matrix in a ascii file (one per momentum sector)");
+  (*SystemGroup) += new BooleanOption ('\n',  "export-bintransformation", "export the transformation matrix in a binary file (one per momentum sector)");
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -253,14 +256,19 @@ int main(int argc, char** argv)
 	  if (TmpValue < 0.0)
 	    {
 	      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.0.vec", OutputNamePrefix, (MomentumModulo / 2), YMomentum);
-	      TmpVector2 = TargetSpaces[MomentumModulo / 2]->ConvertToKxKyBasis(TmpVector, TotalSpace);
+	      if (Manager.GetBoolean("no-convertion") == false)
+		TmpVector2 = TargetSpaces[MomentumModulo / 2]->ConvertToKxKyBasis(TmpVector, TotalSpace);
+	      else
+		TmpVector2 = TmpVector;
 
 	    }
 	  else
 	    {
 	      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.0.vec", OutputNamePrefix, 0, YMomentum);
-	      TmpVector2 = TargetSpaces[0]->ConvertToKxKyBasis(TmpVector, TotalSpace);
-	      
+	      if (Manager.GetBoolean("no-convertion") == false)
+		TmpVector2 = TargetSpaces[0]->ConvertToKxKyBasis(TmpVector, TotalSpace);
+	      else
+		TmpVector2 = TmpVector;	      
 	    }
 	  if (TmpVector2.WriteVector(VectorOutputName) == false)
 	    {
@@ -329,14 +337,18 @@ int main(int argc, char** argv)
 		    }
 		  TmpVector[j] = Tmp;		  
 		}
-	      TmpVectors[KxValues[i]][NbrStatePerKxSector[KxValues[i]]] = (TargetSpaces[KxValues[i]]->ConvertToKxKyBasis(TmpVector, TotalSpace));
+	      if (Manager.GetBoolean("no-convertion") == false)
+		TmpVectors[KxValues[i]][NbrStatePerKxSector[KxValues[i]]] = (TargetSpaces[KxValues[i]]->ConvertToKxKyBasis(TmpVector, TotalSpace));
+	      else
+		TmpVectors[KxValues[i]][NbrStatePerKxSector[KxValues[i]]] = ComplexVector(TmpVector, true);
 	      NbrStatePerKxSector[KxValues[i]]++;	      
 	    }	  
 	  
+	  ComplexMatrix* TransformationMatrices = new ComplexMatrix [MomentumModulo]; 
 	  for (int i = 0; i < MomentumModulo; ++i)
 	    {
 	      ComplexMatrix TmpMatrix (TmpVectors[i], NbrStatePerKxSector[i]);
-	      TmpMatrix.OrthoNormalizeColumns();
+	      TmpMatrix.OrthoNormalizeColumns(TransformationMatrices[i]);
 	      for (int j = 0; j < NbrStatePerKxSector[i]; ++j)
 		{
 		  char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
@@ -349,6 +361,40 @@ int main(int argc, char** argv)
 		}
 //	      delete[] TmpVectors[i];
 	    }	  
+	  if ((Manager.GetBoolean("export-transformation") == true) || 
+	      (Manager.GetBoolean("export-bintransformation") == true))
+	    {
+	      for (int i = 0; i < MomentumModulo; ++i)
+		{
+		  if (NbrStatePerKxSector[i] > 0)
+		    {
+		      ComplexMatrix TmpMatrix(NbrInputStates, NbrStatePerKxSector[i]);
+		      int Tmp = 0;
+		      for (int j = 0; j < NbrInputStates; ++j)
+			{
+			  if (KxValues[j] == i)
+			    {
+			      TmpMatrix[Tmp] = Eigenstates[j];
+			      ++Tmp;
+			    }
+			}
+		      TmpMatrix.ComplexConjugate();
+		      TmpMatrix.Multiply(TransformationMatrices[i]);
+		      char* MatrixOutputName =  new char [256 + strlen(OutputNamePrefix)];
+		      if (Manager.GetBoolean("export-transformation") == true)
+			{
+			  sprintf (MatrixOutputName, "%s_kx_%d_ky_%d.mat.txt", OutputNamePrefix, i, YMomentum);
+			  TmpMatrix.WriteAsciiMatrix(MatrixOutputName);
+			}
+		      else
+			{
+			  sprintf (MatrixOutputName, "%s_kx_%d_ky_%d.mat", OutputNamePrefix, i, YMomentum);
+			  TmpMatrix.WriteMatrix(MatrixOutputName);
+			}
+		      delete[] MatrixOutputName;
+		    }
+		}
+	    }
 	  delete[] TmpVectors;
 	}
     }

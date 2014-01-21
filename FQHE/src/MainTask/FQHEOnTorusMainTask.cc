@@ -189,10 +189,19 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   if ((((*options)["use-hilbert"]) != 0) && (((SingleStringOption*) (*options)["use-hilbert"])->GetString() != 0))
     {
       this->ReducedHilbertSpaceDescription = ((SingleStringOption*) (*options)["use-hilbert"])->GetString();
+      if (((*options)["limit-time"] != 0) &&  (options->GetString("export-hilberttransformation") != 0))
+	{
+	  this->ReducedHilbertSpaceExportTransformation = options->GetString("export-hilberttransformation");
+	}
+      else
+	{
+	  this->ReducedHilbertSpaceExportTransformation = 0;
+	}
     }
   else
     {
       this->ReducedHilbertSpaceDescription = 0;
+      this->ReducedHilbertSpaceExportTransformation = 0;
     }
   if ((*options)["get-hvalue"] != 0)
     {
@@ -1042,6 +1051,10 @@ void FQHEOnTorusMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
 		TmpEigenvector(l, l) = 1.0;
 	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	      if (this->ReducedHilbertSpaceExportTransformation != 0)
+		{
+		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		}
 	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
@@ -1067,6 +1080,10 @@ void FQHEOnTorusMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
 	      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
 	      TmpTriDiag.Diagonalize(TmpEigenvector);
 	      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+	      if (this->ReducedHilbertSpaceExportTransformation != 0)
+		{
+		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		}
 	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
@@ -1176,6 +1193,10 @@ void FQHEOnTorusMainTask::ComplexDiagonalizeInHilbertSubspace(char* subspaceDesc
 	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
 		TmpEigenvector(l, l) = 1.0;
 	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	      if (this->ReducedHilbertSpaceExportTransformation != 0)
+		{
+		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		}
 	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
@@ -1196,6 +1217,10 @@ void FQHEOnTorusMainTask::ComplexDiagonalizeInHilbertSubspace(char* subspaceDesc
 	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
 		TmpEigenvector(l, l) = 1.0;
 	      HRep.Diagonalize(TmpDiag, TmpEigenvector);
+	      if (this->ReducedHilbertSpaceExportTransformation != 0)
+		{
+		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		}
 	      Basis.Multiply(TmpEigenvector);
 	    }
 	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
