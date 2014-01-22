@@ -1067,3 +1067,37 @@ ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertToKxKyBasis(Comp
   return TmpVector;
 }
 
+// convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnTorus* space)
+{
+  BosonOnTorusShort* TmpSpace = (BosonOnTorusShort*) space;
+  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  Complex* FourrierCoefficients = new Complex [this->MomentumModulo];
+  for (int i = 0; i < this->MomentumModulo; ++i)
+    FourrierCoefficients[i] = Phase (-2.0 * M_PI * ((double) (i * this->KxMomentum)) / ((double) this->MomentumModulo));
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      int NbrTranslation = 0;
+      TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(TmpState, NbrTranslation);
+      if (NbrTranslation >= 0)
+	{
+	  int TmpMaxMomentum = this->FermionicMaxMomentum;
+	  while ((TmpState >> TmpMaxMomentum) == 0x0ul)
+	    --TmpMaxMomentum;
+	  int Pos = this->FindStateIndex(TmpState, TmpMaxMomentum);
+	  if (Pos < this->HilbertSpaceDimension)
+	    {
+	      TmpVector[i] =  state[Pos] * FourrierCoefficients[NbrTranslation] / sqrt((double) this->NbrStateInOrbit[Pos]);
+	    }
+	}
+    }
+  delete[] FourrierCoefficients;
+  return TmpVector;
+}
+

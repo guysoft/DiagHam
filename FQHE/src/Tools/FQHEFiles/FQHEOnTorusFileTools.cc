@@ -164,6 +164,51 @@ bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticl
   return true;
 }
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// kyMax = reference to the momentum for a single particle
+// kx = reference to the x momentum
+// ky = reference to the y momentum
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+
+bool FQHEOnTorusFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& kx, int& ky, bool& statistics)
+{
+  if (FQHEOnTorusFindSystemInfoFromVectorFileName(filename, nbrParticles, kyMax, ky, statistics) == false)
+    return false;
+  char* StrNbrParticles;
+
+  StrNbrParticles = strstr(filename, "_kx_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
+	{
+	  char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  kx = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess kx momentum from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
 // try to guess system information from file name for system suth an SU(2) degree of freedom
 //
 // filename = vector file name
