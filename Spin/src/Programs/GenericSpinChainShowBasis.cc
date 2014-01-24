@@ -1,4 +1,6 @@
 #include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainFull.h"
+#include "HilbertSpace/Spin1_2ChainFixedParity.h"
 #include "HilbertSpace/Spin1Chain.h"
 #include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "HilbertSpace/Spin1ChainWithTranslations.h"
@@ -40,9 +42,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('s', "spin", "twice the spin value", 1);
   (*SystemGroup) += new  SingleIntegerOption ('p', "nbr-spin", "number of spins", 10);
   (*SystemGroup) += new  SingleIntegerOption ('z', "sz-value", "twice the value of sz", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "fixed-parity", "the spin chain has a fixed total parity");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "parity", "parity of the spin chain", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "periodic-chain", "consider periodic instead of open chain", false);
   (*SystemGroup) += new  SingleIntegerOption ('k', "momentum", "momentum sector (for periodic chain)", 0);
   (*SystemGroup) += new SingleStringOption  ('e', "state", "name of the file containing the eigenstate to be displayed");
+  (*SystemGroup) += new BooleanOption ('\n', "complex-vector", "the eigenstate to be  displayed is a complex vector");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -71,7 +76,12 @@ int main(int argc, char** argv)
       switch (SpinValue)
 	{
 	case 1 :
-	  Space = new Spin1_2Chain (NbrSpins, SzValue, 1000000);
+	  {
+	    if (Manager.GetBoolean("fixed-parity") == false)
+	      Space = new Spin1_2Chain (NbrSpins, SzValue, 1000000);
+	    else
+	      Space = new Spin1_2ChainFixedParity (NbrSpins, Manager.GetInteger("parity"));
+	  }
 	  break;
 	case 2 :
 	  Space = new Spin1Chain (NbrSpins, SzValue, 1000000);
@@ -93,15 +103,30 @@ int main(int argc, char** argv)
 	}
       else
        {
-          RealVector State;
-	  if (State.ReadVector(Manager.GetString("state")) == false)
-	    {
+	 if (Manager.GetBoolean("complex-vector") == false)
+	   {
+	     RealVector State;
+	     if (State.ReadVector(Manager.GetString("state")) == false)
+	       {
 	      cout << "error while reading " << Manager.GetString("state") << endl;
 	      return -1;
-	    }
-          for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-	     if (fabs(State[i]) > Error)
-	        Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	       }
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       if (fabs(State[i]) > Error)
+		 Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	   }
+	 else
+	   {
+	     ComplexVector State;
+	     if (State.ReadVector(Manager.GetString("state")) == false)
+	       {
+	      cout << "error while reading " << Manager.GetString("state") << endl;
+	      return -1;
+	       }
+	     for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	       if (Norm(State[i]) > Error)
+		 Space->PrintState(cout, i) << " : "  << State[i] << endl;
+	   }
         }
      }
    else //periodic bc

@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
@@ -73,8 +72,8 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
 								     double ratio, int landauLevel, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
-  this->MaxMomentum = maxMomentum;
-  this->NbrLzValue = this->MaxMomentum + 1;
+  this->LzMax = maxMomentum - 1;
+  this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
   this->FastMultiplicationFlag = false;
   this->Ratio = ratio;
@@ -90,7 +89,7 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
       this->FormFactor=LaguerrePolynomial(this->LandauLevel);
     }
   this->EvaluateInteractionFactors();
-  this->EnergyShift = 0.0;
+  this->HamiltonianShift = 0.0;
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -121,233 +120,6 @@ ParticleOnTorusCoulombHamiltonian::ParticleOnTorusCoulombHamiltonian(ParticleOnT
 
 ParticleOnTorusCoulombHamiltonian::~ParticleOnTorusCoulombHamiltonian() 
 {
-  delete[] this->InteractionFactors;
-  delete[] this->M1Value;
-  delete[] this->M2Value;
-  delete[] this->M3Value;
-  if (this->FastMultiplicationFlag == true)
-    {
-      long MinIndex;
-      long MaxIndex;
-      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-      int ReducedSpaceDimension = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      for (int i = 0; i < ReducedSpaceDimension; ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-      this->FastMultiplicationFlag = false;
-    }
-}
-
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
-
-void ParticleOnTorusCoulombHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  delete[] this->InteractionFactors;
-  if (this->FastMultiplicationFlag == true)
-    {
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-    }
-  this->Particles = (ParticleOnTorus*) hilbertSpace;
-  this->EvaluateInteractionFactors();
-}
-
-// get Hilbert space on which Hamiltonian acts
-//
-// return value = pointer to used Hilbert space
-
-AbstractHilbertSpace* ParticleOnTorusCoulombHamiltonian::GetHilbertSpace ()
-{
-  return this->Particles;
-}
-
-// return dimension of Hilbert space where Hamiltonian acts
-//
-// return value = corresponding matrix elementdimension
-
-int ParticleOnTorusCoulombHamiltonian::GetHilbertSpaceDimension ()
-{
-  return this->Particles->GetHilbertSpaceDimension();
-}
-
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void ParticleOnTorusCoulombHamiltonian::ShiftHamiltonian (double shift)
-{
-  this->EnergyShift = shift;
-}
-
-// save precalculations in a file
-// 
-// fileName = pointer to a string containg the name of the file where precalculations have to be stored
-// return value = true if no error occurs
-bool ParticleOnTorusCoulombHamiltonian::SavePrecalculation (char* fileName)
-{
-  return false;
-}
-  
-
-// evaluate all interaction factors
-//   
-
-void ParticleOnTorusCoulombHamiltonian::EvaluateInteractionFactors()
-{
-  int Pos = 0;
-  int m4;
-  double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-  double MaxCoefficient = 0.0;
-
-  if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
-    {
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 > m4)
-		{
-		  TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					 + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		  if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		    MaxCoefficient = fabs(TmpCoefficient[Pos]);
-		  ++Pos;
-		}
-	    }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new double [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 > m4)
-		{
-		  if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		      this->M1Value[this->NbrInteractionFactors] = m1;
-		      this->M2Value[this->NbrInteractionFactors] = m2;
-		      this->M3Value[this->NbrInteractionFactors] = m3;
-		      this->M4Value[this->NbrInteractionFactors] = m4;
-		      ++this->NbrInteractionFactors;
-		    }
-		  ++Pos;
-		}
-	    }
-    }
-  else
-    {
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 <= m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 > m4)
-		{
-		  if (m1 != m2)
-		    {
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		    }
-		  else
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					   + this->EvaluateInteractionCoefficient(m1, m2, m4, m3));
-		  if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		    MaxCoefficient = fabs(TmpCoefficient[Pos]);
-		  ++Pos;
-		}
-	      else
-		if (m3 == m4)
-		  {
-		    if (m1 != m2)
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		    else
-		      TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4);
-		    if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		      MaxCoefficient = fabs(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
-	    }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new double [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 <= m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 >= m4)
-		{
-		  if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		      this->M1Value[this->NbrInteractionFactors] = m1;
-		      this->M2Value[this->NbrInteractionFactors] = m2;
-		      this->M3Value[this->NbrInteractionFactors] = m3;
-		      this->M4Value[this->NbrInteractionFactors] = m4;
-		      ++this->NbrInteractionFactors;
-		    }
-		  ++Pos;
-		}
-	    }
-    }
-  cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
-  cout << "====================================" << endl;
-  delete[] TmpCoefficient;
 }
 
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
@@ -361,7 +133,7 @@ void ParticleOnTorusCoulombHamiltonian::EvaluateInteractionFactors()
 double ParticleOnTorusCoulombHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4)
 {
   double Coefficient = 1.0;
-  double PIOnM = M_PI / ((double) this->MaxMomentum);
+  double PIOnM = M_PI / ((double) this->NbrLzValue);
   double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
   double Sum = 0.0;
   double N2 = (double) (m1 - m4);
@@ -391,9 +163,9 @@ double ParticleOnTorusCoulombHamiltonian::EvaluateInteractionCoefficient(int m1,
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
-      N2 += this->MaxMomentum;
+      N2 += this->NbrLzValue;
     }
-  N2 = (double) (m1 - m4 - this->MaxMomentum);
+  N2 = (double) (m1 - m4 - this->NbrLzValue);
   Coefficient = 1.0;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
@@ -417,9 +189,9 @@ double ParticleOnTorusCoulombHamiltonian::EvaluateInteractionCoefficient(int m1,
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
-      N2 -= this->MaxMomentum;
+      N2 -= this->NbrLzValue;
     }
-  return (Sum / (2.0 * this->MaxMomentum));
+  return (Sum / (2.0 * this->NbrLzValue));
 }
 
 
@@ -445,8 +217,8 @@ double ParticleOnTorusCoulombHamiltonian::GetVofQ(double Q2_half)
 //   double N1;
 //   double N2 = (double)(m1 - m4);
 //   double Q2, Qx, Qy;
-//   double Lx = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->Ratio);
-//   double Ly = sqrt(2.0 * M_PI * (double)this->MaxMomentum * this->InvRatio);
+//   double Lx = sqrt(2.0 * M_PI * (double)this->NbrLzValue * this->Ratio);
+//   double Ly = sqrt(2.0 * M_PI * (double)this->NbrLzValue * this->InvRatio);
 //   double Gx = 2.0 * M_PI / Lx;
 //   double Gy = 2.0 * M_PI / Ly;
 //   double Xj13 = Gy * (double)(m1 - m3);
@@ -483,10 +255,10 @@ double ParticleOnTorusCoulombHamiltonian::GetVofQ(double Q2_half)
 //          N1 += 1.0;
 //        }
 //      Sum += Coefficient;
-//      N2 += (double)this->MaxMomentum;
+//      N2 += (double)this->NbrLzValue;
 //     }
 
-//   N2 = (double) (m1 - m4 - this->MaxMomentum);
+//   N2 = (double) (m1 - m4 - this->NbrLzValue);
 //   Coefficient = Sum;	    
 //   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
 //     {
@@ -519,8 +291,8 @@ double ParticleOnTorusCoulombHamiltonian::GetVofQ(double Q2_half)
 //           N1 += 1.0;
 // 	}
 //      Sum += Coefficient;
-//      N2 -= (double)this->MaxMomentum;
+//      N2 -= (double)this->NbrLzValue;
 //     }
 
-//   return (Sum / (4.0 * M_PI * (double)this->MaxMomentum));
+//   return (Sum / (4.0 * M_PI * (double)this->NbrLzValue));
 // }

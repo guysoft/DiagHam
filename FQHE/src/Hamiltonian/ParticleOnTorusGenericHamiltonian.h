@@ -62,6 +62,10 @@ class ParticleOnTorusGenericHamiltonian : public AbstractQHEOnTorusHamiltonian
 
  public:
 
+  // default constructor
+  //
+  ParticleOnTorusGenericHamiltonian();
+
   // constructor from default datas
   //
   // particles = Hilbert space associated to the system
@@ -90,11 +94,6 @@ class ParticleOnTorusGenericHamiltonian : public AbstractQHEOnTorusHamiltonian
   //
   // hilbertSpace = pointer to Hilbert space to use
   void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
 
  protected:
  

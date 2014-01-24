@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorus.h"
-#include "Hamiltonian/AbstractQHEOnTorusHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusGenericHamiltonian.h"
 #include "Polynomial/Polynomial.h"
 
 #include <iostream>
@@ -47,7 +47,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnTorusCoulombHamiltonian : public AbstractQHEOnTorusHamiltonian
+class ParticleOnTorusCoulombHamiltonian : public ParticleOnTorusGenericHamiltonian
 {
 
  protected:
@@ -83,38 +83,8 @@ class ParticleOnTorusCoulombHamiltonian : public AbstractQHEOnTorusHamiltonian
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
 
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
-
-  // save precalculations in a file
-  // 
-  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
-  // return value = true if no error occurs
-  bool SavePrecalculation (char* fileName);
-
  private:
  
-  // evaluate all interaction factors
-  //   
-  void EvaluateInteractionFactors();
-
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //
   // m1 = first index

@@ -654,6 +654,13 @@ inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyAddMultiplyComp
 	  vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
 	}
     }
+  else
+    {
+      for (int i = firstComponent; i < lastComponent; i += step)
+	{ 
+	  vDestination[i] += this->HamiltonianShift * vSource[i];
+	}
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -684,6 +691,18 @@ inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyAddMultiplyComp
 		  TmpDiagonal += this->OneBodyInteractionFactors[j] * particles->AdA(i, j);
 		}
 	      TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
+	    }
+	}
+    }
+  else
+    {
+      for (int p = 0; p < nbrVectors; ++p)
+	{
+	  RealVector& TmpSourceVector = vSources[p];
+	  RealVector& TmpDestinationVector = vDestinations[p];
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    { 
+	      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
 	    }
 	}
     }
