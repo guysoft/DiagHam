@@ -32,10 +32,14 @@
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+
 #include <iostream>
 #include <cstring>
 #include <stdlib.h>
 #include <math.h>
+#include <sys/time.h>
 #include <fstream>
 
 using std::cout;
@@ -51,11 +55,16 @@ int main(int argc, char** argv)
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
+
+  ArchitectureManager Architecture;
+
   Manager += SystemGroup;
   Manager += PrecalculationGroup;
   Manager += OutputGroup;
   Manager += ToolsGroup;
+  Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
+
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state");
@@ -75,12 +84,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-top", "inclination angle that defines the top of the real space parition (in degrees)", 0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-theta-bot", "inclination angle that defines the bottom of the real space parition (in degrees)", 90);
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-phi-range", "angle between the 2 longitudes that defines the real space parition (in degrees)", 360);
-
   (*SystemGroup) += new BooleanOption  ('\n', "realspace-cylinder", "use real space partition instead of particle partition in the cylinder geometry");
   (*SystemGroup) += new SingleDoubleOption ('\n', "realspace-cylindercut", "x coordinate of the cut on the cylinder", 0);
   (*SystemGroup) += new SingleDoubleOption  ('r', "ratio", "aspect ratio of the cylinder", 1.0);
-
   (*SystemGroup) += new SingleStringOption  ('\n', "realspace-generic", "use a generic real space partition instead of particle partition (geometrical weight has to be provided through this external file)");
+  (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
 
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension)");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
@@ -142,6 +150,7 @@ int main(int argc, char** argv)
   bool RealSpaceCutCylinder = Manager.GetBoolean("realspace-cylinder");
   int FilterLza = Manager.GetInteger("lza-eigenstate");
   int NbrEigenstates = Manager.GetInteger("nbr-eigenstates");
+  bool ShowTimeFlag = Manager.GetBoolean("show-time");
   int* TotalLz = 0;
   bool Statistics = true;
   bool SVDFlag = Manager.GetBoolean("use-svd");
@@ -449,6 +458,12 @@ int main(int argc, char** argv)
       for (; SubsystemTotalLz <= SubsystemMaxTotalLz; SubsystemTotalLz += 2)
 	{
 	  cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTotalLz << endl;
+	  timeval TotalStartingTime;
+	  timeval TotalEndingTime;
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalStartingTime), 0);
+	    }
 	  RealSymmetricMatrix PartialDensityMatrix;
 	  RealMatrix PartialEntanglementMatrix;
 	  if (RealSpaceCut == false)
@@ -588,6 +603,13 @@ int main(int argc, char** argv)
 		  PartialEntanglementMatrix /= sqrt((double) NbrSpaces);
 		}
 	    }
+	  if (ShowTimeFlag == true)
+	    {
+	      gettimeofday (&(TotalEndingTime), 0);
+	      double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+	      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
+	    }
 	  if ((PartialDensityMatrix.GetNbrRow() > 1)||(PartialEntanglementMatrix.GetNbrRow() >= 1))
 	    {
 	      if (Manager.GetString("save-matrix") != 0)
@@ -604,6 +626,10 @@ int main(int argc, char** argv)
 		      OutputDensityMatrixFile << PartialEntanglementMatrix;
 		    }
 		  OutputDensityMatrixFile.close();
+		}
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalStartingTime), 0);
 		}
 	      RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
 	      if (ComputeLValueFlag == false)
@@ -690,6 +716,13 @@ int main(int argc, char** argv)
 		      EntanglementEntropy += TmpDiag[i] * log(TmpDiag[i]);
 		      DensitySum +=TmpDiag[i];
 		    }
+		}
+	      if (ShowTimeFlag == true)
+		{
+		  gettimeofday (&(TotalEndingTime), 0);
+		  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+					((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+		  cout << "diagonalization done in " << Dt << "s" << endl;
 		}
 	    }
 	  else
