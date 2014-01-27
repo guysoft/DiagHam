@@ -10,6 +10,8 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
+#include "MathTools/BinomialCoefficients.h"
+
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include <iostream>
@@ -81,7 +83,21 @@ int main(int argc, char** argv)
   int MaxLza = -MinLza; 
   int* LzaValueArray = 0;
 
-
+  double* CentralMoments  = new double[NbrCumulant + 1];
+  double* Moments = new double[NbrCumulant + 1];
+  double* Cumulants = new double[NbrCumulant + 1];
+  for (int i = 0; i <= NbrCumulant; ++i)
+    {
+      CentralMoments[i] = 0.0;
+      Moments[i] = 0.0;
+      Cumulants[i] = 0.0;
+    }
+  int* NaValues = 0;
+  double* Coefficients = 0;
+  long MinIndex = 0l;
+  long MaxIndex = DensityMatrix.GetNbrLines();
+  char* OutputFileName = Manager.GetString("output");
+   
   if (Manager.GetBoolean("realspace-entanglement") == false)
     {
       if (DensityMatrix.GetNbrColumns() < 4)
@@ -89,66 +105,31 @@ int main(int argc, char** argv)
 	  cout << "wrong number of columns in " << Manager.GetString("density-matrix") << endl;
 	  return -1;
 	}
-      
       int* LaValues = DensityMatrix.GetAsIntegerArray(0);
-      int* NaValues = DensityMatrix.GetAsIntegerArray(1);
-      int* LzValues = DensityMatrix.GetAsIntegerArray(2);
-      long Index = 0l;
-      long MaxIndex = DensityMatrix.GetNbrLines();
-      while ((Index < MaxIndex) && (LaValues[Index] != NbrOrbitalsInPartition))
-	++Index;
-      
-      if (Index < MaxIndex)
+      NaValues = DensityMatrix.GetAsIntegerArray(1);
+      Coefficients = DensityMatrix.GetAsDoubleArray(3);
+      while ((MinIndex < MaxIndex) && (LaValues[MinIndex] != NbrOrbitalsInPartition))
+	++MinIndex;
+      long TmpIndex = MinIndex;
+      while ((TmpIndex < MaxIndex) && (LaValues[TmpIndex] == NbrOrbitalsInPartition))
 	{
-	  double* Coefficients = DensityMatrix.GetAsDoubleArray(3);
-	  char* OutputFileName = Manager.GetString("output");
-	  double* Cumulants = new double[NbrCumulant + 1];
-	  for (int i = 0; i <= NbrCumulant; ++i)
-	    Cumulants[i] = 0.0;
-	  long TmpIndex = Index;
-	  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
+	  ++TmpIndex;
+	}
+      MaxIndex = TmpIndex;
+      if (OutputFileName == 0)
+	{
+	  char* TmpExtension = new char[256];
+	  sprintf(TmpExtension, "la_%d_na_%d.charge", NbrOrbitalsInPartition, NbrParticlesInPartition);
+	  if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
 	    {
-	      Cumulants[0] += Coefficients[Index];
-	      Cumulants[1] += ((double) NaValues[Index]) * Coefficients[Index];
-	      ++Index;
+	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent", TmpExtension);
 	    }
-	  MaxIndex = Index;
-	  Index = TmpIndex;
-	  while ((Index < MaxIndex) && (LaValues[Index] == NbrOrbitalsInPartition))
+	  else
 	    {
-	      double Tmp1 = ((double) NaValues[Index]) - Cumulants[1];
-	      double Tmp2 = Tmp1 * Tmp1;
-	      for (int i = 2; i <= NbrCumulant; ++i)
-		{
-		  Cumulants[i] += Tmp2 * Coefficients[Index];
-		  Tmp2 *= Tmp1;
-		}
-	      ++Index;
+	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent.bz2", TmpExtension);
 	    }
-	  if (OutputFileName == 0)
-	    {
-	      char* TmpExtension = new char[256];
-	      sprintf(TmpExtension, "la_%d_na_%d.charge", NbrOrbitalsInPartition, NbrParticlesInPartition);
-	      if (strcasestr(Manager.GetString("density-matrix"), "bz2") == 0)
-		{
-		  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent", TmpExtension);
-		}
-	      else
-		{
-		  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.ent.bz2", TmpExtension);
-		}
-	    }
-	  ofstream File;
-	  File.open(OutputFileName, ios::out);
-	  File.precision(14);
-	  File << "# i <(N_A-<N_A>)^i>" << endl;
-	  for (int i = 0; i <= NbrCumulant; ++i)
-	    {
-	      File << i << " " << Cumulants[i] << endl;
-	    }
-	  File.close();
-	}      
-    }
+	}
+    }      
   else
     {
       if (DensityMatrix.GetNbrColumns() < 3)
@@ -156,35 +137,8 @@ int main(int argc, char** argv)
 	  cout << "wrong number of columns in " << Manager.GetString("density-matrix") << endl;
 	  return -1;
 	}
-      
-      int* NaValues = DensityMatrix.GetAsIntegerArray(0);
-      long Index = 0l;
-      long MaxIndex = DensityMatrix.GetNbrLines();
-      double* Coefficients = DensityMatrix.GetAsDoubleArray(2);
-
-      double* Cumulants = new double[NbrCumulant + 1];
-      for (int i = 0; i <= NbrCumulant; ++i)
-	Cumulants[i] = 0.0;
-      while (Index < MaxIndex)
-	{
-	  Cumulants[0] += Coefficients[Index];
-	  Cumulants[1] += ((double) NaValues[Index]) * Coefficients[Index];
-	  ++Index;
-	}
-      Index = 0l;
-      while (Index < MaxIndex)
-	{
-	  double Tmp1 = ((double) NaValues[Index]) - Cumulants[1];
-	  double Tmp2 = Tmp1 * Tmp1;
-	  for (int i = 2; i <= NbrCumulant; ++i)
-	    {
-	      Cumulants[i] += Tmp2 * Coefficients[Index];
-	      Tmp2 *= Tmp1;
-	    }
-	  ++Index;
-	}
-      
-      char* OutputFileName = Manager.GetString("output");
+      NaValues = DensityMatrix.GetAsIntegerArray(0);
+      Coefficients = DensityMatrix.GetAsDoubleArray(2);
       if (OutputFileName == 0)
 	{
 	  char* TmpExtension = new char[256];
@@ -198,17 +152,55 @@ int main(int argc, char** argv)
 	      OutputFileName = ReplaceExtensionToFileName(Manager.GetString("density-matrix"), "full.rses.bz2", TmpExtension);
 	    }
 	}
-      ofstream File;
-      File.open(OutputFileName, ios::out);
-      File.precision(14);
-      File << "# i <(N_A-<N_A>)^i>" << endl;
-      for (int i = 0; i <= NbrCumulant; ++i)
+    }
+  
+  long TmpIndex = MinIndex;
+  while (TmpIndex < MaxIndex)
+    {
+      Moments[0] += Coefficients[TmpIndex];
+      Moments[1] += ((double) NaValues[TmpIndex]) * Coefficients[TmpIndex];
+      ++TmpIndex;
+    }
+  CentralMoments[0] = Moments[0];
+  CentralMoments[1] = 0.0;
+  Cumulants[0] = 0.0;
+  Cumulants[1] = Moments[1];
+  
+  TmpIndex = MinIndex;
+  while (TmpIndex < MaxIndex)
+    {
+      double Tmp1 = ((double) NaValues[TmpIndex]) - Moments[1];
+      double Tmp2 = Tmp1 * Tmp1;
+      double Tmp3 = ((double) NaValues[TmpIndex]);
+      double Tmp4 = Tmp3 * Tmp3;
+      for (int i = 2; i <= NbrCumulant; ++i)
 	{
-	  File << i << " " << Cumulants[i] << endl;
+	  CentralMoments[i] += Tmp2 * Coefficients[TmpIndex];
+	  Tmp2 *= Tmp1;
+	  Moments[i] += Tmp4 * Coefficients[TmpIndex];
+	  Tmp4 *= Tmp3;
 	}
-      File.close();	      
+      ++TmpIndex;
     }
 
+  BinomialCoefficients Binomials (NbrCumulant - 1);
+
+  for (int i = 2; i <= NbrCumulant; ++i)
+    {
+      Cumulants[i] = Moments[i];
+      for (int j = 1; j < i; ++j)
+	Cumulants[i] -= Binomials.GetNumericalCoefficient(i - 1, i - j - 1) * Cumulants[i - j] * Moments[j];
+    }
+
+  ofstream File;
+  File.open(OutputFileName, ios::out);
+  File.precision(14);
+  File << "# i <(N_A-<N_A>)^i> <N_A^i> <<N_A^i>>" << endl;
+  for (int i = 0; i <= NbrCumulant; ++i)
+    {
+      File << i << " " << CentralMoments[i] << " " << Moments[i] << " " << Cumulants[i] << endl;
+    }
+  File.close();	      
 
   return 0;
 }
