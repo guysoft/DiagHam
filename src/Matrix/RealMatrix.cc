@@ -1259,37 +1259,108 @@ double* RealMatrix::SingularValueDecomposition()
       SigmaMatrix[0] = sqrt(SigmaMatrix[0]);
       return SigmaMatrix;
     }
+
   int MinDimension = this->NbrColumn;
+  int MaxDimension = this->NbrRow;
   if (this->NbrColumn > this->NbrRow)
-    MinDimension = this->NbrRow;
+    {
+      MinDimension = this->NbrRow;
+      MaxDimension = this->NbrColumn;
+    }
+
+  // code for the slower (but less error proned) dgesvd
+//   double* SigmaMatrix = new double[MinDimension];
+//   int Information = 0;
+//   int WorkingAreaSize = -1;
+//   int IntegerWorkingAreaSize = 8 * MinDimension;
+//   double TmpWorkingArea;
+//   int TmpIntegerWorkingArea;
+//   char Jobu = 'N';
+//   char Jobvt = 'N';
+//   double* TmpMatrix = new double [((long) this->NbrRow) * ((long) this->NbrColumn)];
+//   long TotalIndex = 0l;
+//   for (int j = 0; j < this->NbrColumn; ++j)
+//     {
+//       for (int i = 0; i < this->NbrRow; ++i)
+// 	{
+// 	  TmpMatrix[TotalIndex] = this->Columns[j][i];
+// 	  ++TotalIndex;
+// 	}
+//     }
+//   double* TmpUMatrix = new double [this->NbrColumn];
+//   double* TmpVMatrix = new double [this->NbrRow];
+//   int DummySize = 1;
+//   FORTRAN_NAME(dgesvd)(&Jobu, &Jobvt, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix,
+// 		       TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &Information);
+//   WorkingAreaSize = (int) TmpWorkingArea;
+//   double* WorkingArea = new double [WorkingAreaSize];
+//   FORTRAN_NAME(dgesvd)(&Jobu, &Jobvt, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix,
+// 		       TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, &Information);
+
   double* SigmaMatrix = new double[MinDimension];
   int Information = 0;
   int WorkingAreaSize = -1;
-  int IntegerWorkingAreaSize = -1;
+  int IntegerWorkingAreaSize = 8 * MinDimension;
   double TmpWorkingArea;
   int TmpIntegerWorkingArea;
   char Jobz = 'N';
-  double* TmpMatrix = new double [this->NbrRow * this->NbrColumn];
-  int TotalIndex = 0;
-  for (int j = 0; j < this->NbrColumn; ++j)
+  double* TmpMatrix = new double [((long) this->NbrRow) * ((long) this->NbrColumn)];
+  long TotalIndex = 0l;
+
+  // it seems that highly non-square matrix (i.e this->NbrRow << this->NbrColumn) leads to
+  // inconsistent SVD
+  int LocalNbrColumn = this->NbrColumn;
+  int LocalNbrRow = this->NbrRow;
+  if (this->NbrRow >= this->NbrColumn)
     {
-      for (int i = 0; i < this->NbrRow; ++i)
+      for (int j = 0; j < this->NbrColumn; ++j)
 	{
-	  TmpMatrix[TotalIndex] = this->Columns[j][i];
-	  ++TotalIndex;
+	  for (int i = 0; i < this->NbrRow; ++i)
+	    {
+	      TmpMatrix[TotalIndex] = this->Columns[j][i];
+	      ++TotalIndex;
+	    }
 	}
     }
-  double* TmpUMatrix = new double [this->NbrColumn];
-  double* TmpVMatrix = new double [this->NbrRow];
+  else
+    {
+      LocalNbrColumn = this->NbrRow;
+      LocalNbrRow = this->NbrColumn;
+      for (int j = 0; j < LocalNbrColumn; ++j)
+	{
+	  for (int i = 0; i < LocalNbrRow; ++i)
+	    {
+	      TmpMatrix[TotalIndex] = this->Columns[i][j];
+	      ++TotalIndex;
+	    }
+	}
+    }
+
+  double* TmpUMatrix = new double [LocalNbrColumn];
+  double* TmpVMatrix = new double [LocalNbrRow];
   int DummySize = 1;
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
+  FORTRAN_NAME(dgesdd)(&Jobz, &LocalNbrRow, &LocalNbrColumn, TmpMatrix, &LocalNbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, &TmpIntegerWorkingArea, &Information);
   WorkingAreaSize = (int) TmpWorkingArea;
+  int MinWorkingAreaSize = 3 * MinDimension;
+  if (MaxDimension >= (7 * MinDimension))
+    {
+      MinWorkingAreaSize += MaxDimension;
+    }
+  else
+    {
+      MinWorkingAreaSize += 7 * MinDimension;
+    }
+  if (MinWorkingAreaSize > WorkingAreaSize)
+    WorkingAreaSize = MinWorkingAreaSize;
   double* WorkingArea = new double [WorkingAreaSize];
   IntegerWorkingAreaSize = 8 * MinDimension;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
-  FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  FORTRAN_NAME(dgesdd)(&Jobz, &LocalNbrRow, &LocalNbrColumn, TmpMatrix, &LocalNbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
+  delete[] IntegerWorkingArea;
+  delete[] WorkingArea;
   delete[] TmpUMatrix;
   delete[] TmpVMatrix;
+  delete[] TmpMatrix;
   return SigmaMatrix;
 #else
   return 0;

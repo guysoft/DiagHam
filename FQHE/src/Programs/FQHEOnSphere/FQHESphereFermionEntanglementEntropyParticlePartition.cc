@@ -610,7 +610,8 @@ int main(int argc, char** argv)
 				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
 	      cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
 	    }
-	  if ((PartialDensityMatrix.GetNbrRow() > 1)||(PartialEntanglementMatrix.GetNbrRow() >= 1))
+	  if ((PartialDensityMatrix.GetNbrRow() > 1) || 
+	      ((SVDFlag == true) && (PartialEntanglementMatrix.GetNbrColumn() >= 1) && (PartialEntanglementMatrix.GetNbrRow() >= 1)))
 	    {
 	      if (Manager.GetString("save-matrix") != 0)
 		{	
@@ -647,6 +648,16 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
+// 		      RealMatrix TmpMat;
+// 		      RealMatrix TmpMat2;
+// 		      TmpMat2.Copy(PartialEntanglementMatrix);
+// 		      TmpMat = PartialEntanglementMatrix.DuplicateAndTranspose();
+// 		      TmpMat2.Multiply(TmpMat);
+// 		      RealSymmetricMatrix TmpMat3 ((Matrix&) TmpMat2);
+// 		      RealDiagonalMatrix TmpDiag2(TmpMat3.GetNbrRow());
+// 		      TmpMat3.LapackDiagonalize(TmpDiag2);
+// 		      TmpDiag2.SortMatrixDownOrder();
+
 		      double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
 		      int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
 		      if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
@@ -655,7 +666,6 @@ int main(int argc, char** argv)
 			}
 		      for (int i = 0; i < TmpDimension; ++i)
 			TmpValues[i] *= TmpValues[i];
-		      
 		      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
 		    }
 		  
@@ -726,43 +736,46 @@ int main(int argc, char** argv)
 		}
 	    }
 	  else
-	    if (PartialDensityMatrix.GetNbrRow() == 1)
-	      {
-		double TmpValue = PartialDensityMatrix(0,0);
-		if (DensityMatrixFileName != 0)
-		  {
-		    ofstream DensityMatrixFile;
-		    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
-		    DensityMatrixFile.precision(14);
-		    if (ComputeLValueFlag == false)
-		      {
-			DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
-		      }
-		    else		      
-		      {
-			if (SubsystemNbrParticles == 1)
-			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << ((LzMax * (LzMax + 2)) / 4.0) << " " << (LzMax / 2.0) << endl;
-			else
-			  {
-			    FermionOnSphere TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
-			    ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
-			    RealVector TmpEigenstate(1);
-			    TmpEigenstate[0] = 1.0;
-			    double TmpSqrMomentum = (OperMomentum.MatrixElement(TmpEigenstate, TmpEigenstate)).Re;
-			    double TmpMomentum = 0.0;
-			    if (TmpSqrMomentum > 0.0)
-			      TmpMomentum = (0.5 * (sqrt ((4.0 * TmpSqrMomentum) + 1.0) - 1.0));
-			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << TmpSqrMomentum << " " << TmpMomentum << endl;
-			  }
-		      }
-		    DensityMatrixFile.close();
-		  }		  
-		if (TmpValue > 1e-14)
-		  {
-		    EntanglementEntropy += TmpValue * log(TmpValue);
-		    DensitySum += TmpValue;
-		  }
-	      }
+	    {
+	      if ((SVDFlag == false) && (PartialDensityMatrix.GetNbrRow() == 1))
+		{
+		  double TmpValue = PartialDensityMatrix(0,0);
+		  if (DensityMatrixFileName != 0)
+		    {
+		      ofstream DensityMatrixFile;
+		      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
+		      DensityMatrixFile.precision(14);
+		      if (ComputeLValueFlag == false)
+			{
+			  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << endl;
+			}
+		      else		      
+			{
+			  if (SubsystemNbrParticles == 1)
+			    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << ((LzMax * (LzMax + 2)) / 4.0) << " " << (LzMax / 2.0) << endl;
+			  else
+			    {
+			      FermionOnSphere TmpDestinationHilbertSpace(SubsystemNbrParticles, SubsystemTotalLz, LzMax);
+			      ParticleOnSphereSquareTotalMomentumOperator OperMomentum (&TmpDestinationHilbertSpace, LzMax);
+			      RealVector TmpEigenstate(1);
+			      TmpEigenstate[0] = 1.0;
+			      double TmpSqrMomentum = (OperMomentum.MatrixElement(TmpEigenstate, TmpEigenstate)).Re;
+			      double TmpMomentum = 0.0;
+			      if (TmpSqrMomentum > 0.0)
+				TmpMomentum = (0.5 * (sqrt ((4.0 * TmpSqrMomentum) + 1.0) - 1.0));
+			      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalLz << " " << TmpValue << " " << TmpSqrMomentum << " " << TmpMomentum << endl;
+			    }
+			}
+		      DensityMatrixFile.close();
+		    }		  
+		  if (TmpValue > 1e-14)
+		    {
+		      EntanglementEntropy += TmpValue * log(TmpValue);
+		      DensitySum += TmpValue;
+		    }
+		}
+	    }
+	  cout << "DensitySum = " << DensitySum << endl;
 	}
       File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
       cout << "trace = " << DensitySum << endl;
