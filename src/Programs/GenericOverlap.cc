@@ -1,6 +1,9 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 
+#include "Matrix/RealMatrix.h"
+#include "Matrix/ComplexMatrix.h"
+
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "Options/Options.h"
@@ -45,6 +48,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('n', "normalize", "normalize vectors before calculating any overlaps");
   (*SystemGroup) += new BooleanOption  ('d', "dimension", "show vector dimension");
   (*SystemGroup) += new BooleanOption  ('\n', "quiet", "discard any output except the overlaps");
+  (*SystemGroup) += new SingleStringOption ('\n', "matrix", "export the overlap as a binary matrix");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -116,16 +120,21 @@ int main(int argc, char** argv)
       cout << "File "<<i<<"  "<<VectorFiles[i]<<endl;
 
 
-  int MaxVectors=(Manager.GetBoolean("no-cross")?1:NbrVectors);
+  int MaxVectors= (Manager.GetBoolean("no-cross") ? 1:NbrVectors);
 
-  bool HaveComplex=Manager.GetBoolean("complex");
+  bool HaveComplex = Manager.GetBoolean("complex");
   
   if (HaveComplex)
     {      
       Complex sp = 0.0;
       Complex TotalOverlap = 0.0;
       ComplexVector State1, State2;
-      for (int i=0; i<MaxVectors; ++i)
+      ComplexMatrix OverlapMatrix;
+      if (MaxVectors == 1) 
+	OverlapMatrix = ComplexMatrix(MaxVectors, NbrVectors - 1, true);
+      else
+	OverlapMatrix = ComplexMatrix(MaxVectors, NbrVectors, true);
+      for (int i=0; i < MaxVectors; ++i)
 	{
 	  if (State1.ReadVector (VectorFiles[i]) == false)
 	    {
@@ -137,8 +146,8 @@ int main(int argc, char** argv)
 	      cout << "Vector dimension = "<<State1.GetVectorDimension() <<endl;
 	    }
 	  if (Manager.GetBoolean("normalize"))
-	    State1/=State1.Norm();
-	  for (int j=i+1; j<NbrVectors; ++j)
+	    State1 /= State1.Norm();
+	  for (int j= i + 1; j < NbrVectors; ++j)
 	    {	      
 	      if (State2.ReadVector (VectorFiles[j]) == false)
 		{
@@ -151,18 +160,16 @@ int main(int argc, char** argv)
 		  return -2;
 		}
 	      if (Manager.GetBoolean("normalize"))
-		State2/=State2.Norm();
-	      sp=0.0;
+		State2 /= State2.Norm();
+	      sp = 0.0;
 	      if (Manager.GetBoolean("discard-sign"))
-		for (int i=0; i<State1.GetVectorDimension(); ++i)
-		  sp+=Norm(State1[i]*State2[i]);
+		for (int k = 0; k < State1.GetVectorDimension(); ++k)
+		  sp += Norm(State1[k] * State2[k]);
 	      else
 		if (Manager.GetBoolean("conjugate"))
-		  for (int i=0; i<State1.GetVectorDimension(); ++i)
-		    sp+= State1[i]*State2[i];
+		  sp = EuclidianScalarProduct(State1, State2);
 		else
-		  for (int i=0; i<State1.GetVectorDimension(); ++i)
-		    sp+= Conj(State1[i])*State2[i];
+		  sp = State1 * State2;
 	      if (Scalar == false)
 		{
 		  TotalOverlap += SqrNorm(sp);
@@ -170,6 +177,16 @@ int main(int argc, char** argv)
 	      else
 		{
 		  TotalOverlap += sp;
+		}
+	      if (MaxVectors == 1)
+		{
+		  OverlapMatrix.SetMatrixElement(1, i - 1, sp);
+		}
+	      else
+		{
+		  OverlapMatrix.SetMatrixElement(j, i, sp);
+		  OverlapMatrix.SetMatrixElement(i, j, sp);
+		  OverlapMatrix.SetMatrixElement(i, i, 1.0);
 		}
 	      if (Scalar == false)
 		{
@@ -215,13 +232,22 @@ int main(int argc, char** argv)
 		cout << TotalOverlap << endl;
 	    }
 	}
+      if (Manager.GetString("matrix") != 0)
+	{
+	  OverlapMatrix.WriteMatrix(Manager.GetString("matrix"));
+	}
     }
   else // real vectors
     {
       double TotalOverlap = 0.0;
       double sp = 0.0;
       RealVector State1, State2;
-      for (int i=0; i < MaxVectors; ++i)
+      RealMatrix OverlapMatrix;
+      if (MaxVectors == 1) 
+	OverlapMatrix = RealMatrix(MaxVectors, NbrVectors - 1, true);
+      else
+	OverlapMatrix = RealMatrix(MaxVectors, NbrVectors, true);
+      for (int i = 0; i < MaxVectors; ++i)
 	{
 	  if (State1.ReadVector (VectorFiles[i]) == false)
 	    {
@@ -233,8 +259,8 @@ int main(int argc, char** argv)
 	      cout << "Vector dimension = "<<State1.GetVectorDimension() <<endl;
 	    }
 	  if (Manager.GetBoolean("normalize"))
-	    State1/=State1.Norm();
-	  for (int j=i+1; j<NbrVectors; ++j)
+	    State1 /= State1.Norm();
+	  for (int j = i + 1; j < NbrVectors; ++j)
 	    {	      
 	      if (State2.ReadVector (VectorFiles[j]) == false)
 		{
@@ -248,12 +274,26 @@ int main(int argc, char** argv)
 		}
 	      if (Manager.GetBoolean("normalize"))
 		State2/=State2.Norm();
-	      sp=0.0;
+	      sp = 0.0;
 	      if (Manager.GetBoolean("discard-sign"))
-		for (int i=0; i<State1.GetVectorDimension(); ++i)
-		  sp+=fabs(State1[i]*State2[i]);
+		{
+		  for (int i = 0; i < State1.GetVectorDimension(); ++i)
+		    sp += fabs(State1[i]*State2[i]);
+		}
 	      else
-		sp = State1 *State2 ;
+		{
+		  sp = State1 * State2 ;
+		}
+	      if (MaxVectors == 1)
+		{
+		  OverlapMatrix.SetMatrixElement(1, i - 1, sp);
+		}
+	      else
+		{
+		  OverlapMatrix.SetMatrixElement(j, i, sp);
+		  OverlapMatrix.SetMatrixElement(i, j, sp);
+		  OverlapMatrix.SetMatrixElement(i, i, 1.0);
+		}
 	      if (Scalar == false)
 		{
 		  TotalOverlap += SqrNorm(sp);
@@ -270,7 +310,9 @@ int main(int argc, char** argv)
 			cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << SqrNorm(sp) << endl;
 		    }
 		  else
-		    cout << SqrNorm(sp) << endl;
+		    {
+		      cout << SqrNorm(sp) << endl;
+		    }
 		}
 	      else
 		{
@@ -280,7 +322,9 @@ int main(int argc, char** argv)
 			cout << "<"<<i<<"|"<<j<<"> = " << sp << endl;
 		    }
 		  else
-		    cout << sp << endl;
+		    {
+		      cout << sp << endl;
+		    }
 		}
 
 	    }
@@ -291,6 +335,10 @@ int main(int argc, char** argv)
 	    cout << "Total overlap = " << TotalOverlap << endl;
 	  else
 	    cout << TotalOverlap << endl;
+	}
+      if (Manager.GetString("matrix") != 0)
+	{
+	  OverlapMatrix.WriteMatrix(Manager.GetString("matrix"));
 	}
     }
   return 0;
