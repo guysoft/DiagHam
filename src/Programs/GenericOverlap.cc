@@ -180,7 +180,7 @@ int main(int argc, char** argv)
 		}
 	      if (MaxVectors == 1)
 		{
-		  OverlapMatrix.SetMatrixElement(1, i - 1, sp);
+		  OverlapMatrix.SetMatrixElement(0, j - 1, sp);
 		}
 	      else
 		{
@@ -205,9 +205,9 @@ int main(int argc, char** argv)
 		      if (Norm(sp)>=Threshold)
 			{
 			  if (Manager.GetBoolean("polar"))
-			    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << Norm(sp)<<"*Exp("<< Arg(sp)/M_PI<< " I Pi)" << endl;
+			    cout << "<"<<i<<"|"<<j<<"> = " << Norm(sp)<<"*Exp("<< Arg(sp)/M_PI<< " I Pi)" << endl;
 			  else
-			    cout << "Overlap |<"<<i<<"|"<<j<<">|^2 = " << sp << endl;
+			    cout << "<"<<i<<"|"<<j<<"> = " << sp << endl;
 			}
 		    }
 		  else
@@ -277,8 +277,8 @@ int main(int argc, char** argv)
 	      sp = 0.0;
 	      if (Manager.GetBoolean("discard-sign"))
 		{
-		  for (int i = 0; i < State1.GetVectorDimension(); ++i)
-		    sp += fabs(State1[i]*State2[i]);
+		  for (int k = 0; k < State1.GetVectorDimension(); ++k)
+		    sp += fabs(State1[k] * State2[k]);
 		}
 	      else
 		{
@@ -286,7 +286,7 @@ int main(int argc, char** argv)
 		}
 	      if (MaxVectors == 1)
 		{
-		  OverlapMatrix.SetMatrixElement(1, i - 1, sp);
+		  OverlapMatrix.SetMatrixElement(0, j - 1, sp);
 		}
 	      else
 		{
