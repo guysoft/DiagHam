@@ -56,7 +56,7 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
   Complex MixingTerm13;
   // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
   Complex MixingTerm23;
-
+  
   // four times the sublattice staggered chemical potential 
   double MuS;
   // boundary condition twisting angle along x
@@ -67,7 +67,6 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
   
   // use model with time reversal symmetry
   bool TimeReversal;
-  
 
  public:
 
@@ -82,6 +81,7 @@ class TightBindingModelTimeReversalKagomeLattice : public Abstract2DTightBinding
 // mixingTerm12 = mixing term coupling the two copies of the kagome lattice (sites 1 and 2)
 // mixingTerm13 = mixing term coupling the two copies of the kagome lattice (sites 1 and 3)
 // mixingTerm23 = mixing term coupling the two copies of the kagome lattice (sites 2 and 3)
+// mixingTerm11 = mixing term coupling the two copies of the kagome lattice (sites 1up and 1down, 2up and 2down, 3up and 3down)
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture

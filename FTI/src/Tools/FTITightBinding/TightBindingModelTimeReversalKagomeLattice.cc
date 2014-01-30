@@ -54,6 +54,7 @@ using std::endl;
 
 TightBindingModelTimeReversalKagomeLattice::TightBindingModelTimeReversalKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mixingTerm12, double mixingTerm13, double mixingTerm23, double gammaX, double gammaY, AbstractArchitecture* architecture, bool timeReversalFlag, bool storeOneBodyMatrices)
 {
+   
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
@@ -62,11 +63,11 @@ TightBindingModelTimeReversalKagomeLattice::TightBindingModelTimeReversalKagomeL
   this->NextNNHopping = t2;
   this->NNSpinOrbit = lambda1;
   this->NextNNSpinOrbit = lambda2;
-//   double phi = 0;
-  double phi = M_PI/4;
-  this->MixingTerm12 = mixingTerm12*Phase(phi);
-  this->MixingTerm13 = mixingTerm13*Phase(phi);
-  this->MixingTerm23 = mixingTerm23*Phase(phi);
+
+  this->MixingTerm12 = mixingTerm12;
+  this->MixingTerm13 = mixingTerm13;
+  this->MixingTerm23 = mixingTerm23;
+ 
   this->GammaX = gammaX;
   this->GammaY = gammaY;
   this->NbrBands = 6;
@@ -109,6 +110,8 @@ void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long m
   long MaxStateIndex = minStateIndex + nbrStates;
   double KX;
   double KY;
+  int sign = -1;
+  
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
   {
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
@@ -154,10 +157,10 @@ void TightBindingModelTimeReversalKagomeLattice::CoreComputeBandStructure(long m
 	
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
 	TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm13);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -this->MixingTerm12);
+	TmpOneBodyHamiltonian.SetMatrixElement(1, 3, sign*this->MixingTerm12);
 	TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm23);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -this->MixingTerm13);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -this->MixingTerm23);
+	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, sign*this->MixingTerm13);
+	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, sign*this->MixingTerm23);
 
 	if (this->OneBodyBasis != 0)
 		{
