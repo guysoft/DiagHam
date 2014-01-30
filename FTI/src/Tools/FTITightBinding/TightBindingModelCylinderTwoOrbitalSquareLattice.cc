@@ -172,14 +172,14 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::CoreComputeBandStructure(
 }
 
 
-// compute the real space entanglement spectrum of a full band
+// compute the many-body real space entanglement spectrum of a full band
 // 
 // outputFile = name of the output file where the spectrum has to be stored
 // minEnergy = lowest energy of the full band
 // maxEnergy = highest energy of the full band
 // nbrSiteYA = number of site to keep for the A part along the y direction    
 
-void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA)
+void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeManyBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA)
 {
   if (this->HaveOneBodyBasis() == false)
     {

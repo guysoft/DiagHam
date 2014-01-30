@@ -429,7 +429,7 @@ int main(int argc, char** argv)
 													  Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), 
 													  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"),
 													  Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
-													  Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+													  Manager.GetBoolean("flat-band"), TimeReversalFlag, Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {

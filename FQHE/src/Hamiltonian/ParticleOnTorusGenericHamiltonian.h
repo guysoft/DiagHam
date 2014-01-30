@@ -81,6 +81,23 @@ class ParticleOnTorusGenericHamiltonian : public AbstractQHEOnTorusHamiltonian
 				    int nbrPseudopotentials, double* pseudopotentials,
 				    AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
+  // constructor from default data, filtering the interaction to only keep some terms
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // maxMomentum = maximum Lz value reached by a particle in the state
+  // ratio = ratio between the width in the x direction and the width in the y direction
+  // nbrPseudopotentials = number of pseudopotentials
+  // pseudopotentials = pseudopotential coefficients
+  // filterInteractionFile = name of the file that describe which terms in the interaction should be kept
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+  ParticleOnTorusGenericHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum, double ratio, 
+				    int nbrPseudopotentials, double* pseudopotentials,
+				    char* filterInteractionFile, 
+				    AbstractArchitecture* architecture, long memory, char* precalculationFileName);
+    
   // destructor
   //
   ~ParticleOnTorusGenericHamiltonian();

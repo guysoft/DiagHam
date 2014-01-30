@@ -61,6 +61,13 @@ class AbstractQHEOnTorusHamiltonian : public AbstractQHEOnSphereFullHamiltonian
   // number of Lz values in a state
   int NbrLzValue;
   
+  // flag to indicate that only some terms in the interaction should be kept
+  bool FilterInteractionFlag;
+  // Indices of the annihilation (or creation) terms that have to be kept. Indices are stored a linearized index \sum_{j=1}^{nbr_nbody} i_j * N_\phi^j 
+  int* FilterInteractionIndices;
+  // number of kept indices 
+  int NbrFilterInteractionIndices;
+
  public:
 
   // default constructor
@@ -72,6 +79,15 @@ class AbstractQHEOnTorusHamiltonian : public AbstractQHEOnSphereFullHamiltonian
   virtual ~AbstractQHEOnTorusHamiltonian() = 0;
 
  protected:
+
+  // get all the indices that should appear in the annihilation/creation operators
+  //
+  virtual void GetIndices();
+
+  // find all the indices that have to be kept when filtering the hamiltionian
+  //
+  // filterInteractionFile = name of the file that describe which terms in the interaction should be kept
+  virtual void FindFilteredIndices(char* filterInteractionFile);
 
 };
 

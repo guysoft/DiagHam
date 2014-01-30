@@ -98,7 +98,78 @@ ParticleOnTorusGenericHamiltonian::ParticleOnTorusGenericHamiltonian(ParticleOnT
   this->HamiltonianShift = 0.0;
   this->OneBodyTermFlag = false;
   this->OneBodyInteractionFactors = 0;
+  this->FilterInteractionFlag = false;
 
+  this->NbrPseudopotentials = nbrPseudopotentials;
+  this->Pseudopotentials = new double[this->NbrPseudopotentials];
+  for (int i = 0; i < this->NbrPseudopotentials; ++i)
+    this->Pseudopotentials[i] = pseudopotentials[i];
+  this->LaguerrePolynomials =new Polynomial[this->NbrPseudopotentials];
+  for (int i = 0; i < this->NbrPseudopotentials; ++i)
+    this->LaguerrePolynomials[i] = LaguerrePolynomial(i);
+
+  this->EvaluateInteractionFactors();
+
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	      if (TmpMemory < (1 << 30))
+		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	      else
+		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+}
+
+// constructor from default data, filtering the interaction to only keep some terms
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// maxMomentum = maximum Lz value reached by a particle in the state
+// ratio = ratio between the width in the x direction and the width in the y direction
+// nbrPseudopotentials = number of pseudopotentials
+// pseudopotentials = pseudopotential coefficients
+// filterInteractionFile = name of the file that describe which terms in the interaction should be kept
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
+ParticleOnTorusGenericHamiltonian::ParticleOnTorusGenericHamiltonian(ParticleOnTorus* particles, int nbrParticles, int maxMomentum, double ratio, 
+								     int nbrPseudopotentials, double* pseudopotentials,
+								     char* filterInteractionFile, 
+								     AbstractArchitecture* architecture, long memory, char* precalculationFileName)
+{
+  this->Particles = particles;
+  this->LzMax = maxMomentum - 1;
+  this->NbrLzValue = this->LzMax + 1;
+  this->NbrParticles = nbrParticles;
+  this->FastMultiplicationFlag = false;
+  this->Ratio = ratio;
+  this->InvRatio = 1.0 / ratio;
+  this->Architecture = architecture;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->HamiltonianShift = 0.0;
+  this->OneBodyTermFlag = false;
+  this->OneBodyInteractionFactors = 0;
+  this->FilterInteractionFlag = true;
+  this->FindFilteredIndices(filterInteractionFile);
   this->NbrPseudopotentials = nbrPseudopotentials;
   this->Pseudopotentials = new double[this->NbrPseudopotentials];
   for (int i = 0; i < this->NbrPseudopotentials; ++i)
@@ -173,33 +244,9 @@ void ParticleOnTorusGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* h
 void ParticleOnTorusGenericHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
-  this->NbrSectorSums = this->NbrLzValue;
-  this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
-  for (int i = 0; i < this->NbrSectorSums; ++i)
-    this->NbrSectorIndicesPerSum[i] = 0;      
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];
-      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
-	{
-	  if (this->NbrSectorIndicesPerSum[i]  > 0)
-	    {
-	      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
-	      this->NbrSectorIndicesPerSum[i] = 0;
-	    }
-	}
-      for (int m1 = 0; m1 < this->LzMax; ++m1)
-	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
-	  {
-	    int TmpSum = (m1 + m2) % this->NbrLzValue;
-	    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = m1;
-	    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = m2;
-	    ++this->NbrSectorIndicesPerSum[TmpSum];    
-	  }
-
+      this->GetIndices();
       this->InteractionFactors = new double* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -226,27 +273,7 @@ void ParticleOnTorusGenericHamiltonian::EvaluateInteractionFactors()
     }
   else
     {
-      for (int m1 = 0; m1 <= this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  ++this->NbrSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];
-      this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
-      for (int i = 0; i < this->NbrSectorSums; ++i)
-	{
-	  if (this->NbrSectorIndicesPerSum[i]  > 0)
-	    {
-	      this->SectorIndicesPerSum[i] = new int[2 * this->NbrSectorIndicesPerSum[i]];      
-	      this->NbrSectorIndicesPerSum[i] = 0;
-	    }
-	}
-      for (int m1 = 0; m1 <= this->LzMax; ++m1)
-	for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	  {
-	    int TmpSum = (m1 + m2) % this->NbrLzValue;
-	    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = m1;
-	    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = m2;
-	    ++this->NbrSectorIndicesPerSum[TmpSum];    
-	  }
-
+      this->GetIndices();
       this->InteractionFactors = new double* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{

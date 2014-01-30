@@ -227,7 +227,7 @@ int main(int argc, char** argv)
 	      double MinEnergy = -7.0;
 	      double MaxEnergy = -0.2;
 	      char* EntanglementSpectrumOutputFile;
-	      if (Manager.GetString("eigenvalue-file")!=0)
+	      if (Manager.GetString("eigenvalue-file") != 0)
 		{
 		  EntanglementSpectrumOutputFile = new char [strlen(Manager.GetString("eigenvalue-file")) + 16];
 		  sprintf(EntanglementSpectrumOutputFile, "%s.full.ent", Manager.GetString("eigenvalue-file"));
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 		  EntanglementSpectrumOutputFile = new char [strlen(FilePrefix) + 16];
 		  sprintf (EntanglementSpectrumOutputFile, "%s.full.ent", FilePrefix);
 		}
-	      TightBindingModel.ComputeRealSpaceEntanglementSpectrum(EntanglementSpectrumOutputFile, MinEnergy, MaxEnergy, NbrSiteY / 2);
+	      TightBindingModel.ComputeManyBodyRealSpaceEntanglementSpectrum(EntanglementSpectrumOutputFile, MinEnergy, MaxEnergy, NbrSiteY / 2);
 	    }
 	}
       return 0;

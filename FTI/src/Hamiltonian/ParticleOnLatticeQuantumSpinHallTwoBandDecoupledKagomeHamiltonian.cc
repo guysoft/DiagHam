@@ -65,11 +65,12 @@ using std::ostream;
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // flatBandFlag = use flat band model
+// timeReversalFlag = apply thge time reversal symmetry on the second copy of the tight binding model  (must be in Bloch form)
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, bool timeReversalFlag, long memory)
+																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double lambda1, double lambda2, double mus, double gammaX, double gammaY, bool flatBandFlag, bool timeReversalFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
