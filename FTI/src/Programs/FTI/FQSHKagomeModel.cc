@@ -6,7 +6,7 @@
 
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLatticeTilted.h"
-#include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
 
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.h"
@@ -79,6 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-12", "mixing term coupling the two copies of the kagome lattice (sites 1 and 2)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-13", "mixing term coupling the two copies of the kagome lattice (sites 1 and 3)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-23", "mixing term coupling the two copies of the kagome lattice (sites 2 and 3)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "mixing-11", "mixing term coupling the two copies of the kagome lattice (sites 1up and 1down, sites 2up and 2down, sites 3up and 3down) for T^2 = +1 only", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-z2invariant", "compute the z2 invariant of the fully filled band (only available in singleparticle-spectrum mode)");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
@@ -88,6 +89,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the kagome lattice");
   (*SystemGroup) += new BooleanOption ('\n', "break-timereversal", "use model with two identical copies of the kagome model without time reversal invariance");
+  (*SystemGroup) += new BooleanOption ('\n', "integer-spin", "use time reversal operator T such that T^2 = +1 (the onebody coupling matrix will be symmetric instead of antisymmetric)");
   (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the kagome lattice");
   (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -126,8 +128,11 @@ int main(int argc, char** argv)
   bool ThreeBodyFlag = Manager.GetBoolean("three-body");
   bool TiltedFlag = true;
   bool TimeReversalFlag = true;  
+  bool IntegerSpinFlag = false;
   if (Manager.GetBoolean("break-timereversal") == true)
     TimeReversalFlag = false;
+  if (Manager.GetBoolean("integer-spin") == true)
+    IntegerSpinFlag = true;
   if ((TimeReversalFlag == false) && ((Manager.GetBoolean("export-onebodytheta") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true)))
     {
       cout << "Z2 invariant is only defined for a time reversal invariant system" << endl;
@@ -176,7 +181,10 @@ int main(int argc, char** argv)
     {
       if (TimeReversalFlag == true)
 	{
-	  sprintf (InteractionPrefix, "twoband_quantumspinhall_kagome");
+	  if (IntegerSpinFlag == false)
+	    sprintf (InteractionPrefix, "twoband_quantumspinhall_kagome");
+	  else
+	    sprintf (InteractionPrefix, "twoband_quantumspinhall_integerspin_mix11_%f_kagome", Manager.GetDouble("mixing-11"));
 	}
       else
 	{
@@ -272,8 +280,8 @@ int main(int argc, char** argv)
 	{
 	  TightBindingModel = new TightBindingModelTimeReversalKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 									      Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
-									      Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, ExportOneBody);
+									      Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("mixing-11"),
+									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), TimeReversalFlag, IntegerSpinFlag, ExportOneBody);
 	}
       else
 	{
@@ -350,8 +358,8 @@ int main(int argc, char** argv)
       TightBindingModel = new TightBindingModelTimeReversalKagomeLattice(NbrSitesX, NbrSitesY,  
 									 Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 									 Manager.GetDouble("l1"), Manager.GetDouble("l2"), 
-									 Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"),
-									 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 0, TimeReversalFlag, true);
+									 Manager.GetDouble("mixing-12"), Manager.GetDouble("mixing-13"), Manager.GetDouble("mixing-23"), Manager.GetDouble("mixing-11"), 
+									 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 0, TimeReversalFlag, IntegerSpinFlag, true);
     }
   else
     {
@@ -433,7 +441,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+		      TightBindingModel = new TightBindingModelAlternativeKagomeLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
 									      Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
 									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
 		      if (ThreeBodyFlag == true)
