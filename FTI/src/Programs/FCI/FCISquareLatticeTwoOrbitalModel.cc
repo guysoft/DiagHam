@@ -76,6 +76,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-entspectrum", "compute the real space entanglement spectrum for a filled band");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "entspec-minenergy", "minimum energy that defines the filled band", -7.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "entspec-maxenergy", "maximum energy that defines the filled band", -0.2);
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -224,8 +226,8 @@ int main(int argc, char** argv)
 	    {
 	      double** DensityEigenvalues = 0;
 	      int* NbrDensityEigenvalues = 0;
-	      double MinEnergy = -7.0;
-	      double MaxEnergy = -0.2;
+	      double MinEnergy = Manager.GetDouble("entspec-minenergy");
+	      double MaxEnergy = Manager.GetDouble("entspec-maxenergy");
 	      char* EntanglementSpectrumOutputFile;
 	      if (Manager.GetString("eigenvalue-file") != 0)
 		{
@@ -237,7 +239,7 @@ int main(int argc, char** argv)
 		  EntanglementSpectrumOutputFile = new char [strlen(FilePrefix) + 16];
 		  sprintf (EntanglementSpectrumOutputFile, "%s.full.ent", FilePrefix);
 		}
-	      TightBindingModel.ComputeManyBodyRealSpaceEntanglementSpectrum(EntanglementSpectrumOutputFile, MinEnergy, MaxEnergy, NbrSiteY / 2);
+	      TightBindingModel.ComputeOneBodyRealSpaceEntanglementSpectrum(EntanglementSpectrumOutputFile, MinEnergy, MaxEnergy, NbrSiteY / 2);
 	    }
 	}
       return 0;

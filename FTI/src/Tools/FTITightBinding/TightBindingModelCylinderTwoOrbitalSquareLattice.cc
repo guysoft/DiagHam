@@ -36,6 +36,7 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "MathTools/BinomialCoefficients.h"
+#include "Matrix/HermitianMatrix.h"
 
 #include <iostream>
 
@@ -267,4 +268,77 @@ void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeManyBodyRealSpaceE
   delete[] NbrKeptWeights;
   delete[] KeptWeights;
   delete[] Weights;
+}
+
+// compute the one-body real space entanglement spectrum of a full band
+// 
+// outputFile = name of the output file where the spectrum has to be stored
+// minEnergy = lowest energy of the full band
+// maxEnergy = highest energy of the full band
+// nbrSiteYA = number of site to keep for the A part along the y direction    
+
+void TightBindingModelCylinderTwoOrbitalSquareLattice::ComputeOneBodyRealSpaceEntanglementSpectrum(char* outputFile, double minEnergy, double maxEnergy, int nbrSiteYA)
+{
+  if (this->HaveOneBodyBasis() == false)
+    {
+      cout << "error, the tight binding model does not provide the one body basis" << endl;
+    }
+  int* MinIndex = new int[this->NbrSiteX];
+  int* MaxIndex = new int[this->NbrSiteX];
+  long TotalNbrStates = 0l;
+  double** Weights = new double* [this->NbrSiteX];
+  int* NbrKeptWeights = new int [this->NbrSiteX];
+  int** KeptWeights = new int* [this->NbrSiteX];
+  cout << "nbrSiteYA " << nbrSiteYA << endl;
+  int NbrOrbitalPerUnitCell =  this->NbrBands / this->NbrSiteY;
+  int PropagatorDimension = NbrOrbitalPerUnitCell * nbrSiteYA;
+  ofstream File;
+  File.open(outputFile);
+  File << "# kx  weight_A " << endl;
+  for (int TmpKx = 0; TmpKx < this->NbrSiteX; ++TmpKx)
+    {
+      int MinIndex = this->NbrBands;
+      int MaxIndex = -1;
+      for (int i = 0; i < this->NbrBands; ++i)
+	{
+	  if ((this->EnergyBandStructure[i][TmpKx] >= minEnergy) && (this->EnergyBandStructure[i][TmpKx] <= maxEnergy))
+	    {
+	      ++TotalNbrStates;
+	      if (MinIndex > i)
+		{
+		  MinIndex = i;
+		}
+	      if (MaxIndex < i)
+		{
+		  MaxIndex = i;
+		}
+	    }
+	}
+      if ((MinIndex != this->NbrBands) && (MaxIndex >= 0))
+	{
+	  cout << "nbr of states at kx=" << TmpKx << " : " <<  (MaxIndex - MinIndex + 1)  << endl;
+	  HermitianMatrix Propagator (PropagatorDimension, true);
+	  for (; MinIndex <= MaxIndex; ++MinIndex)
+	    {
+	      for (int i = 0; i < PropagatorDimension; ++i)
+		{
+		  Complex Tmp = Conj(this->OneBodyBasis[TmpKx][MinIndex][i]);
+		  Propagator.AddToMatrixElement(i, i, Tmp * this->OneBodyBasis[TmpKx][MinIndex][i]);		  
+		  for (int j = i + 1; j < PropagatorDimension; ++j)
+		    {
+		      Propagator.AddToMatrixElement(i, j, Tmp * this->OneBodyBasis[TmpKx][MinIndex][j]);		  
+		    }
+		}
+	    }
+	  RealDiagonalMatrix TmpDiag (Propagator.GetNbrRow(), true);
+#ifdef __LAPACK__
+	  Propagator.LapackDiagonalize(TmpDiag);
+#else
+	  Propagator.Diagonalize(TmpDiag);
+#endif		  
+	  for (int i = 0; i < PropagatorDimension; ++i)	 
+	    File << TmpKx << " " << TmpDiag[i] << endl;
+	}
+    }
+  File.close();
 }
