@@ -48,6 +48,20 @@ RealMatrix GetRealMatrixFromProductFile(MultiColumnASCIIFile& productFile, int i
 // return value = corresponding complex matrix
 ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile, int index);
 
+// apply a transformation on a real matrix from string description
+//
+// matrix = reference on the matrix to transform
+// transformation = string describing the transformation to apply
+// return value = reference on the transformed matrix
+RealMatrix& TransformMatrixFromString(RealMatrix& matrix, char* transformation);
+
+// apply a transformation on a complex matrix from string description
+//
+// matrix = reference on the matrix to transform
+// transformation = string describing the transformation to apply
+// return value = reference on the transformed matrix
+ComplexMatrix& TransformMatrixFromString(ComplexMatrix& matrix, char* transformation);
+
 
 int main(int argc, char** argv)
 {
@@ -230,6 +244,10 @@ RealMatrix GetRealMatrixFromProductFile(MultiColumnASCIIFile& productFile, int i
     {
       RealMatrix TmpMatrix;
       TmpMatrix.ReadMatrix(productFile(0, index));
+      if (productFile.GetNbrColumns() >= 2)
+	{
+	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
+	}
       return TmpMatrix;
     }
   if (strcmp(productFile(1, index), "RealVector") == 0)
@@ -250,8 +268,13 @@ RealMatrix GetRealMatrixFromProductFile(MultiColumnASCIIFile& productFile, int i
 	      return RealMatrix();
 	    }
 	}
-      return RealMatrix(TmpVectors, NbrVectors);
-    }
+      RealMatrix TmpMatrix (TmpVectors, NbrVectors);
+      if (productFile.GetNbrColumns() >= 2)
+	{
+	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
+	}
+      return TmpMatrix;
+   }
   return RealMatrix();
 }
 
@@ -267,12 +290,20 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
     {
       ComplexMatrix TmpMatrix;
       TmpMatrix.ReadMatrix(productFile(0, index));
-      return TmpMatrix;
+      if (productFile.GetNbrColumns() >= 2)
+	{
+	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
+	}
+     return TmpMatrix;
     }
   if (strcmp(productFile(1, index), "RealMatrix") == 0)
     {
       RealMatrix TmpMatrix;
       TmpMatrix.ReadMatrix(productFile(0, index));
+      if (productFile.GetNbrColumns() >= 2)
+	{
+	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
+	}
       return ComplexMatrix(TmpMatrix);
     }
   if (strcmp(productFile(1, index), "ComplexVector") == 0)
@@ -293,7 +324,12 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
 	      return ComplexMatrix();
 	    }
 	}
-      return ComplexMatrix(TmpVectors, NbrVectors);
+      ComplexMatrix TmpMatrix (TmpVectors, NbrVectors);
+      if (productFile.GetNbrColumns() >= 2)
+	{
+	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
+	}
+      return TmpMatrix;
     }
   if (strcmp(productFile(1, index), "RealVector") == 0)
     {
@@ -315,7 +351,64 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
 	    }
 	  TmpVectors[i] = TmpVector;
 	}
-      return ComplexMatrix(TmpVectors, NbrVectors);
+      ComplexMatrix TmpMatrix (TmpVectors, NbrVectors);
+      if (productFile.GetNbrColumns() >= 2)
+	{
+	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
+	}
+      return TmpMatrix;
     }
   return ComplexMatrix();
+}
+
+// apply a transformation on a real matrix from string description
+//
+// matrix = reference on the matrix to transform
+// transformation = string describing the transformation to apply
+// return value = reference on the transformed matrix
+
+RealMatrix& TransformMatrixFromString(RealMatrix& matrix, char* transformation)
+{
+  if ((strcmp(transformation, "none") == 0) || (strcmp(transformation, "conjugate") == 0))
+    {
+      return matrix;
+    }
+  if ((strcmp(transformation, "transpose") == 0) || (strcmp(transformation, "hermitian") == 0))
+    {
+      matrix.Transpose();
+      return matrix;
+    }
+  cout << "warning, operation \"" << transformation << "\" is unknown" << endl; 
+  return matrix;
+}
+
+// apply a transformation on a complex matrix from string description
+//
+// matrix = reference on the matrix to transform
+// transformation = string describing the transformation to apply
+// return value = reference on the transformed matrix
+
+ComplexMatrix& TransformMatrixFromString(ComplexMatrix& matrix, char* transformation)
+{
+  if (strcmp(transformation, "none") == 0)
+    {
+      return matrix;
+    }
+  if (strcmp(transformation, "conjugate") == 0)
+    {
+      matrix.ComplexConjugate();
+      return matrix;
+    }
+  if (strcmp(transformation, "transpose") == 0)
+    {
+      matrix.Transpose();
+      return matrix;
+    }
+  if (strcmp(transformation, "hermitian") == 0)
+    {
+      matrix.HermitianTranspose();
+      return matrix;
+    }
+  cout << "warning, operation \"" << transformation << "\" is unknown" << endl; 
+  return matrix;
 }
