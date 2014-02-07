@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of operator vector multiplication operation           //
+//              class of operator vector multiplication operation             //
 //                                                                            //
 //                        last modification : 23/10/2002                      //
 //                                                                            //
@@ -69,7 +69,7 @@ VectorOperatorMultiplyOperation::VectorOperatorMultiplyOperation(const VectorOpe
 {
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
-  this->Operator = operation.Operator;
+  this->Operator = operation.Operator->Clone ();
   this->SourceVector = operation.SourceVector;
   this->DestinationVector = operation.DestinationVector;  
   this->OperationType = AbstractArchitectureOperation::VectorOperatorMultiply;
