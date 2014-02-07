@@ -13,6 +13,7 @@
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
 
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
@@ -342,7 +343,9 @@ int main(int argc, char** argv)
   RealVector TmpVector(TotalSpace->GetHilbertSpaceDimension());
   for (int i = 0; i < NbrInputStates; ++i)
     {
-      KxOperator.Multiply(InputStates[i], TmpVector);
+      VectorOperatorMultiplyOperation Operation(&KxOperator, &(InputStates[i]), &TmpVector);
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+//      KxOperator.Multiply(InputStates[i], TmpVector);
       for (int j = 0; j < NbrInputStates; ++j)
 	{
 	  KxRep.SetMatrixElement(j, i, (InputStates[j] * TmpVector));

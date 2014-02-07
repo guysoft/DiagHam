@@ -24,7 +24,7 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
+#include "Architecture/ArchitectureOperation/VectorOperatorMultiplyOperation.h"
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
@@ -213,7 +213,10 @@ int main(int argc, char** argv)
 	{
 	  cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
 	  ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
-	  TmpOperator.Multiply(InputState, TmpState);
+	  VectorOperatorMultiplyOperation Operation(&TmpOperator, &InputState, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+// 	  VectorOperatorMultiplyOperation
+// 	  TmpOperator.Multiply(InputState, TmpState);
 	  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
 	  sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, m);
 	  TmpState.WriteVector(OutputNameLz);
