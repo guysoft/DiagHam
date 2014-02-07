@@ -215,8 +215,8 @@ int main(int argc, char** argv)
    for (int ky = MinKy; ky <= MaxKy; ++ky)
    {
     
-    int TotalQx = (TotalKx[0] - kx + 2*NbrSiteX) % NbrSiteX;
-    int TotalQy = (TotalKy[0] - ky + 2*NbrSiteY) % NbrSiteY;
+    int TotalQx = (TotalKx[0] - kx + NbrSiteX) % NbrSiteX;
+    int TotalQy = (TotalKy[0] - ky + NbrSiteY) % NbrSiteY;
     cout << "Total Kx = " << TotalQx << " Total Ky = " << TotalQy << endl;
 //     cout << kx << " " << ky << endl;
 //     cout << TotalKx << " " << TotalKy << " " << TotalQx << " " << TotalQy << endl;
@@ -280,7 +280,7 @@ int main(int argc, char** argv)
 		ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
     
 		Projector->LowLevelAddMultiply(GroundStates[i], EigenstateOutput, 0, SpaceSource->GetHilbertSpaceDimension());
-		EigenstateOutput.Normalize();
+// 		EigenstateOutput.Normalize();
 		EigenstateOutput.WriteVector(EigenstateOutputFile);
     
     
