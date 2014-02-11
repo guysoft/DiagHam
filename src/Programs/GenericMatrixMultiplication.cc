@@ -244,7 +244,7 @@ RealMatrix GetRealMatrixFromProductFile(MultiColumnASCIIFile& productFile, int i
     {
       RealMatrix TmpMatrix;
       TmpMatrix.ReadMatrix(productFile(0, index));
-      if (productFile.GetNbrColumns() >= 2)
+      if (productFile.GetNbrColumns() >= 3)
 	{
 	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
 	}
@@ -269,7 +269,7 @@ RealMatrix GetRealMatrixFromProductFile(MultiColumnASCIIFile& productFile, int i
 	    }
 	}
       RealMatrix TmpMatrix (TmpVectors, NbrVectors);
-      if (productFile.GetNbrColumns() >= 2)
+      if (productFile.GetNbrColumns() >= 3)
 	{
 	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
 	}
@@ -290,7 +290,7 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
     {
       ComplexMatrix TmpMatrix;
       TmpMatrix.ReadMatrix(productFile(0, index));
-      if (productFile.GetNbrColumns() >= 2)
+      if (productFile.GetNbrColumns() >= 3)
 	{
 	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
 	}
@@ -300,7 +300,7 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
     {
       RealMatrix TmpMatrix;
       TmpMatrix.ReadMatrix(productFile(0, index));
-      if (productFile.GetNbrColumns() >= 2)
+      if (productFile.GetNbrColumns() >= 3)
 	{
 	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
 	}
@@ -325,7 +325,7 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
 	    }
 	}
       ComplexMatrix TmpMatrix (TmpVectors, NbrVectors);
-      if (productFile.GetNbrColumns() >= 2)
+      if (productFile.GetNbrColumns() >= 3)
 	{
 	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
 	}
@@ -352,7 +352,7 @@ ComplexMatrix GetComplexMatrixFromProductFile(MultiColumnASCIIFile& productFile,
 	  TmpVectors[i] = TmpVector;
 	}
       ComplexMatrix TmpMatrix (TmpVectors, NbrVectors);
-      if (productFile.GetNbrColumns() >= 2)
+      if (productFile.GetNbrColumns() >= 3)
 	{
 	  TransformMatrixFromString(TmpMatrix, productFile(2, index));
 	}
