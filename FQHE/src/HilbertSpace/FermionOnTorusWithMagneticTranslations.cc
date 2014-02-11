@@ -445,8 +445,8 @@ double FermionOnTorusWithMagneticTranslations::AA (int index, int n1, int n2)
 {
   this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
   this->ProdATemporaryState = this->StateDescription[index];
-  if ((n1 >  this->ProdATemporaryStateMaxMomentum) || (n2 >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n1)) == 0) || 
-      ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+  if ((n1 >  this->ProdATemporaryStateMaxMomentum) || (n2 >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n1)) == 0x0ul) || 
+      ((this->ProdATemporaryState & (0x1ul << n2)) == 0x0ul) || (n1 == n2))
     {
       return 0.0;
     }
@@ -459,7 +459,7 @@ double FermionOnTorusWithMagneticTranslations::AA (int index, int n1, int n2)
 #endif
   this->ProdATemporaryState &= ~(0x1ul << n2);
   if (this->ProdATemporaryStateMaxMomentum == n2)
-    while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0)
+    while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0x0ul)
       --this->ProdATemporaryStateMaxMomentum;
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
   Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
@@ -475,7 +475,7 @@ double FermionOnTorusWithMagneticTranslations::AA (int index, int n1, int n2)
   else
     {
       if (this->ProdATemporaryStateMaxMomentum == n1)
-	while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0)
+	while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0x0ul)
 	  --this->ProdATemporaryStateMaxMomentum;
     }
   return Coefficient;
@@ -504,11 +504,12 @@ double FermionOnTorusWithMagneticTranslations::ProdA (int index, int* n, int nbr
 int FermionOnTorusWithMagneticTranslations::AdAd (int m1, int m2, double& coefficient, int& nbrTranslation)
 {
   unsigned long TmpState = this->ProdATemporaryState;
-  if (((TmpState & (0x1ul << m2))!= 0) || (m1 == m2))
+  if (((TmpState & (0x1ul << m2)) != 0x0ul) || (m1 == m2))
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
+  coefficient = 1.0;
   int NewMaxMomentum =  this->ProdATemporaryStateMaxMomentum;
   if (m2 > NewMaxMomentum)
     {
@@ -524,7 +525,7 @@ int FermionOnTorusWithMagneticTranslations::AdAd (int m1, int m2, double& coeffi
 #endif
     }
   TmpState |= (0x1ul << m2);
-  if ((TmpState & (0x1ul << m1))!= 0)
+  if ((TmpState & (0x1ul << m1)) != 0x0ul)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;

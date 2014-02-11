@@ -189,6 +189,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient);
 
+  // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslation);
+
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   //
   // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
@@ -196,6 +205,15 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int nbrIndices, double& coefficient);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation);
 
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   // use double when calculating normalization factors to avoid overflow

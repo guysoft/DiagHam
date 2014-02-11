@@ -185,33 +185,6 @@ int main(int argc, char** argv)
 
   BinomialCoefficients Binomials (NbrCumulant - 1);
 
-//   if (NbrCumulant >= 2)
-//     {
-//       Cumulants[2] = CentralMoments[2];
-//     }
-//   if (NbrCumulant >= 3)
-//     {
-//       Cumulants[3] = CentralMoments[3];
-//     }
-//   if (NbrCumulant >= 4)
-//     {
-//       Cumulants[4] = CentralMoments[4] - (3.0 * CentralMoments[2] * CentralMoments[2]);
-//     }
-//   if (NbrCumulant >= 5)
-//     {
-//       Cumulants[5] = CentralMoments[5] - (10.0 * CentralMoments[3] * CentralMoments[2]);
-//     }
-//   if (NbrCumulant >= 6)
-//     {
-//       Cumulants[6] = (CentralMoments[6] - (15.0 * CentralMoments[4] * CentralMoments[2]) - (10.0 * CentralMoments[3] * CentralMoments[3])
-// 		      + (30.0 * CentralMoments[2] * CentralMoments[2] * CentralMoments[2]));
-//     }
-//   for (int i = 7; i <= NbrCumulant; ++i)
-//     {
-//       Cumulants[i] = Moments[i];
-//       for (int j = 1; j < i; ++j)
-// 	Cumulants[i] -= Binomials.GetNumericalCoefficient(i - 1, i - j - 1) * Cumulants[i - j] * Moments[j];
-//     }
   for (int i = 2; i <= NbrCumulant; ++i)
     {
       Cumulants[i] = CentralMoments[i];

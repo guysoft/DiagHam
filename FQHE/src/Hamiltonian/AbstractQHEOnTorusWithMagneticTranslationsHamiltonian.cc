@@ -777,13 +777,19 @@ void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::PartialEnableFastMul
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = TmpParticles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+//	  Index = TmpParticles->AdAdAA(i + this->PrecalculationShift, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  double Coefficient1 = TmpParticles->AA(i + this->PrecalculationShift, m3, m4);
+	  if (Coefficient1 != 0.0)
 	    {
-	      TmpIndexArray[count] = Index;
-	      TmpCoefficientArray[count] = Coefficient * this->InteractionFactors[j];
-	      TmpNbrTranslationArray[count] = NbrTranslation;
-	      ++count;
+	      Index = TmpParticles->AdAd(m1, m2, Coefficient, NbrTranslation);
+	      Coefficient *= Coefficient1;
+	      if (Index < this->Particles->GetHilbertSpaceDimension())
+		{
+		  TmpIndexArray[count] = Index;
+		  TmpCoefficientArray[count] = Coefficient * this->InteractionFactors[j];
+		  TmpNbrTranslationArray[count] = NbrTranslation;
+		  ++count;
+		}
 	    }
 	}
       ++Pos;

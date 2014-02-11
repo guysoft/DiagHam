@@ -33,7 +33,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/ParticleOnSphere.h"
 #include "HilbertSpace/ParticleOnTorus.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Vector/ComplexVector.h"
@@ -48,17 +48,11 @@ class Matrix;
 class AbstractArchitecture;
 
 
-class ParticleOnTorusWithMagneticTranslations :  public AbstractHilbertSpace
+class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
 {
 
  public:
 
-  enum 
-    {
-      BosonicStatistic = 0x1,
-      FermionicStatistic = 0x2,
-    };
-  
   // virtual destructor
   //
   virtual ~ParticleOnTorusWithMagneticTranslations ();

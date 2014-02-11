@@ -97,10 +97,9 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // number of state in each orbit
   int* NbrStateInOrbit;
 
+  // temporary variables when using AdAd / ProdAd operations
   unsigned long ProdATemporaryState;
-
   int ProdATemporaryStateMaxMomentum;
-
   int ProdATemporaryNbrStateInOrbit;
 
   // sign due to state reordering when applying translation operator 
