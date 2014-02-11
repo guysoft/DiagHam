@@ -435,8 +435,12 @@ int main(int argc, char** argv)
 	  Complex TmpValue = Eigenvalues[i];
 	  File << TmpValue << " " << Norm(TmpValue) << " " << Arg(TmpValue);
 	  double TmpValue2 = Arg(TmpValue);
+	  if (fabs(TmpValue2) < MACHINE_PRECISION)
+	    TmpValue2 = 0.0;
 	  if (TmpValue2 < 0.0)
 	    TmpValue2 += 2.0 * M_PI;
+	  if (TmpValue2 >= (2.0 * M_PI))
+	    TmpValue2 -= 2.0 * M_PI;
 	  TmpValue2 *= Factor;
 	  File << " " << TmpValue2 << " " << round(TmpValue2) << endl;
 	}      
@@ -456,8 +460,12 @@ int main(int argc, char** argv)
 	  Complex TmpValue = Eigenvalues[i];
 	  File << TmpValue << " " << Norm(TmpValue) << " " << Arg(TmpValue);
 	  double TmpValue2 = Arg(TmpValue);
+	  if (fabs(TmpValue2) < MACHINE_PRECISION)
+	    TmpValue2 = 0.0;
 	  if (TmpValue2 < 0.0)
 	    TmpValue2 += 2.0 * M_PI;
+	  if (TmpValue2 >= (2.0 * M_PI))
+	    TmpValue2 -= 2.0 * M_PI;
 	  TmpValue2 *= Factor;
 	  int TmpKx = round(TmpValue2);
 	  File << " " << TmpValue2 << " " << TmpKx << endl;
