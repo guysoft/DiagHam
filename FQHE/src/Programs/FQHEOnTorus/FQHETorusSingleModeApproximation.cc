@@ -195,31 +195,66 @@ int main(int argc, char** argv)
     }
 
   RealVector InputState;
-  if (InputState.ReadVector(StateFileName) == false)
+  ComplexVector ComplexInputState;
+  bool ComplexVectorFlag = false;
+  if (InputState.ReadVectorTest(StateFileName) == false)
     {
-      cout << "error while reading " << StateFileName << endl;
-      return -1;
+      ComplexVectorFlag = true;
+      if (ComplexInputState.ReadVector(StateFileName) == false)
+	{
+	  cout << "error while reading " << StateFileName << endl;
+	  return -1;
+	}
+      if (ComplexInputState.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
+	{
+	  cout << "error: vector and Hilbert-space have unequal dimensions " << ComplexInputState.GetVectorDimension() 
+	       << " "<< TotalSpace->GetHilbertSpaceDimension() << endl;
+	  return -1;
+	}
     }
-  if (InputState.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
+  else
     {
-      cout << "error: vector and Hilbert-space have unequal dimensions " << InputState.GetVectorDimension() << " "<< TotalSpace->GetHilbertSpaceDimension() << endl;
-      return -1;
+      if (InputState.ReadVector(StateFileName) == false)
+	{
+	  cout << "error while reading " << StateFileName << endl;
+	  return -1;
+	}
+      if (InputState.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
+	{
+	  cout << "error: vector and Hilbert-space have unequal dimensions " << InputState.GetVectorDimension() << " "<< TotalSpace->GetHilbertSpaceDimension() << endl;
+	  return -1;
+	}
     }
 
   if (Manager.GetBoolean("compute-bilinears"))
     {
-      RealVector TmpState(TargetSpace->GetHilbertSpaceDimension());
-      for (int m = 0; m < MaxMomentum; ++m)
+      if (ComplexVectorFlag == false)
 	{
-	  cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
-	  ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
-	  VectorOperatorMultiplyOperation Operation(&TmpOperator, &InputState, &TmpState);
-	  Operation.ApplyOperation(Architecture.GetArchitecture());
-// 	  VectorOperatorMultiplyOperation
-// 	  TmpOperator.Multiply(InputState, TmpState);
-	  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
-	  sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, m);
-	  TmpState.WriteVector(OutputNameLz);
+	  RealVector TmpState(TargetSpace->GetHilbertSpaceDimension());
+	  for (int m = 0; m < MaxMomentum; ++m)
+	    {
+	      cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
+	      ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
+	      VectorOperatorMultiplyOperation Operation(&TmpOperator, &InputState, &TmpState);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());
+	      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+	      sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, m);
+	      TmpState.WriteVector(OutputNameLz);
+	    }
+	}
+      else
+	{
+	  ComplexVector TmpState(TargetSpace->GetHilbertSpaceDimension());
+	  for (int m = 0; m < MaxMomentum; ++m)
+	    {
+	      cout << "computing c^+_"<< ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
+	      ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
+	      VectorOperatorMultiplyOperation Operation(&TmpOperator, &ComplexInputState, &TmpState);
+	      Operation.ApplyOperation(Architecture.GetArchitecture());
+	      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+	      sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, m);
+	      TmpState.WriteVector(OutputNameLz);
+	    }
 	}
       return 0;
     }
@@ -235,15 +270,22 @@ int main(int argc, char** argv)
 
   cout << " Groundstate Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
  
-  ComplexVector State(InputState.GetVectorDimension(), true);
-  for (int i = 0; i < InputState.GetVectorDimension(); i++)
-   {
-     Complex Tmp;
-     Tmp.Re = InputState[i];
-     Tmp.Im = 0.0;
-     State[i] = Tmp;
-   }
-  
+  ComplexVector State;
+  if (ComplexVectorFlag == false)
+    {
+      State = ComplexVector(InputState.GetVectorDimension(), true);
+      for (int i = 0; i < InputState.GetVectorDimension(); i++)
+	{
+	  Complex Tmp;
+	  Tmp.Re = InputState[i];
+	  Tmp.Im = 0.0;
+	  State[i] = Tmp;
+	}
+    }
+  else
+    { 
+      State = ComplexInputState;
+    }
 
 
   double InvRatio = 1.0 / XRatio;
