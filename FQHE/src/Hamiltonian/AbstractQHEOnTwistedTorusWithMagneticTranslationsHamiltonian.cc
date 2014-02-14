@@ -840,8 +840,8 @@ void AbstractQHEOnTwistedTorusWithMagneticTranslationsHamiltonian::PartialEnable
 	  m2 = this->M2Value[j];
 	  m3 = this->M3Value[j];
 	  m4 = this->M4Value[j];
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < this->Particles->GetHilbertSpaceDimension())
+	  Index = TmpParticles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
+	  if (Index < TmpParticles->GetHilbertSpaceDimension())
 	    {
 	      TmpIndexArray[count] = Index;
 	      TmpCoefficientArray[count] = Coefficient * this->InteractionFactors[j];
