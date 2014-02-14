@@ -247,6 +247,17 @@ int main(int argc, char** argv)
 	    TmpValue2 += 2.0 * M_PI;
 	  TmpValue2 *= Factor;
 	  File << " " << TmpValue2 << " " << round(TmpValue2) << endl;
+	  if (NbrInputStates == 1)
+	    {
+	      if (C2OnlyFlag == false)
+		{
+		  cout << "C4 = " << round(TmpValue2) << " (" << TmpValue2 << ")" << endl;
+		}
+	      else
+		{
+		  cout << "C2 = " << round(TmpValue2) << " (" << TmpValue2 << ")" << endl;
+		}
+	    }
 	}      
     }
   else
