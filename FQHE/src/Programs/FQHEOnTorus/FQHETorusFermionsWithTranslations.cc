@@ -408,7 +408,8 @@ int main(int argc, char** argv)
               sprintf (EigenvectorName, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), XMomentum, YMomentum);
 	  delete [] TmpName;
 	}
-      double Shift=0.0;
+      double Shift = -10.0;
+      Hamiltonian->ShiftHamiltonian(Shift);      
       FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum, Shift, OutputName, FirstRun, EigenvectorName);
       Task.SetKxValue(XMomentum);
       if (Multiplicities!=0)
