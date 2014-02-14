@@ -31,6 +31,11 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
 
 // virtual destructor
 //
@@ -153,5 +158,16 @@ ComplexVector ParticleOnTorusWithMagneticTranslations::ConvertToKxKyBasis(Comple
 ComplexVector ParticleOnTorusWithMagneticTranslations::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnTorus* space)
 {
   return ComplexVector();
+}
+
+// get the C2 symmetric state of a given state 
+//
+// index = index of the state whose symmetric counterpart has to be computed
+// nbrTranslation = number of translations that has to be applied to C2 symmetric state to be in the canonical form
+
+int ParticleOnTorusWithMagneticTranslations::GetC2SymmetricState (int index, int& nbrTranslation)
+{
+  cout << "warning : GetC2SymmetricState not implemented" << endl;
+  return 0;
 }
 

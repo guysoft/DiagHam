@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/FermionOnSphere.h"
 
 using std::cout;
 using std::endl;
@@ -68,6 +69,11 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   int ComplementaryStateShift;
   // mask corresponding to StateShift
   unsigned long MomentumMask;
+
+  // shift to apply to a state before inverting its expression
+  int InvertShift;
+  // shift to apply to a state after inverting its expression
+  int InvertUnshift;
 
   // array describing each state 
   unsigned long* StateDescription;
@@ -221,7 +227,13 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // index = index of the state on which the operator has to be applied
   // m = index for creation operator
   // return value =  resulting multiplicative factor 
-  double AdA (int index, int m);
+  virtual double AdA (int index, int m);
+
+  // get the C2 symmetric state of a given state 
+  //
+  // index = index of the state whose symmetric counterpart has to be computed
+  // nbrTranslation = number of translations that has to be applied to C2 symmetric state to be in the canonical form
+  virtual int GetC2SymmetricState (int index, int& nbrTranslation);
 
   // print a given State
   //
@@ -332,6 +344,48 @@ inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
   return ParticleOnTorusWithMagneticTranslations::FermionicStatistic;
 }
 
+// get the C2 symmetric state of a given state 
+//
+// index = index of the state whose symmetric counterpart has to be computed
+// nbrTranslation = number of translations that has to be applied to C2 symmetric state to be in the canonical form
+
+inline int FermionOnTorusWithMagneticTranslations::GetC2SymmetricState (int index, int& nbrTranslation)
+{
+  //  cout << index << " : " << hex << this->StateDescription[index] << " ";
+  unsigned long InitialState = this->StateDescription[index] << this->InvertShift;
+  //  cout << hex << InitialState << " ";
+#ifdef __64_BITS__
+  unsigned long TmpState = FermionOnSphereInvertTable[InitialState & 0xff] << 56;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 8) & 0xff] << 48;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 16) & 0xff] << 40;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 24) & 0xff] << 32;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 32) & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 40) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 48) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[InitialState >> 56]; 
+#else
+  unsigned long TmpState = FermionOnSphereInvertTable[InitialState & 0xff] << 24;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 8) & 0xff] << 16;
+  TmpState |= FermionOnSphereInvertTable[(InitialState >> 16) & 0xff] << 8;
+  TmpState |= FermionOnSphereInvertTable[InitialState >> 24];
+#endif	
+  //  cout << TmpState << " ";
+  TmpState >>= this->InvertUnshift;
+  TmpState |= TmpState >> this->MaxMomentum;
+  TmpState &= ~(0x1ul << this->MaxMomentum);
+  //  cout << TmpState  << dec;
+  int TmpStateMaxMomentum = this->MaxMomentum;
+  while ((TmpState >> TmpStateMaxMomentum) == 0x0ul)
+    --TmpStateMaxMomentum;
+  //  cout << " " << TmpStateMaxMomentum;
+  TmpState = this->FindCanonicalForm(TmpState, TmpStateMaxMomentum, nbrTranslation);
+  if (this->TestXMomentumConstraint(TmpState, TmpStateMaxMomentum) == false)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  //  cout << " " << hex << TmpState << " " << dec << TmpStateMaxMomentum << endl;;
+  return this->FindStateIndex(TmpState, TmpStateMaxMomentum);
+}
 
 #endif
 

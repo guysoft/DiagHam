@@ -122,6 +122,12 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
   // return value = corresponding matrix
   Matrix& Ad (int i, Matrix& M);
 
+  // get the C2 symmetric state of a given state 
+  //
+  // index = index of the state whose symmetric counterpart has to be computed
+  // nbrTranslation = number of translations that has to be applied to C2 symmetric state to be in the canonical form
+  virtual int GetC2SymmetricState (int index, int& nbrTranslation);
+
   // core part of the evaluation density matrix particle partition calculation
   // 
   // minIndex = first index to consider in source Hilbert space

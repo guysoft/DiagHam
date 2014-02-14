@@ -208,7 +208,7 @@ int main(int argc, char** argv)
       if (ComplexInputState.GetVectorDimension() != TotalSpace->GetHilbertSpaceDimension())
 	{
 	  cout << "error: vector and Hilbert-space have unequal dimensions " << ComplexInputState.GetVectorDimension() 
-	       << " "<< TotalSpace->GetHilbertSpaceDimension() << endl;
+	       << " " << TotalSpace->GetHilbertSpaceDimension() << endl;
 	  return -1;
 	}
     }

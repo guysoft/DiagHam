@@ -82,6 +82,15 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations (
       this->MomentumMask <<= 1;
       this->MomentumMask |= 0x1ul;
     }
+#ifdef __64_BITS__
+  this->InvertShift = 32 - ((this->MaxMomentum + 1) >> 1);
+#else
+  this->InvertShift = 16 - ((this->MaxMomentum + 1) >> 1);
+#endif
+  if ((this->MaxMomentum & 1) == 0)
+    this->InvertUnshift = this->InvertShift - 1;
+  else
+    this->InvertUnshift = this->InvertShift;
 
   this->MaximumSignLookUp = 16;
   this->GenerateSignLookUpTable();
@@ -126,6 +135,8 @@ FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations(c
   this->MomentumModulo = fermions.MomentumModulo;
   this->XMomentum = fermions.XMomentum;
   this->YMomentum = fermions.YMomentum;
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
 
   this->MomentumIncrement = fermions.MomentumIncrement;
   this->StateShift = fermions.StateShift;
