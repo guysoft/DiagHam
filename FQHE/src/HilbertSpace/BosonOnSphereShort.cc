@@ -52,7 +52,7 @@
 #include <algorithm>
 #include <map>
 
-#define VERBOSE_FF
+//#define VERBOSE_FF
 
 
 using std::cout;

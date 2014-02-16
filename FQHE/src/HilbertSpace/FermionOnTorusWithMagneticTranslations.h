@@ -262,6 +262,15 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // return value = canonical form of a state description
   unsigned long FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
 
+  // safe version to find canonical form of a state description (with additional checks)
+  //
+  // stateDescription = unsigned integer describing the state
+  // maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
+  // nbrTranslation = number of translation needed to obtain the canonical form
+  // yMomentum = state momentum value in the y direction
+  // return value = canonical form of a state description
+  unsigned long SafeFindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation);
+
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
   // stateDescription = unsigned integer describing the state
@@ -342,6 +351,230 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
 inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
 {
   return ParticleOnTorusWithMagneticTranslations::FermionicStatistic;
+}
+
+// find canonical form of a state description
+//
+// stateDescription = unsigned integer describing the state
+// maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
+// nbrTranslation = number of translation needed to obtain the canonical form
+// return value = canonical form of a state description
+
+inline unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalForm(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  unsigned long CanonicalState = stateDescription;
+  unsigned long stateDescriptionReference = stateDescription;
+  int index = 1;
+  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+  while (stateDescriptionReference != stateDescription)
+    {
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslation = index;
+	}
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+      ++index;
+    }
+  if (nbrTranslation != 0)
+    {
+      maxMomentum = this->MaxMomentum;
+      stateDescription = 0x1ul << this->MaxMomentum;
+      while ((CanonicalState & stateDescription) ==0)      
+	{
+	  --maxMomentum;
+	  stateDescription >>= 1;
+	}
+      nbrTranslation = index - nbrTranslation;
+    }
+  return CanonicalState;
+}
+
+// find how many translations on the x direction are needed to obtain the same state
+//
+// stateDescription = unsigned integer describing the state
+// return value = number of translation needed to obtain the same state
+
+inline int FermionOnTorusWithMagneticTranslations::FindNumberXTranslation(unsigned long stateDescription)
+{
+  unsigned long TmpState = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+  int index = 1;  
+  while (TmpState != stateDescription)
+    {
+      TmpState = (TmpState >> this->StateShift) | ((TmpState & this->MomentumMask) << this->ComplementaryStateShift);
+      ++index;
+    }
+  return index;
+}
+
+// test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// maxMomentum = maximum momentum value that can be reached by a fermion in the stateDescription state
+// return value = true if the state satisfy the x momentum constraint
+
+inline bool FermionOnTorusWithMagneticTranslations::TestXMomentumConstraint(unsigned long stateDescription, int maxMomentum)
+{
+  if (this->NbrFermions & 1)
+    {
+      if (this->XMomentum == 0)
+	return true;
+      unsigned long TmpState = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+      int index = 1;  
+      while (TmpState != stateDescription)
+	{
+	  TmpState = (TmpState >> this->StateShift) | ((TmpState & this->MomentumMask) << this->ComplementaryStateShift);
+	  ++index;
+	}
+      if (((this->XMomentum * index) % this->MomentumModulo) == 0)
+	return true;
+      else
+	return false;
+    }
+  else
+    {
+      unsigned long TmpState2 = stateDescription & this->MomentumMask;
+      unsigned long TmpState = (stateDescription >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
+      int TmpSignature = 0;
+      int index = 1;  
+#ifndef  __64_BITS__
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]) & 1;
+#else
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]
+		       + this->NbrParticleLookUpTable[(TmpState2 >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & 0xfffful]) & 1;
+#endif
+
+      while (TmpState != stateDescription)
+	{
+	  TmpState2 = TmpState & this->MomentumMask;
+	  TmpState = (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
+#ifndef  __64_BITS__
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]) & 1;
+#else
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]
+			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & 0xfffful]) & 1;
+#endif
+	  ++index;
+	}
+      if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1)) % this->MomentumModulo) == 0)
+	return true;
+      else
+	return false;
+    }
+}
+
+// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to the x momentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// maxMomentum = reference on the maximum momentum value that can be reached by a fermion in the stateDescription state (will be changed to the one of the canonical form)
+// nbrTranslation = number of translation needed to obtain the canonical form
+// return value = canonical form of a state description and -1 in nbrTranslation if the state does not fit the x momentum constraint
+
+inline unsigned long FermionOnTorusWithMagneticTranslations::FindCanonicalFormAndTestXMomentumConstraint(unsigned long stateDescription, int& maxMomentum, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  unsigned long CanonicalState = stateDescription;
+  unsigned long stateDescriptionReference = stateDescription;
+  int index = 1;  
+  if (this->NbrFermions & 1)
+    {
+      stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+      while (stateDescriptionReference != stateDescription)
+	{
+	  if (stateDescription < CanonicalState)
+	    {
+	      CanonicalState = stateDescription;
+	      nbrTranslation = index;
+	    }
+	  stateDescription = (stateDescription >> this->StateShift) | ((stateDescription & this->MomentumMask) << this->ComplementaryStateShift);
+	  ++index;
+	}
+      if (((this->XMomentum * index) % this->MomentumModulo) != 0)
+	{
+	  nbrTranslation = -1;
+	  return CanonicalState;
+	}
+    }
+  else
+    {
+      unsigned long TmpState = stateDescription & this->MomentumMask;
+      stateDescription = (stateDescription >> this->StateShift) | (TmpState << this->ComplementaryStateShift);
+      int TmpSignature = 0;
+#ifndef  __64_BITS__
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]) & 1;
+#else
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]
+		       + this->NbrParticleLookUpTable[(TmpState >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 48) & 0xfffful]) & 1;
+#endif
+
+      while (stateDescription != stateDescriptionReference)
+	{
+	  if (stateDescription < CanonicalState)
+	    {
+	      CanonicalState = stateDescription;
+	      nbrTranslation = index;
+	    }
+	  TmpState = stateDescription & this->MomentumMask;
+	  stateDescription = (stateDescription >> this->StateShift) | (TmpState << this->ComplementaryStateShift);
+#ifndef  __64_BITS__
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]) & 1;
+#else
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]
+			   + this->NbrParticleLookUpTable[(TmpState >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 48) & 0xfffful]) & 1;
+#endif
+	  ++index;
+	}
+      if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1)) % this->MomentumModulo) != 0)
+	{
+	  nbrTranslation = -1;
+	  return CanonicalState;
+	}
+    }
+  if (nbrTranslation != 0)
+    {
+      maxMomentum = this->MaxMomentum;
+      stateDescription = 0x1ul << this->MaxMomentum;
+      while ((CanonicalState & stateDescription) ==0)      
+	{
+	  --maxMomentum;
+	  stateDescription >>= 1;
+	}
+      nbrTranslation = index - nbrTranslation;
+    }
+  return CanonicalState;
+}
+
+// find state index
+//
+// stateDescription = unsigned longeger describing the state
+// maxMomentum = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+inline int FermionOnTorusWithMagneticTranslations::FindStateIndex(unsigned long stateDescription, int maxMomentum)
+{
+  long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
+  long PosMin = this->LookUpTable[maxMomentum][PosMax];
+  PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMin != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    return PosMax;
 }
 
 // get the C2 symmetric state of a given state 
