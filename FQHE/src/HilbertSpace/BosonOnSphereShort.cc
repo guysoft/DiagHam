@@ -3337,8 +3337,9 @@ RealVector& BosonOnSphereShort::ConvertFromUnnormalizedMonomial(RealVector& stat
 		}
 	      while ((Index1 < this->NbrBosons) && (Index2 < this->NbrBosons) && (TmpMonomialReference[Index1] == TmpMonomial[Index2]))
 		{
+#ifdef VERBOSE_FF
 		  cout << " -- 1=2@"<<Index1<<" -- ";
-
+#endif
 		  ++Index1;
 		  ++Index2;
 		}
