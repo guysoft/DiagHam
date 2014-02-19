@@ -29,13 +29,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef ABSTRACTQHEONTORUSWITHMAGNETICTRANSLATIONSHAMILTONIAN_H
-#define ABSTRACTQHEONTORUSWITHMAGNETICTRANSLATIONSHAMILTONIAN_H
+#ifndef ABSTRACTQHEONTORUSWITHMAGNETICTRANSLATIONSHAMILTONIANV2_H
+#define ABSTRACTQHEONTORUSWITHMAGNETICTRANSLATIONSHAMILTONIANV2_H
 
 
 #include "config.h"
-#include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
-#include "Hamiltonian/AbstractQHEHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian.h"
 
 #include <iostream>
 
@@ -46,22 +45,13 @@ using std::ostream;
 class AbstractArchitecture;
 
 
-class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHEHamiltonian
+class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian
 {
 
   friend class QHEParticlePrecalculationOperation;
 
  protected:
   
-  // Hilbert space associated to the system
-  ParticleOnTorusWithMagneticTranslations* Particles;
-
-  // number of particles
-  int NbrParticles;
-
-  // global energy shift (can be used to store the energy of the Wigner crystal)
-  double EnergyShift;
-
   // ratio between the width in the x direction and the width in the y direction
   double Ratio;
   // ratio between the width in the y direction and the width in the x direction
@@ -76,143 +66,14 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
   // GCD of MaxMomentum and NbrFermions (momemta are defined modulo MomentumModulo)
   int MomentumModulo;
 
-  // shift to apply to go from precalculation index to the corresponding index in the HilbertSpace
-  int PrecalculationShift;
-
-  // array containing all interaction factors 
-  double* InteractionFactors;
-  // number of interaction factors
-  int NbrInteractionFactors;
-  // arrays for indices attached to each interaction factor
-  int* M1Value;
-  int* M2Value;
-  int* M3Value;
-  int* M4Value;
-
-  // flag for fast multiplication algorithm
-  bool FastMultiplicationFlag;
-  // step between each precalculated index
-  int FastMultiplicationStep;
-  // number of non-null term in the hamiltonian for each state
-  int* NbrInteractionPerComponent;
-  // index of the state obtained for each term of the hamiltonian when applying on a given state
-  int** InteractionPerComponentIndex;
-  // multiplicative coefficient obtained for each term of the hamiltonian when applying on a given state and with a given destination state
-  double** InteractionPerComponentCoefficient;
-  // number of transaltion obtained for each term of the hamiltonian when applying on a given state and with a given destination state
-  int** InteractionPerComponentNbrTranslation;
-
-  //array containing all the cosinus that are needed when computing matrix elements
-  double* CosinusTable;
-  //array containing all the sinus that are needed when computing matrix elements
-  double* SinusTable;
+  //array containing all the phase factors that are needed when computing matrix elements
+  Complex* ExponentialFactors;
 
  public:
 
   // destructor
   //
-  virtual ~AbstractQHEOnTorusWithMagneticTranslationsHamiltonian() = 0;
-
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // get Hilbert space on which Hamiltonian acts
-  //
-  // return value = pointer to used Hilbert space
-  virtual AbstractHilbertSpace* GetHilbertSpace ();
-
-  // return dimension of Hilbert space where Hamiltonian acts
-  //
-  // return value = corresponding matrix elementdimension
-  virtual int GetHilbertSpaceDimension ();
-  
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  virtual void ShiftHamiltonian (double shift);
-
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  virtual Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
-
-  // multiply a et of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another et of vectors, low level function (no architecture optimization)
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
-						     int firstComponent, int nbrComponent);
- 
-  // return a list of left interaction operators
-  //
-  // return value = list of left interaction operators
-  virtual List<Matrix*> LeftInteractionOperators();  
-
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  virtual List<Matrix*> RightInteractionOperators();  
-
-  // save precalculations in a file
-  // 
-  // fileName = pointer to a string containg the name of the file where precalculations have to be stored
-  // return value = true if no error occurs
-  virtual bool SavePrecalculation (char* fileName);
+  virtual ~AbstractQHEOnTorusWithMagneticTranslationsHamiltonian();
 
  protected:
  
@@ -220,35 +81,463 @@ class AbstractQHEOnTorusWithMagneticTranslationsHamiltonian : public AbstractQHE
   //   
   virtual void EvaluateInteractionFactors() = 0;
 
-  // test the amount of memory needed for fast multiplication algorithm
-  //
-  // allowedMemory = amount of memory that cam be allocated for fast multiplication
-  // return value = amount of memory needed
-  virtual long FastMultiplicationMemory(long allowedMemory);
+  // evaluate all exponential factors
+  //   
+  virtual void EvaluateExponentialFactors();
 
-  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
+  // get all the indices that should appear in the annihilation/creation operators
   //
+  virtual void GetIndices();
+
+  // core part of the AddMultiply method involving the two-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added
+  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // tmpCoefficients = a temporary array whose size is nbrVectors
+  virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+
+  // core part of the AddMultiply method involving the two-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSource = vector to be multiplied
+  // vDestination = vector at which result has to be added  
+  virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
+
+  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // vSources = array of vectors to be multiplied
+  // vDestinations = array of vectors at which result has to be added
+  // nbrVectors = number of vectors that have to be evaluated together
+  // tmpCoefficients = a temporary array whose size is nbrVectors
+  inline void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+							     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
+
+  // core part of the FastMultiplication method involving the two-body interaction
+  // 
+  // particles = pointer to the Hilbert space
+  // index = index of the component on which the Hamiltonian has to act on
+  // indexArray = array where indices connected to the index-th component through the Hamiltonian
+  // coefficientArray = array of the numerical coefficients related to the indexArray
+  // position = reference on the current position in arrays indexArray and coefficientArray  
+  virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+							    int* indexArray, Complex* coefficientArray, long& position);
+
+  // core part of the PartialFastMultiplicationMemory method involving two-body term
+  // 
+  // particles = pointer to the Hilbert space
   // firstComponent = index of the first component that has to be precalcualted
   // lastComponent  = index of the last component that has to be precalcualted
-  // return value = number of non-zero matrix element
-  virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
-
-  // enable fast multiplication algorithm
-  //
-  virtual void EnableFastMultiplication();
-
-  // enable fast multiplication algorithm (partial evaluation)
-  //
-  // jobIndex = index of the job that proceeds part of the fast multiplication evaluation
-  // nbrJob = number of jobs that proceed the fast multiplication evaluation
-  virtual void PartialEnableFastMultiplication(int jobIndex, int nbrJob);
-
-  // load precalculations from a file
-  // 
-  // fileName = pointer to a string containg the name of the file where precalculations have to be read
-  // return value = true if no error occurs
-  virtual bool LoadPrecalculation (char* fileName);
+  // memory = reference on the amount of memory required for precalculations  
+  virtual void EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
 
 };
+
+// core part of the AddMultiply method involving the two-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+
+inline void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+{
+  int Dim = particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double Coefficient3;
+  Complex Coefficient4;
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  int Index;
+  int NbrTranslations;
+  for (int j = 0; j < this->NbrSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+      TmpIndices = this->SectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  if ((*TmpInteractionFactor) != 0.0)
+		    {
+		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+		      if (Index < Dim)
+			{
+			  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * (this->ExponentialFactors[NbrTranslations] * Coefficient4);
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+}
+
+
+// core part of the AddMultiply method involving the two-body interaction for a set of vectors
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// tmpCoefficients = a temporary array whose size is nbrVectors
+
+inline void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+													      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+{
+  int Dim = particles->GetHilbertSpaceDimension();
+  double Coefficient;
+  double Coefficient3;
+  int Index;
+  int NbrTranslations;
+  
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  Complex Tmp;
+  for (int j = 0; j < this->NbrSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+      TmpIndices = this->SectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  if ((*TmpInteractionFactor) != 0.0)
+		    {
+		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+		      if (Index < Dim)
+			{
+			  Tmp = Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslations];
+			  for (int p = 0; p < nbrVectors; ++p)
+			    vDestinations[p][Index] += Tmp * tmpCoefficients[p];
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+}
+
+// core part of the AddMultiply method involving the two-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSource = vector to be multiplied
+// vDestination = vector at which result has to be added
+
+inline void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+{
+  double Coefficient;
+  double Coefficient3;
+  Complex Coefficient4;
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  int Index;
+  int NbrTranslations;
+  Complex TmpSum = 0.0;
+  for (int j = 0; j < this->NbrSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+      TmpIndices = this->SectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  if ((*TmpInteractionFactor) != 0.0)
+		    {
+		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+		      if (Index <= index)
+			{
+			  if (Index < index)
+			    TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(this->ExponentialFactors[NbrTranslations] *  (*TmpInteractionFactor));
+			  vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * (this->ExponentialFactors[NbrTranslations] * Coefficient4);
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+  vDestination[index] += TmpSum;
+}
+
+
+// core part of the AddMultiply method involving the two-body interaction for a set of vectors
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// vSources = array of vectors to be multiplied
+// vDestinations = array of vectors at which result has to be added
+// nbrVectors = number of vectors that have to be evaluated together
+// tmpCoefficients = a temporary array whose size is nbrVectors
+
+inline void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+														       ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+{
+  double Coefficient;
+  double Coefficient3;
+  int Index;
+  int NbrTranslations;
+  
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  Complex* TmpSum = new Complex[nbrVectors];
+  Complex Tmp;
+  Complex Tmp2;
+  for (int j = 0; j < this->NbrSectorSums; ++j)
+    {
+      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+      TmpIndices = this->SectorIndicesPerSum[j];
+      for (int i1 = 0; i1 < Lim; i1 += 2)
+	{
+	  Coefficient3 = particles->AA(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  if ((*TmpInteractionFactor) != 0.0)
+		    {
+		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+		      if (Index <= index)
+			{
+			  if (Index < index)
+			    {
+			      Tmp = Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslations];
+			      Tmp2 = (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslations]);
+			      for (int p = 0; p < nbrVectors; ++p)
+				{
+				  vDestinations[p][Index] += Tmp * tmpCoefficients[p];
+				  TmpSum[p] += Tmp2 * vSources[p][Index];
+				}
+			    }
+			  else
+			    {
+			      Tmp = Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslations];
+			      for (int p = 0; p < nbrVectors; ++p)
+				{
+				  vDestinations[p][Index] += Tmp * tmpCoefficients[p];
+				}
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	}
+    }
+  for (int l = 0; l < nbrVectors; ++l)
+    vDestinations[l][index] += TmpSum[l];
+  delete[] TmpSum;
+}
+
+// core part of the FastMultiplication method involving the two-body interaction
+// 
+// particles = pointer to the Hilbert space
+// index = index of the component on which the Hamiltonian has to act on
+// indexArray = array where indices connected to the index-th component through the Hamiltonian
+// coefficientArray = array of the numerical coefficients related to the indexArray
+// position = reference on the current position in arrays indexArray and coefficientArray
+
+inline void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+														  int* indexArray, Complex* coefficientArray, long& position)
+{
+  int Index;
+  double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
+  int* TmpIndices;
+  Complex* TmpInteractionFactor;
+  int NbrTranslations;
+  int Dim = particles->GetHilbertSpaceDimension();
+
+  if (this->HermitianSymmetryFlag == false)
+    {
+      for (int j = 0; j < this->NbrSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+	  TmpIndices = this->SectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+	      Coefficient2 = particles->AA(index + this->PrecalculationShift, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      if ((*TmpInteractionFactor) != 0.0)
+			{
+			  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+			  if (Index < Dim)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient2 * (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (int j = 0; j < this->NbrSectorSums; ++j)
+	{
+	  int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+	  TmpIndices = this->SectorIndicesPerSum[j];
+	  for (int i1 = 0; i1 < Lim; i1 += 2)
+	    {
+	      int AbsoluteIndex = index + this->PrecalculationShift;
+	      Coefficient2 = particles->AA(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1]);
+	      if (Coefficient2 != 0.0)
+		{
+		  TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      if ((*TmpInteractionFactor) != 0.0)
+			{
+			  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+			  if (Index <= AbsoluteIndex)
+			    {
+			      if (Index == AbsoluteIndex)
+				{
+				  indexArray[position] = Index;
+				  coefficientArray[position] = Coefficient * Coefficient2 * 0.5 * (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
+				  ++position;
+				}
+			      else
+				{
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient2 * (this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor));
+			      ++position;
+				}
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		}
+	    }
+	}
+    }
+}
+
+// core part of the PartialFastMultiplicationMemory method involving two-body term
+// 
+// particles = pointer to the Hilbert space
+// firstComponent = index of the first component that has to be precalcualted
+// lastComponent  = index of the last component that has to be precalcualted
+// memory = reference on the amount of memory required for precalculations
+
+inline void AbstractQHEOnTorusWithMagneticTranslationsHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+{
+  int Index;
+  double Coefficient = 0.0;
+  double Coefficient2 = 0.0;
+  int* TmpIndices;
+  int NbrTranslations;
+  int Dim = particles->GetHilbertSpaceDimension();
+
+  if (this->HermitianSymmetryFlag == false)
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  for (int j = 0; j < this->NbrSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+	      TmpIndices = this->SectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+		  Coefficient2 = particles->AA(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      Complex* TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  if ((*TmpInteractionFactor) != 0.0)
+			    {
+			      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+			      if (Index < Dim)
+				{
+				  ++memory;
+				  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+				}
+			    }
+			  ++TmpInteractionFactor;
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  for (int j = 0; j < this->NbrSectorSums; ++j)
+	    {
+	      int Lim = 2 * this->NbrSectorIndicesPerSum[j];
+	      TmpIndices = this->SectorIndicesPerSum[j];
+	      for (int i1 = 0; i1 < Lim; i1 += 2)
+		{
+		  Coefficient2 = particles->AA(i, TmpIndices[i1], TmpIndices[i1 + 1]);
+		  if (Coefficient2 != 0.0)
+		    {
+		      Complex* TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  if ((*TmpInteractionFactor) != 0.0)
+			    {
+			      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
+			      if (Index <= i)
+				{
+				  ++memory;
+				  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+				}
+			    }
+			  ++TmpInteractionFactor;
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
 
 #endif

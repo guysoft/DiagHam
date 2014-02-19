@@ -166,17 +166,6 @@ void AbstractQHEOnTorusHamiltonian::GetIndices()
 	  for (int m1 = 0; m1 <= this->LzMax; ++m1)
 	    for (int m2 = m1; m2 <= this->LzMax; ++m2)
 	      {
-		int TmpSum = (m1 + m2) % this->NbrLzValue;
-		this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = m1;
-		this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = m2;
-		++this->NbrSectorIndicesPerSum[TmpSum];    
-	      }
-	}
-      else
-	{
-	  for (int m1 = 0; m1 <= this->LzMax; ++m1)
-	    for (int m2 = m1; m2 <= this->LzMax; ++m2)
-	      {
 		if (SearchInArray<int>(m1 * this->NbrLzValue + m2, this->FilterInteractionIndices, this->NbrFilterInteractionIndices) >= 0)
 		  {
 		    int TmpSum = (m1 + m2) % this->NbrLzValue;
@@ -184,6 +173,17 @@ void AbstractQHEOnTorusHamiltonian::GetIndices()
 		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = m2;
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
+	      }
+	}
+      else
+	{
+	  for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	    for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	      {
+		int TmpSum = (m1 + m2) % this->NbrLzValue;
+		this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = m1;
+		this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = m2;
+		++this->NbrSectorIndicesPerSum[TmpSum];    
 	      }
 	}
     }

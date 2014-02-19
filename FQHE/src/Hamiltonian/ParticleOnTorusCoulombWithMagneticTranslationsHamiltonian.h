@@ -52,10 +52,33 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
 {
 
  protected:
+
   // energy of wigner crystal reference
   double WignerEnergy;
 
+  // landau Level index
+  int LandauLevel;
+
+  // Number of Pseudopotential
+  int NbrPseudopotentials;
+
+  // pseudopotential coefficients
+  double *Pseudopotentials;
+
+  // flag indicating whether Coulomb part is present
+  bool HaveCoulomb;
+
+  // form factor of the interaction (a single Laguerre polynomial for the Landau levels of GaAs)
+  Polynomial FormFactor;
+  
+  // Laguerre polynomial for the pseudopotentials
+  Polynomial *LaguerreM;
+
  public:
+
+  // default constructor
+  //
+  ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian();
 
   // constructor from default datas
   //
@@ -94,21 +117,7 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian& H);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian& H);
-
- private:
+ protected:
  
   // evaluate all interaction factors
   //   
@@ -148,28 +157,7 @@ class ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian : public Abstrac
   // nbrSubdivision = number of subdivision used for the integral
   // return value = value of the integral
   double PartialMisraFunction (double n, double x, double min, double max, int nbrSubdivision);
-
   
- private:
-  
-  // landau Level index
-  int LandauLevel;
-
-  // Number of Pseudopotential
-  int NbrPseudopotentials;
-
-  // pseudopotential coefficients
-  double *Pseudopotentials;
-
-  // flag indicating whether Coulomb part is present
-  bool HaveCoulomb;
-
-  // form factor of the interaction (a single Laguerre polynomial for the Landau levels of GaAs)
-  Polynomial FormFactor;
-  
-  // Laguerre polynomial for the pseudopotentials
-  Polynomial *LaguerreM;
-
 
 };
 

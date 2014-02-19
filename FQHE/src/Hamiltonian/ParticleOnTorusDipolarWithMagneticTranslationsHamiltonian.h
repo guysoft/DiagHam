@@ -36,7 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorus.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "Hamiltonian/AbstractQHEOnTorusWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
 
 #include <iostream>
 
@@ -47,7 +47,7 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsHamiltonian
+class ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian : public ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian
 {
 
  private:
@@ -79,36 +79,8 @@ class ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian : public Abstrac
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
 
-  // set Hilbert space
-  //
-  // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
-
-  // shift Hamiltonian from a given energy
-  //
-  // shift = shift value
-  void ShiftHamiltonian (double shift);
-
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian& H);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusDipolarWithMagneticTranslationsHamiltonian& H);
-
  private:
  
-  // evaluate all interaction factors
-  //   
-  void EvaluateInteractionFactors();
-
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //
   // m1 = first index

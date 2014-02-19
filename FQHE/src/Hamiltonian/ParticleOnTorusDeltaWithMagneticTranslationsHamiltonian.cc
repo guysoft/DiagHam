@@ -36,6 +36,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealAntisymmetricMatrix.h"
 #include "MathTools/Complex.h"
+#include "MathTools/IntegerAlgebraTools.h"
 #include "Output/MathematicaOutput.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "MathTools/ClebschGordanCoefficients.h"
@@ -72,25 +73,27 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::ParticleOnTorusDeltaWit
 														 long memory, char* precalculationFileName)
 {
   this->Particles = particles;
+  this->LzMax = maxMomentum - 1;
+  this->NbrLzValue = this->LzMax + 1;
   this->MaxMomentum = maxMomentum;
   this->XMomentum = xMomentum;
-  this->NbrLzValue = this->MaxMomentum + 1;
   this->NbrParticles = nbrParticles;
+  this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->FastMultiplicationFlag = false;
+  this->HermitianSymmetryFlag = true;
+  this->OneBodyInteractionFactors = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
   double WignerEnergy = this->EvaluateWignerCrystalEnergy() / 2.0;
   this->Architecture = architecture;
-  cout << "Wigner Energy = " << WignerEnergy << endl;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;
+  cout << "Wigner Energy = " << WignerEnergy << endl;  
   this->EvaluateInteractionFactors();
-  this->EnergyShift = 0.0;
-  this->CosinusTable = new double [this->MaxMomentum];
-  this->SinusTable = new double [this->MaxMomentum];
-  for (int i = 0; i < this->MaxMomentum; ++i)
-    {
-      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
-      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
-    }
+  this->HamiltonianShift = ((double) this->NbrParticles)*WignerEnergy;
+  this->EvaluateExponentialFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -121,209 +124,6 @@ ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::ParticleOnTorusDeltaWit
 
 ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::~ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian() 
 {
-  delete[] this->InteractionFactors;
-  delete[] this->M1Value;
-  delete[] this->M2Value;
-  delete[] this->M3Value;
-  delete[] this->M4Value;
-  delete[] this->CosinusTable;
-  delete[] this->SinusTable;
-  if (this->FastMultiplicationFlag == true)
-    {
-      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	  delete[] this->InteractionPerComponentNbrTranslation[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-      delete[] this->InteractionPerComponentNbrTranslation;
-      this->FastMultiplicationFlag = false;
-    }
-}
-
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
-
-void ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  delete[] this->InteractionFactors;
-  if (this->FastMultiplicationFlag == true)
-    {
-      for (int i = 0; i < this->Particles->GetHilbertSpaceDimension(); ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	  delete[] this->InteractionPerComponentNbrTranslation[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-      delete[] this->InteractionPerComponentNbrTranslation;
-    }
-  this->Particles = (ParticleOnTorusWithMagneticTranslations*) hilbertSpace;
-  this->EvaluateInteractionFactors();
-}
-
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::ShiftHamiltonian (double shift)
-{
-}
-  
-// evaluate all interaction factors
-//   
-
-void ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
-{
-  int Pos = 0;
-  int m4;
-  double* TmpCoefficient = new double [this->NbrLzValue * this->NbrLzValue * this->NbrLzValue];
-  double MaxCoefficient = 0.0;
-
-  if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
-    {
-     for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 > m4)
-		{
-		  TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					 + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					 - this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		  if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		    MaxCoefficient = fabs(TmpCoefficient[Pos]);
-		  ++Pos;
-		}
-	    }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new double [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 < m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 > m4)
-		{
-		  if  (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		      this->M1Value[this->NbrInteractionFactors] = m1;
-		      this->M2Value[this->NbrInteractionFactors] = m2;
-		      this->M3Value[this->NbrInteractionFactors] = m3;
-		      this->M4Value[this->NbrInteractionFactors] = m4;
-		      ++this->NbrInteractionFactors;
-		    }
-		  ++Pos;
-		}
-	    }
-    }
-  else
-    {
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 <= m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 > m4)
-		{
-		  if (m1 != m2)
-		    {
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		    }
-		  else
-		    TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					   + this->EvaluateInteractionCoefficient(m1, m2, m4, m3));
-		  if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		    MaxCoefficient = fabs(TmpCoefficient[Pos]);
-		  ++Pos;
-		}
-	      else
-		if (m3 == m4)
-		  {
-		    if (m1 != m2)
-		      TmpCoefficient[Pos] = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4));
-		    else
-		      TmpCoefficient[Pos] = this->EvaluateInteractionCoefficient(m1, m2, m3, m4);
-		    if (MaxCoefficient < fabs(TmpCoefficient[Pos]))
-		      MaxCoefficient = fabs(TmpCoefficient[Pos]);
-		    ++Pos;
-		  }
-	    }
-      this->NbrInteractionFactors = 0;
-      this->M1Value = new int [Pos];
-      this->M2Value = new int [Pos];
-      this->M3Value = new int [Pos];
-      this->M4Value = new int [Pos];
-      this->InteractionFactors = new double [Pos];
-      cout << "nbr interaction = " << Pos << endl;
-      Pos = 0;
-      MaxCoefficient *= MACHINE_PRECISION;
-      for (int m1 = 0; m1 < this->MaxMomentum; ++m1)
-	for (int m2 = 0; m2 <= m1; ++m2)
-	  for (int m3 = 0; m3 < this->MaxMomentum; ++m3)
-	    {
-	      m4 = m1 + m2 - m3;
-	      if (m4 < 0)
-		m4 += this->MaxMomentum;
-	      else
-		if (m4 >= this->MaxMomentum)
-		  m4 -= this->MaxMomentum;
-	      if (m3 >= m4)
-		{
-		  if (fabs(TmpCoefficient[Pos]) > MaxCoefficient)
-		    {
-		      this->InteractionFactors[this->NbrInteractionFactors] = TmpCoefficient[Pos];
-		      this->M1Value[this->NbrInteractionFactors] = m1;
-		      this->M2Value[this->NbrInteractionFactors] = m2;
-		      this->M3Value[this->NbrInteractionFactors] = m3;
-		      this->M4Value[this->NbrInteractionFactors] = m4;
-		      ++this->NbrInteractionFactors;
-		    }
-		  ++Pos;
-		}
-	    }
-    }
-  cout << "nbr interaction = " << this->NbrInteractionFactors << endl;
-  cout << "====================================" << endl;
-  delete[] TmpCoefficient;
 }
 
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
@@ -344,7 +144,6 @@ double ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::EvaluateInteract
   double N1;
   double Q2;
   double Precision;
-//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
@@ -483,75 +282,5 @@ double ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian::PartialMisraFunc
   Sum += (0.5 - M1_12 * 2.0 * x * min * max) * exp(min * min * x);
   Sum *= max;
   return Sum;
-}
-
-// Output Stream overload
-//
-// Str = reference on output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-ostream& operator << (ostream& Str, ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian& H) 
-{
-  ComplexVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  ComplexVector* TmpV = new ComplexVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = ComplexVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2.Re(i - 1) = 0.0;
-      TmpV2.Re(i) = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      for (int j = 0; j < H.Particles->GetHilbertSpaceDimension(); j++)
-	{
-	  Str << "(" << TmpV[j].Re(i) << ", " << TmpV[j].Im(i) << ")    ";
-	}
-      Str << endl;
-    }
-  return Str;
-}
-
-// Mathematica Output Stream overload
-//
-// Str = reference on Mathematica output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusDeltaWithMagneticTranslationsHamiltonian& H) 
-{
-  ComplexVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  ComplexVector* TmpV = new ComplexVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = ComplexVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	{
-	  TmpV2.Re(i - 1) = 0.0;
-	}
-      TmpV2.Re(i) = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  Str << "{";
-  for (int i = 0; i < (H.Particles->GetHilbertSpaceDimension() - 1); i++)
-    {
-      Str << "{";
-      for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-	{
-	  Str << TmpV[j][i] << ",";
-	}
-      Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][i];
-      Str << "},";
-    }
-  Str << "{";
-  for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-    {
-      Str << TmpV[j][H.Particles->GetHilbertSpaceDimension() - 1] << ",";
-    }
-  Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][H.Particles->GetHilbertSpaceDimension() - 1];
-  Str << "}}";
-  return Str;
 }
 

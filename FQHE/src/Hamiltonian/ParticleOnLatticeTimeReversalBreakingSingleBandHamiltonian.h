@@ -648,6 +648,11 @@ inline void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::Evaluate
 	  vDestination[i] += (this->HamiltonianShift + TmpDiagonal)* vSource[i];
 	}
     }
+  else
+    {
+       for (int i = firstComponent; i < lastComponent; i += step)
+	 vDestination[i] += this->HamiltonianShift * vSource[i];
+    }
 }
 
 // core part of the AddMultiply method involving the one-body interaction for a set of vectors, including loop on vector components
@@ -679,6 +684,16 @@ inline void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::Evaluate
 		}
 	      TmpDestinationVector[i] += (this->HamiltonianShift + TmpDiagonal)* TmpSourceVector[i];
 	    }
+	}
+    }
+  else
+    {
+      for (int p = 0; p < nbrVectors; ++p)
+	{
+	  ComplexVector& TmpSourceVector = vSources[p];
+	  ComplexVector& TmpDestinationVector = vDestinations[p];
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
 	}
     }
 }

@@ -318,7 +318,7 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // generate all states corresponding to the constraints
   // tmpDimension = max dimension of Hilbert space (to be reduced by symmetries)
   // return value = hilbert space dimension
-  int GenerateStates(long tmpDimension);
+  long GenerateStates(long tmpDimension);
 
   // generate all states corresponding to the constraints (without taking into the canonical form) 
   // 
@@ -328,7 +328,7 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // pos = position in StateDescription array where to store states
   // currentYMomentum = current value of the momentum in the y direction
   // return value = position from which new states have to be stored
-  int RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentUMomentum);
+  virtual long RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, int currentUMomentum);
 
   // core part of the evaluation density matrix particle partition calculation
   // 
