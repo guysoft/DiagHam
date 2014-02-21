@@ -10,6 +10,8 @@
 #include "Hamiltonian/ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelHaldaneHoneycombLattice.h"
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -90,6 +92,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model. The n-body interaction strength with largest n is set to unity");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
@@ -139,6 +142,8 @@ int main(int argc, char** argv)
     }
 
   char* FilePrefix = new char [512];
+  char* FileParameterString = new char [256];
+  sprintf (FileParameterString, "t1_%f_t2_%f_t3_%f_phi_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi"));
   int lenFilePrefix=0;
   if (Manager.GetBoolean("single-band") == false)
     {
@@ -163,7 +168,7 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("three-body") == true || Manager.GetBoolean("four-body") == true) || Manager.GetBoolean("flat-band") == false)
           lenFilePrefix += sprintf (FilePrefix + lenFilePrefix, "_u_%f", Manager.GetDouble("u-potential"));
       lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_v_%f", Manager.GetDouble("v-potential"));
-      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_t1_%f_t2_%f_t3_%f_phi_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("t3"), Manager.GetDouble("phi"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+      lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_%s_gx_%f_gy_%f", FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
       if (Manager.GetDouble("mu-s") != 0.0)
           lenFilePrefix += sprintf(FilePrefix + lenFilePrefix, "_mus_%f", Manager.GetDouble("mu-s"));
     }
@@ -220,10 +225,20 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-  TightBindingModelHaldaneHoneycombLattice TightBindingModel(NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-							     HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
-
-
+  Abstract2DTightBindingModel* TightBindingModel;
+  if (Manager.GetString("import-onebody") == 0)
+    {
+      TightBindingModel = new TightBindingModelHaldaneHoneycombLattice (NbrSiteX, NbrSiteY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+									HaldanePhi, Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      char* BandStructureOutputFile = new char [1024];
+      sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+    }
+  else
+    {
+      TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+    }
+   
   if(Manager.GetBoolean("WannierHilbertSpace"))
     {
       MinKx=0;
@@ -268,7 +283,7 @@ int main(int argc, char** argv)
               {
                   Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
 										       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-										       &TightBindingModel, 
+										       TightBindingModel, 
 										       Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
               }
               else
@@ -277,13 +292,13 @@ int main(int argc, char** argv)
                   {
                       Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
 												    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-												    &TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+												    TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                   }
                   else
                   {
                       Hamiltonian = new ParticleOnLatticeHaldaneModelSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSiteX, NbrSiteY, 
 												   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("s-potential"),
-												   &TightBindingModel, 
+												   TightBindingModel, 
 												   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
                   }
               }

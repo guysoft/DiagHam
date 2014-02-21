@@ -184,7 +184,8 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-
+  char* FileParameterString = new char [256];
+  sprintf (FileParameterString, "tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g", Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"));
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* EigenvalueOutputFile = new char [512];
@@ -197,16 +198,16 @@ int main(int argc, char** argv)
 	  if (Manager.GetDouble("v-potential") == 0.0)
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_%s_gx_%g_gy_%g.dat",FilePrefix, FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	  else
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	}
       else
@@ -214,16 +215,16 @@ int main(int argc, char** argv)
 	  if (Manager.GetDouble("v-potential") == 0.0)
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_%s_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	  else
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_tr_%g_ti_%g_t1r_%g_t1i_%g_t4_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("tr"), Manager.GetDouble("ti"), Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	}
     }
@@ -242,11 +243,11 @@ int main(int argc, char** argv)
       cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       if (ExportOneBody == true)
 	{
-	  char* BandStructureOutputFile = new char [512];
+	  char* BandStructureOutputFile = new char [1024];
 	  if (Manager.GetString("export-onebodyname") != 0)
 	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
 	  else
-	    sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
+	    sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
 	  if (Manager.GetBoolean("export-onebody") == true)
 	    {
 	      TightBindingModel.WriteBandStructure(BandStructureOutputFile);
@@ -277,15 +278,18 @@ int main(int argc, char** argv)
     
   Abstract2DTightBindingModel* TightBindingModel;
   if (Manager.GetString("import-onebody") == 0)
-  {
-    TightBindingModel = new TightBindingModelRubyLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
-						 Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
-						 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
-  }
+    {
+      TightBindingModel = new TightBindingModelRubyLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("tr"), Manager.GetDouble("ti"), 
+							    Manager.GetDouble("t1r"), Manager.GetDouble("t1i"), Manager.GetDouble("t4"),
+							    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      char* BandStructureOutputFile = new char [1024];
+      sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+    }
   else
-  {
-   TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
-  }
+    {
+      TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+    }
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -355,6 +359,8 @@ int main(int argc, char** argv)
 		}
 	    }
 
+	  double EnergyShift = -10.0;
+	  Hamiltonian->ShiftHamiltonian(EnergyShift);
 	  char* ContentPrefix = new char[256];
 	  sprintf (ContentPrefix, "%d %d", i, j);
 	  char* EigenstateOutputFile = new char [512];
@@ -366,7 +372,7 @@ int main(int argc, char** argv)
 	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
 	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	    }
-	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, EnergyShift,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	  FirstRunFlag = false;
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());

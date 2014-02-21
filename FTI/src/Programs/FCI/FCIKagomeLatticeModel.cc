@@ -19,6 +19,7 @@
 #include "Hamiltonian/ExplicitHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -103,6 +104,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
@@ -222,6 +224,9 @@ int main(int argc, char** argv)
 	}
     }
 
+  char* FileParameterString = new char [256];
+  sprintf (FileParameterString, "t1_%g_t2_%g_l1_%g_l2_%g", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"));
+
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* EigenvalueOutputFile = new char [512];
@@ -234,16 +239,16 @@ int main(int argc, char** argv)
 	  if (Manager.GetDouble("v-potential") == 0.0)
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_%s_gx_%g_gy_%g.dat",FilePrefix, FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	  else
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	}
       else
@@ -251,16 +256,16 @@ int main(int argc, char** argv)
 	  if (Manager.GetDouble("v-potential") == 0.0)
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_%s_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	  else
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_t1_%g_t2_%g_l1_%g_l2_%g_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s_gx_%g_gy_%g_mus_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 
 	    }
 	}
@@ -321,8 +326,19 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   
-  TightBindingModelKagomeLattice TightBindingModel(NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-						   Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+  Abstract2DTightBindingModel* TightBindingModel;
+  if (Manager.GetString("import-onebody") == 0)
+    {
+      TightBindingModel = new TightBindingModelKagomeLattice (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
+							      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      char* BandStructureOutputFile = new char [1024];
+      sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+    }
+  else
+    {
+      TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+    }
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -355,7 +371,7 @@ int main(int argc, char** argv)
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 		{ 
-		  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{ 
@@ -364,7 +380,7 @@ int main(int argc, char** argv)
 		      // use unit three-body interaction by default
 		      Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandThreeBodyHamiltonian
 			(Space, NbrParticles, NbrSitesX, NbrSitesY, /* three-body */ 1.0, Manager.GetDouble("u-potential"),
-			 Manager.GetDouble("v-potential"),  &TightBindingModel, 			 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+			 Manager.GetDouble("v-potential"),  TightBindingModel, 			 Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {

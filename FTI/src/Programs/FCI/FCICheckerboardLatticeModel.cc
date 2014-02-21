@@ -13,6 +13,7 @@
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandFiveBodyHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -152,6 +154,9 @@ int main(int argc, char** argv)
     }
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
+  char* FileParameterString = new char [256];
+  sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetString("eigenvalue-file")!=0)
     strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
@@ -160,25 +165,25 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("single-band") == false)
 	{
 	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"));
+	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("mu-s"));
 	}
       else
 	{
 	  if (Manager.GetBoolean("flat-band") == true)
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	  else
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	    }
 	}
     }
@@ -232,8 +237,19 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
-  TightBindingModelCheckerboardLattice TightBindingModel(NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),
-							 Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+  Abstract2DTightBindingModel* TightBindingModel;
+  if (Manager.GetString("import-onebody") == 0)
+    {
+      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),
+								    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      char* BandStructureOutputFile = new char [1024];
+      sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+    }
+  else
+    {
+      TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+    }      
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -301,7 +317,7 @@ int main(int argc, char** argv)
 		{ 
 		  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 											      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-											      &TightBindingModel,Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+											      TightBindingModel,Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{ 
@@ -309,7 +325,7 @@ int main(int argc, char** argv)
 		    {
 		      Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 													   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-													   &TightBindingModel, 		     
+													   TightBindingModel, 		     
 													   Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		    }
 		  else
@@ -318,14 +334,14 @@ int main(int argc, char** argv)
 			{
 			  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 													      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-													      &TightBindingModel, 		     
+													      TightBindingModel, 		     
 													      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 			}
 		      else
 			{
 			  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandFiveBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 													      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-													      &TightBindingModel, 		     
+													      TightBindingModel, 		     
 													      Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 			}
 
