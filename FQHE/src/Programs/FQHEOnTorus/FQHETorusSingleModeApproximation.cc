@@ -10,6 +10,8 @@
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/BosonOnTorus.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
+#include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
+#include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 
 #include "Operator/ParticleOnSphereDensityOperator.h"
 
@@ -94,6 +96,7 @@ int main(int argc, char** argv)
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1);
   (*SystemGroup) += new BooleanOption ('\n', "compute-bilinears", "compute the action of all the bilinear operators on the ground state");
   (*SystemGroup) += new SingleDoubleOption   ('c', "costheta", "cosine of the angle between the sides of torus (between 0 and 1, 0 for rectangular cell)", 0.0);
+  (*SystemGroup) += new BooleanOption ('\n',  "convert-kxky", "convert the final vector to the (Kx,Ky) n-body basis");
   (*MiscGroup) += new SingleStringOption('\n', "ground-state", "name of the file containing the ground state vector upon which rho_k acts");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
@@ -145,12 +148,13 @@ int main(int argc, char** argv)
 	}
     }
   int ResultingYMomentum = (YMomentum + Ky) % MaxMomentum; 
+  int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
+  int ResultingXMomentum = Kx % MomentumModulo;
 
   double XRatio = Manager.GetDouble("ratio");
   double CosTheta = Manager.GetDouble("costheta");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-  int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
-
+ 
   char* OutputNamePrefix = new char [512];
   ParticleOnTorus* TotalSpace = 0;
   ParticleOnTorus* TargetSpace = 0;
@@ -173,7 +177,7 @@ int main(int argc, char** argv)
 	    TargetSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, ResultingYMomentum);
             ((BosonOnTorus*)TotalSpace)->SetTargetSpace(TargetSpace);
 	  }
-      sprintf (OutputNamePrefix, "bosons_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
+      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
     }
   else
     {
@@ -181,9 +185,23 @@ int main(int argc, char** argv)
       TargetSpace = new FermionOnTorus (NbrParticles, MaxMomentum, ResultingYMomentum);
       ((FermionOnTorus*)TotalSpace)->SetTargetSpace(TargetSpace);
 
-      sprintf (OutputNamePrefix, "fermions_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
+      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
     }
 
+  ParticleOnTorusWithMagneticTranslations* TargetSpaceKx = 0;
+  if (Manager.GetBoolean("convert-kxky") == true)
+    {
+      if (Statistics == false)
+	{
+	  TargetSpaceKx = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	  sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d_kx_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	}
+      else
+	{
+	  TargetSpaceKx = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	  sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d_kx_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	}
+    }
 
   Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
@@ -298,34 +316,25 @@ int main(int argc, char** argv)
   cout << "-     Geometry: Lx = " << Lx << " , Ly = " << Ly<< "  ; cos angle =   " << CosTheta << " -" << endl;
   cout << "-------------------------------------------------"<<endl;
 
-  Complex Phase, MatEl;
+  Complex MatEl;
   ComplexVector TmpState(TargetSpace->GetHilbertSpaceDimension(), true);
   int Index;
   double Coefficient;
-
+  ComplexVector TmpState2(TargetSpace->GetHilbertSpaceDimension());
   for (int m = 0; m < MaxMomentum; ++m)
    {
-      MatEl.Re = cos(0.5 * (2.0 * M_PI/(double)MaxMomentum) * Kx * (2.0 * m + Ky));
-      MatEl.Im = -sin(0.5 * (2.0 * M_PI/(double)MaxMomentum) * Kx * (2.0 * m + Ky));
-      MatEl /= sqrt(NbrParticles);
-      cout << "m= " << m << " Mat el " << MatEl << endl;
-      for (int i = 0; i < TotalSpace->GetHilbertSpaceDimension(); ++i)
-        {
-           Index = TotalSpace->AdA(i, (m + Ky)%MaxMomentum, m, Coefficient);
-           if ((Index < TargetSpace->GetHilbertSpaceDimension()) && (Coefficient != 0))
-             {
-                TmpState[Index] += (MatEl * Coefficient * State[i]);
-             }
-        }
+     MatEl = Phase(-0.5 * (2.0 * M_PI/(double)MaxMomentum) * Kx * (2.0 * m + Ky));
+     MatEl /= sqrt(NbrParticles);
+     cout << "m= " << m << " Mat el " << MatEl << endl;
+     ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
+     VectorOperatorMultiplyOperation Operation(&TmpOperator, &State, &TmpState2);
+     Operation.ApplyOperation(Architecture.GetArchitecture());
+     TmpState2 *= MatEl;
+     TmpState += TmpState2;
    }
   
   cout << "check the norm: " << endl;
-  double TmpNorm = 0.0;
-  for (int i = 0; i < TotalSpace->GetHilbertSpaceDimension(); i++)
-   {
-     Complex Tmp = TmpState[i];
-     TmpNorm += (Tmp.Re * Tmp.Re + Tmp.Im * Tmp.Im);
-   }
+  double TmpNorm = TmpState.SqrNorm();
   cout << "Norm " << TmpNorm << endl;
   if (TmpNorm > 1e-10) 
     TmpState /= sqrt(TmpNorm);
@@ -333,10 +342,19 @@ int main(int argc, char** argv)
     cout << "Warning: Norm " << TmpNorm << endl;
   
 
-  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
-  sprintf (OutputNameLz, "%s.0.vec", OutputNamePrefix);
-  TmpState.WriteVector(OutputNameLz);
-
+  if (Manager.GetBoolean("convert-kxky") == false)
+    {
+      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+      sprintf (OutputNameLz, "%s.0.vec", OutputNamePrefix);
+      TmpState.WriteVector(OutputNameLz);
+    }
+  else
+    {	    
+      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+      sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, (Kx / MomentumModulo));
+      ComplexVector TmpState2 (TargetSpaceKx->ConvertToKxKyBasis(TmpState, TargetSpace));
+      TmpState2.WriteVector(OutputNameLz);    
+    }
    
   return 0;
 }
