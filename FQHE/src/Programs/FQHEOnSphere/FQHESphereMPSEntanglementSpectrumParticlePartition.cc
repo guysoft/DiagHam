@@ -340,7 +340,10 @@ int main(int argc, char** argv)
       RealMatrix TmpFullRightOverlapMatrix(TmpDimension, TmpDimension, true);
       SparseRealMatrix NormalizationMatrix(BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
       NormalizationMatrix.SetToIdentity();
-//      QSectorShift = 0;
+      if (Manager.GetBoolean("orbital-es") == true)
+	{
+	  QSectorShift = 0;
+	}
       for (int i = 0; i < QSectorShift; ++i)
 	{
 	  NormalizationMatrix.Multiply(BMatrices[0]);
