@@ -324,26 +324,35 @@ int main(int argc, char** argv)
   for (int m = 0; m < MaxMomentum; ++m)
    {
      MatEl = Phase(-0.5 * (2.0 * M_PI/(double)MaxMomentum) * Kx * (2.0 * m + Ky));
-     MatEl /= sqrt(NbrParticles);
-     cout << "m= " << m << " Mat el " << MatEl << endl;
+     MatEl /= sqrt((double) NbrParticles);
+     cout << "m= " << m << " Mat el " << MatEl;
      ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
      VectorOperatorMultiplyOperation Operation(&TmpOperator, &State, &TmpState2);
      Operation.ApplyOperation(Architecture.GetArchitecture());
+//      for (int i = 0; i < TotalSpace->GetHilbertSpaceDimension(); ++i)	 
+//        { 
+// 	 Index = TotalSpace->AdA(i, (m + Ky)%MaxMomentum, m, Coefficient);	 
+// 	 if ((Index < TargetSpace->GetHilbertSpaceDimension()) && (Coefficient != 0)) 
+// 	   {
+// 	     TmpState[Index] += (MatEl * Coefficient * State[i]);
+// 	   }
+//        }
+     cout << " <Psi|c^+_m c_n |Psi>=" << (State * TmpState2) << endl;
      TmpState2 *= MatEl;
      TmpState += TmpState2;
    }
   
-  cout << "check the norm: " << endl;
-  double TmpNorm = TmpState.SqrNorm();
-  cout << "Norm " << TmpNorm << endl;
-  if (TmpNorm > 1e-10) 
-    TmpState /= sqrt(TmpNorm);
-  else
-    cout << "Warning: Norm " << TmpNorm << endl;
   
 
   if (Manager.GetBoolean("convert-kxky") == false)
     {
+      cout << "check the norm: " << endl;
+      double TmpNorm = TmpState.SqrNorm();
+      cout << "Norm " << TmpNorm << endl;
+      if (TmpNorm > 1e-10) 
+	TmpState /= sqrt(TmpNorm);
+      else
+	cout << "Warning: Norm " << TmpNorm << endl;
       char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
       sprintf (OutputNameLz, "%s.0.vec", OutputNamePrefix);
       TmpState.WriteVector(OutputNameLz);
@@ -353,6 +362,13 @@ int main(int argc, char** argv)
       char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
       sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, (Kx / MomentumModulo));
       ComplexVector TmpState2 (TargetSpaceKx->ConvertToKxKyBasis(TmpState, TargetSpace));
+      cout << "check the norm: " << endl;
+      double TmpNorm = TmpState2.SqrNorm();
+      cout << "Norm " << TmpNorm << endl;
+      if (TmpNorm > 1e-10) 
+	TmpState2 /= sqrt(TmpNorm);
+      else
+	cout << "Warning: Norm " << TmpNorm << endl;
       TmpState2.WriteVector(OutputNameLz);    
     }
    

@@ -1061,7 +1061,7 @@ ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertToKxKyBasis(Comp
       int Pos = TmpSpace->FindStateIndex(TmpState, TmpMaxMomentum);
       if (Pos < TmpSpace->HilbertSpaceDimension)
 	{
-	  TmpVector[i] = sqrt((double) this->NbrStateInOrbit[i]) * state[Pos];
+	  TmpVector[i] =  state[Pos] * sqrt((double) this->NbrStateInOrbit[i]);
 	}
     }
   return TmpVector;
