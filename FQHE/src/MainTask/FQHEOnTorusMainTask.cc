@@ -1035,78 +1035,92 @@ void FQHEOnTorusMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescription
   delete[] TmpVectors;
   if (this->ShowHamiltonian == true)
     cout << HRep << endl;
-  if (TmpHilbertSpaceDimension > 1)
+  bool DiagonalOnlyFlag = false;
+  ReducedBasis.GetAsBoolean("DiagonalOnly", DiagonalOnlyFlag);
+  if (DiagonalOnlyFlag  == true)
     {
-#ifdef __LAPACK__
-      if (this->LapackFlag == true)
+      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	{
-	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
-	  if (this->EvaluateEigenvectors == false)
+	  double Tmp = 0.0;
+	  HRep.GetMatrixElement(j, j, Tmp);
+	  this->WriteResult(file, (Tmp - this->EnergyShift), true);
+	}      
+    }
+  else
+    {
+      if (TmpHilbertSpaceDimension > 1)
+	{
+#ifdef __LAPACK__
+	  if (this->LapackFlag == true)
 	    {
-	      HRep.LapackDiagonalize(TmpDiag);
+	      RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+	      if (this->EvaluateEigenvectors == false)
+		{
+		  HRep.LapackDiagonalize(TmpDiag);
+		}
+	      else
+		{
+		  RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+		  for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		    TmpEigenvector(l, l) = 1.0;
+		  HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+		  if (this->ReducedHilbertSpaceExportTransformation != 0)
+		    {
+		      TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		    }
+		  Basis.Multiply(TmpEigenvector);
+		}
+	      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+		{
+		  this->WriteResult(file, (TmpDiag[j] - this->EnergyShift), true);
+		}
 	    }
 	  else
 	    {
-	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
-	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
-		TmpEigenvector(l, l) = 1.0;
-	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
-	      if (this->ReducedHilbertSpaceExportTransformation != 0)
+#endif
+	      RealTriDiagonalSymmetricMatrix TmpTriDiag (TmpHilbertSpaceDimension);
+	      if (this->EvaluateEigenvectors == false)
 		{
-		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		  HRep.Householder(TmpTriDiag, 1e-7);
+		  TmpTriDiag.Diagonalize();
+		  TmpTriDiag.SortMatrixUpOrder();
 		}
-	      Basis.Multiply(TmpEigenvector);
+	      else
+		{
+		  RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+		  for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		    TmpEigenvector(l, l) = 1.0;
+		  HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
+		  TmpTriDiag.Diagonalize(TmpEigenvector);
+		  TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
+		  if (this->ReducedHilbertSpaceExportTransformation != 0)
+		    {
+		      TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		    }
+		  Basis.Multiply(TmpEigenvector);
+		}
+	      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+		{
+		  this->WriteResult(file, (TmpTriDiag.DiagonalElement(j) - this->EnergyShift), true);
+		}
+#ifdef __LAPACK__
 	    }
-	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+#endif
+	  if (this->EvaluateEigenvectors == true)
 	    {
-	      this->WriteResult(file, (TmpDiag[j] - this->EnergyShift), true);
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+		{
+		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+		  Basis[j].WriteVector(TmpVectorName);
+		}
+	      delete [] TmpVectorName;
 	    }
 	}
       else
 	{
-#endif
-	  RealTriDiagonalSymmetricMatrix TmpTriDiag (TmpHilbertSpaceDimension);
-	  if (this->EvaluateEigenvectors == false)
-	    {
-	      HRep.Householder(TmpTriDiag, 1e-7);
-	      TmpTriDiag.Diagonalize();
-	      TmpTriDiag.SortMatrixUpOrder();
-	    }
-	  else
-	    {
-	      RealMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
-	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
-		TmpEigenvector(l, l) = 1.0;
-	      HRep.Householder(TmpTriDiag, 1e-7, TmpEigenvector);
-	      TmpTriDiag.Diagonalize(TmpEigenvector);
-	      TmpTriDiag.SortMatrixUpOrder(TmpEigenvector);
-	      if (this->ReducedHilbertSpaceExportTransformation != 0)
-		{
-		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
-		}
-	      Basis.Multiply(TmpEigenvector);
-	    }
-	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
-	    {
-	      this->WriteResult(file, (TmpTriDiag.DiagonalElement(j) - this->EnergyShift), true);
-	    }
-#ifdef __LAPACK__
+	  this->WriteResult(file, (HRep(0, 0) - this->EnergyShift), true);
 	}
-#endif
-      if (this->EvaluateEigenvectors == true)
-	{
-	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
-	    {
-	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-	      Basis[j].WriteVector(TmpVectorName);
-	    }
-	  delete [] TmpVectorName;
-	}
-    }
-  else
-    {
-      this->WriteResult(file, (HRep(0, 0) - this->EnergyShift), true);
     }
   for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
     delete[] VectorFileNames[j];
@@ -1177,73 +1191,87 @@ void FQHEOnTorusMainTask::ComplexDiagonalizeInHilbertSubspace(char* subspaceDesc
   delete[] TmpVectors;
   if (this->ShowHamiltonian == true)
     cout << HRep << endl;
-  if (TmpHilbertSpaceDimension > 1)
+  bool DiagonalOnlyFlag = false;
+  ReducedBasis.GetAsBoolean("DiagonalOnly", DiagonalOnlyFlag);
+  if (DiagonalOnlyFlag  == true)
     {
-      RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
-#ifdef __LAPACK__
-      if (this->LapackFlag == true)
+      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
 	{
-	  if (this->EvaluateEigenvectors == false)
-	    {
-	      HRep.LapackDiagonalize(TmpDiag);
-	    }
-	  else
-	    {
-	      ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
-	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
-		TmpEigenvector(l, l) = 1.0;
-	      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
-	      if (this->ReducedHilbertSpaceExportTransformation != 0)
-		{
-		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
-		}
-	      Basis.Multiply(TmpEigenvector);
-	    }
-	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
-	    {
-	      this->WriteResult(file, (TmpDiag[j] - this->EnergyShift), true);
-	    }
-	}
-      else
-	{
-#endif
-	  if (this->EvaluateEigenvectors == false)
-	    {
-	      HRep.Diagonalize(TmpDiag);
-	    }
-	  else
-	    {
-	      ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
-	      for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
-		TmpEigenvector(l, l) = 1.0;
-	      HRep.Diagonalize(TmpDiag, TmpEigenvector);
-	      if (this->ReducedHilbertSpaceExportTransformation != 0)
-		{
-		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
-		}
-	      Basis.Multiply(TmpEigenvector);
-	    }
-	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
-	    {
-	      this->WriteResult(file, (TmpDiag[j] - this->EnergyShift), true);
-	    }
-#ifdef __LAPACK__
-	}
-#endif
-      if (this->EvaluateEigenvectors == true)
-	{
-	  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
-	  for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
-	    {
-	      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
-	      Basis[j].WriteVector(TmpVectorName);
-	    }
-	  delete [] TmpVectorName;
-	}
+	  double Tmp = 0.0;
+	  HRep.GetMatrixElement(j, j, Tmp);
+	  this->WriteResult(file, (Tmp - this->EnergyShift), true);
+	}      
     }
   else
     {
-      this->WriteResult(file, (HRep(0, 0) - this->EnergyShift), true);
+      if (TmpHilbertSpaceDimension > 1)
+	{
+	  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+#ifdef __LAPACK__
+	  if (this->LapackFlag == true)
+	    {
+	      if (this->EvaluateEigenvectors == false)
+		{
+		  HRep.LapackDiagonalize(TmpDiag);
+		}
+	      else
+		{
+		  ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+		  for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		    TmpEigenvector(l, l) = 1.0;
+		  HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+	      if (this->ReducedHilbertSpaceExportTransformation != 0)
+		{
+		  TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		}
+	      Basis.Multiply(TmpEigenvector);
+		}
+	      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+		{
+		  this->WriteResult(file, (TmpDiag[j] - this->EnergyShift), true);
+		}
+	    }
+	  else
+	    {
+#endif
+	      if (this->EvaluateEigenvectors == false)
+		{
+		  HRep.Diagonalize(TmpDiag);
+		}
+	      else
+		{
+		  ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension, true);	      
+		  for (int l = 0; l < TmpHilbertSpaceDimension; ++l)
+		    TmpEigenvector(l, l) = 1.0;
+		  HRep.Diagonalize(TmpDiag, TmpEigenvector);
+		  if (this->ReducedHilbertSpaceExportTransformation != 0)
+		    {
+		      TmpEigenvector.WriteMatrix(this->ReducedHilbertSpaceExportTransformation);
+		    }
+		  Basis.Multiply(TmpEigenvector);
+		}
+	      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+		{
+		  this->WriteResult(file, (TmpDiag[j] - this->EnergyShift), true);
+		}
+#ifdef __LAPACK__
+	    }
+#endif
+	  if (this->EvaluateEigenvectors == true)
+	    {
+	      char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 16];
+	      for (int j = 0; j < TmpHilbertSpaceDimension; ++j)
+		{
+		  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, j);
+		  Basis[j].WriteVector(TmpVectorName);
+		}
+	      delete [] TmpVectorName;
+	}
+	}
+      else
+	{
+	  this->WriteResult(file, (HRep(0, 0) - this->EnergyShift), true);
+	}
     }
   for (int j= 0; j < TmpHilbertSpaceDimension; ++j)
     delete[] VectorFileNames[j];

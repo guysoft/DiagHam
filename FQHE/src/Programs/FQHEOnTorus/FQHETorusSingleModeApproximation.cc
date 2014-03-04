@@ -139,6 +139,7 @@ int main(int argc, char** argv)
   cout << endl;
 
   int Kx = Manager.GetInteger("kx");
+  int MaxKx = Kx +1; 
   int Ky = Manager.GetInteger("ky");
   if (Manager.GetBoolean("compute-bilinears") == true)
     {
@@ -147,9 +148,16 @@ int main(int argc, char** argv)
 	  Ky = 0;
 	}
     }
+  else
+    {
+      if (Kx < 0)
+	{
+	  Kx = 0;
+	  MaxKx = MaxMomentum;
+	}      
+    }
   int ResultingYMomentum = (YMomentum + Ky) % MaxMomentum; 
   int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
-  int ResultingXMomentum = Kx % MomentumModulo;
 
   double XRatio = Manager.GetDouble("ratio");
   double CosTheta = Manager.GetDouble("costheta");
@@ -177,7 +185,6 @@ int main(int argc, char** argv)
 	    TargetSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, ResultingYMomentum);
             ((BosonOnTorus*)TotalSpace)->SetTargetSpace(TargetSpace);
 	  }
-      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
     }
   else
     {
@@ -188,20 +195,6 @@ int main(int argc, char** argv)
       sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum);
     }
 
-  ParticleOnTorusWithMagneticTranslations* TargetSpaceKx = 0;
-  if (Manager.GetBoolean("convert-kxky") == true)
-    {
-      if (Statistics == false)
-	{
-	  TargetSpaceKx = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
-	  sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d_kx_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
-	}
-      else
-	{
-	  TargetSpaceKx = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
-	  sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d_kx_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
-	}
-    }
 
   Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());
 
@@ -317,59 +310,81 @@ int main(int argc, char** argv)
   cout << "-------------------------------------------------"<<endl;
 
   Complex MatEl;
-  ComplexVector TmpState(TargetSpace->GetHilbertSpaceDimension(), true);
+  ComplexVector* TmpState = new ComplexVector[MaxKx - Kx];
+  for (int TmpKx = Kx; TmpKx < MaxKx; ++TmpKx)
+    {
+      TmpState[TmpKx] = ComplexVector (TargetSpace->GetHilbertSpaceDimension(), true);
+    }
   int Index;
   double Coefficient;
   ComplexVector TmpState2(TargetSpace->GetHilbertSpaceDimension());
   for (int m = 0; m < MaxMomentum; ++m)
-   {
-     MatEl = Phase(-0.5 * (2.0 * M_PI/(double)MaxMomentum) * Kx * (2.0 * m + Ky));
-     MatEl /= sqrt((double) NbrParticles);
-     cout << "m= " << m << " Mat el " << MatEl;
-     ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
-     VectorOperatorMultiplyOperation Operation(&TmpOperator, &State, &TmpState2);
-     Operation.ApplyOperation(Architecture.GetArchitecture());
-//      for (int i = 0; i < TotalSpace->GetHilbertSpaceDimension(); ++i)	 
-//        { 
-// 	 Index = TotalSpace->AdA(i, (m + Ky)%MaxMomentum, m, Coefficient);	 
-// 	 if ((Index < TargetSpace->GetHilbertSpaceDimension()) && (Coefficient != 0)) 
-// 	   {
-// 	     TmpState[Index] += (MatEl * Coefficient * State[i]);
-// 	   }
-//        }
-     cout << " <Psi|c^+_m c_n |Psi>=" << (State * TmpState2) << endl;
-     TmpState2 *= MatEl;
-     TmpState += TmpState2;
-   }
-  
+    {
+      ParticleOnSphereDensityOperator TmpOperator(TotalSpace, (m + Ky) % MaxMomentum, m);
+      VectorOperatorMultiplyOperation Operation(&TmpOperator, &State, &TmpState2);
+      Operation.ApplyOperation(Architecture.GetArchitecture());
+      cout << " computing c^+_" << ((m + Ky) % MaxMomentum) << " c_" << m << " |Psi>" << endl;
+      for (int TmpKx = Kx; TmpKx < MaxKx; ++TmpKx)
+	{
+	  MatEl = Phase(-0.5 * (2.0 * M_PI/(double)MaxMomentum) * TmpKx * (2.0 * m + Ky));
+	  MatEl /= sqrt((double) NbrParticles);
+	  TmpState[TmpKx].AddLinearCombination(MatEl, TmpState2);
+	}
+    }
   
 
   if (Manager.GetBoolean("convert-kxky") == false)
     {
-      cout << "check the norm: " << endl;
-      double TmpNorm = TmpState.SqrNorm();
-      cout << "Norm " << TmpNorm << endl;
-      if (TmpNorm > 1e-10) 
-	TmpState /= sqrt(TmpNorm);
-      else
-	cout << "Warning: Norm " << TmpNorm << endl;
-      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
-      sprintf (OutputNameLz, "%s.0.vec", OutputNamePrefix);
-      TmpState.WriteVector(OutputNameLz);
+      for (int TmpKx = Kx; TmpKx < MaxKx; ++TmpKx)
+	{
+	  if (Statistics == false)
+	    {
+	      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ky_%d_kx_", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum, TmpKx);
+	    }
+	  else
+	    {
+	      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ky_%d_kx_", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingYMomentum, TmpKx);
+	    }
+	  cout << "check the norm: " << endl;
+	  double TmpNorm = TmpState[TmpKx].SqrNorm();
+	  cout << "Norm " << TmpNorm << endl;
+	  if (TmpNorm > 1e-10) 
+	    TmpState[TmpKx] /= sqrt(TmpNorm);
+	  else
+	    cout << "Warning: Norm " << TmpNorm << endl;
+	  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+	  sprintf (OutputNameLz, "%s.0.vec", OutputNamePrefix);
+	  TmpState[TmpKx].WriteVector(OutputNameLz);
+	}
     }
   else
     {	    
-      char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
-      sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, (Kx / MomentumModulo));
-      ComplexVector TmpState2 (TargetSpaceKx->ConvertToKxKyBasis(TmpState, TargetSpace));
-      cout << "check the norm: " << endl;
-      double TmpNorm = TmpState2.SqrNorm();
-      cout << "Norm " << TmpNorm << endl;
-      if (TmpNorm > 1e-10) 
-	TmpState2 /= sqrt(TmpNorm);
-      else
-	cout << "Warning: Norm " << TmpNorm << endl;
-      TmpState2.WriteVector(OutputNameLz);    
+      for (int TmpKx = Kx; TmpKx < MaxKx; ++TmpKx)
+	{
+	  int ResultingXMomentum = TmpKx % MomentumModulo;
+	  ParticleOnTorusWithMagneticTranslations* TargetSpaceKx = 0;
+	  if (Statistics == false)
+	    {
+	      TargetSpaceKx = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	      sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d_kx_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	    }
+	  else
+	    {
+	      TargetSpaceKx = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	      sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d_kx_%d_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, ResultingXMomentum, ResultingYMomentum);
+	    }
+	  char* OutputNameLz = new char [strlen(OutputNamePrefix)+ 16];
+	  sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, (TmpKx / MomentumModulo));
+	  ComplexVector TmpState2 (TargetSpaceKx->ConvertToKxKyBasis(TmpState[TmpKx], TargetSpace));
+	  cout << "check the norm: " << endl;
+	  double TmpNorm = TmpState2.SqrNorm();
+	  cout << "Norm " << TmpNorm << endl;
+	  if (TmpNorm > 1e-10) 
+	    TmpState2 /= sqrt(TmpNorm);
+	  else
+	    cout << "Warning: Norm " << TmpNorm << endl;
+	  TmpState2.WriteVector(OutputNameLz);    
+	}
     }
    
   return 0;
