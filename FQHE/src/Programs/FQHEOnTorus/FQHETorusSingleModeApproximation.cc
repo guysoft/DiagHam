@@ -358,8 +358,13 @@ int main(int argc, char** argv)
 	}
     }
   else
-    {	    
-      for (int TmpKx = Kx; TmpKx < MaxKx; ++TmpKx)
+    {	 
+      int TmpMaxKx = MaxKx;
+      if (Manager.GetInteger("kx") < 0) 
+	{
+	  TmpMaxKx = MomentumModulo;
+	}
+      for (int TmpKx = Kx; TmpKx < TmpMaxKx; ++TmpKx)
 	{
 	  int ResultingXMomentum = TmpKx % MomentumModulo;
 	  ParticleOnTorusWithMagneticTranslations* TargetSpaceKx = 0;
@@ -383,7 +388,24 @@ int main(int argc, char** argv)
 	    TmpState2 /= sqrt(TmpNorm);
 	  else
 	    cout << "Warning: Norm " << TmpNorm << endl;
-	  TmpState2.WriteVector(OutputNameLz);    
+	  TmpState2.WriteVector(OutputNameLz);   
+	  if (Manager.GetInteger("kx") < 0) 
+	    {
+	      for (int i = 1; i < (MaxMomentum / MomentumModulo); ++ i)
+		{ 
+		  sprintf (OutputNameLz, "%s.%d.vec", OutputNamePrefix, i);
+		  TmpState2 = TargetSpaceKx->ConvertToKxKyBasis(TmpState[TmpKx + i * MomentumModulo], TargetSpace);
+		  cout << "check the norm: " << endl;
+		  TmpNorm = TmpState2.SqrNorm();
+		  cout << "Norm " << TmpNorm << endl;
+		  if (TmpNorm > 1e-10) 
+		    TmpState2 /= sqrt(TmpNorm);
+		  else
+		    cout << "Warning: Norm " << TmpNorm << endl;
+		  TmpState2.WriteVector(OutputNameLz);   
+		}
+	    }
+	  delete TargetSpaceKx;
 	}
     }
    
