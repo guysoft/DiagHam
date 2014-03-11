@@ -149,6 +149,7 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian::EvaluateIn
 		this->OneBodyInteractionFactorsupup[Index] = this->LocalTightBindingModel->GetEnergy(0, Index); 
 		this->OneBodyInteractionFactorsdowndown[Index] = this->LocalTightBindingModel->GetEnergy(1, Index);
 	      }
+	  }
 	OneBodyBasis[Index] = this->LocalTightBindingModel->GetOneBodyMatrix(Index);
       }
 
