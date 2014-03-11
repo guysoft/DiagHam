@@ -127,7 +127,7 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian::Evaluat
       {
 	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
 	if (this->FlatBand == false)
-	  this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+	  this->OneBodyInteractionFactors[Index] = this->TightBindingModel->GetEnergy(0, Index);
 	OneBodyBasis[Index] = this->TightBindingModel->GetOneBodyMatrix(Index);
       }
 
