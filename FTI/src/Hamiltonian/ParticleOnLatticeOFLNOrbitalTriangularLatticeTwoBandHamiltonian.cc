@@ -66,7 +66,7 @@ using std::cos;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian::ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrCellX, int nbrCellY, int nbrSpinValue, int  nbrReciprocalVectors, double uPotential, Abstract2DTightBindingModel* tightBindingModel,  bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian::ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrCellX, int nbrCellY, int nbrSpinValue, int  nbrReciprocalVectors, double uPotential, Abstract2DTightBindingModel* tightBindingModel,  bool flatBandFlag, bool  noDispersionFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -81,6 +81,7 @@ ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian::ParticleOnLatti
   this->TightBindingModel = tightBindingModel;
   this->LocalTightBindingModel = ((TightBindingModelOFLNOrbitalTriangularLattice *) tightBindingModel);
   this->FlatBand = flatBandFlag;
+  this->NoDispersionFlag = noDispersionFlag;
   this->UPotential = uPotential;
   this->Architecture = architecture;
   this->Memory = memory;
@@ -138,10 +139,16 @@ void ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian::EvaluateIn
 	int Index = this->LocalTightBindingModel->GetLinearizedMomentumIndex(kx, ky);
 	if (this->FlatBand == false)
 	  {
-	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * this->LocalTightBindingModel->GetEnergy(0, Index); 
-	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->LocalTightBindingModel->GetEnergy(1, Index);
-	    //this->OneBodyInteractionFactorsupup[Index]=0;
-	    //this->OneBodyInteractionFactorsdowndown[Index] = 10000;
+	    if (this->NoDispersionFlag == true)
+	      {
+		this->OneBodyInteractionFactorsupup[Index] = 0;
+		this->OneBodyInteractionFactorsdowndown[Index] = 10;
+	      }
+	    else
+	      {	  
+		this->OneBodyInteractionFactorsupup[Index] = 0.5 * this->LocalTightBindingModel->GetEnergy(0, Index); 
+		this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->LocalTightBindingModel->GetEnergy(1, Index);
+	      }
 	  }
 	OneBodyBasis[Index] = this->LocalTightBindingModel->GetOneBodyMatrix(Index);
       }

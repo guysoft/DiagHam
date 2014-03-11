@@ -84,6 +84,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-dispersion", "use a model without dispersion and a contant gap of 10 between the two lowest bands");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
@@ -282,7 +283,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band") , Architecture.GetArchitecture(), Memory);
+		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
 		    }
 		}
 	      else

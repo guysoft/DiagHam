@@ -63,6 +63,7 @@ ParticleOnSquareLatticeTwoBandSimpleTIHamiltonian
  
   // use flat band model
   bool FlatBand;
+  bool NoDispersionFlag;
 
   TightBindingModelOFLNOrbitalTriangularLattice * LocalTightBindingModel;  
   
@@ -78,9 +79,10 @@ public:
   // nbrReciprocalVectors = number of vectors of the reciprocal space in each direction to keep. It must be even!
   // uPotential = strength of the repulsive two body neareast neighbor interaction
   // flatBandFlag = use flat band model
+  // noDispersionFlag = remove the band dispersion and put a constant gap of 10 between the two lowest band
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSpinValue, int  nbrReciprocalVectors, double uPotential, Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, int nbrSpinValue, int  nbrReciprocalVectors, double uPotential, Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, bool noDispersionFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

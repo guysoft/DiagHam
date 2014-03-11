@@ -163,7 +163,7 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			}
 		    }
 		}
-
+	      //	      cout << TmpOneBodyHamiltonian<<endl;
 	      if (this->OneBodyBasis != 0)
 		{
 		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
