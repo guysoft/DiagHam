@@ -59,11 +59,46 @@ using std::ostream;
 // switch for debugging output
 //#define DEBUG_OUTPUT
 
+// default constructor
+//
+
+AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian()
+{
+  this->OneBodyInteractionFactorsUpUp = 0;
+  this->OneBodyInteractionFactorsDownDown = 0;
+  this->OneBodyInteractionFactorsUpDown = 0;
+}
+  
 // destructor
 //
 
 AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::~AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian()
 {  
+  delete[] this->InteractionFactorsUpUp;
+  delete[] this->InteractionFactorsDownDown;
+  delete[] this->InteractionFactorsUpDown;  
+  if (this->OneBodyInteractionFactorsUpUp != 0)
+    delete[] this->OneBodyInteractionFactorsUpUp;
+  if (this->OneBodyInteractionFactorsDownDown != 0)
+    delete[] this->OneBodyInteractionFactorsDownDown;    
+  if (this->OneBodyInteractionFactorsUpDown != 0)
+    delete[] this->OneBodyInteractionFactorsUpDown;    
+  if (this->FastMultiplicationFlag == true)
+    {
+      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
+      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
+	++ReducedDim;
+      for (int i = 0; i < ReducedDim; ++i)
+	{
+	  delete[] this->InteractionPerComponentIndex[i];
+	  delete[] this->InteractionPerComponentCoefficient[i];
+	  delete[] this->InteractionPerComponentNbrTranslation[i];
+	}
+      delete[] this->InteractionPerComponentIndex;
+      delete[] this->InteractionPerComponentCoefficient;
+      delete[] this->NbrInteractionPerComponent;
+      delete[] this->InteractionPerComponentNbrTranslation;
+    }
 }
 
 // set Hilbert space
@@ -72,12 +107,15 @@ AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::~AbstractQHEOnToru
 
 void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
-  // delete existing interaction factors and recalculate
-  delete[] InteractionFactorsUpUp;
-  delete[] InteractionFactorsDownDown;
-  delete[] InteractionFactorsUpDown;  
-  delete[] OneBodyInteractionFactorsUpUp;
-  delete[] OneBodyInteractionFactorsDownDown;    
+  delete[] this->InteractionFactorsUpUp;
+  delete[] this->InteractionFactorsDownDown;
+  delete[] this->InteractionFactorsUpDown;  
+  if (this->OneBodyInteractionFactorsUpUp != 0)
+    delete[] this->OneBodyInteractionFactorsUpUp;
+  if (this->OneBodyInteractionFactorsDownDown != 0)
+    delete[] this->OneBodyInteractionFactorsDownDown;    
+  if (this->OneBodyInteractionFactorsUpDown != 0)
+    delete[] this->OneBodyInteractionFactorsUpDown;    
   this->Particles = (ParticleOnTorusWithSpinAndMagneticTranslations*) hilbertSpace;
   this->EvaluateInteractionFactors();
 }
@@ -108,132 +146,16 @@ void AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::ShiftHamilton
 {
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
-{
-  return Complex();
-}
-
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
-{
-  /*
-  int Dim = this->Particles->GetHilbertSpaceDimension();
-  double Coefficient;
-  double Cosinus;
-  double Sinus;
-  int NbrTranslation;
-  int Index;
-  int m1;
-  int m2;
-  int m3;
-  int m4;
-  Complex TmpZ;
-  Complex Z (0.0, 0.0);
-  double TmpInteraction;
-  int ReducedNbrInteractionFactors = this->NbrInteractionFactors - 1;
-  for (int j = 0; j < ReducedNbrInteractionFactors; ++j) 
-    {
-      m1 = this->M1Value[j];
-      m2 = this->M2Value[j];
-      m3 = this->M3Value[j];
-      m4 = this->M4Value[j];
-      TmpInteraction = this->InteractionFactors[j];
-      for (int i = 0; i < Dim; ++i)
-	{
-	  Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-	  if (Index < Dim)
-	    {
-	      Coefficient *= TmpInteraction;
-	      Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
-	      Sinus = Coefficient * this->SinusTable[NbrTranslation];
-	      TmpZ.Re = ((V2.Re(i) * Cosinus) - (V2.Im(i) * Sinus));
-	      TmpZ.Im += ((V2.Re(i) * Sinus) + (V2.Im(i) * Cosinus));
-	      Z += Conj(V1[Index]) * TmpZ;
-	    }
-	}
-    }
-  m1 = this->M1Value[ReducedNbrInteractionFactors];
-  m2 = this->M2Value[ReducedNbrInteractionFactors];
-  m3 = this->M3Value[ReducedNbrInteractionFactors];
-  m4 = this->M4Value[ReducedNbrInteractionFactors];
-  TmpInteraction = this->InteractionFactors[ReducedNbrInteractionFactors];
-  for (int i = 0; i < Dim; ++i)
-    {
-      Index = this->Particles->AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslation);
-      if (Index < Dim)
-	{
-	  Coefficient *= TmpInteraction;
-	  Cosinus = Coefficient * this->CosinusTable[NbrTranslation];
-	  Sinus = Coefficient * this->SinusTable[NbrTranslation];
-	  TmpZ.Re = ((V2.Re(i) * Cosinus) - (V2.Im(i) * Sinus));
-	  TmpZ.Im += ((V2.Re(i) * Sinus) + (V2.Im(i) * Cosinus));
-	  Z += Conj(V1[Index]) * TmpZ;
-	}
-      Z += this->EnergyShift * (Conj(V1[i]) * V2[i]);
-    }
-  return Complex(Z);
-  */
-  return Complex();
-}
   
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-RealVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
 // firstComponent = index of the first component to evaluate
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-												  int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
-{
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Particles->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
 ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 												 int firstComponent, int nbrComponent)
 {
@@ -665,26 +587,6 @@ ComplexVector& AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::Low
   return vDestination;
 }
  
-// return a list of left interaction operators
-//
-// return value = list of left interaction operators
-
-List<Matrix*> AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::LeftInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
-// return a list of right interaction operators
-//
-// return value = list of right interaction operators
-
-List<Matrix*> AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian::RightInteractionOperators()
-{
-  List<Matrix*> TmpList;
-  return TmpList;
-}
-
 // test the amount of memory needed for fast multiplication algorithm
 //
 // allowedMemory = amount of memory that cam be allocated for fast multiplication

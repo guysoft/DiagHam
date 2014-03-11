@@ -44,6 +44,8 @@
 
 #include "Architecture/AbstractArchitecture.h"
 
+#include "Polynomial/SpecialPolynomial.h"
+
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
@@ -87,8 +89,134 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnToru
   // double WignerEnergy = 0.0;
   this->Architecture = architecture;
   cout << "Wigner Energy = " << WignerEnergy << endl;  
+  this->PseudopotentialsUpUp = 0;
+  this->PseudopotentialsDownDown = 0;
+  this->PseudopotentialsUpDown = 0;
+  this->LaguerrePolynomials = 0;
   this->EvaluateInteractionFactors();
   this->EnergyShift = ((double) this->NbrParticles)*WignerEnergy; // 0.0;
+  this->CosinusTable = new double [this->MaxMomentum];
+  this->SinusTable = new double [this->MaxMomentum];
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    {
+      this->CosinusTable[i] = cos(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+      this->SinusTable[i] = sin(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+    }
+  if (precalculationFileName == 0)
+    {
+      if (memory > 0)
+	{
+	  int TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024)
+	    cout  << "fast = " <<  TmpMemory << "b ";
+	  else
+	    if (TmpMemory < (1 << 20))
+	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	    else
+	      if (TmpMemory < (1 << 30))
+		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	      else
+		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
+	  cout << endl;
+	  if (memory > 0)
+	    {
+	      this->EnableFastMultiplication();
+	    }
+	}
+    }
+  else
+    this->LoadPrecalculation(precalculationFileName);
+}
+
+// constructor from pseudopotentials
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// maxMomentum = maximum Lz value reached by a particle in the state
+// xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
+// ratio = ratio between the width in the x direction and the width in the y direction
+// nbrPseudopotentialsUpUp = number of pseudopotentials for up-up interaction
+// pseudopotentialsUpUp = pseudopotential coefficients for up-up interaction
+// nbrPseudopotentialsDownDown = number of pseudopotentials for down-down interaction
+// pseudopotentialsDownDown = pseudopotential coefficients for down-down interaction
+// nbrPseudopotentialsUpDown = number of pseudopotentials for up-down interaction
+// pseudopotentialsUpDown = pseudopotential coefficients for up-down interaction
+// spinFluxUp = additional inserted flux for spin up
+// spinFluxDown = additional inserted flux for spin down
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+// precalculationFileName = option file name where precalculation can be read instead of reevaluting them
+
+ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian(ParticleOnTorusWithSpinAndMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, 
+																   int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
+																   int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
+																   int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
+																   double spinFluxUp, double spinFluxDown, 
+																   AbstractArchitecture* architecture, long memory, char* precalculationFileName, double* oneBodyPotentielUpUp, double* oneBodyPotentielDownDown, double* oneBodyPotentielUpDown)
+{
+  this->Particles = particles;
+  this->MaxMomentum = maxMomentum;
+  this->XMomentum = xMomentum;
+  this->NbrLzValue = this->MaxMomentum + 1;
+  this->NbrParticles = nbrParticles;
+  this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
+  this->FastMultiplicationFlag = false;
+  this->Ratio = ratio;  
+  this->InvRatio = 1.0 / ratio;
+  this->LayerSeparation = 0.0;
+  double WignerEnergy = 0.0;
+  this->SpinFluxUp = spinFluxUp;
+  this->SpinFluxDown = spinFluxDown;
+  this->Architecture = architecture;
+  this->NbrPseudopotentialsUpUp = nbrPseudopotentialsUpUp;
+  this->PseudopotentialsUpUp = new double[this->NbrPseudopotentialsUpUp];
+  for (int i = 0; i < this->NbrPseudopotentialsUpUp; ++i)
+    this->PseudopotentialsUpUp[i] = pseudopotentialsUpUp[i];
+  this->NbrPseudopotentialsDownDown = nbrPseudopotentialsDownDown;
+  this->PseudopotentialsDownDown = new double[this->NbrPseudopotentialsDownDown];
+  for (int i = 0; i < this->NbrPseudopotentialsDownDown; ++i)
+    this->PseudopotentialsDownDown[i] = pseudopotentialsDownDown[i];
+  this->NbrPseudopotentialsUpDown = nbrPseudopotentialsUpDown;
+  this->PseudopotentialsUpDown = new double[this->NbrPseudopotentialsUpDown];
+  for (int i = 0; i < this->NbrPseudopotentialsUpDown; ++i)
+    this->PseudopotentialsUpDown[i] = pseudopotentialsUpDown[i];
+
+  this->MaxNbrPseudopotentials = this->NbrPseudopotentialsUpUp;
+  if (this->NbrPseudopotentialsDownDown > this->MaxNbrPseudopotentials)
+    this->MaxNbrPseudopotentials = this->NbrPseudopotentialsDownDown;
+  if (this->NbrPseudopotentialsUpDown > this->MaxNbrPseudopotentials)
+    this->MaxNbrPseudopotentials = this->NbrPseudopotentialsUpDown;
+  this->LaguerrePolynomials =new Polynomial[this->MaxNbrPseudopotentials];
+  for (int i = 0; i < this->MaxNbrPseudopotentials; ++i)
+    this->LaguerrePolynomials[i] = LaguerrePolynomial(i);
+
+  if(oneBodyPotentielUpUp != 0)
+    {
+      this->OneBodyInteractionFactorsUpUp = new double[this->NbrLzValue];
+      for(int i = 0; i < this->NbrLzValue; i++)
+	this->OneBodyInteractionFactorsUpUp[i] = oneBodyPotentielUpUp[i];
+    }
+  this->OneBodyInteractionFactorsDownDown = 0;
+  if(oneBodyPotentielDownDown != 0)
+    {
+      this->OneBodyInteractionFactorsDownDown = new double[this->NbrLzValue];
+      for(int i = 0; i < this->NbrLzValue; i++)
+	this->OneBodyInteractionFactorsDownDown[i] = oneBodyPotentielDownDown[i];
+    } 
+  this->OneBodyInteractionFactorsUpDown = 0;
+  if(oneBodyPotentielUpDown != 0)
+    {
+      this->OneBodyInteractionFactorsUpDown = new double[this->NbrLzValue];
+      for(int i = 0; i < this->NbrLzValue; i++)
+	{
+	  this->OneBodyInteractionFactorsUpDown[i] = oneBodyPotentielUpDown[i];
+	  cout << this->OneBodyInteractionFactorsUpDown[i]<<" ";
+	}
+      cout <<endl;
+    } 
+
+  this->EvaluateInteractionFactors();
+  this->EnergyShift = ((double) this->NbrParticles) * WignerEnergy;
   this->CosinusTable = new double [this->MaxMomentum];
   this->SinusTable = new double [this->MaxMomentum];
   for (int i = 0; i < this->MaxMomentum; ++i)
@@ -139,31 +267,17 @@ ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::~ParticleOnTor
   delete[] M34InterValues;
   delete[] NbrM34InterValues;
 
-  delete[] InteractionFactorsUpUp;
-  delete[] InteractionFactorsDownDown;
-  delete[] InteractionFactorsUpDown;
-
-  delete[] OneBodyInteractionFactorsUpUp;
-  delete[] OneBodyInteractionFactorsDownDown;  
-  
   delete[] this->CosinusTable;
   delete[] this->SinusTable;
-   if (this->FastMultiplicationFlag == true)
-     {
-      int ReducedDim = this->Particles->GetHilbertSpaceDimension() / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != this->Particles->GetHilbertSpaceDimension())
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	  delete[] this->InteractionPerComponentNbrTranslation[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-      delete[] this->InteractionPerComponentNbrTranslation;
-    }
+
+  if (this->PseudopotentialsUpUp != 0)
+    delete[] this->PseudopotentialsUpUp;
+  if (this->PseudopotentialsDownDown != 0)
+    delete[] this->PseudopotentialsDownDown;
+  if (this->PseudopotentialsUpDown != 0)
+    delete[] this->PseudopotentialsUpDown;
+  if (this->LaguerrePolynomials != 0)
+    delete[] this->LaguerrePolynomials;
 }
 
 // set Hilbert space
@@ -434,46 +548,72 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
   return (Sum / (2.0 * this->MaxMomentum));
 }
 
-/*
-// old version
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// nbrPseudopotentials = number of pseudopotentials
+// pseudopotentials = pseudopotential coefficients
+// spinFluxM1 = additional inserted flux for m1
+// spinFluxM2 = additional inserted flux for m2
+// spinFluxM3 = additional inserted flux for m3
+// spinFluxM4 = additional inserted flux for m4
+// return value = numerical coefficient
+
+double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+													double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
 {
   double Coefficient = 1.0;
-  double PIOnM = M_PI / ((double) this->MaxMomentum);
-  double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
-  double Factor2 = sqrt(2.0*PIOnM);
+  double PIOnM = M_PI / ((double) this->NbrLzValue);
+  double Factor =  - (((double) (m1-m3)) + spinFluxM1 - spinFluxM3) * PIOnM * 2.0;
   double Sum = 0.0;
-  double N2 = (double) (m1 - m4);
+  double N2 = ((double) (m1 - m4)) + spinFluxM1 - spinFluxM4;
   double N1;
-  double SqrtQ2, Q2;
+  double Q2;
   double Precision;
-//  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
+  double TmpInteraction;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  SqrtQ2=sqrt(Q2);
-	  Coefficient = exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;
-	  Precision = Coefficient;
+	  TmpInteraction = 0.0;
+	  for (int i = 0; i < nbrPseudopotentials; ++i)
+	    if (pseudopotentials[i] != 0.0)
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0* PIOnM * Q2);
+	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
+          if (fabs(Coefficient) != 0.0)
+ 	    Precision = Coefficient;
+          else
+            Precision = 1.0;
 	}
-      else
-	{
-	  Coefficient = 0.0; 
+       else
+ 	{
 	  Precision = 1.0;
+	  TmpInteraction = 0.0;
+	  for (int i = 0; i < nbrPseudopotentials; ++i)
+	    if (pseudopotentials[i] != 0.0)
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(0.0);
+	  Coefficient = TmpInteraction;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  SqrtQ2=sqrt(Q2);
-	  Precision = 2.0 * exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;	  
+	  TmpInteraction = 0.0;
+	  for (int i = 0; i < nbrPseudopotentials; ++i)
+	    if (pseudopotentials[i] != 0.0)
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
+	  Precision = 2.0 * exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
-      N2 += this->MaxMomentum;
+      N2 += this->NbrLzValue;
     }
-  N2 = (double) (m1 - m4 - this->MaxMomentum);
+  N2 = (double) (m1 - m4 - this->NbrLzValue) + spinFluxM1 - spinFluxM4;
   Coefficient = Sum;	    
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
@@ -481,34 +621,47 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Evaluat
       Q2 = this->Ratio * N2 * N2;
       if (N2 != 0.0)
 	{
-	  SqrtQ2=sqrt(Q2);
-	  Coefficient = exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;
-	  Precision = Coefficient;
+	  TmpInteraction = 0.0;
+	  for (int i=0; i< nbrPseudopotentials; ++i)
+	    if (pseudopotentials[i] != 0.0)
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
+	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
+          if (fabs(Coefficient) != 0.0)
+	    Precision = Coefficient;
+          else
+            Precision = 1.0;
 	}
-      else
-	{
-	  Coefficient = 0.0; 
+       else
+ 	{
 	  Precision = 1.0;
+	  TmpInteraction = 0.0;
+	  for (int i = 0; i < nbrPseudopotentials; ++i)
+	    if (pseudopotentials[i] != 0.0)
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(0.0);
+	  Coefficient = TmpInteraction;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  SqrtQ2=sqrt(Q2);
-	  Precision = 2.0 * exp(- PIOnM * Q2 - layerSeparation * Factor2 * SqrtQ2) / SqrtQ2;
+	  TmpInteraction = 0.0;
+	  for (int i = 0; i < nbrPseudopotentials; ++i)
+	    if (pseudopotentials[i] != 0.0)
+	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
+	  Precision = 2.0 *  exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
       Sum += Coefficient;
-      N2 -= this->MaxMomentum;
+      N2 -= this->NbrLzValue;
     }
-  //cout << "Coefficient ("<<layerSeparation<<") " << m1 << " "  << m2 << " "  << m3 << " "  << m4 << " " << (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)))<<endl;
-  return (Sum / (2.0 * sqrt(2.0 * M_PI * this->MaxMomentum)));
+  //Normalize per flux (gives correct energy scale for 2-particle problem)
+  return (Sum / ((double) this->NbrLzValue));
 }
-*/
 
 // get fourier transform of interaction
 // Q2_half = one half of q² value
 // layerSeparation = layer separation
+
 double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::GetVofQ(double Q2_half, double layerSeparation)
 {
   double Q=sqrt(2.0*Q2_half);
@@ -605,73 +758,5 @@ double ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian::Partial
   Sum += (0.5 - M1_12 * 2.0 * x * min * max) * exp(min * min * x);
   Sum *= max;
   return Sum;
-}
-
-// Output Stream overload
-//
-// Str = reference on output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-ostream& operator << (ostream& Str, ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      for (int j = 0; j < H.Particles->GetHilbertSpaceDimension(); j++)
-	{
-	  Str << TmpV[j][i] << "    ";
-	}
-      Str << endl;
-    }
-  return Str;
-}
-
-// Mathematica Output Stream overload
-//
-// Str = reference on Mathematica output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-MathematicaOutput& operator << (MathematicaOutput& Str, ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Particles->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Particles->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Particles->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Particles->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  Str << "{";
-  for (int i = 0; i < (H.Particles->GetHilbertSpaceDimension() - 1); i++)
-    {
-      Str << "{";
-      for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-	{
-	  Str << TmpV[j][i] << ",";
-	}
-      Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][i];
-      Str << "},";
-    }
-  Str << "{";
-  for (int j = 0; j < (H.Particles->GetHilbertSpaceDimension() - 1); j++)
-    {
-      Str << TmpV[j][H.Particles->GetHilbertSpaceDimension() - 1] << ",";
-    }
-  Str << TmpV[H.Particles->GetHilbertSpaceDimension() - 1][H.Particles->GetHilbertSpaceDimension() - 1];
-  Str << "}}";
-  return Str;
 }
 

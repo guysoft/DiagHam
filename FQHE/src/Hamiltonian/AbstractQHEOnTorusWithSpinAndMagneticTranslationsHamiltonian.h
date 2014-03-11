@@ -111,6 +111,8 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
   double* OneBodyInteractionFactorsUpUp;
   // array that contains all one-body interaction factors for particles with spin down
   double* OneBodyInteractionFactorsDownDown;  
+  // array that contains all one-body interaction factors for particles with spin down
+  double* OneBodyInteractionFactorsUpDown;  
   
 
   // flag for fast multiplication algorithm
@@ -135,9 +137,13 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
 
  public:
 
+  // default constructor
+  //
+  AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian();
+  
   // destructor
   //
-  virtual ~AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian() = 0;
+  virtual ~AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian();
   
   // set Hilbert space
   //
@@ -159,47 +165,6 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
   // shift = shift value
   virtual void ShiftHamiltonian (double shift);
 
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  virtual Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  virtual Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -209,18 +174,8 @@ class AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian : public Abst
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
+					     int firstComponent, int nbrComponent);
  
-  // return a list of left interaction operators
-  //
-  // return value = list of left interaction operators
-  virtual List<Matrix*> LeftInteractionOperators();  
-
-  // return a list of right interaction operators 
-  //
-  // return value = list of right interaction operators
-  virtual List<Matrix*> RightInteractionOperators();  
-
   // save precalculations in a file
   // 
   // fileName = pointer to a string containg the name of the file where precalculations have to be stored

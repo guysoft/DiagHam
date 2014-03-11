@@ -1183,6 +1183,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
 	for (int j = 0; j <= this->LzMax; ++j)
 	  TmpDiagonal += this->OneBodyInteractionFactorsdowndown[j] * particles->AddAd(index + this->PrecalculationShift, j);	  
       indexArray[position] = index + this->PrecalculationShift;
+      if (this->HermitianSymmetryFlag == true)
+	TmpDiagonal *= 0.5;
       coefficientArray[position] = TmpDiagonal;
       ++position;
     }

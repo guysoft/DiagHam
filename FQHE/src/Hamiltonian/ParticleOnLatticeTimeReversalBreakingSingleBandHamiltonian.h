@@ -650,8 +650,8 @@ inline void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::Evaluate
     }
   else
     {
-       for (int i = firstComponent; i < lastComponent; i += step)
-	 vDestination[i] += this->HamiltonianShift * vSource[i];
+      for (int i = firstComponent; i < lastComponent; i += step)
+	vDestination[i] += this->HamiltonianShift * vSource[i];
     }
 }
 
@@ -714,6 +714,8 @@ inline void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::Evaluate
       double TmpDiagonal = 0.0;
       for (int j = 0; j <= this->LzMax; ++j)
 	TmpDiagonal += this->OneBodyInteractionFactors[j] * particles->AdA(index + this->PrecalculationShift, j);
+      if (this->HermitianSymmetryFlag == true)
+	TmpDiagonal *= 0.5;
       indexArray[position] = index + this->PrecalculationShift;
       coefficientArray[position] = TmpDiagonal;
       ++position;	  
