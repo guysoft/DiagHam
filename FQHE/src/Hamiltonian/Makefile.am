@@ -122,4 +122,5 @@ ParticleOnCylinderDensityDensity.cc \
 ParticleOnCP2ThreeBodyDeltaHamiltonian.cc \
 ParticleOnCP2GenericTwoBodyHamiltonian.cc \
 ParticleOnCylinderPseudopotentialHamiltonian.cc \
-ParticleOnSphereWithSpinFullGenericHamiltonian.cc
+ParticleOnSphereWithSpinFullGenericHamiltonian.cc \
+ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.cc
