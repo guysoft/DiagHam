@@ -470,6 +470,11 @@ class ComplexMatrix : public Matrix
   // minor = flag that indicated if precalculation will be used for minor development
   void EvaluateFastPermanentPrecalculationArray(int*& changeBit, int*& changeBitSign, bool minor = false);
 
+  // build a random unitary matrix
+  //
+  // return value = reference on the current matrix
+  ComplexMatrix& RandomUnitaryMatrix();
+
   // Output Stream overload
   //
   // Str = reference on output stream

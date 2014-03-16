@@ -841,25 +841,19 @@ void GenericComplexMainTask::DiagonalizeInHilbertSubspace(char* subspaceDescript
 	delete[] TmpName;
     }
   HermitianMatrix HRep (TmpHilbertSpaceDimension);
-  ComplexVector* TmpVectors = new ComplexVector[TmpHilbertSpaceDimension];
   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
     {
       ComplexVector TmpVector (Basis[0].GetVectorDimension(), true);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &(Basis[i]), &TmpVector);
       Operation1.ApplyOperation(this->Architecture);
-      TmpVectors[i] = TmpVector;
-    }
-  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
-    {
       for (int j = i; j < TmpHilbertSpaceDimension; ++j)
 	{
-	  Complex Tmp = Basis[j] * TmpVectors[i];
+	  Complex Tmp = Basis[j] * TmpVector;
 	  HRep.SetMatrixElement(i ,j, Tmp);
 	}
     }
   if (this->ShowHamiltonian == true)
     cout << HRep << endl;
-  delete[] TmpVectors;
   if (TmpHilbertSpaceDimension > 1)
     {
 #ifdef __LAPACK__

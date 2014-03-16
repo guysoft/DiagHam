@@ -198,6 +198,7 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::InitializeLanczosAlgorith
       this->LanczosVectors[j] /= TmpNorm;
     }
   delete[] TmpCoef;
+  this->TestOrthogonality(this->LanczosVectors,  this->BlockSize);
   this->Index = 0;
   this->ReducedMatrix.Resize(0, 0);
 }
@@ -224,9 +225,9 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::InitializeLanczosAlgorith
 	{
 	  this->LanczosVectors[j] = ComplexVector (Dimension);
 	  for (int i = 0; i < Dimension; ++i)
-	    this->LanczosVectors[j][i] = drand48() * Phase (2.0 * M_PI * drand48());
+	    this->LanczosVectors[j][i] = drand48() * Phase (2.0 * M_PI * drand48());	  
 	  for (int i = 0; i < j; ++i)
-	    TmpCoef[i] = this->LanczosVectors[j] * this->LanczosVectors[i];
+	    TmpCoef[i] = this->LanczosVectors[i] * this->LanczosVectors[j];
 	  for (int i = 0; i < j; ++i)
 	    this->LanczosVectors[j].AddLinearCombination(-TmpCoef[i], this->LanczosVectors[i]);
 	  double TmpNorm = this->LanczosVectors[j].Norm();
@@ -234,6 +235,17 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithm::InitializeLanczosAlgorith
 	}
       delete[] TmpCoef;
     }
+  
+//   ComplexVector* TmpVectors = new ComplexVector[this->BlockSize];
+//   for (int i = 0; i <  this->BlockSize; ++i)
+//     {
+//       TmpVectors[i] = this->LanczosVectors[i];
+//     }
+//   ComplexMatrix TmpVectorMatrix (TmpVectors, this->BlockSize);
+//   ComplexMatrix UnitaryMatrix(this->BlockSize, this->BlockSize);
+//   UnitaryMatrix.RandomUnitaryMatrix();
+//   TmpVectorMatrix.Multiply(UnitaryMatrix);
+  this->TestOrthogonality(this->LanczosVectors,  this->BlockSize);
   this->Index = 0;
   this->ReducedMatrix.Resize(0, 0);
 }

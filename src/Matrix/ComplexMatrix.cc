@@ -1933,10 +1933,10 @@ double* ComplexMatrix::SingularValueDecomposition(ComplexMatrix& uMatrix, Comple
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrColumn];
 
   Complex *TmpColumn;
-  for (int j=0;j<this->NbrColumn;++j)
+  for (int j = 0; j < this->NbrColumn; ++j)
     {
       TmpColumn=this->Columns[j].Components;
-      for (int i=0; i<this->NbrRow;++i)
+      for (int i = 0; i < this->NbrRow;++i)
 	{
 	  TmpMatrix[i+j*this->NbrRow].r=TmpColumn[i].Re;
 	  TmpMatrix[i+j*this->NbrRow].i=TmpColumn[i].Im;
@@ -2324,9 +2324,9 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
   doublecomplex* Tau = new doublecomplex [this->NbrRow];
   doublecomplex* Eigenvalues = new doublecomplex [this->NbrRow];
   Complex *TmpColumn;
-  for (int j=0;j<NbrRow;++j)
+  for (int j = 0; j < NbrRow; ++j)
     {
-      TmpColumn=this->Columns[j].Components;
+      TmpColumn = this->Columns[j].Components;
       for (int i=0; i<NbrRow;++i)
 	{
 	  TmpMatrix[i+j*NbrRow].r=TmpColumn[i].Re;
@@ -2436,6 +2436,27 @@ ComplexDiagonalMatrix& ComplexMatrix::LapackSchurForm (ComplexDiagonalMatrix& M,
 }
 
 #endif
+
+// build a random unitary matrix
+//
+// return value = reference on the current matrix
+
+ComplexMatrix& ComplexMatrix::RandomUnitaryMatrix()
+{
+
+  for (int j = 0; j < this->NbrColumn; ++j)
+    {
+      for (int i = 0; i < this->NbrRow;++i)
+	{
+	  this->Columns[j][i] = drand48() * Phase (2.0 * M_PI * drand48());
+	}
+      double TmpNorm = this->Columns[j].Norm();
+      this->Columns[j] /= TmpNorm;    
+    }
+  this->OrthoNormalizeColumns();
+  return *this;
+}
+
 
 #ifdef __MPI__
 

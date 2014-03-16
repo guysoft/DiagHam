@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("VectorComple2RealImaginary" , "0.01");
+  OptionManager Manager ("VectorRealImaginary2Complex" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type VectorComplex2RealImaginary -h" << endl;
+      cout << "see man page for option syntax or type VectorRealImaginary2Complex -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -62,18 +62,18 @@ int main(int argc, char** argv)
 
   ComplexVector OutputVector (InputVector.GetVectorDimension(), true);
   for (int i = 0; i < InputVector.GetVectorDimension(); ++i)
-        {
-         if (SetImag == false)
-           {
-             OutputVector.Re(i) = InputVector[i];
-             OutputVector.Im(i) = 0;
-           }
-          else
-           {
-             OutputVector.Re(i) = 0;
-             OutputVector.Im(i) = InputVector[i];
-           }
-        }
+    {
+      if (SetImag == false)
+	{
+	  OutputVector.Re(i) = InputVector[i];
+	  OutputVector.Im(i) = 0;
+	}
+      else
+	{
+	  OutputVector.Re(i) = 0;
+	  OutputVector.Im(i) = InputVector[i];
+	}
+    }
 
  OutputVector.WriteVector(Manager.GetString("output-vector"));
  return 0;
