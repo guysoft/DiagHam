@@ -65,6 +65,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);  
   (*SystemGroup) += new BooleanOption  ('\n', "all-bilinear", "apply all bilinear operators to the ground state, without summing on the sector");
+  (*SystemGroup) += new BooleanOption  ('\n', "compute-allsma", "compute all SMA");
+  (*SystemGroup) += new BooleanOption  ('\n', "quantum-distance", "include the quantum distance when computing the SMA");
   (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
@@ -170,102 +172,170 @@ int main(int argc, char** argv)
   
   ParticleOnSphere* SpaceSource = 0;
   Generic2DTightBindingModel TightBindingModel(Manager.GetString("import-onebody"));
-  AbstractOperator* Projector;
   ParticleOnSphere* SpaceDestination = 0;
-  if (BilinearFlag == false)
+
+  if (Manager.GetBoolean("compute-allsma") == false)
     {
-      cout << "N = " << NbrParticles << " Nx = " << NbrSiteX << " Ny = " << NbrSiteY << " Kx = "<< TotalKx[0] << " Ky = "<< TotalKy[0] <<  endl;
+      if (BilinearFlag == false)
+	{
+	  cout << "N = " << NbrParticles << " Nx = " << NbrSiteX << " Ny = " << NbrSiteY << " Kx = "<< TotalKx[0] << " Ky = "<< TotalKy[0] <<  endl;
+	  if (Statistics == true)
+	    SpaceSource = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[0], TotalKy[0]);
+	  else
+	    SpaceSource = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[0], TotalKy[0]);
+	  for (int kx = MinKx; kx <= MaxKx; ++kx)
+	    {
+	      for (int ky = MinKy; ky <= MaxKy; ++ky)
+		{
+		  
+		  int TotalQx = (TotalKx[0] - kx + NbrSiteX) % NbrSiteX;
+		  int TotalQy = (TotalKy[0] - ky + NbrSiteY) % NbrSiteY;
+		  cout << "Total Kx = " << TotalQx << " Total Ky = " << TotalQy << endl;
+		  //     cout << kx << " " << ky << endl;
+		  //     cout << TotalKx << " " << TotalKy << " " << TotalQx << " " << TotalQy << endl;
+		  if (Statistics == true)
+		    SpaceDestination = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalQx, TotalQy);
+		  else
+		    SpaceDestination = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalQx, TotalQy);
+		  
+		  char* EigenstateOutputFile;
+		  char* TmpExtention = new char [512];
+		  int QxTwoBrillouinZones = (TotalKx[0] - kx + 2*NbrSiteX) % (2*NbrSiteX);
+		  int QyTwoBrillouinZones = (TotalKy[0] - ky + 2*NbrSiteY) % (2*NbrSiteY);
+		  sprintf (TmpExtention, "_SMA_kx_%d_ky_%d.vec", QxTwoBrillouinZones, QyTwoBrillouinZones);
+		  EigenstateOutputFile = ReplaceExtensionToFileName(GroundStateFiles[0], ".vec", TmpExtention);
+		  ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
+		  
+		  ParticleOnLatticeProjectedDensityOperator Projector(SpaceSource, SpaceDestination, &TightBindingModel, kx, ky);
+		  VectorOperatorMultiplyOperation Operation(&Projector, &(GroundStates[0]), &EigenstateOutput);
+		  Operation.ApplyOperation(Architecture.GetArchitecture());
+		  EigenstateOutput.Normalize();
+		  EigenstateOutput.WriteVector(EigenstateOutputFile);
+		  
+		  
+		  delete[] EigenstateOutputFile;
+		  
+		}
+	    }
+	  delete SpaceDestination;
+	  delete SpaceSource;
+	}  
+      else
+	{
+	  for (int Qx0 = MinKx; Qx0 <= MaxKx; ++Qx0)
+	    {
+	      for (int Qy0 = MinKy; Qy0 <= MaxKy; ++Qy0)
+		{
+		  if (Statistics == true)
+		    SpaceDestination = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx0, Qy0);
+		  else
+		    SpaceDestination = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx0, Qy0);
+		  for (int i = 0; i < NbrSpaces; ++i)
+		    {
+		      cout << "N = " << NbrParticles << " Nx = " << NbrSiteX << " Ny = " << NbrSiteY << " Kx = "<< TotalKx[i] << " Ky = "<< TotalKy[i] <<  endl;
+		      if (Statistics == true)
+			SpaceSource = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+		      else
+			SpaceSource = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
+		      
+		      ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
+		      SpaceSource->SetTargetSpace(SpaceDestination);
+		      char* EigenstateOutputFile;
+		      char* TmpExtention = new char [512];
+		      for (int kx = 0; kx < NbrSiteX; ++kx)
+			{
+			  for (int ky = 0; ky < NbrSiteY; ++ky)
+			    {
+			      int KxQx = (kx + Qx0 - TotalKx[i]) % NbrSiteX;
+			      if (KxQx < 0)
+				KxQx += NbrSiteX;
+			      int KyQy = (ky + Qy0 - TotalKy[i]) % NbrSiteY;
+			      if (KyQy < 0)
+				KyQy += NbrSiteY;
+			      int indexDagger = TightBindingModel.GetLinearizedMomentumIndexSafe(KxQx, KyQy);
+			      int index = TightBindingModel.GetLinearizedMomentumIndexSafe(kx, ky);
+			      cout << "computing c^+_{"<< KxQx << "," << KyQy << "} c_{"<< kx << "," << ky << "} |Psi_" << i << ">" << endl;
+			      ParticleOnSphereDensityOperator Projector(SpaceSource, indexDagger, index);
+			      VectorOperatorMultiplyOperation Operation(&Projector, &(GroundStates[i]), &EigenstateOutput);
+			      Operation.ApplyOperation(Architecture.GetArchitecture());
+			      sprintf (TmpExtention, "_bilinear_kx_%d_ky_%d_qx0_%d_qy0_%d.vec", kx, ky, Qx0, Qy0);
+			      EigenstateOutputFile = ReplaceExtensionToFileName(GroundStateFiles[i], ".vec", TmpExtention);
+			      // 		EigenstateOutput.Normalize();
+			      EigenstateOutput.WriteVector(EigenstateOutputFile);
+			    }
+			}
+		      delete[] EigenstateOutputFile;
+		    }   
+		  delete SpaceDestination;
+		  delete SpaceSource;
+		}
+	    }
+	}
+    }
+  else
+    {
+      int Qx = MinKx;
+      int Qy = MinKy;
+      if (Statistics == true)
+	SpaceDestination = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx, Qy);
+      else
+	SpaceDestination = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx, Qy);
       if (Statistics == true)
 	SpaceSource = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[0], TotalKy[0]);
       else
 	SpaceSource = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[0], TotalKy[0]);
-      for (int kx = MinKx; kx <= MaxKx; ++kx)
+      SpaceSource->SetTargetSpace(SpaceDestination);
+      ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension());
+      ComplexVector TmpEigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
+      for (int Gx = 0; Gx < NbrSiteY; ++Gx)
 	{
-	  for (int ky = MinKy; ky <= MaxKy; ++ky)
+	  for (int Gy = 0; Gy < NbrSiteX; ++Gy)
 	    {
-	      
-	      int TotalQx = (TotalKx[0] - kx + NbrSiteX) % NbrSiteX;
-	      int TotalQy = (TotalKy[0] - ky + NbrSiteY) % NbrSiteY;
-	      cout << "Total Kx = " << TotalQx << " Total Ky = " << TotalQy << endl;
-	      //     cout << kx << " " << ky << endl;
-	      //     cout << TotalKx << " " << TotalKy << " " << TotalQx << " " << TotalQy << endl;
-	      if (Statistics == true)
-		SpaceDestination = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalQx, TotalQy);
-	      else
-		SpaceDestination = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalQx, TotalQy);
-	      
-	      Projector = new ParticleOnLatticeProjectedDensityOperator(SpaceSource, SpaceDestination, &TightBindingModel, kx, ky);
-	      
+	      EigenstateOutput.ClearVector();
 	      char* EigenstateOutputFile;
 	      char* TmpExtention = new char [512];
-	      int QxTwoBrillouinZones = (TotalKx[0] - kx + 2*NbrSiteX) % (2*NbrSiteX);
-	      int QyTwoBrillouinZones = (TotalKy[0] - ky + 2*NbrSiteY) % (2*NbrSiteY);
-	      sprintf (TmpExtention, "_SMA_kx_%d_ky_%d.vec", QxTwoBrillouinZones, QyTwoBrillouinZones);
-	      EigenstateOutputFile = ReplaceExtensionToFileName(GroundStateFiles[0], ".vec", TmpExtention);
-	      ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
-	      
-	      Projector->LowLevelAddMultiply(GroundStates[0], EigenstateOutput, 0, SpaceSource->GetHilbertSpaceDimension());
-	      EigenstateOutput.Normalize();
-	      EigenstateOutput.WriteVector(EigenstateOutputFile);
-	    
-	      
-	      delete[] EigenstateOutputFile;
-	      
-	    }
-	}
-      delete Projector;
-    }  
-  else
-    {
-      for (int Qx0 = MinKx; Qx0 <= MaxKx; ++Qx0)
-	{
-	  for (int Qy0 = MinKy; Qy0 <= MaxKy; ++Qy0)
-	    {
-	      if (Statistics == true)
-		SpaceDestination = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx0, Qy0);
-	      else
-		SpaceDestination = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx0, Qy0);
-	      for (int i = 0; i < NbrSpaces; ++i)
+	      cout << "computing rho_{"<< Qx << "," << Qy << "}^{"<< Gx << "," << Gy << "} |Psi_0>" << endl;
+	      for (int kx = 0; kx < NbrSiteX; ++kx)
 		{
-		  cout << "N = " << NbrParticles << " Nx = " << NbrSiteX << " Ny = " << NbrSiteY << " Kx = "<< TotalKx[i] << " Ky = "<< TotalKy[i] <<  endl;
-		  if (Statistics == true)
-		    SpaceSource = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
-		  else
-		    SpaceSource = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, TotalKx[i], TotalKy[i]);
-		  
-		  ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
-		  SpaceSource->SetTargetSpace(SpaceDestination);
-		  char* EigenstateOutputFile;
-		  char* TmpExtention = new char [512];
-		  for (int kx = 0; kx < NbrSiteX; ++kx)
+		  for (int ky = 0; ky < NbrSiteY; ++ky)
 		    {
-		      for (int ky = 0; ky < NbrSiteY; ++ky)
-			{
-			  int KxQx = (kx + Qx0 - TotalKx[i]) % NbrSiteX;
-			  if (KxQx < 0)
-			    KxQx += NbrSiteX;
-			  int KyQy = (ky + Qy0 - TotalKy[i]) % NbrSiteY;
-			  if (KyQy < 0)
-			    KyQy += NbrSiteY;
-			  int indexDagger = TightBindingModel.GetLinearizedMomentumIndexSafe(KxQx, KyQy);
-			  int index = TightBindingModel.GetLinearizedMomentumIndexSafe(kx, ky);
-			  cout << "computing c^+_{"<< KxQx << "," << KyQy << "} c_{"<< kx << "," << ky << "} |Psi_" << i << ">" << endl;
-			  ParticleOnSphereDensityOperator Projector(SpaceSource, indexDagger, index);
-			  VectorOperatorMultiplyOperation Operation(&Projector, &(GroundStates[i]), &EigenstateOutput);
-			  Operation.ApplyOperation(Architecture.GetArchitecture());
-			  sprintf (TmpExtention, "_bilinear_kx_%d_ky_%d_qx0_%d_qy0_%d.vec", kx, ky, Qx0, Qy0);
-			  EigenstateOutputFile = ReplaceExtensionToFileName(GroundStateFiles[i], ".vec", TmpExtention);
-			  // 		EigenstateOutput.Normalize();
-			  EigenstateOutput.WriteVector(EigenstateOutputFile);
-			}
+		      int KxQx = (kx + Qx - TotalKx[0]) % NbrSiteX;
+		      if (KxQx < 0)
+			KxQx += NbrSiteX;
+		      int KyQy = (ky + Qy - TotalKy[0]) % NbrSiteY;
+		      if (KyQy < 0)
+			KyQy += NbrSiteY;
+		      int indexDagger = TightBindingModel.GetLinearizedMomentumIndexSafe(KxQx, KyQy);
+		      int index = TightBindingModel.GetLinearizedMomentumIndexSafe(kx, ky);
+		      ParticleOnSphereDensityOperator Projector(SpaceSource, indexDagger, index);
+		      VectorOperatorMultiplyOperation Operation(&Projector, &(GroundStates[0]), &TmpEigenstateOutput);
+		      Operation.ApplyOperation(Architecture.GetArchitecture());
+		      Complex TmpFactor = 0.0;
+		      if (Manager.GetBoolean("quantum-distance"))
+			Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+		      else
+			Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+// 		      if ((kx == Gy) && (ky == Gx))
+// 			{
+// 			  TmpFactor = 1.0;
+// 			}
+// 		      else
+// 			{
+// 			  TmpFactor = 0.0;
+// 			}
+		      EigenstateOutput. AddLinearCombination(TmpFactor, TmpEigenstateOutput);
 		    }
-		  delete[] EigenstateOutputFile;
-		}   
+		}
+	      double TmpNorm = EigenstateOutput.Norm();
+	      cout << "norm = " << TmpNorm << endl;
+	      EigenstateOutput /= TmpNorm;
+	      sprintf (TmpExtention, "_sma_qx_%d_qy_%d_gx_%d_gy_%d.vec", Qx, Qy, Gx, Gy);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(GroundStateFiles[0], ".vec", TmpExtention);
+	      EigenstateOutput.WriteVector(EigenstateOutputFile);
 	    }
 	}
-    }
-  delete SpaceDestination;
-  delete SpaceSource;
-  
+      delete SpaceDestination;
+      delete SpaceSource;
+    }  
   return 0;
 }

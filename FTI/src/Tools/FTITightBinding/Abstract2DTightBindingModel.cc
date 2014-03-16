@@ -223,6 +223,7 @@ bool Abstract2DTightBindingModel::WriteBandStructureASCII(char* fileName)
 // qy = momentum transfer along y
 // band = band index
 // return value = < u(k) | u(k+q) >
+
 Complex Abstract2DTightBindingModel::GetAbelianConnection(int kx, int ky, int qx, int qy, int band)
 {
     // [band][orbital] = Conj(<orbital|band>)
@@ -246,6 +247,34 @@ Complex Abstract2DTightBindingModel::GetAbelianConnection(int kx, int ky, int qx
         exit(1);
     }
     return inner / n;
+}
+
+// compute the exponentiated, unitary Abelian connection times the quantum distance
+//
+// kx = momentum along x
+// ky = momentum along y
+// qx = momentum transfer along x
+// qy = momentum transfer along y
+// band = band index
+// return value = < u(k) | u(k+q) >
+
+Complex Abstract2DTightBindingModel::GetAbelianConnectionQuantumDistance(int kx, int ky, int qx, int qy, int band)
+{
+    // [band][orbital] = Conj(<orbital|band>)
+    int k1 = this->GetLinearizedMomentumIndexSafe(kx, ky);
+    int k2 = this->GetLinearizedMomentumIndexSafe(kx + qx, ky + qy);
+    ComplexVector bra = this->GetOneBodyMatrix(k1)[band];
+    ComplexVector ket = this->GetOneBodyMatrix(k2)[band];
+
+    Complex inner = 0.0;
+    if (this->EmbeddingX.GetVectorDimension() != this->NbrBands)
+        inner = ket * bra;
+    else
+    {
+        for (int i = 0; i < this->NbrBands; ++i)
+            inner += Phase(- 2.0 * M_PI * (qx * this->EmbeddingX[i] / this->NbrSiteX + qy * this->EmbeddingY[i] / this->NbrSiteY)) * bra[i] * Conj(ket[i]);
+    }
+    return inner;
 }
 
 // compute the unitary Abelian Wilson loop

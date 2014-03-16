@@ -154,6 +154,16 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = Phase of < u(k) | u(k+q) >
   virtual Complex GetAbelianConnection(int kx, int ky, int qx, int qy, int band);
 
+  // compute the exponentiated, unitary Abelian connection times the quantum distance
+  //
+  // kx = momentum along x
+  // ky = momentum along y
+  // qx = momentum transfer along x
+  // qy = momentum transfer along y
+  // band = band index
+  // return value = < u(k) | u(k+q) >
+  virtual Complex GetAbelianConnectionQuantumDistance(int kx, int ky, int qx, int qy, int band);
+
   // compute the unitary Abelian Wilson loop
   //
   // ky = momentum along y
