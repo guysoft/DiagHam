@@ -18,6 +18,7 @@
 #include "Operator/ParticleOnSphereDensityOperator.h"
 #include "Operator/ParticleOnLatticeProjectedDensityOperator.h"
 
+
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "name of the vector file to which the SMA should be applied");
-  (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-groundstate", "name of the file that gives the vector files to which the SMA should be applied (in all-bilinear mode)");	
+  (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-groundstate", "name of the file that gives the vector files to which the SMA should be applied (in all-bilinear or sma mode)");	
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);  
   (*SystemGroup) += new BooleanOption  ('\n', "all-bilinear", "apply all bilinear operators to the ground state, without summing on the sector");
@@ -312,9 +313,9 @@ int main(int argc, char** argv)
 		      Operation.ApplyOperation(Architecture.GetArchitecture());
 		      Complex TmpFactor = 0.0;
 		      if (Manager.GetBoolean("quantum-distance"))
-			Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+			TmpFactor = Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
 		      else
-			Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+			TmpFactor = Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
 // 		      if ((kx == Gy) && (ky == Gx))
 // 			{
 // 			  TmpFactor = 1.0;
