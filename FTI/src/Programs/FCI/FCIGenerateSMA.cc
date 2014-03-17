@@ -312,10 +312,15 @@ int main(int argc, char** argv)
 		      VectorOperatorMultiplyOperation Operation(&Projector, &(GroundStates[0]), &TmpEigenstateOutput);
 		      Operation.ApplyOperation(Architecture.GetArchitecture());
 		      Complex TmpFactor = 0.0;
+// 		      if (Manager.GetBoolean("quantum-distance"))
+// 			TmpFactor = Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+// 		      else
+// 			TmpFactor = Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+		      
 		      if (Manager.GetBoolean("quantum-distance"))
-			TmpFactor = Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+			TmpFactor = Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX - TotalKx[0], Qy + Gy * NbrSiteY - TotalKy[0], 0));
 		      else
-			TmpFactor = Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX, Qy + Gy * NbrSiteY, 0));
+			TmpFactor = Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX- TotalKx[0], Qy + Gy * NbrSiteY- TotalKy[0], 0));
 // 		      if ((kx == Gy) && (ky == Gx))
 // 			{
 // 			  TmpFactor = 1.0;
