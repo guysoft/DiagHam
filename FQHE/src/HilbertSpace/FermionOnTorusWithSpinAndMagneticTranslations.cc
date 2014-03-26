@@ -146,6 +146,70 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
 #endif    
 }
 
+// basic constructor without constraint on Sz
+// 
+// nbrFermions= number of fermions
+// maxMomentum = momentum maximum value for a fermion
+// xMomentum = momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
+// yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)  
+
+FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagneticTranslations (int nbrFermions, int maxMomentum, int xMomentum, int yMomentum)
+{
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->TotalSpin = 0;
+  this->NbrFermionsUp = this->NbrFermions;
+  this->NbrFermionsDown = 0;  
+  this->MaxMomentum = maxMomentum;  
+
+  this->NbrMomentum = this->MaxMomentum + 1;
+  this->NbrFermionStates = 2 * this->NbrMomentum;
+  this->MomentumModulo = FindGCD(this->NbrFermions, this->MaxMomentum);
+  cout << "MomentumModulo=" << MomentumModulo<<endl;
+  this->XMomentum = xMomentum % this->MomentumModulo;
+  this->YMomentum = yMomentum % this->MaxMomentum;
+
+  this->StateShift = 2*(this->MaxMomentum / this->MomentumModulo);
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
+  this->ComplementaryStateShift = 2*this->MaxMomentum - this->StateShift;
+  this->MomentumMask = ((unsigned long) 1);
+  for (int i = 1; i < this->StateShift; ++i)
+    {
+      this->MomentumMask <<= 1;
+      this->MomentumMask |= ((unsigned long) 1);
+    }
+
+  this->MaximumSignLookUp = 16;
+  this->GenerateSignLookUpTable();
+  this->LargeHilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  this->HilbertSpaceDimension = this->GenerateStates();
+  cout << "Orbits: "<<HilbertSpaceDimension<<endl;
+  this->Flag.Initialize();
+  if (this->HilbertSpaceDimension != 0)
+    this->GenerateLookUpTable(1000000);
+  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+#ifdef __DEBUG__
+  int UsedMemory = 0;
+  UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
+  UsedMemory += this->NbrMomentum * sizeof(int);
+  //  UsedMemory += this->NbrMomentum * this->LookUpTableMemorySize * sizeof(int);
+  UsedMemory +=  (1 << MaximumSignLookUp) * sizeof(double);
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+}
+
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy

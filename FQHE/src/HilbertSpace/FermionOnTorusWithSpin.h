@@ -51,6 +51,13 @@ class FermionOnTorusWithSpin :  public FermionOnSphereWithSpin
   // momentumConstraint = index of the momentum orbit
   FermionOnTorusWithSpin (int nbrFermions, int maxMomentum, int totalSpinMomentum, int momentumConstaint);
 
+  // constructor without  constraint on total spin momentum
+  // 
+  // nbrFermions = number of fermions
+  // maxMomentum = momentum maximum value for a fermion
+  // momentumConstraint = index of the momentum orbit
+  FermionOnTorusWithSpin (int nbrFermions, int maxMomentum, int momentumConstaint);
+
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
@@ -94,10 +101,19 @@ class FermionOnTorusWithSpin :  public FermionOnSphereWithSpin
   // evaluate Hilbert space dimension for a given total spin momentum
   //
   // nbrFermions = number of fermions
-  // maxMomentum = momentum maximum value for a fermion
-  // momemtum = twice the total spin momentum
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKy = current total momentum along y
+  // nbrSpinUp = number of particles with spin up
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int maxMomentum, int momemtum);
+  long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKy, int currentTotalKy, int nbrSpinUp);
+
+  // evaluate Hilbert space dimension for a given total momentum
+  //
+  // nbrFermions = number of fermions
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKy = current total momentum along y
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKy, int currentTotalKy);
 
   // generate all states corresponding to the constraints
   // 
@@ -109,6 +125,16 @@ class FermionOnTorusWithSpin :  public FermionOnSphereWithSpin
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
   int GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentTotalSpinMomentum, int currentMomentum);
+
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // maxMomentum = momentum maximum value for a fermion in the state
+  // currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+  // pos = position in StateDescription array where to store states
+  // currentMomentum = current value of the momentum
+  // return value = position from which new states have to be stored
+  int GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, int currentMomentum);
 
 };
 

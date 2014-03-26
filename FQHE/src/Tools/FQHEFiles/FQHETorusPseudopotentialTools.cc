@@ -203,18 +203,42 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
   return true;
 }
 
+// get pseudopototentials for particles on torus with SU(2) spin from file, including the one-body pseudopotentials if any
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// oneBobyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
+//                            first index refered to the spin sector (sorted as up-up, down-down, up-down)
+// return value = true if no error occured
+
+bool FQHETorusSU2GetPseudopotentials (char* fileName, int nbrFluxQuanta, int* nbrPseudoPotentials, double** pseudoPotentials, double** oneBobyPseudoPotentials)
+{
+  if (FQHETorusSU2GetPseudopotentials (fileName, nbrPseudoPotentials, pseudoPotentials) == false)
+    {
+      return false;
+    }
+  return FQHETorusSU2GetOneBodyPseudopotentials (fileName, nbrFluxQuanta, oneBobyPseudoPotentials[0], oneBobyPseudoPotentials[1], oneBobyPseudoPotentials[2]);
+}
+
 // get pseudopototentials for particles on torus with SU(2) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
 // nbrPseudoPotentials = number of pseudopotentials per interaction type
 // pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // return value = true if no error occured
 
-bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown, double*& oneBodyPotentialUpDown)
+bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int nbrFluxQuanta, double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown, double*& oneBodyPotentialUpDown)
 {
   int TmpNbrPseudoPotentials;
   ConfigurationParser InteractionDefinition;
+  oneBodyPotentialUpUp = 0;
+  oneBodyPotentialDownDown = 0;
+  oneBodyPotentialUpDown = 0;
   if (InteractionDefinition.Parse(fileName) == false)
     {
       InteractionDefinition.DumpErrors(cout) << endl;
@@ -222,7 +246,7 @@ bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*&
     }
   if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpUp", ' ', oneBodyPotentialUpUp, TmpNbrPseudoPotentials) == true)
     {
-      if (TmpNbrPseudoPotentials != lzMax )
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
 	{
 	  cout << "OneBodyPotentialUpUp has a wrong number of components or has a wrong value in " << fileName << endl;
 	  return false;
@@ -230,7 +254,7 @@ bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*&
     }
   if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialDownDown", ' ', oneBodyPotentialDownDown, TmpNbrPseudoPotentials) == true)
     {
-      if (TmpNbrPseudoPotentials != lzMax)
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
 	{
 	  cout << "OneBodyPotentialDownDown has a wrong number of components or has a wrong value in " << fileName << endl;
 	  return false;
@@ -238,7 +262,7 @@ bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int lzMax, double*&
     }
   if (InteractionDefinition.GetAsDoubleArray("OneBodyPotentialUpDown", ' ', oneBodyPotentialUpDown, TmpNbrPseudoPotentials) == true)
     {
-      if (TmpNbrPseudoPotentials != lzMax)
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
 	{
 	  cout << "OneBodyPotentialUpDown has a wrong number of components or has a wrong value in " << fileName << endl;
 	  return false;

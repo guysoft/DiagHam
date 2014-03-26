@@ -6,7 +6,8 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//   class of fermion with spin on a torus taking into account magnetic translations    //
+//                 class of fermion with spin on a torus taking               //
+//                      into account magnetic translations                    //
 //                                                                            //
 //                        last modification : 26/11/2007                      //
 //                                                                            //
@@ -133,9 +134,16 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // totalSpin = twice the total spin value
   // maxMomentum = momentum maximum value for a fermion
   // xMomentum = momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
-  // yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)
-  
+  // yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)  
   FermionOnTorusWithSpinAndMagneticTranslations (int nbrFermions, int totalSpin, int maxMomentum, int xMomentum, int yMomentum);
+
+  // basic constructor without constraint on Sz
+  // 
+  // nbrFermions= number of fermions
+  // maxMomentum = momentum maximum value for a fermion
+  // xMomentum = momentum in the x direction (modulo GCD of nbrFermions and maxMomentum)
+  // yMomentum = momentum in the y direction (modulo GCD of nbrFermions and maxMomentum)  
+  FermionOnTorusWithSpinAndMagneticTranslations (int nbrFermions, int maxMomentum, int xMomentum, int yMomentum);
 
   // copy constructor (without duplicating datas)
   //

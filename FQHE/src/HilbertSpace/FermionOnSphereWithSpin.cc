@@ -1800,7 +1800,7 @@ double FermionOnSphereWithSpin::ComputeSign(unsigned long signs)
 // totalSpin = twce the total spin value
 // return value = Hilbert space dimension
 
-int FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
+long FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin)
 {
   //  codage des etats sur deux bits, -lzMax up down on the lsb's
   
@@ -1810,7 +1810,7 @@ int FermionOnSphereWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int 
   unsigned long i, coeff;
   int k, position; 
   int CheckLz;
-  int counter;
+  long counter;
   int DimOrbit = lzMax+1;
   /*-------------INITS---------------------*/
   

@@ -20,17 +20,15 @@
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
+#include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleDoubleOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
+
+#include "MainTask/FQHEOnTorusMainTask.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -53,16 +51,16 @@ int main(int argc, char** argv)
     
   // some running options and help
   OptionManager Manager ("FQHETorusFermionsWithSpinAndTranslations" , "0.01");
-  OptionGroup* LanczosGroup  = new OptionGroup ("Lanczos options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(true);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
-  Manager += LanczosGroup;
+  Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
@@ -72,25 +70,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
-					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", -1.0);
+					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 1.0);
   (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
 					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
   (*SystemGroup) += new  BooleanOption  ('\n', "redundantYMomenta", "Calculate all subspaces up to YMomentum = MaxMomentum-1", false);
-
-  (*LanczosGroup) += new SingleIntegerOption  ('n', "nbr-eigen", "number of eigenvalues", 30);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "full-diag", 
-					       "maximum Hilbert space dimension for which full diagonalization is applied", 
-					       500, true, 100);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "iter-max", "maximum number of lanczos iteration", 3000);
-  (*LanczosGroup) += new BooleanOption  ('\n', "disk", "enable disk resume capabilities", false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "resume", "resume from disk datas", false);
-  (*LanczosGroup) += new SingleIntegerOption  ('i', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
-  (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
-  (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
-					 "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", 
-					 false);
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate", "evaluate eigenstates", false);  
-  (*LanczosGroup) += new BooleanOption  ('\n', "eigenstate-convergence", "evaluate Lanczos convergence from eigenstate convergence", false);  
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
@@ -103,46 +86,40 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHETorusFermionsWithSpinAndTranslations -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int MaxNbrIterLanczos = ((SingleIntegerOption*) Manager["iter-max"])->GetInteger();
   int TotalSpin = Manager.GetInteger("total-spin");
-  int NbrIterLanczos = ((SingleIntegerOption*) Manager["nbr-iter"])->GetInteger();
-  int NbrEigenvalue = ((SingleIntegerOption*) Manager["nbr-eigen"])->GetInteger();
-  int NbrFermions = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int XMomentum = ((SingleIntegerOption*) Manager["x-momentum"])->GetInteger();
-  int YMomentum = ((SingleIntegerOption*) Manager["y-momentum"])->GetInteger();
-  int MaxFullDiagonalization = ((SingleIntegerOption*) Manager["full-diag"])->GetInteger();
+  int NbrIterLanczos = Manager.GetInteger("nbr-iter");
+  int NbrFermions = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int XMomentum = Manager.GetInteger("x-momentum");
+  int YMomentum = Manager.GetInteger("y-momentum");
   double XRatio = NbrFermions / 4.0;
-  if (((SingleDoubleOption*) Manager["ratio"])->GetDouble() > 0)
+  if (Manager.GetDouble("ratio") > 0)
     {
-       XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+       XRatio = Manager.GetDouble("ratio");
     }
   double LayerSeparation = Manager.GetDouble("layerSeparation");
-  bool ResumeFlag = ((BooleanOption*) Manager["resume"])->GetBoolean();
-  bool DiskFlag = ((BooleanOption*) Manager["disk"])->GetBoolean();
-  int VectorMemory = ((SingleIntegerOption*) Manager["nbr-vector"])->GetInteger();
-  char* LoadPrecalculationFileName = ((SingleStringOption*) Manager["load-precalculation"])->GetString();
-  char* SavePrecalculationFileName = ((SingleStringOption*) Manager["save-precalculation"])->GetString();
-  long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+  char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
+  char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   int L = 0;
   double GroundStateEnergy = 0.0;
 
-  char* OutputNameLz = new char [512];
+  char* OutputName = new char [512];
   if (LayerSeparation==0.0)
-    sprintf (OutputNameLz, "fermions_torus_su2_coulomb_n_%d_2s_%d_Sz_%d_ratio_%f.dat", NbrFermions, MaxMomentum, TotalSpin, XRatio);
+    sprintf (OutputName, "fermions_torus_su2_coulomb_n_%d_2s_%d_sz_%d_ratio_%f.dat", NbrFermions, MaxMomentum, TotalSpin, XRatio);
   else
-    sprintf (OutputNameLz, "fermions_torus_d_%f_coulomb_n_%d_2s_%d_Sz_%d_ratio_%f.dat", LayerSeparation, 
+    sprintf (OutputName, "fermions_torus_d_%f_coulomb_n_%d_2s_%d_sz_%d_ratio_%f.dat", LayerSeparation, 
 NbrFermions,MaxMomentum, TotalSpin, XRatio);
   ofstream File;
-  File.open(OutputNameLz, ios::binary | ios::out);
+  File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
 
 
@@ -162,165 +139,47 @@ NbrFermions,MaxMomentum, TotalSpin, XRatio);
   else
     YMaxMomentum = YMomentum; 
 
+  bool FirstRun=true;
   for (; XMomentum <= XMaxMomentum; ++XMomentum)
     for (int YMomentum2 = YMomentum; YMomentum2 <= YMaxMomentum; ++YMomentum2)
       {     
 	cout << "----------------------------------------------------------------" << endl;
 	cout << " Ratio = " << XRatio << endl;
-//	FermionOnTorus TotalSpace (NbrFermions, MaxMomentum, y);
-	FermionOnTorusWithSpinAndMagneticTranslations TotalSpace (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
-	cout << " Total Hilbert space dimension = " << TotalSpace.GetHilbertSpaceDimension() << endl;
-	//      cout << "momentum = " << Momentum << endl;
+	FermionOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0 ;
+	TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+	cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
 	cout << "momentum = (" << XMomentum << "," << YMomentum2 << ")" << endl;
-//	cout << "momentum = (" << y << ")" << endl;
-/*	for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
-	  {
-	    cout << i << " = ";
-	    TotalSpace.PrintState(cout, i) << endl;
-	  }
-	cout << endl << endl;
-	exit(0);*/
-/*      for (int i = 0; i < TotalSpace.GetHilbertSpaceDimension(); ++i)
-	{
-	  cout << "---------------------------------------------" << endl;
-	  cout << i << " = " << endl;;
-	  for (int m1 = 0; m1 < MaxMomentum; ++m1)
-	    for (int m2 = 0; m2 < m1; ++m2)
-	      for (int m3 = 0; m3 < MaxMomentum; ++m3)
-		{
-		  int m4 = m1 + m2 - m3;
-		  if (m4 < 0)
-		    m4 += MaxMomentum;
-		  else
-		    if (m4 >= MaxMomentum)
-		      m4 -= MaxMomentum;
-		  if (m3 > m4)
-		    {
-		      double Coefficient = 0.0;
-		      int NbrTranslations = 0;
-		      TotalSpace.AdAdAA(i, m1, m2, m3, m4, Coefficient, NbrTranslations);
-		    }
-		 }
-		
-	 }*/
-	
-	Architecture.GetArchitecture()->SetDimension(TotalSpace.GetHilbertSpaceDimension());
-	
-	AbstractHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian
-	  (&TotalSpace, NbrFermions, MaxMomentum, XMomentum, XRatio, LayerSeparation, 
+	Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());	
+	AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian
+	  (TotalSpace, NbrFermions, MaxMomentum, XMomentum, XRatio, LayerSeparation, 
 	   Architecture.GetArchitecture(), Memory);
-	
-	if (Hamiltonian->GetHilbertSpaceDimension() < MaxFullDiagonalization)
+	char* EigenvectorName = 0;
+	if (Manager.GetBoolean("eigenstate"))	
 	  {
-	    HermitianMatrix HRep2(Hamiltonian->GetHilbertSpaceDimension());
-	    Hamiltonian->GetHamiltonian(HRep2);
-	    Complex Zero;
-	    //	  HRep2.SetMatrixElement(0, 1, Zero);
-	    //	  HRep2.SetMatrixElement(1, 5, Zero);
-	    //	  cout << HRep2 << endl;	  
-	    RealSymmetricMatrix HRep (HRep2.ConvertToSymmetricMatrix());
-	    if (Hamiltonian->GetHilbertSpaceDimension() > 1)
-	      {
-		RealTriDiagonalSymmetricMatrix TmpTriDiag (Hamiltonian->GetHilbertSpaceDimension(), true);
-		HRep.Householder(TmpTriDiag, 1e-7);
-		TmpTriDiag.Diagonalize();
-		TmpTriDiag.SortMatrixUpOrder();
-		if (L == 0)
-		  GroundStateEnergy = TmpTriDiag.DiagonalElement(0);
-		for (int j = 0; j < Hamiltonian->GetHilbertSpaceDimension() ; j++)
-		  {
-		    File << XMomentum << " " << YMomentum2 << " " << TmpTriDiag.DiagonalElement(2 * j) << endl;
-		    cout << XMomentum << " " << YMomentum2 << " " << TmpTriDiag.DiagonalElement(2 * j) << endl;
-		  }
-		cout << endl;
-	      }
+	    EigenvectorName = new char [512];
+	    char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
+	    if (Manager.GetString("eigenstate-file") == 0)
+              sprintf (EigenvectorName, "%s_kx_%d_ky_%d", TmpName, XMomentum, YMomentum);
 	    else
-	      {
-		if (Hamiltonian->GetHilbertSpaceDimension() > 0)
-		  File << XMomentum << " " << YMomentum2 << " " << HRep(0, 0) << endl;
-	      }
+              sprintf (EigenvectorName, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), XMomentum, YMomentum);
+	    delete [] TmpName;
 	  }
-	else
+	double Shift = -10.0;
+	Hamiltonian->ShiftHamiltonian(Shift);      
+	FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputName, FirstRun, EigenvectorName);
+	Task.SetKxValue(XMomentum);
+	MainTaskOperation TaskOperation (&Task);
+	TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	if (EigenvectorName != 0)
 	  {
-	    int MaxNbrIterLanczos = 4000;
-	    AbstractLanczosAlgorithm* Lanczos;
-	    if (NbrEigenvalue == 1)
-	      {
-		if (DiskFlag == false)
-		  Lanczos = new ComplexBasicLanczosAlgorithm(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
-		else
-		  Lanczos = new ComplexBasicLanczosAlgorithmWithDiskStorage(Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
-	      }
-	    else
-	      {
-		if (DiskFlag == false)
-		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithm (Architecture.GetArchitecture(), NbrEigenvalue, MaxNbrIterLanczos);
-		else
-		  Lanczos = new FullReorthogonalizedComplexLanczosAlgorithmWithDiskStorage (Architecture.GetArchitecture(), NbrEigenvalue, VectorMemory, 
-											    MaxNbrIterLanczos);
-	      }
-	    double Precision = 1.0;
-	    double PreviousLowest = 1e50;
-	    double Lowest = PreviousLowest;
-	    int CurrentNbrIterLanczos = NbrEigenvalue + 3;
-	    Lanczos->SetHamiltonian(Hamiltonian);
-	    if ((DiskFlag == true) && (ResumeFlag == true))
-	      Lanczos->ResumeLanczosAlgorithm();
-	    else
-	      Lanczos->InitializeLanczosAlgorithm();
-	    cout << "Run Lanczos Algorithm" << endl;
-	    timeval TotalStartingTime;
-	    timeval TotalEndingTime;
-	    double Dt;
-	    gettimeofday (&(TotalStartingTime), 0);
-	    if (ResumeFlag == false)
-	      {
-		Lanczos->RunLanczosAlgorithm(NbrEigenvalue + 2);
-		CurrentNbrIterLanczos = NbrEigenvalue + 3;
-	      }
-	    RealTriDiagonalSymmetricMatrix TmpMatrix;
-	    while ((Lanczos->TestConvergence() == false) && (((DiskFlag == true) && (CurrentNbrIterLanczos < NbrIterLanczos)) ||
-							     ((DiskFlag == false) && (CurrentNbrIterLanczos < MaxNbrIterLanczos))))
-	      {
-		Lanczos->RunLanczosAlgorithm(1);
-		TmpMatrix.Copy(Lanczos->GetDiagonalizedMatrix());
-		TmpMatrix.SortMatrixUpOrder();
-		Lowest = TmpMatrix.DiagonalElement(NbrEigenvalue - 1);
-		Precision = fabs((PreviousLowest - Lowest) / PreviousLowest);
-		PreviousLowest = Lowest; 
-		cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << " "<< endl;
-		++CurrentNbrIterLanczos;
-	      }
-	    if (CurrentNbrIterLanczos >= MaxNbrIterLanczos)
-	      {
-		cout << "too much Lanczos iterations" << endl;
-		File << "too much Lanczos iterations" << endl;
-		File.close();
-		exit(0);
-	      }
-	    GroundStateEnergy = TmpMatrix.DiagonalElement(0);
-	    cout << endl;
-	    cout << TmpMatrix.DiagonalElement(0) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
-		 << CurrentNbrIterLanczos << endl;
-	    for (int i = 0; i <= NbrEigenvalue; ++i)
-	      {
-		cout << TmpMatrix.DiagonalElement(i) << " ";
-		File << XMomentum << " " << YMomentum2 << " " << TmpMatrix.DiagonalElement(i) << endl;
-	      }
-	    cout << endl;
-	    gettimeofday (&(TotalEndingTime), 0);
-	    cout << "------------------------------------------------------------------" << endl << endl;;
-	    Dt = (double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
-	      ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0);
-	    cout << "time = " << Dt << endl;
-	    delete Lanczos;
+	    delete[] EigenvectorName;
 	  }
-	cout << "----------------------------------------------------------------" << endl;
-	cout << " ground state energy = " << GroundStateEnergy << endl;
-	cout << " energy per particle in the ground state = " << (GroundStateEnergy / (double) NbrFermions) << endl;
+	if (FirstRun == true)
+	  FirstRun = false;
 	delete Hamiltonian;
+	delete TotalSpace;
       }
   File.close();
-  delete[] OutputNameLz;
+  delete[] OutputName;
   return 0;
 }

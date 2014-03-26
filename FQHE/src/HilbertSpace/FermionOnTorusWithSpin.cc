@@ -62,15 +62,64 @@ FermionOnTorusWithSpin::FermionOnTorusWithSpin (int nbrFermions, int maxMomentum
   this->TotalLz = momentumConstaint;
   this->NbrFermionsUp = (this->NbrFermions+this->TotalSpin)/2;
   this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;
-  this->LargeHilbertSpaceDimension = (int) this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrLzValue, totalSpinMomentum);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrLzValue - 1, 0, this->NbrFermionsUp);
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   this->Flag.Initialize();
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateHighestBit = new int [this->LargeHilbertSpaceDimension];
+  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions,  2 * this->NbrLzValue - 1, 2 * this->NbrLzValue - 1, 0, 0, 0);
+  this->TargetSpace = this;
+  this->MaximumSignLookUp = 16;
+  this->GenerateLookUpTable(1000000);
+#ifdef __DEBUG__
+  int UsedMemory = 0;
+  UsedMemory += 2 * this->HilbertSpaceDimension * sizeof(int);
+  UsedMemory += this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+  UsedMemory +=  (1 << MaximumSignLookUp) * sizeof(double);
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+}
+
+// constructor with a constraint on total momentum
+// 
+// nbrFermions = number of fermions
+// maxMomentum = momentum maximum value for a fermion
+// momentumConstraint = index of the momentum orbit
+
+FermionOnTorusWithSpin::FermionOnTorusWithSpin (int nbrFermions, int maxMomentum, int momentumConstaint)
+{
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->LzMax = maxMomentum - 1;
+  this->NbrLzValue = maxMomentum;
+  this->TotalSpin = 0;
+  this->TotalLz = momentumConstaint;
+  this->NbrFermionsUp = (this->NbrFermions+this->TotalSpin)/2;
+  this->NbrFermionsDown = (this->NbrFermions-this->TotalSpin)/2;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrLzValue - 1, 0);
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];
-  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions,  2 * this->NbrLzValue - 1, 2 * this->NbrLzValue - 1, 0, 0, 0);
+  this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions,  2 * this->NbrLzValue - 1, 2 * this->NbrLzValue - 1, 0, 0);
+  if (((long) this->HilbertSpaceDimension) != this->LargeHilbertSpaceDimension)
+    cout << "erro, Hilbert space dimension mismatch " << this->HilbertSpaceDimension << " (" << this->LargeHilbertSpaceDimension << ")" << endl;
   this->TargetSpace = this;
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
@@ -234,7 +283,7 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
 	  currentMaxMomentum &= ~0x1;
 	  for (; i <= currentMaxMomentum; i += (this->NbrLzValue << 1))
 	    {
-	      this->StateDescription[pos] = 0x1l << i;
+	      this->StateDescription[pos] = 0x1ul << i;
 	      this->StateHighestBit[pos] = maxMomentum >> 1;
 	      ++pos;
 	    }
@@ -275,22 +324,103 @@ int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int
     return this->GenerateStates(nbrFermions, maxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentTotalSpinMomentum, currentMomentum);
 }
 
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// maxMomentum = momentum maximum value for a fermion in the state
+// currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+// pos = position in StateDescription array where to store states
+// currentMomentum = current value of the momentum
+// return value = position from which new states have to be stored
+
+int FermionOnTorusWithSpin::GenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, int pos, 
+					   int currentMomentum)
+{
+  if ((nbrFermions < 0) || (nbrFermions > (currentMaxMomentum + 1)) || ((nbrFermions > 0) && (currentMaxMomentum < 0)))
+    return pos;
+  if (nbrFermions == 0)
+    {
+      if ((currentMomentum % this->NbrLzValue) == this->TotalLz)
+	{
+	  this->StateDescription[pos] = 0x0ul;
+	  this->StateHighestBit[pos] = maxMomentum >> 1;
+	  ++pos;
+	}
+      return pos;
+    }
+  int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
+  int TmpPos = this->GenerateStates(nbrFermions - 1, maxMomentum, ReducedCurrentMaxMomentum, pos, currentMomentum + (currentMaxMomentum >> 1));
+  unsigned long Mask = 0x1ul << currentMaxMomentum;
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  if (maxMomentum == currentMaxMomentum)
+    return this->GenerateStates(nbrFermions, ReducedCurrentMaxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum);
+  else
+    return this->GenerateStates(nbrFermions, maxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum);
+}
+
 // evaluate Hilbert space dimension for a given total spin momentum
 //
 // nbrFermions = number of fermions
-// maxMomentum = momentum maximum value for a fermion
-// spinMomemtum = twice the total spin momentum
+// currentKy = current momentum along y for a single particle
+// currentTotalKy = current total momentum along y
+// nbrSpinUp = number of particles with spin up
 // return value = Hilbert space dimension
 
-int FermionOnTorusWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int maxMomentum, int spinMomemtum)
+long FermionOnTorusWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKy, int currentTotalKy, int nbrSpinUp)
 {
-  FactorialCoefficient Dimension; 
-  int NbrUpFermion = (spinMomemtum + nbrFermions) >> 1;
-  Dimension.PartialFactorialMultiply(maxMomentum - NbrUpFermion + 1, maxMomentum); 
-  Dimension.FactorialDivide(NbrUpFermion);
-  NbrUpFermion = nbrFermions - NbrUpFermion;
-  Dimension.PartialFactorialMultiply(maxMomentum - NbrUpFermion + 1, maxMomentum); 
-  Dimension.FactorialDivide(NbrUpFermion);
-  return (Dimension.GetIntegerValue());
+  if ((nbrSpinUp < 0) || (nbrSpinUp > nbrFermions))
+    return 0l;
+
+  if (nbrFermions == 0)
+    {
+      if ((currentTotalKy % this->NbrLzValue) == this->TotalLz)
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKy < 0)
+    return 0l;
+  long Count = 0;
+  if (nbrFermions == 1)
+    {
+      for (int j = currentKy; j >= 0; --j)
+	{
+	  if (((j + currentTotalKy) % this->NbrLzValue) == this->TotalLz)
+	    Count++;
+	}
+      return Count;
+    }
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 2, currentKy - 1, currentTotalKy + (2 * currentKy), nbrSpinUp - 1);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKy - 1, currentTotalKy + currentKy, nbrSpinUp - 1);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKy - 1, currentTotalKy + currentKy, nbrSpinUp);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKy - 1, currentTotalKy, nbrSpinUp);
+  return Count;
+}
+
+// evaluate Hilbert space dimension for a given total momentum
+//
+// nbrFermions = number of fermions
+// currentKy = current momentum along y for a single particle
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long FermionOnTorusWithSpin::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKy, int currentTotalKy)
+{
+  if (nbrFermions == 0)
+    {
+      if ((currentTotalKy % this->NbrLzValue) == this->TotalLz)
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKy < 0)
+    return 0l;
+  long  Count = 0l;
+  if (nbrFermions > 1)
+    Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 2, currentKy - 1, currentTotalKy + (2 * currentKy));
+  Count += 2l * this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKy - 1, currentTotalKy + currentKy);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKy - 1, currentTotalKy);
+  return Count;
 }
 

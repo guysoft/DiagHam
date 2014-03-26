@@ -577,7 +577,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // totalLz = momentum total value
   // totalSpin = twce the total spin value
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalLz, int totalSpin);
 
   // evaluate Hilbert space dimension
   //

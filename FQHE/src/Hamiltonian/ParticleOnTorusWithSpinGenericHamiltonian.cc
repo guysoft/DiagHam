@@ -122,25 +122,36 @@ ParticleOnTorusWithSpinGenericHamiltonian::ParticleOnTorusWithSpinGenericHamilto
   this->OneBodyInteractionFactorsupup = 0;
   if(oneBodyPotentielUpUp != 0)
     {
+      cout << "One-body interaction factors up-up : " << endl;
       this->OneBodyInteractionFactorsupup = new double[this->NbrLzValue];
       for(int i = 0; i < this->NbrLzValue; i++)
-	this->OneBodyInteractionFactorsupup[i] = oneBodyPotentielUpUp[i];
+	{
+	  this->OneBodyInteractionFactorsupup[i] = oneBodyPotentielUpUp[i];
+	  cout << this->OneBodyInteractionFactorsupup[i] << " ";
+	}
+      cout << endl;
     }
   this->OneBodyInteractionFactorsdowndown = 0;
   if(oneBodyPotentielDownDown != 0)
     {
+      cout << "One-body interaction factors down-down : " << endl;
       this->OneBodyInteractionFactorsdowndown = new double[this->NbrLzValue];
       for(int i = 0; i < this->NbrLzValue; i++)
-	this->OneBodyInteractionFactorsdowndown[i] = oneBodyPotentielDownDown[i];
+	{
+	  this->OneBodyInteractionFactorsdowndown[i] = oneBodyPotentielDownDown[i];
+	  cout << this->OneBodyInteractionFactorsdowndown[i] << " ";
+	}
+      cout << endl;
     } 
   this->OneBodyInteractionFactorsupdown = 0;
   if(oneBodyPotentielUpDown != 0)
     {
+      cout << "One-body interaction factors up-down : " << endl;
       this->OneBodyInteractionFactorsupdown = new double[this->NbrLzValue];
       for(int i = 0; i < this->NbrLzValue; i++)
 	{
 	  this->OneBodyInteractionFactorsupdown[i] = oneBodyPotentielUpDown[i];
-	  cout << this->OneBodyInteractionFactorsupdown[i]<<" ";
+	  cout << this->OneBodyInteractionFactorsupdown[i] << " ";
 	}
       cout <<endl;
     } 

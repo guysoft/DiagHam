@@ -99,27 +99,27 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHETorusFermionsLaplacianDelta -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
     }
 
 
-  int NbrParticles = ((SingleIntegerOption*) Manager["nbr-particles"])->GetInteger();
-  int MaxMomentum = ((SingleIntegerOption*) Manager["max-momentum"])->GetInteger();
-  int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int MaxMomentum = Manager.GetInteger("max-momentum");
+  int Momentum = Manager.GetInteger("ky-momentum");
   int NbrKy = Manager.GetInteger("nbr-ky");
 
-  double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
-  double Confinement = ((SingleDoubleOption*) Manager["confinement-potential"])->GetDouble();
+  double XRatio = Manager.GetDouble("ratio");
+  double Confinement = Manager.GetDouble("confinement-potential");
   if (Confinement != 0.0)
     {
       cout << "Assuming quadratic confining potential sum_m (a*X_m^2) c_m^+ c_m " << endl;
       cout << "where X_m=2pi m/L and a = " << Confinement << endl;
     }
   bool LineCharge = false;
-  if (((BooleanOption*) Manager["line-charge"])->GetBoolean() == true)
+  if (Manager.GetBoolean("line-charge") == true)
     LineCharge = true;
 
   double* PseudoPotentials;
@@ -209,7 +209,7 @@ int main(int argc, char** argv)
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
-      if (((BooleanOption*) Manager["eigenstate"])->GetBoolean() == true)	
+      if (Manager.GetBoolean("eigenstate") == true)	
 	{
 	  EigenvectorName = new char [256];
 	  sprintf (EigenvectorName, "fermions_cylinder_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Ky);

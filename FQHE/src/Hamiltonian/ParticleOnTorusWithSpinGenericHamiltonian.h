@@ -99,7 +99,8 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
 					    int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
 					    int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
 					    double spinFluxUp, double spinFluxDown, 
-					    AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0, double * oneBodyPotentielUpUp = 0, double * oneBodyPotentielDownDown = 0, double * oneBodyPotentielUpDown = 0);
+					    AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0, 
+					    double * oneBodyPotentielUpUp = 0, double * oneBodyPotentielDownDown = 0, double * oneBodyPotentielUpDown = 0);
 
   // destructor
   //
