@@ -145,6 +145,14 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
 	}     
     }
   File.close();
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;  
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  this->ComputeAllProjectedMomenta();
 }
 
 // destructor

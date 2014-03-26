@@ -81,9 +81,6 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   this->NbrBands = 3;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
-  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
-  for (int i = 0; i < this->NbrStatePerBand; ++i)
-    this->ProjectedMomenta[i] = new double [2];
   
   this->ComputeAllProjectedMomenta();
   
@@ -145,16 +142,8 @@ TightBindingModelKagomeLattice::TightBindingModelKagomeLattice(int nbrSiteX, int
   this->NbrBands = 3;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
-  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
-  for (int i = 0; i < this->NbrStatePerBand; ++i)
-    this->ProjectedMomenta[i] = new double [2];
-  
   
   this->ComputeAllProjectedMomenta();
-//   cout << "ok" << endl;
-//   for (int i = 0; i < this->NbrSiteX; ++i)
-//     for (int j = 0; j < this->NbrSiteY; ++j)
-//       cout << this->GetLinearizedMomentumIndex(i,j) << " " << this->GetProjectedMomentum(i, j, 0) << " " << this->GetProjectedMomentum(i, j, 1) << endl;
   
   if (storeOneBodyMatrices == true)
     {

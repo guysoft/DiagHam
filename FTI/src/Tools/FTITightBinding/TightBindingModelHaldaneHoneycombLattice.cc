@@ -68,9 +68,6 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
   this->GammaY = gammaY;
   this->NbrBands = 2;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
-  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
-  for (int i = 0; i < this->NbrStatePerBand; ++i)
-    this->ProjectedMomenta[i] = new double [2];
   
   this->ComputeAllProjectedMomenta();
 
@@ -155,9 +152,6 @@ TightBindingModelHaldaneHoneycombLattice::TightBindingModelHaldaneHoneycombLatti
       this->Inversion[i][1 - i] = 1.0;
 
   this->Architecture = architecture;
-  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
-  for (int i = 0; i < this->NbrStatePerBand; ++i)
-    this->ProjectedMomenta[i] = new double [2];
   
   this->ComputeAllProjectedMomenta();
 

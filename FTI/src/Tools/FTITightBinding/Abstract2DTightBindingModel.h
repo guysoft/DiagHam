@@ -441,16 +441,17 @@ inline double Abstract2DTightBindingModel::ComputeCurvatureSinglePlaquette(int k
     return Arg(W) / (2 * M_PI);
 }
 
-  //Computes value of projected momentum along the lattice directions
-  //
-  //kx = first coordinate of the given point in the Brillouin zone
-  //ky = second coordinate of the given point in the Brillouin zone
-  //latticeComponent = index of the lattice vector along which the projection is to be performed
-  //return value = projected momentum
+// Computes value of projected momentum along the lattice directions
+//
+// kx = first coordinate of the given point in the Brillouin zone
+// ky = second coordinate of the given point in the Brillouin zone
+// latticeComponent = index of the lattice vector along which the projection is to be performed
+// return value = projected momentum
    
   
- inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, int latticeComponent)
-  {
-    return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
-  }
+inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, int latticeComponent)
+{
+  return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
+}
+
 #endif

@@ -71,10 +71,6 @@ TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbr
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
-  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
-  for (int i = 0; i < this->NbrStatePerBand; ++i)
-    this->ProjectedMomenta[i] = new double [2];
-  
   this->ComputeAllProjectedMomenta();
 
   double a = 1 + sqrt(3);
@@ -153,9 +149,6 @@ TightBindingModelRubyLattice::TightBindingModelRubyLattice(int nbrSiteX, int nbr
   this->NbrBands = 6;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
-  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
-  for (int i = 0; i < this->NbrStatePerBand; ++i)
-    this->ProjectedMomenta[i] = new double [2];
   
   this->ComputeAllProjectedMomenta();
 

@@ -1182,23 +1182,24 @@ int Abstract2DTightBindingModel::ComputeZ2Invariant(int nbrOccupiedBands)
 
 //computes all the values of the projected momentum and stores them in a double array
 //
+
 void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
 {
- double projectedMomentum1;
- double projectedMomentum2;
- for (int kx = 0; kx < this->NbrSiteX; ++kx)
- {
-   for (int ky = 0; ky < this->NbrSiteY; ++ky)
-   {
-     double kx_trans = kx + this->Offset*ky + this->GammaX;
-     double ky_trans = ky + this->GammaY;
-     projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
-     projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
-//     cout << kx << " " << ky << " " << this->GetLinearizedMomentumIndex(kx, ky) << endl;
-//     cout << projectedMomentum1 << endl;
-//     cout << projectedMomentum2 << endl;
-     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
-     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
-   }
- }
+  this->ProjectedMomenta = new double* [this->NbrStatePerBand];
+  for (int i = 0; i < this->NbrStatePerBand; ++i)
+    this->ProjectedMomenta[i] = new double [2];
+  double projectedMomentum1;
+  double projectedMomentum2;
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    {
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	{
+	  double kx_trans = kx + this->Offset*ky + this->GammaX;
+	  double ky_trans = ky + this->GammaY;
+	  projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+	  projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
+	  this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
+	  this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
+	}
+    }
 }
