@@ -458,20 +458,6 @@ void ParticleOnLatticeRubyLatticeSingleBandHamiltonian::EvaluateInteractionFacto
   cout << "====================================" << endl;
 }
 
-// compute the matrix element for the two body interaction between two sites A and B 
-//
-// k1a = creation momentum along x for the B site
-// k1b = creation momentum along y for the B site
-// k2a = annihilation momentum along x for the B site
-// k2b = annihilation momentum along y for the B site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
-{
-  Complex Tmp = 2.0 * cos (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
-  //Complex Tmp = Phase (0.5 * (this->KxFactor * ((double) (k2a - k1a))));
-  return Tmp;
-}
 
 // compute the matrix element for the two body interaction between two sites A1 and A2 
 //
@@ -510,7 +496,8 @@ Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixE
 
 Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementA1A6(int k1x, int k1y, int k2x, int k2y)
 {
-  return Phase(this->KxFactor * ((double) (k2x - k1x)));
+  return Phase((double) (this->TightBindingModel->GetProjectedMomentum(k2x, k2y, 0) - this->TightBindingModel->GetProjectedMomentum(k1x, k1y, 0)));
+//   return Phase(this->KxFactor * ((double) (k2x - k1x)));
 }
 
 // compute the matrix element for the two body interaction between two sites A2 and A3 
@@ -523,7 +510,8 @@ Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixE
 
 Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementA2A3(int k1x, int k1y, int k2x, int k2y)
 {
-  return Phase((this->KxFactor * ((double) (k1x - k2x))) + (this->KyFactor * ((double) (k1y - k2y))));
+  return Phase(this->TightBindingModel->GetProjectedMomentum(k1x, k1y, 0) - this->TightBindingModel->GetProjectedMomentum(k2x, k2y, 0) + this->TightBindingModel->GetProjectedMomentum(k1x, k1y, 1) - this->TightBindingModel->GetProjectedMomentum(k2x, k2y, 1));
+//   return Phase((this->KxFactor * ((double) (k1x - k2x))) + (this->KyFactor * ((double) (k1y - k2y))));
 }
 
 // compute the matrix element for the two body interaction between two sites A2 and A4
@@ -554,7 +542,8 @@ Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixE
 
 Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementA3A4(int k1x, int k1y, int k2x, int k2y)
 {
-  return Phase(this->KxFactor * ((double) (k2x - k1x)));
+  return Phase (this->TightBindingModel->GetProjectedMomentum(k2x, k2y, 0) - this->TightBindingModel->GetProjectedMomentum(k1x, k1y, 0));
+//   return Phase(this->KxFactor * ((double) (k2x - k1x)));
 }
 
 // compute the matrix element for the two body interaction between two sites A3 and A5
@@ -594,41 +583,8 @@ Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixE
 
 Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementA5A6(int k1x, int k1y, int k2x, int k2y)
 {
-  return Phase((this->KxFactor * ((double) (k2x - k1x))) + (this->KyFactor * ((double) (k2y - k1y))));
-}
-
-// compute the matrix element for the two body interaction between two sites A and C 
-//
-// k1a = creation momentum along x for the C site
-// k1b = creation momentum along y for the C site
-// k2a = annihilation momentum along x for the C site
-// k2b = annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
-{
-  Complex Tmp = 2.0 * cos (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  //Complex Tmp = Phase (0.5 * (this->KyFactor * ((double) (k2b - k1b))));
-  return Tmp;
-}
-
-// compute the matrix element for the two body interaction between two sites B and C 
-//
-// k1a = creation momentum along x for the B site
-// k1b = creation momentum along y for the B site
-// k2a = creation momentum along x for the C site
-// k2b = creation momentum along y for the C site
-// k3a = annihilation momentum along x for the B site
-// k3b = annihilation momentum along y for the B site
-// k4a = annihilation momentum along x for the C site
-// k4b = annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
-{
-  Complex Tmp = 2.0 * cos (0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
-  //Complex Tmp = Phase(0.5 * ((this->KxFactor * ((double) (k3a - k1a))) + (this->KyFactor * ((double) (k4b - k2b)))));
-  return Tmp;
+  return Phase(this->TightBindingModel->GetProjectedMomentum(k2x, k2y, 0) - this->TightBindingModel->GetProjectedMomentum(k1x, k1y, 0) + this->TightBindingModel->GetProjectedMomentum(k2x, k2y, 1) - this->TightBindingModel->GetProjectedMomentum(k1x, k1y, 1)); 
+//   return Phase((this->KxFactor * ((double) (k2x - k1x))) + (this->KyFactor * ((double) (k2y - k1y))));
 }
 
 
@@ -684,40 +640,5 @@ Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixE
 Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteA6A6()
 {
   return 1.0;
-}
-
-
-// compute the matrix element for on-site two body interaction involving B sites
-//
-// kx1 = first creation momentum along x for the B site
-// ky1 = first creation momentum along y for the B site
-// kx2 = second creation momentum along x for the B site
-// ky2 = second creation momentum along y for the B site
-// kx3 = first annihilation momentum along x for the B site
-// ky3 = first annihilation momentum along y for the B site
-// kx4 = second annihilation momentum along x for the B site
-// ky4 = second annihilation momentum along y for the B site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
-{
-  return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
-}
-
-// compute the matrix element for on-site two body interaction involving C sites
-//
-// kx1 = first creation momentum along x for the C site
-// ky1 = first creation momentum along y for the C site
-// kx2 = second creation momentum along x for the C site
-// ky2 = second creation momentum along y for the C site
-// kx3 = first annihilation momentum along x for the C site
-// ky3 = first annihilation momentum along y for the C site
-// kx4 = second annihilation momentum along x for the C site
-// ky4 = second annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeRubyLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
-{
-  return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
 }
 
