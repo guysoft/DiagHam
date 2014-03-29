@@ -79,9 +79,10 @@ class FQHEOnTorusMainTask: public QHEOnDiskMainTask
   // outputFileName = name of the file where results have to be stored
   // firstRun = flag that indicates if it the first time the main task is used
   // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+  // kxValue = set the Kx value (-1 if the hamiltonian does not handle the Kx symmetry)
   FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 		      AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
-		      bool firstRun = true, char* eigenvectorFileName = 0);
+		      bool firstRun = true, char* eigenvectorFileName = 0, int kxValue = -1);
   
   // destructor
   //  

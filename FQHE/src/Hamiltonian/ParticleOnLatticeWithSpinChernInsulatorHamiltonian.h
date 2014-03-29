@@ -312,8 +312,8 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   // indexArray = array where indices connected to the index-th component through the Hamiltonian
   // coefficientArray = array of the numerical coefficients related to the indexArray
   // position = reference on the current position in arrays indexArray and coefficientArray
-  void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
-						    int* indexArray, Complex* coefficientArray, long& position);
+  virtual void EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
+							    int* indexArray, Complex* coefficientArray, long& position);
 
   // core part of the AddMultiply method involving the one-body interaction, including loop on vector components
   // 

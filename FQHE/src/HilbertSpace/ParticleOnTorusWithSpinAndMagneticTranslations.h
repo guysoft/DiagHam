@@ -6,7 +6,8 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//   class of particle with spin on a torus taking into account magnetic translations   //
+//                class of particle with spin on a torus taking               //
+//                       into account magnetic translations                   //
 //                                                                            //
 //                        last modification : 27/11/2007                      //
 //                                                                            //
@@ -33,7 +34,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/AbstractHilbertSpace.h"
+#include "HilbertSpace/ParticleOnSphereWithSpin.h"
 
 #include <iostream>
 
@@ -44,16 +45,10 @@ using std::ostream;
 class Matrix;
 
 
-class ParticleOnTorusWithSpinAndMagneticTranslations :  public AbstractHilbertSpace
+class ParticleOnTorusWithSpinAndMagneticTranslations :  public ParticleOnSphereWithSpin
 {
 
  public:
-
-  enum 
-    {
-      BosonicStatistic = 0x1,
-      FermionicStatistic = 0x2,
-    };
   
   // virtual destructor
   //
@@ -173,4 +168,4 @@ class ParticleOnTorusWithSpinAndMagneticTranslations :  public AbstractHilbertSp
 };
 
 
-#endif //PARTICLEONTORUSWITHSPINANDMAGNETICTRANSLATIONS
+#endif

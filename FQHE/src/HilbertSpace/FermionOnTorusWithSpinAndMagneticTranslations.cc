@@ -87,44 +87,11 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
 
   this->MaximumSignLookUp = 16;
   this->GenerateSignLookUpTable();
-  // testing the count of states:
-  if (false)
-    {
-      int tmpYMomentum=YMomentum;
-      long sum=0;
-      for ( int i=0; i<this->MaxMomentum; ++i)
-	{
-	  this->YMomentum=i;
-	  this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp);
-	  sum += this->HilbertSpaceDimension;
-	  cout << "YMomentum="<<YMomentum << "\tD="<<this->HilbertSpaceDimension<<endl;
-	}
-      cout << "sum D= "<<sum<<endl;
-      cout << "A priori = " << this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->TotalSpin, this->MaxMomentum)<<endl;
-      YMomentum=tmpYMomentum;
-
-      if (abs(TotalSpin)==NbrFermions)
-	{
-	  cout << "comparing:" << endl;
-	  FermionOnTorusWithMagneticTranslations *test=new FermionOnTorusWithMagneticTranslations
-	    (NbrFermions, MaxMomentum, xMomentum, yMomentum);
-	  test->GetHilbertSpaceDimension();
-	  cout << "done comparing:" << endl;
-	}
-    }
-  // end test section
-  cout << "YMomentum="<<YMomentum <<endl;
   this->HilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp);
-  cout << "Full dimension: "<<HilbertSpaceDimension<<endl;
+  cout << "intermediate Hilbert space dimension = " << HilbertSpaceDimension << endl;
   this->HilbertSpaceDimension = this->GenerateStates();
-  cout << "Orbits: "<<HilbertSpaceDimension<<endl;
+  cout << "Hilbert space dimension = "<< HilbertSpaceDimension << endl;
   this->Flag.Initialize();
-
-  if (false)
-    {
-      for (int i=0; i<this->HilbertSpaceDimension; ++i)
-	PrintState(cout,i)<<endl;
-    }
 
   if (this->HilbertSpaceDimension !=0)
     this->GenerateLookUpTable(1000000);
@@ -181,14 +148,14 @@ FermionOnTorusWithSpinAndMagneticTranslations::FermionOnTorusWithSpinAndMagnetic
 
   this->MaximumSignLookUp = 16;
   this->GenerateSignLookUpTable();
-  this->LargeHilbertSpaceDimension = ShiftedEvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->MaxMomentum - 1, 0);
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
   cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
-  this->HilbertSpaceDimension = this->GenerateStates();
-  cout << "Orbits: "<<HilbertSpaceDimension<<endl;
+  this->HilbertSpaceDimension = this->GenerateStates(true);
+  cout << "Hilbert space dimension = "<< HilbertSpaceDimension << endl;
   this->Flag.Initialize();
   if (this->HilbertSpaceDimension != 0)
     this->GenerateLookUpTable(1000000);
@@ -459,7 +426,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAddAdAd (int index, int m1
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n2);
+  TmpState &= ~(0x1ul << n2);
   if (NewHighestBit == n2)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
       --NewHighestBit;
@@ -469,7 +436,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAddAdAd (int index, int m1
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n1);
+  TmpState &= ~(0x1ul << n1);
   if (NewHighestBit == n1)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
       --NewHighestBit;
@@ -493,8 +460,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAddAdAd (int index, int m1
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
-  if ((TmpState & (((unsigned long) 0x1ul) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -512,7 +479,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAddAdAd (int index, int m1
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, NewHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, NewHighestBit) == false)
     {
@@ -521,7 +488,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAddAdAd (int index, int m1
     }
   int TmpIndex = this->FindStateIndex(TmpState, NewHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -536,6 +503,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAddAdAd (int index, int m1
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
 // return value = index of the destination state 
+
 int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1, int m2, int n1, int n2, double& coefficient, int& nbrTranslation)
 {
   int StateHighestBit = this->StateHighestBit[index];
@@ -558,7 +526,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n2);
+  TmpState &= ~(0x1ul << n2);
   if (NewHighestBit == n2)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
       --NewHighestBit;
@@ -568,7 +536,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n1);
+  TmpState &= ~(0x1ul << n1);
   if (NewHighestBit == n1)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
       --NewHighestBit;  
@@ -576,7 +544,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1
   m1+=1;
   m2<<=1;
   m2+=1;
-  if ((TmpState & (((unsigned long) 0x1) << m2))!= 0)
+  if ((TmpState & (0x1ul << m2))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -594,8 +562,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
-  if ((TmpState & (((unsigned long) 0x1) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -613,7 +581,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, NewHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, NewHighestBit) == false)
     {
@@ -622,7 +590,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAu (int index, int m1
     }
   int TmpIndex = this->FindStateIndex(TmpState, NewHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -659,7 +627,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAuV (int index, int m
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n2);
+  TmpState &= ~(0x1ul << n2);
   cout << "Sign after n2="<<n2<<" in AduAduAuAu:" << coefficient << endl;
   if (NewHighestBit == n2)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
@@ -670,7 +638,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAuV (int index, int m
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n1);
+  TmpState &= ~(0x1ul << n1);
   cout << "Sign after n1="<<n1<<" in AduAduAuAu:" << coefficient << endl;
   if (NewHighestBit == n1)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
@@ -698,7 +666,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAuV (int index, int m
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
+  TmpState |= (0x1ul << m2);
   cout << "Sign after m2="<<m2<<" in AduAduAuAu:" << coefficient << endl;
   if ((TmpState & (((unsigned long) 1) << m1))!= 0)
     {
@@ -718,7 +686,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAuV (int index, int m
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   cout << "Sign after m1="<<m1<<" in AduAduAuAu:" << coefficient << endl;
   TmpState = this->FindCanonicalForm(TmpState, NewHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, NewHighestBit) == false)
@@ -728,8 +696,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduAuAuV (int index, int m
     }
   int TmpIndex = this->FindStateIndex(TmpState, NewHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
-  cout << "TmpIndex= " << TmpIndex << " rescaling= " <<this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]] << " reordering = " << 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1)))) << endl;
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
+  cout << "TmpIndex= " << TmpIndex << " rescaling= " <<this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]] << " reordering = " << 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul))) << endl;
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -765,7 +733,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAduAdAu (int index, int m1
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n2);
+  TmpState &= ~(0x1ul << n2);
   if (NewHighestBit == n2)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
       --NewHighestBit;
@@ -775,7 +743,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAduAdAu (int index, int m1
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(TmpState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  TmpState &= ~(((unsigned long) 0x1) << n1);
+  TmpState &= ~(0x1ul << n1);
   if (NewHighestBit == n1)
     while ((NewHighestBit)&&(TmpState >> NewHighestBit) == 0)
       --NewHighestBit;
@@ -800,8 +768,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAduAdAu (int index, int m1
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
-  if ((TmpState & (((unsigned long) 0x1) << m1))!= 0)
+  TmpState |= (0x1ul << m2);
+  if ((TmpState & (0x1ul << m1))!= 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
@@ -819,7 +787,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAduAdAu (int index, int m1
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, NewHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, NewHighestBit) == false)
     {
@@ -828,7 +796,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAduAdAu (int index, int m1
     }
   int TmpIndex = this->FindStateIndex(TmpState, NewHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -843,7 +811,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AddAd (int index, int m)
 {
   if (this->StateHighestBit[index] < 2*m)
     return 0.0;
-  if ((this->StateDescription[index] & (((unsigned long) 0x1) << (m<<1))) == 0)
+  if ((this->StateDescription[index] & (0x1ul << (m<<1))) == 0)
     return 0.0;
   else
     return 1.0;
@@ -859,10 +827,138 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AduAu (int index, int m)
 {
   if (this->StateHighestBit[index] < 2*m+1)
     return 0.0;
-  if ((this->StateDescription[index] & (((unsigned long) 0x1) << (2*m+1))) == 0)
+  if ((this->StateDescription[index] & (0x1ul << (2*m+1))) == 0)
     return 0.0;
   else
     return 1.0;
+}
+
+// apply a^+_m_u a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int FermionOnTorusWithSpinAndMagneticTranslations::AduAd (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  m = (m << 1) + 1;
+  n <<= 1;
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0) )
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (NewLargestBit == n)
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= (0x1ul << m);
+  State = this->FindCanonicalForm(State, NewLargestBit, nbrTranslation);
+  if (this->TestXMomentumConstraint(State, NewLargestBit) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int TmpIndex = this->FindStateIndex(State, NewLargestBit);
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
+  nbrTranslation *= this->StateShift / 2;
+  return TmpIndex;
+}
+
+// apply a^+_m_d a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int FermionOnTorusWithSpinAndMagneticTranslations::AddAu (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  m <<= 1;
+  n = (n << 1) + 1;  
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (NewLargestBit == n)
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= (0x1ul << m);
+  State = this->FindCanonicalForm(State, NewLargestBit, nbrTranslation);
+  if (this->TestXMomentumConstraint(State, NewLargestBit) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int TmpIndex = this->FindStateIndex(State, NewLargestBit);
+  coefficient *= this->RescalingFactors[this->NbrStateInOrbit[index]][this->NbrStateInOrbit[TmpIndex]];
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
+  nbrTranslation *= this->StateShift / 2;
+  return TmpIndex;
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
@@ -889,7 +985,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAu (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n2);
+  ProdATemporaryState &= ~(0x1ul << n2);
   if (ProdAHighestBit == n2)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -899,7 +995,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAu (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n1);
+  ProdATemporaryState &= ~(0x1ul << n1);
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -930,7 +1026,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAuV (int index, int n1, 
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n2);
+  ProdATemporaryState &= ~(0x1ul << n2);
   cout << "Sign after n2="<<n2<<" in AuAu:" << coefficient << endl;
   if (ProdAHighestBit == n2)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
@@ -941,7 +1037,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAuV (int index, int n1, 
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n1);
+  ProdATemporaryState &= ~(0x1ul << n1);
   cout << "Sign after n1="<<n1<<" in AuAu:" << coefficient << endl;
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
@@ -971,7 +1067,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AdAd (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n2);
+  ProdATemporaryState &= ~(0x1ul << n2);
   if (ProdAHighestBit == n2)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -981,7 +1077,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AdAd (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n1);
+  ProdATemporaryState &= ~(0x1ul << n1);
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -1011,7 +1107,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAd (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n2);
+  ProdATemporaryState &= ~(0x1ul << n2);
   if (ProdAHighestBit == n2)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -1021,7 +1117,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAd (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n1);
+  ProdATemporaryState &= ~(0x1ul << n1);
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -1051,7 +1147,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AdAu (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n2);
+  ProdATemporaryState &= ~(0x1ul << n2);
   if (ProdAHighestBit == n2)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -1061,7 +1157,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AdAu (int index, int n1, i
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
   coefficient *= this->SignLookUpTable[(ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
 #endif
-  ProdATemporaryState &= ~(((unsigned long) 0x1) << n1);
+  ProdATemporaryState &= ~(0x1ul << n1);
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
@@ -1099,7 +1195,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdu (int m1, int m2, doubl
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
+  TmpState |= (0x1ul << m2);
   
   if (m1 > TmpAHighestBit)
     TmpAHighestBit = m1;
@@ -1112,7 +1208,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdu (int m1, int m2, doubl
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, TmpAHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, TmpAHighestBit) == false)
     {
@@ -1121,7 +1217,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdu (int m1, int m2, doubl
     }
   int TmpIndex = this->FindStateIndex(TmpState, TmpAHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[ProdAIndex]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -1158,7 +1254,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduV (int m1, int m2, doub
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
+  TmpState |= (0x1ul << m2);
   cout << "Sign after m2="<<m2<<" in AduAdu:" << coefficient << endl;
   if (m1 > TmpAHighestBit)
     TmpAHighestBit = m1;
@@ -1171,7 +1267,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduV (int m1, int m2, doub
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   cout << "Sign after m1="<<m1<<" in AduAdu:" << coefficient << endl;
   TmpState = this->FindCanonicalForm(TmpState, TmpAHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, TmpAHighestBit) == false)
@@ -1181,8 +1277,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAduV (int m1, int m2, doub
     }
   int TmpIndex = this->FindStateIndex(TmpState, TmpAHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[ProdAIndex]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
-  cout << "TmpIndex= " << TmpIndex << " rescaling= " <<this->RescalingFactors[this->NbrStateInOrbit[ProdAIndex]][this->NbrStateInOrbit[TmpIndex]] << " reordering = " << 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1)))) << endl;
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
+  cout << "TmpIndex= " << TmpIndex << " rescaling= " <<this->RescalingFactors[this->NbrStateInOrbit[ProdAIndex]][this->NbrStateInOrbit[TmpIndex]] << " reordering = " << 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul))) << endl;
   nbrTranslation *= this->StateShift/2;
   cout << "Sign at end of day in AduAdu:" << coefficient << endl;
   return TmpIndex;
@@ -1217,7 +1313,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAdd (int m1, int m2, doubl
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
+  TmpState |= (0x1ul << m2);
   
   if (m1 > TmpAHighestBit)
     TmpAHighestBit = m1;
@@ -1230,7 +1326,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAdd (int m1, int m2, doubl
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, TmpAHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, TmpAHighestBit) == false)
     {
@@ -1239,7 +1335,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAdd (int m1, int m2, doubl
     }
   int TmpIndex = this->FindStateIndex(TmpState, TmpAHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[ProdAIndex]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -1276,7 +1372,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, doubl
       coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m2);
+  TmpState |= (0x1ul << m2);
   
   if (m1 > TmpAHighestBit)
     TmpAHighestBit = m1;
@@ -1289,7 +1385,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, doubl
       coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
 #endif
     }
-  TmpState |= (((unsigned long) 0x1) << m1);
+  TmpState |= (0x1ul << m1);
   TmpState = this->FindCanonicalForm(TmpState, TmpAHighestBit, nbrTranslation);
   if (this->TestXMomentumConstraint(TmpState, TmpAHighestBit) == false)
     {
@@ -1298,7 +1394,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, doubl
     }
   int TmpIndex = this->FindStateIndex(TmpState, TmpAHighestBit);
   coefficient *= this->RescalingFactors[this->NbrStateInOrbit[ProdAIndex]][this->NbrStateInOrbit[TmpIndex]];
-  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & ((unsigned long) 0x1))));
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
   nbrTranslation *= this->StateShift/2;
   return TmpIndex;
 }
@@ -1389,10 +1485,10 @@ bool FermionOnTorusWithSpinAndMagneticTranslations::TestXMomentumConstraint(unsi
       int TmpSignature = 0;
       int index = 1;  
 #ifndef  __64_BITS__
-      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]) & 1;
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]) & 1;
 #else
-      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]
-		       + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((unsigned long) 0xffff)]) & 1;
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]
+		       + this->NbrParticleLookUpTable[(TmpState2 >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & 0xfffful]) & 1;
 #endif
 
       while (TmpState != stateDescription)
@@ -1400,10 +1496,10 @@ bool FermionOnTorusWithSpinAndMagneticTranslations::TestXMomentumConstraint(unsi
 	  TmpState2 = TmpState & this->MomentumMask;
 	  TmpState = (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
 #ifndef  __64_BITS__
-	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]) & 1;
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]) & 1;
 #else
-	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & ((unsigned long) 0xffff)]
-			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & ((unsigned long) 0xffff)]) & 1;
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState2 & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 16) & 0xfffful]
+			   + this->NbrParticleLookUpTable[(TmpState2 >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState2 >> 48) & 0xfffful]) & 1;
 #endif
 	  ++index;
 	}
@@ -1452,10 +1548,10 @@ unsigned long FermionOnTorusWithSpinAndMagneticTranslations::FindCanonicalFormAn
       stateDescription = (stateDescription >> this->StateShift) | (TmpState << this->ComplementaryStateShift);
       int TmpSignature = 0;
 #ifndef  __64_BITS__
-      TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]) & 1;
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]) & 1;
 #else
-      TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]
-		       + this->NbrParticleLookUpTable[(TmpState >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 48) & ((unsigned long) 0xffff)]) & 1;
+      TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]
+		       + this->NbrParticleLookUpTable[(TmpState >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 48) & 0xfffful]) & 1;
 #endif
 
       while (stateDescription != stateDescriptionReference)
@@ -1468,10 +1564,10 @@ unsigned long FermionOnTorusWithSpinAndMagneticTranslations::FindCanonicalFormAn
 	  TmpState = stateDescription & this->MomentumMask;
 	  stateDescription = (stateDescription >> this->StateShift) | (TmpState << this->ComplementaryStateShift);
 #ifndef  __64_BITS__
-	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]) & 1;
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]) & 1;
 #else
-	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 16) & ((unsigned long) 0xffff)]
-			   + this->NbrParticleLookUpTable[(TmpState >> 32) & ((unsigned long) 0xffff)] + this->NbrParticleLookUpTable[(TmpState >> 48) & ((unsigned long) 0xffff)]) & 1;
+	  TmpSignature += (this->NbrParticleLookUpTable[TmpState & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 16) & 0xfffful]
+			   + this->NbrParticleLookUpTable[(TmpState >> 32) & 0xfffful] + this->NbrParticleLookUpTable[(TmpState >> 48) & 0xfffful]) & 1;
 #endif
 	  ++index;
 	}
@@ -1538,7 +1634,7 @@ ostream& FermionOnTorusWithSpinAndMagneticTranslations::PrintState (ostream& Str
 {
   unsigned long TmpState = this->StateDescription[state];
   for (int i = 0; i < this->MaxMomentum; ++i)
-    Str << ((TmpState >> 2*i) & ((unsigned long) 0x1)) << ((TmpState >> 2*i+1) & ((unsigned long) 0x1)) << " ";
+    Str << ((TmpState >> 2*i) & 0x1ul) << ((TmpState >> 2*i+1) & 0x1ul) << " ";
 //   Str << "  (" << hex << this->ReorderingSign[state] << dec << ")";
 //   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
 //   if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
@@ -1550,15 +1646,18 @@ ostream& FermionOnTorusWithSpinAndMagneticTranslations::PrintState (ostream& Str
 
 // generate all states corresponding to the constraints
 // 
+// fullSzFlag = if true, does not apply the Sz contraint
 // return value = hilbert space dimension
 
-int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
+int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates(bool fullSzFlag)
 {
   int maxHighestBit = 2*(this->MaxMomentum + 1);
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-  this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp, 0);
-    
+  if (fullSzFlag == false)
+    this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp, 0l);
+  else
+    this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, 2 * this->MaxMomentum - 1, 2 * this->MaxMomentum - 1, 0l, 0);    
   int* TmpNbrStateDescription = new int [maxHighestBit];  
   for (int i = 0; i < maxHighestBit; ++i)
     {
@@ -1664,7 +1763,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 		  this->NbrStateInOrbit[Pos] = this->FindNumberXTranslation(this->StateDescription[Pos]);		  
 		  TmpState = this->StateDescription[Pos];
 		  TmpSignature = 0;
-		  TmpReorderingSign = (unsigned long) 0;
+		  TmpReorderingSign = 0x0ul;
 		  if ((this->NbrFermions & 1) == 0)
 		    {
 		      for (int k = 1; k <= this->NbrStateInOrbit[Pos]; ++k)
@@ -1680,12 +1779,12 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 			    }
 			  if (TmpNbrParticle & 1)
 			    {			 
-			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      TmpReorderingSign |= (((TmpReorderingSign << 1) & (0x1ul << k))) ^ (0x1ul << k);
 			      ++TmpSignature;
 			    }
 			  else
 			    {
-			      TmpReorderingSign |= ((TmpReorderingSign << 1) & (((unsigned long) 0x1) << k));
+			      TmpReorderingSign |= ((TmpReorderingSign << 1) & (0x1ul << k));
 			    }			  
 			}
 		    }
@@ -1702,8 +1801,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 		  this->NbrStateInOrbit[Pos] = this->FindNumberXTranslation(this->StateDescription[Pos]);		  
 		  TmpState = this->StateDescription[Pos];
 		  TmpSignature = 0;
-		  TmpReorderingSignUp = (unsigned long) 0;
-		  TmpReorderingSignDown = (unsigned long) 0;
+		  TmpReorderingSignUp = 0x0ul;
+		  TmpReorderingSignDown = 0x0ul;
 		  if (((this->NbrFermionsUp & 1) == 0)||((this->NbrFermionsDown & 1) == 0))
 		    {
 		      for (int k = 1; k <= this->NbrStateInOrbit[Pos]; ++k)
@@ -1722,21 +1821,21 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates()
 			    }
 			  if ((TmpNbrParticleUp & 1)&&((this->NbrFermionsUp & 1) == 0))
 			    {			 
-			      TmpReorderingSignUp |= (((TmpReorderingSignUp << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      TmpReorderingSignUp |= (((TmpReorderingSignUp << 1) & (0x1ul << k))) ^ (0x1ul << k);
 			      ++TmpSignature;
 			    }
 			  else
 			    {
-			      TmpReorderingSignUp |= ((TmpReorderingSignUp << 1) & (((unsigned long) 0x1) << k));
+			      TmpReorderingSignUp |= ((TmpReorderingSignUp << 1) & (0x1ul << k));
 			    }
 			  if ((TmpNbrParticleDown & 1)&&((this->NbrFermionsDown & 1) == 0))
 			    {			 
-			      TmpReorderingSignDown |= (((TmpReorderingSignDown << 1) & (((unsigned long) 0x1) << k))) ^ (((unsigned long) 0x1) << k);
+			      TmpReorderingSignDown |= (((TmpReorderingSignDown << 1) & (0x1ul << k))) ^ (0x1ul << k);
 			      ++TmpSignature;
 			    }
 			  else
 			    {
-			      TmpReorderingSignDown |= ((TmpReorderingSignDown << 1) & (((unsigned long) 0x1) << k));
+			      TmpReorderingSignDown |= ((TmpReorderingSignDown << 1) & (0x1ul << k));
 			    }			  
 
 			}
@@ -1819,6 +1918,41 @@ long FermionOnTorusWithSpinAndMagneticTranslations::RawGenerateStates(int nbrFer
   // do not put any particles
   return this->RawGenerateStates(nbrFermions, lzMax - 1, totalMomentum, totalSpinUp, pos);  
   
+}
+
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// maxMomentum = momentum maximum value for a fermion in the state
+// currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+// pos = position in StateDescription array where to store states
+// currentMomentum = current value of the momentum
+// return value = position from which new states have to be stored
+
+long FermionOnTorusWithSpinAndMagneticTranslations::RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, 
+								     int currentMomentum)
+{
+  if ((nbrFermions < 0) || (nbrFermions > (currentMaxMomentum + 1)) || ((nbrFermions > 0) && (currentMaxMomentum < 0)))
+    return pos;
+  if (nbrFermions == 0)
+    {
+      if ((currentMomentum % this->MaxMomentum) == this->YMomentum)
+	{
+	  this->StateDescription[pos] = 0x0ul;
+	  this->StateHighestBit[pos] = maxMomentum >> 1;
+	  ++pos;
+	}
+      return pos;
+    }
+  int ReducedCurrentMaxMomentum = currentMaxMomentum - 1;
+  long TmpPos = this->RawGenerateStates(nbrFermions - 1, maxMomentum, ReducedCurrentMaxMomentum, pos, currentMomentum + (currentMaxMomentum >> 1));
+  unsigned long Mask = 0x1ul << currentMaxMomentum;
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  if (maxMomentum == currentMaxMomentum)
+    return this->RawGenerateStates(nbrFermions, ReducedCurrentMaxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum);
+  else
+    return this->RawGenerateStates(nbrFermions, maxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum);
 }
 
 // generate look-up table associated to current Hilbert space
@@ -1952,41 +2086,21 @@ void FermionOnTorusWithSpinAndMagneticTranslations::GenerateSignLookUpTable()
 #ifdef __64_BITS__
   this->SignLookUpTableMask = new unsigned long [128];
   for (int i = 0; i < 48; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+    this->SignLookUpTableMask[i] = 0xfffful;
   for (int i = 48; i < 64; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 48);
+    this->SignLookUpTableMask[i] = 0xfffful >> (i - 48);
   for (int i = 64; i < 128; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
+    this->SignLookUpTableMask[i] = 0x0ul;
 #else
   this->SignLookUpTableMask = new unsigned long [64];
   for (int i = 0; i < 16; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0xffff;
+    this->SignLookUpTableMask[i] = 0xfffful;
   for (int i = 16; i < 32; ++i)
-    this->SignLookUpTableMask[i] = ((unsigned long) 0xffff) >> (i - 16);
+    this->SignLookUpTableMask[i] = 0xfffful >> (i - 16);
   for (int i = 32; i < 64; ++i)
-    this->SignLookUpTableMask[i] = (unsigned long) 0;
+    this->SignLookUpTableMask[i] = 0x0ul;
 #endif
 }
-
-
-// evaluate Hilbert space dimension
-//
-// nbrFermions = number of fermions
-// totalSpin = twice z-projection of total spin
-// maxMomentum = momentum maximum value for a fermion
-// return value = Hilbert space dimension
-int FermionOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(int nbrFermions, int totalSpin, int maxMomentum)
-{
-  FactorialCoefficient Dimension;
-  int nbrFermionsUp = (nbrFermions+totalSpin)/2;
-  int nbrFermionsDown = (nbrFermions-totalSpin)/2;  
-  Dimension.PartialFactorialMultiply(maxMomentum - nbrFermionsUp + 1, maxMomentum); 
-  Dimension.FactorialDivide(nbrFermionsUp);
-  Dimension.PartialFactorialMultiply(maxMomentum - nbrFermionsDown + 1, maxMomentum); 
-  Dimension.FactorialDivide(nbrFermionsDown);
-  return Dimension.GetIntegerValue();
-}
-
 
 // evaluate Hilbert space dimension
 //
@@ -2025,4 +2139,30 @@ long FermionOnTorusWithSpinAndMagneticTranslations::ShiftedEvaluateHilbertSpaceD
   return  (Tmp + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp - 1)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions - 1, lzMax - 1, totalMomentum + lzMax, totalSpinUp)
 	   + this->ShiftedEvaluateHilbertSpaceDimension(nbrFermions, lzMax - 1, totalMomentum, totalSpinUp));
+}
+
+// evaluate Hilbert space dimension for a given total momentum
+//
+// nbrFermions = number of fermions
+// currentKy = current momentum along y for a single particle
+// currentTotalKy = current total momentum along y
+// return value = Hilbert space dimension
+
+long FermionOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(int nbrFermions, int currentKy, int currentTotalKy)
+{
+  if (nbrFermions == 0)
+    {
+      if ((currentTotalKy % this->MaxMomentum) == this->YMomentum)
+	return 1l;
+      else	
+	return 0l;
+    }
+  if (currentKy < 0)
+    return 0l;
+  long  Count = 0l;
+  if (nbrFermions > 1)
+    Count += this->EvaluateHilbertSpaceDimension(nbrFermions - 2, currentKy - 1, currentTotalKy + (2 * currentKy));
+  Count += 2l * this->EvaluateHilbertSpaceDimension(nbrFermions - 1, currentKy - 1, currentTotalKy + currentKy);
+  Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKy - 1, currentTotalKy);
+  return Count;
 }

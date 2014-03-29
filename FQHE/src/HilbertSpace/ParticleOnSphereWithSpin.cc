@@ -268,6 +268,34 @@ int ParticleOnSphereWithSpin::AduAd (int index, int m, double& coefficient)
   return this->AduAd(index, m, m, coefficient);
 }
 
+// apply a^+_m_u a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAd (int index, int m, double& coefficient, int& nbrTranslation)
+{
+  return this->AduAd(index, m, m, coefficient, nbrTranslation);
+}
+
+// apply a^+_m_u a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AduAd(index, m, n, coefficient);
+}
+
 // apply a^+_m_d a_n_u operator to a given state 
 //
 // index = index of the state on which the operator has to be applied
@@ -294,6 +322,34 @@ int ParticleOnSphereWithSpin::AddAu (int index, int m, double& coefficient)
 }
 
 
+// apply a^+_m_d a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAu (int index, int m, double& coefficient, int& nbrTranslation)
+{
+  return this->AddAu(index, m, m, coefficient, nbrTranslation);
+}
+
+// apply a^+_m_d a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation/annihilation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AddAu(index, m, n, coefficient);
+}
+
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator (spin up)
@@ -304,6 +360,102 @@ int ParticleOnSphereWithSpin::AddAu (int index, int m, double& coefficient)
 int ParticleOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient)
 {
   return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
+//
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AduAdu (m1, m2, coefficient);
+}
+
+// apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+//
+// m1 = first index for creation operator (spin down)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AddAdd (m1, m2, coefficient);
+}
+
+// apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+//
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AduAdd (m1, m2, coefficient);
+}
+
+// apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// sigma1 = SU(2) index for the first annihilation operator
+// sigma2 = SU(2) index for the second annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSpin::AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2)
+{
+  if (sigma1 == 0)
+    {
+      if (sigma2 == 0)
+	return this->AuAu(index, n1, n2);
+      else
+	return this->AuAd(index, n1, n2);
+    }
+  if (sigma2 == 1)
+    return this->AdAd(index, n1, n2);
+  else
+    {
+      // warning : can be statistic sensitive
+      return this->AuAd(index, n2, n1);
+    }
+}
+
+// apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is is 0 for up and 1 for down
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// sigma1 = SU(2) index for the first creation operator
+// sigma2 = SU(2) index for the second creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient)
+{
+  if (sigma1 == 0)
+    {
+      if (sigma2 == 0)
+	return this->AduAdu(m1, m2, coefficient);
+      else
+	return this->AduAdd(m1, m2, coefficient);
+    }
+  if (sigma2 == 1)
+    return this->AddAdd(m1, m2, coefficient);
+  else
+    {
+      // warning : can be statistic sensitive
+      return this->AduAdd(m2, m1, coefficient);
+    }
 }
 
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call

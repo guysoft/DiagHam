@@ -663,12 +663,12 @@ int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient
   coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
-  State &= ~(((unsigned long) (0x1ul)) << n);
+  State &= ~(0x1ul << n);
   if (NewLargestBit == n)
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (((unsigned long) (0x1ul)) << m))!= 0)
+  if ((State & (0x1ul << m))!= 0)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -686,7 +686,7 @@ int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient
       coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  State |= (((unsigned long) (0x1ul)) << m);
+  State |= (0x1ul << m);
   return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
 }
 
@@ -715,12 +715,12 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
   coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
-  State &= ~(((unsigned long) (0x1ul)) << n);
+  State &= ~(0x1ul << n);
   if (NewLargestBit == n)
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (((unsigned long) (0x1ul)) << m))!= 0)
+  if ((State & (0x1ul << m))!= 0)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -738,7 +738,7 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
       coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  State |= (((unsigned long) (0x1ul)) << m);
+  State |= (0x1ul << m);
   return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
 }
 
@@ -751,10 +751,10 @@ int FermionOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
 int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient)
-  {
+{
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
-  m = (m<<1) + 1;
+  m = (m << 1) + 1;
   n <<= 1;
   if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0) )
     {
@@ -768,12 +768,12 @@ int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient
   coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
-  State &= ~(((unsigned long) (0x1ul)) << n);
+  State &= ~(0x1ul << n);
   if (NewLargestBit == n)
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (((unsigned long) (0x1ul)) << m))!= 0)
+  if ((State & (0x1ul << m))!= 0)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -791,7 +791,7 @@ int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient
       coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  State |= (((unsigned long) (0x1ul)) << m);
+  State |= (0x1ul << m);
   return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 
@@ -809,7 +809,7 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
   m <<= 1;
-  n = (n<<1) + 1;  
+  n = (n << 1) + 1;  
   if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0))
     {
       coefficient = 0.0;
@@ -822,12 +822,12 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
   coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
   coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
 #endif
-  State &= ~(((unsigned long) (0x1ul)) << n);
+  State &= ~(0x1ul << n);
   if (NewLargestBit == n)
     while ((State >> NewLargestBit) == 0)
       --NewLargestBit;
 
-  if ((State & (((unsigned long) (0x1ul)) << m))!= 0)
+  if ((State & (0x1ul << m))!= 0)
     {
       coefficient = 0.0;
       return this->TargetSpace->HilbertSpaceDimension;
@@ -845,7 +845,7 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
       coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
-  State |= (((unsigned long) (0x1ul)) << m);
+  State |= (0x1ul << m);
   return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 

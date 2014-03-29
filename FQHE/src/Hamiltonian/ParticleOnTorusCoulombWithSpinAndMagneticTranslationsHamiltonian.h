@@ -50,7 +50,9 @@ class Polynomial;
 
 class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithSpinAndMagneticTranslationsHamiltonian
 {
+
  protected:
+
   // parameter of layer separation if non-SU(2) invariant interaction
   double LayerSeparation;
 
@@ -154,22 +156,6 @@ class ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian : public 
   // layerSeparation = separation of layers
   // return value = numerical coefficient
   double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, double layerSeparation=0.0);
-
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
-  //
-  // m1 = first index
-  // m2 = second index
-  // m3 = third index
-  // m4 = fourth index
-  // nbrPseudopotentials = number of pseudopotentials
-  // pseudopotentials = pseudopotential coefficients
-  // spinFluxM1 = additional inserted flux for m1
-  // spinFluxM2 = additional inserted flux for m2
-  // spinFluxM3 = additional inserted flux for m3
-  // spinFluxM4 = additional inserted flux for m4
-  // return value = numerical coefficient
-  double EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
-					double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4);
 
   // get fourier transform of interaction
   // Q2_half = one half of q² value

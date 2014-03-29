@@ -1,6 +1,6 @@
 #include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
 
-#include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -12,6 +12,7 @@
 
 #include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
+#include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 
 #include "Options/Options.h"
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name as it should appear in output files (if the NAME option is not used in the interaction file)", "unknown");
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the reduced Brillouin zone", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -109,11 +110,11 @@ int main(int argc, char** argv)
       TotalSpin |= (NbrBosons & 1);
     }
 
+  char* InteractionName = 0;
   double** PseudoPotentials  = new double*[3];
+  double** OneBodyPseudoPotentials  = new double*[3];
   int* NbrPseudoPotentials  = new int[3];
-  double * OneBodyPotentialUpUp = 0;
-  double * OneBodyPotentialDownDown = 0;
-  double * OneBodyPotentialUpDown = 0;
+
   if (Manager.GetString("interaction-file") == 0)
     {
       cout << "an interaction file has to be provided" << endl;
@@ -121,15 +122,42 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), NbrPseudoPotentials, PseudoPotentials) == false)
-	return -1;
+      if (FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), MaxMomentum, NbrPseudoPotentials, PseudoPotentials, OneBodyPseudoPotentials) == false)
+	{	  
+	  return -1;
+	}
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+	{
+	  InteractionDefinition.DumpErrors(cout) << endl;
+	  exit(-1);
+	}
+       if (InteractionDefinition["Name"] == NULL)
+	 {
+	   if (Manager.GetString("interaction-name") != 0)
+	     {
+	       InteractionName = new char[strlen(Manager.GetString("interaction-name")) + 1];
+	       sprintf(InteractionName, "%s", Manager.GetString("interaction-name"));
+	     }
+	   else
+	     {
+	       cout << "Attention, using unnamed interaction! Please include a line 'Name = ...'" << endl;
+	       InteractionName = new char[10];
+	       sprintf(InteractionName, "unnamed");
+	     }
+	}
+      else
+	{
+	  InteractionName = new char[strlen(InteractionDefinition["Name"]) + 1];
+	  strcpy(InteractionName, InteractionDefinition["Name"]);
+	}    
     }
     
   char* OutputFileName = new char [512];
   if ((Manager.GetDouble("spinup-flux") == 0.0) && (Manager.GetDouble("spindown-flux") == 0.0))
-    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio);
+    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio);
   else
-    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", Manager.GetString("interaction-name"), NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
+    sprintf (OutputFileName, "bosons_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f_fluxup_%f_fluxdown_%f.dat", InteractionName, NbrBosons, MaxMomentum, TotalSpin, XRatio, Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"));
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);
@@ -242,13 +270,13 @@ int main(int argc, char** argv)
 	}
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(Space, NbrBosons, MaxMomentum, XMomentum, XRatio,
 														 NbrPseudoPotentials[0], PseudoPotentials[0],
 														 NbrPseudoPotentials[1], PseudoPotentials[1],
 														 NbrPseudoPotentials[2], PseudoPotentials[2],
 														 Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 														 Architecture.GetArchitecture(), Memory, 0,
-														 OneBodyPotentialUpUp,OneBodyPotentialDownDown,OneBodyPotentialUpDown);
+														 OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;
@@ -260,7 +288,7 @@ int main(int argc, char** argv)
 	  delete [] TmpName;
 	}
 
-      FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum, Shift, OutputFileName, FirstRun, EigenvectorName);
+      FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum, Shift, OutputFileName, FirstRun, EigenvectorName, XMomentum);
       Task.SetKxValue(XMomentum);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());

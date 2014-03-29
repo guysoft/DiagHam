@@ -88,10 +88,11 @@ using std::ofstream;
 // outputFileName = name of the file where results have to be stored
 // firstRun = flag that indicates if it the first time the main task is used
 // eigenvectorFileName = prefix to add to the name of each file that will contain an eigenvector
+// kxValue = set the Kx value (-1 if the hamiltonian does not handle the Kx symmetry)
 
 FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbertSpace* space, LanczosManager* lanczos, 
 					 AbstractQHEHamiltonian* hamiltonian, int kyValue, double shift, char* outputFileName,
-					 bool firstRun, char* eigenvectorFileName)
+					 bool firstRun, char* eigenvectorFileName, int kxValue)
 {
   this->OutputFileName = new char [strlen(outputFileName) + 1];
   strncpy(this->OutputFileName, outputFileName, strlen(outputFileName));
@@ -112,6 +113,12 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   this->KxValue = 0;
   this->KyOnlyFlag = true;
   this->RealFlag = true;
+  if (kxValue >= 0)
+    {
+      this->KxValue = kxValue;
+      this->KyOnlyFlag = false;
+      this->RealFlag = false;      
+    }
   this->MultiplicityFlag = false;
   this->AlgorithmManager = lanczos;
   this->EnergyShift = shift;

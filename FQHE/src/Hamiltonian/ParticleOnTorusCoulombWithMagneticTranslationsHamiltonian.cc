@@ -140,9 +140,9 @@ ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::ParticleOnTorusCoulom
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;
   cout << "Wigner Energy = " << WignerEnergy << endl;  
-  this->EvaluateInteractionFactors();
-  this->HamiltonianShift = ((double) this->NbrParticles)*WignerEnergy;
   this->EvaluateExponentialFactors();
+  this->HamiltonianShift = ((double) this->NbrParticles)*WignerEnergy;
+  this->EvaluateInteractionFactors();
   if (precalculationFileName == 0)
     {
       if (memory > 0)

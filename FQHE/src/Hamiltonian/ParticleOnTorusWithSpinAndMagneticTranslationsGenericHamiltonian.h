@@ -103,7 +103,7 @@ class ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian : public 
 								   int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
 								   double spinFluxUp, double spinFluxDown, 
 								   AbstractArchitecture* architecture, long memory, char* precalculationFileName, 
-								   double* oneBodyPotentielUpUp, double* oneBodyPotentielDownDown, double* oneBodyPotentielUpDown);
+								   double* oneBodyPotentielUpUp = 0, double* oneBodyPotentielDownDown = 0, double* oneBodyPotentielUpDown = 0);
   
   // destructor
   //

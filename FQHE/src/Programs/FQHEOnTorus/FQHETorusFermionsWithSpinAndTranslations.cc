@@ -8,6 +8,7 @@
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
@@ -22,6 +23,8 @@
 #include "MathTools/IntegerAlgebraTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+
+#include "Tools/FQHEFiles/FQHETorusPseudopotentialTools.h"
 
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "HilbertSpace/SubspaceSpaceConverter.h"
@@ -51,6 +54,7 @@ int main(int argc, char** argv)
     
   // some running options and help
   OptionManager Manager ("FQHETorusFermionsWithSpinAndTranslations" , "0.01");
+  OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -62,6 +66,7 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Lanczos.AddOptionGroup(&Manager);
   Manager += PrecalculationGroup;
+  Manager += ToolsGroup;
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 6);
@@ -71,14 +76,23 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption   ('r', "ratio", 
 					      "ratio between lengths along the x and y directions (-1 if has to be taken equal to nbr-particles/4)", 1.0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new SingleDoubleOption   ('d', "layerSeparation", 
 					      "for bilayer simulations: layer separation in magnetic lengths", 0.0);
   (*SystemGroup) += new  BooleanOption  ('\n', "redundantYMomenta", "Calculate all subspaces up to YMomentum = MaxMomentum-1", false);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "save-precalculation", "save precalculation in a file",0);
+
+#ifdef __LAPACK__
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
+#endif
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -111,13 +125,72 @@ int main(int argc, char** argv)
 
   int L = 0;
   double GroundStateEnergy = 0.0;
+  bool HaveCoulomb = false;
+  int LandauLevel = 0;
+  char* InteractionName = 0;
+  double** PseudoPotentials  = new double*[3];
+  PseudoPotentials[0] = 0;
+  PseudoPotentials[1] = 0;
+  PseudoPotentials[2] = 0;
+  double** OneBodyPseudoPotentials  = new double*[3];
+  int* NbrPseudoPotentials  = new int[3];
+
+  if (Manager.GetString("interaction-file") != NULL)
+    {
+      FQHETorusSU2GetPseudopotentials(Manager.GetString("interaction-file"), MaxMomentum, NbrPseudoPotentials, PseudoPotentials, OneBodyPseudoPotentials);
+      ConfigurationParser InteractionDefinition;
+      if (InteractionDefinition.Parse(Manager.GetString("interaction-file")) == false)
+	{
+	  InteractionDefinition.DumpErrors(cout) << endl;
+	  exit(-1);
+	}
+      if (InteractionDefinition["CoulombLandauLevel"] != NULL)
+	{
+	  LandauLevel = atoi(InteractionDefinition["CoulombLandauLevel"]);
+	  HaveCoulomb = true;
+	}
+      if (InteractionDefinition["Name"] == NULL)
+	{
+	  if ((InteractionDefinition["CoulombLandauLevel"] != NULL) && (PseudoPotentials[0] == 0) && (PseudoPotentials[1] == 0) && (PseudoPotentials[2] == 0))
+	    {
+	      InteractionName = new char[18];
+	      if (LandauLevel >= 0)
+		sprintf(InteractionName,"coulomb_l_%d",LandauLevel);
+	      else
+		sprintf(InteractionName,"graphene_l_%d",-LandauLevel);
+	    }
+	  else
+	    {
+	      cout << "Attention, using unnamed interaction! Please include a line 'Name = ...'" << endl;
+	      InteractionName = new char[10];
+	      sprintf(InteractionName,"unnamed");
+	    }
+	}
+      else
+	{
+	  InteractionName = new char[strlen(InteractionDefinition["Name"])+1];
+	  strcpy(InteractionName, InteractionDefinition["Name"]);
+	}
+    }
+  else
+    {
+      LandauLevel = Manager.GetInteger("landau-level");
+      InteractionName = new char[128];
+      sprintf (InteractionName, "coulomb");
+      HaveCoulomb = true;
+    }
+
 
   char* OutputName = new char [512];
-  if (LayerSeparation==0.0)
-    sprintf (OutputName, "fermions_torus_su2_coulomb_n_%d_2s_%d_sz_%d_ratio_%f.dat", NbrFermions, MaxMomentum, TotalSpin, XRatio);
+  if (OneBodyPseudoPotentials[2] == 0)
+    {
+      sprintf (OutputName, "fermions_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
+    }
   else
-    sprintf (OutputName, "fermions_torus_d_%f_coulomb_n_%d_2s_%d_sz_%d_ratio_%f.dat", LayerSeparation, 
-NbrFermions,MaxMomentum, TotalSpin, XRatio);
+    {
+      sprintf (OutputName, "fermions_torus_su2_%s_n_%d_2s_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, XRatio);
+    }
+
   ofstream File;
   File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
@@ -145,14 +218,35 @@ NbrFermions,MaxMomentum, TotalSpin, XRatio);
       {     
 	cout << "----------------------------------------------------------------" << endl;
 	cout << " Ratio = " << XRatio << endl;
-	FermionOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0 ;
-	TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+	FermionOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0;
+	if (OneBodyPseudoPotentials[2] == 0)
+	  {
+	    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+	  }
+	else
+	  {
+	    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
+	  }
 	cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
 	cout << "momentum = (" << XMomentum << "," << YMomentum2 << ")" << endl;
 	Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());	
-	AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian
-	  (TotalSpace, NbrFermions, MaxMomentum, XMomentum, XRatio, LayerSeparation, 
-	   Architecture.GetArchitecture(), Memory);
+	AbstractQHEHamiltonian* Hamiltonian = 0;
+	if (HaveCoulomb == true)
+	  {
+	    Hamiltonian = new ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian (TotalSpace, NbrFermions, 
+												MaxMomentum, XMomentum, XRatio, LayerSeparation, 
+												Architecture.GetArchitecture(), Memory);
+	  }
+	else
+	  {
+	    Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian (TotalSpace, NbrFermions, 
+												MaxMomentum, XMomentum, XRatio,
+												NbrPseudoPotentials[0], PseudoPotentials[0],
+												NbrPseudoPotentials[1], PseudoPotentials[1],
+												NbrPseudoPotentials[2], PseudoPotentials[2],
+												Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+												Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+	  }
 	char* EigenvectorName = 0;
 	if (Manager.GetBoolean("eigenstate"))	
 	  {
@@ -166,7 +260,7 @@ NbrFermions,MaxMomentum, TotalSpin, XRatio);
 	  }
 	double Shift = -10.0;
 	Hamiltonian->ShiftHamiltonian(Shift);      
-	FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputName, FirstRun, EigenvectorName);
+	FQHEOnTorusMainTask Task (&Manager, TotalSpace, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputName, FirstRun, EigenvectorName, XMomentum);
 	Task.SetKxValue(XMomentum);
 	MainTaskOperation TaskOperation (&Task);
 	TaskOperation.ApplyOperation(Architecture.GetArchitecture());

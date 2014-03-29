@@ -248,7 +248,27 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = coefficient obtained when applying a^+_m a_m
   double AduAu (int index, int m);
 
-    // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
   //
   // index = index of the state on which the operator has to be applied
   // n1 = first index for annihilation operator (spin up)
@@ -353,16 +373,14 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = corresponding index
   int FindStateIndex(unsigned long stateDescription, int maxMomentum);
 
-  
-  // evaluate Hilbert space dimension
+  // evaluate Hilbert space dimension for a given total momentum
   //
   // nbrFermions = number of fermions
-  // totalSpin = twice z-projection of total spin
-  // maxMomentum = momentum maximum value for a fermion
+  // currentKy = current momentum along y for a single particle
+  // currentTotalKy = current total momentum along y
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrFermions, int totalSpin, int maxMomentum);
-  
-  
+  long EvaluateHilbertSpaceDimension(int nbrFermions, int currentKy, int currentTotalKy);
+
   // evaluate Hilbert space dimension using recursive algorithm
   //
   // nbrFermions = number of fermions
@@ -370,7 +388,6 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // totalMomentum = momentum total value
   // totalSpin = number of particles with spin up
   // return value = Hilbert space dimension
-  
   long ShiftedEvaluateHilbertSpaceDimension(int nbrFermions, int lzMax, int totalMomentum, int totalSpin);
 
   // generate look-up table associated to current Hilbert space
@@ -384,10 +401,11 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
 
   // generate all states corresponding to the constraints
   // 
+  // fullSzFlag = if true, does not apply the Sz contraint
   // return value = hilbert space dimension
-  int GenerateStates();
+  int GenerateStates(bool fullSzFlag = false);
  
-  // evaluate Hilbert space dimension
+  // evaluate Hilbert space dimension without the translation symmmetry along x
   //
   // nbrFermions = number of fermions
   // lzMax = momentum maximum value for a fermion
@@ -395,8 +413,18 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // totalSpinUp = number of particles with spin up
   // pos = position in StateDescription array where to store states
   // return value = Hilbert space dimension
-  
   long RawGenerateStates(int nbrFermions, int lzMax, int totalMomentum, int totalSpinUp, long pos);
+
+  // generate all states corresponding to the constraints without the translation symmmetry along x
+  // 
+  // nbrFermions = number of fermions
+  // maxMomentum = momentum maximum value for a fermion in the state
+  // currentMaxMomentum = momentum maximum value for fermions that are still to be placed
+  // pos = position in StateDescription array where to store states
+  // currentMomentum = current value of the momentum
+  // return value = position from which new states have to be stored
+  long RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, int currentMomentum);
+
 };
 
 // get the particle statistic 

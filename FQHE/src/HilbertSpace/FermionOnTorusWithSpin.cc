@@ -119,7 +119,7 @@ FermionOnTorusWithSpin::FermionOnTorusWithSpin (int nbrFermions, int maxMomentum
   this->StateHighestBit = new int [this->HilbertSpaceDimension];
   this->HilbertSpaceDimension = this->GenerateStates(this->NbrFermions,  2 * this->NbrLzValue - 1, 2 * this->NbrLzValue - 1, 0, 0);
   if (((long) this->HilbertSpaceDimension) != this->LargeHilbertSpaceDimension)
-    cout << "erro, Hilbert space dimension mismatch " << this->HilbertSpaceDimension << " (" << this->LargeHilbertSpaceDimension << ")" << endl;
+    cout << "error, Hilbert space dimension mismatch " << this->HilbertSpaceDimension << " (" << this->LargeHilbertSpaceDimension << ")" << endl;
   this->TargetSpace = this;
   this->MaximumSignLookUp = 16;
   this->GenerateLookUpTable(1000000);
