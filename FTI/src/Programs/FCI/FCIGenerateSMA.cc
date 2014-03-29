@@ -64,6 +64,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-groundstate", "name of the file that gives the vector files to which the SMA should be applied (in all-bilinear or sma mode)");	
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);  
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-gx", "only evalute a given x momentum sector (negative if only the first Brillouin zone has to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-gy", "only evalute a given y momentum sector (negative if only the first Brillouin zone has to be computed)", -1);  
   (*SystemGroup) += new BooleanOption  ('\n', "all-bilinear", "apply all bilinear operators to the ground state, without summing on the sector");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-allsma", "compute all SMA");
   (*SystemGroup) += new BooleanOption  ('\n', "quantum-distance", "include the quantum distance when computing the SMA");
@@ -229,6 +231,20 @@ int main(int argc, char** argv)
     {
       int Qx = MinKx;
       int Qy = MinKy;
+      int MinGx = 0;
+      int MaxGx = 0;
+      if (Manager.GetInteger("only-gx") >= 0)
+	{						
+	  MinGx = Manager.GetInteger("only-gx");
+	  MaxGx = MinGx;
+	}
+      int MinGy = 0;
+      int MaxGy = 0;
+      if (Manager.GetInteger("only-gy") >= 0)
+	{						
+	  MinGy = Manager.GetInteger("only-gy");
+	  MaxGy = MinGy;
+	}
       if (Statistics == true)
 	SpaceDestination = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSiteX, NbrSiteY, Qx, Qy);
       else
@@ -240,9 +256,9 @@ int main(int argc, char** argv)
       SpaceSource->SetTargetSpace(SpaceDestination);
       ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension());
       ComplexVector TmpEigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
-      for (int Gx = -1; Gx < 1; ++Gx)
+      for (int Gx = MinGx; Gx < MaxGx; ++Gx)
 	{
-	  for (int Gy = -1; Gy < 1; ++Gy)
+	  for (int Gy = MinGy; Gy < MaxGy; ++Gy)
 	    {
 	      EigenstateOutput.ClearVector();
 	      char* EigenstateOutputFile;
