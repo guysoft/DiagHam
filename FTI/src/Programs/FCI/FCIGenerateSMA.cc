@@ -233,14 +233,14 @@ int main(int argc, char** argv)
       int Qy = MinKy;
       int MinGx = 0;
       int MaxGx = 0;
-      if (Manager.GetInteger("only-gx") >= 0)
+      if (Manager.GetInteger("only-gx") != 0)
 	{						
 	  MinGx = Manager.GetInteger("only-gx");
 	  MaxGx = MinGx;
 	}
       int MinGy = 0;
       int MaxGy = 0;
-      if (Manager.GetInteger("only-gy") >= 0)
+      if (Manager.GetInteger("only-gy") != 0)
 	{						
 	  MinGy = Manager.GetInteger("only-gy");
 	  MaxGy = MinGy;
