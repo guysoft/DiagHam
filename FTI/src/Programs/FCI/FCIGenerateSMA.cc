@@ -256,9 +256,9 @@ int main(int argc, char** argv)
       SpaceSource->SetTargetSpace(SpaceDestination);
       ComplexVector EigenstateOutput(SpaceDestination->GetHilbertSpaceDimension());
       ComplexVector TmpEigenstateOutput(SpaceDestination->GetHilbertSpaceDimension(), true);
-      for (int Gx = MinGx; Gx < MaxGx; ++Gx)
+      for (int Gx = MinGx; Gx <= MaxGx; ++Gx)
 	{
-	  for (int Gy = MinGy; Gy < MaxGy; ++Gy)
+	  for (int Gy = MinGy; Gy <= MaxGy; ++Gy)
 	    {
 	      EigenstateOutput.ClearVector();
 	      char* EigenstateOutputFile;
