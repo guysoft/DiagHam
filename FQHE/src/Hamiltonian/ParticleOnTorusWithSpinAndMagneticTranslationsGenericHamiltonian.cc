@@ -158,14 +158,14 @@ ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ParticleOnToru
     {
       if (memory > 0)
 	{
-	  int TmpMemory = this->FastMultiplicationMemory(memory);
-	  if (TmpMemory < 1024)
+	  long TmpMemory = this->FastMultiplicationMemory(memory);
+	  if (TmpMemory < 1024l)
 	    cout  << "fast = " <<  TmpMemory << "b ";
 	  else
-	    if (TmpMemory < (1 << 20))
+	    if (TmpMemory < (1l << 20))
 	      cout  << "fast = " << (TmpMemory >> 10) << "kb ";
 	    else
-	      if (TmpMemory < (1 << 30))
+	      if (TmpMemory < (1l << 30))
 		cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
 	      else
 		cout  << "fast = " << (TmpMemory >> 30) << "Gb ";
