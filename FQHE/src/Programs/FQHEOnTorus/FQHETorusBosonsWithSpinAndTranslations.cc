@@ -98,7 +98,7 @@ int main(int argc, char** argv)
   int NbrBosons = Manager.GetInteger("nbr-particles");
   int MaxMomentum = Manager.GetInteger("max-momentum");
   int XMomentum = Manager.GetInteger("x-momentum");
-  int YMomentum = Manager.GetInteger("ky-momentum");
+  int YMomentum = Manager.GetInteger("y-momentum");
   double XRatio = Manager.GetDouble("ratio");
   char* LoadPrecalculationFileName = Manager.GetString("load-precalculation");
   char* SavePrecalculationFileName = Manager.GetString("save-precalculation");
@@ -164,10 +164,6 @@ int main(int argc, char** argv)
 
   int MomentumModulo = FindGCD(NbrBosons, MaxMomentum);
   int YMaxMomentum = (MomentumModulo - 1);
-  if (YMomentum < 0)
-    YMomentum = 0;
-  else
-    YMaxMomentum = YMomentum; 
 
   int NbrMomenta;
   int* XMomenta;
@@ -262,7 +258,9 @@ int main(int argc, char** argv)
       cout << " Ratio = " << XRatio << endl;
       BosonOnTorusWithSpinAndMagneticTranslations* Space = 0;
       if(NoSzFlag == false)
-	Space = new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, TotalSpin, MaxMomentum, XMomentum, YMomentum);
+	{
+	  Space = new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, TotalSpin, MaxMomentum, XMomentum, YMomentum);
+	}
       else
 	{
 	  Space = 0;;//new BosonOnTorusWithSpinAndMagneticTranslations (NbrBosons, MaxMomentum, XMomentum, YMomentum);

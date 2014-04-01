@@ -233,7 +233,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
 	    }
 	  else
 	    {
-	      HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);
+	      ComplexMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), this->Hamiltonian->GetHilbertSpaceDimension(), true);
 	      this->Hamiltonian->GetHamiltonian(HRep);
 	      cout << HRep << endl;
 	    } 

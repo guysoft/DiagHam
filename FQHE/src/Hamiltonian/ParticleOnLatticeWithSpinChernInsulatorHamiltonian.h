@@ -865,6 +865,8 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      cout << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " : " 
+			   << TmpIndices[i2] << " " <<  TmpIndices[i2 + 1] << " = " << Index << "  " << Coefficient << endl;
 		      if (Index < Dim)
 			{
                           indexArray[position] = Index;
