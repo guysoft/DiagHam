@@ -866,6 +866,20 @@ Complex EuclidianScalarProduct (const ComplexVector& V1, const ComplexVector& V2
   
 }
 
+// assuming the vector is real up to a global phase, compute this global phase (and the real vector norm)
+//
+// return value = global phase factor (i.e. Norm * exp(i phi))
+
+Complex ComplexVector::GlobalPhase()
+{
+  Complex Tmp = 0.0;
+  for (long i = 0; i < this->LargeDimension; ++i)
+    {
+      Tmp += this->Components[i] * this->Components[i];
+    }  
+  return pow(Tmp, 0.5);
+}
+
 // sum two vectors
 //
 // V1 = vector to add

@@ -283,6 +283,11 @@ class ComplexVector : public Vector
   // return value = result of scalar product
   friend Complex EuclidianScalarProduct (const ComplexVector& V1, const ComplexVector& V2);
 
+  // assuming the vector is real up to a global phase, compute this global phase
+  //
+  // return value = global phase factor (i.e. exp(i phi))
+  Complex GlobalPhase();
+
   // sum two vectors
   //
   // V1 = vector to add
