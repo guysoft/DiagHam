@@ -70,6 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\n',  "interaction-name", "name that should be inserted in the output file names", "dummy");
   (*SystemGroup) += new BooleanOption ('\n',  "no-convertion", "do not convert the final vectors to the (Kx,Ky) n-body basis");
   (*SystemGroup) += new BooleanOption ('\n',  "invert", "assume the input states are in the (Kx,Ky) and express them in the Ky basis");
+  (*SystemGroup) += new BooleanOption ('\n',  "invert-real", "when using the invert option, assume that the final vector is real");
   (*SystemGroup) += new BooleanOption ('\n',  "export-transformation", "export the transformation matrix in a ascii file (one per momentum sector)");
   (*SystemGroup) += new BooleanOption ('\n',  "export-bintransformation", "export the transformation matrix in a binary file (one per momentum sector)");
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
@@ -181,13 +182,13 @@ int main(int argc, char** argv)
 	{
 	  TargetSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
 	  TotalSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, YMomentum);
-	  sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+	  sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, Manager.GetDouble("ratio"));
 	}
       else
 	{
 	  TotalSpace = new FermionOnTorus (NbrParticles, MaxMomentum, YMomentum);
 	  TargetSpace = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-	  sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+	  sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, Manager.GetDouble("ratio"));
 	}
       if (InputStates[0].GetVectorDimension() != TargetSpace->GetHilbertSpaceDimension())
 	{
@@ -200,9 +201,23 @@ int main(int argc, char** argv)
 	  char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
 	  sprintf (VectorOutputName, "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, XMomentum, YMomentum, i);
 	  ComplexVector TmpVector = TargetSpace->ConvertFromKxKyBasis(InputStates[i], TotalSpace);
-	  if (TmpVector.WriteVector(VectorOutputName) == false)
+	  if (Manager.GetBoolean("invert-real") == false)
 	    {
-	      cout << "error, can't write vector " << VectorOutputName << endl;
+	      if (TmpVector.WriteVector(VectorOutputName) == false)
+		{
+		  cout << "error, can't write vector " << VectorOutputName << endl;
+		}
+	    }
+	  else
+	    {
+	      Complex TmpPhase = TmpVector.GlobalPhase();
+	      TmpVector /= TmpPhase;
+	      RealVector TmpVector2(TmpVector);
+	      TmpVector2.Normalize();
+	      if (TmpVector2.WriteVector(VectorOutputName) == false)
+		{
+		  cout << "error, can't write vector " << VectorOutputName << endl;
+		}	      
 	    }
 	  delete[] VectorOutputName;
 	}
@@ -359,7 +374,7 @@ int main(int argc, char** argv)
 	  {
 	    TotalSpace = new BosonOnTorus(NbrParticles, MaxMomentum, YMomentum);
 	  }
-      sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+      sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d_ratio_%.6f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, Manager.GetDouble("ratio"));
       if (Manager.GetBoolean("compute-eigenstate") == true)
 	{
 	  TargetSpaces = new ParticleOnTorusWithMagneticTranslations*[MomentumModulo];
@@ -370,7 +385,7 @@ int main(int argc, char** argv)
   else
     {
       TotalSpace = new FermionOnTorus (NbrParticles, MaxMomentum, YMomentum);
-      sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+      sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d_ratio_%.6f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, Manager.GetDouble("ratio"));
       if (Manager.GetBoolean("compute-eigenstate") == true)
 	{
 	  TargetSpaces = new ParticleOnTorusWithMagneticTranslations*[MomentumModulo];
