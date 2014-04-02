@@ -196,7 +196,7 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
   if ((((*options)["use-hilbert"]) != 0) && (((SingleStringOption*) (*options)["use-hilbert"])->GetString() != 0))
     {
       this->ReducedHilbertSpaceDescription = ((SingleStringOption*) (*options)["use-hilbert"])->GetString();
-      if (((*options)["limit-time"] != 0) &&  (options->GetString("export-hilberttransformation") != 0))
+      if (((*options)["export-hilberttransformation"] != 0) &&  (options->GetString("export-hilberttransformation") != 0))
 	{
 	  this->ReducedHilbertSpaceExportTransformation = options->GetString("export-hilberttransformation");
 	}
