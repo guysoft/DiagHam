@@ -286,6 +286,19 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //return value = projected momentum
   virtual double GetProjectedMomentum(int kx, int ky, int latticeComponent);
   
+  //get the value of the embedding vectors
+  //
+  virtual void GetEmbedding(RealVector& embeddingX, RealVector& embeddingY);
+  
+  //set the value of the embedding vectors
+  //
+  virtual void SetEmbedding(RealVector embeddingX, RealVector embeddingY);
+  
+   //set the value of the embedding vectors from an external ascii file
+  //
+  //embeddingFileName = name of the ascii file that defines the embedding
+  //
+  bool SetEmbeddingFromAsciiFile(char* embeddingFileName);
   
  protected:
 
@@ -299,6 +312,7 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //computes all the values of the momentum projected and stores them in a double array
   //
   virtual void ComputeAllProjectedMomenta();
+  
   
 };
 
@@ -453,5 +467,21 @@ inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, 
 {
   return this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][latticeComponent];
 }
+
+ //get the value of the embedding vectors
+ //
+ inline void Abstract2DTightBindingModel::GetEmbedding(RealVector& embeddingX, RealVector& embeddingY)
+ {
+   embeddingX = this->EmbeddingX;
+   embeddingY = this->EmbeddingY;
+ }
+ 
+ //get the value of the embedding vectors
+ //
+ inline void Abstract2DTightBindingModel::SetEmbedding(RealVector embeddingX, RealVector embeddingY)
+ {
+   this->EmbeddingX = embeddingX;
+   this->EmbeddingY = embeddingY;
+ }
 
 #endif

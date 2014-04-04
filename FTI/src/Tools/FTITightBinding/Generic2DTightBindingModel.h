@@ -44,8 +44,8 @@ class Generic2DTightBindingModel : public Abstract2DTightBindingModel
   //
   // fileName = name of the binary file that contains the band structure information
   Generic2DTightBindingModel(char* fileName);
-
-  // destructor
+  
+    // destructor
   //
   ~Generic2DTightBindingModel();
 
@@ -56,6 +56,7 @@ class Generic2DTightBindingModel : public Abstract2DTightBindingModel
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
-};
+  
+ };
 
 #endif

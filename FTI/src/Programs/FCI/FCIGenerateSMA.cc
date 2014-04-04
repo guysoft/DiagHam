@@ -9,9 +9,6 @@
 #include "HilbertSpace/BosonOnSquareLatticeWithSU3SpinMomentumSpace.h"
 
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
-#include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
-#include "Tools/FTITightBinding/TightBindingModelRubyLattice.h"
-#include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 
 #include "Operator/AbstractOperator.h"
@@ -64,12 +61,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-groundstate", "name of the file that gives the vector files to which the SMA should be applied (in all-bilinear or sma mode)");	
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);  
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-gx", "only evalute a given x momentum sector (negative if only the first Brillouin zone has to be computed)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-gy", "only evalute a given y momentum sector (negative if only the first Brillouin zone has to be computed)", -1);  
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-gx", "only evalute a given x momentum sector (negative if only the first Brillouin zone has to be computed)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-gy", "only evalute a given y momentum sector (negative if only the first Brillouin zone has to be computed)", 0);  
   (*SystemGroup) += new BooleanOption  ('\n', "all-bilinear", "apply all bilinear operators to the ground state, without summing on the sector");
   (*SystemGroup) += new BooleanOption  ('\n', "compute-allsma", "compute all SMA");
   (*SystemGroup) += new BooleanOption  ('\n', "quantum-distance", "include the quantum distance when computing the SMA");
-  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a binary file");
+  (*SystemGroup) += new SingleStringOption  ('\n', "embedding-file", "import embedding information from a text file (override information from onebody file)");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   
@@ -95,6 +93,7 @@ int main(int argc, char** argv)
       return -1;
     }
  
+  
   bool BilinearFlag = Manager.GetBoolean("all-bilinear");
   int NbrParticles = 0;
   int NbrSiteX = 0;
@@ -174,6 +173,9 @@ int main(int argc, char** argv)
   
   ParticleOnSphere* SpaceSource = 0;
   Generic2DTightBindingModel TightBindingModel(Manager.GetString("import-onebody"));
+  if (Manager.GetString("embedding-file") != 0 && TightBindingModel.SetEmbeddingFromAsciiFile(Manager.GetString("embedding-file")) == false )
+    return 0;
+	
   ParticleOnSphere* SpaceDestination = 0;
 
   if (Manager.GetBoolean("compute-allsma") == false)

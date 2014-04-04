@@ -34,6 +34,7 @@
 #include "config.h"
 #include "GeneralTools/List.h"
 #include "MathTools/Complex.h"
+#include "Vector/RealVector.h"
 
 #include <iostream>
 
@@ -143,6 +144,12 @@ class MultiColumnASCIIFile
   // return value = reference on the array where the read values have to be stored (allocation is done by the method itself,  de-allocation has to be done by hand)
   LongRational* GetAsLongRationalArray (int column);
 
+  // get a column converting it to a real vector
+  //
+  // column = column index
+  // return value = reference on the vector where the read values have to be stored (allocation is done by the method itself,  de-allocation has to be done by hand)
+  RealVector GetAsRealVector (int column);
+  
   // get a line converting it to integer
   //
   // line = line index

@@ -34,6 +34,7 @@
 #include "Matrix/ComplexDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <fstream>
 #include <iostream>
@@ -1202,4 +1203,25 @@ void Abstract2DTightBindingModel::ComputeAllProjectedMomenta()
 	  this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
 	}
     }
+}
+
+//set the value of the embedding vectors from an external ascii file
+//
+//embeddingFileName = name of the ascii file that defines the embedding
+//
+bool Abstract2DTightBindingModel::SetEmbeddingFromAsciiFile(char* embeddingFileName)
+{
+  MultiColumnASCIIFile Parser;
+  Parser.Parse(embeddingFileName);
+//   cout << Parser.GetNbrColumns() <<  "  " << Parser.GetNbrLines() << endl;
+  if (Parser.GetNbrColumns() != 2 || Parser.GetNbrLines() != this->NbrBands)
+  {
+    cout << "Embedding file should have " << this->NbrBands << " lines and 2 columns" << endl;
+    return false;
+  }
+  else
+  {
+    this->SetEmbedding(Parser.GetAsRealVector(0), Parser.GetAsRealVector(1));
+    return true;
+  }
 }

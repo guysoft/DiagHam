@@ -155,12 +155,15 @@ Generic2DTightBindingModel::Generic2DTightBindingModel(char* fileName)
   this->ComputeAllProjectedMomenta();
 }
 
+
+
 // destructor
 //
 
 Generic2DTightBindingModel::~Generic2DTightBindingModel()
 {
 }
+
 
 // core part that compute the band structure
 //
