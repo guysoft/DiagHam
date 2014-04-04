@@ -1221,7 +1221,19 @@ bool Abstract2DTightBindingModel::SetEmbeddingFromAsciiFile(char* embeddingFileN
   }
   else
   {
-    this->SetEmbedding(Parser.GetAsRealVector(0), Parser.GetAsRealVector(1));
+    double** coefficients = new double*[2];
+    for (int i = 0; i < 2; ++i)
+      coefficients[i] = Parser.GetAsDoubleArray(i);
+
+    for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EmbeddingX[i] = coefficients[0][i];
+//       cout << this->EmbeddingX[i] << endl;
+      this->EmbeddingY[i] = coefficients[1][i];
+//       cout << this->EmbeddingY[i] << endl;
+    }
+    delete[] coefficients;
     return true;
   }
+ 
 }

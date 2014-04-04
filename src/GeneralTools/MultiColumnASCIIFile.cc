@@ -395,31 +395,6 @@ Complex* MultiColumnASCIIFile::GetAsComplexArray (int column)
 }
 
 
-// get a column converting it to a real vector
-//
-// column = column index
-// return value = reference on the vector where the read values have to be stored (allocation is done by the method itself, de-allocation has to be done by hand)
-
-RealVector MultiColumnASCIIFile::GetAsRealVector (int column)
-{
-  RealVector TmpColumn(this->NbrLines, true);
-  char** TmpASCIIColumn = this->Data[column];
-  char* TmpError;
-  for (int i = 0; i < this->NbrLines; ++i)
-    {
-      TmpColumn[i] = strtod(TmpASCIIColumn[i], &TmpError);
-      if ((TmpError == TmpASCIIColumn[i]) || ((*TmpError) != '\0'))
-	{
-	  char* TmpString = new char [256 + strlen(TmpASCIIColumn[i])]; 
-	  sprintf (TmpString, "element in column %d and line %d is an invalid double value (%s)\n", column, i, TmpASCIIColumn[i]);
-	  this->ErrorLog += TmpString;
-// 	  delete[] TmpColumn;
-	  return 0;
-	}
-    } 
-  return TmpColumn;
-}
-
 // get a line converting it to integer
 //
 // line = line index
