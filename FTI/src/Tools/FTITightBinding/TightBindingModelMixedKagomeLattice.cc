@@ -5,12 +5,12 @@
 //                                                                            //
 //                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
-//                        class author: Yang-Le Wu                            //
+//                        class author: Nicolas Regnault                      //
 //                                                                            //
 //             class of tight binding model for the Kagome lattice            //
-//                with the gauge choice in the Zoology paper                  //
+//   linearly combining a copy of the model and its time reversal conjugate   //
 //                                                                            //
-//                        last modification : 04/10/2012                      //
+//                        last modification : 11/04/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,7 +31,7 @@
 
 
 #include "config.h"
-#include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelMixedKagomeLattice.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -46,13 +46,14 @@
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
 // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice chemical potential on A1 sites
+// coefficient = coefficient of the linear combination (0 begin the same model than TightBindingAlternativeMixedKagomeLattice and 1 being its time reversal conjugate)
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
-TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mus,
-										     double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+TightBindingModelMixedKagomeLattice::TightBindingModelMixedKagomeLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double lambda1, double lambda2, double mus, double coefficient,
+									 double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
     this->NbrSiteX = nbrSiteX;
     this->NbrSiteY = nbrSiteY;
@@ -70,6 +71,7 @@ TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLat
     this->TwistAngle = M_PI / 3;
     this->GammaX = gammaX;
     this->GammaY = gammaY;
+    this->Coefficient = coefficient;
 
     this->NbrBands = 3;
     this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
@@ -106,13 +108,14 @@ TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLat
 // lambda1 = imaginary part of the hopping amplitude between neareast neighbor sites
 // lambda1 = imaginary part of the hopping amplitude between next neareast neighbor sites
 // mus = sublattice chemical potential on A1 sites
+// coefficient = coefficient of the linear combination (0 begin the same model than TightBindingAlternativeMixedKagomeLattice and 1 being its time reversal conjugate)
 // gammaX = boundary condition twisting angle along x
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 
-TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mus,
-        double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+TightBindingModelMixedKagomeLattice::TightBindingModelMixedKagomeLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double lambda1, double lambda2, double mus, double coefficient,
+									 double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
 {
     this->NbrSiteX = nbrSiteX;
     this->NbrSiteY = nbrSiteY;
@@ -131,6 +134,7 @@ TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLat
     this->TwistAngle = M_PI / 3;
     this->GammaX = gammaX;
     this->GammaY = gammaY;
+    this->Coefficient = coefficient;
 
     this->NbrBands = 3;
     this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
@@ -160,7 +164,7 @@ TightBindingModelAlternativeKagomeLattice::TightBindingModelAlternativeKagomeLat
 // destructor
 //
 
-TightBindingModelAlternativeKagomeLattice::~TightBindingModelAlternativeKagomeLattice()
+TightBindingModelMixedKagomeLattice::~TightBindingModelMixedKagomeLattice()
 {
 }
 
@@ -169,7 +173,7 @@ TightBindingModelAlternativeKagomeLattice::~TightBindingModelAlternativeKagomeLa
 // minStateIndex = minimum index of the state to compute
 // nbrStates = number of states to compute
 
-void TightBindingModelAlternativeKagomeLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+void TightBindingModelMixedKagomeLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
     if (nbrStates == 0l)
         nbrStates = this->NbrStatePerBand;
@@ -181,20 +185,31 @@ void TightBindingModelAlternativeKagomeLattice::CoreComputeBandStructure(long mi
             int Index = this->GetLinearizedMomentumIndex(kx, ky);
 	    double x = this->ProjectedMomenta[Index][0];
 	    double y = this->ProjectedMomenta[Index][1];
+            int InvIndex = this->GetLinearizedMomentumIndex((this->NbrSiteX - kx) % this->NbrSiteX, 
+							    (this->NbrSiteY - ky) % this->NbrSiteY);
+	    double InvX = this->ProjectedMomenta[InvIndex][0];
+	    double InvY = this->ProjectedMomenta[InvIndex][1];
             if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	      {
-                Complex nnBA = Complex(-this->NNHopping, -this->NNSpinOrbit) * (1 + Phase(x));
-                Complex nnCA = Complex(-this->NNHopping, +this->NNSpinOrbit) * (1 + Phase(y));
-                Complex nnCB = Complex(-this->NNHopping, -this->NNSpinOrbit) * (1 + Phase(y-x));
+                Complex nnBA = Complex(-this->NNHopping, -this->NNSpinOrbit) * (1.0 + Phase(x));
+                Complex nnCA = Complex(-this->NNHopping, +this->NNSpinOrbit) * (1.0 + Phase(y));
+                Complex nnCB = Complex(-this->NNHopping, -this->NNSpinOrbit) * (1.0 + Phase(y-x));
                 Complex nnnBA = Complex(-this->NextNNHopping, +this->NextNNSpinOrbit) * (Phase(y) + Phase(x-y));
                 Complex nnnCA = Complex(-this->NextNNHopping, -this->NextNNSpinOrbit) * (Phase(x) + Phase(y-x));
                 Complex nnnCB = Complex(-this->NextNNHopping, +this->NextNNSpinOrbit) * (Phase(-x) + Phase(y));
 
+                Complex InvnnBA = Conj(Complex(-this->NNHopping, -this->NNSpinOrbit) * (1.0 + Phase(InvX)));
+                Complex InvnnCA = Conj(Complex(-this->NNHopping, +this->NNSpinOrbit) * (1.0 + Phase(InvY)));
+                Complex InvnnCB = Conj(Complex(-this->NNHopping, -this->NNSpinOrbit) * (1.0 + Phase(InvY - InvX)));
+                Complex InvnnnBA = Conj(Complex(-this->NextNNHopping, +this->NextNNSpinOrbit) * (Phase(InvY) + Phase(InvX - InvY)));
+                Complex InvnnnCA = Conj(Complex(-this->NextNNHopping, -this->NextNNSpinOrbit) * (Phase(InvX) + Phase(InvY - InvX)));
+                Complex InvnnnCB = Conj(Complex(-this->NextNNHopping, +this->NextNNSpinOrbit) * (Phase(-InvX) + Phase(InvY)));
+
                 HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
                 TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->MuS);
-                TmpOneBodyHamiltonian.SetMatrixElement(1, 0, nnBA + nnnBA);
-                TmpOneBodyHamiltonian.SetMatrixElement(2, 0, nnCA + nnnCA);
-                TmpOneBodyHamiltonian.SetMatrixElement(2, 1, nnCB + nnnCB);
+                TmpOneBodyHamiltonian.SetMatrixElement(1, 0, this->Coefficient * (nnBA + nnnBA) + (1.0 - this->Coefficient) * (InvnnBA + InvnnnBA));
+                TmpOneBodyHamiltonian.SetMatrixElement(2, 0, this->Coefficient * (nnCA + nnnCA) + (1.0 - this->Coefficient) * (InvnnCA + InvnnnCA));
+                TmpOneBodyHamiltonian.SetMatrixElement(2, 1, this->Coefficient * (nnCB + nnnCB) + (1.0 - this->Coefficient) * (InvnnCB + InvnnnCB));
 
                 if (this->OneBodyBasis != 0)
 		  {

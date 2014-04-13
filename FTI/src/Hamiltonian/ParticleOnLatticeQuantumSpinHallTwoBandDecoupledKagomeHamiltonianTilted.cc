@@ -78,7 +78,84 @@ ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::Particl
   this->LzMax = nbrSiteX * nbrSiteY - 1;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
-  this->TightBindingModel = tightBindingModel;
+  this->TightBindingModelUp = tightBindingModel;
+  this->TightBindingModelDown = tightBindingModel;
+  this->HamiltonianShift = 0.0;
+  
+  this->FlatBand = flatBandFlag;
+  this->TimeReversal = timeReversalFlag;
+
+  this->UPotential = uPotential;
+  this->VPotential = vPotential;
+  this->WPotential = wPotential;
+
+  this->Architecture = architecture;
+  this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->HermitianSymmetryFlag = true;
+  this->EvaluateInteractionFactors();
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+      this->EnableFastMultiplication();
+    }
+}
+
+// constructor with the one-body Hamiltonian for the down copy is explicitly provided
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// uPotential = strength of the repulsive two body neareast neighbor interaction
+// vPotential = strength of the repulsive on site two body interaction between opposite spins
+// wPotential = strength of the repulsive two body neareast neighbor interaction between opposite spins
+// tightBindingModelUp = pointer to the tight binding model of the first copy (must be in Bloch form)
+// tightBindingModelDown = pointer to the tight binding model of the second copy (must be in Bloch form)
+// flatBandFlag = use flat band model
+// timeReversalFlag = apply thge time reversal symmetry on the second copy of the tight binding model
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+																		 double uPotential, double vPotential, double wPotential,
+																		 Abstract2DTightBindingModel* tightBindingModelUp, Abstract2DTightBindingModel* tightBindingModelDown, bool flatBandFlag, bool timeReversalFlag, 
+																		 AbstractArchitecture* architecture, long memory)
+{
+  this->Particles = particles;
+  this->NbrParticles = nbrParticles;
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->LzMax = nbrSiteX * nbrSiteY - 1;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->TightBindingModelUp = tightBindingModelUp;
+  this->TightBindingModelDown = tightBindingModelDown;
   this->HamiltonianShift = 0.0;
   
   this->FlatBand = flatBandFlag;
@@ -713,7 +790,7 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::Ev
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = 1.0 + Phase(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0));
+  Complex Tmp = 1.0 + Phase(this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 0));
   return Tmp;
 }
 
@@ -728,7 +805,7 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted:
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ComputeTwoBodyMatrixElementAUpCUp(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = 1.0 + Phase(this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1));
+  Complex Tmp = 1.0 + Phase(this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 1));
   return Tmp;
 }
 
@@ -746,7 +823,7 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted:
 
 Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ComputeTwoBodyMatrixElementBUpCUp(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = 1.0 + Phase(this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1) - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0));
+  Complex Tmp = 1.0 + Phase(this->TightBindingModelUp->GetProjectedMomentum(kx4, ky4, 1) - this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 1) + this->TightBindingModelUp->GetProjectedMomentum(kx3, ky3, 0) - this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 0));
   return Tmp;
 }
 
@@ -893,31 +970,31 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::Co
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
-	int Index = this->TightBindingModel->GetLinearizedMomentumIndex(kx, ky);
+	int Index = this->TightBindingModelUp->GetLinearizedMomentumIndex(kx, ky);
 	oneBodyBasis[Index] = ComplexMatrix(6, 6, true);
 	for (int i = 0; i < 3; ++i)
 	  for (int j = 0; j < 3; ++j)
-	    oneBodyBasis[Index][2 * i][j] = this->TightBindingModel->GetOneBodyMatrix(Index)[i][j];
+	    oneBodyBasis[Index][2 * i][j] = this->TightBindingModelUp->GetOneBodyMatrix(Index)[i][j];
 	if (this->FlatBand == false)
 	  {
-	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
+	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * this->TightBindingModelUp->GetEnergy(0, Index);
 	  }
-	cout << this->TightBindingModel->GetEnergy(0, Index) << " " << this->TightBindingModel->GetEnergy(1, Index) << " " << this->TightBindingModel->GetEnergy(2, Index) << endl;
-		
-	int IndexInv = this->TightBindingModel->GetLinearizedMomentumIndex(((this->NbrSiteX - kx) % this->NbrSiteX), ((this->NbrSiteY - ky) % this->NbrSiteY));
+	cout << this->TightBindingModelUp->GetEnergy(0, Index) << " " << this->TightBindingModelUp->GetEnergy(1, Index) << " " << this->TightBindingModelUp->GetEnergy(2, Index) << endl;
+	
+	int IndexInv = this->TightBindingModelDown->GetLinearizedMomentumIndex(((this->NbrSiteX - kx) % this->NbrSiteX), ((this->NbrSiteY - ky) % this->NbrSiteY));
 	for (int i = 0; i < 3; ++i)
 	  for (int j = 0; j < 3; ++j)
-	  {
-	    if (this->TimeReversal == true)
-	      oneBodyBasis[Index][2 * i + 1][3 + j] = Conj (this->TightBindingModel->GetOneBodyMatrix(IndexInv)[i][j]);
-	    else
-	      oneBodyBasis[Index][2 * i + 1][3 + j] = this->TightBindingModel->GetOneBodyMatrix(Index)[i][j];
-	  }
+	    {
+	      if (this->TimeReversal == true)
+		oneBodyBasis[Index][2 * i + 1][3 + j] = Conj (this->TightBindingModelDown->GetOneBodyMatrix(IndexInv)[i][j]);
+	      else
+		oneBodyBasis[Index][2 * i + 1][3 + j] = this->TightBindingModelDown->GetOneBodyMatrix(Index)[i][j];
+	    }
 	if (this->FlatBand == false)
 	  {
-	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, IndexInv);
+	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->TightBindingModelDown->GetEnergy(0, IndexInv);
 	  }
-	cout << this->TightBindingModel->GetEnergy(0, IndexInv) << " " << this->TightBindingModel->GetEnergy(1, IndexInv) << " " << this->TightBindingModel->GetEnergy(2, IndexInv) << endl;
+	cout << this->TightBindingModelDown->GetEnergy(0, IndexInv) << " " << this->TightBindingModelDown->GetEnergy(1, IndexInv) << " " << this->TightBindingModelDown->GetEnergy(2, IndexInv) << endl;
       }
 }
 

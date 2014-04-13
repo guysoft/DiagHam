@@ -117,103 +117,84 @@ void TightBindingModelTimeReversalKagomeLatticeTilted::CoreComputeBandStructure(
   double KX;
   double KY;
   for (int kx = 0; kx < this->NbrSiteX; ++kx)
-  {
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	int Index = (kx * this->NbrSiteY) + ky;
-
-	HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	
-	KX = this->ProjectedMomenta[Index][0];
-	KY = this->ProjectedMomenta[Index][1];
-	Complex HAB (-this->NNHopping, -this->NNSpinOrbit);
-	HAB *= 1 + Phase(KX);
-	Complex HAC(-this->NNHopping, this->NNSpinOrbit);
-	HAC *= 1 + Phase(KY);
-	Complex HBC(- this->NNHopping, - this->NNSpinOrbit);
-	HBC *= 1 + Phase(KY - KX);
-
-		
-	double InvKX = -this->ProjectedMomenta[Index][0];
-	double InvKY = -this->ProjectedMomenta[Index][1];
-	Complex InvHAB = Complex(- this->NNHopping, - this->NNSpinOrbit);
-	InvHAB *= 1 + Phase(InvKX);
-	Complex InvHAC = Complex(- this->NNHopping,  this->NNSpinOrbit);
-	InvHAC *= 1 + Phase(InvKY);
-	Complex InvHBC = Complex(- this->NNHopping, - this->NNSpinOrbit);
-	InvHBC *= 1 + Phase(InvKY - InvKX);
-
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
-	if (this->TimeReversal == true)
+    {
+      for (int ky = 0; ky < this->NbrSiteY; ++ky)
 	{
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
-	}
-	else
-	{
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 4, HAB);
-	  TmpOneBodyHamiltonian.SetMatrixElement(3, 5, HAC);
-	  TmpOneBodyHamiltonian.SetMatrixElement(4, 5, HBC);
-	}
-
-	
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm13);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -this->MixingTerm12);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm23);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -this->MixingTerm13);
-	TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -this->MixingTerm23);
-
-	if (this->OneBodyBasis != 0)
-	  {
-	    ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
-	    TmpMatrix.SetToIdentity();
-	    RealDiagonalMatrix TmpDiag;
+	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
+	  
+	  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+	  
+	  KX = this->ProjectedMomenta[Index][0];
+	  KY = this->ProjectedMomenta[Index][1];
+	  Complex HAB (-this->NNHopping, -this->NNSpinOrbit);
+	  HAB *= 1 + Phase(KX);
+	  Complex HAC(-this->NNHopping, this->NNSpinOrbit);
+	  HAC *= 1 + Phase(KY);
+	  Complex HBC(- this->NNHopping, - this->NNSpinOrbit);
+	  HBC *= 1 + Phase(KY - KX);
+	  
+	  
+	  double InvKX = -this->ProjectedMomenta[Index][0];
+	  double InvKY = -this->ProjectedMomenta[Index][1];
+	  Complex InvHAB = Complex(- this->NNHopping, - this->NNSpinOrbit);
+	  InvHAB *= 1 + Phase(InvKX);
+	  Complex InvHAC = Complex(- this->NNHopping,  this->NNSpinOrbit);
+	  InvHAC *= 1 + Phase(InvKY);
+	  Complex InvHBC = Complex(- this->NNHopping, - this->NNSpinOrbit);
+	  InvHBC *= 1 + Phase(InvKY - InvKX);
+	  
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, HAB);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 2, HAC);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 2, HBC);
+	  if (this->TimeReversal == true)
+	    {
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 4, Conj(InvHAB));
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 5, Conj(InvHAC));
+	      TmpOneBodyHamiltonian.SetMatrixElement(4, 5, Conj(InvHBC));
+	    }
+	  else
+	    {
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 4, HAB);
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 5, HAC);
+	      TmpOneBodyHamiltonian.SetMatrixElement(4, 5, HBC);
+	    }
+	  
+	  
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 4, this->MixingTerm12);
+	  TmpOneBodyHamiltonian.SetMatrixElement(0, 5, this->MixingTerm13);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 3, -this->MixingTerm12);
+	  TmpOneBodyHamiltonian.SetMatrixElement(1, 5, this->MixingTerm23);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -this->MixingTerm13);
+	  TmpOneBodyHamiltonian.SetMatrixElement(2, 4, -this->MixingTerm23);
+	  
+	  if (this->OneBodyBasis != 0)
+	    {
+	      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+	      TmpMatrix.SetToIdentity();
+	      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-	    TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-	    this->OneBodyBasis[Index] = TmpMatrix;
-	    for (int i = 0; i < this->NbrBands; ++i)
-	      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-	  }
-	else
-	  {
-	    RealDiagonalMatrix TmpDiag;
+	      this->OneBodyBasis[Index] = TmpMatrix;
+	      for (int i = 0; i < this->NbrBands; ++i)
+		this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+	    }
+	  else
+	    {
+	      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-	    TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+	      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
-	    TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+	      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif
-	    for (int i = 0; i < this->NbrBands; ++i)
+	      for (int i = 0; i < this->NbrBands; ++i)
 	      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-	  }
-      }
-  }
+	    }
+	}
+    }
 }
 
 
 
-//computes all the values of the projected momentum and stores them in a double array
-//
-void TightBindingModelTimeReversalKagomeLatticeTilted::ComputeAllProjectedMomenta()
-{
- double projectedMomentum1;
- double projectedMomentum2;
- for (int kx = 0; kx < this->NbrSiteX; ++kx)
- {
-   for (int ky = 0; ky < this->NbrSiteY; ++ky)
-   {
-     double kx_trans = kx + this->Offset*ky + this->GammaX;
-     double ky_trans = ky + this->GammaY;
-     projectedMomentum1 = 2.0 * M_PI * ((double) kx_trans * (double) this->Ny2 - (double) ky_trans * (double) this->Ny1) / ((double) (this->NbrSiteX * this->NbrSiteY));
-     projectedMomentum2 = 2.0 * M_PI * ((double) kx_trans * (double) (-this->Nx2) + (double) ky_trans * (double)this->Nx1) / ((double) (this->NbrSiteX * this->NbrSiteY));
-     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][0] = projectedMomentum1;
-     this->ProjectedMomenta[this->GetLinearizedMomentumIndex(kx, ky)][1] = projectedMomentum2;
-   }
- }
-}

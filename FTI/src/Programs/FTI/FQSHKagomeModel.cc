@@ -7,6 +7,7 @@
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalKagomeLatticeTilted.h"
 #include "Tools/FTITightBinding/TightBindingModelAlternativeKagomeLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelMixedKagomeLattice.h"
 
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandKagomeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonian.h"
@@ -89,7 +90,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume two decoupled copies of the kagome lattice");
   (*SystemGroup) += new BooleanOption ('\n', "break-timereversal", "use model with two identical copies of the kagome model without time reversal invariance");
-  
+  (*SystemGroup) += new BooleanOption ('\n', "mixed-timereversalbroken", "use a linear combination of the kagome model and its time reversal conjugate for the down layer");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "mixedtr-coefficient", "coefficient of linear combination of the kagome model and its time reversal conjugate for the down layer (0 being the pure time reversal conjugate and 1 the pure kagome model)", 0.0);
   (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value when considering two decoupled copies of the kagome lattice");
   (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -130,26 +132,35 @@ int main(int argc, char** argv)
   bool TimeReversalFlag = true;  
   if (Manager.GetBoolean("break-timereversal") == true)
     TimeReversalFlag = false;
-  
+  bool MixedTimeReversalBrokenFlag = Manager.GetBoolean("mixed-timereversalbroken");
+  double MixedTimeReversalBrokenCoefficient = Manager.GetDouble("mixedtr-coefficient");
   if ((TimeReversalFlag == false) && ((Manager.GetBoolean("export-onebodytheta") == true) || (Manager.GetBoolean("singleparticle-z2invariant") == true)))
     {
       cout << "Z2 invariant is only defined for a time reversal invariant system" << endl;
       return 0;
     }
-  if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
-     TiltedFlag = false;
+  if (((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)))
+    {
+      TiltedFlag = false;
+      if (MixedTimeReversalBrokenFlag == true)
+	{
+	  TiltedFlag = true;
+	  nx1 = NbrSitesX;
+	  ny2 = NbrSitesY;
+	}
+    }
   else
     {
       if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
-      {
-	cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
-	return 0;
-      }
+	{
+	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	  return 0;
+	}
       if (((offset*ny2 - ny1) % NbrSitesX) != 0 || ((nx1 - offset*nx2) % NbrSitesX != 0))
-      {
-	cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSitesX) = 0 and ((nx1 - offset*nx2) % NbrSitesX = 0) to verify momentum conservation" << endl;
-	return 0;
-      }
+	{
+	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSitesX) = 0 and ((nx1 - offset*nx2) % NbrSitesX = 0) to verify momentum conservation" << endl;
+	  return 0;
+	}
       else
 	cout << "Using tilted boundary conditions" << endl;
     }
@@ -177,13 +188,20 @@ int main(int argc, char** argv)
   char* InteractionPrefix = new char [512];
   if (ThreeBodyFlag == false)
     {
-      if (TimeReversalFlag == true)
+      if (MixedTimeReversalBrokenFlag == false)
 	{
-	 sprintf (InteractionPrefix, "twoband_quantumspinhall_kagome");
+	  if (TimeReversalFlag == true)
+	    {
+	      sprintf (InteractionPrefix, "twoband_quantumspinhall_kagome");
+	    }
+	  else
+	    {
+	      sprintf (InteractionPrefix, "twoband_bilayer_kagome");
+	    }
 	}
       else
 	{
-	  sprintf (InteractionPrefix, "twoband_bilayer_kagome");
+	  sprintf (InteractionPrefix, "twoband_trbrokenquantumspinhall_%f_kagome", MixedTimeReversalBrokenCoefficient);	  
 	}
     }
   else
@@ -437,8 +455,8 @@ int main(int argc, char** argv)
 		  else
 		    {
 		      TightBindingModel = new TightBindingModelAlternativeKagomeLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
-									      Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
-									      Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+											 Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
+											 Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
 		      if (ThreeBodyFlag == true)
 			{
 			  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
@@ -448,11 +466,32 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,
-														    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
-														    Manager.GetDouble("w-potential"), TightBindingModel,
-														    Manager.GetBoolean("flat-band"), TimeReversalFlag, 
-														    Architecture.GetArchitecture(), Memory);
+			  if (MixedTimeReversalBrokenFlag == false)
+			    {
+			      Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,
+															Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+															Manager.GetDouble("w-potential"), TightBindingModel,
+															Manager.GetBoolean("flat-band"), TimeReversalFlag, 
+															Architecture.GetArchitecture(), Memory);
+			    }
+			  else
+			    {
+			      Abstract2DTightBindingModel* TightBindingModelDown = new TightBindingModelMixedKagomeLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), 
+																  Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"),
+															    MixedTimeReversalBrokenCoefficient, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+			      if ((Manager.GetBoolean("export-onebodytext") == true) && (FirstRunFlag == true))
+				{
+				  char* TmpExtention = new char [512];
+				  sprintf (TmpExtention, "_mixedpartonly_tightbinding.dat");
+				  char* BandStructureOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);				  
+				  TightBindingModelDown->WriteBandStructureASCII(BandStructureOutputFile);
+				}
+			      Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(Space, NbrParticles, NbrSitesX, NbrSitesY,
+															Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
+															Manager.GetDouble("w-potential"), TightBindingModel, TightBindingModelDown,
+															Manager.GetBoolean("flat-band"), false, 
+															Architecture.GetArchitecture(), Memory);
+			    }
 			}
 		    }
 		  char* ContentPrefix = new char[256];

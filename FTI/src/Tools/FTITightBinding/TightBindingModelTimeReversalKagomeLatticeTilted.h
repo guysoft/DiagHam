@@ -59,24 +59,6 @@ class TightBindingModelTimeReversalKagomeLatticeTilted : public Abstract2DTightB
 
   // four times the sublattice staggered chemical potential 
   double MuS;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-  // nearest neighbor density-density potential strength
-  
-  //first coordinate of the first spanning vector of the tilted lattice
-  int Nx1;
-  //second coordinate of the first spanning vector of the tilted lattice
-  int Ny1;
-  //first coordinate of the second spanning vector of the tilted lattice
-  int Nx2;
-  //second coordinate of the second spanning vector of the tilted lattice
-  int Ny2;
-  //array of projected momenta
-  double** ProjectedMomenta;
-  //second coordinate in momentum space of the second spanning vector of the reciprocal lattice
-  int Offset;
   
   // use model with time reversal symmetry
   bool TimeReversal;
@@ -111,10 +93,6 @@ class TightBindingModelTimeReversalKagomeLatticeTilted : public Abstract2DTightB
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
-  
-  //computes all the values of the momentum projected and stores them in a double array
-  //
-  virtual void ComputeAllProjectedMomenta();
   
   //Computes value of projected momentum along the lattice directions
   //

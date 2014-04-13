@@ -62,8 +62,14 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted : 
   bool FlatBand;
   // use two copies of Kagome with time reversal symmetry
   bool TimeReversal;
+  // use a linear combination of the tight binding model and its time reversal conjugate for the down copy
+  bool LinearCombinationFlag;
+  // coefficietn of the linear combination of the tight binding model and its time reversal conjugate for the down copy
+  double LinearCombinationCoefficient;  
   // pointer to the tight binding model of the first copy (must be in Bloch form)
-  Abstract2DTightBindingModel* TightBindingModel;
+  Abstract2DTightBindingModel* TightBindingModelUp;
+  // pointer to the tight binding model of the second copy (must be in Bloch form)
+  Abstract2DTightBindingModel* TightBindingModelDown;
 
  public:
 
@@ -86,6 +92,26 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted : 
 									  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, bool timeReversalFlag, 
 									  AbstractArchitecture* architecture, long memory = -1);
 
+  // constructor with the one-body Hamiltonian for the down copy is explicitly provided
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // uPotential = strength of the repulsive two body neareast neighbor interaction
+  // vPotential = strength of the repulsive on site two body interaction between opposite spins
+  // wPotential = strength of the repulsive two body neareast neighbor interaction between opposite spins
+  // tightBindingModelUp = pointer to the tight binding model of the first copy (must be in Bloch form)
+  // tightBindingModelDown = pointer to the tight binding model of the second copy (must be in Bloch form)
+  // flatBandFlag = use flat band model
+  // timeReversalFlag = apply thge time reversal symmetry on the second copy of the tight binding model
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)  
+  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+									  double uPotential, double vPotential, double wPotential,
+									  Abstract2DTightBindingModel* tightBindingModelUp, Abstract2DTightBindingModel* tightBindingModelDown, bool flatBandFlag, bool timeReversalFlag, 
+									  AbstractArchitecture* architecture, long memory = -1);
+  
   // destructor
   //
   ~ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted();

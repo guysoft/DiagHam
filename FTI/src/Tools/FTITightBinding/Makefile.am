@@ -44,4 +44,5 @@ TightBindingModelTimeReversalBHZLattice.cc \
 TightBindingModelBHZLattice.cc \
 TightBindingModelTimeReversalKagomeLatticeTilted.cc \
 TightBindingModelOFLGenericLattice.cc \
-TightBindingModelCylinderTwoOrbitalSquareLattice.cc
+TightBindingModelCylinderTwoOrbitalSquareLattice.cc \
+TightBindingModelMixedKagomeLattice.cc
