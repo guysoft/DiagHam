@@ -291,6 +291,7 @@ int main(int argc, char** argv)
 			TmpFactor = Conj(TightBindingModel.GetAbelianConnectionQuantumDistance(kx, ky, Qx + Gx * NbrSiteX - TotalKx[0], Qy + Gy * NbrSiteY - TotalKy[0], 0));
 		      else
 			TmpFactor = Conj(TightBindingModel.GetAbelianConnection(kx, ky, Qx + Gx * NbrSiteX- TotalKx[0], Qy + Gy * NbrSiteY- TotalKy[0], 0));
+			
 
 		      EigenstateOutput. AddLinearCombination(TmpFactor, TmpEigenstateOutput);
 		    }

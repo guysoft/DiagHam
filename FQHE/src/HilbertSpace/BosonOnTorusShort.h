@@ -282,6 +282,30 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // patternShift = indicate where the pattern has to be applied
   // return value = trucated state
   virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnTorus* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
+  
+  
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  
+
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
 
  protected:
 
@@ -382,6 +406,9 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
   HermitianMatrix  EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState);
+  
+  
+
 
 };
 

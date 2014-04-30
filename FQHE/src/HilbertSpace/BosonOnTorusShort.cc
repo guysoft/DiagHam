@@ -37,6 +37,7 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "MathTools/IntegerAlgebraTools.h"
 
+
 #include <math.h>
 
 
@@ -1651,3 +1652,112 @@ RealVector BosonOnTorusShort::TruncateStateWithPatternConstraint(RealVector& inp
 }
 
 
+// symmetrize a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+RealVector BosonOnTorusShort::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+
+//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+//   Operation.ApplyOperation(architecture);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
+//   timeval TotalStartingTime;
+//   gettimeofday (&TotalStartingTime, 0);
+  
+  this->SymmetrizeU1U1StateCore ( SymmetrizedVector ,leftVector , rightVector,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  
+  
+  
+//   timeval TotalEndingTime;
+//   gettimeofday (&TotalEndingTime, 0);
+//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
+  if ( unnormalizedBasisFlag == false )
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+
+  return SymmetrizedVector;
+}
+
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == true)
+    {
+      cout << "Unnormalized basis not implemented" << endl;
+    }
+  else
+    {
+      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+	{
+	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
+	  
+	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  double TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(leftSpace->NbrBosons);
+	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	    {
+	      this->FermionToBoson(rightSpace->StateDescription[j], rightSpace->StateKyMax[j] + rightSpace->NbrBosons - 1, 
+				   rightSpace->TemporaryState, rightSpace->TemporaryStateKyMax);
+	      int k = 0;
+	      for (; k <= rightSpace->TemporaryStateKyMax; ++k)
+	      {
+		this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+	      }
+	      this->TemporaryStateKyMax = rightSpace->TemporaryStateKyMax;
+	      if (leftSpace->TemporaryStateKyMax > rightSpace->TemporaryStateKyMax)
+		{
+		  for (; k <= leftSpace->TemporaryStateKyMax; ++k)
+		  {
+		    this->TemporaryState[k] = leftSpace->TemporaryState[k];
+		  }
+		  this->TemporaryStateKyMax = leftSpace->TemporaryStateKyMax;
+		}
+
+	      int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  Factorial2 = Factorial1;
+		  for (k = 0; k <= rightSpace->TemporaryStateKyMax; ++k)
+		    if (rightSpace->TemporaryState[k] > 1)
+		      Factorial2.FactorialDivide(rightSpace->TemporaryState[k]);
+		  for (k = 0; k <= this->TemporaryStateKyMax; ++k)
+		    if (this->TemporaryState[k] > 1)
+		      Factorial2.FactorialMultiply(this->TemporaryState[k]);	
+		    
+		  symmetrizedVector[TmpPos] += sqrt(Factorial2.GetNumericalValue()) * TmpCoefficient * rightVector[j];
+		}
+		
+	    }
+	}  
+    }
+}
