@@ -458,7 +458,7 @@ inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::Her
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void ParticleOnLatticeTimeReversalBreakingSingleBandNBodyHamiltonian::EvaluateMNNBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index,
-														  int* indexArray, Complex* coefficientArray, long& position)
+															int* indexArray, Complex* coefficientArray, long& position)
 {
   int Index;
   double Coefficient = 0.0;
