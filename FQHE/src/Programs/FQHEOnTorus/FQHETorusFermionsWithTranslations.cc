@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusCoulombMassAnisotropyWithMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTwistedTorusCoulombWithMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -76,6 +77,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the full reduced Brillouin zone", false);
   (*SystemGroup) += new BooleanOption  ('\n', "add-wigner", "consider the energy contribution from the Wigner crystal", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "mass-anisotropy", "use a mass anisotropy for the system");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropy", "value of the anisotropy parameter alpha (i.e. q_g^2 = alpha q_x^2 + q_y^2 / alpha)", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
@@ -166,7 +169,15 @@ int main(int argc, char** argv)
   char* SuffixOutputName = new char [256];
   if (Angle == 0.0)    
     {
-      sprintf (SuffixOutputName, "n_%d_2s_%d_ratio_%.6f.dat", NbrFermions, MaxMomentum, XRatio);
+      if (Manager.GetBoolean("mass-anisotropy"))
+	{
+	  sprintf (SuffixOutputName, "anisotropy_%f_n_%d_2s_%d_ratio_%.6f.dat", Manager.GetDouble("anisotropy"),
+		   NbrFermions, MaxMomentum, XRatio);
+	}
+      else
+	{
+	  sprintf (SuffixOutputName, "n_%d_2s_%d_ratio_%.6f.dat", NbrFermions, MaxMomentum, XRatio);
+	}
     }  
   else
     {
@@ -275,7 +286,7 @@ int main(int argc, char** argv)
 		      CenterY=0;
 		    }
 		}
-	      if (XRatio == 1.0)
+	      if ((XRatio == 1.0) && (Manager.GetBoolean("mass-anisotropy") == false))
 		{
 		  NbrMomenta=0;
 		  for (int Kx = CenterX; Kx<=CenterX+MomentumModulo/2; ++Kx)
@@ -386,9 +397,14 @@ int main(int argc, char** argv)
       AbstractQHEHamiltonian* Hamiltonian;
       if (Angle == 0.0)
 	{
-          Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
-										      XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
-										      Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+	  if (Manager.GetBoolean("mass-anisotropy") == false)
+	    Hamiltonian = new ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
+											XRatio, HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+											Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
+	  else
+	    Hamiltonian = new ParticleOnTorusCoulombMassAnisotropyWithMagneticTranslationsHamiltonian(TotalSpace, NbrFermions, MaxMomentum, XMomentum, 
+												      XRatio, Manager.GetDouble("anisotropy"), HaveCoulomb, LandauLevel, NbrPseudopotentials, Pseudopotentials, !Manager.GetBoolean("add-wigner"),
+											Architecture.GetArchitecture(), Memory, LoadPrecalculationFile);
 	}
       else
 	{

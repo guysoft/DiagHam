@@ -6,6 +6,7 @@
 
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusMassAnisotropyGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -75,10 +76,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle", 18);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative if none)", -1);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
-  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
-   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
+  (*SystemGroup) += new BooleanOption  ('\n', "mass-anisotropy", "use a mass anisotropy for the system");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropy", "value of the anisotropy parameter alpha (i.e. q_g^2 = alpha q_x^2 + q_y^2 / alpha)", 1.0);
+  (*SystemGroup) += new SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
@@ -127,8 +130,18 @@ int main(int argc, char** argv)
 	return -1;
     }
 
-  char* OutputNameLz = new char [256];
-  sprintf (OutputNameLz, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
+  char* OutputNamePrefix = new char [1024];
+  if (Manager.GetBoolean("mass-anisotropy") == false)
+    {
+      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
+    }
+  else
+    {
+      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_anisotropy_%f_n_%d_2s_%d_ratio_%f", Manager.GetString("interaction-name"), 
+	       Manager.GetDouble("anisotropy"), NbrParticles, MaxMomentum, XRatio);
+    }
+  char* OutputNameLz = new char [strlen(OutputNamePrefix) + 8];
+  sprintf (OutputNameLz, "%s.dat", OutputNamePrefix);
   ofstream File;
   File.open(OutputNameLz, ios::binary | ios::out);
   File.precision(14);
@@ -151,8 +164,18 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnTorusGenericHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, NbrPseudoPotentials, PseudoPotentials,
-										   Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = 0;
+      if (Manager.GetBoolean("mass-anisotropy") == false)
+	{
+	  Hamiltonian = new ParticleOnTorusGenericHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, NbrPseudoPotentials, PseudoPotentials,
+							       Architecture.GetArchitecture(), Memory);
+	}
+      else
+	{
+	  Hamiltonian = new ParticleOnTorusMassAnisotropyGenericHamiltonian (Space, NbrParticles, MaxMomentum, XRatio, Manager.GetDouble("anisotropy"),
+									      NbrPseudoPotentials, PseudoPotentials,
+									      Architecture.GetArchitecture(), Memory);
+	}
 
       if (Manager.GetString("energy-expectation") != 0 )
 	{
@@ -203,8 +226,8 @@ int main(int argc, char** argv)
       char* EigenvectorName = 0;
       if (Manager.GetBoolean("eigenstate") == true)	
 	{
-	  EigenvectorName = new char [256];
-	  sprintf (EigenvectorName, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio, Momentum);
+	  EigenvectorName = new char [64 + strlen(OutputNamePrefix)];
+	  sprintf (EigenvectorName, "%s_ky_%d", OutputNamePrefix, Momentum);
 	}
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, Momentum, Shift, OutputNameLz, FirstRun, EigenvectorName);
       MainTaskOperation TaskOperation (&Task);
