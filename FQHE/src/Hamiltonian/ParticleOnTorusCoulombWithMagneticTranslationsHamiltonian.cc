@@ -400,6 +400,7 @@ double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::EvaluateIntera
 
 // get fourier transform of interaction
 // Q2_half = one half of q² value
+
 double ParticleOnTorusCoulombWithMagneticTranslationsHamiltonian::GetVofQ(double Q2_half)
 {
   double Result;
