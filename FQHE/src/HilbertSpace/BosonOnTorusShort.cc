@@ -1684,9 +1684,75 @@ RealVector BosonOnTorusShort::SymmetrizeU1U1State (RealVector& leftVector, RealV
   if ( unnormalizedBasisFlag == false )
     SymmetrizedVector /= SymmetrizedVector.Norm();
 
+  for (int i = 0; i < leftSpace->LargeHilbertSpaceDimension; ++i)
+  {
+   cout << SymmetrizedVector[i] << endl; 
+  }
   return SymmetrizedVector;
 }
 
+
+// symmetrize a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+ComplexVector BosonOnTorusShort::SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  ComplexVector SymmetrizedVector(this->LargeHilbertSpaceDimension, true);
+  RealVector leftVectorReal(leftVector);
+  RealVector rightVectorReal(rightVector);
+    
+  Complex TmpCoefficient (0.0, -1.0);
+  leftVector *= TmpCoefficient;
+  rightVector *= TmpCoefficient;
+  
+  RealVector leftVectorImaginary(leftVector);
+  RealVector rightVectorImaginary(rightVector);
+  
+  
+//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+//   Operation.ApplyOperation(architecture);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
+//   timeval TotalStartingTime;
+//   gettimeofday (&TotalStartingTime, 0);
+  
+  RealVector TmpVector (this->LargeHilbertSpaceDimension, true);
+  
+  this->SymmetrizeU1U1StateCore ( TmpVector, leftVectorImaginary, rightVectorReal,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  SymmetrizedVector += TmpVector;  
+  TmpVector.ClearVector(); 
+  this->SymmetrizeU1U1StateCore ( TmpVector, leftVectorReal , rightVectorImaginary,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  SymmetrizedVector += TmpVector;
+  TmpVector.ClearVector();
+  
+  SymmetrizedVector *= TmpCoefficient;
+  
+  this->SymmetrizeU1U1StateCore ( TmpVector , leftVectorReal , rightVectorReal,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  SymmetrizedVector -= TmpVector;
+  TmpVector.ClearVector();
+  this->SymmetrizeU1U1StateCore ( TmpVector , leftVectorImaginary , rightVectorImaginary,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+  SymmetrizedVector += TmpVector;
+
+  
+  
+//   timeval TotalEndingTime;
+//   gettimeofday (&TotalEndingTime, 0);
+//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
+//   cout << SymmetrizedVector.Norm() << endl;
+  if ( unnormalizedBasisFlag == false )
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+
+  
+  return SymmetrizedVector;
+}
 
 // symmetrized a product of two uncoupled states 
 //
@@ -1760,4 +1826,205 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, 
 	    }
 	}  
     }
+}
+
+// symmetrize a vector with even number of orbitals 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector to be symmetrized
+// leftSpace = pointer to the Hilbert space
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+RealVector BosonOnTorusShort::SymmetrizeU1U1SingleState (RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+
+//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+//   Operation.ApplyOperation(architecture);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
+//   timeval TotalStartingTime;
+//   gettimeofday (&TotalStartingTime, 0);
+  if (oneInTwoFlag == false)
+    this->SymmetrizeU1U1SingleStateCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+  else
+    this->SymmetrizeU1U1SingleStateOneInTwoCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+  
+  
+  
+//   timeval TotalEndingTime;
+//   gettimeofday (&TotalEndingTime, 0);
+//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
+  if ( unnormalizedBasisFlag == false )
+  {
+    if (SymmetrizedVector.Norm() != 0)
+      SymmetrizedVector /= SymmetrizedVector.Norm();
+  }
+
+  return SymmetrizedVector;
+}
+
+
+// symmetrize a vector with even number of orbitals 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector to be symmetrized
+// leftSpace = pointer to the Hilbert space
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftVector,  BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  ComplexVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+  Complex TmpCoefficient (0.0, -1.0);
+  
+  RealVector leftVectorReal(leftVector);
+  RealVector leftVectorImaginary(leftSpace->LargeHilbertSpaceDimension, true);
+  leftVectorImaginary = TmpCoefficient * leftVector;
+  
+  RealVector TmpVector(this->LargeHilbertSpaceDimension, true);
+
+//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+//   Operation.ApplyOperation(architecture);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
+//   timeval TotalStartingTime;
+//   gettimeofday (&TotalStartingTime, 0);
+  if (oneInTwoFlag == false)
+  {
+    this->SymmetrizeU1U1SingleStateCore ( TmpVector ,leftVectorImaginary , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+    SymmetrizedVector += TmpVector;
+    SymmetrizedVector *= TmpCoefficient;
+    TmpVector.ClearVector(); 
+    this->SymmetrizeU1U1SingleStateCore ( TmpVector ,leftVectorReal , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+    SymmetrizedVector -= TmpVector;
+  }
+  else
+    {
+      this->SymmetrizeU1U1SingleStateOneInTwoCore ( TmpVector ,leftVectorImaginary , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+      SymmetrizedVector += TmpVector;
+      SymmetrizedVector *= TmpCoefficient;
+      TmpVector.ClearVector(); 
+      this->SymmetrizeU1U1SingleStateOneInTwoCore ( TmpVector ,leftVectorReal , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+      SymmetrizedVector -= TmpVector;
+    }
+  
+  
+  
+//   timeval TotalEndingTime;
+//   gettimeofday (&TotalEndingTime, 0);
+//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
+  if ( unnormalizedBasisFlag == false )
+  {
+    if (SymmetrizedVector.Norm() != 0)
+      SymmetrizedVector /= SymmetrizedVector.Norm();
+  }
+
+  return SymmetrizedVector;
+}
+
+
+void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == true)
+    {
+      cout << "Unnormalized basis not implemented" << endl;
+    }
+  else
+    {
+      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+	{
+	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
+	  
+	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  double TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(leftSpace->NbrBosons);
+	  
+	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  int k = 0;
+	  for (; k < this->KyMax; ++k)
+	    {
+	      this->TemporaryState[k] = leftSpace->TemporaryState[k] + leftSpace->TemporaryState[k + this->KyMax];
+	      if (leftSpace->TemporaryState[k] != 0 || leftSpace->TemporaryState[k + this->KyMax] != 0)
+		this->TemporaryStateKyMax = k;
+	    }
+	  
+	  int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+	  if (TmpPos < this->HilbertSpaceDimension)
+	    {
+	      for (k = 0; k <= this->TemporaryStateKyMax; ++k)
+		if (this->TemporaryState[k] > 1)
+		  Factorial1.FactorialMultiply(this->TemporaryState[k]);	
+		    
+		  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	    }
+		
+	  }
+      }  
+}
+
+void BosonOnTorusShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == true)
+    {
+      cout << "Unnormalized basis not implemented" << endl;
+    }
+  else
+    {
+      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+	{
+	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
+	  
+	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
+	    leftSpace->TemporaryState[k] = 0;
+	  double TmpCoefficient = leftVector[i];
+	  Factorial1.SetToOne();
+	  Factorial1.Power2Divide(leftSpace->NbrBosons);
+	  
+	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
+	    if (leftSpace->TemporaryState[k] > 1)
+	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+	  int k = 0;
+	  int kyTot = 0;
+	  for (; k < this->KyMax; ++k)
+	    {
+	      this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
+	      kyTot += this->TemporaryState[k]*k;
+	      if (leftSpace->TemporaryState[2*k] != 0 || leftSpace->TemporaryState[2*k + 1] != 0)
+		this->TemporaryStateKyMax = k;
+	    }
+	  
+	  int TmpPos;
+	  if ((kyTot % this->KyMax) != this->TotalKy)
+	    TmpPos = this->HilbertSpaceDimension;
+	  else
+	    TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+	  if (TmpPos < this->HilbertSpaceDimension)
+	    {
+	      for (k = 0; k <= this->TemporaryStateKyMax; ++k)
+		if (this->TemporaryState[k] > 1)
+		  Factorial1.FactorialMultiply(this->TemporaryState[k]);	
+		    
+		  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	    }
+		
+	  }
+      }  
 }

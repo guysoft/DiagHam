@@ -295,6 +295,17 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = symmetrized state
   virtual RealVector SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
   
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual ComplexVector SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  
 
   // symmetrized a product of two uncoupled states 
   //
@@ -306,6 +317,45 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
   // return value = symmetrized state
   virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  
+  // symmetrize a vector with even number of orbitals 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector to be symmetrized
+  // leftSpace = pointer to the Hilbert space
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeU1U1SingleState (RealVector& leftVector, BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a vector with even number of orbitals 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector to be symmetrized
+  // leftSpace = pointer to the Hilbert space
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual ComplexVector SymmetrizeU1U1SingleState (ComplexVector& leftVector, BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  
+  
+  // symmetrize a vector with even number of orbitals
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
+   
+  // symmetrize a vector with even number of orbitals
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
 
  protected:
 
