@@ -79,6 +79,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "add-wigner", "consider the energy contribution from the Wigner crystal", false);
   (*SystemGroup) += new BooleanOption  ('\n', "mass-anisotropy", "use a mass anisotropy for the system");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropy", "value of the anisotropy parameter alpha (i.e. q_g^2 = alpha q_x^2 + q_y^2 / alpha)", 1.0);
+  (*SystemGroup) += new SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
