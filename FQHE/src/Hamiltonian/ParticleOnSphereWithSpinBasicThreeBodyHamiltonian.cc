@@ -1017,11 +1017,11 @@ void    ParticleOnSphereWithSpinBasicThreeBodyHamiltonian::EvaluateInteractionFa
         }
       else
         { // two-body interaction for bosons needs to be tested
-          this->NbrIntraSectorSums = 2 * this->LzMax;
+          this->NbrIntraSectorSums = 2 * this->LzMax + 1;
           this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
           for (int i = 0; i < this->NbrIntraSectorSums; ++i)
             this->NbrIntraSectorIndicesPerSum[i] = 0;
-          for (int m1 = 0; m1 < this->LzMax; ++m1)
+          for (int m1 = 0; m1 <= this->LzMax; ++m1)
             for (int m2 = m1; m2 <= this->LzMax; ++m2)
               ++this->NbrIntraSectorIndicesPerSum[m1 + m2];
           this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
@@ -1030,7 +1030,7 @@ void    ParticleOnSphereWithSpinBasicThreeBodyHamiltonian::EvaluateInteractionFa
               this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
               this->NbrIntraSectorIndicesPerSum[i] = 0;
             }
-          for (int m1 = 0; m1 < this->LzMax; ++m1)
+          for (int m1 = 0; m1 <= this->LzMax; ++m1)
             for (int m2 = m1; m2 <= this->LzMax; ++m2)
               {
                 this->IntraSectorIndicesPerSum[m1 + m2][this->NbrIntraSectorIndicesPerSum[m1 + m2] << 1] = m1;

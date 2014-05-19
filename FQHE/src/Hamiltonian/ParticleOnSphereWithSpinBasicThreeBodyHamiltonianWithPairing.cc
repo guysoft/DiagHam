@@ -574,8 +574,7 @@ void ParticleOnSphereWithSpinBasicThreeBodyHamiltonianWithPairing::EvaluatePairi
 		    this->InteractionFactorsPairing[i][Index] *= 2.0;
 		  if (m3 != m4)
 		    this->InteractionFactorsPairing[i][Index] *= 2.0;
-
-		  cout << "PairingTerm["<<m1<<", "<<m2<<", "<<m3<<", "<<m4<<"]="<<this->InteractionFactorsPairing[i][Index]<<endl;
+		  //cout << "PairingTerm["<<m1<<", "<<m2<<", "<<m3<<", "<<m4<<"]="<<this->InteractionFactorsPairing[i][Index]<<endl;
 		  TotalNbrInteractionFactors += 2;
 		  ++Index;
 		}
