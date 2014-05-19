@@ -49,6 +49,10 @@ class Matrix;
 class ParticleOnTorus :  public ParticleOnSphere
 {
 
+ protected:
+
+  friend class FQHETorusApplyCNRotationOperation;
+
  public:
 
   // virtual destructor
@@ -104,11 +108,34 @@ class ParticleOnTorus :  public ParticleOnSphere
   // return value = trucated state
   virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnTorus* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
 
+  // apply the C4 rotation to a given state assumin it is an eigenstate of both kx and ky
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // architecture = pointer to the architecture
+  // clockwise = the rotation is done clockwise
+  // return value = rotated state
+  virtual ComplexVector C4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, bool clockwise = false, AbstractArchitecture* architecture = 0);
+
   // apply a magnetic translation along x to a given state
   //
   // index = state index 
   // return value = translated state index
   virtual int ApplyXMagneticTranslation(int index);
+
+ protected:
+
+  // core part of the C4 rotation
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // outputState = reference on the rotated state
+  // minIndex = minimum index that has to be computed
+  // nbrIndices = number of indices that have to be computed
+  // clockwise = the rotation is done clockwise
+  // return value = reference on the rotated state
+  virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
+
 
 };
 

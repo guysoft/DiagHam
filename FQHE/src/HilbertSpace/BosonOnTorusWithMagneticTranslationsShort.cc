@@ -388,7 +388,9 @@ int BosonOnTorusWithMagneticTranslationsShort::AdAd (int m1, int m2, double& coe
 int BosonOnTorusWithMagneticTranslationsShort::ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation)
 {
   for (int i = 0; i < this->MaxMomentum; ++i)
-    this->TemporaryState[i] = this->ProdATemporaryState[i];
+    {
+      this->TemporaryState[i] = this->ProdATemporaryState[i];
+    }
   int TmpCoefficient = 1;
   for (int i = 0; i < nbrIndices; ++i)
     TmpCoefficient *= ++this->TemporaryState[m[i]];

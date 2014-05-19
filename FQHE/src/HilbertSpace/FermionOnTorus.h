@@ -324,6 +324,29 @@ class FermionOnTorus :  public ParticleOnTorus
   long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorus* complementaryHilbertSpace,  ParticleOnTorus* destinationHilbertSpace,
 							  RealVector& groundState,  RealSymmetricMatrix* densityMatrix);
 
+  // core part of the C4 rotation
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // outputState = reference on the rotated state
+  // minIndex = minimum index that has to be computed
+  // nbrIndices = number of indices that have to be computed
+  // clockwise = the rotation is done clockwise
+  // return value = reference on the rotated state
+  virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
+  
+  // convert a fermionic state to its monomial representation
+  //
+  // initialState = initial fermionic state in its fermionic representation
+  // finalState = reference on the array where the monomial representation has to be stored
+  virtual void ConvertToMonomial(unsigned long initialState, unsigned long*& finalState);
+
+  // convert a fermionic state from its monomial representation
+  //
+  // initialState = array where the monomial representation is stored
+  // return value = fermionic state in its fermionic representation
+  virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
+
 };
 
 // get the particle statistic 
@@ -334,6 +357,34 @@ inline int FermionOnTorus::GetParticleStatistic()
 {
   return ParticleOnTorus::FermionicStatistic;
 }
+
+// convert a fermionic state to its monomial representation
+//
+// initialState = initial fermionic state in its fermionic representation
+// finalState = reference on the array where the monomial representation has to be stored
+
+inline void FermionOnTorus::ConvertToMonomial(unsigned long initialState, unsigned long*& finalState)
+{
+  int Index = 0;
+  for (long j = this->KyMax; j >= 0l; --j)
+    if (((initialState >> j) & 1ul) != 0ul)
+      finalState[Index++] = (unsigned long) j;
+}
+
+
+// convert a fermionic state from its monomial representation
+//
+// initialState = array where the monomial representation is stored
+// return value = fermionic state in its fermionic representation
+
+inline unsigned long FermionOnTorus::ConvertFromMonomial(unsigned long* initialState)
+{
+  unsigned long TmpState = 0x0ul;  
+  for (int j = 0; j < this->NbrFermions; ++j)
+    TmpState |= 0x1ul << initialState[j];
+  return TmpState;
+ }
+
 
 #endif
 

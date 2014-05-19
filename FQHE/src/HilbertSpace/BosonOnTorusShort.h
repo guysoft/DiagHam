@@ -286,7 +286,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   
   // symmetrized a product of two uncoupled states 
   //
-  // outputVector = reference on the vector which will contain the symmetrozed state
+  // outputVector = reference on the vector which will contain the symmetrized state
   // leftVector = reference on the vector associated to the first color
   // rightVector = reference on the vector associated to the second color
   // leftSpace = pointer to the Hilbert space of the first color
@@ -309,7 +309,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
 
   // symmetrized a product of two uncoupled states 
   //
-  // outputVector = reference on the vector which will contain the symmetrozed state
+  // outputVector = reference on the vector which will contain the symmetrized state
   // leftVector = reference on the vector associated to the first color
   // rightVector = reference on the vector associated to the second color
   // leftSpace = pointer to the Hilbert space of the first color
@@ -457,8 +457,17 @@ class BosonOnTorusShort :  public ParticleOnTorus
   RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
   HermitianMatrix  EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState);
   
+  // core part of the C4 rotation
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // outputState = reference on the rotated state
+  // minIndex = minimum index that has to be computed
+  // nbrIndices = number of indices that have to be computed
+  // clockwise = the rotation is done clockwise
+  // return value = reference on the rotated state
+  virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
   
-
 
 };
 

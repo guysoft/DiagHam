@@ -39,6 +39,8 @@
 
 
 #include <math.h>
+#include <algorithm>
+#include <set>
 
 
 using std::cout;
@@ -1828,203 +1830,75 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, 
     }
 }
 
-// symmetrize a vector with even number of orbitals 
+// core part of the C4 rotation
 //
-// outputVector = reference on the vector which will contain the symmetrozed state
-// leftVector = reference on the vector to be symmetrized
-// leftSpace = pointer to the Hilbert space
-// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-// return value = symmetrized state
-RealVector BosonOnTorusShort::SymmetrizeU1U1SingleState (RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+// inputState = reference on the state that has to be rotated
+// inputSpace = Hilbert space associated to the input state
+// outputState = reference on the rotated state
+// minIndex = minimum index that has to be computed
+// nbrIndices = number of indices that have to be computed
+// clockwise = the rotation is done clockwise
+// return value = reference on the rotated state
+
+ComplexVector& BosonOnTorusShort::CoreC4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices,
+						  bool clockwise)
 {
-  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
-
-//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
-//   Operation.ApplyOperation(architecture);
-  unsigned long firstComponent = 0;
-  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
-//   timeval TotalStartingTime;
-//   gettimeofday (&TotalStartingTime, 0);
-  if (oneInTwoFlag == false)
-    this->SymmetrizeU1U1SingleStateCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-  else
-    this->SymmetrizeU1U1SingleStateOneInTwoCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-  
-  
-  
-//   timeval TotalEndingTime;
-//   gettimeofday (&TotalEndingTime, 0);
-//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
-  if ( unnormalizedBasisFlag == false )
-  {
-    if (SymmetrizedVector.Norm() != 0)
-      SymmetrizedVector /= SymmetrizedVector.Norm();
-  }
-
-  return SymmetrizedVector;
-}
-
-
-// symmetrize a vector with even number of orbitals 
-//
-// outputVector = reference on the vector which will contain the symmetrozed state
-// leftVector = reference on the vector to be symmetrized
-// leftSpace = pointer to the Hilbert space
-// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-// return value = symmetrized state
-ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftVector,  BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
-{
-  ComplexVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
-  Complex TmpCoefficient (0.0, -1.0);
-  
-  RealVector leftVectorReal(leftVector);
-  RealVector leftVectorImaginary(leftSpace->LargeHilbertSpaceDimension, true);
-  leftVectorImaginary = TmpCoefficient * leftVector;
-  
-  RealVector TmpVector(this->LargeHilbertSpaceDimension, true);
-
-//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
-//   Operation.ApplyOperation(architecture);
-  unsigned long firstComponent = 0;
-  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
-//   timeval TotalStartingTime;
-//   gettimeofday (&TotalStartingTime, 0);
-  if (oneInTwoFlag == false)
-  {
-    this->SymmetrizeU1U1SingleStateCore ( TmpVector ,leftVectorImaginary , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-    SymmetrizedVector += TmpVector;
-    SymmetrizedVector *= TmpCoefficient;
-    TmpVector.ClearVector(); 
-    this->SymmetrizeU1U1SingleStateCore ( TmpVector ,leftVectorReal , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-    SymmetrizedVector -= TmpVector;
-  }
-  else
+  BosonOnTorusShort* TmpInputSpace = (BosonOnTorusShort*) inputSpace;
+  unsigned long* TmpInputMonomial = new unsigned long [this->NbrBosons];
+  unsigned long* TmpOutputMonomial = new unsigned long [this->NbrBosons];
+  double* LogFactorialCoefficients = new double [this->NbrBosons + 1];
+  LogFactorialCoefficients[0] = 0.0;
+  for (int i = 1; i <= this->NbrBosons; ++i)
+    LogFactorialCoefficients[i] = LogFactorialCoefficients[i - 1] + log((double) i);
+  int LastIndex = minIndex + nbrIndices;
+  Complex Tmp = 0.0;
+  Complex Tmp2 = 0.0;
+  double TmpLogCoefficient = 0.0;
+  double TmpLogCoefficient2 = 0.0;
+  double TmpLogCoefficient3 = this->NbrBosons * log((double) this->KyMax);
+  double PhaseFactor = 2.0 * M_PI / ((double) this->KyMax);
+  if (clockwise == true)
+    PhaseFactor *= -1.0;
+  for (int i = minIndex ; i < LastIndex; ++i)
     {
-      this->SymmetrizeU1U1SingleStateOneInTwoCore ( TmpVector ,leftVectorImaginary , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-      SymmetrizedVector += TmpVector;
-      SymmetrizedVector *= TmpCoefficient;
-      TmpVector.ClearVector(); 
-      this->SymmetrizeU1U1SingleStateOneInTwoCore ( TmpVector ,leftVectorReal , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-      SymmetrizedVector -= TmpVector;
-    }
-  
-  
-  
-//   timeval TotalEndingTime;
-//   gettimeofday (&TotalEndingTime, 0);
-//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
-  if ( unnormalizedBasisFlag == false )
-  {
-    if (SymmetrizedVector.Norm() != 0)
-      SymmetrizedVector /= SymmetrizedVector.Norm();
-  }
-
-  return SymmetrizedVector;
-}
-
-
-void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
-{
-  unsigned long LastComponent = firstComponent + nbrComponents;
-  
-  FactorialCoefficient Factorial1;
-  FactorialCoefficient Factorial2;
-  if (unnormalizedBasisFlag == true)
-    {
-      cout << "Unnormalized basis not implemented" << endl;
-    }
-  else
-    {
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+      this->FermionToBoson(this->StateDescription[i], this->StateKyMax[i] + this->NbrBosons - 1, 
+			   this->TemporaryState, this->TemporaryStateKyMax);
+      this->ConvertToMonomial(this->StateDescription[i], this->StateKyMax[i] + this->NbrBosons - 1, TmpOutputMonomial);
+      Tmp = 0.0;
+      TmpLogCoefficient = 0.0;
+      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+	TmpLogCoefficient += LogFactorialCoefficients[this->TemporaryState[k]];
+      for (int j = 0; j < TmpInputSpace->HilbertSpaceDimension; ++j)
 	{
-	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
-			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
-	  
-	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
-	    leftSpace->TemporaryState[k] = 0;
-	  double TmpCoefficient = leftVector[i];
-	  Factorial1.SetToOne();
-	  Factorial1.Power2Divide(leftSpace->NbrBosons);
-	  
-	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
-	    if (leftSpace->TemporaryState[k] > 1)
-	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
-	  
-	  int k = 0;
-	  for (; k < this->KyMax; ++k)
+	  this->FermionToBoson(TmpInputSpace->StateDescription[j], TmpInputSpace->StateKyMax[j] + TmpInputSpace->NbrBosons - 1, 
+			       TmpInputSpace->TemporaryState, TmpInputSpace->TemporaryStateKyMax);
+	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputSpace->StateKyMax[j] + this->NbrBosons - 1, TmpInputMonomial);
+	  unsigned long TmpPhase = 0ul;
+	  for (int k = 0; k < this->NbrBosons; ++k)
 	    {
-	      this->TemporaryState[k] = leftSpace->TemporaryState[k] + leftSpace->TemporaryState[k + this->KyMax];
-	      if (leftSpace->TemporaryState[k] != 0 || leftSpace->TemporaryState[k + this->KyMax] != 0)
-		this->TemporaryStateKyMax = k;
+	      TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
 	    }
-	  
-	  int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
-	  if (TmpPos < this->HilbertSpaceDimension)
+	  Tmp2 = Phase(PhaseFactor * ((double) TmpPhase));
+	  while (std::prev_permutation(TmpInputMonomial, TmpInputMonomial + this->NbrBosons))
 	    {
-	      for (k = 0; k <= this->TemporaryStateKyMax; ++k)
-		if (this->TemporaryState[k] > 1)
-		  Factorial1.FactorialMultiply(this->TemporaryState[k]);	
-		    
-		  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	      TmpPhase = 0ul;
+	      for (int k = 0; k < this->NbrBosons; ++k)
+		{
+		  TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
+		}
+	      Tmp2 += Phase(PhaseFactor * ((double) TmpPhase));
 	    }
-		
-	  }
-      }  
-}
-
-void BosonOnTorusShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
-{
-  unsigned long LastComponent = firstComponent + nbrComponents;
-  
-  FactorialCoefficient Factorial1;
-  FactorialCoefficient Factorial2;
-  if (unnormalizedBasisFlag == true)
-    {
-      cout << "Unnormalized basis not implemented" << endl;
+	  TmpLogCoefficient2 = 0.0;
+	  for (int k = 0; k <= TmpInputSpace->TemporaryStateKyMax; ++k)
+	    {
+	      TmpLogCoefficient2 += LogFactorialCoefficients[TmpInputSpace->TemporaryState[k]];
+	    }
+	  Tmp += inputState[j] * Tmp2 * exp(0.5 * (TmpLogCoefficient2 - TmpLogCoefficient - TmpLogCoefficient3));
+	}
+      outputState[i] = Tmp;      
     }
-  else
-    {
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
-	{
-	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
-			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
-	  
-	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
-	    leftSpace->TemporaryState[k] = 0;
-	  double TmpCoefficient = leftVector[i];
-	  Factorial1.SetToOne();
-	  Factorial1.Power2Divide(leftSpace->NbrBosons);
-	  
-	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
-	    if (leftSpace->TemporaryState[k] > 1)
-	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
-	  
-	  int k = 0;
-	  int kyTot = 0;
-	  for (; k < this->KyMax; ++k)
-	    {
-	      this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
-	      kyTot += this->TemporaryState[k]*k;
-	      if (leftSpace->TemporaryState[2*k] != 0 || leftSpace->TemporaryState[2*k + 1] != 0)
-		this->TemporaryStateKyMax = k;
-	    }
-	  
-	  int TmpPos;
-	  if ((kyTot % this->KyMax) != this->TotalKy)
-	    TmpPos = this->HilbertSpaceDimension;
-	  else
-	    TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
-	  if (TmpPos < this->HilbertSpaceDimension)
-	    {
-	      for (k = 0; k <= this->TemporaryStateKyMax; ++k)
-		if (this->TemporaryState[k] > 1)
-		  Factorial1.FactorialMultiply(this->TemporaryState[k]);	
-		    
-		  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
-	    }
-		
-	  }
-      }  
+  delete[] TmpInputMonomial;
+  delete[] TmpOutputMonomial;
+  delete[] LogFactorialCoefficients;
+  return outputState;
 }
