@@ -89,7 +89,8 @@ class AbstractArchitectureOperation
       FQHESphereSymmetrizeU1U1StateOperation = 0x18020,
       FQHESquareLatticeSymmetrizeU1U1StateOperation = 0x18021,
       FQHESphereBosonsWithSpinLandauLevelLiftOperation = 0x18022,
-      FQHELatticeFourierTransformOperation = 0x18024,
+      FQHELatticeFourierTransformOperation = 0x18024, 
+      FQHETorusApplyCNRotationOperation = 0x18025,
       FTIComputeBandStructureOperation = 0x30001,
       FQHEMPSCreateStateOperation = 0x30002,
       FQHEMPSEvaluateCFTOperation = 0x30003

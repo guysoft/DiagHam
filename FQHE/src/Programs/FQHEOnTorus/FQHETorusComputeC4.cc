@@ -67,6 +67,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "degenerated-states", "name of the file containing a list of states (override input-state)");
   (*SystemGroup) += new BooleanOption ('\n',  "compute-eigenstate", "compute the eigenstates of the C4 (or C2) operator in the given basis");
   (*SystemGroup) += new SingleStringOption ('\n',  "interaction-name", "name that should be inserted in the output file names", "dummy");
+  (*SystemGroup) += new BooleanOption ('\n',  "apply-c4", "apply the C4 rotation to the input states instead of computing the C4 eigenvalue(s)");
+  (*SystemGroup) += new BooleanOption ('\n',  "clockwise", "apply the C4 rotation clockwise");
   (*SystemGroup) += new BooleanOption ('\n',  "c2-only", "only check the C2 symmetry");
   (*SystemGroup) += new BooleanOption ('\n',  "export-transformation", "export the transformation matrix in a ascii file (one per momentum sector)");
   (*SystemGroup) += new BooleanOption ('\n',  "export-bintransformation", "export the transformation matrix in a binary file (one per momentum sector)");
@@ -106,7 +108,7 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " " << " Ky=" << YMomentum << endl;
-      if ((XMomentum != YMomentum) || (!((XMomentum == 0) || (((NbrParticles & 1) == 0) && (XMomentum == (NbrParticles / 2))))))
+      if ((Manager.GetBoolean("apply-c4") == false) && ((XMomentum != YMomentum) || (!((XMomentum == 0) || (((NbrParticles & 1) == 0) && (XMomentum == (NbrParticles / 2)))))))
 	{
 	  cout << "C4 symmetry can only be computed in the (0,0) or (pi,pi) sectors" << endl;
 	  return -1;
@@ -140,7 +142,7 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " " << " Ky=" << YMomentum << endl;
-      if ((XMomentum != YMomentum) || (!((XMomentum == 0) || (((NbrParticles & 1) == 0) && (XMomentum == (NbrParticles / 2))))))
+      if ((Manager.GetBoolean("apply-c4") == false) && ((XMomentum != YMomentum) || (!((XMomentum == 0) || (((NbrParticles & 1) == 0) && (XMomentum == (NbrParticles / 2)))))))
 	{
 	  cout << "C4 symmetry can only be computed in the (0,0) or (pi,pi) sectors" << endl;
 	  return -1;
@@ -185,14 +187,45 @@ int main(int argc, char** argv)
   if (XMomentum != 0)
     PiPiSectorFlag = true;
   ParticleOnTorusWithMagneticTranslations* Space = 0;
+  ParticleOnTorusWithMagneticTranslations* OutputSpace = 0;
+  ParticleOnTorus* UnfoldedSpace = 0;
+  ParticleOnTorus* UnfoldedOutputSpace = 0;
+  int MomentumModulo = FindGCD(NbrParticles, MaxMomentum);
+  int TargetXMomentum = (MaxMomentum - YMomentum) % MomentumModulo;
+  int TargetYMomentum  = XMomentum;
+  if (Manager.GetBoolean("clockwise"))
+    {
+      TargetXMomentum = YMomentum & MomentumModulo;
+      TargetYMomentum = (MaxMomentum - XMomentum) % MaxMomentum;
+    }
   if (Statistics == false)
     {
       Space = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+      if (Manager.GetBoolean("apply-c4"))
+	{
+	  OutputSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, TargetXMomentum, TargetYMomentum);	
+	  UnfoldedSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, YMomentum);
+	  UnfoldedOutputSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, XMomentum);
+	}
+      else
+	{
+	  OutputSpace = (ParticleOnTorusWithMagneticTranslations*) Space->Clone();
+	}
       sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
     }
   else
     {
       Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+      if (Manager.GetBoolean("apply-c4"))
+	{
+	  OutputSpace = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, TargetXMomentum, TargetYMomentum);
+	  UnfoldedSpace = new FermionOnTorus(NbrParticles, MaxMomentum, YMomentum);
+	  UnfoldedOutputSpace = new FermionOnTorus(NbrParticles, MaxMomentum, XMomentum);
+	}
+      else
+	{
+	  OutputSpace = (ParticleOnTorusWithMagneticTranslations*) Space->Clone();
+	}
       sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
     }
   if (InputStates[0].GetVectorDimension() != Space->GetHilbertSpaceDimension())
@@ -204,23 +237,48 @@ int main(int argc, char** argv)
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
+
+  char* OutputName = new char [256 + strlen(OutputNamePrefix)];
+  sprintf (OutputName, "%s_c4_kx_%d_ky_%d.dat", OutputNamePrefix, YMomentum, XMomentum);
   ComplexMatrix C4Rep (NbrInputStates, NbrInputStates, true);
-  ParticleOnTorusC4Operator C4Operator(Space, PiPiSectorFlag, C2OnlyFlag);
-
-
-  ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
-  for (int i = 0; i < NbrInputStates; ++i)
+  if (Manager.GetBoolean("apply-c4"))
     {
-      VectorOperatorMultiplyOperation Operation(&C4Operator, &(InputStates[i]), &TmpVector);
-      Operation.ApplyOperation(Architecture.GetArchitecture());
-      for (int j = 0; j < NbrInputStates; ++j)
+      for (int i = 0; i < NbrInputStates; ++i)
 	{
-	  C4Rep.SetMatrixElement(j, i, (TmpVector * InputStates[j]));
+	  ComplexVector TmpVector = Space->ConvertFromKxKyBasis(InputStates[i], UnfoldedSpace);
+	  //	  cout << "input vector:" << endl << TmpVector << endl;
+	  ComplexVector TmpVector2 = UnfoldedOutputSpace->C4Rotation(TmpVector, UnfoldedSpace, Manager.GetBoolean("clockwise"), Architecture.GetArchitecture());
+	  //	  cout << "output vector:" << endl << TmpVector2 << endl;
+	  ComplexVector TmpVector3 = OutputSpace->ConvertToKxKyBasis(TmpVector2, UnfoldedOutputSpace);
+	  double TmpNorm = TmpVector3.Norm();
+	  cout << "Norm of rotated state " << i << " : " << TmpNorm << endl;
+	  TmpVector3 /= TmpNorm;
+	  char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
+	  sprintf (VectorOutputName, "%s_c4_kx_%d_ky_%d.%d.vec", OutputNamePrefix, TargetXMomentum, TargetYMomentum, i);
+	  if (TmpVector3.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;	      
+	    }
+	  delete[] VectorOutputName;
+	}
+      return 0;
+    }
+  else
+    {
+      ParticleOnTorusC4Operator C4Operator(Space, PiPiSectorFlag, C2OnlyFlag);
+            
+      ComplexVector TmpVector(Space->GetHilbertSpaceDimension());
+      for (int i = 0; i < NbrInputStates; ++i)
+	{
+	  VectorOperatorMultiplyOperation Operation(&C4Operator, &(InputStates[i]), &TmpVector);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  for (int j = 0; j < NbrInputStates; ++j)
+	    {
+	      C4Rep.SetMatrixElement(j, i, (TmpVector * InputStates[j]));
+	    }
 	}
     }
 
-  char* OutputName = new char [256 + strlen(OutputNamePrefix)];
-  sprintf (OutputName, "%s_c4_kx_%d_ky_%d.dat", OutputNamePrefix, XMomentum, YMomentum);
   ofstream File;
   File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
