@@ -21,4 +21,5 @@ FQHESphereBosonsWithSpinLandauLevelLiftOperation.cc \
 FQHESquareLatticeSymmetrizeU1U1StateOperation.cc \
 FQHELatticeFourierTransformOperation.cc \
 FQHEMPSCreateStateOperation.cc \
-FQHEMPSEvaluateCFTOperation.cc 
+FQHEMPSEvaluateCFTOperation.cc \
+FQHETorusApplyCNRotationOperation.cc
