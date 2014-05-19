@@ -310,7 +310,7 @@ int main(int argc, char** argv)
   cout << "-------------------------------------------------"<<endl;
 
   Complex MatEl;
-  ComplexVector* TmpState = new ComplexVector[MaxKx - Kx];
+  ComplexVector* TmpState = new ComplexVector[MaxKx];
   for (int TmpKx = Kx; TmpKx < MaxKx; ++TmpKx)
     {
       TmpState[TmpKx] = ComplexVector (TargetSpace->GetHilbertSpaceDimension(), true);

@@ -91,7 +91,7 @@ int main(int argc, char** argv)
   int YMomentum = -1;
   bool Statistics = true;
 
-  if (Manager.GetBoolean("invert"))
+  if ((Manager.GetBoolean("invert")) || (Manager.GetBoolean("invert-real")))
     {
       int XMomentum = -1;
       ComplexVector* InputStates = 0;
@@ -109,8 +109,8 @@ int main(int argc, char** argv)
 	    {
 	      cout << "error while retrieving system parameters from file name " << Manager.GetString("ground-state") << endl;
 	      return -1;
-	}
-	  cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Ky=" << YMomentum << " ";
+	    }
+	  cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " Ky=" << YMomentum << " ";
 	  NbrInputStates = 1;
 	  InputStates = new ComplexVector [NbrInputStates];
 	  if (InputStates[0].ReadVector(Manager.GetString("input-state")) == false)
