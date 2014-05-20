@@ -34,6 +34,8 @@
 #include "MathTools/IntegerAlgebraTools.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "GeneralTools/StringTools.h"
+#include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/Endian.h"
 
 #include <iostream>
 
@@ -81,6 +83,95 @@ ParticleOnTorusThreeBodyHardcoreWithMagneticTranslationsHamiltonian::ParticleOnT
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;
   this->EvaluateExponentialFactors();
+  this->PrecalculatedInteractionCoefficients = new double***** [this->NbrLzValue];
+  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+    {
+      this->PrecalculatedInteractionCoefficients[m1] = new double**** [this->NbrLzValue];
+      for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
+	{
+	  this->PrecalculatedInteractionCoefficients[m1][m2] = new double*** [this->NbrLzValue];
+	  for (int m3 = 0; m3 < this->NbrLzValue; ++m3)
+	    {
+	      this->PrecalculatedInteractionCoefficients[m1][m2][m3] = new double** [this->NbrLzValue];
+	      for (int n1 = 0; n1 < this->NbrLzValue; ++n1)
+		{
+		  this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1] = new double* [this->NbrLzValue];
+		  for (int n2 = 0; n2 < this->NbrLzValue; ++n2)
+		    {
+		      this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2] = new double [this->NbrLzValue];
+		    }
+		}
+	    }
+	}
+    }
+  char* InteractionCoefficientFileName = new char [512];
+  sprintf (InteractionCoefficientFileName, "threebodydelta_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NbrLzValue, this->Ratio);
+  if (IsFile(InteractionCoefficientFileName))
+    {
+      ifstream File;
+      File.open(InteractionCoefficientFileName, ios::binary | ios::in);
+      if (!File.is_open())
+	{
+	  cout << "cannot open " << InteractionCoefficientFileName << endl;
+	}
+      else
+	{
+	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+	    {
+	      for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
+		{
+		  for (int m3 = 0; m3 < this->NbrLzValue; ++m3)
+		    {
+		      for (int n1 = 0; n1 < this->NbrLzValue; ++n1)
+			{
+			  for (int n2 = 0; n2 < this->NbrLzValue; ++n2)
+			    {
+			      ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2], this->NbrLzValue);
+// 			      for (int n3 = 0; n3 < this->NbrLzValue; ++n3)
+// 				{
+// 				  ReadLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2][n3]);
+// 				}
+			    }
+			}
+		    }
+		}
+	    }
+	  File.close();
+	}
+    }
+  else
+    {
+      ofstream File;
+      File.open(InteractionCoefficientFileName, ios::binary | ios::out);
+      if (!File.is_open())
+	{
+	  cout << "cannot create " << InteractionCoefficientFileName << endl;
+	}
+      else
+	{
+	  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+	    {
+	      for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
+		{
+		  for (int m3 = 0; m3 < this->NbrLzValue; ++m3)
+		    {
+		      for (int n1 = 0; n1 < this->NbrLzValue; ++n1)
+			{
+			  for (int n2 = 0; n2 < this->NbrLzValue; ++n2)
+			    {
+			      for (int n3 = 0; n3 < this->NbrLzValue; ++n3)
+				{
+				  this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2][n3] = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
+				}
+			      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2], this->NbrLzValue);
+			    }
+			}
+		    }
+		}
+	    }
+	  File.close();
+	}
+    }
   this->HamiltonianShift = 0.0;
   this->EvaluateInteractionFactors();
   if (precalculationFileName == 0)

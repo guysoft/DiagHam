@@ -49,6 +49,8 @@ class ParticleOnTorusThreeBodyHardcoreWithMagneticTranslationsHamiltonian : publ
 
  protected:
 
+  // array where the interaction coefficients are stored
+  double****** PrecalculatedInteractionCoefficients;
 
  public:
 
@@ -147,31 +149,31 @@ inline double ParticleOnTorusThreeBodyHardcoreWithMagneticTranslationsHamiltonia
     {
       if (n2 != n3)
 	{	  
-	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n3, n2);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n1, n3);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n3, n1);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n3, n1, n2);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n3, n2, n1);
+	  TmpInteraction  = this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2][n3];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n3][n2];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n2][n1][n3];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n2][n3][n1];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n3][n1][n2];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n3][n2][n1];
 	}
       else
 	{	  
-	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n1, n3);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n3, n2, n1);
+	  TmpInteraction  = this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2][n3];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n2][n1][n3];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n3][n2][n1];
 	}
     }
   else
     {
       if (n2 != n3)
 	{	  
-	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n3, n2);
-	  TmpInteraction += this->EvaluateInteractionCoefficient(m1, m2, m3, n2, n1, n3);
+	  TmpInteraction  = this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2][n3];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n3][n2];
+	  TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2][m3][n2][n1][n3];
 	}
       else
 	{	  
-	  TmpInteraction  = this->EvaluateInteractionCoefficient(m1, m2, m3, n1, n2, n3);
+	  TmpInteraction  = this->PrecalculatedInteractionCoefficients[m1][m2][m3][n1][n2][n3];
 	}
     }
   return TmpInteraction;
