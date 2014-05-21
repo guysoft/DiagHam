@@ -152,21 +152,21 @@ double ParticleOnTorusMassAnisotropyGenericHamiltonian::EvaluateInteractionCoeff
   double N2 = (double) (m1 - m4);
   double N1;
   double Q2;
-  double Q2Gaussian;
+  double Q2Anistropy;
   double Precision;
   double TmpInteraction;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
-      Q2Gaussian = this->Ratio * N2 * N2 * this->InvAnisotropy;
+      Q2Anistropy = this->Ratio * N2 * N2 * this->InvAnisotropy;
       if (N2 != 0.0)
 	{
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
-	  Coefficient = exp(- PIOnM * Q2Gaussian) * TmpInteraction;
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2Anistropy);
+	  Coefficient = exp(- PIOnM * Q2Anistropy) * TmpInteraction;
 	  Precision = Coefficient;
 	}
       else
@@ -181,12 +181,12 @@ double ParticleOnTorusMassAnisotropyGenericHamiltonian::EvaluateInteractionCoeff
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Q2Gaussian = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
+	  Q2Anistropy = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
-	  Precision = 2.0 * exp(- PIOnM * Q2Gaussian) * TmpInteraction;
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2Anistropy);
+	  Precision = 2.0 * exp(- PIOnM * Q2Anistropy) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
@@ -199,14 +199,14 @@ double ParticleOnTorusMassAnisotropyGenericHamiltonian::EvaluateInteractionCoeff
     {
       N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
-      Q2Gaussian = this->Ratio * N2 * N2  * this->InvAnisotropy;
+      Q2Anistropy = this->Ratio * N2 * N2  * this->InvAnisotropy;
       if (N2 != 0.0)
 	{
 	  TmpInteraction = 0.0;
 	  for (int i=0; i< this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
-	  Coefficient = exp(- PIOnM * Q2Gaussian) * TmpInteraction;
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2Anistropy);
+	  Coefficient = exp(- PIOnM * Q2Anistropy) * TmpInteraction;
 	  Precision = Coefficient;
 	}
       else
@@ -221,12 +221,12 @@ double ParticleOnTorusMassAnisotropyGenericHamiltonian::EvaluateInteractionCoeff
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Q2Gaussian = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
+	  Q2Anistropy = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < this->NbrPseudopotentials; ++i)
 	    if (this->Pseudopotentials[i] != 0.0)
-	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2);
-	  Precision = 2.0 *  exp(- PIOnM * Q2Gaussian) * TmpInteraction;
+	      TmpInteraction += this->Pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(TwoPIOnM * Q2Anistropy);
+	  Precision = 2.0 *  exp(- PIOnM * Q2Anistropy) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}

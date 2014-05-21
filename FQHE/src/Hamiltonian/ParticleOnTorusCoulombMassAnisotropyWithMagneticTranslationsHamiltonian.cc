@@ -182,29 +182,29 @@ double ParticleOnTorusCoulombMassAnisotropyWithMagneticTranslationsHamiltonian::
   double N2 = (double) (m1 - m4);
   double N1;
   double Q2;
-  double Q2Gaussian;
+  double Q2Anistropy;
   double Precision;
 //  cout << "new coef====================================" << m1 << " "  << m2 << " "  << m3 << " "  << m4 << endl;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
-      Q2Gaussian = this->Ratio * N2 * N2 * this->InvAnisotropy;
+      Q2Anistropy = this->Ratio * N2 * N2 * this->InvAnisotropy;
       if (N2 != 0.0)
 	{
-	  Coefficient = this->GetVofQ(PIOnM * Q2, PIOnM * Q2Gaussian);
+	  Coefficient = this->GetVofQ(PIOnM * Q2Anistropy, PIOnM * Q2Anistropy);
 	  Precision = Coefficient;
 	}
       else
 	{
-	  Coefficient = this->GetVofQ(PIOnM * Q2, PIOnM * Q2Gaussian); // yields non-zero terms only for non-singular interactions
+	  Coefficient = this->GetVofQ(PIOnM * Q2Anistropy, PIOnM * Q2Anistropy); // yields non-zero terms only for non-singular interactions
 	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Q2Gaussian = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
-	  Precision = 2.0 * this->GetVofQ(PIOnM * Q2, PIOnM * Q2Gaussian);
+	  Q2Anistropy = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
+	  Precision = 2.0 * this->GetVofQ(PIOnM * Q2Anistropy, PIOnM * Q2Anistropy);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
@@ -217,22 +217,22 @@ double ParticleOnTorusCoulombMassAnisotropyWithMagneticTranslationsHamiltonian::
     {
       N1 = 1.0;
       Q2 = this->Ratio * N2 * N2;
-      Q2Gaussian = this->Ratio * N2 * N2 * this->InvAnisotropy;
+      Q2Anistropy = this->Ratio * N2 * N2 * this->InvAnisotropy;
       if (N2 != 0.0)
 	{
-	  Coefficient =  this->GetVofQ(PIOnM * Q2, PIOnM * Q2Gaussian);
+	  Coefficient =  this->GetVofQ(PIOnM * Q2Anistropy, PIOnM * Q2Anistropy);
 	  Precision = Coefficient;
 	}
       else
 	{
-	  Coefficient = this->GetVofQ(PIOnM * Q2, PIOnM * Q2Gaussian); // yields non-zero terms only for non-singular interactions
+	  Coefficient = this->GetVofQ(PIOnM * Q2Anistropy, PIOnM * Q2Anistropy); // yields non-zero terms only for non-singular interactions
 	  Precision = 1.0;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
-	  Q2Gaussian = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
-	  Precision = 2.0 * this->GetVofQ(PIOnM * Q2, PIOnM * Q2Gaussian);
+	  Q2Anistropy = this->InvRatio * N1 * N1  * this->Anisotropy + this->Ratio * N2 * N2  * this->InvAnisotropy;
+	  Precision = 2.0 * this->GetVofQ(PIOnM * Q2Anistropy, PIOnM * Q2Anistropy);
 	  Coefficient += Precision * cos (N1 * Factor);
 	  N1 += 1.0;
 	}
