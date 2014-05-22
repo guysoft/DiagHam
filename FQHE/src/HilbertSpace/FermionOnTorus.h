@@ -40,6 +40,10 @@
 class FermionOnTorus :  public ParticleOnTorus
 {
 
+  friend class FermionOnTorusWithMagneticTranslations;
+
+ protected:
+
   // number of fermions
   int NbrFermions;
   // number of fermions plus 1

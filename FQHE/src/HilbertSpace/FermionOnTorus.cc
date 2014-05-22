@@ -36,6 +36,7 @@
 #include "HilbertSpace/SubspaceSpaceConverter.h"
 #include "HilbertSpace/FermionOnDisk.h"
 #include "Matrix/Matrix.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
 #include <algorithm>
@@ -1367,11 +1368,12 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
 {
   FermionOnTorus* TmpInputSpace = (FermionOnTorus*) inputSpace;
   unsigned long* TmpInputMonomial = new unsigned long [this->NbrFermions];
+  unsigned long* TmpInputMonomial2 = new unsigned long [this->NbrFermions];
   unsigned long* TmpOutputMonomial = new unsigned long [this->NbrFermions];
   int LastIndex = minIndex + nbrIndices;
   Complex Tmp = 0.0;
   Complex Tmp2 = 0.0;
-  double TmpCoefficient = pow((double) this->KyMax, 0.5 * ((double) this->NbrFermions));
+  double TmpCoefficient = pow((double) this->KyMax, -0.5 * ((double) this->NbrFermions));
   double PhaseFactor = 2.0 * M_PI / ((double) this->KyMax);
   if (clockwise == true)
     PhaseFactor *= -1.0;
@@ -1386,7 +1388,7 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
 	  for (int k = 0; k < this->NbrFermions; ++k)
 	    {
 	      TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
-	    }
+ 	    }
 	  Tmp2 = Phase(PhaseFactor * ((double) TmpPhase));
 	  while (std::prev_permutation(TmpInputMonomial, TmpInputMonomial + this->NbrFermions))
 	    {
@@ -1395,13 +1397,17 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
 		{
 		  TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
 		}
-	      Tmp2 += Phase(PhaseFactor * ((double) TmpPhase));
+	      memcpy(TmpInputMonomial2, TmpInputMonomial, sizeof(unsigned long) * this->NbrFermions);
+	      int NbrSwaps = 0;
+	      SortArrayDownOrderingPermutation(TmpInputMonomial2, this->NbrFermions, NbrSwaps);
+	      Tmp2 += Phase(PhaseFactor * ((double) TmpPhase)) * ((double) (1 - (2 * (NbrSwaps & 1))));
 	    }
 	  Tmp += inputState[j] * Tmp2 * TmpCoefficient;
-	}
+ 	}
       outputState[i] = Tmp;      
     }
   delete[] TmpInputMonomial;
+  delete[] TmpInputMonomial2;
   delete[] TmpOutputMonomial;
   return outputState;
 }
