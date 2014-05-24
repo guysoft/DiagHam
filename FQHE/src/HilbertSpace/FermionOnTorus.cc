@@ -1377,6 +1377,11 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
   double PhaseFactor = 2.0 * M_PI / ((double) this->KyMax);
   if (clockwise == true)
     PhaseFactor *= -1.0;
+  ComplexMatrix DeterminantMatrix (this->NbrFermions, this->NbrFermions);
+  ComplexMatrix PhaseMatrix (this->KyMax, this->KyMax);
+  for (int k = 0; k < this->KyMax; ++k)
+    for (int l = 0; l < this->KyMax; ++l)
+      PhaseMatrix[k][l] = Phase(PhaseFactor * ((double) (k * l)));
   for (int i = minIndex ; i < LastIndex; ++i)
     {
       this->ConvertToMonomial(this->StateDescription[i], TmpOutputMonomial);
@@ -1386,23 +1391,13 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
 	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputMonomial);
 	  unsigned long TmpPhase = 0ul;
 	  for (int k = 0; k < this->NbrFermions; ++k)
-	    {
-	      TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
- 	    }
-	  Tmp2 = Phase(PhaseFactor * ((double) TmpPhase));
-	  while (std::prev_permutation(TmpInputMonomial, TmpInputMonomial + this->NbrFermions))
-	    {
-	      TmpPhase = 0ul;
-	      for (int k = 0; k < this->NbrFermions; ++k)
-		{
-		  TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
-		}
-	      memcpy(TmpInputMonomial2, TmpInputMonomial, sizeof(unsigned long) * this->NbrFermions);
-	      int NbrSwaps = 0;
-	      SortArrayDownOrderingPermutation(TmpInputMonomial2, this->NbrFermions, NbrSwaps);
-	      Tmp2 += Phase(PhaseFactor * ((double) TmpPhase)) * ((double) (1 - (2 * (NbrSwaps & 1))));
-	    }
-	  Tmp += inputState[j] * Tmp2 * TmpCoefficient;
+	    for (int l = 0; l < this->NbrFermions; ++l)
+	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
+#ifdef __LAPACK__
+	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.LapackDeterminant();	  
+#else
+	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.Determinant();
+#endif
  	}
       outputState[i] = Tmp;      
     }

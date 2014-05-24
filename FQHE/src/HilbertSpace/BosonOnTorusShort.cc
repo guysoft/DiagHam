@@ -2061,6 +2061,11 @@ ComplexVector& BosonOnTorusShort::CoreC4Rotation (ComplexVector& inputState, Par
   double PhaseFactor = 2.0 * M_PI / ((double) this->KyMax);
   if (clockwise == true)
     PhaseFactor *= -1.0;
+  ComplexMatrix DeterminantMatrix (this->NbrBosons, this->NbrBosons);
+  ComplexMatrix PhaseMatrix (this->KyMax, this->KyMax);
+  for (int k = 0; k < this->KyMax; ++k)
+    for (int l = 0; l < this->KyMax; ++l)
+      PhaseMatrix[k][l] = Phase(PhaseFactor * ((double) (k * l)));
   for (int i = minIndex ; i < LastIndex; ++i)
     {
       this->FermionToBoson(this->StateDescription[i], this->StateKyMax[i] + this->NbrBosons - 1, 
@@ -2075,27 +2080,15 @@ ComplexVector& BosonOnTorusShort::CoreC4Rotation (ComplexVector& inputState, Par
 	  this->FermionToBoson(TmpInputSpace->StateDescription[j], TmpInputSpace->StateKyMax[j] + TmpInputSpace->NbrBosons - 1, 
 			       TmpInputSpace->TemporaryState, TmpInputSpace->TemporaryStateKyMax);
 	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputSpace->StateKyMax[j] + this->NbrBosons - 1, TmpInputMonomial);
-	  unsigned long TmpPhase = 0ul;
 	  for (int k = 0; k < this->NbrBosons; ++k)
-	    {
-	      TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
-	    }
-	  Tmp2 = Phase(PhaseFactor * ((double) TmpPhase));
-	  while (std::prev_permutation(TmpInputMonomial, TmpInputMonomial + this->NbrBosons))
-	    {
-	      TmpPhase = 0ul;
-	      for (int k = 0; k < this->NbrBosons; ++k)
-		{
-		  TmpPhase += TmpInputMonomial[k] * TmpOutputMonomial[k];
-		}
-	      Tmp2 += Phase(PhaseFactor * ((double) TmpPhase));
-	    }
+	    for (int l = 0; l < this->NbrBosons; ++l)
+	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
 	  TmpLogCoefficient2 = 0.0;
 	  for (int k = 0; k <= TmpInputSpace->TemporaryStateKyMax; ++k)
 	    {
 	      TmpLogCoefficient2 += LogFactorialCoefficients[TmpInputSpace->TemporaryState[k]];
 	    }
-	  Tmp += inputState[j] * Tmp2 * exp(0.5 * (TmpLogCoefficient2 - TmpLogCoefficient - TmpLogCoefficient3));
+	  Tmp += inputState[j] * DeterminantMatrix.Permanent() * exp(0.5 * (-TmpLogCoefficient2 - TmpLogCoefficient - TmpLogCoefficient3));
 	}
       outputState[i] = Tmp;      
     }

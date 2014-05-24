@@ -30,6 +30,8 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
+#include "Vector/ComplexVector.h"
+#include "Architecture/ArchitectureOperation/FQHETorusApplyCNRotationOperation.h"
 
 #include <iostream>
 
@@ -171,3 +173,49 @@ int ParticleOnTorusWithMagneticTranslations::GetC2SymmetricState (int index, int
   return 0;
 }
 
+// apply the C4 rotation to a given state assumin it is an eigenstate of both kx and ky
+//
+// inputState = reference on the state that has to be rotated
+// inputSpace = Hilbert space associated to the input state
+// architecture = pointer to the architecture
+// clockwise = the rotation is done clockwise
+// return value = rotated state
+
+ComplexVector ParticleOnTorusWithMagneticTranslations::C4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace, bool clockwise, AbstractArchitecture* architecture)
+{
+  ComplexVector OutputState (this->HilbertSpaceDimension, true);
+  if (architecture != 0)
+    {
+      if (clockwise == false)
+	{
+	  FQHETorusApplyCNRotationOperation Operation(4, &inputState, &OutputState, inputSpace, this);
+	  Operation.ApplyOperation(architecture);
+	}
+      else
+	{
+	  FQHETorusApplyCNRotationOperation Operation(-4, &inputState, &OutputState, inputSpace, this);
+	  Operation.ApplyOperation(architecture);
+	}
+    }
+  else
+    {
+      this->CoreC4Rotation(inputState, inputSpace, OutputState, 0 , this->HilbertSpaceDimension, clockwise);
+    }
+  return OutputState;
+}
+
+// core part of the C4 rotation
+//
+// inputState = reference on the state that has to be rotated
+// inputSpace = Hilbert space associated to the input state
+// outputState = reference on the rotated state
+// minIndex = minimum index that has to be computed
+// nbrIndices = number of indices that have to be computed
+// clockwise = the rotation is done clockwise
+// return value = reference on the rotated state
+
+ComplexVector& ParticleOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise)
+{
+  cout << "warning : CoreC4Rotation not implemented" << endl;
+  return outputState;
+}

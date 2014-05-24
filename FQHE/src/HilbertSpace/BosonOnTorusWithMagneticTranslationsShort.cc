@@ -43,6 +43,8 @@
 #include "MathTools/IntegerAlgebraTools.h"
 
 #include <math.h>
+#include <algorithm>
+#include <set>
 
 
 using std::cout;
@@ -1101,5 +1103,71 @@ ComplexVector BosonOnTorusWithMagneticTranslationsShort::ConvertFromKxKyBasis(Co
     }
   delete[] FourrierCoefficients;
   return TmpVector;
+}
+
+// core part of the C4 rotation
+//
+// inputState = reference on the state that has to be rotated
+// inputSpace = Hilbert space associated to the input state
+// outputState = reference on the rotated state
+// minIndex = minimum index that has to be computed
+// nbrIndices = number of indices that have to be computed
+// clockwise = the rotation is done clockwise
+// return value = reference on the rotated state
+
+ComplexVector& BosonOnTorusWithMagneticTranslationsShort::CoreC4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace, 
+									  ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise)
+{
+  BosonOnTorusWithMagneticTranslationsShort* TmpInputSpace = (BosonOnTorusWithMagneticTranslationsShort*) inputSpace;
+  unsigned long* TmpInputMonomial = new unsigned long [this->NbrBosons];
+  unsigned long* TmpOutputMonomial = new unsigned long [this->NbrBosons];
+  double* LogFactorialCoefficients = new double [this->NbrBosons + 1];
+  LogFactorialCoefficients[0] = 0.0;
+  for (int i = 1; i <= this->NbrBosons; ++i)
+    LogFactorialCoefficients[i] = LogFactorialCoefficients[i - 1] + log((double) i);
+  int LastIndex = minIndex + nbrIndices;
+  Complex Tmp = 0.0;
+  Complex Tmp2 = 0.0;
+  double TmpLogCoefficient = 0.0;
+  double TmpLogCoefficient2 = 0.0;
+  double TmpLogCoefficient3 = this->NbrBosons * log((double) this->MaxMomentum);
+  double PhaseFactor = 2.0 * M_PI / ((double) this->MaxMomentum);
+  if (clockwise == true)
+    PhaseFactor *= -1.0;
+  ComplexMatrix DeterminantMatrix (this->NbrBosons, this->NbrBosons);
+  ComplexMatrix PhaseMatrix (this->MaxMomentum, this->MaxMomentum);
+  for (int k = 0; k < this->MaxMomentum; ++k)
+    for (int l = 0; l < this->MaxMomentum; ++l)
+      PhaseMatrix[k][l] = Phase(PhaseFactor * ((double) (k * l)));
+  for (int i = minIndex ; i < LastIndex; ++i)
+    {
+      this->FermionToBoson(this->StateDescription[i], this->FermionicMaxMomentum, 
+			   this->TemporaryState, this->TemporaryStateKyMax);
+      this->ConvertToMonomial(this->StateDescription[i], this->FermionicMaxMomentum, TmpOutputMonomial);
+      Tmp = 0.0;
+      TmpLogCoefficient = 0.0;
+      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+	TmpLogCoefficient += LogFactorialCoefficients[this->TemporaryState[k]];
+      for (int j = 0; j < TmpInputSpace->HilbertSpaceDimension; ++j)
+	{
+	  this->FermionToBoson(TmpInputSpace->StateDescription[j], TmpInputSpace->FermionicMaxMomentum, 
+			       TmpInputSpace->TemporaryState, TmpInputSpace->TemporaryStateKyMax);
+	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputSpace->FermionicMaxMomentum, TmpInputMonomial);
+	  for (int k = 0; k < this->NbrBosons; ++k)
+	    for (int l = 0; l < this->NbrBosons; ++l)
+	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
+	  TmpLogCoefficient2 = 0.0;
+	  for (int k = 0; k <= TmpInputSpace->TemporaryStateKyMax; ++k)
+	    {
+	      TmpLogCoefficient2 += LogFactorialCoefficients[TmpInputSpace->TemporaryState[k]];
+	    }
+	  Tmp += inputState[j] * DeterminantMatrix.Permanent() * exp(0.5 * (-TmpLogCoefficient2 - TmpLogCoefficient - TmpLogCoefficient3)) * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);
+	}
+      outputState[i] = Tmp * sqrt((double) (this->NbrStateInOrbit[i]));      
+    }
+  delete[] TmpInputMonomial;
+  delete[] TmpOutputMonomial;
+  delete[] LogFactorialCoefficients;
+  return outputState;
 }
 

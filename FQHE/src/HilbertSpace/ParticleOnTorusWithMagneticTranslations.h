@@ -51,6 +51,10 @@ class AbstractArchitecture;
 class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
 {
 
+ protected:
+
+  friend class FQHETorusApplyCNRotationOperation;
+
  public:
 
   // virtual destructor
@@ -128,6 +132,16 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
   // nbrTranslation = number of translations that has to be applied to C2 symmetric state to be in the canonical form
   virtual int GetC2SymmetricState (int index, int& nbrTranslation);
 
+  // apply the C4 rotation to a given state assumin it is an eigenstate of both kx and ky
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // architecture = pointer to the architecture
+  // clockwise = the rotation is done clockwise
+  // return value = rotated state
+  virtual ComplexVector C4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace,
+				    bool clockwise = false, AbstractArchitecture* architecture = 0);
+
   // core part of the evaluation density matrix particle partition calculation
   // 
   // minIndex = first index to consider in source Hilbert space
@@ -153,6 +167,20 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnTorus* space);
+
+ protected:
+
+  // core part of the C4 rotation
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // outputState = reference on the rotated state
+  // minIndex = minimum index that has to be computed
+  // nbrIndices = number of indices that have to be computed
+  // clockwise = the rotation is done clockwise
+  // return value = reference on the rotated state
+  virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace, 
+					 ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
 
 };
 

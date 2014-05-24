@@ -1242,3 +1242,56 @@ ComplexVector FermionOnTorusWithMagneticTranslations::ConvertFromKxKyBasis(Compl
   return TmpVector;
 }
 
+// core part of the C4 rotation
+//
+// inputState = reference on the state that has to be rotated
+// inputSpace = Hilbert space associated to the input state
+// outputState = reference on the rotated state
+// minIndex = minimum index that has to be computed
+// nbrIndices = number of indices that have to be computed
+// clockwise = the rotation is done clockwise
+// return value = reference on the rotated state
+
+ComplexVector& FermionOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, 
+					       bool clockwise)
+{
+  FermionOnTorusWithMagneticTranslations* TmpInputSpace = (FermionOnTorusWithMagneticTranslations*) inputSpace;
+  unsigned long* TmpInputMonomial = new unsigned long [this->NbrFermions];
+  unsigned long* TmpInputMonomial2 = new unsigned long [this->NbrFermions];
+  unsigned long* TmpOutputMonomial = new unsigned long [this->NbrFermions];
+  int LastIndex = minIndex + nbrIndices;
+  Complex Tmp = 0.0;
+  Complex Tmp2 = 0.0;
+  double TmpCoefficient = pow((double) this->MaxMomentum, -0.5 * ((double) this->NbrFermions));
+  double PhaseFactor = 2.0 * M_PI / ((double) this->MaxMomentum);
+  if (clockwise == true)
+    PhaseFactor *= -1.0;
+  ComplexMatrix DeterminantMatrix (this->NbrFermions, this->NbrFermions);
+  ComplexMatrix PhaseMatrix (this->MaxMomentum, this->MaxMomentum);
+  for (int k = 0; k < this->MaxMomentum; ++k)
+    for (int l = 0; l < this->MaxMomentum; ++l)
+      PhaseMatrix[k][l] = Phase(PhaseFactor * ((double) (k * l)));
+  for (int i = minIndex ; i < LastIndex; ++i)
+    {
+      this->ConvertToMonomial(this->StateDescription[i], TmpOutputMonomial);
+      Tmp = 0.0;
+      for (int j = 0; j < TmpInputSpace->HilbertSpaceDimension; ++j)
+	{
+	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputMonomial);
+	  unsigned long TmpPhase = 0ul;
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    for (int l = 0; l < this->NbrFermions; ++l)
+	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
+#ifdef __LAPACK__
+	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.LapackDeterminant() * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);	  
+#else
+	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.Determinant() * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);
+#endif
+ 	}
+      outputState[i] = Tmp * sqrt((double) (this->NbrStateInOrbit[i]));      
+    }
+  delete[] TmpInputMonomial;
+  delete[] TmpInputMonomial2;
+  delete[] TmpOutputMonomial;
+  return outputState;
+}

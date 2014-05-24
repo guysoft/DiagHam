@@ -390,6 +390,21 @@ public:
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnTorus* space);
+
+ protected:
+
+  // core part of the C4 rotation
+  //
+  // inputState = reference on the state that has to be rotated
+  // inputSpace = Hilbert space associated to the input state
+  // outputState = reference on the rotated state
+  // minIndex = minimum index that has to be computed
+  // nbrIndices = number of indices that have to be computed
+  // clockwise = the rotation is done clockwise
+  // return value = reference on the rotated state
+  virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorusWithMagneticTranslations* inputSpace, 
+					 ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
+
 };
 
 // get the particle statistic 
