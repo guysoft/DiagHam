@@ -36,6 +36,7 @@
 #include "Vector/ComplexVector.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "HilbertSpace/ParticleOnTorus.h"
+#include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 
 
 class FQHETorusApplyCNRotationOperation : public AbstractArchitectureOperation
@@ -50,6 +51,11 @@ class FQHETorusApplyCNRotationOperation : public AbstractArchitectureOperation
   ParticleOnTorus* InputSpace;
   // pointer to the Hilbert space of the rotated state	
   ParticleOnTorus* OutputSpace;
+
+  // pointer to the Hilbert space of the initial state
+  ParticleOnTorusWithMagneticTranslations* InputSpaceWithMagneticTranslations;
+  // pointer to the Hilbert space of the rotated state	
+  ParticleOnTorusWithMagneticTranslations* OutputSpaceWithMagneticTranslations;
 
   // vector where the initial state is stored
   ComplexVector* InputState;
@@ -71,6 +77,15 @@ class FQHETorusApplyCNRotationOperation : public AbstractArchitectureOperation
   // inputSpace = vector where the initial state is stored
   // outputSpace = vector where the rotated state is stored
   FQHETorusApplyCNRotationOperation(int nValue, ComplexVector* inputState, ComplexVector* outputState, ParticleOnTorus* inputSpace, ParticleOnTorus* outputSpace);
+    
+  // constructor 
+  //
+  // nValue = N Value of the rotation (negative if clockwise)
+  // inputState = pointer to the Hilbert space of the initial state
+  // outputState = pointer to the Hilbert space of the rotated state
+  // inputSpace = vector where the initial state is stored
+  // outputSpace = vector where the rotated state is stored
+  FQHETorusApplyCNRotationOperation(int nValue, ComplexVector* inputState, ComplexVector* outputState, ParticleOnTorusWithMagneticTranslations* inputSpace, ParticleOnTorusWithMagneticTranslations* outputSpace);
     
   // copy constructor 
   //

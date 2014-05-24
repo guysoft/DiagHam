@@ -55,6 +55,8 @@ FQHETorusApplyCNRotationOperation::FQHETorusApplyCNRotationOperation(int nValue,
   this->NValue = nValue;
   this->InputSpace =  (ParticleOnTorus*) inputSpace->Clone();
   this->OutputSpace = (ParticleOnTorus*) outputSpace->Clone();
+  this->InputSpaceWithMagneticTranslations = 0;
+  this->OutputSpaceWithMagneticTranslations = 0;
   this->InputState = inputState;
   this->OutputState = outputState;
   this->FirstComponent = 0;
@@ -62,6 +64,28 @@ FQHETorusApplyCNRotationOperation::FQHETorusApplyCNRotationOperation(int nValue,
   this->OperationType = AbstractArchitectureOperation::FQHETorusApplyCNRotationOperation;
 }
 
+// constructor 
+//
+// nValue = N Value of the rotation (negative if clockwise)
+// inputState = pointer to the Hilbert space of the initial state
+// outputState = pointer to the Hilbert space of the rotated state
+// inputSpace = vector where the initial state is stored
+// outputSpace = vector where the rotated state is stored
+
+FQHETorusApplyCNRotationOperation::FQHETorusApplyCNRotationOperation(int nValue, ComplexVector* inputState, ComplexVector* outputState, ParticleOnTorusWithMagneticTranslations* inputSpace, ParticleOnTorusWithMagneticTranslations* outputSpace)
+{
+  this->NValue = nValue;
+  this->InputSpaceWithMagneticTranslations =  (ParticleOnTorusWithMagneticTranslations*) inputSpace->Clone();
+  this->OutputSpaceWithMagneticTranslations = (ParticleOnTorusWithMagneticTranslations*) outputSpace->Clone();
+  this->InputSpace = 0;
+  this->OutputSpace = 0;
+  this->InputState = inputState;
+  this->OutputState = outputState;
+  this->FirstComponent = 0;
+  this->NbrComponent = this->OutputSpaceWithMagneticTranslations->GetHilbertSpaceDimension();
+  this->OperationType = AbstractArchitectureOperation::FQHETorusApplyCNRotationOperation;
+}
+    
 
 // copy constructor 
 //
@@ -71,8 +95,20 @@ FQHETorusApplyCNRotationOperation::FQHETorusApplyCNRotationOperation(const FQHET
 {
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
-  this->InputSpace =  (ParticleOnTorus*) operation.InputSpace->Clone();
-  this->OutputSpace = (ParticleOnTorus*) operation.OutputSpace->Clone();
+  if (operation.InputSpaceWithMagneticTranslations == 0)
+    {
+      this->InputSpace =  (ParticleOnTorus*) operation.InputSpace->Clone();
+      this->OutputSpace = (ParticleOnTorus*) operation.OutputSpace->Clone();
+      this->InputSpaceWithMagneticTranslations = 0;
+      this->OutputSpaceWithMagneticTranslations = 0;
+    }
+  else
+    {
+      this->InputSpaceWithMagneticTranslations =  (ParticleOnTorusWithMagneticTranslations*) operation.InputSpaceWithMagneticTranslations->Clone();
+      this->OutputSpaceWithMagneticTranslations = (ParticleOnTorusWithMagneticTranslations*) operation.OutputSpaceWithMagneticTranslations->Clone();
+      this->InputSpace = 0;
+      this->OutputSpace = 0;
+    }
   this->InputState = operation.InputState;
   this->OutputState = operation.OutputState;
   this->NValue = operation.NValue;
@@ -84,8 +120,16 @@ FQHETorusApplyCNRotationOperation::FQHETorusApplyCNRotationOperation(const FQHET
 
 FQHETorusApplyCNRotationOperation::~FQHETorusApplyCNRotationOperation()
 {
-  delete this->InputSpace;
-  delete this->OutputSpace;
+  if (this->InputSpaceWithMagneticTranslations == 0)
+    {
+      delete this->InputSpace;
+      delete this->OutputSpace;
+    }
+  else
+    {
+      delete this->InputSpaceWithMagneticTranslations;
+      delete this->OutputSpaceWithMagneticTranslations;
+    }
 }
   
 // set range of indices
@@ -126,15 +170,25 @@ bool FQHETorusApplyCNRotationOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);  
-  if (this->NValue > 0)
-    this->OutputSpace->CoreC4Rotation(*(this->InputState), this->InputSpace, *(this->OutputState), this->FirstComponent, this->NbrComponent, false);
+  if (this->InputSpaceWithMagneticTranslations == 0)
+    {
+      if (this->NValue > 0)
+	this->OutputSpace->CoreC4Rotation(*(this->InputState), this->InputSpace, *(this->OutputState), this->FirstComponent, this->NbrComponent, false);
+      else
+	this->OutputSpace->CoreC4Rotation(*(this->InputState), this->InputSpace, *(this->OutputState), this->FirstComponent, this->NbrComponent, true);
+    }
   else
-    this->OutputSpace->CoreC4Rotation(*(this->InputState), this->InputSpace, *(this->OutputState), this->FirstComponent, this->NbrComponent, true);
+    {
+      if (this->NValue > 0)
+	this->OutputSpaceWithMagneticTranslations->CoreC4Rotation(*(this->InputState), this->InputSpaceWithMagneticTranslations, *(this->OutputState), this->FirstComponent, this->NbrComponent, false);
+      else
+	this->OutputSpaceWithMagneticTranslations->CoreC4Rotation(*(this->InputState), this->InputSpaceWithMagneticTranslations, *(this->OutputState), this->FirstComponent, this->NbrComponent, true);
+    }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
  		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-  cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
+  cout << "contribution from " << this->FirstComponent << " to " <<  (this->NbrComponent + this->FirstComponent - 1) << " computed in " << Dt << "s" << endl;
   return true;
 }
 
