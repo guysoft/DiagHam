@@ -6,9 +6,10 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on lattice with spin                   //
-//                                  in real space                             //
-//                        Class author: Cecile Repellin                       //
+//            class of fermions on lattice with spin  and Gutzwiller          //
+//                          projection in real space                          //
+//                                                                            //
+//                       class author: Nicolas Regnault                       //
 //                                                                            //
 //                        last modification : 17/06/2014                      //
 //                                                                            //
@@ -31,7 +32,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -56,36 +57,13 @@ using std::ifstream;
 using std::ios;
 
 
-// default constructor
-// 
-
-FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace ()
-{
-  this->NbrFermions = 0;
-  this->IncNbrFermions = this->NbrFermions + 1;
-  this->SzFlag = false;
-  this->TotalLz = 0;
-  this->TotalSpin = 0;
-  this->NbrFermionsUp = 0;
-  this->NbrFermionsDown = 0;
-  this->NbrSite = 0;
-  this->LzMax = this->NbrSite;
-  this->NbrLzValue = this->LzMax + 1;
-  this->MaximumSignLookUp = 0;
-  this->LargeHilbertSpaceDimension = 0l;
-  this->HilbertSpaceDimension = 0;
-  this->StateDescription = 0;
-  this->StateHighestBit = 0;  
-  this->LargeHilbertSpaceDimension = 0;
-}
-
 // basic constructor
 // 
 // nbrFermions = number of fermions
 // nbrSite = total number of sites 
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFermions, int nbrSite, unsigned long memory)
+FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (int nbrFermions, int nbrSite, unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
@@ -153,7 +131,7 @@ FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFer
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace(const FermionOnLatticeWithSpinRealSpace& fermions)
+FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(const FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace& fermions)
 {
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
@@ -187,7 +165,7 @@ FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace(const Fermi
 // destructor
 //
 
-FermionOnLatticeWithSpinRealSpace::~FermionOnLatticeWithSpinRealSpace ()
+FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::~FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace ()
 {
 }
 
@@ -196,7 +174,7 @@ FermionOnLatticeWithSpinRealSpace::~FermionOnLatticeWithSpinRealSpace ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnLatticeWithSpinRealSpace& FermionOnLatticeWithSpinRealSpace::operator = (const FermionOnLatticeWithSpinRealSpace& fermions)
+FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace& FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::operator = (const FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace& fermions)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
@@ -233,39 +211,9 @@ FermionOnLatticeWithSpinRealSpace& FermionOnLatticeWithSpinRealSpace::operator =
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnLatticeWithSpinRealSpace::Clone()
+AbstractHilbertSpace* FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::Clone()
 {
-  return new FermionOnLatticeWithSpinRealSpace(*this);
-}
-
-// print a given State
-//
-// Str = reference on current output stream 
-// state = ID of the state to print
-// return value = reference on current output stream 
-
-ostream& FermionOnLatticeWithSpinRealSpace::PrintState (ostream& Str, int state)
-{
-  unsigned long TmpState = this->StateDescription[state];
-  unsigned long Tmp;
-  Str << "[";
-  for (int i = 0; i < this->NbrLzValue; ++i)
-    {
-      Tmp = (TmpState >> (i << 1));
-      if ((Tmp & 0x2l) != 0ul)
-	Str << "(" << Tmp << ",+)";
-      if ((Tmp & 0x1l) != 0ul)
-	Str << "(" << Tmp << ",-)";
-    }
-  Str << "]";
-//   Str << " " << TmpState; 
-//   Str << " " << hex << TmpState << dec; 
-//   Str << " " << state;
-//   int TmpLzMax = (this->LzMax << 1) + 1;
-//   while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-//     --TmpLzMax;
-//   Str << " " << this->FindStateIndex(TmpState, TmpLzMax);
-  return Str;
+  return new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(*this);
 }
 
 // generate all states corresponding to the constraints
@@ -275,7 +223,7 @@ ostream& FermionOnLatticeWithSpinRealSpace::PrintState (ostream& Str, int state)
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int currentSite, long pos)
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::GenerateStates(int nbrFermions, int currentSite, long pos)
 {
   if (nbrFermions == 0)
     {
@@ -318,7 +266,7 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-// long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
+// long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
 // {
 //   
 // }
@@ -327,10 +275,13 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
 //
 // nbrFermions = number of fermions
 // return value = Hilbert space dimension
-long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions)
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions)
 {
-  BinomialCoefficients binomials(2*this->NbrSite);
-  long dimension = binomials(2*this->NbrSite, this->NbrFermions);
+  BinomialCoefficients binomials(this->NbrSite);
+  int NbrHoles = this->NbrSite - this->NbrFermions;
+  long dimension = binomials(this->NbrSite, NbrHoles);
+  for (int i = 0; i < this->NbrFermions; ++i)
+    dimension *= 2l;
   return dimension;
 }
 
@@ -345,7 +296,7 @@ long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFer
 // nbrSpinUp = number of fermions with spin up
 // return value = Hilbert space dimension
 /*
-long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
 {
   
 }*/

@@ -2,5 +2,5 @@ SUBDIRS=
 
 noinst_LIBRARIES=libFTIHilbertSpace.a
 
-libFTIHilbertSpace_a_SOURCES=FermionOnLatticeWithSpinRealSpace.cc
-
+libFTIHilbertSpace_a_SOURCES=FermionOnLatticeWithSpinRealSpace.cc \
+FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.cc

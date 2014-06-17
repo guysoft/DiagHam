@@ -6,9 +6,10 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on lattice with spin                   //
-//                               in real space                                //
-//                       class author: Cecile Repellin                        //
+//            class of fermions on lattice with spin  and Gutzwiller          //
+//                          projection in real space                          //
+//                                                                            //
+//                       class author: Nicolas Regnault                       //
 //                                                                            //
 //                        last modification : 17/06/2014                      //
 //                                                                            //
@@ -30,41 +31,32 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONLATTICEWITHSPINREALSPACE_H
-#define FERMIONONLATTICEWITHSPINREALSPACE_H
+#ifndef FERMIONONLATTICEWITHSPINANDGUTZWILLERPROJECTIONREALSPACE_H
+#define FERMIONONLATTICEWITHSPINANDGUTZWILLERPROJECTIONREALSPACE_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 
 #include <iostream>
 
 
 
-class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
+class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionOnLatticeWithSpinRealSpace
 {
 
   friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
 
  protected:
 
-  // total number of sites
-  int NbrSite;
-  
-  // flag to indicate that the Hilbert space should preserve Sz
-  bool SzFlag;
 
  public:
-
-  // default constructor
-  // 
-  FermionOnLatticeWithSpinRealSpace ();
 
   // basic constructor
   // 
   // nbrFermions = number of fermions
   // nbrSite = number of sites
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeWithSpinRealSpace (int nbrFermions, int nbrSite, unsigned long memory = 10000000);
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (int nbrFermions, int nbrSite, unsigned long memory = 10000000);
 
   // basic constructor when Sz is preserved
   // 
@@ -77,29 +69,22 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnLatticeWithSpinRealSpace(const FermionOnLatticeWithSpinRealSpace& fermions);
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(const FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace& fermions);
 
   // destructor
   //
-  ~FermionOnLatticeWithSpinRealSpace ();
+  ~FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnLatticeWithSpinRealSpace& operator = (const FermionOnLatticeWithSpinRealSpace& fermions);
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace& operator = (const FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
-
-  // print a given State
-  //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-  virtual ostream& PrintState (ostream& Str, int state);
 
  protected:
 
