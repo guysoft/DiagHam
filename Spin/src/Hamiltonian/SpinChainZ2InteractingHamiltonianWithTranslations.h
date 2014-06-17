@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                        class of Z2 interacting chain                       //
+//              class of Z2 interacting chain with translations               //
 //                                                                            //
-//                        last modification : 11/12/2013                      //
+//                        last modification : 06/06/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,12 +28,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPINCHAINZ2INTERACTINGHAMILTONIAN_H
-#define SPINCHAINZ2INTERACTINGHAMILTONIAN_H
+#ifndef SPINCHAINZ2INTERACTINGHAMILTONIANWITHTRANSLATIONS_H
+#define SPINCHAINZ2INTERACTINGHAMILTONIANWITHTRANSLATIONS_H
 
 
 #include "config.h"
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainWithTranslations.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 
 
@@ -44,18 +44,18 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
+class SpinChainZ2InteractingHamiltonianWithTranslations : public AbstractHamiltonian
 {
 
  protected:
   
   // pointer to the Hilbert space of the system
-  Spin1_2Chain* Chain;
+  Spin1_2ChainWithTranslations* Chain;
 
   // coupling along the z direction
   double JFactor;
-  // Zeeman term on each site
-  double* FFactors;
+  // Zeeman term
+  double FFactor;
   // coupling along the x direction
   double InteractionStrength;
 
@@ -74,7 +74,7 @@ class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
 
   // default constructor
   //
-  SpinChainZ2InteractingHamiltonian();
+  SpinChainZ2InteractingHamiltonianWithTranslations();
 
   // constructor
   //
@@ -84,36 +84,18 @@ class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
   // fFactor = Zeeman term
   // interactionStrength = coupling along the x direction
   // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
-  SpinChainZ2InteractingHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
-				    double jFactor, double fFactor, double interactionStrength, 
-				    double boundaryCondition = 0.0);
-
-  // constructor
-  //
-  // chain = pointer to the Hilbert space of the system
-  // nbrSpin = number of spins
-  // jFactor = coupling along the z direction
-  // fFactors = Zeeman term for each site
-  // interactionStrength = coupling along the x direction
-  // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
-  SpinChainZ2InteractingHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
-				    double jFactor, double* fFactors, double interactionStrength, 
-				    double boundaryCondition = 0.0);
+  SpinChainZ2InteractingHamiltonianWithTranslations(Spin1_2ChainWithTranslations* chain, int nbrSpin, 
+						    double jFactor, double fFactor, double interactionStrength, 
+						    double boundaryCondition = 0.0);
 
   // destructor
   //
-  ~SpinChainZ2InteractingHamiltonian();
+  ~SpinChainZ2InteractingHamiltonianWithTranslations();
 
   // clone hamiltonian without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
-
-  // set chain
-  // 
-  // chain = pointer on Hilbert space of the associated system
-  // return value = reference on current Hamiltonian
-  SpinChainZ2InteractingHamiltonian& SetChain(AbstractSpinChain* chain);
 
   // set Hilbert space
   //
@@ -143,7 +125,7 @@ class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 					  int firstComponent, int nbrComponent);
 
   // multiply a set of vectors by the current hamiltonian for a given range of indices 
@@ -155,8 +137,8 @@ class SpinChainZ2InteractingHamiltonian : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = pointer to the array of vectors where result has been stored
-  virtual RealVector* LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-						  int firstComponent, int nbrComponent);
+  virtual ComplexVector* LowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
+						     int firstComponent, int nbrComponent);
 
 
  protected:

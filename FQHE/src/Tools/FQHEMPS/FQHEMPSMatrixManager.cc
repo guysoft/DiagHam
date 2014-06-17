@@ -118,10 +118,13 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new SingleIntegerOption  ('\n', "r-index", "r index of the (k,r) clustered state", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new SingleStringOption  ('\n', "cft", "use a file that described the CFT to be used");
-  (*SystemGroup) += new BooleanOption  ('\n', "quasihole-sector", "look at the quasihole sector for the (k=2,r) series of clustered states");
+  (*SystemGroup) += new BooleanOption  ('\n', "quasihole-sector", "look at the quasihole sector for the (k=2,r) series of clustered states and the RR state");
+  (*SystemGroup) += new BooleanOption  ('\n', "quasiholesector-left", "consider the quasihole sector for the left B matrix");
+  (*SystemGroup) += new BooleanOption  ('\n', "quasiholesector-right", "consider the quasihole sector for the right B matrix");
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "use a group of B matrices to fix the charge sector");
+  (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-b", "use the unnormalized B matrix");
   if (this->EMatrixFlag == false)
     {
       (*SystemGroup) += new SingleIntegerOption ('\n', "qsector-value", "charge sector to consider when using the --fixed-qsector option");
@@ -258,24 +261,41 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	    {
 	      if (quasiholeSectorFlag == false)
 		{
-		  if (importBMatrices != 0)
+		  if (this->Options->GetBoolean("unnormalized-b") == false)
 		    {
-		      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-							   importBMatrices, this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa);
-		    }
-		  else
-		    {
-		      if (this->Options->GetString("cft") != 0)
+		      if (importBMatrices != 0)
 			{
-			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
-								   this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
+								   importBMatrices, this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa);
 			}
 		      else
 			{
-			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-								   this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), 
-								   this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+			  if (this->Options->GetString("cft") != 0)
+			    {
+			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
+								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+			    }
+			  else
+			    {
+			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								       this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), 
+								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+			    }
 			}
+		    }
+		  else
+		    {
+// 		      if (this->Options->GetString("cft") != 0)
+// 			{
+// 			  MPSMatrix = new FQHEMPSClustered2RUnnormalizedMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
+// 								   this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+// 			}
+// 		      else
+// 			{
+// 			  MPSMatrix = new FQHEMPSClustered2RUnnormalizedMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+// 								   this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), 
+// 								   this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+// 			}
 		    }
 		}
 	      else
@@ -449,9 +469,12 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetRightMPSMatrices(int nbrFluxQuan
     }
   else
     {
-      if ((this->Options->GetInteger("qsectorleft-value") != this->Options->GetInteger("qsectorright-value")) || (this->LeftBMatrix == 0))
+      if ((this->Options->GetInteger("qsectorleft-value") != this->Options->GetInteger("qsectorright-value")) 
+	  || (this->LeftBMatrix == 0)
+	  || (this->Options->GetBoolean("quasiholesector-left") != this->Options->GetBoolean("quasiholesector-right")))
 	{
-	  this->RightBMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), 
+	  this->RightBMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector") | 
+						    this->Options->GetBoolean("quasiholesector-right") , 
 						    this->Options->GetInteger("qsectorright-value"), 
 						    this->Options->GetString("import-rightbmatrices"), nbrFluxQuanta, architecture);
 	}
@@ -488,9 +511,12 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetLeftMPSMatrices(int nbrFluxQuant
     }
   else
     {
-      if ((this->Options->GetInteger("qsectorleft-value") != this->Options->GetInteger("qsectorright-value")) || (this->RightBMatrix == 0))
+      if (((this->Options->GetInteger("qsectorleft-value") != this->Options->GetInteger("qsectorright-value")) 
+	  || (this->RightBMatrix == 0)) 
+	  || (this->Options->GetBoolean("quasiholesector-left") != this->Options->GetBoolean("quasiholesector-right")))
 	{
-	  this->LeftBMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), 
+	  this->LeftBMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector")| 
+						   this->Options->GetBoolean("quasiholesector-left"), 
 						   this->Options->GetInteger("qsectorleft-value"), 
 						   this->Options->GetString("import-leftbmatrices"), nbrFluxQuanta, architecture);
 	}

@@ -509,6 +509,25 @@ double Spin1_2ChainWithTranslations::SziSzj (int i, int j, int state)
     return -0.25;
 }
 
+// compute the parity (prod_i Sz_i) for a given state
+//
+// state = index of the state to be applied on Sz_i operator
+// return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
+
+unsigned long Spin1_2ChainWithTranslations::Parity (int state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+#ifdef __64_BITS__
+  TmpState ^= TmpState >> 32;
+#endif
+  TmpState ^= TmpState >> 16;
+  TmpState ^= TmpState >> 8;
+  TmpState ^= TmpState >> 4;
+  TmpState ^= TmpState >> 2;
+  TmpState ^= TmpState >> 1;
+  return (TmpState & 0x1ul);
+  
+}
 // return index of resulting state from application of P_ij operator on a given state
 //
 // i = first position

@@ -952,8 +952,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	    {
 	      MatrixPsi21[3 + i][j] = MatrixPsi21[i][j];
 	    }
-	  MatrixPsi21[2][j] = RealMatrix();
-	  MatrixPsi21[1][j] = RealMatrix();
+	  if (this->PLevel >= 2)
+	    MatrixPsi21[2][j] = RealMatrix();
+	  if (this->PLevel >= 1)
+	    MatrixPsi21[1][j] = RealMatrix();
 	  MatrixPsi21[0][j] = RealMatrix();
 	}
       for (int i = 0; i <= this->PLevel; ++i)
@@ -962,8 +964,10 @@ void FQHEMPSReadRezayi3Matrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	    {
 	      MatrixPsi12[i][3 + j] = MatrixPsi12[i][j];
 	    }
-	  MatrixPsi12[i][2] = RealMatrix();
-	  MatrixPsi12[i][1] = RealMatrix();
+	  if (this->PLevel >= 2)
+	    MatrixPsi12[i][2] = RealMatrix();
+	  if (this->PLevel >= 1)
+	    MatrixPsi12[i][1] = RealMatrix();
 	  MatrixPsi12[i][0] = RealMatrix();
 	}
     }

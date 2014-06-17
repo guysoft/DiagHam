@@ -66,7 +66,9 @@ SpinChainXYZHamiltonian::SpinChainXYZHamiltonian(Spin1_2Chain* chain, int nbrSpi
   this->JxFactor = -jxFactor;
   this->JyFactor = -jyFactor;
   this->InteractionStrength = -jzFactor;
-  this->FFactor = hFactor;
+  this->FFactors = new double[this->NbrSpin];
+  for (int i = 0; i < this->NbrSpin; ++i)
+    this->FFactors[i] = hFactor;
   this->BoundaryCondition = boundaryCondition;
   this->EvaluateDiagonalMatrixElements();
 }

@@ -10,6 +10,8 @@
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
+#include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
+
 #include "MainTask/GenericRealMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
@@ -55,6 +57,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption('j', "j-value", "", 1.0);
   (*SystemGroup) += new  SingleDoubleOption('f', "f-value", "", 1.0);
   (*SystemGroup) += new  SingleDoubleOption('v', "v-value", "", 1.0);
+  (*SystemGroup) += new  SingleStringOption('\n', "full-fvalues", "provide the f value for each site from a text file");
+  (*SystemGroup) += new  BooleanOption('\n', "random-fvalues", "use a randome f value for each site, maximum amplitude is set by f-value");
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "boundary conditions (0 for open, 1 for periodic, -1 for antiperiodic)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
 #ifdef __LAPACK__
@@ -78,17 +82,77 @@ int main(int argc, char** argv)
   double JValue = Manager.GetDouble("j-value");
   double FValue = Manager.GetDouble("f-value");
   double VValue = Manager.GetDouble("v-value");
-  int BValue = Manager.GetInteger("boundary-conditions");
-  char* OutputFileName = new char [512];
-  char* CommentLine = new char [1024];
-  sprintf (OutputFileName, "z2interactingchain_n_%d_j_%.6f_f_%.6f_v_%.6f_b_%d", NbrSpins, JValue, FValue, VValue, BValue);
-  if (Manager.GetBoolean("no-parity") == true)
-    { 
-      sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# ", NbrSpins, JValue, FValue, VValue, BValue);
+  double* JValues = new double[NbrSpins];
+  double* FValues = new double[NbrSpins];
+  double* VValues = new double[NbrSpins];
+  if (Manager.GetBoolean("random-fvalues") == false)
+    {
+      for (int i = 0; i < NbrSpins; ++i)
+	{
+	  FValues[i] = FValue;
+	}
     }
   else
     {
-      sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# Q ", NbrSpins, JValue, FValue, VValue, BValue);
+      AbstractRandomNumberGenerator* RandomNumber = 0;
+      timeval CurrentTime;
+      gettimeofday (&(CurrentTime), 0);
+       RandomNumber = new StdlibRandomNumberGenerator (CurrentTime.tv_usec);
+      for (int i = 0; i < NbrSpins; ++i)
+	{
+	  FValues[i] = FValue * 2.0 * (RandomNumber->GetRealRandomNumber() - 0.5);
+	}
+    }
+
+  int BValue = Manager.GetInteger("boundary-conditions");
+  char* OutputFileName = new char [512];
+  char* CommentLine = new char [1024 + (NbrSpins * 32)];
+
+  if (Manager.GetBoolean("random-fvalues") == false)
+    { 
+      sprintf (OutputFileName, "z2interactingchain_n_%d_j_%.6f_f_%.6f_v_%.6f_b_%d", NbrSpins, JValue, FValue, VValue, BValue);
+    }
+  else
+    {
+      sprintf (OutputFileName, "z2interactingchain_n_%d_j_%.6f_f_random_%.6f_v_%.6f_b_%d", NbrSpins, JValue, FValue, VValue, BValue);
+    }
+  if (Manager.GetBoolean("no-parity") == true)
+    { 
+      if (Manager.GetBoolean("random-fvalues") == false)
+	{
+	  sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# ", NbrSpins, JValue, FValue, VValue, BValue);
+	}
+      else
+	{
+	  sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, V=%.6f and boundary conditions B=%d\n# F Values = ", NbrSpins, JValue, VValue, BValue);
+	  char* TmpCommentLine;
+	  for (int i = 0; i < NbrSpins; ++i)
+	    {
+	      TmpCommentLine = CommentLine + strlen(CommentLine);
+	      sprintf (TmpCommentLine, " %.14f", FValues[i]);
+	    }
+	  TmpCommentLine = CommentLine + strlen(CommentLine);
+	  sprintf (TmpCommentLine, "\n#");	  
+	}
+    }
+  else
+    {
+      if (Manager.GetBoolean("random-fvalues") == false)
+	{
+	  sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# Q ", NbrSpins, JValue, FValue, VValue, BValue);
+	}
+      else
+	{
+	  sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, V=%.6f and boundary conditions B=%d\n# F Values = ", NbrSpins, JValue, VValue, BValue);
+	  char* TmpCommentLine;
+	  for (int i = 0; i < NbrSpins; ++i)
+	    {
+	      TmpCommentLine = CommentLine + strlen(CommentLine);
+	      sprintf (TmpCommentLine, " %.14f", FValues[i]);
+	    }
+	  TmpCommentLine = CommentLine + strlen(CommentLine);
+	  sprintf (TmpCommentLine, "\n#");	  
+	}
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
@@ -100,7 +164,7 @@ int main(int argc, char** argv)
       Spin1_2Chain* Chain = new Spin1_2ChainFull (NbrSpins, 1000000);
       if (Chain->GetHilbertSpaceDimension() > 0)
 	{
-	  SpinChainZ2InteractingHamiltonian Hamiltonian (Chain, NbrSpins, JValue, FValue, VValue, (double) BValue);
+	  SpinChainZ2InteractingHamiltonian Hamiltonian (Chain, NbrSpins, JValue, FValues, VValue, (double) BValue);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	  sprintf (TmpEigenstateString, "%s", OutputFileName);
 	  char TmpEntry = '\0';
@@ -122,7 +186,7 @@ int main(int argc, char** argv)
 	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitalQValue);
 	  if (Chain->GetHilbertSpaceDimension() > 0)
 	    {	     
-	      SpinChainZ2InteractingHamiltonian Hamiltonian (Chain, NbrSpins, JValue, FValue, VValue, (double) BValue);
+	      SpinChainZ2InteractingHamiltonian	Hamiltonian (Chain, NbrSpins, JValue, FValues, VValue, (double) BValue);
 	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
 	      char* TmpQString = new char[64];

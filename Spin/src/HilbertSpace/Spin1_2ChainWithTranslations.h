@@ -45,6 +45,8 @@ using std::ostream;
 class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
 {
 
+ protected: 
+
   // length of the spin chain
   int ChainLength;
 
@@ -162,6 +164,12 @@ class Spin1_2ChainWithTranslations : public AbstractSpinChainWithTranslations
   // state = index of the state to consider
   // return value = corresponding eigenvalue
   double SziSzj (int i, int j, int state);
+
+  // compute the parity (prod_i Sz_i) for a given state
+  //
+  // state = index of the state to be applied on Sz_i operator
+  // return value = total Sz value
+  virtual unsigned long Parity (int state);
 
   // return index of resulting state from application of P_ij operator on a given state
   //

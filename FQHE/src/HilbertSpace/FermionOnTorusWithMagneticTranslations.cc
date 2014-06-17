@@ -54,6 +54,12 @@ using std::dec;
 using std::hex;
 
 
+// binding to the LAPACK zgetrf routine for LU decomposition and back-substitution
+//
+extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimensionN, const doublecomplex* matrixA,
+				     const int* leadingDimensionA, const int *ipiv, const int *info);
+
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
@@ -1266,11 +1272,17 @@ ComplexVector& FermionOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVe
   double PhaseFactor = 2.0 * M_PI / ((double) this->MaxMomentum);
   if (clockwise == true)
     PhaseFactor *= -1.0;
+#ifdef __LAPACK__
+  int* Permutation = new int[this->NbrFermions];
+  doublecomplex* DeterminantMatrix = new doublecomplex [this->NbrFermions * this->NbrFermions];
+#else
   ComplexMatrix DeterminantMatrix (this->NbrFermions, this->NbrFermions);
+#endif
   ComplexMatrix PhaseMatrix (this->MaxMomentum, this->MaxMomentum);
   for (int k = 0; k < this->MaxMomentum; ++k)
     for (int l = 0; l < this->MaxMomentum; ++l)
       PhaseMatrix[k][l] = Phase(PhaseFactor * ((double) (k * l)));
+ 
   for (int i = minIndex ; i < LastIndex; ++i)
     {
       this->ConvertToMonomial(this->StateDescription[i], TmpOutputMonomial);
@@ -1279,17 +1291,42 @@ ComplexVector& FermionOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVe
 	{
 	  TmpInputSpace->ConvertToMonomial(TmpInputSpace->StateDescription[j], TmpInputMonomial);
 	  unsigned long TmpPhase = 0ul;
+#ifdef __LAPACK__
+	  for (int k = 0; k < this->NbrFermions; ++k)
+	    {
+	      ComplexVector& TmpColumn = PhaseMatrix[TmpInputMonomial[k]];
+	      for (int l = 0; l < this->NbrFermions; ++l)
+		{
+		  Complex& Tmp = TmpColumn[TmpOutputMonomial[l]];
+		  DeterminantMatrix[k + l * this->NbrFermions].r = Tmp.Re;
+		  DeterminantMatrix[k + l * this->NbrFermions].i = Tmp.Im;
+		}
+	    }
+	  int Information = 0;
+	  int TmpDimension = this->NbrFermions;
+	  FORTRAN_NAME(zgetrf)(&TmpDimension, &TmpDimension, DeterminantMatrix, &TmpDimension, Permutation, &Information);
+	  int Sign = 0;
+	  Complex Determinant (1.0,0.0);
+	  for (int k = 0; k < TmpDimension; ++k)
+	    {
+	      if (Permutation[k] != k + 1)
+		Sign ^= 1;
+	      Determinant *= Complex(DeterminantMatrix[k + TmpDimension * k].r, DeterminantMatrix[k + TmpDimension * k].i);
+	    }
+	  if (Sign & 1)
+	    Determinant *= -1.0;
+	  Tmp += inputState[j] * TmpCoefficient * Determinant * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);
+#else
 	  for (int k = 0; k < this->NbrFermions; ++k)
 	    for (int l = 0; l < this->NbrFermions; ++l)
 	      DeterminantMatrix[k][l] = PhaseMatrix[TmpInputMonomial[k]][TmpOutputMonomial[l]];
-#ifdef __LAPACK__
-	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.LapackDeterminant() * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);	  
-#else
 	  Tmp += inputState[j] * TmpCoefficient * DeterminantMatrix.Determinant() * sqrt((double) TmpInputSpace->NbrStateInOrbit[j]);
 #endif
- 	}
+	}
       outputState[i] = Tmp * sqrt((double) (this->NbrStateInOrbit[i]));      
     }
+  delete[] DeterminantMatrix;
+  delete[] Permutation;
   delete[] TmpInputMonomial;
   delete[] TmpInputMonomial2;
   delete[] TmpOutputMonomial;
