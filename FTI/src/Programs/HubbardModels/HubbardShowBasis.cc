@@ -1,4 +1,5 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -32,6 +33,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-sites", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
 //   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   
@@ -71,7 +73,14 @@ int main(int argc, char** argv)
     }
   else
     {
-      Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+      if (Manager.GetBoolean("gutzwiller") == false)
+	{
+	  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+	}
+      else
+	{
+	  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+	}
     }
   
   if (Manager.GetString("get-index") != 0)

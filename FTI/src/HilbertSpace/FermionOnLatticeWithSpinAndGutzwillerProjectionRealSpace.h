@@ -105,9 +105,10 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
   // 
   // nbrFermions = number of fermions
   // currentSite = current site index in real state
+  // nbrHoles = number of unoccupied sites
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
-  virtual long GenerateStates(int nbrFermions, int currentSite, long pos);
+  virtual long GenerateStates(int nbrFermions, int currentSite, int nbrHoles, long pos);
 
   // generate all states corresponding to the constraints
   // 

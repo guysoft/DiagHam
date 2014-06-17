@@ -87,7 +87,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrSite - this->NbrFermions, 0l);
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
@@ -220,42 +220,38 @@ AbstractHilbertSpace* FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::
 // 
 // nbrFermions = number of fermions
 // currentSite = current site index
+// nbrHoles = number of unoccupied sites
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::GenerateStates(int nbrFermions, int currentSite, long pos)
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::GenerateStates(int nbrFermions, int currentSite, int nbrHoles, long pos)
 {
   if (nbrFermions == 0)
     {
-      this->StateDescription[pos] = 0x0ul;	  
-      return (pos + 1l);
+      if (nbrHoles == (currentSite + 1))
+	{
+	  this->StateDescription[pos] = 0x0ul;	  
+	  return (pos + 1l);
+	}
+      else
+	{
+	  return pos;
+	}
     }
   if (currentSite < 0)
     return pos;
-  if (nbrFermions == 1)
-    {
-      for (int j = currentSite; j >= 0; --j)
-	{
-	  this->StateDescription[pos] = 0x2ul << ((j) << 1);
-	  ++pos;
-	  this->StateDescription[pos] = 0x1ul << ((j) << 1);
-	  ++pos;
-	}
-    return pos;
-    }
-  long TmpPos = this->GenerateStates(nbrFermions - 2, currentSite, pos);
-  unsigned long Mask = 0x3ul << ((currentSite) << 1);
+  long TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, nbrHoles, pos);
+  unsigned long Mask = 0x2ul << ((currentSite) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, pos);
-  Mask = 0x2ul << ((currentSite) << 1);
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
-   TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, pos);
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, nbrHoles, pos);
    Mask = 0x1ul << ((currentSite) << 1);
    for (; pos < TmpPos; ++pos)
      this->StateDescription[pos] |= Mask;
-  return this->GenerateStates(nbrFermions, currentSite - 1, pos);
+   if (nbrHoles == 0)
+     return pos;
+   else
+     return this->GenerateStates(nbrFermions, currentSite - 1, nbrHoles - 1, pos);
 };
 
 // generate all states corresponding to the constraints
