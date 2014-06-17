@@ -32,6 +32,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('l', "nbr-sites", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
 //   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
@@ -125,10 +126,24 @@ int main(int argc, char** argv)
 	{
 	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 	    {
-	      if (AddIndex == true) 
-		File << i << " ";
-	      Space->PrintState(File, i);
 	      
+		  if (AddIndex == true) 
+		    File << i << " ";
+		  Space->PrintState(File, i);
+		  File<<endl;
+		
+	    }
+	}
+      else
+	{
+	  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+	    {
+	      
+		  if (AddIndex == true) 
+		    cout << i <<" ";
+		  Space->PrintState(cout, i);
+		  cout<<endl;
+		
 	    }
 	}
     }
