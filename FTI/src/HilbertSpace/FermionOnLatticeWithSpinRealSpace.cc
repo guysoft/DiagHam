@@ -99,6 +99,7 @@ FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFer
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
+  cout << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -253,11 +254,12 @@ ostream& FermionOnLatticeWithSpinRealSpace::PrintState (ostream& Str, int state)
     {
       Tmp = (TmpState >> (i << 1));
       if ((Tmp & 0x2l) != 0ul)
-	Str << "(" << Tmp << ",+)";
+	Str << "(" << i << ",+)";
       if ((Tmp & 0x1l) != 0ul)
-	Str << "(" << Tmp << ",-)";
+	Str << "(" << i << ",-)";
     }
   Str << "]";
+  Str << hex << TmpState << dec;
 //   Str << " " << TmpState; 
 //   Str << " " << hex << TmpState << dec; 
 //   Str << " " << state;
