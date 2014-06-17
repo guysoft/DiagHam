@@ -1,0 +1,5 @@
+SUBDIRS=
+
+noinst_LIBRARIES=libFTIHilbertSpace.a
+
+libFTIHilbertSpace_a_SOURCES=

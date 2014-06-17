@@ -1,0 +1,4 @@
+SUBDIRS=
+
+bin_PROGRAMS=
+
