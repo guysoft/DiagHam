@@ -99,7 +99,7 @@ FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFer
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
-  cout << this->LargeHilbertSpaceDimension << endl;
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
   else
@@ -110,7 +110,11 @@ FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFer
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+      if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+	{
+	  cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
+	}
       this->GenerateLookUpTable(memory);
       
 #ifdef __DEBUG__
@@ -249,24 +253,25 @@ ostream& FermionOnLatticeWithSpinRealSpace::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
-  Str << "[";
   for (int i = 0; i < this->NbrLzValue; ++i)
     {
-      Tmp = (TmpState >> (i << 1));
-      if ((Tmp & 0x2l) != 0ul)
-	Str << "(" << i << ",+)";
-      if ((Tmp & 0x1l) != 0ul)
-	Str << "(" << i << ",-)";
+      Tmp = (TmpState >> (i << 1)) & 03ul;
+      switch (Tmp)
+	{
+	case 0x0ul:
+	  Str << "0 ";
+	  break;
+	case 0x1ul:
+	  Str << "d ";
+	  break;
+	case 0x2ul:
+	  Str << "u ";
+	  break;
+	case 0x3ul:
+	  Str << "X ";
+	  break;
+	}
     }
-  Str << "]";
-  Str << hex << TmpState << dec;
-//   Str << " " << TmpState; 
-//   Str << " " << hex << TmpState << dec; 
-//   Str << " " << state;
-//   int TmpLzMax = (this->LzMax << 1) + 1;
-//   while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-//     --TmpLzMax;
-//   Str << " " << this->FindStateIndex(TmpState, TmpLzMax);
   return Str;
 }
 
@@ -284,20 +289,20 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
       this->StateDescription[pos] = 0x0ul;	  
       return (pos + 1l);
     }
-  if (currentSite < 0)
+  if ((currentSite < 0) || (nbrFermions < 0))
     return pos;
   if (nbrFermions == 1)
     {
       for (int j = currentSite; j >= 0; --j)
 	{
-	  this->StateDescription[pos] = 0x2ul << ((j) << 1);
+	  this->StateDescription[pos] = 0x2ul << (j << 1);
 	  ++pos;
-	  this->StateDescription[pos] = 0x1ul << ((j) << 1);
+	  this->StateDescription[pos] = 0x1ul << (j << 1);
 	  ++pos;
 	}
-    return pos;
+      return pos;
     }
-  long TmpPos = this->GenerateStates(nbrFermions - 2, currentSite, pos);
+  long TmpPos = this->GenerateStates(nbrFermions - 2, currentSite - 1, pos);
   unsigned long Mask = 0x3ul << ((currentSite) << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
