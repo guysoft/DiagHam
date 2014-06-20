@@ -439,7 +439,7 @@ int Spin1_2Chain::TotalSz (int index)
   int TmpSz = 0;
   for (int i = 0; i < this->ChainLength; i++)
     {
-      TmpSz += ((State & 0x00000001) << 1);
+      TmpSz += ((State & 0x1ul) << 1);
       State >>= 1;
     }
   TmpSz -= this->ChainLength;

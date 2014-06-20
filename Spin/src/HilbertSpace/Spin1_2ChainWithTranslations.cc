@@ -463,7 +463,8 @@ int Spin1_2ChainWithTranslations::TotalSz (int index)
       TmpSz += (State & 0x1ul) << 1;
       State >>= 1;
     }
-  return ((2 * TmpSz) - this->ChainLength);
+  TmpSz -= this->ChainLength;
+  return TmpSz;
 }
 
 // return value of the value of the sum of the square of spin projection on (Oz) 

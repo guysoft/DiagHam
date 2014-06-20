@@ -1,1 +1,1 @@
-SUBDIRS=FTITightBinding
+SUBDIRS=FTITightBinding FTIFiles

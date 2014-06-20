@@ -67,7 +67,7 @@ SpinChainZ2InteractingHamiltonianWithTranslations::SpinChainZ2InteractingHamilto
 // jFactor = coupling along the z direction
 // fFactor = Zeeman term
 // interactionStrength = coupling along the x direction
-// boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
+// boundaryCondition = boundary condition to apply (1 for periodic, -1 for antiperiodic)
 
 SpinChainZ2InteractingHamiltonianWithTranslations::SpinChainZ2InteractingHamiltonianWithTranslations(Spin1_2ChainWithTranslations* chain, int nbrSpin, 
 												     double jFactor, double fFactor, double interactionStrength, 
@@ -78,10 +78,11 @@ SpinChainZ2InteractingHamiltonianWithTranslations::SpinChainZ2InteractingHamilto
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->Parities = new double [this->Chain->GetHilbertSpaceDimension()];
   this->JFactor = -jFactor;
-  this->FFactor = fFactor;
+  this->FFactor = -  fFactor;
   this->InteractionStrength = -interactionStrength;
   this->BoundaryCondition = boundaryCondition;
   this->EvaluateDiagonalMatrixElements();
+  this->EvaluateCosineTable();
 }
 
 // destructor
@@ -90,6 +91,7 @@ SpinChainZ2InteractingHamiltonianWithTranslations::SpinChainZ2InteractingHamilto
 SpinChainZ2InteractingHamiltonianWithTranslations::~SpinChainZ2InteractingHamiltonianWithTranslations() 
 {
   delete[] this->SzSzContributions;
+  delete[] this->ExponentialTable;
 }
 
 // set Hilbert space
@@ -157,52 +159,59 @@ ComplexVector& SpinChainZ2InteractingHamiltonianWithTranslations::LowLevelAddMul
     {
       vDestination[i] += this->SzSzContributions[i] * vSource[i];
       Complex TmpValue = this->JFactor * vSource[i];
+      cout << "TmpValue=" << TmpValue << endl;
+      cout << "diag part = " << this->SzSzContributions[i] << endl;
       // J part of Hamiltonian      
       for (int j = 0; j < MaxPos; ++j)
 	{
 	  pos = this->Chain->SmiSpj(j, j + 1, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += coef * TmpValue;
+	      vDestination[pos] += coef * (TmpValue * this->ExponentialTable[NbrTranslations]);
+	      cout << "o1 : " <<  coef << " t=" << NbrTranslations << " " << pos << endl;
 	    }
 	  pos = this->Chain->SmiSpj(j + 1, j, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += coef * TmpValue;
+	      vDestination[pos] += coef * (TmpValue * this->ExponentialTable[NbrTranslations]);
+	      cout << "o2 : " <<  coef << " t=" << NbrTranslations << " " << pos << endl;
 	    }
 	  pos = this->Chain->SpiSpj(j, j + 1, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += coef * TmpValue;
+	      vDestination[pos] += coef * (TmpValue * this->ExponentialTable[NbrTranslations]);
+	      cout << "o3 : " <<  coef << " t=" << NbrTranslations << " " << pos << endl;
 	    }
 	  pos = this->Chain->SmiSmj(j, j + 1, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] += coef * TmpValue;
+	      vDestination[pos] += coef * (TmpValue * this->ExponentialTable[NbrTranslations]);
+	      cout << "o4 : " <<  coef << " t=" << NbrTranslations << " " << pos << endl;
 	    }
 	}
-      if (this->BoundaryCondition != 0.0)
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, coef, NbrTranslations);
+      if (pos != dim)
 	{
-	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue;
-	    }
-	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue;
-	    }
-	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue;
-	    }
-	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue;
-	    }
+	  vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * this->ExponentialTable[NbrTranslations] * TmpValue;
+	  cout << "p1 : " <<  coef << " " <<  this->Parities[pos] << " " <<  this->BoundaryCondition << " t=" << NbrTranslations << " " << pos << endl;
+	}
+      pos = this->Chain->SmiSpj(0, MaxPos, i, coef, NbrTranslations);
+      if (pos != dim)
+	{
+	  vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * this->ExponentialTable[NbrTranslations] * TmpValue;
+	  cout << "p2 : " <<  coef << " " <<  this->Parities[pos] << " " <<  this->BoundaryCondition << " t=" << NbrTranslations << " " << pos << endl;
+	}
+      pos = this->Chain->SpiSpj(MaxPos, 0, i, coef, NbrTranslations);
+      if (pos != dim)
+	{
+	  vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * this->ExponentialTable[NbrTranslations] * TmpValue;
+	  cout << "p3 : " <<  coef << " " <<  this->Parities[pos] << " " <<  this->BoundaryCondition << " t=" << NbrTranslations << " " << pos << endl;
+	}
+      pos = this->Chain->SmiSmj(MaxPos, 0, i, coef, NbrTranslations);
+      if (pos != dim)
+	{
+	  vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition  * this->ExponentialTable[NbrTranslations] * TmpValue;
+	  cout << "p4 : " <<  coef << " " <<  this->Parities[pos] << " " <<  this->BoundaryCondition << " t=" << NbrTranslations << " " << pos << endl;
 	}
     }
   return vDestination;
@@ -250,53 +259,50 @@ ComplexVector* SpinChainZ2InteractingHamiltonianWithTranslations::LowLevelMultip
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * TmpValues[k];
+		vDestinations[k][pos] += coef * TmpValues[k] * this->ExponentialTable[NbrTranslations];
 	    }
 	  pos = this->Chain->SmiSpj(j + 1, j, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * TmpValues[k];
+		vDestinations[k][pos] += coef * TmpValues[k] * this->ExponentialTable[NbrTranslations];
 	    }
 	  pos = this->Chain->SpiSpj(j, j + 1, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * TmpValues[k];
+		vDestinations[k][pos] += coef * TmpValues[k] * this->ExponentialTable[NbrTranslations];
 	    }
 	  pos = this->Chain->SmiSmj(j, j + 1, i, coef, NbrTranslations);
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * TmpValues[k];
+		vDestinations[k][pos] += coef * TmpValues[k] * this->ExponentialTable[NbrTranslations];
 	    }
 	}
-      if (this->BoundaryCondition != 0.0)
+      pos = this->Chain->SmiSpj(MaxPos, 0, i, coef, NbrTranslations);
+      if (pos != dim)
 	{
-	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
-	    }
-	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
-	    }
-	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
-	    }
-	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef, NbrTranslations);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k];
-	    }
+	  for (int k = 0; k < nbrVectors; ++k)
+	    vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k] * this->ExponentialTable[NbrTranslations];
+	}
+      pos = this->Chain->SmiSpj(0, MaxPos, i, coef, NbrTranslations);
+      if (pos != dim)
+	{
+	  for (int k = 0; k < nbrVectors; ++k)
+	    vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k] * this->ExponentialTable[NbrTranslations];
+	}
+      pos = this->Chain->SpiSpj(MaxPos, 0, i, coef, NbrTranslations);
+      if (pos != dim)
+	{
+	  for (int k = 0; k < nbrVectors; ++k)
+	    vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k] * this->ExponentialTable[NbrTranslations];
+	}
+      pos = this->Chain->SmiSmj(MaxPos, 0, i, coef, NbrTranslations);
+      if (pos != dim)
+	{
+	  for (int k = 0; k < nbrVectors; ++k)
+	    vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues[k] * this->ExponentialTable[NbrTranslations];
 	}
     }
   delete[] TmpValues;
@@ -321,12 +327,21 @@ void SpinChainZ2InteractingHamiltonianWithTranslations::EvaluateDiagonalMatrixEl
       this->SzSzContributions[i] = this->InteractionStrength * 4.0 * Tmp + this->FFactor * this->Chain->TotalSz(i);
       this->Parities[i] = 1.0 - 2.0 * ((double) this->Chain->Parity(i));  
     }
-  if (this->BoundaryCondition != 0.0)
+  for (int i = 0; i < dim; i++)
     {
-      for (int i = 0; i < dim; i++)
-	{
-	  this->SzSzContributions[i] += 4.0 * this->InteractionStrength * this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
-	}
+      this->SzSzContributions[i] += 4.0 * this->InteractionStrength * this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
     }
 }
 
+// evaluate all cosine/sine that are needed when computing matrix elements
+//
+
+void SpinChainZ2InteractingHamiltonianWithTranslations::EvaluateCosineTable()
+{
+  this->ExponentialTable = new Complex [this->NbrSpin];
+  double Coef = 2.0 * M_PI / ((double) this->NbrSpin) * ((double) this->Chain->GetMomentum());
+  for (int i = 0; i < this->NbrSpin ; ++i)
+    {
+      this->ExponentialTable[i] = Phase((Coef * ((double) i)));
+    }
+}

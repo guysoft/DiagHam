@@ -88,7 +88,8 @@ Spin1_2ChainFixedParityWithTranslations::Spin1_2ChainFixedParityWithTranslations
 // memorySize = memory size in bytes allowed for look-up table
 // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
 
-Spin1_2ChainFixedParityWithTranslations::Spin1_2ChainFixedParityWithTranslations (int chainLength, int momentum, int translationStep, int parity, int memorySize, int memorySlice) 
+Spin1_2ChainFixedParityWithTranslations::Spin1_2ChainFixedParityWithTranslations (int chainLength, int momentum, int translationStep, int parity, 
+										  int memorySize, int memorySlice) 
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
@@ -120,7 +121,8 @@ Spin1_2ChainFixedParityWithTranslations::Spin1_2ChainFixedParityWithTranslations
   int CurrentNbrStateInOrbit;
   unsigned long DicardFlag = ~0x0ul;
   unsigned long TmpMax = 1ul << this->ChainLength;
-  for (unsigned long i = 0l ; i < TmpMax; ++i)
+  unsigned long TmpSzParity = this->SzParity ^ (this->ChainLength & 1);
+  for (unsigned long i = 0ul; i <= TmpMax; ++i)
     {
       unsigned long TmpState = i;
 #ifdef __64_BITS__
@@ -131,7 +133,7 @@ Spin1_2ChainFixedParityWithTranslations::Spin1_2ChainFixedParityWithTranslations
       TmpState ^= TmpState >> 4;
       TmpState ^= TmpState >> 2;
       TmpState ^= TmpState >> 1;
-      if (((int) (TmpState & 0x1ul)) == this->SzParity)
+      if ((TmpState & 0x1ul) == TmpSzParity)
 	{
 	  TmpState = i;
 	  TmpState2 = this->FindCanonicalForm(TmpState, NbrTranslation);
@@ -140,7 +142,7 @@ Spin1_2ChainFixedParityWithTranslations::Spin1_2ChainFixedParityWithTranslations
 	      CurrentNbrStateInOrbit = this->FindNumberTranslation(TmpState2);
 	      if (this->CompatibilityWithMomentum[CurrentNbrStateInOrbit] == true)
 		{
-		  this->StateDescription[this->LargeHilbertSpaceDimension] = i;
+		  this->StateDescription[this->LargeHilbertSpaceDimension] = TmpState2;
 		  ++this->LargeHilbertSpaceDimension;
 		}
 	    }

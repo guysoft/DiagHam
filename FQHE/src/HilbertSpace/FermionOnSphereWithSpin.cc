@@ -1672,7 +1672,6 @@ void FermionOnSphereWithSpin::GenerateLookUpTable(unsigned long memory)
   for (int i = 0; i < 2*this->NbrLzValue; ++i)
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
   int CurrentLargestBit = CurrentHighestBit;
-  cout << this->NbrLzValue << " " << CurrentLargestBit << endl;
   int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
   if (CurrentLargestBit < this->MaximumLookUpShift)
     this->LookUpTableShift[CurrentLargestBit] = 0;
@@ -3015,6 +3014,186 @@ RealMatrix FermionOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePar
       RealMatrix TmpEntanglementMatrixZero;
       return TmpEntanglementMatrixZero;
     }
+}
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in source Hilbert space
+// nbrIndex = number of indices to consider in source Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+										 RealVector& groundState, RealSymmetricMatrix* densityMatrix)
+{
+  cout << "warning, untested code FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore" << endl;
+  FermionOnSphereWithSpin* TmpHilbertSpace = (FermionOnSphereWithSpin*) complementaryHilbertSpace;
+  FermionOnSphereWithSpin* TmpDestinationHilbertSpace = (FermionOnSphereWithSpin*) destinationHilbertSpace;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  double* TmpStateCoefficient = new double [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  long TmpNbrNonZeroElements = 0;
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace->HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[MinIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+	      int TmpLzMax = (this->LzMax << 1) +1;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+ 		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+ 		    Coefficient *= 1.0;
+ 		  else
+ 		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      double TmpValue = groundState[TmpStatePosition[j]] * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  delete[] TmpStateCoefficient;
+  return TmpNbrNonZeroElements;
+}
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in source Hilbert space
+// nbrIndex = number of indices to consider in source Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+										 ComplexVector& groundState, HermitianMatrix* densityMatrix)
+{
+  cout << "warning, untested code FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore" << endl;
+  FermionOnSphereWithSpin* TmpHilbertSpace = (FermionOnSphereWithSpin*) complementaryHilbertSpace;
+  FermionOnSphereWithSpin* TmpDestinationHilbertSpace = (FermionOnSphereWithSpin*) destinationHilbertSpace;
+  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  Complex* TmpStateCoefficient = new Complex [TmpDestinationHilbertSpace->HilbertSpaceDimension];
+  long TmpNbrNonZeroElements = 0;
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
+  for (int MinIndex = 0; MinIndex < TmpHilbertSpace->HilbertSpaceDimension; ++MinIndex)    
+    {
+      int Pos = 0;
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[MinIndex];
+      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
+	    {
+	      int TmpLzMax = (this->LzMax << 1) +1;
+	      unsigned long TmpState3 = TmpState | TmpState2;
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos != this->HilbertSpaceDimension)
+		{
+ 		  double Coefficient = TmpInvBinomial;
+		  unsigned long Sign = 0x0ul;
+		  int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
+		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
+		    {
+		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState3 ^= TmpState3 >> 32;
+#endif	
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState2 &= ~(0x1ul << Pos2);
+		      --Pos2;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+ 		    Coefficient *= 1.0;
+ 		  else
+ 		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+		  ++Pos;
+		}
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+    }
+  delete[] TmpStatePosition2;
+  delete[] TmpStatePosition;
+  delete[] TmpStateCoefficient;
+  return TmpNbrNonZeroElements;
 }
 
 

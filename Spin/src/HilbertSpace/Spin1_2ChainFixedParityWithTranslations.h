@@ -62,9 +62,10 @@ class Spin1_2ChainFixedParityWithTranslations : public Spin1_2ChainWithTranslati
   // chainLength = number of spin 1
   // momemtum = total momentum of each state
   // translationStep = indicates the step for an elementary translation
-  // parity = parity of the total (Sz + 1/2) (can be 0 or 1)
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2ChainFixedParityWithTranslations (int chainLength, int momentum, int translationStep, int parity, int memorySize, int memorySlice);
+  // memorySlice = maximum amount of memory that can be allocated to partially evalauted the states
+  Spin1_2ChainFixedParityWithTranslations (int chainLength, int momentum, int translationStep, int parity, 
+					   int memorySize = 10000000, int memorySlice = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -86,6 +87,12 @@ class Spin1_2ChainFixedParityWithTranslations : public Spin1_2ChainWithTranslati
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // compute the parity (prod_i Sz_i) for a given state
+  //
+  // state = index of the state to be applied on Sz_i operator
+  // return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
+  virtual unsigned long Parity (int state);
+
  protected:
 
   // constructor from pre-constructed datas
@@ -102,6 +109,16 @@ class Spin1_2ChainFixedParityWithTranslations : public Spin1_2ChainWithTranslati
 					   int complementaryStateShift);
 
 };
+
+// compute the parity (prod_i Sz_i) for a given state
+//
+// state = index of the state to be applied on Sz_i operator
+// return value = 0 if prod_i Sz_i = 1, 1 if prod_i Sz_i = -1
+
+inline unsigned long Spin1_2ChainFixedParityWithTranslations::Parity (int state)
+{
+  return (unsigned long) this->SzParity;
+}
 
 
 #endif

@@ -70,6 +70,9 @@ class SpinChainZ2InteractingHamiltonianWithTranslations : public AbstractHamilto
   // precalculation array where the parity of each state is stored
   double* Parities;
 
+  //array containing all the complex phase that are needed when computing matrix elements
+  Complex* ExponentialTable;
+
  public:
 
   // default constructor
@@ -83,10 +86,10 @@ class SpinChainZ2InteractingHamiltonianWithTranslations : public AbstractHamilto
   // jFactor = coupling along the z direction
   // fFactor = Zeeman term
   // interactionStrength = coupling along the x direction
-  // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
+  // boundaryCondition = boundary condition to apply (1 for periodic, -1 for antiperiodic)
   SpinChainZ2InteractingHamiltonianWithTranslations(Spin1_2ChainWithTranslations* chain, int nbrSpin, 
 						    double jFactor, double fFactor, double interactionStrength, 
-						    double boundaryCondition = 0.0);
+						    double boundaryCondition = 1.0);
 
   // destructor
   //
@@ -146,6 +149,10 @@ class SpinChainZ2InteractingHamiltonianWithTranslations : public AbstractHamilto
   // evaluate all matrix elements
   //   
   void EvaluateDiagonalMatrixElements();
+
+  // evaluate all cosine/sine that are needed when computing matrix elements
+  //
+  void EvaluateCosineTable();
 
 };
 

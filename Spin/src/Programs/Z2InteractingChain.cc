@@ -1,8 +1,10 @@
 #include "Hamiltonian/SpinChainZ2InteractingHamiltonian.h"
+#include "Hamiltonian/SpinChainZ2InteractingHamiltonianWithTranslations.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
 #include "HilbertSpace/Spin1_2ChainFixedParity.h"
+#include "HilbertSpace/Spin1_2ChainFixedParityWithTranslations.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -13,6 +15,7 @@
 #include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
 #include "MainTask/GenericRealMainTask.h"
+#include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -61,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption('\n', "random-fvalues", "use a randome f value for each site, maximum amplitude is set by f-value");
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "boundary conditions (0 for open, 1 for periodic, -1 for antiperiodic)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
+  (*SystemGroup) += new  BooleanOption('\n', "use-momentum", "compute the spectrum using the momentum as a good quantum number");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -85,15 +89,25 @@ int main(int argc, char** argv)
   double* JValues = new double[NbrSpins];
   double* FValues = new double[NbrSpins];
   double* VValues = new double[NbrSpins];
+  bool UseMomentumFlag = Manager.GetBoolean("use-momentum");
   if (Manager.GetBoolean("random-fvalues") == false)
     {
       for (int i = 0; i < NbrSpins; ++i)
 	{
 	  FValues[i] = FValue;
 	}
+      if (UseMomentumFlag == true)
+	{
+	  Lanczos.SetComplexAlgorithms();
+	}
     }
   else
     {
+      if (UseMomentumFlag == true)
+	{
+	  cout << "error, can't use momentum as a good quantum number when having disorder" << endl;
+	  return -1;
+	}
       AbstractRandomNumberGenerator* RandomNumber = 0;
       timeval CurrentTime;
       gettimeofday (&(CurrentTime), 0);
@@ -139,7 +153,14 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("random-fvalues") == false)
 	{
-	  sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# Q ", NbrSpins, JValue, FValue, VValue, BValue);
+	  if (UseMomentumFlag == false)
+	    {
+	      sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# Q ", NbrSpins, JValue, FValue, VValue, BValue);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " Z2 interacting chain with %d sites, J=%.6f, F= %.6f, V=%.6f and boundary conditions B=%d\n# Q k ", NbrSpins, JValue, FValue, VValue, BValue);
+	    }
 	}
       else
 	{
@@ -179,26 +200,60 @@ int main(int argc, char** argv)
     }
   else
     {
-      int InitalQValue = 0;
-      int MaxQValue = 1;
-      for (; InitalQValue <= MaxQValue; ++InitalQValue)
+      if (UseMomentumFlag == false)
 	{
-	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitalQValue);
-	  if (Chain->GetHilbertSpaceDimension() > 0)
-	    {	     
-	      SpinChainZ2InteractingHamiltonian	Hamiltonian (Chain, NbrSpins, JValue, FValues, VValue, (double) BValue);
-	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
-	      char* TmpQString = new char[64];
-	      sprintf (TmpQString, "%d", InitalQValue);
-	      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
-				       FirstRun, TmpEigenstateString);
-	      MainTaskOperation TaskOperation (&Task);
-	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	      FirstRun = false;
-	      delete[] TmpEigenstateString;
+	  int InitalQValue = 0;
+	  int MaxQValue = 1;
+	  for (; InitalQValue <= MaxQValue; ++InitalQValue)
+	    {
+	      Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitalQValue);
+	      if (Chain->GetHilbertSpaceDimension() > 0)
+		{	     
+		  for (int i = 0 ; i < Chain->GetHilbertSpaceDimension(); ++i)
+		    Chain->PrintState(cout, i) << endl; 
+		  SpinChainZ2InteractingHamiltonian	Hamiltonian (Chain, NbrSpins, JValue, FValues, VValue, (double) BValue);
+		  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+		  sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
+		  char* TmpQString = new char[64];
+		  sprintf (TmpQString, "%d", InitalQValue);
+		  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
+					   FirstRun, TmpEigenstateString);
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  FirstRun = false;
+		  delete[] TmpEigenstateString;
+		}
+	      delete Chain;
 	    }
-	  delete Chain;
+	}
+      else
+	{
+	  int InitalQValue = 0;
+	  int MaxQValue = 1;
+	  for (; InitalQValue <= MaxQValue; ++InitalQValue)
+	    {
+	      for (int Momentum = 0; Momentum < NbrSpins; ++Momentum)
+		{
+		  Spin1_2ChainWithTranslations* Chain = new Spin1_2ChainFixedParityWithTranslations (NbrSpins, Momentum, 1, InitalQValue);
+		  if (Chain->GetHilbertSpaceDimension() > 0)
+		    {	     
+		      for (int i = 0 ; i < Chain->GetHilbertSpaceDimension(); ++i)
+			Chain->PrintState(cout, i) << endl; 
+		      SpinChainZ2InteractingHamiltonianWithTranslations	Hamiltonian (Chain, NbrSpins, JValue, FValue, VValue, (double) BValue);
+		      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
+		      sprintf (TmpEigenstateString, "%s_q_%d_k_%d", OutputFileName, InitalQValue, Momentum);
+		      char* TmpQString = new char[64];
+		      sprintf (TmpQString, "%d %d", InitalQValue, Momentum);
+		      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
+						  FirstRun, TmpEigenstateString);
+		      MainTaskOperation TaskOperation (&Task);
+		      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		      FirstRun = false;
+		      delete[] TmpEigenstateString;
+		    }
+		  delete Chain;
+		}
+	    }
 	}
     }
   return 0;

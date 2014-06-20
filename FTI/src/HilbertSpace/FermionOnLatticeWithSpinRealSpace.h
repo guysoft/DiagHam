@@ -53,6 +53,9 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // flag to indicate that the Hilbert space should preserve Sz
   bool SzFlag;
 
+  // indices of the orbitals that are kept when performing an orbital cut
+  int* KeptOrbitals;
+
  public:
 
   // default constructor
@@ -101,6 +104,24 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // keptOrbitals = array of orbitals that have to be kept, should be sorted from the smallest index to the largest index 
+  // nbrKeptOrbitals = array of orbitals that have to be kept
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+  
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -132,6 +153,18 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
 //   virtual long GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos);
+
+  // core part of the evaluation orbital cut entanglement matrix calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+						      ComplexVector& groundState, ComplexMatrix* entanglementMatrix);
 
 };
 
