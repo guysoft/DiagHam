@@ -82,6 +82,7 @@ BosonOnSphereShort::BosonOnSphereShort (int nbrBosons, int totalLz, int lzMax)
   this->TotalLz = totalLz;
   this->LzMax = lzMax;
   this->ShiftedTotalLz = (this->TotalLz + this->NbrBosons * this->LzMax) >> 1;
+//   cout << this->NbrBosons << " " << this->TotalLz << " " << this->LzMax << endl;
   this->NbrLzValue = this->LzMax + 1;
   if (nbrBosons > 0)
     this->FermionBasis = new FermionOnSphere(nbrBosons, totalLz, lzMax + nbrBosons - 1);
@@ -5473,4 +5474,230 @@ void BosonOnSphereShort::EvaluatePartialDensityMatrixMultipartiteParticlePartiti
   delete [] TmpStatePositionA;
   delete [] TmpStatePositionB;
   delete [] TmpStateCoefficient;
+}
+
+// symmetrize a vector with even number of orbitals 
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector to be symmetrized
+// leftSpace = pointer to the Hilbert space
+// return value = symmetrized state
+RealVector BosonOnSphereShort::SymmetrizeU1U1SingleState (RealVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
+  this->SymmetrizeU1U1SingleStateOneInTwoCore (SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+  
+  if ((SymmetrizedVector.Norm() != 0) && (unnormalizedBasisFlag = false))
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+  
+//   cout << this->TotalLz << " " << SymmetrizedVector.Norm() << endl;
+  
+  return SymmetrizedVector;
+}
+
+
+// symmetrize a vector with even number of orbitals and rational coefficients
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector to be symmetrized
+// leftSpace = pointer to the Hilbert space
+// return value = symmetrized state
+LongRationalVector BosonOnSphereShort::SymmetrizeU1U1SingleState (LongRationalVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  LongRationalVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
+  this->SymmetrizeU1U1SingleStateOneInTwoCore (SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+  
+  if ((SymmetrizedVector.Norm() != 0) && (unnormalizedBasisFlag = false))
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+  
+//   cout << this->TotalLz << " " << SymmetrizedVector.Norm() << endl;
+  
+  return SymmetrizedVector;
+}
+
+// symmetrize a vector with even number of orbitals
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// leftSpace = pointer to the Hilbert space of the first color
+// return value = symmetrized state
+void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == false)
+  {
+   for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    {
+      this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+	  
+      for (int k = leftSpace->TemporaryStateLzMax + 1;  k < leftSpace->NbrLzValue; ++k)
+	leftSpace->TemporaryState[k] = 0;
+      double TmpCoefficient = leftVector[i];
+      Factorial1.SetToOne();
+      Factorial1.Power2Divide(leftSpace->NbrBosons);
+      
+      for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+	if (leftSpace->TemporaryState[k] > 1)
+	  Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+      int k = 0;
+      int kyTot = 0;
+      for (; k < this->NbrLzValue; ++k)
+      {
+	this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
+	for (int j = 0; j < leftSpace->TemporaryState[2*k]; ++j)
+	{
+	  Factorial1.FactorialMultiply(this->LzMax);
+	  Factorial1.FactorialDivide(leftSpace->LzMax);
+	  Factorial1.FactorialMultiply(2*k);
+	  Factorial1.FactorialDivide(k);
+	  Factorial1.FactorialMultiply(leftSpace->LzMax - 2*k);
+	  Factorial1.FactorialDivide(this->LzMax - k);
+	}
+	for (int j = 0; j < leftSpace->TemporaryState[2*k + 1]; ++j)
+	{
+	  Factorial1.FactorialMultiply(this->LzMax);
+	  Factorial1.FactorialDivide(leftSpace->LzMax);
+	  Factorial1.FactorialMultiply(2*k + 1);
+	  Factorial1.FactorialDivide(k);
+	  Factorial1.FactorialMultiply(leftSpace->LzMax - 2*k - 1);
+	  Factorial1.FactorialDivide(this->LzMax - k);
+	}
+	
+	kyTot += this->TemporaryState[k]*k;
+	if (leftSpace->TemporaryState[2*k] != 0 || leftSpace->TemporaryState[2*k + 1] != 0)
+	  this->TemporaryStateLzMax = k;
+      }
+	  
+      int TmpPos;
+      if (kyTot != this->ShiftedTotalLz)
+	TmpPos = this->HilbertSpaceDimension;
+      else
+      {
+	TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+      }
+      if (TmpPos < this->HilbertSpaceDimension)
+      {
+	for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+	  if (this->TemporaryState[k] > 1)
+	    Factorial1.FactorialMultiply(this->TemporaryState[k]);	
+		    
+	symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+      }
+    }
+  }
+  else
+  {
+    for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    {
+      this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+	  
+      for (int k = leftSpace->TemporaryStateLzMax + 1;  k < leftSpace->NbrLzValue; ++k)
+	leftSpace->TemporaryState[k] = 0;
+      double TmpCoefficient = leftVector[i];
+      Factorial1.SetToOne();
+  
+      for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+	if (leftSpace->TemporaryState[k] > 1)
+	  Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+      int k = 0;
+      int kyTot = 0;
+      for (; k < this->NbrLzValue; ++k)
+      {
+	this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
+	kyTot += this->TemporaryState[k]*k;
+	if (leftSpace->TemporaryState[2*k] != 0 || leftSpace->TemporaryState[2*k + 1] != 0)
+	  this->TemporaryStateLzMax = k;
+      }
+	  
+      int TmpPos;
+      if (kyTot != this->ShiftedTotalLz)
+	TmpPos = this->HilbertSpaceDimension;
+      else
+      {
+	TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+      }
+      if (TmpPos < this->HilbertSpaceDimension)
+      {
+	for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+	  if (this->TemporaryState[k] > 1)
+	    Factorial1.FactorialMultiply(this->TemporaryState[k]);	
+		    
+	symmetrizedVector[TmpPos] += Factorial1.GetNumericalValue() * TmpCoefficient;
+      }
+    }
+  }
+}
+
+// symmetrize a vector with even number of orbitals and rational coefficients
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// leftSpace = pointer to the Hilbert space of the first color
+// return value = symmetrized state
+void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  if (unnormalizedBasisFlag == false)
+  {
+   cout << " Error: normalized basis not implemented for rational numbers" << endl;
+  }
+  else
+  {
+    for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    {
+      this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+	  
+      for (int k = leftSpace->TemporaryStateLzMax + 1;  k < leftSpace->NbrLzValue; ++k)
+	leftSpace->TemporaryState[k] = 0;
+      LongRational TmpCoefficient = leftVector[i];
+      cout << TmpCoefficient << endl;
+      Factorial1.SetToOne();
+      
+  
+      for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+	if (leftSpace->TemporaryState[k] > 1)
+	  Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+	  
+      int k = 0;
+      int kyTot = 0;
+      for (; k < this->NbrLzValue; ++k)
+      {
+	this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
+	kyTot += this->TemporaryState[k]*k;
+	if (leftSpace->TemporaryState[2*k] != 0 || leftSpace->TemporaryState[2*k + 1] != 0)
+	  this->TemporaryStateLzMax = k;
+      }
+	  
+      int TmpPos;
+      if (kyTot != this->ShiftedTotalLz)
+	TmpPos = this->HilbertSpaceDimension;
+      else
+      {
+	TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+      }
+      if (TmpPos < this->HilbertSpaceDimension)
+      {
+	for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+	  if (this->TemporaryState[k] > 1)
+	    Factorial1.FactorialMultiply(this->TemporaryState[k]);
+		    
+	symmetrizedVector[TmpPos] += Factorial1.GetNumericalValue() * TmpCoefficient;
+      }
+    }
+  }
 }

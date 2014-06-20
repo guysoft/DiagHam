@@ -1853,18 +1853,12 @@ RealVector BosonOnTorusShort::SymmetrizeU1U1SingleState (RealVector& leftVector,
   else
     this->SymmetrizeU1U1SingleStateOneInTwoCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
   
-  
-  
-//   timeval TotalEndingTime;
-//   gettimeofday (&TotalEndingTime, 0);
-//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
   if ( unnormalizedBasisFlag == false )
   {
     if (SymmetrizedVector.Norm() != 0)
       SymmetrizedVector /= SymmetrizedVector.Norm();
   }
-
+  cout << this->TotalKy << " " << SymmetrizedVector.Norm() << endl;
   return SymmetrizedVector;
 }
 
@@ -1927,6 +1921,14 @@ ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftV
   return SymmetrizedVector;
 }
 
+// symmetrize a vector with even number of orbitals (divides torus aspect ratio by two)
+//
+// symmetrizedVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector to be symmetrized
+// leftSpace = pointer to the Hilbert space
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+//first component = index of the first vector component 
+//last component = index of the last component
 
 void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
 {
@@ -1977,6 +1979,14 @@ void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVe
       }  
 }
 
+// symmetrize a vector with even number of orbitals (multiplies torus aspect ratio by two)
+//
+// symmetrizedVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector to be symmetrized
+// leftSpace = pointer to the Hilbert space
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+//first component = index of the first vector component 
+//last component = index of the last component
 void BosonOnTorusShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
 {
   unsigned long LastComponent = firstComponent + nbrComponents;

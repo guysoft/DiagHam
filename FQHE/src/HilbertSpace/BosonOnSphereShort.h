@@ -794,6 +794,38 @@ class BosonOnSphereShort :  public ParticleOnSphere
   
   virtual void EvaluatePartialDensityMatrixMultipartiteParticlePartition(ParticleOnSphere * spaceA, ParticleOnSphere * spaceB, ParticleOnSphere * spaceC,  RealVector groundstate, RealSymmetricMatrix* densityMatrix, AbstractArchitecture* architecture = 0);
  
+  // symmetrize a vector with even number of orbitals 
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector to be symmetrized
+  // leftSpace = pointer to the Hilbert space
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeU1U1SingleState (RealVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a vector with even number of orbitals and rational coefficients
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector to be symmetrized
+  // leftSpace = pointer to the Hilbert space
+  // return value = symmetrized state
+  virtual LongRationalVector SymmetrizeU1U1SingleState (LongRationalVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a vector with even number of orbitals
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrize a vector with even number of orbitals and rational components
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
   protected:
 
   // convert a bosonic state into its fermionic counterpart
