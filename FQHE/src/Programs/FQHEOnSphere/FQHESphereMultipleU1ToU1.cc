@@ -323,13 +323,16 @@ int main(int argc, char** argv)
    else
    {
      RationalOutputState = TargetSpace->SymmetrizeU1U1SingleState(RationalState1, Space1, Manager.GetBoolean("unnormalized-basis"));
+     bool zeroFlag = true;
      for (int TmpPos = 0; TmpPos < TargetSpace->GetHilbertSpaceDimension(); TmpPos ++)
       {
-	if (RationalOutputState[TmpPos].IsZero())
-	{
-	  cout << "Symmetrized state is zero. No output." << endl;
-	  return -1;
-	}
+	if (RationalOutputState[TmpPos].IsZero() == false)
+	  zeroFlag = false;
+      }
+      if (zeroFlag)
+      {
+	cout << "Symmetrized state is zero. No output." << endl;
+	return -1;
       }
       
 	if (RationalOutputState.WriteVector(OutputFileName) == false)
@@ -340,16 +343,15 @@ int main(int argc, char** argv)
 	if (Manager.GetBoolean("unnormalized-basis") == true);
 	{
 	  int RootPosition = 0;
-	  while (RationalOutputState[RootPosition] == 0)
+	  while (RationalOutputState[RootPosition].IsZero())
 	  {
 	    RootPosition += 1;
 	  }
 	  LongRational RootCoef = RationalOutputState[RootPosition];
 	  RationalOutputState /= RootCoef;
-	
+	} 
       }
     }
-  }
   
   delete Space1;
   delete Space2;

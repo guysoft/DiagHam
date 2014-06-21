@@ -4477,13 +4477,13 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, Real
 
 void BosonOnSphereShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
 {
-  unsigned long LastComponent = firstComponent + nbrComponents;
+  long LastComponent = long(firstComponent + nbrComponents);
   
   FactorialCoefficient Factorial1;
   FactorialCoefficient Factorial2;
   if (unnormalizedBasisFlag == true)
     {
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+      for (long i = (long) firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -4527,7 +4527,7 @@ void BosonOnSphereShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector,
     }
   else
     {
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+      for (long i = (long) firstComponent; i < LastComponent; ++i)
 	{
 	  this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -5511,10 +5511,6 @@ LongRationalVector BosonOnSphereShort::SymmetrizeU1U1SingleState (LongRationalVe
   unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
   this->SymmetrizeU1U1SingleStateOneInTwoCore (SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
   
-  if ((SymmetrizedVector.Norm() != 0) && (unnormalizedBasisFlag = false))
-    SymmetrizedVector /= SymmetrizedVector.Norm();
-  
-//   cout << this->TotalLz << " " << SymmetrizedVector.Norm() << endl;
   
   return SymmetrizedVector;
 }
@@ -5527,13 +5523,13 @@ LongRationalVector BosonOnSphereShort::SymmetrizeU1U1SingleState (LongRationalVe
 // return value = symmetrized state
 void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
 {
-  unsigned long LastComponent = firstComponent + nbrComponents;
+  long LastComponent = long(firstComponent + nbrComponents);
   
   FactorialCoefficient Factorial1;
   FactorialCoefficient Factorial2;
   if (unnormalizedBasisFlag == false)
   {
-   for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+   for (long i = (long) firstComponent; i < LastComponent; ++i)
     {
       this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -5596,7 +5592,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symm
   }
   else
   {
-    for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    for (long i = (long) firstComponent; i < LastComponent; ++i)
     {
       this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -5647,7 +5643,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symm
 // return value = symmetrized state
 void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
 {
-  unsigned long LastComponent = firstComponent + nbrComponents;
+  long LastComponent = long(firstComponent + nbrComponents);
   
   FactorialCoefficient Factorial1;
   FactorialCoefficient Factorial2;
@@ -5657,7 +5653,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVect
   }
   else
   {
-    for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    for (long i = (long) firstComponent; i < LastComponent; ++i)
     {
       this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
 			       leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
@@ -5665,7 +5661,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVect
       for (int k = leftSpace->TemporaryStateLzMax + 1;  k < leftSpace->NbrLzValue; ++k)
 	leftSpace->TemporaryState[k] = 0;
       LongRational TmpCoefficient = leftVector[i];
-      cout << TmpCoefficient << endl;
+//       cout << TmpCoefficient << endl;
       Factorial1.SetToOne();
       
   
@@ -5696,7 +5692,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVect
 	  if (this->TemporaryState[k] > 1)
 	    Factorial1.FactorialMultiply(this->TemporaryState[k]);
 		    
-	symmetrizedVector[TmpPos] += Factorial1.GetNumericalValue() * TmpCoefficient;
+	symmetrizedVector[TmpPos] += Factorial1.GetLongRationalValue() * TmpCoefficient;
       }
     }
   }
