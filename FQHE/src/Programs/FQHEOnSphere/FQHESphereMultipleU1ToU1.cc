@@ -63,6 +63,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "rational", "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the target system (in single-state mode)", 0);
   
+#ifdef __GMP__
+  (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
+#else
+  (*SystemGroup) += new BooleanOption  ('\n', "use-longlong", "use 128bit(64bits) integers instead of 64bits(32bits) integers in rational mode");
+#endif
+  
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -228,8 +234,7 @@ int main(int argc, char** argv)
       {
 	if (Manager.GetBoolean("unnormalized-basis") == false)
 	 {
-	   cout << "Normalized basis not implemented" << endl;
-	   return -1;
+	   sprintf(OutputFileName, "bosons_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1, (NbrFluxQuanta1 - 1)/2, Manager.GetInteger("total-lz"));
 	 }
 	else
 	{
@@ -300,12 +305,8 @@ int main(int argc, char** argv)
     }
     else
     {
-      if (OutputState.WriteVector(OutputFileName) == false)
-      {
-	cout << "error while writing output state " << OutputFileName << endl;
-	return -1;
-      }
-      if (Manager.GetBoolean("unnormalized-basis") == true);
+      
+      if (Manager.GetBoolean("unnormalized-basis") == true)
       {
 	int RootPosition = 0;
 	while (abs(OutputState[RootPosition]) < 1.0e-12)
@@ -313,10 +314,14 @@ int main(int argc, char** argv)
 	  RootPosition += 1;
 	}
 	double RootCoef = OutputState[RootPosition];
-	for (int TmpPos = 0; TmpPos < TargetSpace->GetHilbertSpaceDimension(); ++TmpPos)
-	{
-	 OutputState[TmpPos] /= RootCoef; 
-	}
+	OutputState /= RootCoef;
+      }
+      else
+	OutputState /= OutputState.Norm();
+      if (OutputState.WriteVector(OutputFileName) == false)
+      {
+	cout << "error while writing output state " << OutputFileName << endl;
+	return -1;
       }
     }
    }
@@ -334,24 +339,23 @@ int main(int argc, char** argv)
 	cout << "Symmetrized state is zero. No output." << endl;
 	return -1;
       }
-      
-	if (RationalOutputState.WriteVector(OutputFileName) == false)
-	{
-	  cout << "error while writing output state " << OutputFileName << endl;
-	  return -1;
-	}
-	if (Manager.GetBoolean("unnormalized-basis") == true);
-	{
-	  int RootPosition = 0;
-	  while (RationalOutputState[RootPosition].IsZero())
-	  {
-	    RootPosition += 1;
-	  }
-	  LongRational RootCoef = RationalOutputState[RootPosition];
-	  RationalOutputState /= RootCoef;
-	} 
+	
+      int RootPosition = 0;
+      while (RationalOutputState[RootPosition].IsZero())
+      {
+	RootPosition += 1;
       }
-    }
+      LongRational RootCoef = RationalOutputState[RootPosition];
+      RationalOutputState /= RootCoef; 
+	
+      if (RationalOutputState.WriteVector(OutputFileName) == false)
+      {
+	cout << "error while writing output state " << OutputFileName << endl;
+	return -1;
+      }
+	
+     }
+   }
   
   delete Space1;
   delete Space2;
