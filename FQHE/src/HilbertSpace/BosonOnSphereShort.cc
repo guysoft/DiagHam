@@ -5489,11 +5489,7 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1SingleState (RealVector& leftVector
   unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
   this->SymmetrizeU1U1SingleStateOneInTwoCore (SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
   
-  if ((SymmetrizedVector.Norm() != 0) && (unnormalizedBasisFlag = false))
-    SymmetrizedVector /= SymmetrizedVector.Norm();
-  
-//   cout << this->TotalLz << " " << SymmetrizedVector.Norm() << endl;
-  
+   
   return SymmetrizedVector;
 }
 
@@ -5538,7 +5534,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symm
 	leftSpace->TemporaryState[k] = 0;
       double TmpCoefficient = leftVector[i];
       Factorial1.SetToOne();
-      Factorial1.Power2Divide(leftSpace->NbrBosons);
+//       Factorial1.Power2Divide(leftSpace->NbrBosons);
       
       for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
 	if (leftSpace->TemporaryState[k] > 1)
@@ -5551,21 +5547,21 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symm
 	this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
 	for (int j = 0; j < leftSpace->TemporaryState[2*k]; ++j)
 	{
-	  Factorial1.FactorialMultiply(this->LzMax);
-	  Factorial1.FactorialDivide(leftSpace->LzMax);
-	  Factorial1.FactorialMultiply(2*k);
-	  Factorial1.FactorialDivide(k);
-	  Factorial1.FactorialMultiply(leftSpace->LzMax - 2*k);
-	  Factorial1.FactorialDivide(this->LzMax - k);
+	  Factorial1.FactorialDivide(this->LzMax);
+	  Factorial1.FactorialMultiply(leftSpace->LzMax);
+	  Factorial1.FactorialDivide(2*k);
+	  Factorial1.FactorialMultiply(k);
+	  Factorial1.FactorialDivide(leftSpace->LzMax - 2*k);
+	  Factorial1.FactorialMultiply(this->LzMax - k);
 	}
 	for (int j = 0; j < leftSpace->TemporaryState[2*k + 1]; ++j)
 	{
-	  Factorial1.FactorialMultiply(this->LzMax);
-	  Factorial1.FactorialDivide(leftSpace->LzMax);
-	  Factorial1.FactorialMultiply(2*k + 1);
-	  Factorial1.FactorialDivide(k);
-	  Factorial1.FactorialMultiply(leftSpace->LzMax - 2*k - 1);
-	  Factorial1.FactorialDivide(this->LzMax - k);
+	  Factorial1.FactorialDivide(this->LzMax);
+	  Factorial1.FactorialMultiply(leftSpace->LzMax);
+	  Factorial1.FactorialDivide(2*k + 1);
+	  Factorial1.FactorialMultiply(k);
+	  Factorial1.FactorialDivide(leftSpace->LzMax - 2*k - 1);
+	  Factorial1.FactorialMultiply(this->LzMax - k);
 	}
 	
 	kyTot += this->TemporaryState[k]*k;
@@ -5587,6 +5583,8 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symm
 	    Factorial1.FactorialMultiply(this->TemporaryState[k]);	
 		    
 	symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+// 	this->PrintState(cout, TmpPos);
+// 	cout << " " << sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient << endl;
       }
     }
   }

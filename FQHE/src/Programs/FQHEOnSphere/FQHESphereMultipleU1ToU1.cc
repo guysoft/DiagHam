@@ -57,7 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-2", "use squeezed basis instead of the usual n-body basis for the second component");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-output", "use squeezed basis instead of the usual n-body basis for the symmetrized state");
   (*SystemGroup) += new BooleanOption  ('\n', "single-state", "symmetrize a unique state with even number of orbitals");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when usinf the single-state option", 2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file1", "use a file as the definition of the reference state for the first component squeezed basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file2", "use a file as the definition of the reference state for the second component squeezed basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-fileoutput", "use a file as the definition of the reference state for the symmetrized state squeezed basis");
@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("rational") == false)
 	    {
 	      OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
-	      if (OutputState.Norm() == 0.0)
+	      if (OutputState.Norm() < 1.0e-12)
 		{
 		  cout << "Symmetrized state is zero. No output." << endl;
 		  return -1;
@@ -371,10 +371,12 @@ int main(int argc, char** argv)
 	    {
 	      RationalOutputState = TargetSpace->SymmetrizeU1U1SingleState(RationalState1, Space1, Manager.GetBoolean("unnormalized-basis"));
 	      bool zeroFlag = true;
-	      for (int TmpPos = 0; TmpPos < TargetSpace->GetHilbertSpaceDimension(); TmpPos ++)
+	      int TmpPos = 0;
+	      while((TmpPos < TargetSpace->GetHilbertSpaceDimension()) && (zeroFlag == true))
 		{
 		  if (RationalOutputState[TmpPos].IsZero() == false)
 		    zeroFlag = false;
+		  TmpPos += 1;
 		}
 	      if (zeroFlag)
 		{
