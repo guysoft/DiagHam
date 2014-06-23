@@ -5263,3 +5263,116 @@ RealVector& FermionOnSphere::NormalizeJackToCylinder(RealVector& state, double a
  
   return state;
 }
+
+// symmetrize a vector by grouping several orbitals into a single one
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Lz to the largest Lz
+// lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+// return value = number of states that have been generated through the symmetrization procedure
+
+int FermionOnSphere::SymmetrizeSingleStateOneIntoManyOrbital (LongRationalVector& inputVector, int nbrOrbitals, LongRationalVector*& symmetrizedVectors, int*& lzSectors)
+{
+  int TargetSpaceNbrOrbitals = (this->LzMax + 1) / nbrOrbitals;
+  int MaxTotalLz = TargetSpaceNbrOrbitals * this->NbrFermions - ((this->NbrFermions * (this->NbrFermions - 1)) / 2);
+  LongRationalVector* TmpVectors = new LongRationalVector[MaxTotalLz + 1];
+  this->SymmetrizeSingleStateOneIntoManyOrbitalCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= MaxTotalLz; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new LongRationalVector[NbrGeneratedSectors];
+  lzSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= MaxTotalLz; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	  lzSectors[NbrGeneratedSectors] = 2 * i - ((TargetSpaceNbrOrbitals - 1) * this->NbrFermions);
+	  ++NbrGeneratedSectors;	  
+	}     
+    }  
+  return NbrGeneratedSectors;
+}
+  
+// symmetrize a vector by grouping several orbitals into a single one
+//
+// inputVector = reference on the vector to symmetrize
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Lz to the largest Lz
+// nbrOrbitals = number of orbitals to group together
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void FermionOnSphere::SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = (this->LzMax + 1) / nbrOrbitals;
+  int MaxTotalLz = TargetSpaceNbrOrbitals * this->NbrFermions - ((this->NbrFermions * (this->NbrFermions - 1)) / 2);
+  FermionOnSphere** TargetSpaces = new FermionOnSphere* [MaxTotalLz + 1];
+  for (int i = 0; i <= MaxTotalLz; ++i)
+    {
+      TargetSpaces[i] = 0;
+    }
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      unsigned long TmpNbrParticles = 0x0ul;
+      unsigned long TmpState = this->StateDescription[i];
+      unsigned long TmpState2 = 0x0ul;
+      int TmpTotalLz = 0;
+      bool OrbitalOverflow = false;
+      for (int k = 0; (k <= this->LzMax) && (OrbitalOverflow == false); ++k)
+	{
+	  TmpNbrParticles = 0x0ul;
+	  for (int l = 0; l < nbrOrbitals; ++l)
+	    {
+	      TmpNbrParticles += TmpState & 0x1ul;
+	      TmpState >>= 1;
+	    }
+	  if (TmpNbrParticles == 0x1ul)
+	    {
+	      TmpState2 |= 0x1ul << k;
+	      TmpTotalLz += k;
+	    }
+	  else
+	    {
+	      if (TmpNbrParticles > 0x1ul)
+		OrbitalOverflow = true;
+	    }
+	}
+      if (OrbitalOverflow == false)
+	{
+	  cout << hex << this->StateDescription[i] << " | " << TmpState2 << dec << endl;
+	  if (TargetSpaces[TmpTotalLz] == 0)
+	    {
+	      TargetSpaces[TmpTotalLz] = new FermionOnSphere (this->NbrFermions, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * this->NbrFermions), 
+							      TargetSpaceNbrOrbitals - 1);
+	      symmetrizedVectors[TmpTotalLz] = LongRationalVector(TargetSpaces[TmpTotalLz]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpLzMax = TargetSpaces[TmpTotalLz]->LzMax;
+	  while ((TmpState2 >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpPos = TargetSpaces[TmpTotalLz]->FindStateIndex(TmpState2, TmpLzMax);
+	  if (TmpPos < TargetSpaces[TmpTotalLz]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[TmpTotalLz][TmpPos] += inputVector[i];
+	    }
+	}
+    }
+  for (int i = 0; i <= MaxTotalLz; ++i)
+    {
+      if (TargetSpaces[i] != 0)
+	{
+	  delete TargetSpaces[i];
+	}
+    }
+}
+  

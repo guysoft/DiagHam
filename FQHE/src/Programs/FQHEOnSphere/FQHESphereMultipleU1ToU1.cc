@@ -4,6 +4,8 @@
 
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnSphereHaldaneBasisShort.h"
+#include "HilbertSpace/FermionOnSphere.h"
+#include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -55,6 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-2", "use squeezed basis instead of the usual n-body basis for the second component");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-output", "use squeezed basis instead of the usual n-body basis for the symmetrized state");
   (*SystemGroup) += new BooleanOption  ('\n', "single-state", "symmetrize a unique state with even number of orbitals");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when usinf the single-state option", 2);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file1", "use a file as the definition of the reference state for the first component squeezed basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file2", "use a file as the definition of the reference state for the second component squeezed basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-fileoutput", "use a file as the definition of the reference state for the symmetrized state squeezed basis");
@@ -91,12 +94,12 @@ int main(int argc, char** argv)
     {
       cout << "can't open file " << Manager.GetString("state-1") << endl;
     }
-  if (Manager.GetString("state-2") == 0 && Manager.GetBoolean("single-state") == false)
+  if ((Manager.GetString("state-2") == 0) && (Manager.GetBoolean("single-state") == false))
     {
       cout << "error, an input file should be provided for the second component. See man page for option syntax or type FQHESphereMultipleU1ToU1 -h" << endl;
       return -1;
     }
-  if (Manager.GetBoolean("single-state") == false && IsFile(Manager.GetString("state-2")) == false)
+  if ((Manager.GetBoolean("single-state") == false) && (IsFile(Manager.GetString("state-2")) == false))
     {
       cout << "can't open file " << Manager.GetString("state-2") << endl;
     }
@@ -141,66 +144,84 @@ int main(int argc, char** argv)
 
   BosonOnSphereShort* Space1 = 0;
   BosonOnSphereShort* Space2 = 0;
-  if (Manager.GetBoolean("haldane-1") == true)
+  FermionOnSphere* FermionicSpace = 0;
+  if (Statistics == false)
     {
-      int* ReferenceState = 0;
-      if (FQHEGetRootPartition(Manager.GetString("reference-file1"), NbrParticles1, NbrFluxQuanta1, ReferenceState) == false)
-	return -1;
-      Space1 = new BosonOnSphereHaldaneBasisShort(NbrParticles1, TotalLz1, NbrFluxQuanta1, ReferenceState);	       
+      if (Manager.GetBoolean("haldane-1") == true)
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file1"), NbrParticles1, NbrFluxQuanta1, ReferenceState) == false)
+	    return -1;
+	  Space1 = new BosonOnSphereHaldaneBasisShort(NbrParticles1, TotalLz1, NbrFluxQuanta1, ReferenceState);	       
+	}
+      else
+	{
+	  Space1 = new BosonOnSphereShort(NbrParticles1, TotalLz1, NbrFluxQuanta1);	       
+	}
     }
   else
     {
-      Space1 = new BosonOnSphereShort(NbrParticles1, TotalLz1, NbrFluxQuanta1);	       
+      if (Manager.GetBoolean("haldane-1") == true)
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file1"), NbrParticles1, NbrFluxQuanta1, ReferenceState) == false)
+	    return -1;
+	  FermionicSpace = new FermionOnSphereHaldaneBasis(NbrParticles1, TotalLz1, NbrFluxQuanta1, ReferenceState);	       
+	}
+      else
+	{
+	  FermionicSpace = new FermionOnSphere(NbrParticles1, TotalLz1, NbrFluxQuanta1);	       
+	}
     }
   
   if (Manager.GetBoolean("single-state") == false)
-  {
-    Statistics = true;
-    if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("state-2"),
-						   NbrParticles2, NbrFluxQuanta2, TotalLz2, Statistics) == false)
-      {
-	cout << "error while retrieving system parameters from file name " << Manager.GetString("state-2") << endl;
+    {
+      Statistics = true;
+      if (FQHEOnSphereFindSystemInfoFromVectorFileName(Manager.GetString("state-2"),
+						       NbrParticles2, NbrFluxQuanta2, TotalLz2, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << Manager.GetString("state-2") << endl;
+	  return -1;
+	}
+      /*  if (NbrParticles1 != NbrParticles2)
+	  {
+	  cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
+	  return -1;
+	  }*/
+      if (NbrFluxQuanta2 != NbrFluxQuanta1)
+	{
+	  cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of flux quanta" << endl;
+	  return -1;
+	}
+      
+      
+      if (State2.ReadVector (Manager.GetString("state-2")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("state-2") << endl;
+	  return -1;      
+	}
+      
+      if (Manager.GetBoolean("haldane-2") == true)
+	{
+	  int* ReferenceState = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-file2"), NbrParticles2, NbrFluxQuanta2, ReferenceState) == false)
 	return -1;
-      }
-  /*  if (NbrParticles1 != NbrParticles2)
-      {
-      cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
-      return -1;
-      }*/
-  if (NbrFluxQuanta2 != NbrFluxQuanta1)
-    {
-      cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of flux quanta" << endl;
-      return -1;
-    }
-    
-    
-  if (State2.ReadVector (Manager.GetString("state-2")) == false)
-    {
-      cout << "can't open vector file " << Manager.GetString("state-2") << endl;
-      return -1;      
-    }
-  
-  if (Manager.GetBoolean("haldane-2") == true)
-    {
-      int* ReferenceState = 0;
-      if (FQHEGetRootPartition(Manager.GetString("reference-file2"), NbrParticles2, NbrFluxQuanta2, ReferenceState) == false)
-	return -1;
-      Space2 = new BosonOnSphereHaldaneBasisShort(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);	       
+	  Space2 = new BosonOnSphereHaldaneBasisShort(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);	       
+	}
+      else
+	{
+	  Space2 = new BosonOnSphereShort(NbrParticles2, TotalLz2, NbrFluxQuanta2);	       
+	}
+      
     }
   else
     {
-      Space2 = new BosonOnSphereShort(NbrParticles2, TotalLz2, NbrFluxQuanta2);	       
+      if (((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) 
+	{
+	  cout << "Error: number of orbitals should be a multiple of " << Manager.GetInteger("nbr-orbitals") << " for symmetrization of a single state" << endl;
+	  return -1;
+	}
     }
-  
-  }
-  else
-  {
-   if ((NbrFluxQuanta1 % 2) == 0) 
-   {
-    cout << "Error: number of orbitals should be even for symmetrization of a single state" << endl;
-    return -1;
-   }
-  }
   
   
   
@@ -214,35 +235,53 @@ int main(int argc, char** argv)
     {
       OutputFileName = new char [512];
       if (Manager.GetBoolean("single-state") == false)
-      {
-	if (Manager.GetBoolean("unnormalized-basis") == false)
-	  {
-	    if (Manager.GetBoolean("haldane-output") == true)
-	      sprintf (OutputFileName, "bosons_haldane_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
-	    else
-	      sprintf (OutputFileName, "bosons_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
-	  }
-	else
-	  {
-	    if (Manager.GetBoolean("haldane-output") == true)
-	      sprintf (OutputFileName, "bosons_haldane_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
-	    else
-	      sprintf (OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
-	  }
-      }
-      else
-      {
-	if (Manager.GetBoolean("unnormalized-basis") == false)
-	 {
-	   sprintf(OutputFileName, "bosons_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1, (NbrFluxQuanta1 - 1)/2, Manager.GetInteger("total-lz"));
-	 }
-	else
 	{
-	  sprintf(OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1, (NbrFluxQuanta1 - 1)/2, Manager.GetInteger("total-lz"));
+	  if (Manager.GetBoolean("unnormalized-basis") == false)
+	    {
+	      if (Manager.GetBoolean("haldane-output") == true)
+		sprintf (OutputFileName, "bosons_haldane_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+	      else
+		sprintf (OutputFileName, "bosons_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("haldane-output") == true)
+		sprintf (OutputFileName, "bosons_haldane_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+	      else
+		sprintf (OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+	    }
 	}
-      }
+      else
+	{
+	  if (Statistics == false)
+	    {
+	      if (Manager.GetBoolean("unnormalized-basis") == false)
+		{
+		  sprintf(OutputFileName, "bosons_symmetrized_n_%d_2s_%d", NbrParticles1, 
+			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		}
+	      else
+		{
+		  sprintf(OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d", NbrParticles1, 
+			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		}
+	    }
+	  else
+	    {
+	      if (Manager.GetBoolean("unnormalized-basis") == false)
+		{
+		  sprintf(OutputFileName, "fermions_symmetrized_n_%d_2s_%d", NbrParticles1, 
+			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		}
+	      else
+		{
+		  sprintf(OutputFileName, "fermions_unnormalized_symmetrized_n_%d_2s_%d", NbrParticles1, 
+			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		}
+	    }
+	}
     }
-
+  
 /*  if (NbrParticles1 != NbrParticles2)
     {
       cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
@@ -251,114 +290,168 @@ int main(int argc, char** argv)
   
   BosonOnSphereShort* TargetSpace = 0;
   if (Manager.GetBoolean("single-state") == false)
-  {
-    if (Manager.GetBoolean("haldane-output") == true)
-      {
-	int* ReferenceState = 0;
-	int NbrParticles = 0;
-	int NbrFluxQuanta = 0;
-	if (FQHEGetRootPartition(Manager.GetString("reference-fileoutput"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
-	  return -1;
-	if (NbrParticles != (NbrParticles1 + NbrParticles2))
-	  {
-	    cout << "error : number of particles for the output state ( " << NbrParticles << " ) is different from the one computed from the input states (" << (NbrParticles1 + NbrParticles2) << ")" << endl;
-	    return -1;
-	  }
-	if (NbrFluxQuanta != NbrFluxQuanta2)
-	  {
-	    cout << "error : number of flux quanta for the output state ( " << NbrFluxQuanta << " ) is different from the one computed from the input states (" << NbrFluxQuanta2 << ")" << endl;
-	    return -1;
-	  }
-	int TotalLz = 0;
-	TargetSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta2, ReferenceState);	       
-	if (TotalLz != (TotalLz1 + TotalLz2))
-	  {
-	    cout << "error : total Lz for the output state ( " << TotalLz << " ) is different from the one computed from the input states (" << (TotalLz1 + TotalLz2) << ")" << endl;
-	    return -1;
-	  }
-      }
-    else
     {
-      TargetSpace = new BosonOnSphereShort(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	       
-    }
-    RealVector OutputState = TargetSpace->SymmetrizeU1U1State (State1 , State2, Space1 , Space2 , Manager.GetBoolean("unnormalized-basis") , Architecture.GetArchitecture());
-    if (OutputState.WriteVector(OutputFileName) == false)
-    {
-      cout << "error while writing output state " << OutputFileName << endl;
-      return -1;
-    }
-  }
-  else
-  {
-   int NbrFluxQuanta = (NbrFluxQuanta1 - 1)/2;
-   int TotalLz = Manager.GetInteger("total-lz");
-   TargetSpace = new BosonOnSphereShort(NbrParticles1, TotalLz, NbrFluxQuanta);
-   RealVector OutputState;
-   LongRationalVector RationalOutputState;
-   if (Manager.GetBoolean("rational") == false)
-   {
-    OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
-    if (OutputState.Norm() == 0)
-    {
-      cout << "Symmetrized state is zero. No output." << endl;
-      return -1;
-    }
-    else
-    {
-      
-      if (Manager.GetBoolean("unnormalized-basis") == true)
-      {
-	int RootPosition = 0;
-	while (abs(OutputState[RootPosition]) < 1.0e-12)
+      if (Manager.GetBoolean("haldane-output") == true)
 	{
-	  RootPosition += 1;
+	  int* ReferenceState = 0;
+	  int NbrParticles = 0;
+	  int NbrFluxQuanta = 0;
+	  if (FQHEGetRootPartition(Manager.GetString("reference-fileoutput"), NbrParticles, NbrFluxQuanta, ReferenceState) == false)
+	    return -1;
+	  if (NbrParticles != (NbrParticles1 + NbrParticles2))
+	    {
+	      cout << "error : number of particles for the output state ( " << NbrParticles << " ) is different from the one computed from the input states (" << (NbrParticles1 + NbrParticles2) << ")" << endl;
+	      return -1;
+	    }
+	  if (NbrFluxQuanta != NbrFluxQuanta2)
+	    {
+	      cout << "error : number of flux quanta for the output state ( " << NbrFluxQuanta << " ) is different from the one computed from the input states (" << NbrFluxQuanta2 << ")" << endl;
+	      return -1;
+	    }
+	  int TotalLz = 0;
+	  TargetSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta2, ReferenceState);	       
+	  if (TotalLz != (TotalLz1 + TotalLz2))
+	    {
+	      cout << "error : total Lz for the output state ( " << TotalLz << " ) is different from the one computed from the input states (" << (TotalLz1 + TotalLz2) << ")" << endl;
+	      return -1;
+	    }
 	}
-	double RootCoef = OutputState[RootPosition];
-	OutputState /= RootCoef;
-      }
       else
-	OutputState /= OutputState.Norm();
+	{
+	  TargetSpace = new BosonOnSphereShort(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	       
+	}
+      RealVector OutputState = TargetSpace->SymmetrizeU1U1State (State1 , State2, Space1 , Space2 , Manager.GetBoolean("unnormalized-basis") , Architecture.GetArchitecture());
       if (OutputState.WriteVector(OutputFileName) == false)
-      {
-	cout << "error while writing output state " << OutputFileName << endl;
-	return -1;
-      }
+	{
+	  cout << "error while writing output state " << OutputFileName << endl;
+	  return -1;
+	}
     }
-   }
-   else
-   {
-     RationalOutputState = TargetSpace->SymmetrizeU1U1SingleState(RationalState1, Space1, Manager.GetBoolean("unnormalized-basis"));
-     bool zeroFlag = true;
-     for (int TmpPos = 0; TmpPos < TargetSpace->GetHilbertSpaceDimension(); TmpPos ++)
-      {
-	if (RationalOutputState[TmpPos].IsZero() == false)
-	  zeroFlag = false;
-      }
-      if (zeroFlag)
-      {
-	cout << "Symmetrized state is zero. No output." << endl;
-	return -1;
-      }
-	
-      int RootPosition = 0;
-      while (RationalOutputState[RootPosition].IsZero())
-      {
-	RootPosition += 1;
-      }
-      LongRational RootCoef = RationalOutputState[RootPosition];
-      RationalOutputState /= RootCoef; 
-	
-      if (RationalOutputState.WriteVector(OutputFileName) == false)
-      {
-	cout << "error while writing output state " << OutputFileName << endl;
-	return -1;
-      }
-	
-     }
-   }
+  else
+    {
+      if (Statistics == false)
+	{
+	  int NbrFluxQuanta = (NbrFluxQuanta1 - 1) / 2;
+	  int TotalLz = Manager.GetInteger("total-lz");
+	  char* FullOutputFileName = new char [strlen(OutputFileName) + 128];
+	  sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, (int) Manager.GetInteger("total-lz"));
+	  TargetSpace = new BosonOnSphereShort(NbrParticles1, TotalLz, NbrFluxQuanta);
+	  RealVector OutputState;
+	  LongRationalVector RationalOutputState;
+	  if (Manager.GetBoolean("rational") == false)
+	    {
+	      OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
+	      if (OutputState.Norm() == 0.0)
+		{
+		  cout << "Symmetrized state is zero. No output." << endl;
+		  return -1;
+		}
+	      else
+		{		  
+		  if (Manager.GetBoolean("unnormalized-basis") == true)
+		    {
+		      int RootPosition = 0;
+		      while (abs(OutputState[RootPosition]) < 1.0e-12)
+			{
+			  RootPosition += 1;
+			}
+		      double RootCoef = OutputState[RootPosition];
+		      OutputState /= RootCoef;
+		    }
+		  else
+		    OutputState /= OutputState.Norm();
+		  if (OutputState.WriteVector(FullOutputFileName) == false)
+		    {
+		      cout << "error while writing output state " << FullOutputFileName << endl;
+		      return -1;
+		    }
+		}
+	    }
+	  else
+	    {
+	      RationalOutputState = TargetSpace->SymmetrizeU1U1SingleState(RationalState1, Space1, Manager.GetBoolean("unnormalized-basis"));
+	      bool zeroFlag = true;
+	      for (int TmpPos = 0; TmpPos < TargetSpace->GetHilbertSpaceDimension(); TmpPos ++)
+		{
+		  if (RationalOutputState[TmpPos].IsZero() == false)
+		    zeroFlag = false;
+		}
+	      if (zeroFlag)
+		{
+		  cout << "Symmetrized state is zero. No output." << endl;
+		  return -1;
+		}
+	      
+	      int RootPosition = 0;
+	      while (RationalOutputState[RootPosition].IsZero())
+		{
+		  RootPosition += 1;
+		}
+	      LongRational RootCoef = RationalOutputState[RootPosition];
+	      RationalOutputState /= RootCoef; 
+	      
+	      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
+		{
+		  cout << "error while writing output state " << FullOutputFileName << endl;
+		  return -1;
+		}
+	      
+	    }
+	}
+      else
+	{
+	  char* FullOutputFileName = new char [strlen(OutputFileName) + 128];
+	  RealVector OutputState;
+	  LongRationalVector RationalOutputState;
+	  if (Manager.GetBoolean("rational") == false)
+	    {
+	    }
+	  else
+	    {
+	      LongRationalVector* RationalOutputStates;
+	      int* LzSectors;
+	      int NbrLzSectors = FermionicSpace->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+	      int NbrGeneratedStates = 0;
+	      for (int i = 0; i < NbrLzSectors; ++i)
+		{
+		  cout << "state generated in the 2*Lz=" << LzSectors[i] << " sector" << endl;
+		  LongRationalVector& RationalOutputState = RationalOutputStates[i];
+		  bool zeroFlag = true;
+		  int RootPosition = 0;
+		  for (int TmpPos = 0; (TmpPos < RationalOutputState.GetVectorDimension()) && (zeroFlag == true); ++TmpPos)
+		    {
+		      if (RationalOutputState[TmpPos].IsZero() == false)
+			zeroFlag = false;
+		      else
+			++RootPosition;
+		    }
+		  if (zeroFlag)
+		    {
+		      cout << "this state is null." << endl;
+		    }
+		  else
+		    {
+		      LongRational RootCoef = RationalOutputState[RootPosition];
+		      RationalOutputState /= RootCoef; 
+		      sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+		      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
+			{
+			  cout << "error while writing output state " << FullOutputFileName << endl;
+			  return -1;
+			}
+		      ++NbrGeneratedStates;
+		    }		  
+		}
+	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
+	    }
+	}
+    }
   
-  delete Space1;
-  delete Space2;
-  delete TargetSpace;
+  if (Space1 != 0)
+    delete Space1;
+  if (Space2 != 0)
+    delete Space2;
+  if (TargetSpace != 0)
+    delete TargetSpace;
 }
 

@@ -812,6 +812,15 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = vector resulting of the operation
   virtual LongRationalVector GetLzSymmetricVector(ParticleOnSphere* finalSpace, LongRationalVector& initialVector);
 
+  // symmetrize a vector by grouping several orbitals into a single one
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStateOneIntoManyOrbital (LongRationalVector& inputVector, int nbrOrbitals, LongRationalVector*& symmetrizedVectors, int*& lzSectors);
+  
  protected:
 
   // find state index
@@ -873,6 +882,15 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = fermionic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
+  // symmetrize a vector by grouping several orbitals into a single one
+  //
+  // inputVector = reference on the vector to symmetrize
+  // symmetrizedVectors = array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // nbrOrbitals = number of orbitals to group together
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  void SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+  
 };
 
 // get the particle statistic 
