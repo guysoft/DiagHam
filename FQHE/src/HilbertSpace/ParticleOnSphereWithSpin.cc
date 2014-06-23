@@ -243,6 +243,14 @@ int ParticleOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficien
   return this->HilbertSpaceDimension;
 }
 
+// apply a^+_m_d a_n_d operator to a given state  and check if resulting state belongs to Hilbert space
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
 // apply a^+_m_u a_n_d operator to a given state 
 //
 // index = index of the state on which the operator has to be applied

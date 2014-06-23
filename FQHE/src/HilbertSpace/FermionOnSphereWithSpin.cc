@@ -792,7 +792,7 @@ int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
-  return this->TargetSpace->FindStateIndex(State, NewLargestBit);
+  return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
 }
 
 
@@ -846,7 +846,7 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
-  return this->TargetSpace->FindStateIndex(State, NewLargestBit);
+  return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
 }
 
 
@@ -1015,6 +1015,7 @@ int FermionOnSphereWithSpin::AduAdu (int m1, int m2, double& coefficient)
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
+
 // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator (spin down)
@@ -1057,6 +1058,7 @@ int FermionOnSphereWithSpin::AddAdd (int m1, int m2, double& coefficient)
   TmpState |= (0x1ul << m1);
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
+
 
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
 //

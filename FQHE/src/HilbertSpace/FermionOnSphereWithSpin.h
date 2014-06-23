@@ -251,7 +251,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAu (int index, int m, int n, double& coefficient);
-
+  
   // apply a^+_m_d a_n_d operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -260,7 +260,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AddAd (int index, int m, int n, double& coefficient);
-
+  
   // apply a^+_m_u a_n_d operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -269,7 +269,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, int n, double& coefficient);
-
+  
   // apply a^+_m_d a_n_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -330,7 +330,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAdu (int m1, int m2, double& coefficient);
-
+   
   // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin down)
@@ -338,16 +338,16 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AddAdd (int m1, int m2, double& coefficient);
-
-  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  
+    // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
   // m2 = second index for creation operator (spin down)
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient);
-
-  // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
+  
+    // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
   //
   // index = index of the state on which the operator has to be applied
   // n = array containg the indices of the annihilation operators (first index corresponding to the leftmost operator)

@@ -95,6 +95,13 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+  
+  // carefully test whether state is in Hilbert-space and find corresponding state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+  // return value = corresponding index, or dimension of space, if not found
+  virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
  protected:
 

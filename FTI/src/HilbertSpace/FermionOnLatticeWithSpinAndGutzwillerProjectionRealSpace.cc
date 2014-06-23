@@ -442,3 +442,44 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
   return TmpNbrNonZeroElements;
 }
 
+// carefully test whether state is in Hilbert-space and find corresponding state index
+//
+// stateDescription = unsigned integer describing the state
+// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
+// return value = corresponding index, or dimension of space, if not found
+int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+{
+  if (bitcount(stateDescription)!=this->NbrFermions)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  if (highestBit<0)
+    {
+      highestBit = getHighestBit(stateDescription)-1;
+    }
+  if (highestBit >= this->NbrSite)
+    {
+      return this->HilbertSpaceDimension;
+    }
+  bool flag = false;
+  int i = 0;
+  while (i < 2*this->NbrSite)
+  {
+    unsigned long TmpState = (stateDescription >> i) ;
+    if (((TmpState && 0x1ul) != 0x1ul) && ((TmpState && 0x2ul) != 0x1ul))
+      return this->HilbertSpaceDimension;   
+    i += 2;
+  }
+  
+  int Index = this->FindStateIndex(stateDescription, highestBit);  
+  if (this->StateDescription[Index] == stateDescription)
+    return Index;
+  else
+    {
+      for (int i=0; i<HilbertSpaceDimension; ++i)
+	if (this->StateDescription[i] == stateDescription)
+	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]
+	       <<"="<<stateDescription<<"!"<<endl;      
+      return this->HilbertSpaceDimension;
+    }
+}

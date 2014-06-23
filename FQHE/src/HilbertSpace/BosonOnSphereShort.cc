@@ -5488,8 +5488,10 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1SingleState (RealVector& leftVector
   unsigned long firstComponent = 0;
   unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
   this->SymmetrizeU1U1SingleStateOneInTwoCore (SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+  /*
+  cout << this->TotalLz << " " << SymmetrizedVector.Norm() << endl;
+  */
   
-   
   return SymmetrizedVector;
 }
 

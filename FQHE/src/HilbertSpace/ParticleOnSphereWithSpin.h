@@ -143,6 +143,15 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAu (int index, int m, int n, double& coefficient);
+  
+  // apply a^+_m_u a_n_u operator to a given state and check if resulting state belongs to Hilbert space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+//   virtual int AduAuSafe (int index, int m, int n, double& coefficient);
 
   // apply a^+_m_d a_n_d operator to a given state 
   //
@@ -152,6 +161,15 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AddAd (int index, int m, int n, double& coefficient);
+  
+  // apply a^+_m_d a_n_d operator to a given state and check if resulting state belongs to Hilbert space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+//   virtual int AddAdSafe (int index, int m, int n, double& coefficient);
 
   // apply a^+_m_u a_n_d operator to a given state 
   //
@@ -161,6 +179,15 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, int n, double& coefficient);
+  
+  // apply a^+_m_u a_n_d operator to a given state and check if resulting state belongs to Hilbert space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+//   virtual int AduAdSafe (int index, int m, int n, double& coefficient);
 
   // apply a^+_m_u a_n_d operator to a given state 
   //
@@ -276,7 +303,7 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAdu (int m1, int m2, double& coefficient);
-
+  
   // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin down)
@@ -284,7 +311,7 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AddAdd (int m1, int m2, double& coefficient);
-
+  
   // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
@@ -292,7 +319,7 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient);
-
+  
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)

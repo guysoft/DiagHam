@@ -255,7 +255,7 @@ ostream& FermionOnLatticeWithSpinRealSpace::PrintState (ostream& Str, int state)
 {
   unsigned long TmpState = this->StateDescription[state];
   unsigned long Tmp;
-  for (int i = 0; i < this->NbrLzValue; ++i)
+  for (int i = 0; i < this->LzMax; ++i)
     {
       Tmp = (TmpState >> (i << 1)) & 03ul;
       switch (Tmp)
@@ -305,7 +305,7 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
       return pos;
     }
   long TmpPos = this->GenerateStates(nbrFermions - 2, currentSite - 1, pos);
-  unsigned long Mask = 0x3ul << ((currentSite) << 1);
+  unsigned long Mask = 0x3ul << (currentSite << 1);
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
   TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, pos);
@@ -313,7 +313,7 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
    TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, pos);
-   Mask = 0x1ul << ((currentSite) << 1);
+   Mask = 0x1ul << (currentSite << 1);
    for (; pos < TmpPos; ++pos)
      this->StateDescription[pos] |= Mask;
   return this->GenerateStates(nbrFermions, currentSite - 1, pos);

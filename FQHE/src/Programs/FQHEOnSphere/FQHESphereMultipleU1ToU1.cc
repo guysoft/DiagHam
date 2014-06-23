@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("rational") == false)
 	    {
 	      OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
-	      if (OutputState.Norm() < 1.0e-12)
+	      if (OutputState.Norm() < 1.0e-10)
 		{
 		  cout << "Symmetrized state is zero. No output." << endl;
 		  return -1;
