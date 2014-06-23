@@ -371,6 +371,21 @@ Vector* LongRationalVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
   return TmpVectors;
 }
 
+// test if the vector is a null vector
+//
+// return value = true if the vector is a null vector
+
+bool LongRationalVector::IsNullVector()
+{
+  long i = 0l;
+  while ((i < this->LargeDimension) && (this->Components[i].IsZero()))
+    ++i;
+  if (i == this->LargeDimension)
+    return true;
+  else
+    return false;  
+}
+
 // sum two vectors
 //
 // vector = vector to add
@@ -379,7 +394,7 @@ Vector* LongRationalVector::EmptyCloneArray(int nbrVectors, bool zeroFlag)
 LongRationalVector& LongRationalVector::operator += (LongRationalVector& vector)
 {
   if (this->Dimension == -1)
-    for (long i = 0; i < this->LargeDimension; ++i)
+    for (long i = 0l; i < this->LargeDimension; ++i)
       this->Components[i] += vector[i];
   else
     {

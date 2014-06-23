@@ -182,6 +182,11 @@ class LongRationalVector : public Vector
   // return value = denominator
   long Den(long index);
 
+  // test if the vector is a null vector
+  //
+  // return value = true if the vector is a null vector
+  bool IsNullVector();
+
   // sum two vectors
   //
   // vector = vector to add

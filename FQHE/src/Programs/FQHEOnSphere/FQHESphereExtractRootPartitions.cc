@@ -180,60 +180,60 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       if (FourDFlag == false)
-      {
-	if (FQHEOnSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0), NbrParticles, NbrFluxQuanta, MaxLzValue, FermionFlag) == false)  
 	{
-	  cout << "can't retrieve system information from file name " << EigenstateListFile(0,0) << endl;
-	  return -1;
+	  if (FQHEOnSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0), NbrParticles, NbrFluxQuanta, MaxLzValue, FermionFlag) == false)  
+	    {
+	      cout << "can't retrieve system information from file name " << EigenstateListFile(0,0) << endl;
+	      return -1;
+	    }
+	  
+	  FQHEOnSphereFindInternalSymmetryGroupFromFileName(EigenstateListFile(0,0), SU2SpinFlag, SU3SpinFlag, SU4SpinFlag);          
+	  MinLzValue = MaxLzValue;
+	  TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
+	  LzDegeneracy = new int[TotalMaxLz + 1];
+	  TotalNbrZeroEnergyStates = EigenstateListFile.GetNbrLines();
+	  for (int i = 0 ; i < TotalMaxLz; ++i)
+	    LzDegeneracy[i] = 0;
+	  LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
 	}
-      
-      FQHEOnSphereFindInternalSymmetryGroupFromFileName(EigenstateListFile(0,0), SU2SpinFlag, SU3SpinFlag, SU4SpinFlag);          
-      MinLzValue = MaxLzValue;
-      TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
-      LzDegeneracy = new int[TotalMaxLz + 1];
-      TotalNbrZeroEnergyStates = EigenstateListFile.GetNbrLines();
-      for (int i = 0 ; i < TotalMaxLz; ++i)
-	LzDegeneracy[i] = 0;
-      LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
-      }
       else
-      {
-	if (PESFlag == false)
 	{
-	  if (FQHEOn4DSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0),NbrParticles, NbrFluxQuanta, MaxJzValue, MaxKzValue,FermionFlag) == false)
-	  {
-	    cout << "can't retrieve system information from 4d file name " << EigenstateListFile(0,0) << endl;
-	    return -1;
-	  }
+	  if (PESFlag == false)
+	    {
+	      if (FQHEOn4DSphereFindSystemInfoFromVectorFileName(EigenstateListFile(0,0),NbrParticles, NbrFluxQuanta, MaxJzValue, MaxKzValue,FermionFlag) == false)
+		{
+		  cout << "can't retrieve system information from 4d file name " << EigenstateListFile(0,0) << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      if (FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(EigenstateListFile(0,0),NbrTotParticles,NbrParticles, NbrFluxQuanta, MaxJzValue, MaxKzValue,FermionFlag) == false)
+		{
+		  cout << "can't retrieve system information from 4d file name " << EigenstateListFile(0,0) << endl;
+		  return -1;
+		}
+	    }
+	  int TotalNbrSectors = 2*NbrParticles*NbrFluxQuanta*(NbrParticles*NbrFluxQuanta + 1) + 1;
+	  // 	cout << TotalNbrSectors << endl;
+	  totalJz = new int[TotalNbrSectors];
+	  totalKz = new int[TotalNbrSectors];
+	  GetSectorsJzKzFromLinearizedIndex(NbrParticles, NbrFluxQuanta, totalJz, totalKz);
+	  if (MaxJzValue >= 0) 
+	    MaxLzValue = MaxKzValue + NbrParticles*NbrFluxQuanta + 2*NbrParticles*NbrFluxQuanta*MaxJzValue - MaxJzValue*(MaxJzValue - 1);
+	  else
+	    MaxLzValue = -(MaxKzValue + NbrParticles*NbrFluxQuanta + MaxJzValue + (2*NbrParticles*NbrFluxQuanta + MaxJzValue + 1)*(-MaxJzValue - 1)) - 1;
+	  // 	MaxLzValue = MaxLzValue + NbrParticles*NbrFluxQuanta*NbrParticles*NbrFluxQuanta ;
+	  MinLzValue = MaxLzValue;
+	  TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
+	  LzDegeneracy = new int[TotalMaxLz + 1];
+	  TotalNbrZeroEnergyStates = EigenstateListFile.GetNbrLines();
+	  for (int i = 0 ; i < TotalMaxLz; ++i)
+	    LzDegeneracy[i] = 0;
+	  LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
 	}
-	else
-	{
-	  if (FQHEOn4DSphereFindSystemInfoFromPESVectorFileName(EigenstateListFile(0,0),NbrTotParticles,NbrParticles, NbrFluxQuanta, MaxJzValue, MaxKzValue,FermionFlag) == false)
-	  {
-	    cout << "can't retrieve system information from 4d file name " << EigenstateListFile(0,0) << endl;
-	    return -1;
-	  }
-	}
-	int TotalNbrSectors = 2*NbrParticles*NbrFluxQuanta*(NbrParticles*NbrFluxQuanta + 1) + 1;
-// 	cout << TotalNbrSectors << endl;
-	totalJz = new int[TotalNbrSectors];
-	totalKz = new int[TotalNbrSectors];
-	GetSectorsJzKzFromLinearizedIndex(NbrParticles, NbrFluxQuanta, totalJz, totalKz);
-	if (MaxJzValue >= 0) 
-	  MaxLzValue = MaxKzValue + NbrParticles*NbrFluxQuanta + 2*NbrParticles*NbrFluxQuanta*MaxJzValue - MaxJzValue*(MaxJzValue - 1);
-	else
-	  MaxLzValue = -(MaxKzValue + NbrParticles*NbrFluxQuanta + MaxJzValue + (2*NbrParticles*NbrFluxQuanta + MaxJzValue + 1)*(-MaxJzValue - 1)) - 1;
-// 	MaxLzValue = MaxLzValue + NbrParticles*NbrFluxQuanta*NbrParticles*NbrFluxQuanta ;
-	MinLzValue = MaxLzValue;
-	TotalMaxLz = (MaxLzValue - MinLzValue) >> 1;
-	LzDegeneracy = new int[TotalMaxLz + 1];
-	TotalNbrZeroEnergyStates = EigenstateListFile.GetNbrLines();
-	for (int i = 0 ; i < TotalMaxLz; ++i)
-	  LzDegeneracy[i] = 0;
-	 LzDegeneracy[TotalMaxLz] = TotalNbrZeroEnergyStates;
-      }
     }
-      
+  
   if (TotalNbrZeroEnergyStates == 0l)
     {
       cout << "Spectrum " << Manager.GetString("input-file") << " does not contain any zero energy state" << endl;      
@@ -276,50 +276,50 @@ int main(int argc, char** argv)
   for (int TotalLz = MinLzValue; TotalLz <= MaxLzValue; TotalLz += 2)
     {
       if (FourDFlag == false)
-      {
-	if ((TotalMaxLz & 1) != 0)
-	  {
-	    File << "Lz = " << TotalLz << "/2 : " << endl;
-	  }
-	else
-	  {
-	    File << "Lz = " << (TotalLz  >> 1) << " : " << endl;
-	  }
-      }
-      else
-      {
-	int Shift = NbrParticles*NbrFluxQuanta*NbrParticles*NbrFluxQuanta ;
-	int TotalMaxJz = totalJz[TotalMaxLz + Shift];
-	int TotalMaxKz = totalKz[TotalMaxLz + Shift];
-	TotalJz = totalJz[TotalLz + Shift];
-	TotalKz = totalKz[TotalLz + Shift];
-	cout << TotalJz << "  " << TotalKz << endl;
-	if ((TotalMaxJz & 1) != 0)
-	  {
-	    File << "Jz = " << TotalJz << "/2 , ";
-	    if ((TotalMaxKz & 1) != 0)
-	    {
-	      File << "Kz = " << TotalKz << "/2 : " << endl;
-	    }
-	    else 
-	    {
-	     File << "Kz = " << (TotalKz  >> 1) << " : " << endl;
-	    }
-	  }
-	else
 	{
-	 File << "Jz = " << (TotalJz  >> 1) << " , ";
-	 if ((TotalMaxKz & 1) != 0)
+	  if ((TotalMaxLz & 1) != 0)
 	    {
-	      File << "Kz = " << TotalKz << "/2 : " << endl;
+	      File << "Lz = " << TotalLz << "/2 : " << endl;
 	    }
-	    else 
+	  else
 	    {
-	     File << "Kz = " << (TotalKz  >> 1) << " : " << endl;
+	      File << "Lz = " << (TotalLz  >> 1) << " : " << endl;
 	    }
 	}
-	
-      }
+      else
+	{
+	  int Shift = NbrParticles*NbrFluxQuanta*NbrParticles*NbrFluxQuanta ;
+	  int TotalMaxJz = totalJz[TotalMaxLz + Shift];
+	  int TotalMaxKz = totalKz[TotalMaxLz + Shift];
+	  TotalJz = totalJz[TotalLz + Shift];
+	  TotalKz = totalKz[TotalLz + Shift];
+	  cout << TotalJz << "  " << TotalKz << endl;
+	  if ((TotalMaxJz & 1) != 0)
+	    {
+	      File << "Jz = " << TotalJz << "/2 , ";
+	      if ((TotalMaxKz & 1) != 0)
+		{
+		  File << "Kz = " << TotalKz << "/2 : " << endl;
+		}
+	      else 
+		{
+		  File << "Kz = " << (TotalKz  >> 1) << " : " << endl;
+		}
+	    }
+	  else
+	    {
+	      File << "Jz = " << (TotalJz  >> 1) << " , ";
+	      if ((TotalMaxKz & 1) != 0)
+		{
+		  File << "Kz = " << TotalKz << "/2 : " << endl;
+		}
+	      else 
+		{
+		  File << "Kz = " << (TotalKz  >> 1) << " : " << endl;
+		}
+	    }
+	  
+	}
       int TmpNbrStates = LzDegeneracy[(TotalLz  - MinLzValue) >> 1];
       RealVector* TmpVectors = 0;
       LongRationalVector* TmpRationalVectors = 0;
@@ -413,25 +413,30 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  LongRational Tmp = TmpRationalVectors[0][MinTmpPos];
-	  TmpRationalVectors[0] /= Tmp;
-	  for (int k = 1; k < TmpNbrStates; ++k)
+	  if (TmpRationalVectors[0].IsNullVector() == false)
 	    {
-	      for (int j = k; j < TmpNbrStates; ++j)
+	      LongRational Tmp = TmpRationalVectors[0][MinTmpPos];
+	      TmpRationalVectors[0] /= Tmp;
+	      for (int k = 1; k < TmpNbrStates; ++k)
 		{
-		  TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k -1]);
+		  for (int j = k; j < TmpNbrStates; ++j)
+		    {
+		      TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k -1]);
+		    }
+		  MinTmpPos = ReshuffleVectors(TmpRationalVectors + k, TmpNbrStates - k);
+		  RootPositions[k] = MinTmpPos;
+		  if (TmpRationalVectors[k].IsNullVector() == false)
+		    {
+		      Tmp = TmpRationalVectors[k][MinTmpPos];
+		      TmpRationalVectors[k] /= Tmp;
+		      for (int j = 0; j < k; ++j)
+			{
+			  TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k]);
+			}
+		    }
 		}
-	      MinTmpPos = ReshuffleVectors(TmpRationalVectors + k, TmpNbrStates - k);
-	      RootPositions[k] = MinTmpPos;
-	      Tmp = TmpRationalVectors[k][MinTmpPos];
-	      TmpRationalVectors[k] /= Tmp;
- 	      for (int j = 0; j < k; ++j)
- 		{
- 		  TmpRationalVectors[j].AddLinearCombination(-TmpRationalVectors[j][MinTmpPos], TmpRationalVectors[k]);
- 		}
 	    }
 	}
-
       
       ParticleOnSphere* Space = 0;
       char* FilePrefix = new char [256];
@@ -503,7 +508,7 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      sprintf (FilePrefix, "fermions_rational__sphere_su2_");
+		      sprintf (FilePrefix, "fermions_rational_sphere_su2_");
 		    }
 		  sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalLz);
 		}
@@ -518,7 +523,7 @@ int main(int argc, char** argv)
 			}
 		      else
 			{
-			  sprintf (FilePrefix, "fermions_rational__sphere_su3_");
+			  sprintf (FilePrefix, "fermions_rational_sphere_su3_");
 			}
 		      sprintf (FileSuffix, "n_%d_2s_%d_tz_%d_y_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalTz, TotalY, TotalLz);
 		    }
@@ -533,7 +538,7 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      sprintf (FilePrefix, "fermions_rational__sphere_su4_");
+			      sprintf (FilePrefix, "fermions_rational_sphere_su4_");
 			    }
 			  sprintf (FileSuffix, "n_%d_2s_%d_sz_%d_iz_%d_pz_%d_lz_%d.", NbrParticles, NbrFluxQuanta, TotalSz, TotalIz, TotalPz, TotalLz);
 			}
@@ -542,25 +547,38 @@ int main(int argc, char** argv)
 	    }
 	}
       
+      int NbrSavedStates = 0;
       for (int j = 0; j < TmpNbrStates; ++j)
 	{
-	  Space->PrintState(File, RootPositions[j]) << endl;
-	  if (SaveStates == true)
+	  if (TmpRationalVectors == 0)
 	    {
-	      char* FileName = new char[512];
-	      sprintf (FileName, "%sroot_%s%d.vec", FilePrefix, FileSuffix, j); 
-	      if (TmpRationalVectors == 0)
+	      Space->PrintState(File, RootPositions[j]) << endl;
+	      if (SaveStates == true)
 		{
+		  char* FileName = new char[512];
+		  sprintf (FileName, "%sroot_%s%d.vec", FilePrefix, FileSuffix, NbrSavedStates); 
 		  TmpVectors[j].WriteVector(FileName);
+		  ++NbrSavedStates;
+		  delete[] FileName;
 		}
-	      else
+	    }
+	  else
+	    {
+	      if (TmpRationalVectors[j].IsNullVector() == false)
 		{
-		  TmpRationalVectors[j].WriteVector(FileName);
+		  Space->PrintState(File, RootPositions[j]) << endl;
+		  if (SaveStates == true)
+		    {
+		      char* FileName = new char[512];
+		      sprintf (FileName, "%sroot_%s%d.vec", FilePrefix, FileSuffix, NbrSavedStates); 
+		      TmpRationalVectors[j].WriteVector(FileName);
+		      delete[] FileName;
+		    }
+		  ++NbrSavedStates;
 		}
-	      delete[] FileName;
 	    }
 	}
-      File << "nbr states = " << TmpNbrStates << endl;
+      File << "nbr states = " << NbrSavedStates << endl;
       File << "-----------------------------------------" << endl;
 
       delete[] FilePrefix;
@@ -637,7 +655,7 @@ int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors)
   for (int j = 0; j < nbrVectors; ++j)      
     {
       int TmpPos = 0;
-      while ((TmpPos < vectors[j].GetVectorDimension()) && (vectors[j][TmpPos] == 0l))
+      while ((TmpPos < vectors[j].GetVectorDimension()) && (vectors[j][TmpPos].IsZero() == true))
 	{
 	  TmpPos++;
 	}
