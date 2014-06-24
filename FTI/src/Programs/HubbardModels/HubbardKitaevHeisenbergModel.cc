@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site (Hubbard) potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "t", "isotropic spin nearest neighbor hopping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "tK", "anisotropic nearest neighbor hopping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropic-t", "anisotropic nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j1", "strength of the neareast neighbor Heisenberg interaction", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j2", "strength of the neareast neighbor anisotropic interaction", 1.0);
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
   
   
   char* FileParameterString = new char [256];
-    sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("t"), Manager.GetDouble("tK"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
+    sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
 
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n");
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
       if (Manager.GetDouble("u-potential") == 0.0)
 	sprintf(EigenvalueOutputFile, "%s_%s.dat", FilePrefix, FileParameterString);
       else
-	sprintf(EigenvalueOutputFile, "%s_%s_u_%d.dat", FilePrefix, FileParameterString, Manager.GetDouble("u-potential"));
+	sprintf(EigenvalueOutputFile, "%s_%s_u_%f.dat", FilePrefix, FileParameterString, Manager.GetDouble("u-potential"));
     }
 
   bool FirstRunFlag = true;
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   if (StripeFlag)
-    Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetDouble("t"), Manager.GetDouble("tK"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+    Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetDouble("t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
   else
     Hamiltonian = 0;
 	      
