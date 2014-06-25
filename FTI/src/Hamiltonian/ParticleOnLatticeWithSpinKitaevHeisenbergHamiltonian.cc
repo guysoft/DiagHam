@@ -84,6 +84,9 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->J2Factor = j2Factor;
   this->Architecture = architecture;
   this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
   this->OneBodyGenericInteractionFactorsupup = 0;
   this->OneBodyGenericInteractionFactorsdowndown = 0;
   this->OneBodyGenericInteractionFactorsupdown = 0;
@@ -136,25 +139,25 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::~ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian()
 {
   if (this->MapNearestNeighborBonds != 0)
-  {
-    for (int i = 0; i < this->NbrSite; ++i)
-      delete[] this->MapNearestNeighborBonds[i];
-   delete[] this->MapNearestNeighborBonds; 
-  }
-  if (this->InteractionFactorsupup != 0)
     {
       for (int i = 0; i < this->NbrSite; ++i)
-	{
-	  delete[] this->InteractionFactorsupup[i];
-	  delete[] this->InteractionFactorsdowndown[i];
-	  delete[] this->InteractionFactorsupdown[i];
-	  delete[] this->InteractionFactorsupupdowndown[i];
-	}
-      delete[] this->InteractionFactorsupup;
-      delete[] this->InteractionFactorsupdown;
-      delete[] this->InteractionFactorsdowndown;
-      delete[] this->InteractionFactorsupupdowndown;
+	delete[] this->MapNearestNeighborBonds[i];
+      delete[] this->MapNearestNeighborBonds; 
     }
+//   if (this->InteractionFactorsupup != 0)
+//     {
+//       for (int i = 0; i < this->NbrSite; ++i)
+// 	{
+// 	  delete[] this->InteractionFactorsupup[i];
+// 	  delete[] this->InteractionFactorsdowndown[i];
+// 	  delete[] this->InteractionFactorsupdown[i];
+// 	  delete[] this->InteractionFactorsupupdowndown[i];
+// 	}
+//       delete[] this->InteractionFactorsupup;
+//       delete[] this->InteractionFactorsupdown;
+//       delete[] this->InteractionFactorsdowndown;
+//       delete[] this->InteractionFactorsupupdowndown;
+//     }
   if (this->OneBodyGenericInteractionFactorsupup != 0)
     {
       for (int i = 0; i < this->NbrSite; ++i)
@@ -170,25 +173,25 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::~ParticleOnLatticeWithSpin
     }
   
     
-  if (this->FastMultiplicationFlag == true)
-    {
-      long MinIndex;
-      long MaxIndex;
-      this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-      int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
-      int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
-      if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
-	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
-	{
-	  delete[] this->InteractionPerComponentIndex[i];
-	  delete[] this->InteractionPerComponentCoefficient[i];
-	}
-      delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
-      delete[] this->NbrInteractionPerComponent;
-      this->FastMultiplicationFlag = false;
-    }
+//   if (this->FastMultiplicationFlag == true)
+//     {
+//       long MinIndex;
+//       long MaxIndex;
+//       this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+//       int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+//       int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+//       if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
+// 	++ReducedDim;
+//       for (int i = 0; i < ReducedDim; ++i)
+// 	{
+// 	  delete[] this->InteractionPerComponentIndex[i];
+// 	  delete[] this->InteractionPerComponentCoefficient[i];
+// 	}
+//       delete[] this->InteractionPerComponentIndex;
+//       delete[] this->InteractionPerComponentCoefficient;
+//       delete[] this->NbrInteractionPerComponent;
+//       this->FastMultiplicationFlag = false;
+//     }
 }
   
 
@@ -477,8 +480,10 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
   for (int j = 0; j < this->NbrSite; ++j)
     for (int k = 0; k < 3; ++k)  
       if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
+	{
 	  ++this->NbrInterSectorIndicesPerSum[index];
 	  ++index;
+	}
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
@@ -512,8 +517,8 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	  ++TmpSum;
 	}
       }
-   this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
-   for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+  this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
+  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
     {
       if (this->NbrIntraSectorIndicesPerSum[i]  > 0)
 	{
@@ -521,13 +526,13 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	  this->NbrIntraSectorIndicesPerSum[i] = 0;
 	}
     }
-    TmpSum = 0;
-    for (int j = 0;j < this->NbrSite; ++j)
-      for (int k = 0; k < 3; ++k)
-	{
-	  int Index1 = j;
-	  int Index2 = this->MapNearestNeighborBonds[j][k];
-	  if (Index2 < this->NbrSite)
+  TmpSum = 0;
+  for (int j = 0;j < this->NbrSite; ++j)
+    for (int k = 0; k < 3; ++k)
+      {
+	int Index1 = j;
+	int Index2 = this->MapNearestNeighborBonds[j][k];
+	if (Index2 < this->NbrSite)
 	  {
 	    if (Index1 < Index2)
 	      {
@@ -535,147 +540,173 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 		this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		++this->NbrIntraSectorIndicesPerSum[TmpSum];    
 	      }
-	   ++TmpSum;
+	    ++TmpSum;
 	  }
-	}
-      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupupupdown = 0;
-      this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndownupdown = 0;
-      this->InteractionFactorsupdownupup = 0;
-      this->InteractionFactorsupdownupdown = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupdowndowndown = 0;
-      
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+      }
+  this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
+  this->InteractionFactorsupupupdown = new Complex* [this->NbrInterSectorSums];
+  this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
+  this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
+  this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
+  this->InteractionFactorsdowndownupdown = new Complex* [this->NbrInterSectorSums];
+  this->InteractionFactorsupdownupup = new Complex* [this->NbrIntraSectorSums];
+  this->InteractionFactorsupdownupdown = new Complex* [this->NbrInterSectorSums];
+  this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
+  
+  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+    {
+      this->InteractionFactorsupupupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+      this->InteractionFactorsdowndowndowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+      this->InteractionFactorsupupdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+      this->InteractionFactorsdowndownupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
+      this->InteractionFactorsupdownupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+      this->InteractionFactorsupdowndowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+      int Index = 0;
+      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 	{
-	  this->InteractionFactorsupupupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndowndowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsupupdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  this->InteractionFactorsdowndownupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+	  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
 	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+	      if (this->FindBondType(Index1, Index2) == 0)
 		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  if (this->FindBondType(Index1, Index2) == 0)
-		  {
-		    this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor - this->J2Factor);
-		    this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor - this->J2Factor);
-		    this->InteractionFactorsdowndownupup[i][Index] = -2*this->J1Factor;
-		    this->InteractionFactorsupupdowndown[i][Index] = -2*this->J1Factor;
-		  }
-	     
-		  if (this->FindBondType(Index1, Index2) == 1)
-		  {
-		    this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor - this->J2Factor);
-		    this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor - this->J2Factor);
-		    this->InteractionFactorsdowndownupup[i][Index] = (this->J1Factor - this->J2Factor);
-		    this->InteractionFactorsupupdowndown[i][Index] = (this->J1Factor - this->J2Factor);
-		  }
-	      
-		  if (this->FindBondType(Index1, Index2) == 2)
-		  {
-		    this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor + this->J2Factor);
-		    this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor + this->J2Factor);
-		    this->InteractionFactorsdowndownupup[i][Index] = -2*(this->J1Factor - this->J2Factor);
-		    this->InteractionFactorsupupdowndown[i][Index] = -2*(this->J1Factor - this->J2Factor);
-		  }
-	      
-	   		  
-		  TotalNbrInteractionFactors += 4;
-		  ++Index;
+		  this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor - this->J2Factor);
+		  this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor - this->J2Factor);
+		  this->InteractionFactorsdowndownupup[i][Index] = -2*this->J1Factor;
+		  this->InteractionFactorsupupdowndown[i][Index] = -2*this->J1Factor;
 		}
+	      
+	      if (this->FindBondType(Index1, Index2) == 1)
+		{
+		  this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor - this->J2Factor);
+		  this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor - this->J2Factor);
+		  this->InteractionFactorsdowndownupup[i][Index] = (this->J1Factor - this->J2Factor);
+		  this->InteractionFactorsupupdowndown[i][Index] = (this->J1Factor - this->J2Factor);
+		}
+	      
+	      if (this->FindBondType(Index1, Index2) == 2)
+		{
+		  this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor + this->J2Factor);
+		  this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor + this->J2Factor);
+		  this->InteractionFactorsdowndownupup[i][Index] = -2*(this->J1Factor - this->J2Factor);
+		  this->InteractionFactorsupupdowndown[i][Index] = -2*(this->J1Factor - this->J2Factor);
+		}	      	      
+	      TotalNbrInteractionFactors += 4;
+	      ++Index;
 	    }
 	}
-    for (int i = 0; i < this->NbrInterSectorSums; ++i)
-      {
-	  this->InteractionFactorsupdownupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+      Index = 0;
+      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+	{
+	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  
-		  if (this->FindBondType(Index1, Index2) == 0)
+	      this->InteractionFactorsupdownupup[i][Index] = 0.0;
+	      this->InteractionFactorsupdowndowndown[i][Index] = 0.0;
+	      TotalNbrInteractionFactors += 2;	      
+	      ++Index;
+	    }
+	}
+    }
+  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+    {
+      this->InteractionFactorsupdownupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+      this->InteractionFactorsupupupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+      this->InteractionFactorsdowndownupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
+      int Index = 0;
+      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	{
+	  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
+	  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
+	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	    {
+	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+	      
+	      if (this->FindBondType(Index1, Index2) == 0)
 		  {
 		    if (Index1 == Index3)
 		      this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
 		    else
 		      this->InteractionFactorsupdownupdown[i][Index] = 2*this->J2Factor;
 		  }
-		  if (this->FindBondType(Index1, Index2) == 1)
-		  {
-		    if (Index1 == Index3)
-		      this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
-		    else
-		      this->InteractionFactorsupdownupdown[i][Index] = -2*this->J2Factor;
-		  }
-		  if (this->FindBondType(Index1, Index2) == 2)
-		  {		    
-		    this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor + this->J2Factor);    
-		  }
-		  TotalNbrInteractionFactors += 1;
-		  ++Index;
+	      if (this->FindBondType(Index1, Index2) == 1)
+		{
+		  if (Index1 == Index3)
+		    this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
+		  else
+		    this->InteractionFactorsupdownupdown[i][Index] = -2*this->J2Factor;
 		}
+	      if (this->FindBondType(Index1, Index2) == 2)
+		{		    
+		  this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor + this->J2Factor);    
+		}
+	      TotalNbrInteractionFactors += 1;
+	      ++Index;
 	    }
-      }
-
+	}
+      Index = 0;
+      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
+	{
+	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+	    {
+	      this->InteractionFactorsupupupdown[i][Index] = 0.0;
+	      this->InteractionFactorsdowndownupdown[i][Index] = 0.0;
+	      TotalNbrInteractionFactors += 2;	      
+	      ++Index;
+	    }
+	}
+    }
+  
+  
+  this->OneBodyGenericInteractionFactorsupup = new double*[this->NbrSite];
+  this->OneBodyGenericInteractionFactorsdowndown = new double*[this->NbrSite];
+  this->OneBodyGenericInteractionFactorsupdown = new Complex*[this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
+    {
+      this->OneBodyGenericInteractionFactorsupup[i] = new double [3];
+      this->OneBodyGenericInteractionFactorsdowndown[i] = new double [3];
+      this->OneBodyGenericInteractionFactorsupdown[i] = new Complex [3];
+      for (int j = 0; j < 3; ++j)
+	{   
+	  this->OneBodyGenericInteractionFactorsupup[i][j] = 0.0;
+	  this->OneBodyGenericInteractionFactorsdowndown[i][j] = 0.0;
+	  this->OneBodyGenericInteractionFactorsupdown[i][j] = 0.0;
+	}
+    }
   
   for (int i = 0; i < this->NbrSite; ++i)
-  {
-   this->OneBodyGenericInteractionFactorsupup[i] = new double [3];
-   this->OneBodyGenericInteractionFactorsdowndown[i] = new double [3];
-   this->OneBodyGenericInteractionFactorsupdown[i] = new Complex [3];
-   for (int j = 0; j < 3; ++j)
-   {   
-    this->OneBodyGenericInteractionFactorsupup[i][j] = 0.0;
-    this->OneBodyGenericInteractionFactorsdowndown[i][j] = 0.0;
-    this->OneBodyGenericInteractionFactorsupdown[i][j] = 0.0;
-   }
-  }
+    {
+      int jx = this->MapNearestNeighborBonds[i][0];
+      int jy = this->MapNearestNeighborBonds[i][1];
+      int jz = this->MapNearestNeighborBonds[i][2];
+      
+      if (jx < this->NbrSite)
+	{
+	  this->OneBodyGenericInteractionFactorsupup[i][0] += -this->KineticFactorIsotropic;
+	  this->OneBodyGenericInteractionFactorsdowndown[i][0] += -this->KineticFactorIsotropic;
+	  this->OneBodyGenericInteractionFactorsupdown[i][0] += Complex(-this->KineticFactorIsotropic - this->KineticFactorAnisotropic, 0) * 2;
+	  
+	}
+      
+      if (jy < this->NbrSite)
+	{
+	  this->OneBodyGenericInteractionFactorsupup[i][1] += -this->KineticFactorIsotropic;
+	  this->OneBodyGenericInteractionFactorsdowndown[i][1] += -this->KineticFactorIsotropic;
+	  this->OneBodyGenericInteractionFactorsupdown[i][1] += Complex(-this->KineticFactorIsotropic,  this->KineticFactorAnisotropic) * 2;
+	  
+	}
+      
+      if (jz < this->NbrSite)
+	{
+	  this->OneBodyGenericInteractionFactorsupup[i][2] += -this->KineticFactorIsotropic - this->KineticFactorAnisotropic;
+	  this->OneBodyGenericInteractionFactorsdowndown[i][2] += -this->KineticFactorIsotropic + this->KineticFactorAnisotropic;
+	  
+	}
+      //    cout << i << " " << this->InteractionFactorsupup[i][0] << " " << this->InteractionFactorsupup[i][1] << " " << this->InteractionFactorsupup[i][2] << endl;
+    }
   
-  for (int i = 0; i < this->NbrSite; ++i)
-  {
-   int jx = this->MapNearestNeighborBonds[i][0];
-   int jy = this->MapNearestNeighborBonds[i][1];
-   int jz = this->MapNearestNeighborBonds[i][2];
-   
-   if (jx < this->NbrSite)
-   {
-    this->OneBodyGenericInteractionFactorsupup[i][0] += -this->KineticFactorIsotropic;
-    this->OneBodyGenericInteractionFactorsdowndown[i][0] += -this->KineticFactorIsotropic;
-    this->OneBodyGenericInteractionFactorsupdown[i][0] += Complex(-this->KineticFactorIsotropic - this->KineticFactorAnisotropic, 0) * 2;
-    
-   }
-   
-   if (jy < this->NbrSite)
-   {
-     this->OneBodyGenericInteractionFactorsupup[i][1] += -this->KineticFactorIsotropic;
-     this->OneBodyGenericInteractionFactorsdowndown[i][1] += -this->KineticFactorIsotropic;
-     this->OneBodyGenericInteractionFactorsupdown[i][1] += Complex(-this->KineticFactorIsotropic,  this->KineticFactorAnisotropic) * 2;
-     
-   }
-   
-   if (jz < this->NbrSite)
-   {
-    this->OneBodyGenericInteractionFactorsupup[i][2] += -this->KineticFactorIsotropic - this->KineticFactorAnisotropic;
-    this->OneBodyGenericInteractionFactorsdowndown[i][2] += -this->KineticFactorIsotropic + this->KineticFactorAnisotropic;
-    
-   }
-//    cout << i << " " << this->InteractionFactorsupup[i][0] << " " << this->InteractionFactorsupup[i][1] << " " << this->InteractionFactorsupup[i][2] << endl;
-  }
- 
   
   
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
