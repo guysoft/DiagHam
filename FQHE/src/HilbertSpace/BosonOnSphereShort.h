@@ -826,6 +826,15 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = symmetrized state
   virtual void SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, BosonOnSphereShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
   
+  // symmetrize a vector by grouping several orbitals into a single one
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStateOneIntoManyOrbital (LongRationalVector& inputVector, int nbrOrbitals, LongRationalVector*& symmetrizedVectors, int*& lzSectors);
+  
   protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -914,6 +923,15 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = true if the product firstState*secondState is in the lexicographical order
   virtual bool CheckLexiOrder(int * firstState,unsigned long* secondState,int TailleEgal);
 
+  // symmetrize a vector by grouping several orbitals into a single one
+  //
+  // inputVector = reference on the vector to symmetrize
+  // symmetrizedVectors = array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // nbrOrbitals = number of orbitals to group together
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  void SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+  
 };
 
 // get the particle statistic 

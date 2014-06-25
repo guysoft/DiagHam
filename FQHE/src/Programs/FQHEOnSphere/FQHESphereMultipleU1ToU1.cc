@@ -282,11 +282,6 @@ int main(int argc, char** argv)
 	}
     }
   
-/*  if (NbrParticles1 != NbrParticles2)
-    {
-      cout << "error, " << Manager.GetString("state-1") << " and " << Manager.GetString("state-2") << " don't have the same number of particles" << endl;
-      return -1;
-    }*/
   
   BosonOnSphereShort* TargetSpace = 0;
   if (Manager.GetBoolean("single-state") == false)
@@ -369,34 +364,69 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      RationalOutputState = TargetSpace->SymmetrizeU1U1SingleState(RationalState1, Space1, Manager.GetBoolean("unnormalized-basis"));
-	      bool zeroFlag = true;
-	      int TmpPos = 0;
-	      while((TmpPos < TargetSpace->GetHilbertSpaceDimension()) && (zeroFlag == true))
+	      LongRationalVector* RationalOutputStates;
+	      int* LzSectors;
+	      int NbrLzSectors = Space1->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+	      int NbrGeneratedStates = 0;
+	      for (int i = 0; i < NbrLzSectors; ++i)
 		{
-		  if (RationalOutputState[TmpPos].IsZero() == false)
-		    zeroFlag = false;
-		  TmpPos += 1;
+		  cout << "state generated in the 2*Lz=" << LzSectors[i] << " sector" << endl;
+		  LongRationalVector& RationalOutputState = RationalOutputStates[i];
+		  bool zeroFlag = true;
+		  int RootPosition = 0;
+		  for (int TmpPos = 0; (TmpPos < RationalOutputState.GetVectorDimension()) && (zeroFlag == true); ++TmpPos)
+		    {
+		      if (RationalOutputState[TmpPos].IsZero() == false)
+			zeroFlag = false;
+		      else
+			++RootPosition;
+		    }
+		  if (zeroFlag)
+		    {
+		      cout << "this state is null." << endl;
+		    }
+		  else
+		    {
+		      LongRational RootCoef = RationalOutputState[RootPosition];
+		      RationalOutputState /= RootCoef; 
+		      sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+		      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
+			{
+			  cout << "error while writing output state " << FullOutputFileName << endl;
+			  return -1;
+			}
+		      ++NbrGeneratedStates;
+		    }		  
 		}
-	      if (zeroFlag)
-		{
-		  cout << "Symmetrized state is zero. No output." << endl;
-		  return -1;
-		}
+	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
+// 	      RationalOutputState = TargetSpace->SymmetrizeU1U1SingleState(RationalState1, Space1, Manager.GetBoolean("unnormalized-basis"));
+// 	      bool zeroFlag = true;
+// 	      int TmpPos = 0;
+// 	      while((TmpPos < TargetSpace->GetHilbertSpaceDimension()) && (zeroFlag == true))
+// 		{
+// 		  if (RationalOutputState[TmpPos].IsZero() == false)
+// 		    zeroFlag = false;
+// 		  TmpPos += 1;
+// 		}
+// 	      if (zeroFlag)
+// 		{
+// 		  cout << "Symmetrized state is zero. No output." << endl;
+// 		  return -1;
+// 		}
 	      
-	      int RootPosition = 0;
-	      while (RationalOutputState[RootPosition].IsZero())
-		{
-		  RootPosition += 1;
-		}
-	      LongRational RootCoef = RationalOutputState[RootPosition];
-	      RationalOutputState /= RootCoef; 
+// 	      int RootPosition = 0;
+// 	      while (RationalOutputState[RootPosition].IsZero())
+// 		{
+// 		  RootPosition += 1;
+// 		}
+// 	      LongRational RootCoef = RationalOutputState[RootPosition];
+// 	      RationalOutputState /= RootCoef; 
 	      
-	      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
-		{
-		  cout << "error while writing output state " << FullOutputFileName << endl;
-		  return -1;
-		}
+// 	      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
+// 		{
+// 		  cout << "error while writing output state " << FullOutputFileName << endl;
+// 		  return -1;
+// 		}
 	      
 	    }
 	}

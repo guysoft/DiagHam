@@ -5329,7 +5329,7 @@ void FermionOnSphere::SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalV
       unsigned long TmpState2 = 0x0ul;
       int TmpTotalLz = 0;
       bool OrbitalOverflow = false;
-      for (int k = 0; (k <= this->LzMax) && (OrbitalOverflow == false); ++k)
+      for (int k = 0; (k < TargetSpaceNbrOrbitals) && (OrbitalOverflow == false); ++k)
 	{
 	  TmpNbrParticles = 0x0ul;
 	  for (int l = 0; l < nbrOrbitals; ++l)
@@ -5350,7 +5350,6 @@ void FermionOnSphere::SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalV
 	}
       if (OrbitalOverflow == false)
 	{
-	  cout << hex << this->StateDescription[i] << " | " << TmpState2 << dec << endl;
 	  if (TargetSpaces[TmpTotalLz] == 0)
 	    {
 	      TargetSpaces[TmpTotalLz] = new FermionOnSphere (this->NbrFermions, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * this->NbrFermions), 
