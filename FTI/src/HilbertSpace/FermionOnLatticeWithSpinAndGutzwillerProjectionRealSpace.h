@@ -121,12 +121,19 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentSite, int nbrHoles, long pos);
   
-  // find state index
+  // find state index (and checks state belongs to Hilbert space)
   //
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
+  
+  // find state index and checks that states belongs to Hilbert space
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  virtual int CarefulFindStateIndex(unsigned long stateDescription, int lzmax);
 
   // generate all states corresponding to the constraints
   // 
@@ -151,6 +158,16 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
 
 };
 
+
+// find state index and checks that states belongs to Hilbert space
+//
+// stateDescription = unsigned integer describing the state
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+inline int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::CarefulFindStateIndex(unsigned long stateDescription, int lzmax)
+{
+ return this->FindStateIndex(stateDescription, lzmax); 
+}
 
 #endif
 
