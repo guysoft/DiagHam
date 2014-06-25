@@ -442,22 +442,23 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
   return TmpNbrNonZeroElements;
 }
 
-// carefully test whether state is in Hilbert-space and find corresponding state index
+// find state index
 //
 // stateDescription = unsigned integer describing the state
-// highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
-// return value = corresponding index, or dimension of space, if not found
-int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::CarefulFindStateIndex(unsigned long stateDescription, int highestBit)
+// lzmax = maximum Lz value reached by a fermion in the state
+// return value = corresponding index
+
+  int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   if (bitcount(stateDescription)!=this->NbrFermions)
     {
       return this->HilbertSpaceDimension;
     }
-  if (highestBit<0)
+  if (lzmax<0)
     {
-      highestBit = getHighestBit(stateDescription)-1;
+      lzmax = getHighestBit(stateDescription)-1;
     }
-  if (highestBit >= this->NbrSite)
+  if (lzmax >= this->NbrSite)
     {
       return this->HilbertSpaceDimension;
     }
@@ -471,15 +472,26 @@ int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::CarefulFindStateIn
     i += 2;
   }
   
-  int Index = this->FindStateIndex(stateDescription, highestBit);  
-  if (this->StateDescription[Index] == stateDescription)
-    return Index;
-  else
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
-      for (int i=0; i<HilbertSpaceDimension; ++i)
-	if (this->StateDescription[i] == stateDescription)
-	  cout << "Element now found at i="<<i<<", "<<this->StateDescription[i]
-	       <<"="<<stateDescription<<"!"<<endl;      
-      return this->HilbertSpaceDimension;
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
     }
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    return PosMin;
 }

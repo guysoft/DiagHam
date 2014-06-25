@@ -792,7 +792,7 @@ int FermionOnSphereWithSpin::AduAd (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
-  return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
+  return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 
 
@@ -846,7 +846,7 @@ int FermionOnSphereWithSpin::AddAu (int index, int m, int n, double& coefficient
 #endif
     }
   State |= (0x1ul << m);
-  return this->TargetSpace->CarefulFindStateIndex(State, NewLargestBit);
+  return this->TargetSpace->FindStateIndex(State, NewLargestBit);
 }
 
 

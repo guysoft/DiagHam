@@ -96,12 +96,6 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
   
-  // carefully test whether state is in Hilbert-space and find corresponding state index
-  //
-  // stateDescription = unsigned integer describing the state
-  // highestBit = maximum nonzero bit reached by a particle in the state (can be given negative, if not known)
-  // return value = corresponding index, or dimension of space, if not found
-  virtual int CarefulFindStateIndex(unsigned long stateDescription, int highestBit);
 
  protected:
 
@@ -126,6 +120,13 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentSite, int nbrHoles, long pos);
+  
+  // find state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 
   // generate all states corresponding to the constraints
   // 
