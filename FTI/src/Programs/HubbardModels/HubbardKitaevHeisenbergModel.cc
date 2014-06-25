@@ -89,6 +89,12 @@ int main(int argc, char** argv)
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   bool StripeFlag = Manager.GetBoolean("stripe");
   
+  if ((StripeFlag) && ((NbrSites % 4) != 2))
+  {
+   cout << "Error: number of sites should be of the form 4n + 2 for stripe geometry " << endl; 
+   return -1;
+  }
+  
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* StatisticPrefix = new char [64];
@@ -150,7 +156,7 @@ int main(int argc, char** argv)
 	      
   char* ContentPrefix = new char[256];
 //   sprintf (ContentPrefix, "%d %d", i, j);
-  sprintf (ContentPrefix, "");
+  sprintf (ContentPrefix, "0");
   char* EigenstateOutputFile;
   if (Manager.GetString("eigenstate-file") != 0)
     {

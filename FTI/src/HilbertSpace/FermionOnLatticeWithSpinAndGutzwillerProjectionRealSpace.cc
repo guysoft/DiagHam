@@ -458,20 +458,19 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
     {
       lzmax = getHighestBit(stateDescription)-1;
     }
-  if (lzmax >= this->NbrSite)
+  if (lzmax >= 2*this->NbrSite)
     {
       return this->HilbertSpaceDimension;
     }
   bool flag = false;
   int i = 0;
-  while (i < 2*this->NbrSite)
+  while (i < this->NbrSite)
   {
-    unsigned long TmpState = (stateDescription >> i) ;
+    unsigned long TmpState = (stateDescription >> (i << 1)) ;
     if (((TmpState && 0x1ul) != 0x1ul) && ((TmpState && 0x2ul) != 0x1ul))
       return this->HilbertSpaceDimension;   
     i += 2;
   }
-  
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];

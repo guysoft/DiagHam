@@ -1067,6 +1067,9 @@ void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::PartialEnableFastMultip
 							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
       this->EvaluateMNOneBodyFastMultiplicationComponent(TmpParticles, i + this->PrecalculationShift, this->InteractionPerComponentIndex[Pos], 
       							 this->InteractionPerComponentCoefficient[Pos], TotalPos);
+      
+//       for (int j = 0; j < this->NbrInteractionPerComponent[Pos]; ++j)
+// 	cout << Pos << " " << j << "  " << this->InteractionPerComponentCoefficient[Pos][j] << endl;
       ++Pos;
     }
   delete TmpParticles;

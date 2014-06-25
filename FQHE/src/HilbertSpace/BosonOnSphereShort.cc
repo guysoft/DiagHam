@@ -5692,7 +5692,7 @@ void BosonOnSphereShort::SymmetrizeU1U1SingleStateOneInTwoCore (LongRationalVect
 		if (this->TemporaryState[k] > 1)
 		  Factorial1.FactorialMultiply(this->TemporaryState[k]);
 	      
-	      symmetrizedVector[TmpPos] += Factorial1.GetNumericalValue() * TmpCoefficient;
+	      symmetrizedVector[TmpPos] += Factorial1.GetLongRationalValue() * TmpCoefficient;
 	    }
 	}
     }
