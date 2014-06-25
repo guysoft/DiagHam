@@ -49,8 +49,8 @@ int main(int argc, char** argv)
   Manager += SystemGroup;
   Manager += OutputGroup;
   Manager += MiscGroup;
-  (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-particles", "number of particles", 4);
-  (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-sites", "number of flux quanta", 20);
+  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");

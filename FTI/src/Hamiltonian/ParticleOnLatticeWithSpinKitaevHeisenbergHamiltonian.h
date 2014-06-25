@@ -640,14 +640,14 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	      if (Index < Dim)
 	      {
 		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k];
+		coefficientArray[position] = Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
 		++position;
 	      }
 	      Index = particles->AduAd(index + this->PrecalculationShift, j, j2, Coefficient);
 	      if (Index < Dim)
 	      {
 		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
+		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k];
 		++position;
 	      }
 	    }

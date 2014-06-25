@@ -431,7 +431,7 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	{
 	  this->OneBodyGenericInteractionFactorsupup[i][0] += -this->KineticFactorIsotropic;
 	  this->OneBodyGenericInteractionFactorsdowndown[i][0] += -this->KineticFactorIsotropic;
-	  this->OneBodyGenericInteractionFactorsupdown[i][0] += Complex(- this->KineticFactorAnisotropic, 0.0) * 2;
+	  this->OneBodyGenericInteractionFactorsupdown[i][0] += Complex(- this->KineticFactorAnisotropic, 0.0);
 	  
 	}
       
@@ -439,7 +439,7 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	{
 	  this->OneBodyGenericInteractionFactorsupup[i][1] += -this->KineticFactorIsotropic;
 	  this->OneBodyGenericInteractionFactorsdowndown[i][1] += -this->KineticFactorIsotropic;
-	  this->OneBodyGenericInteractionFactorsupdown[i][1] += Complex(0.0,  this->KineticFactorAnisotropic) * 2;
+	  this->OneBodyGenericInteractionFactorsupdown[i][1] += Complex(0.0,  this->KineticFactorAnisotropic);
 	  
 	}
       
