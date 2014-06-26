@@ -880,14 +880,14 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
 inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(int i, int j)
 {
   int diff = i - j;
-  if ((abs(diff) == 2) || (abs(diff == 1)))
+  if ((abs(diff) == 2) || (abs(diff) == 1))
   {
     if (abs(diff) == 1)
       return 2;
     else
     {
       if (((i % 4) == 0) || ((i % 4) == 3))
-	if (diff == -2)
+	if (diff == 2)
 	  return 0;
 	else
 	  return 1;
