@@ -104,7 +104,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 //   {
 //     for (int k = 0; k < 3; ++k)
 //     {
-//       cout << i << " " << k << " " << this->InteractionFactorsupup[i][k] << endl;
+//       cout << i << " " << k << " " << this->MapNearestNeighborBonds[i][k] << endl;
 //     }
 //   }
     

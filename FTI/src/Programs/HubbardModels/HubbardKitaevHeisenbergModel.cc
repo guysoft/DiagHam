@@ -54,7 +54,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site (Hubbard) potential strength", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t", "isotropic spin nearest neighbor hopping amplitude", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "isotropic-t", "isotropic spin nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropic-t", "anisotropic nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j1", "strength of the neareast neighbor Heisenberg interaction", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j2", "strength of the neareast neighbor anisotropic interaction", 1.0);
@@ -89,11 +89,11 @@ int main(int argc, char** argv)
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   bool StripeFlag = Manager.GetBoolean("stripe");
   
-  if ((StripeFlag) && ((NbrSites % 4) != 2))
-  {
-   cout << "Error: number of sites should be of the form 4n + 2 for stripe geometry " << endl; 
-   return -1;
-  }
+//   if ((StripeFlag) && ((NbrSites % 4) != 2))
+//   {
+//    cout << "Error: number of sites should be of the form 4n + 2 for stripe geometry " << endl; 
+//    return -1;
+//   }
   
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
   
   
   char* FileParameterString = new char [256];
-    sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
+    sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
 
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n");
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
   if (StripeFlag)
-    Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetDouble("t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+    Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
   else
     Hamiltonian = 0;
 	      

@@ -75,7 +75,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
   this->NbrFermionsDown = 0;
   this->NbrSite = nbrSite;
   this->LzMax = this->NbrSite;
-  this->NbrLzValue = this->LzMax + 1;
+  this->NbrLzValue = this->LzMax;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
   cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
@@ -119,6 +119,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
 	cout << UsedMemory << endl;
 #endif
     }
+    
 }
 
 // basic constructor when Sz is preserved
@@ -458,19 +459,12 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
     {
       lzmax = getHighestBit(stateDescription)-1;
     }
-  if (lzmax >= 2*this->NbrSite)
+  if ((lzmax >= 2*this->NbrSite) || (lzmax < 2))
     {
       return this->HilbertSpaceDimension;
     }
   bool flag = false;
-  int i = 0;
-  while (i < this->NbrSite)
-  {
-    unsigned long TmpState = (stateDescription >> (i << 1)) ;
-    if (((TmpState && 0x1ul) != 0x1ul) && ((TmpState && 0x2ul) != 0x1ul))
-      return this->HilbertSpaceDimension;   
-    i += 1;
-  }
+
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
@@ -492,5 +486,8 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
   if (CurrentState == stateDescription)
     return PosMid;
   else
-    return PosMin;
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
 }

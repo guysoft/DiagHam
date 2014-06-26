@@ -127,51 +127,6 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian : public ParticleOnLa
   
  protected:
  
-  // core part of the AddMultiply method involving the two-body interaction
-  // 
-  // particles = pointer to the Hilbert space
-  // index = index of the component on which the Hamiltonian has to act on
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added  
-//   virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
-
-  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
-  // 
-  // particles = pointer to the Hilbert space
-  // index = index of the component on which the Hamiltonian has to act on
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // tmpCoefficients = a temporary array whose size is nbrVectors
-//   virtual void EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources,						     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
-
-  // core part of the AddMultiply method involving the two-body interaction
-  // 
-  // particles = pointer to the Hilbert space
-  // index = index of the component on which the Hamiltonian has to act on
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added  
-//   virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector& vSource, ComplexVector& vDestination);
-
-  // core part of the AddMultiply method involving the two-body interaction for a set of vectors
-  // 
-  // particles = pointer to the Hilbert space
-  // index = index of the component on which the Hamiltonian has to act on
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // tmpCoefficients = a temporary array whose size is nbrVectors
-//   virtual void HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 							      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients);
-
-  // core part of the FastMultiplication method involving the two-body interaction
-  // 
-  // particles = pointer to the Hilbert space
-  // index = index of the component on which the Hamiltonian has to act on
-  // indexArray = array where indices connected to the index-th component through the Hamiltonian
-  // coefficientArray = array of the numerical coefficients related to the indexArray
-  // position = reference on the current position in arrays indexArray and coefficientArray
-//   virtual void EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index,							    int* indexArray, Complex* coefficientArray, long& position);
-
   // core part of the FastMultiplication method involving the one-body interaction
   // 
   // particles = pointer to the Hilbert space
@@ -221,59 +176,11 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian : public ParticleOnLa
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphereWithSpin* particles, int firstComponent, int lastComponent, long& memory);
 
-
-  // multiply a et of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another et of vectors, low level function (no architecture optimization)
-  // using partial fast multiply option
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-//   virtual ComplexVector* LowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, int firstComponent, int nbrComponent);
-
-  // multiply a et of vectors by the current hamiltonian for a given range of indices 
-  // and add result to another et of vectors, low level function (no architecture optimization)
-  // using partial fast multiply option
-  //
-  // vSources = array of vectors to be multiplied
-  // vDestinations = array of vectors at which result has to be added
-  // nbrVectors = number of vectors that have to be evaluated together
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = pointer to the array of vectors where result has been stored
-//   virtual ComplexVector* HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 									 int firstComponent, int nbrComponent);
-
   // evaluate all interaction factors
   //   
   virtual void EvaluateInteractionFactors();
 
-  // test the amount of memory needed for fast multiplication algorithm
-  //
-  // allowedMemory = amount of memory that cam be allocated for fast multiplication
-  // return value = amount of memory needed
-//   virtual long FastMultiplicationMemory(long allowedMemory);
-
-  // test the amount of memory needed for fast multiplication algorithm (partial evaluation)
-  //
-  // firstComponent = index of the first component that has to be precalcualted
-  // lastComponent  = index of the last component that has to be precalcualted
-  // return value = number of non-zero matrix element
-//   virtual long PartialFastMultiplicationMemory(int firstComponent, int lastComponent);
-
-  // enable fast multiplication algorithm
-  //
-//   virtual void EnableFastMultiplication();
-
-  // enable fast multiplication algorithm (partial evaluation)
-  //
-  // firstComponent = index of the first component that has to be precalcualted
-  // nbrComponent  = index of the last component that has to be precalcualted
-//   virtual void PartialEnableFastMultiplication(int firstComponent, int nbrComponent);
-  
-  
+    
   //fill up the positions of the three types of nearest neighbor bonds
   //
   virtual void PlotMapNearestNeighborBonds();
@@ -689,6 +596,7 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 			{
 			  ++memory;
 			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+// 			  cout << i << " " << Index << " upup" << endl;
 			}
 		    }
 		  }
@@ -712,6 +620,7 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 			{
 			  ++memory;
 			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+// 			  cout << i << " " << Index << " upup" << endl;
 			}
 		    }
 		  }
@@ -833,6 +742,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
   for (int i = 0; i < this->NbrSite; ++i)
     this->MapNearestNeighborBonds[i] = new int [3];
   
+  if ((this->NbrSite % 4) == 2)
+  {
   for (int i = 0; i <= (this->NbrSite - 2)/4 ; ++i)
   {
     Index = 4*i;
@@ -871,6 +782,36 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
     }
   }
 }
+else
+{
+ for (int i = 0; i < this->NbrSite; ++i) 
+ {
+   if ((i % 2) != 0)
+   {
+    if (i < this->NbrSite - 1)
+      this->MapNearestNeighborBonds[i][0] = i + 1;
+    else
+      this->MapNearestNeighborBonds[i][0] = this->NbrSite;
+    
+    this->MapNearestNeighborBonds[i][1] = i - 1;
+   }
+   else
+   {
+     if (i > 0)
+      this->MapNearestNeighborBonds[i][0] = i - 1;
+    else
+      this->MapNearestNeighborBonds[i][0] = this->NbrSite; 
+    if (i < this->NbrSite - 1)
+      this->MapNearestNeighborBonds[i][1] = i + 1;
+    else
+      this->MapNearestNeighborBonds[i][1] = this->NbrSite;
+   }
+  this->MapNearestNeighborBonds[i][2] = this->NbrSite;
+  
+//   cout << i << " " << this->MapNearestNeighborBonds[i][0] << " " << this->MapNearestNeighborBonds[i][1] << " " << this->MapNearestNeighborBonds[i][2] << endl;
+ }  
+}
+}
 
 //find the type of bond that links neighboring sites i and j
 //
@@ -880,6 +821,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
 inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(int i, int j)
 {
   int diff = i - j;
+  if ((this->NbrSite % 4) == 2)
+  {
   if ((abs(diff) == 2) || (abs(diff) == 1))
   {
     if (abs(diff) == 1)
@@ -900,7 +843,28 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
   }    
   else
     return -1;
-
+  }
+  else
+  {
+   if (abs(diff) != 1)
+     return -1;
+   else
+   {
+     if ((i % 2) == 0)
+       if (diff == -1)
+	 return 1;
+       else
+	 return 0;
+       
+     else
+       if (diff == 1)
+	 return 1;
+       else
+	 return 0;
+       
+   }
+       
+  }
 }
 
 //get the index of the nearest neighbor linked with bond x
