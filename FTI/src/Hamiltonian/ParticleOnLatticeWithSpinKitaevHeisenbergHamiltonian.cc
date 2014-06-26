@@ -76,7 +76,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->NbrParticles = nbrParticles;
   this->NbrSite = nbrSite;
   this->LzMax = this->NbrSite - 1;
-  this->UPotential = 2.0 * uPotential / ((double) this->NbrParticles);
+  this->UPotential = uPotential; //2.0 * uPotential / ((double) this->NbrParticles);
   this->HamiltonianShift = 0.0;//4.0 * uPotential;
   this->KineticFactorIsotropic = kineticFactorIsotropic;
   this->KineticFactorAnisotropic = kineticFactorAnisotropic;
@@ -208,9 +208,12 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
   
   this->NbrInterSectorSums = 0;
   for (int j = 0; j < this->NbrSite; ++j)
-    for (int k = 0; k < 3; ++k)
-      if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
-	++this->NbrInterSectorSums;
+    {
+      for (int k = 0; k < 3; ++k)
+	if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
+	  ++this->NbrInterSectorSums;
+      ++this->NbrInterSectorSums;      
+    }
    
   
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
@@ -223,12 +226,16 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
   
   int index = 0;
   for (int j = 0; j < this->NbrSite; ++j)
-    for (int k = 0; k < 3; ++k)  
-      if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
-	{
-	  ++this->NbrInterSectorIndicesPerSum[index];
-	  ++index;
-	}
+    {
+      for (int k = 0; k < 3; ++k)  
+	if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
+	  {
+	    ++this->NbrInterSectorIndicesPerSum[index];
+	    ++index;
+	  }
+      ++this->NbrInterSectorIndicesPerSum[index];
+      ++index;
+    }
   this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
     {
@@ -240,14 +247,20 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
     }
   int TmpSum = 0;
   for (int j = 0; j < this->NbrSite; ++j)
-    for (int k = 0; k < 3; ++k)
-      if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
+    {
+      for (int k = 0; k < 3; ++k)
+	if (this->MapNearestNeighborBonds[j][k] < this->NbrSite)
 	  {
 	    this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = j;
 	    this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = this->MapNearestNeighborBonds[j][k];
 	    ++this->NbrInterSectorIndicesPerSum[TmpSum];    
 	    ++TmpSum;
 	  }
+      this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = j;
+      this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = j;
+      ++this->NbrInterSectorIndicesPerSum[TmpSum];    
+      ++TmpSum;      
+    }
  
   TmpSum = 0;
   for (int j = 0; j < this->NbrSite; ++j)
@@ -364,31 +377,61 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	{
 	  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
 	  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+	  if (Index1 != Index2)	      
 	    {
-	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      
-	      if (this->FindBondType(Index1, Index2) == 0)
-		  {
-		    if (Index1 == Index3)
-		      this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
-		    else
-		      this->InteractionFactorsupdownupdown[i][Index] = 2*this->J2Factor;
-		  }
-	      if (this->FindBondType(Index1, Index2) == 1)
+	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
-		  if (Index1 == Index3)
-		    this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
+		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  
+		  if (Index3 != Index4)
+		    {
+		      if (this->FindBondType(Index1, Index2) == 0)
+			{
+			  if (Index1 == Index3)
+			    this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
+			  else
+			    this->InteractionFactorsupdownupdown[i][Index] = 2*this->J2Factor;
+			}
+		      if (this->FindBondType(Index1, Index2) == 1)
+			{
+			  if (Index1 == Index3)
+			    this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor - this->J2Factor);
+			  else
+			    this->InteractionFactorsupdownupdown[i][Index] = -2*this->J2Factor;
+			}
+		      if (this->FindBondType(Index1, Index2) == 2)
+			{		    
+			  this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor + this->J2Factor);    
+			}
+		      TotalNbrInteractionFactors += 1;
+		      ++Index;
+		    }
 		  else
-		    this->InteractionFactorsupdownupdown[i][Index] = -2*this->J2Factor;
+		    {
+		      this->InteractionFactorsupdownupdown[i][Index] = 0.0;    
+		      TotalNbrInteractionFactors += 1;
+		      ++Index;
+		    }
 		}
-	      if (this->FindBondType(Index1, Index2) == 2)
-		{		    
-		  this->InteractionFactorsupdownupdown[i][Index] = (this->J1Factor + this->J2Factor);    
+	    }
+	  else
+	    {
+	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
+		{
+		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
+		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
+		  if (Index3 == Index4)
+		    {
+		      this->InteractionFactorsupdownupdown[i][Index] = -this->UPotential;
+		    }
+		  else
+		    {
+		      this->InteractionFactorsupdownupdown[i][Index] = 0.0;
+		    }
+		  TotalNbrInteractionFactors += 1;
+		  ++Index;
 		}
-	      TotalNbrInteractionFactors += 1;
-	      ++Index;
 	    }
 	}
       Index = 0;
