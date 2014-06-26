@@ -835,7 +835,16 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = number of states that have been generated through the symmetrization procedure
   virtual int SymmetrizeSingleStateOneIntoManyOrbital (LongRationalVector& inputVector, int nbrOrbitals, LongRationalVector*& symmetrizedVectors, int*& lzSectors);
   
-  protected:
+  // symmetrize a vector by grouping several orbitals that are related by a periodicity condition on their momenta
+  //
+  // inputVector = reference on the vector to symmetrize
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStatePeriodicOrbitals (LongRationalVector& inputVector, int periodicity, LongRationalVector*& symmetrizedVectors, int*& lzSectors);
+
+ protected:
 
   // convert a bosonic state into its fermionic counterpart
   //
@@ -930,8 +939,18 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // nbrOrbitals = number of orbitals to group together
   // firstComponent = first component of the input vector that has to be symmetrized
   // nbrComponents = number of components of the input vector that have to be symmetrized
-  void SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+  virtual void SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
   
+  // symmetrize a vector by grouping several orbitals that are related by a periodicity condition on their momenta
+  //
+  // inputVector = reference on the vector to symmetrize
+  // symmetrizedVectors = array on the symmetrize states ranging from the smallest Lz to the largest Lz
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = symmetrized state
+  virtual void SymmetrizeSingleStatePeriodicOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int periodicity, unsigned long firstComponent, unsigned long nbrComponents);
+
 };
 
 // get the particle statistic 

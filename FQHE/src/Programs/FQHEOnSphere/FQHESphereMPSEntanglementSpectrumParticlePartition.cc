@@ -105,7 +105,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "left-eigenstate", "file containing the transfer matrix left eigenstate");
   (*SystemGroup) += new SingleStringOption  ('\n', "right-eigenstate", "file containing the transfer matrix right eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "diagonal-block", "transfer matrix eigenstates are computed only from the block diagonal in P, CFT sector and Q (override autodetect from eigenvector file names)");
-  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 500);
+  (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "memory", "amount of memory that can used for precalculations (in Mb)", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "ematrix-memory", "amount of memory that can used for precalculations of the E matrix (in Mb)", 500);
   (*OutputGroup) += new SingleStringOption  ('o', "output-file", "output file name");
 
@@ -635,6 +635,11 @@ int main(int argc, char** argv)
 
   long MaxTmpMatrixElements = (((long) BMatrices[0].GetNbrRow()) * 
 				((long) BMatrices[0].GetNbrRow() / 1l));
+  long MaxMemoryTmpMatrixElements = Manager.GetInteger("memory");
+  MaxMemoryTmpMatrixElements <<= 20;
+  MaxMemoryTmpMatrixElements /= (2l * sizeof(double) + sizeof(int));
+  if ((MaxMemoryTmpMatrixElements != 0l) && (MaxTmpMatrixElements > MaxMemoryTmpMatrixElements))
+    MaxTmpMatrixElements = MaxMemoryTmpMatrixElements;
   cout << "Requested memory for sparse matrix multiplications = " << ((MaxTmpMatrixElements * (2l * sizeof(double) + sizeof(int))) >> 20) << "Mb" << endl;
   double* TmpMatrixElements = new double [MaxTmpMatrixElements];
   int* TmpColumnIndices = new int [MaxTmpMatrixElements];

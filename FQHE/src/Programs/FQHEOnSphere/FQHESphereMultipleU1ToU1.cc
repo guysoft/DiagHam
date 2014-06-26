@@ -56,7 +56,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-1", "use squeezed basis instead of the usual n-body basis for the first component");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-2", "use squeezed basis instead of the usual n-body basis for the second component");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-output", "use squeezed basis instead of the usual n-body basis for the symmetrized state");
-  (*SystemGroup) += new BooleanOption  ('\n', "single-state", "symmetrize a unique state with even number of orbitals");
+  (*SystemGroup) += new BooleanOption  ('\n', "single-state", "symmetrize a unique state, groupings consecutive orbitals");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
+  (*SystemGroup) += new BooleanOption  ('\n', "periodicity-symmetrization", "group orbitals that have the same momentum modulo a given periodicity, instead of neighboring orbitals");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file1", "use a file as the definition of the reference state for the first component squeezed basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file2", "use a file as the definition of the reference state for the second component squeezed basis");
@@ -366,7 +368,11 @@ int main(int argc, char** argv)
 	    {
 	      LongRationalVector* RationalOutputStates;
 	      int* LzSectors;
-	      int NbrLzSectors = Space1->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+	      int NbrLzSectors;
+	      if (Manager.GetBoolean("periodicity-symmetrization") == false)
+		NbrLzSectors = Space1->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+	      else
+		NbrLzSectors = Space1->SymmetrizeSingleStatePeriodicOrbitals(RationalState1, (NbrFluxQuanta1 + 1) / (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
 	      int NbrGeneratedStates = 0;
 	      for (int i = 0; i < NbrLzSectors; ++i)
 		{
