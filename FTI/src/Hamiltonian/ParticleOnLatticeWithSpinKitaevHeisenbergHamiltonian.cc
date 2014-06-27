@@ -338,16 +338,16 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 		{
 		  this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor - this->J2Factor);
 		  this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor - this->J2Factor);
-		  this->InteractionFactorsdowndownupup[i][Index] = -2*this->J2Factor;
-		  this->InteractionFactorsupupdowndown[i][Index] = -2*this->J2Factor;
+		  this->InteractionFactorsdowndownupup[i][Index] = -2.0 * this->J2Factor;
+		  this->InteractionFactorsupupdowndown[i][Index] = -2.0 * this->J2Factor;
 		}
 	      
 	      if (this->FindBondType(Index1, Index2) == 1)
 		{
 		  this->InteractionFactorsupupupup[i][Index] = -(this->J1Factor - this->J2Factor);
 		  this->InteractionFactorsdowndowndowndown[i][Index] = -(this->J1Factor - this->J2Factor);
-		  this->InteractionFactorsdowndownupup[i][Index] = 2*this->J2Factor;
-		  this->InteractionFactorsupupdowndown[i][Index] = 2*this->J2Factor;
+		  this->InteractionFactorsdowndownupup[i][Index] = 2.0 * this->J2Factor;
+		  this->InteractionFactorsupupdowndown[i][Index] = 2.0 * this->J2Factor;
 		}
 	      
 	      if (this->FindBondType(Index1, Index2) == 2)
@@ -397,23 +397,23 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 		      if (this->FindBondType(Index1, Index2) == 0)
 			{
 			  if (Index1 == Index3)
-			    this->InteractionFactorsupdownupdown[i][Index] = 0.5*(this->J1Factor - this->J2Factor);
+			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * (this->J1Factor - this->J2Factor);
 			  else
-			    this->InteractionFactorsupdownupdown[i][Index] = 0.5*2*this->J1Factor;
+			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * 2.0 * this->J1Factor;
 			}
 		      if (this->FindBondType(Index1, Index2) == 1)
 			{
 			  if (Index1 == Index3)
-			    this->InteractionFactorsupdownupdown[i][Index] = 0.5*(this->J1Factor - this->J2Factor);
+			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * (this->J1Factor - this->J2Factor);
 			  else
-			    this->InteractionFactorsupdownupdown[i][Index] = 0.5*2*this->J1Factor;
+			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * 2.0 * this->J1Factor;
 			}
 		      if (this->FindBondType(Index1, Index2) == 2)
 			{		    
 			  if (Index1 == Index3)
-			    this->InteractionFactorsupdownupdown[i][Index] = 0.5*(this->J1Factor + this->J2Factor);  
+			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * (this->J1Factor + this->J2Factor);  
 			  else
-			    this->InteractionFactorsupdownupdown[i][Index] = 0.5*2*(this->J1Factor - this->J2Factor);
+			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * 2.0 * (this->J1Factor - this->J2Factor);
 			}
 		      TotalNbrInteractionFactors += 1;
 		      ++Index;
