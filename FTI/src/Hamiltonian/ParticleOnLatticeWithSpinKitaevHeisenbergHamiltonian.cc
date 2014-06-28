@@ -357,11 +357,11 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 		  this->InteractionFactorsdowndownupup[i][Index] = 0.0;
 		  this->InteractionFactorsupupdowndown[i][Index] = 0.0;
 		}	      	      
-	      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " t=" << this->FindBondType(Index1, Index2)
-		   << " : uuuu=" << this->InteractionFactorsupupupup[i][Index]
-		   << " dddd=" << this->InteractionFactorsdowndowndowndown[i][Index]
-		   << " uudd=" << this->InteractionFactorsupupdowndown[i][Index]
-		   << " dduu=" << this->InteractionFactorsdowndownupup[i][Index] << endl;
+// 	      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " t=" << this->FindBondType(Index1, Index2)
+// 		   << " : uuuu=" << this->InteractionFactorsupupupup[i][Index]
+// 		   << " dddd=" << this->InteractionFactorsdowndowndowndown[i][Index]
+// 		   << " uudd=" << this->InteractionFactorsupupdowndown[i][Index]
+// 		   << " dduu=" << this->InteractionFactorsdowndownupup[i][Index] << endl;
 	      TotalNbrInteractionFactors += 4;
 	      ++Index;
 	    }
@@ -420,7 +420,7 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 			  else
 			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * 2.0 * (this->J1Factor - this->J2Factor);
 			}
-		      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " : " << this->InteractionFactorsupdownupdown[i][Index] << endl;
+// 		      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " : " << this->InteractionFactorsupdownupdown[i][Index] << endl;
 		      TotalNbrInteractionFactors += 1;
 		      ++Index;
 		    }
@@ -512,7 +512,23 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
       //    cout << i << " " << this->InteractionFactorsupup[i][0] << " " << this->InteractionFactorsupup[i][1] << " " << this->InteractionFactorsupup[i][2] << endl;
     }
   
-
+//   for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+//   {
+//     int Index = 0;
+//       for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
+// 	{
+// 	  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
+// 	  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
+// 	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
+// 	    {
+// 	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
+// 	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
+// 	      
+// 	      cout << Index1 << " " << Index2 << " " << this->FindBondType(Index1, Index2) << " " << this->InteractionFactorsupupupup[i][Index] << " " << this->InteractionFactorsdowndowndowndown[i][Index] << " " << this->InteractionFactorsupupdowndown[i][Index] << " " << this->InteractionFactorsdowndownupup[i][Index] << endl;
+// 	      ++Index;
+// 	    }
+// 	}
+//   }
   
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;

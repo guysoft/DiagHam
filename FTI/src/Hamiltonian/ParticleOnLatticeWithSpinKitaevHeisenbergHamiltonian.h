@@ -784,6 +784,24 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
 }
 else
 {
+  if (this->NbrSite == 4)
+  {
+  this->MapNearestNeighborBonds[0][0] = this->NbrSite;
+  this->MapNearestNeighborBonds[0][1] = 1;
+  this->MapNearestNeighborBonds[0][2] = this->NbrSite;
+  this->MapNearestNeighborBonds[1][0] = 2;
+  this->MapNearestNeighborBonds[1][1] = 0;
+  this->MapNearestNeighborBonds[1][2] = this->NbrSite;
+  this->MapNearestNeighborBonds[2][0] = 1;
+  this->MapNearestNeighborBonds[2][1] = this->NbrSite;
+  this->MapNearestNeighborBonds[2][2] = 3;
+  this->MapNearestNeighborBonds[3][0] = this->NbrSite;
+  this->MapNearestNeighborBonds[3][1] = this->NbrSite;
+  this->MapNearestNeighborBonds[3][2] = 2;
+  }
+  else
+  {
+  
  for (int i = 0; i < this->NbrSite; ++i) 
  {
    if ((i % 2) != 0)
@@ -810,6 +828,7 @@ else
   
 //   cout << i << " " << this->MapNearestNeighborBonds[i][0] << " " << this->MapNearestNeighborBonds[i][1] << " " << this->MapNearestNeighborBonds[i][2] << endl;
  }  
+}
 }
 }
 
@@ -845,6 +864,32 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
 /* 	}     */
 /*       else */
 /* 	return -1; */
+//       if (diff < 0)
+// 	{
+// 	  diff = j;
+// 	  j = i;
+// 	  i = diff;
+// 	  diff = i - j;
+// 	}
+//       if (diff == 1)
+// 	return 2;
+//       switch (i & 3)
+// 	{
+// 	case 0:
+// 	  return 1;
+// 	  break;
+// 	case 3:
+// 	  return 1;
+// 	  break;
+// 	case 1:
+// 	  return 0;
+// 	  break;
+// 	case 2:
+// 	  return 0;
+// 	  break;
+// 	}
+//       return -1;
+
       if (diff < 0)
 	{
 	  diff = j;
@@ -857,16 +902,16 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
       switch (i & 3)
 	{
 	case 0:
-	  return 1;
+	  return 0;
 	  break;
 	case 3:
-	  return 1;
+	  return 0;
 	  break;
 	case 1:
-	  return 0;
+	  return 1;
 	  break;
 	case 2:
-	  return 0;
+	  return 1;
 	  break;
 	}
       return -1;
