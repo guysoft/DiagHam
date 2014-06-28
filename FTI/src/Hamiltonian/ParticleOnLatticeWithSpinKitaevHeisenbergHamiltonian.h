@@ -818,53 +818,79 @@ else
 // i = index of the first site
 // j = index of the second site
 //return value = 0 (x bond), 1 (y bond), 2 (z bond)
+
 inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(int i, int j)
 {
+//  cout << i << " " << j << endl;
   int diff = i - j;
   if ((this->NbrSite % 4) == 2)
-  {
-  if ((abs(diff) == 2) || (abs(diff) == 1))
-  {
-    if (abs(diff) == 1)
-      return 2;
-    else
     {
-      if (((i % 4) == 0) || ((i % 4) == 3))
-	if (diff == 2)
-	  return 0;
-	else
+/*       if ((abs(diff) == 2) || (abs(diff) == 1)) */
+/* 	{ */
+/* 	  if (abs(diff) == 1) */
+/* 	    return 2; */
+/* 	  else */
+/* 	    { */
+/* 	      if (((i % 4) == 0) || ((i % 4) == 3)) */
+/* 		if (diff == 2) */
+/* 		  return 0; */
+/* 		else */
+/* 		  return 1; */
+/* 	      else */
+/* 		if (diff == 2) */
+/* 		  return 0; */
+/* 		else */
+/* 		  return 1; */
+/* 	    } */
+/* 	}     */
+/*       else */
+/* 	return -1; */
+      if (diff < 0)
+	{
+	  diff = j;
+	  j = i;
+	  i = diff;
+	  diff = i - j;
+	}
+      if (diff == 1)
+	return 2;
+      switch (i & 3)
+	{
+	case 0:
 	  return 1;
-      else
-	if (diff == 2)
-	  return 0;
-	else
+	  break;
+	case 3:
 	  return 1;
+	  break;
+	case 1:
+	  return 0;
+	  break;
+	case 2:
+	  return 0;
+	  break;
+	}
+      return -1;
     }
-  }    
   else
-    return -1;
-  }
-  else
-  {
-   if (abs(diff) != 1)
-     return -1;
-   else
-   {
-     if ((i % 2) == 0)
-       if (diff == -1)
-	 return 1;
-       else
-	 return 0;
-       
-     else
-       if (diff == 1)
-	 return 1;
-       else
-	 return 0;
-       
-   }
-       
-  }
+    {
+      if (abs(diff) != 1)
+	return -1;
+      else
+	{
+	  if ((i % 2) == 0)
+	    if (diff == -1)
+	      return 1;
+	    else
+	      return 0;
+	  
+	  else
+	    if (diff == 1)
+	      return 1;
+	    else
+	      return 0;
+	  
+	}      
+    }
 }
 
 //get the index of the nearest neighbor linked with bond x

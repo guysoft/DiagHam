@@ -357,6 +357,11 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 		  this->InteractionFactorsdowndownupup[i][Index] = 0.0;
 		  this->InteractionFactorsupupdowndown[i][Index] = 0.0;
 		}	      	      
+	      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " t=" << this->FindBondType(Index1, Index2)
+		   << " : uuuu=" << this->InteractionFactorsupupupup[i][Index]
+		   << " dddd=" << this->InteractionFactorsdowndowndowndown[i][Index]
+		   << " uudd=" << this->InteractionFactorsupupdowndown[i][Index]
+		   << " dduu=" << this->InteractionFactorsdowndownupup[i][Index] << endl;
 	      TotalNbrInteractionFactors += 4;
 	      ++Index;
 	    }
@@ -415,6 +420,7 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 			  else
 			    this->InteractionFactorsupdownupdown[i][Index] = 0.5 * 2.0 * (this->J1Factor - this->J2Factor);
 			}
+		      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " : " << this->InteractionFactorsupdownupdown[i][Index] << endl;
 		      TotalNbrInteractionFactors += 1;
 		      ++Index;
 		    }
