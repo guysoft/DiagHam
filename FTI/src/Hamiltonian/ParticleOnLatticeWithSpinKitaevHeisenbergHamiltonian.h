@@ -744,92 +744,133 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
   
   if ((this->NbrSite % 4) == 2)
   {
-  for (int i = 0; i <= (this->NbrSite - 2)/4 ; ++i)
-  {
-    Index = 4*i;
-    if (i == 0)
-      this->MapNearestNeighborBonds[Index][0] = this->NbrSite;
-    else
-      this->MapNearestNeighborBonds[Index][0] = Index - 2;
-    if (i < (this->NbrSite - 2)/4)
-      this->MapNearestNeighborBonds[Index][1] = Index + 2;
-    else
-      this->MapNearestNeighborBonds[Index][1] = this->NbrSite;
-    this->MapNearestNeighborBonds[Index][2] = Index + 1;
-    
-    Index = 4*i + 1;
-    if (i < (this->NbrSite - 2)/4)
-      this->MapNearestNeighborBonds[Index][0] = Index + 2;
-    else
-      this->MapNearestNeighborBonds[Index][0] = this->NbrSite;
-    if (i == 0)
-      this->MapNearestNeighborBonds[Index][1] = this->NbrSite;
-    else
-      this->MapNearestNeighborBonds[Index][1] = Index - 2;
-    this->MapNearestNeighborBonds[Index][2] = Index - 1;
-    
-    if (i < (this->NbrSite - 2)/4)
+    for (int i = 0; i <= (this->NbrSite - 2)/4 ; ++i)
     {
-      Index = 4*i + 2;
+      Index = 4*i;
+      if (i == 0)
+	this->MapNearestNeighborBonds[Index][0] = this->NbrSite;
+      else
+	this->MapNearestNeighborBonds[Index][0] = Index - 2;
+      if (i < (this->NbrSite - 2)/4)
+	this->MapNearestNeighborBonds[Index][1] = Index + 2;
+      else
+	this->MapNearestNeighborBonds[Index][1] = this->NbrSite;
+      this->MapNearestNeighborBonds[Index][2] = Index + 1;
+    
+      Index = 4*i + 1;
+      if (i < (this->NbrSite - 2)/4)
+	this->MapNearestNeighborBonds[Index][0] = Index + 2;
+      else
+	this->MapNearestNeighborBonds[Index][0] = this->NbrSite;
+      if (i == 0)
+	this->MapNearestNeighborBonds[Index][1] = this->NbrSite;
+      else
+	this->MapNearestNeighborBonds[Index][1] = Index - 2;
+      this->MapNearestNeighborBonds[Index][2] = Index - 1;
+    
+      if (i < (this->NbrSite - 2)/4)
+      {
+	Index = 4*i + 2;
+	this->MapNearestNeighborBonds[Index][0] = Index + 2;
+	this->MapNearestNeighborBonds[Index][1] = Index - 2;
+	this->MapNearestNeighborBonds[Index][2] = this->NbrSite;
+      
+	Index = 4*i + 3;
+	this->MapNearestNeighborBonds[Index][0] = Index - 2;
+	this->MapNearestNeighborBonds[Index][1] = Index + 2;
+	this->MapNearestNeighborBonds[Index][2] = this->NbrSite;      
+      }
+    }
+  }
+  else
+  {
+    if (((this->NbrSite % 4) == 0) && (this->NbrSite > 4))
+    {
+    for (int i = 0; i < this->NbrSite /4 ; ++i)
+    {
+      Index = 4*i;
+      if (i == 0)
+	this->MapNearestNeighborBonds[Index][0] = this->NbrSite - 2;
+      else
+	this->MapNearestNeighborBonds[Index][0] = Index - 2;
+      this->MapNearestNeighborBonds[Index][1] = Index + 2;
+      this->MapNearestNeighborBonds[Index][2] = Index + 1;
+    
+      Index = 4*i + 1;
       this->MapNearestNeighborBonds[Index][0] = Index + 2;
+      if (i == 0)
+	this->MapNearestNeighborBonds[Index][1] = this->NbrSite - 1;
+      else
+	this->MapNearestNeighborBonds[Index][1] = Index - 2;
+      this->MapNearestNeighborBonds[Index][2] = Index - 1;
+    
+      
+      Index = 4*i + 2;
+      if (i == (this->NbrSite /4 - 1))
+	this->MapNearestNeighborBonds[Index][0] = 0;
+      else
+	this->MapNearestNeighborBonds[Index][0] = Index + 2;
       this->MapNearestNeighborBonds[Index][1] = Index - 2;
       this->MapNearestNeighborBonds[Index][2] = this->NbrSite;
       
       Index = 4*i + 3;
       this->MapNearestNeighborBonds[Index][0] = Index - 2;
-      this->MapNearestNeighborBonds[Index][1] = Index + 2;
+      if (i == (this->NbrSite /4 - 1))
+	this->MapNearestNeighborBonds[Index][1] = 1;
+      else
+	this->MapNearestNeighborBonds[Index][1] = Index + 2;
       this->MapNearestNeighborBonds[Index][2] = this->NbrSite;      
+
+     }
     }
-  }
-}
-else
-{
-  if (this->NbrSite == 4)
-  {
-  this->MapNearestNeighborBonds[0][0] = this->NbrSite;
-  this->MapNearestNeighborBonds[0][1] = 1;
-  this->MapNearestNeighborBonds[0][2] = this->NbrSite;
-  this->MapNearestNeighborBonds[1][0] = 2;
-  this->MapNearestNeighborBonds[1][1] = 0;
-  this->MapNearestNeighborBonds[1][2] = this->NbrSite;
-  this->MapNearestNeighborBonds[2][0] = 1;
-  this->MapNearestNeighborBonds[2][1] = this->NbrSite;
-  this->MapNearestNeighborBonds[2][2] = 3;
-  this->MapNearestNeighborBonds[3][0] = this->NbrSite;
-  this->MapNearestNeighborBonds[3][1] = this->NbrSite;
-  this->MapNearestNeighborBonds[3][2] = 2;
-  }
-  else
-  {
-  
- for (int i = 0; i < this->NbrSite; ++i) 
- {
-   if ((i % 2) != 0)
-   {
-    if (i < this->NbrSite - 1)
-      this->MapNearestNeighborBonds[i][0] = i + 1;
     else
-      this->MapNearestNeighborBonds[i][0] = this->NbrSite;
+    {
+      if (this->NbrSite == 4)
+      {
+	this->MapNearestNeighborBonds[0][0] = this->NbrSite;
+	this->MapNearestNeighborBonds[0][1] = 1;
+	this->MapNearestNeighborBonds[0][2] = this->NbrSite;
+	this->MapNearestNeighborBonds[1][0] = 2;
+	this->MapNearestNeighborBonds[1][1] = 0;
+	this->MapNearestNeighborBonds[1][2] = this->NbrSite;
+	this->MapNearestNeighborBonds[2][0] = 1;
+	this->MapNearestNeighborBonds[2][1] = this->NbrSite;
+	this->MapNearestNeighborBonds[2][2] = 3;
+	this->MapNearestNeighborBonds[3][0] = this->NbrSite;
+	this->MapNearestNeighborBonds[3][1] = this->NbrSite;
+	this->MapNearestNeighborBonds[3][2] = 2;
+      }
+    else
+    {
+      for (int i = 0; i < this->NbrSite; ++i) 
+      {
+	if ((i % 2) != 0)
+	{
+	  if (i < this->NbrSite - 1)
+	    this->MapNearestNeighborBonds[i][0] = i + 1;
+	  else
+	    this->MapNearestNeighborBonds[i][0] = this->NbrSite;
     
-    this->MapNearestNeighborBonds[i][1] = i - 1;
-   }
-   else
-   {
-     if (i > 0)
-      this->MapNearestNeighborBonds[i][0] = i - 1;
-    else
-      this->MapNearestNeighborBonds[i][0] = this->NbrSite; 
-    if (i < this->NbrSite - 1)
-      this->MapNearestNeighborBonds[i][1] = i + 1;
-    else
-      this->MapNearestNeighborBonds[i][1] = this->NbrSite;
-   }
-  this->MapNearestNeighborBonds[i][2] = this->NbrSite;
+	  this->MapNearestNeighborBonds[i][1] = i - 1;
+	}
+	else
+	{
+	  if (i > 0)
+	    this->MapNearestNeighborBonds[i][0] = i - 1;
+	  else
+	    this->MapNearestNeighborBonds[i][0] = this->NbrSite; 
+	  if (i < this->NbrSite - 1)
+	    this->MapNearestNeighborBonds[i][1] = i + 1;
+	  else
+	    this->MapNearestNeighborBonds[i][1] = this->NbrSite;
+	}
+	this->MapNearestNeighborBonds[i][2] = this->NbrSite;
   
 //   cout << i << " " << this->MapNearestNeighborBonds[i][0] << " " << this->MapNearestNeighborBonds[i][1] << " " << this->MapNearestNeighborBonds[i][2] << endl;
- }  
-}
-}
+      }  
+     }
+    }
+  }
 }
 
 //find the type of bond that links neighboring sites i and j
@@ -842,54 +883,9 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
 {
 //  cout << i << " " << j << endl;
   int diff = i - j;
+  //open chain of hexagons
   if ((this->NbrSite % 4) == 2)
     {
-/*       if ((abs(diff) == 2) || (abs(diff) == 1)) */
-/* 	{ */
-/* 	  if (abs(diff) == 1) */
-/* 	    return 2; */
-/* 	  else */
-/* 	    { */
-/* 	      if (((i % 4) == 0) || ((i % 4) == 3)) */
-/* 		if (diff == 2) */
-/* 		  return 0; */
-/* 		else */
-/* 		  return 1; */
-/* 	      else */
-/* 		if (diff == 2) */
-/* 		  return 0; */
-/* 		else */
-/* 		  return 1; */
-/* 	    } */
-/* 	}     */
-/*       else */
-/* 	return -1; */
-//       if (diff < 0)
-// 	{
-// 	  diff = j;
-// 	  j = i;
-// 	  i = diff;
-// 	  diff = i - j;
-// 	}
-//       if (diff == 1)
-// 	return 2;
-//       switch (i & 3)
-// 	{
-// 	case 0:
-// 	  return 1;
-// 	  break;
-// 	case 3:
-// 	  return 1;
-// 	  break;
-// 	case 1:
-// 	  return 0;
-// 	  break;
-// 	case 2:
-// 	  return 0;
-// 	  break;
-// 	}
-//       return -1;
-
       if (diff < 0)
 	{
 	  diff = j;
@@ -918,6 +914,41 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
     }
   else
     {
+      //periodic chain of hexagons
+      if (((this->NbrSite % 4) == 0) && (this->NbrSite > 4))
+      {
+	if (diff < 0)
+	{
+	  diff = j;
+	  j = i;
+	  i = diff;
+	  diff = i - j;
+	}
+      if (diff == 1)
+	return 2;
+      if (diff == this->NbrSite - 2)
+      {
+	return j;
+      }
+      switch (i & 3)
+	{
+	case 0:
+	  return 0;
+	  break;
+	case 3:
+	  return 0;
+	  break;
+	case 1:
+	  return 1;
+	  break;
+	case 2:
+	  return 1;
+	  break;
+	}
+      return -1;
+      }
+      else
+      {
       if (abs(diff) != 1)
 	return -1;
       else
@@ -933,8 +964,8 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
 	      return 1;
 	    else
 	      return 0;
-	  
 	}      
+      }
     }
 }
 

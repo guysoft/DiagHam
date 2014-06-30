@@ -98,8 +98,6 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = false;
   
-  this->EvaluateInteractionFactors();
-  
 //   for (int i = 0; i < this->NbrSite; ++i)
 //   {
 //     for (int k = 0; k < 3; ++k)
@@ -107,6 +105,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 //       cout << i << " " << k << " " << this->MapNearestNeighborBonds[i][k] << endl;
 //     }
 //   }
+  this->EvaluateInteractionFactors();
     
   if (memory > 0)
     {
