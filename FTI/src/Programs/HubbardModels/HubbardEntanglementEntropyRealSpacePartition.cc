@@ -54,6 +54,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\0', "ground-file", "name of the file corresponding to the ground state of the whole system");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");  
+  (*SystemGroup) += new SingleStringOption  ('\n', "kept-sites", "column-based tesxt file that list sites that have to be kept");
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
@@ -104,6 +105,21 @@ int main(int argc, char** argv)
       cout << "can't open file " << Manager.GetString("degenerated-groundstate") << endl;
       return -1;
     }
+
+  if (Manager.GetString("kept-sites") == 0)
+    {
+      cout << "error, a file describing the sites to keep has to be provided" << endl;
+      return -1;     
+    }
+  MultiColumnASCIIFile KeptOrbitalFile;
+  if (KeptOrbitalFile.Parse(Manager.GetString("kept-sites")) == false)
+    {
+      KeptOrbitalFile.DumpErrors(cout);
+      return -1;
+    }
+  int NbrKeptOrtbitals = KeptOrbitalFile.GetNbrLines();
+  int* KeptOrbitals = KeptOrbitalFile.GetAsIntegerArray(0);
+  SortArrayUpOrdering(KeptOrbitals, NbrKeptOrtbitals);
 
   if (Manager.GetString("degenerated-groundstate") == 0)
     {
@@ -204,10 +220,7 @@ int main(int argc, char** argv)
   File.precision(14);
   cout.precision(14);
   
-  int NbrKeptOrtbitals = 2;
-  int* KeptOrbitals = new int [NbrKeptOrtbitals];
-  KeptOrbitals[0] = 0;
-  KeptOrbitals[2] = 0;
+
   int MaxSubsystemNbrParticles = 2 * NbrKeptOrtbitals;
   if (GutzwillerFlag == true)
     {
@@ -241,7 +254,7 @@ int main(int argc, char** argv)
 				((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
 	  cout << "reduced density matrix evaluated in " << Dt << "s" << endl;
 	}
-      if (PartialEntanglementMatrix.GetNbrRow() > 1)
+      if ((PartialEntanglementMatrix.GetNbrColumn() > 0) && (PartialEntanglementMatrix.GetNbrRow() > 0))
 	{
 	  if (ShowTimeFlag == true)
 	    {
@@ -281,8 +294,8 @@ int main(int argc, char** argv)
 				    ((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
 	      cout << "diagonalization done in " << Dt << "s" << endl;
 	    }
+	  File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
 	}
-          File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
     }
   File.close();
 

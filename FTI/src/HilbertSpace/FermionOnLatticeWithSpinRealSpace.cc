@@ -410,6 +410,13 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialDensityMatrixP
 
 ComplexMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  if ((nbrParticleSector > (2 * nbrKeptOrbitals)) || 
+      (ComplementaryNbrParticles > (2 * (this->NbrSite - nbrKeptOrbitals))))
+    {
+      ComplexMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;
+    }
   if (nbrKeptOrbitals == 0)
     {
       if (nbrParticleSector == 0)
@@ -447,7 +454,6 @@ ComplexMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatr
   this->KeptOrbitals = new int [nbrKeptOrbitals];
   for (int i = 0 ; i < nbrKeptOrbitals; ++i) 
     this->KeptOrbitals[i] = keptOrbitals[i];
-  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
   FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals);
   FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals);
   ComplexMatrix TmpEntanglementMatrix (SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySpace.HilbertSpaceDimension, true);
@@ -481,16 +487,13 @@ long FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrixCore (i
 {
   FermionOnLatticeWithSpinRealSpace* TmpHilbertSpace = (FermionOnLatticeWithSpinRealSpace*) complementaryHilbertSpace;
   FermionOnLatticeWithSpinRealSpace* TmpDestinationHilbertSpace = (FermionOnLatticeWithSpinRealSpace*) destinationHilbertSpace;
-  int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
-  Complex* TmpStateCoefficient = new Complex [TmpDestinationHilbertSpace->HilbertSpaceDimension];
   long TmpNbrNonZeroElements = 0;
   int* TraceOutOrbitals = new int [this->LzMax - TmpDestinationHilbertSpace->LzMax];
   int MaxIndex = minIndex + nbrIndex;
   int TmpIndex = 0;
   for (int i = 0; i < this->LzMax; ++i)
     {
-      if (SearchInArray<int>(i, this->KeptOrbitals, TmpDestinationHilbertSpace->LzMax))
+      if (SearchInArray<int>(i, this->KeptOrbitals, TmpDestinationHilbertSpace->LzMax) < 0)
 	TraceOutOrbitals[TmpIndex++] = i;
     }
   for (; minIndex < MaxIndex; ++minIndex)    
@@ -499,78 +502,50 @@ long FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrixCore (i
       unsigned long TmpStateCompact = TmpHilbertSpace->StateDescription[minIndex];
       unsigned long TmpState = 0x0ul;
       for (int i = 0 ; i < TmpHilbertSpace->LzMax; ++i)
-	TmpState |= ((TmpStateCompact >> (2 * i)) & 0x3ul) << TraceOutOrbitals[i];
+	TmpState |= ((TmpStateCompact >> (2 * i)) & 0x3ul) << (2 * TraceOutOrbitals[i]);
       for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
 	{
 	  unsigned long TmpStateCompact2 = TmpDestinationHilbertSpace->StateDescription[j];
 	  unsigned long TmpState2 = 0x0ul;
 	  for (int i = 0 ; i < TmpDestinationHilbertSpace->LzMax; ++i)
-	    TmpState2 |= ((TmpStateCompact2 >> (2 * i)) & 0x3ul) << this->KeptOrbitals[i];
+	    TmpState2 |= ((TmpStateCompact2 >> (2 * i)) & 0x3ul) << (2 * this->KeptOrbitals[i]);
 	  unsigned long TmpState3 = TmpState | TmpState2;
-	  int TmpLzMax = (this->LzMax << 1);
-	  TmpIndex = 0;
-	  while ((TmpIndex < TmpLzMax) && (((TmpState3 >> TmpIndex) & 0x3ul) != 0x3ul))
+	  int TmpLzMax = (this->LzMax << 1) + 1; 
+	  while ((TmpState3 >> TmpLzMax) == 0x0ul)
+	    --TmpLzMax;
+	  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
-	      TmpIndex += 2;
-	    }
-	  
-	  if (TmpIndex >= TmpLzMax)
-	    {
-	      TmpLzMax = (this->LzMax << 1) + 1; 
-	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
-		--TmpLzMax;
-	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
-	      if (TmpPos != this->HilbertSpaceDimension)
+	      double Coefficient = 1.0;
+	      unsigned long Sign = 0x0ul;
+	      int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
+	      while ((Pos2 > 0) && (TmpState2 != 0x0ul))
 		{
-		  double Coefficient = 1.0;
-		  unsigned long Sign = 0x0ul;
-		  int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
-		  while ((Pos2 > 0) && (TmpState2 != 0x0ul))
-		    {
-		      while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
-			--Pos2;
-		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+		  while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
+		    --Pos2;
+		  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
 #ifdef  __64_BITS__
-		      TmpState3 ^= TmpState3 >> 32;
+		  TmpState3 ^= TmpState3 >> 32;
 #endif	
-		      TmpState3 ^= TmpState3 >> 16;
-		      TmpState3 ^= TmpState3 >> 8;
-		      TmpState3 ^= TmpState3 >> 4;
-		      TmpState3 ^= TmpState3 >> 2;
-		      TmpState3 ^= TmpState3 >> 1;
-		      Sign ^= TmpState3;
-		      TmpState2 &= ~(0x1ul << Pos2);
-		      --Pos2;
-		    }
-		  if ((Sign & 0x1ul) == 0x0ul)		  
-		    Coefficient *= 1.0;
-		  else
-		    Coefficient *= -1.0;
-		  TmpStatePosition[Pos] = TmpPos;
-		  TmpStatePosition2[Pos] = j;
-		  TmpStateCoefficient[Pos] = Coefficient;
-		  ++Pos;
+		  TmpState3 ^= TmpState3 >> 16;
+		  TmpState3 ^= TmpState3 >> 8;
+		  TmpState3 ^= TmpState3 >> 4;
+		  TmpState3 ^= TmpState3 >> 2;
+		  TmpState3 ^= TmpState3 >> 1;
+		  Sign ^= TmpState3;
+		  TmpState2 &= ~(0x1ul << Pos2);
+		  --Pos2;
 		}
-	    }
-	}
-      if (Pos != 0)
-	{
-	  ++TmpNbrNonZeroElements;
-	  for (int j = 0; j < Pos; ++j)
-	    {
-	      int Pos2 = TmpStatePosition2[j];
-	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
-	      for (int k = 0; k < Pos; ++k)
-		if (TmpStatePosition2[k] >= Pos2)
-		  {
-		    entanglementMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
-		  }
+	      if ((Sign & 0x1ul) == 0x0ul)		  
+		Coefficient *= 1.0;
+	      else
+		Coefficient *= -1.0;
+	      
+	      entanglementMatrix->AddToMatrixElement(j, minIndex, Coefficient * groundState[TmpPos]);
+	      ++TmpNbrNonZeroElements;
 	    }
 	}
     }
-  delete[] TmpStatePosition2;
-  delete[] TmpStatePosition;
-  delete[] TmpStateCoefficient;
   delete[] TraceOutOrbitals;
   return TmpNbrNonZeroElements;
 }

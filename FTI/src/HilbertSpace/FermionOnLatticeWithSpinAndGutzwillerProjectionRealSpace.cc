@@ -43,6 +43,7 @@
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
 #include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
 
 #include <math.h>
@@ -77,49 +78,63 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
   this->LzMax = this->NbrSite;
   this->NbrLzValue = this->LzMax;
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
-  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
-  if (this->LargeHilbertSpaceDimension >= (1l << 30))
-    this->HilbertSpaceDimension = 0;
-  else
-    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  if ( this->LargeHilbertSpaceDimension > 0l)
+  if (this->NbrFermions > 0)
     {
+      this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
+      cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+      if (this->LargeHilbertSpaceDimension >= (1l << 30))
+	this->HilbertSpaceDimension = 0;
+      else
+	this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+      if ( this->LargeHilbertSpaceDimension > 0l)
+	{
+	  this->Flag.Initialize();
+	  this->TargetSpace = this;
+	  this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+	  this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+	  long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrSite - this->NbrFermions, 0l);
+	  if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+	    {
+	      cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
+	    }
+	  this->GenerateLookUpTable(memory);
+	  
+#ifdef __DEBUG__
+	  long UsedMemory = 0;
+	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+	  cout << "memory requested for Hilbert space = ";
+	  if (UsedMemory >= 1024)
+	    if (UsedMemory >= 1048576)
+	      cout << (UsedMemory >> 20) << "Mo" << endl;
+	    else
+	      cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  else
+	cout << UsedMemory << endl;
+	  UsedMemory = this->NbrLzValue * sizeof(int);
+	  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+	  cout << "memory requested for lookup table = ";
+	  if (UsedMemory >= 1024)
+	    if (UsedMemory >= 1048576)
+	      cout << (UsedMemory >> 20) << "Mo" << endl;
+	    else
+	      cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  else
+	    cout << UsedMemory << endl;
+#endif
+	}
+    }
+  else
+    {
+      this->LargeHilbertSpaceDimension = 1l;
+      this->HilbertSpaceDimension = 1;
       this->Flag.Initialize();
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrSite - this->NbrFermions, 0l);
-      if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
-	{
-	  cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
-	}
+      this->StateDescription[0] = 0x0ul;
+      this->StateHighestBit[0] = 0;
       this->GenerateLookUpTable(memory);
-      
-#ifdef __DEBUG__
-      long UsedMemory = 0;
-      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
-      cout << "memory requested for Hilbert space = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
-	  cout << (UsedMemory >> 20) << "Mo" << endl;
-	else
-	  cout << (UsedMemory >> 10) << "ko" <<  endl;
-      else
-	cout << UsedMemory << endl;
-      UsedMemory = this->NbrLzValue * sizeof(int);
-      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
-      cout << "memory requested for lookup table = ";
-      if (UsedMemory >= 1024)
-	if (UsedMemory >= 1048576)
-	  cout << (UsedMemory >> 20) << "Mo" << endl;
-	else
-	  cout << (UsedMemory >> 10) << "ko" <<  endl;
-      else
-	cout << UsedMemory << endl;
-#endif
-    }
-    
+    }    
 }
 
 // basic constructor when Sz is preserved
@@ -443,28 +458,87 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
   return TmpNbrNonZeroElements;
 }
 
+// evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// groundState = reference on the total system ground state
+// keptOrbitals = array of orbitals that have to be kept, should be sorted from the smallest index to the largest index 
+// nbrKeptOrbitals = array of orbitals that have to be kept
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem
+
+ComplexMatrix FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  if ((nbrParticleSector > nbrKeptOrbitals) || (ComplementaryNbrParticles > (this->NbrSite - nbrKeptOrbitals)))
+    {
+      ComplexMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;
+    }
+  if (nbrKeptOrbitals == 0)
+    {
+      if (nbrParticleSector == 0)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      TmpEntanglementMatrix[i][0] = groundState[i];
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  if (nbrKeptOrbitals == this->NbrSite)
+    {
+      if (nbrParticleSector == this->NbrFermions)
+	{
+	  ComplexMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      TmpEntanglementMatrix[0][i] = groundState[i];
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  this->KeptOrbitals = new int [nbrKeptOrbitals];
+  for (int i = 0 ; i < nbrKeptOrbitals; ++i) 
+    this->KeptOrbitals[i] = keptOrbitals[i];
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals);
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals);
+  ComplexMatrix TmpEntanglementMatrix (SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySpace.HilbertSpaceDimension, true);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+
+  long TmpEntanglementMatrixZero = this->EvaluatePartialEntanglementMatrixCore(0, ComplementarySpace.HilbertSpaceDimension, &ComplementarySpace, &SubsytemSpace, groundState, &TmpEntanglementMatrix);
+//   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpEntanglementMatrix);
+//   Operation.ApplyOperation(architecture);
+//   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+  if (TmpEntanglementMatrixZero > 0)
+     return TmpEntanglementMatrix;
+   else
+     {
+       ComplexMatrix TmpEntanglementMatrixZero;
+       return TmpEntanglementMatrixZero;
+     }    
+}
+
+  
 // find state index
 //
 // stateDescription = unsigned integer describing the state
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-  int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FindStateIndex(unsigned long stateDescription, int lzmax)
+int FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
-//   if (bitcount(stateDescription)!=this->NbrFermions)
-//     {
-//       return this->HilbertSpaceDimension;
-//     }
-//   if (lzmax<0)
-//     {
-//       lzmax = getHighestBit(stateDescription)-1;
-//     }
-//   if ((lzmax >= 2*this->NbrSite) || (lzmax < 2))
-//     {
-//       return this->HilbertSpaceDimension;
-//     }
-//   bool flag = false;
-
   if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
     return this->HilbertSpaceDimension;
 
@@ -494,3 +568,4 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDe
     else
       return PosMin;
 }
+
