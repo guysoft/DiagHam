@@ -123,6 +123,7 @@ int main(int argc, char** argv)
       return -1;
     }
   
+  
   RealVector State1;
   LongRationalVector RationalState1;
   RealVector State2;
@@ -330,6 +331,12 @@ int main(int argc, char** argv)
 	{
 	  int NbrFluxQuanta = (NbrFluxQuanta1 - 1) / 2;
 	  int TotalLz = Manager.GetInteger("total-lz");
+	 
+	  if (((NbrParticles1 * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
+	    {
+	      cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
+	      return -1;
+	    } 
 	  char* FullOutputFileName = new char [strlen(OutputFileName) + 128];
 	  sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, (int) Manager.GetInteger("total-lz"));
 	  TargetSpace = new BosonOnSphereShort(NbrParticles1, TotalLz, NbrFluxQuanta);

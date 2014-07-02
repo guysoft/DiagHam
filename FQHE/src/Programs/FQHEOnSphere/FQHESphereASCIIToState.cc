@@ -63,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption ('\0', "ascii-state", "name of the input ASCII description of the state (should use the same convention than FQHESphereShowBasis output)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of trying to replace .txt extension with .vec or appending .vec extension");
   (*SystemGroup) += new BooleanOption  ('\n', "no-normalization", "do not normalize the final state");
+  (*SystemGroup) += new BooleanOption  ('\n', "rational", "use rational numbers instead of double precision floating point numbers");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -225,26 +226,6 @@ int main(int argc, char** argv)
 		Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	  
 	}
     }
-  
-  RealVector State (Space->GetHilbertSpaceDimension(), true);
-
-  for (int i = 0; i < InputFile.GetNbrLines(); ++i)
-    {
-      char* TmpString =  InputFile(0, i);
-      CleanLine(TmpString);
-      int TmpIndex = Space->FindStateIndex(TmpString);
-      if (TmpIndex != -1)
-	{
-	  State[TmpIndex] = Coefficients[i];
-	}
-      else
-	{
-	  cout << "warning , invalid state |" <<  TmpString << ">" << endl;
-	}
-    }
-  if (Manager.GetBoolean("no-normalization") == false)
-    State /= State.Norm();
-
   char* OutputFile = Manager.GetString("output-file");
   if (OutputFile == 0)
     {
@@ -252,7 +233,53 @@ int main(int argc, char** argv)
       if (OutputFile == 0)
 	OutputFile = AddExtensionToFileName(Manager.GetString("ascii-state"), "vec");
     }
+  if (Manager.GetBoolean("rational") == false)
+  {
+    RealVector State (Space->GetHilbertSpaceDimension(), true);
+
+    for (int i = 0; i < InputFile.GetNbrLines(); ++i)
+      {
+	char* TmpString =  InputFile(0, i);
+	CleanLine(TmpString);
+	int TmpIndex = Space->FindStateIndex(TmpString);
+	if (TmpIndex != -1)
+	  {
+	    State[TmpIndex] = Coefficients[i];
+	  }
+	else
+	  {
+	    cout << "warning , invalid state |" <<  TmpString << ">" << endl;
+	  }
+      }
+    if (Manager.GetBoolean("no-normalization") == false)
+      State /= State.Norm();
   State.WriteVector(OutputFile);
+  }
+  else
+  {
+    LongRationalVector State (Space->GetHilbertSpaceDimension(), true);
+    LongRational* Coefficients = InputFile.GetAsLongRationalArray(1);
+    if (Coefficients == 0)
+      {
+	InputFile.DumpErrors(cout) << endl;
+	return -1;
+      }
+    for (int i = 0; i < InputFile.GetNbrLines(); ++i)
+      {
+	char* TmpString =  InputFile(0, i);
+	CleanLine(TmpString);
+	int TmpIndex = Space->FindStateIndex(TmpString);
+	if (TmpIndex != -1)
+	  {
+	    State[TmpIndex] = Coefficients[i];
+	  }
+	else
+	  {
+	    cout << "warning , invalid state |" <<  TmpString << ">" << endl;
+	  }
+      }
+    State.WriteVector(OutputFile);
+  }
 
   return 0;
 }
