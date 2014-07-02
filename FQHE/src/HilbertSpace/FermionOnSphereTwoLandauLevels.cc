@@ -44,6 +44,7 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/UnsignedIntegerTools.h"
 #include "GeneralTools/ArrayTools.h"
+#include "GeneralTools/StringTools.h"
 
 
 #include <cmath>
@@ -2784,7 +2785,63 @@ int FermionOnSphereTwoLandauLevels::FindStateIndex(unsigned long stateDescriptio
   return this->HilbertSpaceDimension;
 }
 
+// find state index from a string
+//
+// stateDescription = string describing the state
+// return value = corresponding index, -1 if an error occured
 
+int FermionOnSphereTwoLandauLevels::FindStateIndex(char* stateDescription)
+{
+  char** TmpDescription;
+  if (SplitLine(stateDescription, TmpDescription, ' ') != (this->LzMax + 1))
+    return -1;
+  unsigned long TmpState = 0x0ul;
+  int TmpNbrParticles = 0;
+  int TmpTotalLz = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      if (TmpDescription[i][0] == 'u')
+	{
+	  TmpState |= 0x2ul << (2 * i);
+	  TmpTotalLz += i;
+	  ++TmpNbrParticles;	  
+	}
+      else
+	{
+	  if (TmpDescription[i][0] == 'd')
+	    {
+	      TmpState |= 0x1ul << (2 * i);
+	      TmpTotalLz += i;
+	      ++TmpNbrParticles;	  
+	    }
+	  else
+	    {
+	      if (TmpDescription[i][0] == 'X')
+		{
+		  TmpState |= 0x3ul << (2 * i);
+		  TmpTotalLz += 2 * i;
+		  TmpNbrParticles += 2;	  
+		}
+	      else
+		{
+		  if (TmpDescription[i][0] != '0')
+		    {
+		      return -1;
+		    }
+		}
+	    }
+	}
+      delete[] TmpDescription[i];
+    }
+  delete[] TmpDescription;
+  if ((TmpNbrParticles != this->NbrFermions) 
+      || (TmpTotalLz != ((this->TotalLz + this->NbrFermions * this->LzMax) >> 1)))
+    return -1;
+  int TmpLzMax = 2 * this->LzMax + 1;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  return this->FindStateIndex(TmpState, TmpLzMax);
+}
 
 // compute the product and the projection of a Slater determinant and a monomial with reverse flux attachment
 // 

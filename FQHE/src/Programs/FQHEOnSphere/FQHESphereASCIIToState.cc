@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereTwoLandauLevels.h"
 
 #include "MathTools/ClebschGordanCoefficients.h"
 
@@ -58,6 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "total-y", "three time the quantum number of the system associated to the Y generator (only useful in su(3) mode)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "su4-spin", "consider particles with SU(4) spin");
   (*SystemGroup) += new SingleIntegerOption  ('i', "total-isosz", "twice the z component of the total isospin of the system (only usefull in su(4) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "2-ll", "consider particles within two Landau levels");
   (*SystemGroup) += new SingleStringOption ('\0', "ascii-state", "name of the input ASCII description of the state (should use the same convention than FQHESphereShowBasis output)");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of trying to replace .txt extension with .vec or appending .vec extension");
   (*SystemGroup) += new BooleanOption  ('\n', "no-normalization", "do not normalize the final state");
@@ -88,6 +90,7 @@ int main(int argc, char** argv)
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
   bool SU3SpinFlag = Manager.GetBoolean("su3-spin");
   bool SU4SpinFlag = Manager.GetBoolean("su4-spin");
+  bool TwoLLFlag = Manager.GetBoolean("2-ll");
   int TotalSz = Manager.GetInteger("total-sz");
     
   if (((NbrParticles * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
@@ -156,7 +159,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false))
+      if ((SU2SpinFlag == false) && (SU3SpinFlag == false) && (SU4SpinFlag == false) && (TwoLLFlag == false))
 	{
 	  if (Manager.GetBoolean("haldane") == false)
 	    {
@@ -211,11 +214,16 @@ int main(int argc, char** argv)
 	    }
 	}
       else
-	if (SU2SpinFlag == true)
-	  Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
-	else
-	  if (SU3SpinFlag == true)
-	    Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);	  
+	{
+	  if (SU2SpinFlag == true)
+	    Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	  else
+	    if (SU3SpinFlag == true)
+	      Space = new FermionOnSphereWithSU3Spin(NbrParticles, TotalLz, NbrFluxQuanta, TotalTz, TotalY);	  
+	    else
+	      if (TwoLLFlag == true)
+		Space = new FermionOnSphereTwoLandauLevels(NbrParticles, TotalLz, NbrFluxQuanta + 2, NbrFluxQuanta);	  
+	}
     }
   
   RealVector State (Space->GetHilbertSpaceDimension(), true);

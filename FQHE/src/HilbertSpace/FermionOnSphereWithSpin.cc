@@ -43,6 +43,7 @@
 #include "GeneralTools/ArrayTools.h"
 #include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/StringTools.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -1353,7 +1354,7 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
 // lzmax = maximum Lz value reached by a fermion in the state
 // return value = corresponding index
 
-  int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
+int FermionOnSphereWithSpin::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
   long PosMin = this->LookUpTable[lzmax][PosMax];
@@ -1377,8 +1378,69 @@ int FermionOnSphereWithSpin::CarefulFindStateIndex(unsigned long stateDescriptio
     return PosMid;
   else
     return PosMin;
-}
+}  
 
+// find state index from a string
+//
+// stateDescription = string describing the state
+// return value = corresponding index, -1 if an error occured
+
+int FermionOnSphereWithSpin::FindStateIndex(char* stateDescription)
+{
+  char** TmpDescription;
+  if (SplitLine(stateDescription, TmpDescription, ' ') != (this->LzMax + 1))
+    return -1;
+  unsigned long TmpState = 0x0ul;
+  int TmpNbrParticles = 0;
+  int TmpTotalLz = 0;
+  int TmpTotalSz = 0;
+  for (int i = 0; i <= this->LzMax; ++i)
+    {
+      if (TmpDescription[i][0] == 'u')
+	{
+	  TmpState |= 0x2ul << (2 * i);
+	  TmpTotalLz += i;
+	  ++TmpTotalSz;
+	  ++TmpNbrParticles;	  
+	}
+      else
+	{
+	  if (TmpDescription[i][0] == 'd')
+	    {
+	      TmpState |= 0x1ul << (2 * i);
+	      TmpTotalLz += i;
+	      --TmpTotalSz;
+	      ++TmpNbrParticles;	  
+	    }
+	  else
+	    {
+	      if (TmpDescription[i][0] == 'X')
+		{
+		  TmpState |= 0x3ul << (2 * i);
+		  TmpTotalLz += 2 * i;
+		  TmpNbrParticles += 2;	  
+		}
+	      else
+		{
+		  if (TmpDescription[i][0] != '0')
+		    {
+		      return -1;
+		    }
+		}
+	    }
+	}
+      delete[] TmpDescription[i];
+    }
+  delete[] TmpDescription;
+  if ((TmpNbrParticles != this->NbrFermions) 
+      || (TmpTotalLz != ((this->TotalLz + this->NbrFermions * this->LzMax) >> 1))
+      || (TmpTotalSz != this->TotalSpin))
+    return -1;
+  int TmpLzMax = 2 * this->LzMax + 1;
+  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
+    --TmpLzMax;
+  return this->FindStateIndex(TmpState, TmpLzMax);
+}
 
 
 // print a given State

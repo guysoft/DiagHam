@@ -5,6 +5,7 @@
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
@@ -166,8 +167,19 @@ int main(int argc, char** argv)
     }
   else
     {
-      cout << "no coefficients defined in " << Manager.GetString("input-states") << endl;
-      return -1; 
+      if (CoefficientOnlyFlag == true)
+	{
+	  Coefficients = new Complex [InputVectors.GetNbrLines()];
+	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
+	    {
+	      Coefficients[i] = 1.0;
+	    }
+	}
+      else
+	{
+	  cout << "no coefficients defined in " << Manager.GetString("input-states") << endl;
+	  return -1; 
+	}
     }
   
   //  ParticleOnDiskFunctionBasis Basis(TotalLz);
@@ -336,7 +348,8 @@ int main(int argc, char** argv)
 	  for (int i = 0; i <= ForceMaxMomentum; ++i)
 	    for (int j = 0; j <= ForceMaxMomentum; ++j)
 	      {
-		File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][i][j] << endl;
+		if ((RawPrecalculatedValues[m][n][i][j].Re != 0.0) || (RawPrecalculatedValues[m][n][i][j].Im != 0.0))
+		  File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][i][j] << endl;
 	      }
     }
   
@@ -417,18 +430,25 @@ bool FQHECheckerboardLatticeModelDensityGetHilbertSpace(char* inputState, int& n
       return false;      
     }
 
+  if (statistics == true)
+    {
 #ifdef __64_BITS__
-  if ((nbrSitesX * nbrSitesY) <= 63)
+      if ((nbrSitesX * nbrSitesY) <= 63)
 #else
-    if ((nbrSitesX * nbrSitesY) <= 31)
+	if ((nbrSitesX * nbrSitesY) <= 31)
 #endif
-      {
-	space = new FermionOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
-      }
-    else
-      {
-	space = new FermionOnSquareLatticeMomentumSpaceLong (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
-      }
+	  {
+	    space = new FermionOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	  }
+	else
+	  {
+	    space = new FermionOnSquareLatticeMomentumSpaceLong (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	  }
+    }
+  else
+    {
+      space = new BosonOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+    }
   if (space->GetLargeHilbertSpaceDimension() != state.GetLargeVectorDimension())
     {
       cout << "dimension mismatch between the state (" << state.GetLargeVectorDimension() << ") and the Hilbert space (" << space->GetLargeHilbertSpaceDimension() << ")" << endl;

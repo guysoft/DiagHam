@@ -568,7 +568,12 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
-
+  
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
 
   // evaluate Hilbert space dimension
   //

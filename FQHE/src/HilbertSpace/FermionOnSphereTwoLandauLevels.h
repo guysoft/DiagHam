@@ -544,14 +544,20 @@ protected:
   // sortingMap = map in which the generated states and their coefficient will be stored
   // finalSpace = pointer to the final HilbertSpace
   virtual void SlaterTimesSlater(unsigned long* slater, unsigned long* lllslater, map <unsigned long, double> & sortingMap, BosonOnSphereTwoLandauLevels* finalSpace);
-  
+
   // find state index. not using lookup table at the moment
   //
   // stateDescription = unsigned integer describing the state
   // lzmax = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  virtual int  FindStateIndex(unsigned long stateDescription, int lzmax);
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
 	
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
+
   // compute the product and the projection of a Slater determinant and a monomial with reverse flux attachment
   // 
   // slater = array where the slater is stored in its monomial representation
