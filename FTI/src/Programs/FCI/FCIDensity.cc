@@ -20,6 +20,9 @@
 
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
+
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
@@ -52,9 +55,9 @@ using std::ofstream;
 // space = reference on the pointer to the Hilbert space
 // state = reference on the state vector
 // return value = true if no error occured
-bool FQHECheckerboardLatticeModelDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
-							int& kxMomentum, int& kyMomentum, bool& statistics,
-							ParticleOnSphere*& space, ComplexVector& state);
+bool FCIDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
+			       int& kxMomentum, int& kyMomentum, bool& statistics,
+			       ParticleOnSphere*& space, ComplexVector& state);
 
 
 int main(int argc, char** argv)
@@ -62,7 +65,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FQHECheckerboardLatticeModelDensity" , "0.01");
+  OptionManager Manager ("FCIDensity" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PlotOptionGroup = new OptionGroup ("plot options");  
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -80,12 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (overriding the one found in the vector file name if greater than 0)", 0);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "nearest neighbor hoping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "next nearest neighbor hoping amplitude", 1.0 - 0.5 * M_SQRT2);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "tpp", "second next nearest neighbor hoping amplitude", 0.5 * (M_SQRT2 - 1.0));
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
 
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to do the plot");
@@ -95,7 +93,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHECheckerboardLatticeModelDensity -h" << endl;
+      cout << "see man page for option syntax or type FCIDensity -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -105,7 +103,7 @@ int main(int argc, char** argv)
     }
   if (Manager.GetString("input-states") == 0)
     {
-      cout << "FQHECheckerboardLatticeModelDensity requires an input state" << endl;
+      cout << "FCIDensity requires an input state" << endl;
       return -1;
     }
 
@@ -119,6 +117,12 @@ int main(int argc, char** argv)
   double NextNNHoping = Manager.GetDouble("t2");
   double SecondNextNNHoping = Manager.GetDouble("tpp");
   double MuS = Manager.GetDouble("mu-s");
+
+  if ((CoefficientOnlyFlag == false) && (Manager.GetString("import-onebody") == 0))
+    {
+      cout << "error, a tight binding model as to be provided"  << endl;
+      return -1;
+    }
 
   MultiColumnASCIIFile InputVectors;
   if (InputVectors.Parse(Manager.GetString("input-states")) == false)
@@ -182,10 +186,7 @@ int main(int argc, char** argv)
 	}
     }
   
-  //  ParticleOnDiskFunctionBasis Basis(TotalLz);
-
   int ForceMaxMomentum = NbrSitesX * NbrSitesY - 1;      
-  //  double Scale = 2.0 * sqrt((double) TotalLz);
   ComplexMatrix PrecalculatedValues(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
   ComplexMatrix** RawPrecalculatedValues = new ComplexMatrix*[InputVectors.GetNbrLines()];
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
@@ -203,7 +204,7 @@ int main(int argc, char** argv)
 	  ComplexVector LeftState;
 	  int LeftKxMomentum = 0;
 	  int LeftKyMomentum = 0;
-	  if (FQHECheckerboardLatticeModelDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, NbrSitesX, NbrSitesY, 
+	  if (FCIDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, NbrSitesX, NbrSitesY, 
 								 LeftKxMomentum, LeftKyMomentum, Statistics, 
 								 LeftSpace, LeftState) == false)
 	    return -1;
@@ -226,7 +227,7 @@ int main(int argc, char** argv)
 	      ComplexVector RightState;
 	      int RightKxMomentum = 0;
 	      int RightKyMomentum = 0;
-	      if (FQHECheckerboardLatticeModelDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, NbrSitesX, NbrSitesY, 
+	      if (FCIDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, NbrSitesX, NbrSitesY, 
 								     RightKxMomentum, RightKyMomentum, Statistics, 
 								     RightSpace, RightState) == false)
 		return -1;
@@ -299,33 +300,7 @@ int main(int argc, char** argv)
 	}
     }
 
-  ComplexMatrix* OneBodyBasis = new ComplexMatrix [NbrSitesX * NbrSitesY];
-  double GammaX = 0.0;
-  double GammaY = 0.0;
-  for (int kx = 0; kx < NbrSitesX; ++kx)
-    for (int ky = 0; ky < NbrSitesY; ++ky)
-      {
-	int Index = (kx * NbrSitesY) + ky;
-	Complex B1 = 4.0 * NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * cos (1.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY)) * cos(M_PI * 0.25), 
-						     sin (1.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * sin (1.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY)) * sin(M_PI * 0.25));
-	double d1 = 4.0 * SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) * cos (2.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY));
-	double d3 =  MuS + (2.0 * NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + GammaX) / ((double) NbrSitesX)) 
-							      - cos (2.0 * M_PI * (((double) ky) + GammaY) / ((double) NbrSitesY))));
-	HermitianMatrix TmpOneBobyHamiltonian(2, true);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBobyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBobyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBobyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBobyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	OneBodyBasis[Index] = TmpMatrix;	
-      }
+
 
   ofstream File;
   File.precision(14);
@@ -355,6 +330,7 @@ int main(int argc, char** argv)
   
   if (CoefficientOnlyFlag == false)
     {
+      Generic2DTightBindingModel TightBindingModel(Manager.GetString("import-onebody")); 
       Complex Sum = 0.0;
       double Normalization = 1.0 / (((double) NbrSitesX) * ((double) NbrSitesY));      
       for (int i = 0; i < NbrSitesX; ++i)
@@ -371,7 +347,7 @@ int main(int argc, char** argv)
 		      int TotalKx2 = n / NbrSitesY;
 		      int TotalKy2 = n % NbrSitesY;
 		      DensityA += Phase(-2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * i)) / ((double) NbrSitesX) 
-					- 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Normalization * Conj(OneBodyBasis[m][0][0]) * OneBodyBasis[n][0][0] * PrecalculatedValues[m][n];
+					- 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Normalization * Conj(TightBindingModel.GetOneBodyMatrix(m)[0][0]) * TightBindingModel.GetOneBodyMatrix(n)[0][0] * PrecalculatedValues[m][n];
 		    }
 		}
 	      Sum += DensityA;
@@ -390,7 +366,7 @@ int main(int argc, char** argv)
 		      int TotalKx2 = n / NbrSitesY;
 		      int TotalKy2 = n % NbrSitesY;
 		      DensityB += Phase(-2.0 * M_PI * (((double) (TotalKx1 - TotalKx2)) * (0.5 + (double) i)) / ((double) NbrSitesX) 
-					- 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Normalization * OneBodyBasis[m][0][1] * Conj(OneBodyBasis[n][0][1]) * PrecalculatedValues[m][n];
+					- 2.0 * M_PI * (((double) (TotalKy1 - TotalKy2)) * (0.5 + (double) j)) / ((double) NbrSitesY)) * Normalization * TightBindingModel.GetOneBodyMatrix(m)[0][1] * Conj(TightBindingModel.GetOneBodyMatrix(n)[0][1]) * PrecalculatedValues[m][n];
 		    }
 		}
 	      Sum += DensityB;
@@ -416,7 +392,7 @@ int main(int argc, char** argv)
 // state = reference on the state vector
 // return value = true if no error occured
 
-bool FQHECheckerboardLatticeModelDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
+bool FCIDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
 							int& kxMomentum, int& kyMomentum, bool& statistics,
 							ParticleOnSphere*& space, ComplexVector& state)
 {
