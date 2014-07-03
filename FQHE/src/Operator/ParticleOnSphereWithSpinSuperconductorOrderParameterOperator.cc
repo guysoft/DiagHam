@@ -52,11 +52,24 @@ ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWi
 															   int creationMomentumIndex1, int creationSymmetryIndex1,
 															   int creationMomentumIndex2, int creationSymmetryIndex2)
 {
-  this->Particle= particle;
+  this->Particle = (ParticleOnSphereWithSpin*) (particle->Clone());
   this->CreationMomentumIndex1 = creationMomentumIndex1;
   this->CreationSymmetryIndex1 = creationSymmetryIndex1;
   this->CreationMomentumIndex2 = creationMomentumIndex2;
   this->CreationSymmetryIndex2 = creationSymmetryIndex2;
+}
+
+// copy constructor
+//
+
+ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpinSuperconductorOrderParameterOperator& oper)
+{
+  this->Particle = (ParticleOnSphereWithSpin*) (oper.Particle->Clone());
+  this->CreationMomentumIndex1 = oper.CreationMomentumIndex1;
+  this->CreationSymmetryIndex1 = oper.CreationSymmetryIndex1;
+  this->CreationMomentumIndex2 = oper.CreationMomentumIndex2;
+  this->CreationSymmetryIndex2 = oper.CreationSymmetryIndex2;
+  
 }
 
 // destructor
@@ -64,6 +77,7 @@ ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWi
 
 ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::~ParticleOnSphereWithSpinSuperconductorOrderParameterOperator()
 {
+  delete this->Particle;
 }
   
 // clone operator without duplicating datas
@@ -72,7 +86,7 @@ ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::~ParticleOnSphereW
 
 AbstractOperator* ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::Clone ()
 {
-  return 0;
+  return new ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(*this);
 }
 
 // set Hilbert space

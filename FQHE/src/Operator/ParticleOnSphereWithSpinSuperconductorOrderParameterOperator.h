@@ -69,6 +69,10 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
 							       int creationMomentumIndex2, int creationSymmetryIndex2);
 
+  // copy constructor
+  //
+  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpinSuperconductorOrderParameterOperator& oper);
+
   // destructor
   //
   ~ParticleOnSphereWithSpinSuperconductorOrderParameterOperator();
