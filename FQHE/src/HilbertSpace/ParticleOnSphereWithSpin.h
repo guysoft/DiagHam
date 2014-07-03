@@ -320,6 +320,33 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient);
   
+  // apply a^+_m1_u a^+_m2_u operator to a state, assuming a different target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAdu (int index, int m1, int m2, double& coefficient);
+   
+  // apply a^+_m1_d a^+_m2_d operator to a state, assuming a different target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAdd (int index, int m1, int m2, double& coefficient);
+  
+  // apply a^+_m1_u a^+_m2_d operator to a state, assuming a different target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAdd (int index, int m1, int m2, double& coefficient);
+  
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)

@@ -54,10 +54,13 @@ using std::ofstream;
 // statistics = reference on the statistic flag
 // space = reference on the pointer to the Hilbert space
 // state = reference on the state vector
+// spaces = array where the Hilbert spaces are stored
+// recomputeHilbert = true if the Hilbert space should not be stored
 // return value = true if no error occured
-bool FCIDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
-			       int& kxMomentum, int& kyMomentum, bool& statistics,
-			       ParticleOnSphere*& space, ComplexVector& state);
+bool FCIImpuritiesGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
+				  int& kxMomentum, int& kyMomentum, bool& statistics,
+				  ParticleOnSphere*& space, ComplexVector& state,
+				  ParticleOnSphere** spaces, bool recomputeHilbert);
 
 
 int main(int argc, char** argv)
@@ -65,7 +68,7 @@ int main(int argc, char** argv)
   cout.precision(14);
 
   // some running options and help
-  OptionManager Manager ("FCIDensity" , "0.01");
+  OptionManager Manager ("FCIImpurities" , "0.01");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* PlotOptionGroup = new OptionGroup ("plot options");  
   OptionGroup* PrecalculationGroup = new OptionGroup ("precalculation options");
@@ -79,21 +82,19 @@ int main(int argc, char** argv)
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleStringOption  ('\n', "input-states", "use a file to describe the state as a linear combination");
-  (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles (overriding the one found in the vector file name if greater than 0)", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
-  (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
+  (*SystemGroup) += new SingleStringOption  ('\n', "input-states", "ASCII column formatted file that describes the low energy states of the system withot impurities");
+  (*SystemGroup) += new SingleStringOption  ('\n', "impurities", "ASCII column formatted file that gives the location and strength of each impurity");
   (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
-  (*SystemGroup) += new BooleanOption  ('\n', "coefficients-only", "only compute the one body coefficients that are requested to evaluate the density profile", false);
+  (*SystemGroup) += new BooleanOption('\n', "recompute-hilbert", "do not store the Hilbert spaces (decreasing the memory consumption)");
 
-  (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to do the plot");
-  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .rho.dat)", 0);
+  (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to perform the calculation");
+  (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .impurities.dat)", 0);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FCIDensity -h" << endl;
+      cout << "see man page for option syntax or type FCIImpurities -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -103,21 +104,20 @@ int main(int argc, char** argv)
     }
   if (Manager.GetString("input-states") == 0)
     {
-      cout << "FCIDensity requires an input state" << endl;
+      cout << "FCIImpurities requires an input state" << endl;
       return -1;
     }
 
-  int NbrParticles = Manager.GetInteger("nbr-particles");
-  int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
-  int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+  int NbrParticles = 0;
+  int NbrSitesX = 0; 
+  int NbrSitesY = 0; 
   bool Statistics = false;
-  bool CoefficientOnlyFlag = Manager.GetBoolean("coefficients-only");
   char* OutputName = Manager.GetString("output");
   int BandIndex = 0;
 
-  if ((CoefficientOnlyFlag == false) && (Manager.GetString("import-onebody") == 0))
+  if (Manager.GetString("import-onebody") == 0)
     {
-      cout << "error, a tight binding model as to be provided"  << endl;
+      cout << "error, a tight binding model has to be provided"  << endl;
       return -1;
     }
 
@@ -128,6 +128,44 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  if (Manager.GetString("impurities") == 0)
+    {
+      cout << "error, impurity locations have to be provided"  << endl;
+      return -1;
+    }
+  MultiColumnASCIIFile Impurities;
+  if (Impurities.Parse(Manager.GetString("impurities")) == false)
+    {
+      Impurities.DumpErrors(cout) << endl;
+      return -1;
+    }
+
+  int NbrImpurities = Impurities.GetNbrLines();
+  if (NbrImpurities == 0)
+    {
+      cout << "no impurity location provided in " << Manager.GetString("impurities") << endl;
+      return -1;
+    }
+  if (Impurities.GetNbrColumns() < 3)
+    {
+      cout << "wrong number of columns in " << Manager.GetString("impurities") << endl;
+      return -1;
+    }
+  int* ImpurityXPositions = Impurities.GetAsIntegerArray(0);
+  int* ImpurityYPositions = Impurities.GetAsIntegerArray(1);
+  int* ImpurityOrbitals = Impurities.GetAsIntegerArray(2);
+  double* ImpurityStrengths = 0;
+  if (Impurities.GetNbrColumns() > 3)
+    {
+      ImpurityStrengths = Impurities.GetAsDoubleArray(3);;
+    }
+  else
+    {
+      ImpurityStrengths = new double [NbrImpurities];
+      for (int i = 0; i < NbrImpurities; ++i)
+	ImpurityStrengths[i] = 1.0;
+    }
+  Generic2DTightBindingModel TightBindingModel(Manager.GetString("import-onebody")); 
   int CurrentKx = 0;
   int CurrentKy = 0;
   if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(InputVectors(0, 0), NbrParticles, NbrSitesX, NbrSitesY, CurrentKx, CurrentKy, Statistics) == false)
@@ -161,30 +199,8 @@ int main(int argc, char** argv)
 	  return -1;
 	}
     }
-  Complex* Coefficients = 0;
-  if (InputVectors(1, 0) != 0)
-    {
-      Coefficients = InputVectors.GetAsComplexArray(1);
-    }
-  else
-    {
-      if (CoefficientOnlyFlag == true)
-	{
-	  Coefficients = new Complex [InputVectors.GetNbrLines()];
-	  for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	    {
-	      Coefficients[i] = 1.0;
-	    }
-	}
-      else
-	{
-	  cout << "no coefficients defined in " << Manager.GetString("input-states") << endl;
-	  return -1; 
-	}
-    }
   
   int ForceMaxMomentum = NbrSitesX * NbrSitesY - 1;      
-  ComplexMatrix PrecalculatedValues(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
   ComplexMatrix** RawPrecalculatedValues = new ComplexMatrix*[InputVectors.GetNbrLines()];
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
@@ -195,64 +211,61 @@ int main(int argc, char** argv)
   
   if (Manager.GetString("use-precomputed") == 0)
     {	  
+      ParticleOnSphere** Spaces = new ParticleOnSphere* [NbrSitesX * NbrSitesY];
+      for (int m = 0; m <= ForceMaxMomentum; ++m)
+	Spaces[m] = 0;
       for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
 	{
 	  ParticleOnSphere* LeftSpace = 0;
 	  ComplexVector LeftState;
 	  int LeftKxMomentum = 0;
 	  int LeftKyMomentum = 0;
-	  if (FCIDensityGetHilbertSpace(InputVectors(0, i), NbrParticles, NbrSitesX, NbrSitesY, 
-								 LeftKxMomentum, LeftKyMomentum, Statistics, 
-								 LeftSpace, LeftState) == false)
+	  if (FCIImpuritiesGetHilbertSpace(InputVectors(0, i), NbrParticles, NbrSitesX, NbrSitesY, 
+					   LeftKxMomentum, LeftKyMomentum, Statistics, 
+					   LeftSpace, LeftState, Spaces, Manager.GetBoolean("recompute-hilbert")) == false)
 	    return -1;
 	  for (int m = 0; m <= ForceMaxMomentum; ++m)
 	    {
-	      int TotalKx = m / NbrSitesY;
-	      int TotalKy = m % NbrSitesY;
 	      ParticleOnSphereDensityOperator Operator (LeftSpace, m);
 	      OperatorMatrixElementOperation Operation(&Operator, LeftState, LeftState);
 	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      //	      Complex Tmp = Operation.GetScalar();
 	      Complex Tmp = Operator.MatrixElement(LeftState, LeftState);
 	      RawPrecalculatedValues[i][i].AddToMatrixElement(m, m, Tmp);
-	      Tmp *= (Conj(Coefficients[i]) * Coefficients[i]);
-	      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
 	    }
-	  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
+	  for (int j = 0; j < InputVectors.GetNbrLines(); ++j)
 	    {
 	      ParticleOnSphere* RightSpace = 0;
 	      ComplexVector RightState;
 	      int RightKxMomentum = 0;
 	      int RightKyMomentum = 0;
-	      if (FCIDensityGetHilbertSpace(InputVectors(0, j), NbrParticles, NbrSitesX, NbrSitesY, 
-								     RightKxMomentum, RightKyMomentum, Statistics, 
-								     RightSpace, RightState) == false)
+	      if (FCIImpuritiesGetHilbertSpace(InputVectors(0, j), NbrParticles, NbrSitesX, NbrSitesY, 
+					       RightKxMomentum, RightKyMomentum, Statistics, 
+					       RightSpace, RightState, Spaces, Manager.GetBoolean("recompute-hilbert")) == false)
 		return -1;
 	      RightSpace->SetTargetSpace(LeftSpace);
 	      for (int m = 0; m <= ForceMaxMomentum; ++m)
 		{
+		  int TotalKx1;
+		  int TotalKy1;
+		  TightBindingModel.GetLinearizedMomentumIndex(m, TotalKx1, TotalKy1);
 		  for (int n = 0; n <= ForceMaxMomentum; ++n)
 		    {
-		      int TotalKx1 = m / NbrSitesY;
-		      int TotalKy1 = m % NbrSitesY;
-		      int TotalKx2 = n / NbrSitesY;
-		      int TotalKy2 = n % NbrSitesY;
+		      int TotalKx2;
+		      int TotalKy2;
+		      TightBindingModel.GetLinearizedMomentumIndex(n, TotalKx2, TotalKy2);
 		      if ((((RightKxMomentum - TotalKx2) % NbrSitesX) == ((LeftKxMomentum - TotalKx1) % NbrSitesX))
 			  && (((RightKyMomentum - TotalKy2) % NbrSitesY) == ((LeftKyMomentum - TotalKy1) % NbrSitesY)))
 			{
 			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
 			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
 			  Operation.ApplyOperation(Architecture.GetArchitecture());
-			  //Complex Tmp = Operation.GetScalar();
-			  Complex Tmp = -Operator.MatrixElement(LeftState, RightState);
+			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
 			  RawPrecalculatedValues[i][j].AddToMatrixElement(m, n, Tmp);
-			  Tmp *=  (Conj(Coefficients[i]) * Coefficients[j]);
-			  PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
-			  PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
 			}
 		    }
 		}
-	      delete RightSpace;
+	      if (Manager.GetBoolean("recompute-hilbert") == true)
+		delete RightSpace;
 	    }
 	}
     }
@@ -273,28 +286,6 @@ int main(int argc, char** argv)
 	{
 	  RawPrecalculatedValues[StateIndexLeft[i]][StateIndexRight[i]].AddToMatrixElement(OperatorIndexLeft[i], OperatorIndexRight[i], OneBodyCoefficients[i]);
 	}
-      for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
-	{
-	  for (int m = 0; m <= ForceMaxMomentum; ++m)
-	    {
-	      Complex Tmp = RawPrecalculatedValues[i][i][m][m];
-	      Tmp *= (Coefficients[i] * Coefficients[i]);
-	      PrecalculatedValues.AddToMatrixElement(m, m, Tmp);
-	    }
-	  for (int j = i + 1; j < InputVectors.GetNbrLines(); ++j)
-	    {
-	      for (int m = 0; m <= ForceMaxMomentum; ++m)
-		{
-		  for (int n = 0; n <= ForceMaxMomentum; ++n)
-		    {
-		      Complex Tmp = RawPrecalculatedValues[i][j][m][n];
-		      Tmp *= (Coefficients[i] * Coefficients[j]);
-		      PrecalculatedValues.AddToMatrixElement(m, n, Tmp);
-		      PrecalculatedValues.AddToMatrixElement(n, m, Conj(Tmp));
-		    }
-		}
-	    }
-	}
     }
 
 
@@ -302,64 +293,73 @@ int main(int argc, char** argv)
   ofstream File;
   File.precision(14);
   if (OutputName == 0)
-    OutputName = ReplaceExtensionToFileName(Manager.GetString("input-states"), "dat", "rho.dat");
+    OutputName = ReplaceExtensionToFileName(Manager.GetString("input-states"), "dat", "coefficients.dat");
   File.open(OutputName, ios::binary | ios::out);
   File << "# density coefficients for " << Manager.GetString("input-states") << endl;
-  if (CoefficientOnlyFlag == false)
-    {
-      File << "#" << endl << "# m  n  c_{m,n}" << endl;
+  File << "#" << endl << "# state_index_left state_index_right m  n  c_{m,n}" << endl;
+  for (int m = 0; m < InputVectors.GetNbrLines(); ++m)
+    for (int n = m; n < InputVectors.GetNbrLines(); ++n)
       for (int i = 0; i <= ForceMaxMomentum; ++i)
 	for (int j = 0; j <= ForceMaxMomentum; ++j)
-	  File << "# " << i << " " << j << " " << PrecalculatedValues[i][j] << endl;
+	  {
+	    if ((RawPrecalculatedValues[m][n][i][j].Re != 0.0) || (RawPrecalculatedValues[m][n][i][j].Im != 0.0))
+	      File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][i][j] << endl;
+	  }
+  File.close();
+
+
+
+  
+  double Normalization = 1.0 /  ((double) (NbrSitesX * NbrSitesY));  
+  int TmpHilbertSpaceDimension = InputVectors.GetNbrLines();
+  HermitianMatrix HRep (TmpHilbertSpaceDimension, true);
+  for (int m = 0; m < TmpHilbertSpaceDimension; ++m)
+    for (int n = m; n < TmpHilbertSpaceDimension; ++n)
+      {
+	Complex TmpElement = 0.0;
+	for (int i = 0; i <= ForceMaxMomentum; ++i)
+	  {
+	    int TotalKx1;
+	    int TotalKy1;
+	    TightBindingModel.GetLinearizedMomentumIndex(i, TotalKx1, TotalKy1);
+	    for (int j = 0; j <= ForceMaxMomentum; ++j)
+	      {
+		int TotalKx2;
+		int TotalKy2;
+		TightBindingModel.GetLinearizedMomentumIndex(j, TotalKx2, TotalKy2);
+		for (int p = 0; p < NbrImpurities; ++p)
+		  {
+		    TmpElement += (Phase(-2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * ImpurityXPositions[p])) / ((double) NbrSitesX) 
+					- 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * ImpurityYPositions[p])) / ((double) NbrSitesY)) 
+				   * Conj(TightBindingModel.GetOneBodyMatrix(i)[BandIndex][ImpurityOrbitals[p]]) * TightBindingModel.GetOneBodyMatrix(j)[BandIndex][ImpurityOrbitals[p]] 
+				   * Normalization * RawPrecalculatedValues[m][n][i][j]);
+		  }
+	      }
+	  }
+	HRep.SetMatrixElement(m, n, TmpElement);
+      }
+
+  RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+  if (TmpHilbertSpaceDimension > 1)
+    {
+      ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension);	      
+      TmpEigenvector.SetToIdentity();
+#ifdef __LAPACK__
+      HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
+#else
+      HRep.Diagonalize(TmpDiag, TmpEigenvector);
+#endif
     }
   else
     {
-      File << "#" << endl << "# state_index_left state_index_right m  n  c_{m,n}" << endl;
-      for (int m = 0; m < InputVectors.GetNbrLines(); ++m)
-	for (int n = m; n < InputVectors.GetNbrLines(); ++n)
-	  for (int i = 0; i <= ForceMaxMomentum; ++i)
-	    for (int j = 0; j <= ForceMaxMomentum; ++j)
-	      {
-		if ((RawPrecalculatedValues[m][n][i][j].Re != 0.0) || (RawPrecalculatedValues[m][n][i][j].Im != 0.0))
-		  File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][i][j] << endl;
-	      }
+      TmpDiag[0] = HRep(0, 0);
     }
-  
-  if (CoefficientOnlyFlag == false)
+
+  for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
     {
-      Generic2DTightBindingModel TightBindingModel(Manager.GetString("import-onebody")); 
-      Complex Sum = 0.0;
-      double Normalization = 1.0 / (((double) NbrSitesX) * ((double) NbrSitesY));      
-      for (int i = 0; i < NbrSitesX; ++i)
-	{
-	  for (int j = 0; j < NbrSitesY; ++j)
-	    {
-	      File << i << " " << j;
-	      for (int alpha = 0; alpha < TightBindingModel.GetNbrBands(); ++alpha)
-		{
-		  Complex Density = 0.0;
-		  for (int m = 0; m <= ForceMaxMomentum; ++m)
-		    {
-		      for (int n = 0; n <= ForceMaxMomentum; ++n)
-			{
-			  int TotalKx1 = m / NbrSitesY;
-			  int TotalKy1 = m % NbrSitesY;
-			  int TotalKx2 = n / NbrSitesY;
-			  int TotalKy2 = n % NbrSitesY;
-			  Density += Phase(-2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * i)) / ((double) NbrSitesX) 
-					    - 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * j)) / ((double) NbrSitesY)) * Normalization * Conj(TightBindingModel.GetOneBodyMatrix(m)[BandIndex][alpha]) * TightBindingModel.GetOneBodyMatrix(n)[BandIndex][alpha] * PrecalculatedValues[m][n];
-			}
-		    }
-		  Sum += Density;
-		  File << " " << Density.Re << " " << Density;
-		}
-	      File << endl;
-	    }
-	  File << endl;
-	}
-      cout << "Sum = " << Sum << endl;
+      cout << TmpDiag[i] << endl;
     }
-  File.close();
+
 }
 
 // get the Hilbert space and the vector state form the input file name
@@ -373,11 +373,12 @@ int main(int argc, char** argv)
 // statistics = reference on the statistic flag
 // space = reference on the pointer to the Hilbert space
 // state = reference on the state vector
+// spaces = array where the Hilbert spaces are stored
+// recomputeHilbert = true if the Hilbert space should not be stored
 // return value = true if no error occured
 
-bool FCIDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY,
-							int& kxMomentum, int& kyMomentum, bool& statistics,
-							ParticleOnSphere*& space, ComplexVector& state)
+bool FCIImpuritiesGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSitesX, int& nbrSitesY, int& kxMomentum, int& kyMomentum, bool& statistics,
+				  ParticleOnSphere*& space, ComplexVector& state, ParticleOnSphere** spaces, bool recomputeHilbert)
 {
   if (FQHEOnSquareLatticeFindSystemInfoFromVectorFileName(inputState, nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum, statistics) == false)
     {
@@ -389,24 +390,33 @@ bool FCIDensityGetHilbertSpace(char* inputState, int& nbrParticles, int& nbrSite
       return false;      
     }
 
-  if (statistics == true)
+  if (spaces[kxMomentum + nbrSitesX * kyMomentum] == 0)
     {
+      if (statistics == true)
+	{
 #ifdef __64_BITS__
-      if ((nbrSitesX * nbrSitesY) <= 63)
+	  if ((nbrSitesX * nbrSitesY) <= 63)
 #else
-	if ((nbrSitesX * nbrSitesY) <= 31)
+	    if ((nbrSitesX * nbrSitesY) <= 31)
 #endif
-	  {
-	    space = new FermionOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
-	  }
-	else
-	  {
-	    space = new FermionOnSquareLatticeMomentumSpaceLong (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
-	  }
+	      {
+		space = new FermionOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	      }
+	    else
+	      {
+		space = new FermionOnSquareLatticeMomentumSpaceLong (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	      }
+	}
+      else
+	{
+	  space = new BosonOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+	}
+      if (recomputeHilbert == false)
+	spaces[kxMomentum + nbrSitesX * kyMomentum] = space;
     }
   else
     {
-      space = new BosonOnSquareLatticeMomentumSpace (nbrParticles, nbrSitesX, nbrSitesY, kxMomentum, kyMomentum);
+      space = spaces[kxMomentum + nbrSitesX * kyMomentum];
     }
   if (space->GetLargeHilbertSpaceDimension() != state.GetLargeVectorDimension())
     {

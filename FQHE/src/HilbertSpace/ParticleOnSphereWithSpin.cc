@@ -412,6 +412,45 @@ int ParticleOnSphereWithSpin::AduAdd (int m1, int m2, double& coefficient, int& 
   return this->AduAdd (m1, m2, coefficient);
 }
 
+// apply a^+_m1_u a^+_m2_u operator to a state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAdu (int index, int m1, int m2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+   
+// apply a^+_m1_d a^+_m2_d operator to a state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin down)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAdd (int index, int m1, int m2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+  
+// apply a^+_m1_u a^+_m2_d operator to a state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAdd (int index, int m1, int m2, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+  
 // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down
 //
 // index = index of the state on which the operator has to be applied
