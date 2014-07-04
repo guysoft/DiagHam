@@ -66,7 +66,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file names");
   (*OutputGroup) += new BooleanOption  ('u', "unnormalized-basis", "indicates that calculations and data are in the unnormalized basis");
   (*SystemGroup) += new BooleanOption  ('\n', "rational", "use rational numbers instead of double precision floating point numbers");
-  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the target system (in single-state mode)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('z', "total-lz", "twice the total momentum projection for the target system (in single-state mode)", -1);
   
 #ifdef __GMP__
   (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
@@ -331,12 +331,6 @@ int main(int argc, char** argv)
 	{
 	  int NbrFluxQuanta = (NbrFluxQuanta1 - 1) / 2;
 	  int TotalLz = Manager.GetInteger("total-lz");
-	 
-	  if (((NbrParticles1 * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
-	    {
-	      cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
-	      return -1;
-	    } 
 	  char* FullOutputFileName = new char [strlen(OutputFileName) + 128];
 	  sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, (int) Manager.GetInteger("total-lz"));
 	  TargetSpace = new BosonOnSphereShort(NbrParticles1, TotalLz, NbrFluxQuanta);
@@ -344,6 +338,78 @@ int main(int argc, char** argv)
 	  LongRationalVector RationalOutputState;
 	  if (Manager.GetBoolean("rational") == false)
 	    {
+	      if (Manager.GetInteger("total-lz") == -1 )
+	      {
+	      RealVector* OutputStates;
+	      int* LzSectors;
+	      int NbrLzSectors;
+	      if (Manager.GetBoolean("periodicity-symmetrization") == false)
+		NbrLzSectors = Space1->SymmetrizeSingleStateOneIntoManyOrbital(State1, (int) Manager.GetInteger("nbr-orbitals"), OutputStates, Manager.GetBoolean("unnormalized-basis"), LzSectors);
+	      else
+	      {
+		cout << "periodique symmetrization not implemented for real vectors" << endl;
+		return -1;
+// 		NbrLzSectors = Space1->SymmetrizeSingleStatePeriodicOrbitals(State1, (NbrFluxQuanta1 + 1) / (int) Manager.GetInteger("nbr-orbitals"), OutputStates, LzSectors);
+	      }
+	      int NbrGeneratedStates = 0;
+	      for (int i = 0; i < NbrLzSectors; ++i)
+		{
+		  cout << "state generated in the 2*Lz=" << LzSectors[i] << " sector" << endl;
+		  RealVector& OutputState = OutputStates[i];
+		  bool zeroFlag = true;
+		  int RootPosition = 0;
+		  if (Manager.GetBoolean("unnormalized-basis"))
+		  {
+		    for (int TmpPos = 0; (TmpPos < OutputState.GetVectorDimension()) && (zeroFlag == true); ++TmpPos)
+		      {
+			if (OutputState[TmpPos] > 1.0e-10)
+			  zeroFlag = false;
+			else
+			  ++RootPosition;
+		      }
+		    if (zeroFlag)
+		      {
+			cout << "this state is null." << endl;
+		      }
+		    else
+		    {
+		      OutputState /= OutputState[RootPosition]; 
+		      sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+		      if (OutputState.WriteVector(FullOutputFileName) == false)
+			{
+			  cout << "error while writing output state " << FullOutputFileName << endl;
+			  return -1;
+			}
+		      ++NbrGeneratedStates;
+		    }	
+		  }
+		  else
+		  {
+		   if (OutputState.Norm() < 1.0e-10)
+		     cout << "this state is null." << endl;
+		   else
+		   {
+		    OutputState /= OutputState.Norm(); 
+		    sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+		    if (OutputState.WriteVector(FullOutputFileName) == false)
+		    {
+		      cout << "error while writing output state " << FullOutputFileName << endl;
+		      return -1;
+		    }
+		    ++NbrGeneratedStates;
+		   }
+		  }
+		}
+	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
+	      }
+	      else
+	      {
+	      
+	      if (((NbrParticles1 * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
+	      {
+		cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
+		return -1;
+	      } 
 	      OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
 	      if (OutputState.Norm() < 1.0e-10)
 		{
@@ -370,6 +436,7 @@ int main(int argc, char** argv)
 		      return -1;
 		    }
 		}
+	      }
 	    }
 	  else
 	    {

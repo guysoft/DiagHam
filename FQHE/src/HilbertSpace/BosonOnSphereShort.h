@@ -844,6 +844,15 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = number of states that have been generated through the symmetrization procedure
   virtual int SymmetrizeSingleStatePeriodicOrbitals (LongRationalVector& inputVector, int periodicity, LongRationalVector*& symmetrizedVectors, int*& lzSectors);
 
+  // symmetrize a vector by grouping several orbitals into a single one
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStateOneIntoManyOrbital (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, bool unnormalizedBasisFlag, int*& lzSectors);
+  
  protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -950,6 +959,15 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // nbrComponents = number of components of the input vector that have to be symmetrized
   // return value = symmetrized state
   virtual void SymmetrizeSingleStatePeriodicOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int periodicity, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrize a vector by grouping several orbitals into a single one
+  //
+  // inputVector = reference on the vector to symmetrize
+  // symmetrizedVectors = array on the symmetrized states ranging from the smallest Lz to the largest Lz
+  // nbrOrbitals = number of orbitals to group together
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  virtual void SymmetrizeSingleStateOneIntoManyOrbitalCore (RealVector& inputVector, RealVector* symmetrizedVectors, bool unnormalizedBasisFlag, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
 
 };
 
