@@ -46,4 +46,5 @@ TightBindingModelTimeReversalKagomeLatticeTilted.cc \
 TightBindingModelOFLGenericLattice.cc \
 TightBindingModelCylinderTwoOrbitalSquareLattice.cc \
 TightBindingModelMixedKagomeLattice.cc \
-TightBindingModelZhangQiLattice.cc
+TightBindingModelZhangQiLattice.cc \
+TightBindingModel2DAtomicLimitLattice.cc
