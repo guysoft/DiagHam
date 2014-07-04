@@ -5932,7 +5932,14 @@ int BosonOnSphereShort::SymmetrizeSingleStateOneIntoManyOrbital (RealVector& inp
   RealVector* TmpVectors = new RealVector[MaxTotalLz + 1];
   this->SymmetrizeSingleStateOneIntoManyOrbitalCore(inputVector, TmpVectors, unnormalizedBasisFlag, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
   int NbrGeneratedSectors = 0;
-  
+  for (int i = 0; i <= MaxTotalLz; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    } 
+//   cout <<  TmpVectors[trueMaxLz][4]/TmpVectors[trueMaxLz].Norm() << endl;
   if (NbrGeneratedSectors == 0)
     return 0;
   symmetrizedVectors = new RealVector[NbrGeneratedSectors];

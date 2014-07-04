@@ -340,67 +340,69 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetInteger("total-lz") == -1 )
 	      {
-	      RealVector* OutputStates;
-	      int* LzSectors;
-	      int NbrLzSectors;
-	      if (Manager.GetBoolean("periodicity-symmetrization") == false)
-		NbrLzSectors = Space1->SymmetrizeSingleStateOneIntoManyOrbital(State1, (int) Manager.GetInteger("nbr-orbitals"), OutputStates, Manager.GetBoolean("unnormalized-basis"), LzSectors);
-	      else
-	      {
-		cout << "periodique symmetrization not implemented for real vectors" << endl;
-		return -1;
-// 		NbrLzSectors = Space1->SymmetrizeSingleStatePeriodicOrbitals(State1, (NbrFluxQuanta1 + 1) / (int) Manager.GetInteger("nbr-orbitals"), OutputStates, LzSectors);
-	      }
-	      int NbrGeneratedStates = 0;
-	      for (int i = 0; i < NbrLzSectors; ++i)
+		RealVector* OutputStates;
+		int* LzSectors;
+		int NbrLzSectors;
+		if (Manager.GetBoolean("periodicity-symmetrization") == false)
+		  NbrLzSectors = Space1->SymmetrizeSingleStateOneIntoManyOrbital(State1, (int) Manager.GetInteger("nbr-orbitals"), OutputStates, Manager.GetBoolean("unnormalized-basis"), LzSectors);
+		else
 		{
-		  cout << "state generated in the 2*Lz=" << LzSectors[i] << " sector" << endl;
-		  RealVector& OutputState = OutputStates[i];
-		  bool zeroFlag = true;
-		  int RootPosition = 0;
-		  if (Manager.GetBoolean("unnormalized-basis"))
+		  cout << "periodic symmetrization not implemented for real vectors" << endl;
+		  return -1;
+// 		NbrLzSectors = Space1->SymmetrizeSingleStatePeriodicOrbitals(State1, (NbrFluxQuanta1 + 1) / (int) Manager.GetInteger("nbr-orbitals"), OutputStates, LzSectors);
+		}
+		int NbrGeneratedStates = 0;
+		for (int i = 0; i < NbrLzSectors; ++i)
 		  {
-		    for (int TmpPos = 0; (TmpPos < OutputState.GetVectorDimension()) && (zeroFlag == true); ++TmpPos)
+		    cout << "state generated in the 2*Lz=" << LzSectors[i] << " sector" << endl;
+		    RealVector& OutputState = OutputStates[i];
+		    bool zeroFlag = true;
+		    int RootPosition = 0;
+		    if (Manager.GetBoolean("unnormalized-basis") == true)
+		    {
+		      for (int TmpPos = 0; (TmpPos < OutputState.GetVectorDimension()) && (zeroFlag == true); ++TmpPos)
+			{
+			  if (OutputState[TmpPos] > 1.0e-10)
+			    zeroFlag = false;
+			  else
+			    ++RootPosition;
+			}
+		      if (zeroFlag)
+			{	
+			  cout << "this state is null." << endl;
+			}
+		      else
 		      {
-			if (OutputState[TmpPos] > 1.0e-10)
-			  zeroFlag = false;
-			else
-			  ++RootPosition;
-		      }
-		    if (zeroFlag)
+			OutputState /= OutputState[RootPosition]; 
+			sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+			if (OutputState.WriteVector(FullOutputFileName) == false)
+			  {
+			    cout << "error while writing output state " << FullOutputFileName << endl;
+			    return -1;
+			  }
+			++NbrGeneratedStates;
+		      }	
+		    }
+		    else
+		    {
+		      if (OutputState.Norm() < 1.0e-10)
 		      {
 			cout << "this state is null." << endl;
 		      }
-		    else
-		    {
-		      OutputState /= OutputState[RootPosition]; 
-		      sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
-		      if (OutputState.WriteVector(FullOutputFileName) == false)
+		      else
+		      {
+			OutputState /= OutputState.Norm(); 
+			sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+			if (OutputState.WriteVector(FullOutputFileName) == false)
 			{
 			  cout << "error while writing output state " << FullOutputFileName << endl;
 			  return -1;
 			}
-		      ++NbrGeneratedStates;
-		    }	
-		  }
-		  else
-		  {
-		   if (OutputState.Norm() < 1.0e-10)
-		     cout << "this state is null." << endl;
-		   else
-		   {
-		    OutputState /= OutputState.Norm(); 
-		    sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
-		    if (OutputState.WriteVector(FullOutputFileName) == false)
-		    {
-		      cout << "error while writing output state " << FullOutputFileName << endl;
-		      return -1;
+			++NbrGeneratedStates;
+		      }
 		    }
-		    ++NbrGeneratedStates;
-		   }
 		  }
-		}
-	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
+		cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
 	      }
 	      else
 	      {
