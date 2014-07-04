@@ -67,14 +67,16 @@ class OperatorMatrixElementOperation: public AbstractScalarSumOperation
   // oper = operator which has to be evaluated  
   // leftVector = pointer to the vector to use for the left hand side of the matrix element
   // rightVector = pointer to the vector to use for the right hand side of the matrix element
-  OperatorMatrixElementOperation(AbstractOperator* oper, RealVector& leftVector, RealVector& rightVectors);
+  // nbrComponents = if positive, override the number of components that have to be computed (usually deduced from the vector dimensions)
+  OperatorMatrixElementOperation(AbstractOperator* oper, RealVector& leftVector, RealVector& rightVectors, long nbrComponents = -1l);
 
   // constructor 
   //
   // oper = operator which has to be evaluated  
   // leftVector = pointer to the vector to use for the left hand side of the matrix element
   // rightVector = pointer to the vector to use for the right hand side of the matrix element
-  OperatorMatrixElementOperation(AbstractOperator* oper, ComplexVector& leftVector, ComplexVector& rightVectors);
+  // nbrComponents = if positive, override the number of components that have to be computed (usually deduced from the vector dimensions)
+  OperatorMatrixElementOperation(AbstractOperator* oper, ComplexVector& leftVector, ComplexVector& rightVectors, long nbrComponents = -1l);
 
   // copy constructor 
   //

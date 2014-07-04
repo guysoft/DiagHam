@@ -422,6 +422,12 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // index = index of state to consider
   virtual int StateVariance (int index);
 
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
+
   // carefully test whether state is in Hilbert-space and find corresponding state index
   //
   // stateDescription = unsigned integer describing the state
@@ -596,12 +602,6 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = corresponding index
   virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
   
-  // find state index from a string
-  //
-  // stateDescription = string describing the state
-  // return value = corresponding index, -1 if an error occured
-  virtual int FindStateIndex(char* stateDescription);
-
   // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions

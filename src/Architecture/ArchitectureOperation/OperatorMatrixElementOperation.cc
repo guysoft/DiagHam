@@ -38,8 +38,9 @@
 // oper = operator which has to be evaluated  
 // leftVector = pointer to the vector to use for the left hand side of the matrix element
 // rightVector = pointer to the vector to use for the right hand side of the matrix element
+// nbrComponents = if positive, override the number of components that have to be computed (usually deduced from the vector dimensions)
 
-OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator* oper, RealVector& leftVector, RealVector& rightVector)
+OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator* oper, RealVector& leftVector, RealVector& rightVector, long nbrComponents)
 {
   this->RealLeftVector = leftVector;
   this->RealRightVector = rightVector;
@@ -49,6 +50,11 @@ OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator*
   this->NbrComponent = rightVector.GetVectorDimension();
   this->LargeFirstComponent = 0l;
   this->LargeNbrComponent = rightVector.GetLargeVectorDimension();
+  if (nbrComponents > 0)
+    {
+      this->LargeNbrComponent = nbrComponents;
+      this->NbrComponent = (int) this->LargeNbrComponent;
+    }
   this->Scalars = 0;
   this->NbrScalars = 1;
 }
@@ -58,8 +64,9 @@ OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator*
 // oper = operator which has to be evaluated  
 // leftVector = pointer to the vector to use for the left hand side of the matrix element
 // rightVector = pointer to the vector to use for the right hand side of the matrix element
+// nbrComponents = if positive, override the number of components that have to be computed (usually deduced from the vector dimensions)
 
-OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator* oper, ComplexVector& leftVector, ComplexVector& rightVector)
+OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator* oper, ComplexVector& leftVector, ComplexVector& rightVector, long nbrComponents)
 {
   this->ComplexLeftVector = leftVector;
   this->ComplexRightVector = rightVector;
@@ -69,6 +76,11 @@ OperatorMatrixElementOperation::OperatorMatrixElementOperation(AbstractOperator*
   this->NbrComponent = leftVector.GetVectorDimension();
   this->LargeFirstComponent = 0l;
   this->LargeNbrComponent = leftVector.GetLargeVectorDimension();
+  if (nbrComponents > 0)
+    {
+      this->LargeNbrComponent = nbrComponents;
+      this->NbrComponent = (int) this->LargeNbrComponent;
+    }
   this->Scalars = 0;
   this->NbrScalars = 1;
 }

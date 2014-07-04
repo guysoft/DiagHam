@@ -201,12 +201,12 @@ int main(int argc, char** argv)
 	  if ((RightGutzwillerFlag == false) && (LeftGutzwillerFlag == false))
 	    {
 	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUpDiag (RightSpace, i, 0, i, 1);
-	      OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftState, RightState);
+	      OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftState, RightState, RightState.GetVectorDimension());
 	      OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
 	      Complex Tmp = OperationDownUp.GetScalar();
 	      File << i << " " << i << " 0 1 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
 	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDownDiag (RightSpace, i, 1, i, 0);
-	      OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftState, RightState);
+	      OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftState, RightState, RightState.GetVectorDimension());
 	      OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
 	      Tmp = OperationUpDown.GetScalar();
 	      File << i << " " << i << " 1 0 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
@@ -216,22 +216,22 @@ int main(int argc, char** argv)
       for (int j = Index; j < RightNbrSites; ++j)
 	{
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownDown (RightSpace, i, 0, j, 0);
-	  OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftState, RightState);
+	  OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftState, RightState, RightState.GetVectorDimension());
 	  OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
 	  Complex Tmp = OperationDownDown.GetScalar();
 	  File << i << " " << j << " 0 0 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 0, j, 1);
-	  OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftState, RightState);
+	  OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftState, RightState, RightState.GetVectorDimension());
 	  OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
 	  Tmp = OperationDownUp.GetScalar();
 	  File << i << " " << j << " 0 1 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDown (RightSpace, i, 1, j, 0);
-	  OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftState, RightState);
+	  OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftState, RightState, RightState.GetVectorDimension());
 	  OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
 	  Tmp = OperationUpDown.GetScalar();
 	  File << i << " " << j << " 1 0 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpUp (RightSpace, i, 1, j, 1);
-	  OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftState, RightState);
+	  OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftState, RightState, RightState.GetVectorDimension());
 	  OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
 	  Tmp = OperationUpUp.GetScalar();
 	  File << i << " " << j << " 1 1 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;

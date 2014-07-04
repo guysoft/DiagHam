@@ -104,6 +104,12 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // find state index from a string
+  //
+  // stateDescription = string describing the state
+  // return value = corresponding index, -1 if an error occured
+  virtual int FindStateIndex(char* stateDescription);
+
   // evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles
   // 
   // nbrParticleSector = number of particles that belong to the subsytem 
@@ -124,6 +130,13 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
 
  protected:
 
+  // find state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
+  
   // evaluate Hilbert space dimension
   //
   // nbrFermions = number of fermions

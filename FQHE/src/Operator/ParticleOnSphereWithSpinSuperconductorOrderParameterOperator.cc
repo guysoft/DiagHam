@@ -281,7 +281,9 @@ Complex ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::PartialMat
 	  {
 	    int Index = this->Particle->AduAdu(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
 	    if (Index != FullDim)
-	      Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	      {
+		Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	      }
 	  }
       }
       break;

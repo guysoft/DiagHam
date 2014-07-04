@@ -261,41 +261,47 @@ int main(int argc, char** argv)
 		    }
 		}
 	      else
-		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		  {
-		    if (Norm(State[i]) > Error)
-		      {
-			if (AddIndex == true) 
-			  cout << i <<" ";
-			Space->PrintState(cout, i) << " : " << State.Re(i)<<" "<<State.Im(i);
-			cout<<endl;
-		      }
-		    else		     
-		      {
-			WeightHiddenComponents += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
-			++NbrHiddenComponents; 
-		      }
-		    Normalization += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
-		  }
-	      cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
+		{
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    {
+		      if (Norm(State[i]) > Error)
+			{
+			  if (AddIndex == true) 
+			    cout << i <<" ";
+			  Space->PrintState(cout, i) << " : " << State.Re(i)<<" "<<State.Im(i);
+			  cout<<endl;
+			}
+		      else		     
+			{
+			  WeightHiddenComponents += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
+			  ++NbrHiddenComponents; 
+			}
+		      Normalization += State.Re(i) * State.Re(i) + State.Im(i) * State.Im(i);
+		    }
+		  cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
+		}
 	    }
 	  else
 	    {    
 	      if (Manager.GetBoolean("save-disk") == true)
+		{		  
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		    {
-		      
-			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-			  Space->PrintState(File, i) << " : " << Space->StateVariance(i) << " " << State.Re(i) << " " << State.Im(i) << " " << i <<endl;
-		      
+		      if (AddIndex == true) 
+			File << i << " ";	
+		      Space->PrintState(File, i) << " : " << " " << State.Re(i) << " " << State.Im(i) << endl;		  
 		    }
-		  else
+		}
+	      else
+		{
+		  
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		    {
-		      
-			for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-			  Space->PrintState(cout, i) << " : " << Space->StateVariance(i) << " " << State.Re(i) << " " << State.Im(i) << " " << i <<endl;
+		      if (AddIndex == true) 
+			cout << i << " ";	
+		      Space->PrintState(cout, i) << " : " << " " << State.Re(i) << " " << State.Im(i) << endl;
 		    }
-
-	     
+		}	      	      
 	    }
     }
 
