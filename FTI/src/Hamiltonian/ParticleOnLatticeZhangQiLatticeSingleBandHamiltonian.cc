@@ -64,15 +64,15 @@ ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLa
 // nbrParticles = number of particles
 // nbrCellX = number of sites in the x direction
 // nbrCellY = number of sites in the y direction
-// uPotential = repulsive on site inter-orbital potential strength
-// vPotential = repulsive nearest neighbor potential strength (for fermions) or repulsive on site intra orbital strength (for bosons)
+// uPotential = repulsive on site potential strength
+// vPotential = repulsive inter orbital strength
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, 
-															 double uPotential,  double vPotential,  
-															 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+													   double uPotential,  double vPotential,  
+													   Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -85,8 +85,27 @@ ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLa
   this->HamiltonianShift = 0.0;
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
-  this->UPotential = uPotential;
-  this->VPotential = vPotential;
+  this->UFactors = RealMatrix (this->TightBindingModel->GetNbrStatePerBand(), this->TightBindingModel->GetNbrStatePerBand(), true);
+  for (int i = 0; i < this->TightBindingModel->GetNbrStatePerBand(); ++i)
+    {
+      this->UFactors[i][i] = uPotential / ((double) (this->NbrSiteX * this->NbrSiteY));
+    }
+  if (vPotential != 0.0)
+    {
+      this->InterOrbitalInteractionFlag = true;
+      for (int i = 0; i < this->TightBindingModel->GetNbrStatePerBand(); ++i)
+	{
+	  for (int j = i + 1; j < this->TightBindingModel->GetNbrStatePerBand(); ++j)
+	    {
+	      this->UFactors[i][j] = vPotential / ((double) (this->NbrSiteX * this->NbrSiteY));
+	      this->UFactors[j][i] = vPotential / ((double) (this->NbrSiteX * this->NbrSiteY));
+	    }
+	}
+    }
+  else
+    {
+      this->InterOrbitalInteractionFlag = false;
+    }
   this->BandIndex = 0;
   this->Architecture = architecture;
   this->Memory = memory;
@@ -132,22 +151,23 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 	  this->OneBodyInteractionFactors[Index] = 0.5 * this->TightBindingModel->GetEnergy(0, Index);
 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }
-
+ 
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
+      cout << "warning, untested code!!!"  << endl;
       this->NbrSectorSums = this->NbrSiteX * this->NbrSiteY;
       this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	this->NbrSectorIndicesPerSum[i] = 0;      
-      for (int k1a = 0; k1a < this->NbrSiteX; ++k1a)
-	for (int k2a = 0; k2a < this->NbrSiteX; ++k2a)
-	  for (int k1b = 0; k1b < this->NbrSiteY; ++k1b)
-	    for (int k2b = 0; k2b < this->NbrSiteY; ++k2b) 
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 	      {
-		int Index1 = (k1a * this->NbrSiteY) + k1b;
-		int Index2 = (k2a * this->NbrSiteY) + k2b;
+		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 < Index2)
-		  ++this->NbrSectorIndicesPerSum[(((k1a + k2a) % this->NbrSiteX) *  this->NbrSiteY) + ((k1b + k2b) % this->NbrSiteY)];    
+		  ++this->NbrSectorIndicesPerSum[this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1 + kx2, ky1 + ky2)];    
 	      }
       this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -158,25 +178,21 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 	      this->NbrSectorIndicesPerSum[i] = 0;
 	    }
 	}
-      for (int k1a = 0; k1a < this->NbrSiteX; ++k1a)
-	for (int k2a = 0; k2a < this->NbrSiteX; ++k2a)
-	  for (int k1b = 0; k1b < this->NbrSiteY; ++k1b)
-	    for (int k2b = 0; k2b < this->NbrSiteY; ++k2b) 
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 	      {
-		int Index1 = (k1a * this->NbrSiteY) + k1b;
-		int Index2 = (k2a * this->NbrSiteY) + k2b;
+		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 < Index2)
 		  {
-		    int TmpSum = (((k1a + k2a) % this->NbrSiteX) *  this->NbrSiteY) + ((k1b + k2b) % this->NbrSiteY);
+		    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1 + kx2, ky1 + ky2);
 		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      double FactorUAB = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      double FactorUAC = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      double FactorUBC = this->UPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -186,35 +202,49 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 	    {
 	      int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
 	      int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int k1a = Index1 / this->NbrSiteY;
-	      int k1b = Index1 % this->NbrSiteY;
-	      int k2a = Index2 / this->NbrSiteY;
-	      int k2b = Index2 % this->NbrSiteY;
+	      int kx1;
+	      int ky1;
+	      int kx2;
+	      int ky2;
+	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
+	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
 	      for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
 		{
 		  int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
 		  int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int k3a = Index3 / this->NbrSiteY;
-		  int k3b = Index3 % this->NbrSiteY;
-		  int k4a = Index4 / this->NbrSiteY;
-		  int k4b = Index4 % this->NbrSiteY;
-		  
-		  this->InteractionFactors[i][Index] = FactorUAB * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementAB(k2a, k2b, k4a, k4b);
- 		  this->InteractionFactors[i][Index] -= FactorUAB * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1]) * this->ComputeTwoBodyMatrixElementAB(k1a, k1b, k4a, k4b);
- 		  this->InteractionFactors[i][Index] -= FactorUAB * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementAB(k2a, k2b, k3a, k3b);
- 		  this->InteractionFactors[i][Index] += FactorUAB * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1]) * this->ComputeTwoBodyMatrixElementAB(k1a, k1b, k3a, k3b);
+		  int kx3;
+		  int ky3;
+		  int kx4;
+		  int ky4;
+		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
+		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+		  Complex sumU = 0.0;
+		  this->InteractionFactors[i][Index] = 0.0;
+		  if (this->InterOrbitalInteractionFlag == true)
+		    {
+		      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital1)
+			{
+			  for (int Orbital2 = Orbital1 + 1; Orbital2 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital2)
+			    {
+			      sumU  = Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2];
+			      sumU -= Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index3][this->BandIndex][Orbital2];
+			      sumU -= Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index1][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2];
+			      sumU += Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index1][this->BandIndex][Orbital2]) * OneBodyBasis[Index3][this->BandIndex][Orbital2];
+			      this->InteractionFactors[i][Index] += 2.0 * this->UFactors[Orbital1][Orbital2] *sumU;
+			    }
+			}
+		    }
+			
+		  if (Index3 == Index4)
+		    this->InteractionFactors[i][Index] *= 0.5;
+		  if (Index1 == Index2)
+		    this->InteractionFactors[i][Index] *= 0.5;
+		  this->InteractionFactors[i][Index] *= 2.0;
 
- 		  this->InteractionFactors[i][Index] += FactorUAC * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementAC(k2a, k2b, k4a, k4b);
- 		  this->InteractionFactors[i][Index] -= FactorUAC * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index3][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementAC(k1a, k1b, k4a, k4b);
- 		  this->InteractionFactors[i][Index] -= FactorUAC * (Conj(OneBodyBasis[Index1][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementAC(k2a, k2b, k3a, k3b);
- 		  this->InteractionFactors[i][Index] += FactorUAC * (Conj(OneBodyBasis[Index2][BandIndex][0]) * OneBodyBasis[Index4][BandIndex][0] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementAC(k1a, k1b, k3a, k3b);
-
- 		  this->InteractionFactors[i][Index] += FactorUBC * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(k1a, k1b, k2a, k2b, k3a, k3b, k4a, k4b);
- 		  this->InteractionFactors[i][Index] -= FactorUBC * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index3][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index4][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(k2a, k2b, k1a, k1b, k3a, k3b, k4a, k4b);
- 		  this->InteractionFactors[i][Index] -= FactorUBC * (Conj(OneBodyBasis[Index1][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index2][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(k1a, k1b, k2a, k2b, k4a, k4b, k3a, k3b);
- 		  this->InteractionFactors[i][Index] += FactorUBC * (Conj(OneBodyBasis[Index2][BandIndex][1]) * OneBodyBasis[Index4][BandIndex][1] * Conj(OneBodyBasis[Index1][BandIndex][2]) * OneBodyBasis[Index3][BandIndex][2]) * this->ComputeTwoBodyMatrixElementBC(k2a, k2b, k1a, k1b, k4a, k4b, k3a, k3b);
-
-		  this->InteractionFactors[i][Index] *= -2.0;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -232,10 +262,10 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 <= Index2)
-		  ++this->NbrSectorIndicesPerSum[(((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY)];    
+		  ++this->NbrSectorIndicesPerSum[this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1 + kx2, ky1 + ky2)];    
 	      }
       this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
@@ -251,21 +281,16 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
 	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
+		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 <= Index2)
 		  {
-		    int TmpSum = (((kx1 + kx2) % this->NbrSiteX) *  this->NbrSiteY) + ((ky1 + ky2) % this->NbrSiteY);
+		    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1 + kx2, ky1 + ky2);
 		    this->SectorIndicesPerSum[TmpSum][this->NbrSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		    this->SectorIndicesPerSum[TmpSum][1 + (this->NbrSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		    ++this->NbrSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
-      double FactorU = 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      if ((this->FlatBand == false) || (this->VPotential != 0.0))
-	FactorU *= this->UPotential;
-      double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      
       this->InteractionFactors = new Complex* [this->NbrSectorSums];
       for (int i = 0; i < this->NbrSectorSums; ++i)
 	{
@@ -275,66 +300,61 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 	    {
 	      int Index1 = this->SectorIndicesPerSum[i][j1 << 1];
 	      int Index2 = this->SectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1 = Index1 / this->NbrSiteY;
-	      int ky1 = Index1 % this->NbrSiteY;
-	      int kx2 = Index2 / this->NbrSiteY;
-	      int ky2 = Index2 % this->NbrSiteY;
+	      int kx1;
+	      int ky1;
+	      int kx2;
+	      int ky2;
+	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
+	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
 	      for (int j2 = 0; j2 < this->NbrSectorIndicesPerSum[i]; ++j2)
 		{
 		  int Index3 = this->SectorIndicesPerSum[i][j2 << 1];
 		  int Index4 = this->SectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3 = Index3 / this->NbrSiteY;
-		  int ky3 = Index3 % this->NbrSiteY;
-		  int kx4 = Index4 / this->NbrSiteY;
-		  int ky4 = Index4 % this->NbrSiteY;
-		  Complex Tmp = 0.0;
-		  for (int Site = 0; Site < this->TightBindingModel->GetNbrBands(); ++Site)
+		  int kx3;
+		  int ky3;
+		  int kx4;
+		  int ky4;
+		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
+		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+		  Complex sumU = 0.0;
+		  this->InteractionFactors[i][Index] = 0.0;
+		  for (int Orbital = 0; Orbital < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital)
 		    {
-		      Tmp += (Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site] * Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site]);
-		      Tmp += (Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site] * Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site]);
-		      Tmp += (Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site] * Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site]);
-		      Tmp += (Conj(OneBodyBasis[Index2][BandIndex][Site]) * OneBodyBasis[Index4][BandIndex][Site] * Conj(OneBodyBasis[Index1][BandIndex][Site]) * OneBodyBasis[Index3][BandIndex][Site]);
+		      sumU  = Conj(OneBodyBasis[Index1][this->BandIndex][Orbital]) * OneBodyBasis[Index3][this->BandIndex][Orbital]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][Orbital]) * OneBodyBasis[Index4][this->BandIndex][Orbital];
+		      sumU += Conj(OneBodyBasis[Index1][this->BandIndex][Orbital]) * OneBodyBasis[Index4][this->BandIndex][Orbital]
+                        * Conj(OneBodyBasis[Index2][this->BandIndex][Orbital]) * OneBodyBasis[Index3][this->BandIndex][Orbital];
+		      sumU += Conj(OneBodyBasis[Index2][this->BandIndex][Orbital]) * OneBodyBasis[Index3][this->BandIndex][Orbital]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][Orbital]) * OneBodyBasis[Index4][this->BandIndex][Orbital];
+		      sumU += Conj(OneBodyBasis[Index2][this->BandIndex][Orbital]) * OneBodyBasis[Index4][this->BandIndex][Orbital]
+                        * Conj(OneBodyBasis[Index1][this->BandIndex][Orbital]) * OneBodyBasis[Index3][this->BandIndex][Orbital];
+		      this->InteractionFactors[i][Index] += this->UFactors[Orbital][Orbital] *sumU; 
 		    }
-		  Tmp *= FactorU;
-		  
-		  		  
-		  this->InteractionFactors[i][Index] =  Tmp;
-		  
-		  if(this->VPotential != 0.0)
-		  {
-		    Complex Tmp2 = 0.0;
-		    int NbrLayers = (this->TightBindingModel->GetNbrBands() + 1)/4;
-		    for (int Site = 0; Site < NbrLayers; ++Site)
+		  if (this->InterOrbitalInteractionFlag == true)
 		    {
-		      int PosA = 4*Site;
-		      int PosB = 4*Site+1;
-		      int PosC = 4*Site+2;
-		      Tmp2 = (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
-		      Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
-		      Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
-		      Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB]) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
-
- 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx4, ky4);
- 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index3][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx4, ky4);
- 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx2, ky2, kx3, ky3);
- 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosA]) * OneBodyBasis[Index4][BandIndex][PosA] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementAC(kx1, ky1, kx3, ky3);
-
- 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx3, ky3, kx4, ky4);
- 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index3][BandIndex][PosB] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index4][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx3, ky3, kx4, ky4);
- 		  Tmp2 += (Conj(OneBodyBasis[Index1][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB] * Conj(OneBodyBasis[Index2][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx1, ky1, kx2, ky2, kx4, ky4, kx3, ky3);
- 		  Tmp2 += (Conj(OneBodyBasis[Index2][BandIndex][PosB]) * OneBodyBasis[Index4][BandIndex][PosB] * Conj(OneBodyBasis[Index1][BandIndex][PosC]) * OneBodyBasis[Index3][BandIndex][PosC]) * this->ComputeTwoBodyMatrixElementBC(kx2, ky2, kx1, ky1, kx4, ky4, kx3, ky3);
+		      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital1)
+			{
+			  for (int Orbital2 = Orbital1 + 1; Orbital2 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital2)
+			    {
+			      sumU  = Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2];
+			      sumU += Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index3][this->BandIndex][Orbital2];
+			      sumU += Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index1][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2];
+			      sumU += Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
+				* Conj(OneBodyBasis[Index1][this->BandIndex][Orbital2]) * OneBodyBasis[Index3][this->BandIndex][Orbital2];
+			      this->InteractionFactors[i][Index] += 2.0 * this->UFactors[Orbital1][Orbital2] *sumU;
+			    }
+			}
 		    }
-		    Tmp2 *= FactorV;
-		    
-		  this->InteractionFactors[i][Index] += Tmp2;
-		  }
-		  
+			
 		  if (Index3 == Index4)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  if (Index1 == Index2)
 		    this->InteractionFactors[i][Index] *= 0.5;
 		  this->InteractionFactors[i][Index] *= 2.0;
-		  
+
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}

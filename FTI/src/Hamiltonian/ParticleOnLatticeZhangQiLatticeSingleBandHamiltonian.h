@@ -53,10 +53,10 @@ class ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian : public ParticleOnLa
  protected:
   
   
-  // repulsive on site inter-orbital potential strength
-  double UPotential;  
-  // repulsive nearest neighbor potential strength (for fermions) or repulsive on site intra orbital strength (for bosons)
-  double VPotential;
+  // repulsive on site and inter orbital potential strengths
+  RealMatrix UFactors;
+  // use the inter orbital potential strengths of UFactors
+  bool InterOrbitalInteractionFlag;
 
   // index of the band to be filled
   int BandIndex;
