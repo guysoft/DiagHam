@@ -7,8 +7,9 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//      class of Zhang-Qi C=2 modele model described in arxiv:1403.0164       //
-//        with interacting particles in the single band approximation         // 
+//      class of a generic interaction involving only interactions between    //
+//        orbitals in the same unit cell, assuming a Bloch form for the       //
+//                           the tight binding model                          //
 //                                                                            //
 //                        last modification : 30/06/2014                      //
 //                                                                            //
@@ -31,7 +32,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian.h"
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
@@ -51,9 +52,11 @@ using std::ostream;
 using std::sin;
 using std::cos;
 
+
 // constructor
 //
-ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian()
+
+ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian::ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian()
 {
   this->BandIndex = 0;
 }
@@ -64,15 +67,16 @@ ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLa
 // nbrParticles = number of particles
 // nbrCellX = number of sites in the x direction
 // nbrCellY = number of sites in the y direction
-// uPotential = repulsive on site potential strength
-// vPotential = repulsive inter orbital strength
+// bandIndex = index of the band in which the Hamiltonian is projected 
+// uPotential = repulsive intra-orbital potential strength
+// vPotential = repulsive inter-orbital potential strength
 // flatBandFlag = use flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, 
-													   double uPotential,  double vPotential,  
-													   Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian::ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrCellX, int nbrCellY, 
+																	     int bandIndex, double uPotential,  double vPotential,  
+																	     Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -106,7 +110,7 @@ ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLa
     {
       this->InterOrbitalInteractionFlag = false;
     }
-  this->BandIndex = 0;
+  this->BandIndex = bandIndex;
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactors = 0;
@@ -128,14 +132,14 @@ ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ParticleOnLatticeZhangQiLa
 // destructor
 //
 
-ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::~ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian()
+ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian::~ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian()
 {
 }
 
 // evaluate all interaction factors
 //   
 
-void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFactors()
+void ParticleOnLatticeGenericIntraUnitCellInteractionSingleBandHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
@@ -222,9 +226,9 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 		  this->InteractionFactors[i][Index] = 0.0;
 		  if (this->InterOrbitalInteractionFlag == true)
 		    {
-		      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital1)
+		      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
 			{
-			  for (int Orbital2 = Orbital1 + 1; Orbital2 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital2)
+			  for (int Orbital2 = Orbital1 + 1; Orbital2 < this->TightBindingModel->GetNbrBands(); ++Orbital2)
 			    {
 			      sumU  = Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
 				* Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2];
@@ -318,7 +322,7 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
 		  Complex sumU = 0.0;
 		  this->InteractionFactors[i][Index] = 0.0;
-		  for (int Orbital = 0; Orbital < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital)
+		  for (int Orbital = 0; Orbital < this->TightBindingModel->GetNbrBands(); ++Orbital)
 		    {
 		      sumU  = Conj(OneBodyBasis[Index1][this->BandIndex][Orbital]) * OneBodyBasis[Index3][this->BandIndex][Orbital]
                         * Conj(OneBodyBasis[Index2][this->BandIndex][Orbital]) * OneBodyBasis[Index4][this->BandIndex][Orbital];
@@ -332,9 +336,9 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
 		    }
 		  if (this->InterOrbitalInteractionFlag == true)
 		    {
-		      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital1)
+		      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
 			{
-			  for (int Orbital2 = Orbital1 + 1; Orbital2 < this->TightBindingModel->GetNbrStatePerBand(); ++Orbital2)
+			  for (int Orbital2 = Orbital1 + 1; Orbital2 < this->TightBindingModel->GetNbrBands(); ++Orbital2)
 			    {
 			      sumU  = Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
 				* Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2];
@@ -365,100 +369,5 @@ void ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::EvaluateInteractionFa
   cout << "====================================" << endl;
 
   delete [] OneBodyBasis;
-}
-
-// conventions adopted for matrix elements:
-// modified with respect to Tang, Mei, Wen:
-// unit cell is triangle standing on base. bottom left corner site A and bottom right corner B, tip is site C.
-
-
-// compute the matrix element for the two body interaction between two sites A and B 
-//
-// k1a = creation momentum along x for the B site
-// k1b = creation momentum along y for the B site
-// k2a = annihilation momentum along x for the B site
-// k2b = annihilation momentum along y for the B site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int k1a, int k1b, int k2a, int k2b)
-{
-  Complex Tmp = 1 + Phase(this->KyFactor * ((double) (-k2a + k1a )));
-  return Tmp;
-}
-
-// compute the matrix element for the two body interaction between two sites A and C 
-//
-// k1a = creation momentum along x for the C site
-// k1b = creation momentum along y for the C site
-// k2a = annihilation momentum along x for the C site
-// k2b = annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAC(int k1a, int k1b, int k2a, int k2b)
-{
- Complex Tmp = 1 + Phase(this->KyFactor * ((double) (-k2b + k1b )));
-  return Tmp;
-}
-
-// compute the matrix element for the two body interaction between two sites B and C 
-//
-// k1a = creation momentum along x for the B site
-// k1b = creation momentum along y for the B site
-// k2a = creation momentum along x for the C site
-// k2b = creation momentum along y for the C site
-// k3a = annihilation momentum along x for the B site
-// k3b = annihilation momentum along y for the B site
-// k4a = annihilation momentum along x for the C site
-// k4b = annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementBC(int k1a, int k1b, int k2a, int k2b, int k3a, int k3b, int k4a, int k4b)
-{
-  Complex Tmp = 1 + Phase(this->KxFactor * ((double) (k4a - k2a )) - this->KyFactor * ((double) (k4b - k2b)));
-  return Tmp;
-}
-
-
-// compute the matrix element for on-site two body interaction involving A sites
-//
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteAA()
-{
-  return 1.0;
-}
-
-// compute the matrix element for on-site two body interaction involving B sites
-//
-// kx1 = first creation momentum along x for the B site
-// ky1 = first creation momentum along y for the B site
-// kx2 = second creation momentum along x for the B site
-// ky2 = second creation momentum along y for the B site
-// kx3 = first annihilation momentum along x for the B site
-// ky3 = first annihilation momentum along y for the B site
-// kx4 = second annihilation momentum along x for the B site
-// ky4 = second annihilation momentum along y for the B site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
-{
-  return Phase(0.5 * this->KxFactor * ((double) (kx4 + kx3 - kx2 -kx1)));
-}
-
-// compute the matrix element for on-site two body interaction involving C sites
-//
-// kx1 = first creation momentum along x for the C site
-// ky1 = first creation momentum along y for the C site
-// kx2 = second creation momentum along x for the C site
-// ky2 = second creation momentum along y for the C site
-// kx3 = first annihilation momentum along x for the C site
-// ky3 = first annihilation momentum along y for the C site
-// kx4 = second annihilation momentum along x for the C site
-// ky4 = second annihilation momentum along y for the C site
-// return value = corresponding matrix element
-
-Complex ParticleOnLatticeZhangQiLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteCC(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
-{
-  return Phase(0.5 * this->KyFactor * ((double) (ky4 + ky3 - ky2 -ky1)));
 }
 

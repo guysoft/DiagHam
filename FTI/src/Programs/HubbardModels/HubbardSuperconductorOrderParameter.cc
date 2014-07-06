@@ -34,10 +34,19 @@
 #include <fstream>
 #include <sys/time.h>
 
+
 using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
+
+
+// Diagionalize the superconductor order parameter matrix
+//
+// orderParameter = reference to the superconductor order parameter matrix
+// output = reference on the output stream
+void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderParameter, ostream& output);
+
 
 int main(int argc, char** argv)
 {
@@ -57,6 +66,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\n', "left-state", "name of the file corresponding to the state |Psi_L> (the order parameter being <Psi_L|c^+c^+|Psi_R>");
   (*SystemGroup) += new SingleStringOption  ('\n', "right-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
+  (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-leftstates", "single column file describing a set of degenerate left states");
+  (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-rightstates", "single column file describing a set of degenerate right states");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -75,57 +86,127 @@ int main(int argc, char** argv)
   int LeftNbrSites = 0;
   bool LeftStatistics = true;
   bool LeftGutzwillerFlag = false;
-  if (Manager.GetString("left-state") == 0)
+  int NbrLeftStates = 0;
+  if ((Manager.GetString("left-state") == 0) && (Manager.GetString("degenerate-leftstates") == 0))
     {
       cout << "error, a left state file should be provided. See man page for option syntax or type HubbardSuperconductorOrderParameter -h" << endl;
       return -1;
     }
-  if (IsFile(Manager.GetString("left-state")) == false)
+  if (Manager.GetString("left-state") != 0)
     {
-      cout << "can't open file " << Manager.GetString("left-state") << endl;
-      return -1;
+      NbrLeftStates = 1;
+      if (IsFile(Manager.GetString("left-state")) == false)
+	{
+	  cout << "can't open file " << Manager.GetString("left-state") << endl;
+	  return -1;
+	}
+      if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("left-state"), LeftNbrParticles, LeftNbrSites, LeftStatistics, LeftGutzwillerFlag) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("left-state")  << endl;
+	  return -1;
+	}
     }
-  if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("left-state"), LeftNbrParticles, LeftNbrSites, LeftStatistics, LeftGutzwillerFlag) == false)
+  else
     {
-      cout << "error while retrieving system parameters from file name " <<Manager.GetString("left-state")  << endl;
-      return -1;
+      MultiColumnASCIIFile DegenerateFile;
+      if (DegenerateFile.Parse(Manager.GetString("degenerate-leftstates")) == false)
+	{
+	  DegenerateFile.DumpErrors(cout);
+	  return -1;
+	}
+      NbrLeftStates = DegenerateFile.GetNbrLines();
+      if (FTIHubbardModelFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), LeftNbrParticles, LeftNbrSites, LeftStatistics, LeftGutzwillerFlag) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("left-state")  << endl;
+	  return -1;
+	}
     }
 
   int RightNbrParticles = 0;
   int RightNbrSites = 0;
   bool RightStatistics = true;
   bool RightGutzwillerFlag = false;
-  if (Manager.GetString("right-state") == 0)
+  int NbrRightStates = 0;
+  if ((Manager.GetString("right-state") == 0) && (Manager.GetString("degenerate-rightstates") == 0))
     {
       cout << "error, a right state file should be provided. See man page for option syntax or type HubbardSuperconductorOrderParameter -h" << endl;
       return -1;
     }
-  if (IsFile(Manager.GetString("right-state")) == false)
+  if (Manager.GetString("right-state") != 0)
     {
-      cout << "can't open file " << Manager.GetString("right-state") << endl;
-      return -1;
+      NbrRightStates = 1;
+      if (IsFile(Manager.GetString("right-state")) == false)
+	{
+	  cout << "can't open file " << Manager.GetString("right-state") << endl;
+	  return -1;
+	}
+      if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("right-state"), RightNbrParticles, RightNbrSites, RightStatistics, RightGutzwillerFlag) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("right-state")  << endl;
+	  return -1;
+	}
     }
-  if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("right-state"), RightNbrParticles, RightNbrSites, RightStatistics, RightGutzwillerFlag) == false)
+  else
     {
-      cout << "error while retrieving system parameters from file name " <<Manager.GetString("right-state")  << endl;
-      return -1;
+      MultiColumnASCIIFile DegenerateFile;
+      if (DegenerateFile.Parse(Manager.GetString("degenerate-rightstates")) == false)
+	{
+	  DegenerateFile.DumpErrors(cout);
+	  return -1;
+	}
+      NbrRightStates = DegenerateFile.GetNbrLines();
+      if (FTIHubbardModelFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), RightNbrParticles, RightNbrSites, RightStatistics, RightGutzwillerFlag) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " <<  DegenerateFile(0, 0) << endl;
+	  return -1;
+	}
     }
 
   if (RightNbrSites != LeftNbrSites)
     {
-      cout << "error, " << Manager.GetString("left-state")  << " and " << Manager.GetString("right-state") << "don't have the same number of sites" << endl;
+      cout << "error, left and right states don't have the same number of sites" << endl;
     }
 
   if (LeftNbrParticles != (RightNbrParticles + 2))
     {
-      cout << "error, " << Manager.GetString("left-state")  << " and " << Manager.GetString("right-state") << "don't have the proper number of particles" << endl;
+      cout << "error, left and right states don't have the proper number of particles" << endl;
     }
 
-  ComplexVector LeftState;
-  if (LeftState.ReadVector (Manager.GetString("left-state")) == false)
+  ComplexVector* LeftStates = new ComplexVector[NbrLeftStates];
+  if (Manager.GetString("left-state") != 0)
     {
-      cout << "can't open vector file " << Manager.GetString("left-state") << endl;
-      return -1;      
+      if (LeftStates[0].ReadVector (Manager.GetString("left-state")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("left-state") << endl;
+	  return -1;      
+	}
+    }
+  else
+    {
+      MultiColumnASCIIFile DegenerateFile;
+      if (DegenerateFile.Parse(Manager.GetString("degenerate-leftstates")) == false)
+	{
+	  DegenerateFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (LeftStates[0].ReadVector (DegenerateFile(0, 0)) == false)
+	{
+	  cout << "can't open vector file " << DegenerateFile(0, 0) << endl;
+	  return -1;      
+	}	  
+      for (int i = 1; i < NbrLeftStates; ++i)
+	{
+	  if (LeftStates[i].ReadVector (DegenerateFile(0, i)) == false)
+	    {
+	      cout << "can't open vector file " << DegenerateFile(0, i) << endl;
+	      return -1;      
+	    }	  
+	  if (LeftStates[0].GetVectorDimension() != LeftStates[i].GetVectorDimension())
+	    {
+	      cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << "don't have the same  dimension (" << LeftStates[0].GetVectorDimension() << " and " << LeftStates[i].GetVectorDimension()<< ")" << endl;
+	      return -1;
+	    }
+	}
     }
   ParticleOnSphereWithSpin* LeftSpace = 0;
   if (LeftStatistics == true)
@@ -140,19 +221,50 @@ int main(int argc, char** argv)
       cout << "not available for bosons" << endl;
       return -1;
     }
-  if (LeftSpace->GetHilbertSpaceDimension() != LeftState.GetVectorDimension())
+  if (LeftSpace->GetHilbertSpaceDimension() != LeftStates[0].GetVectorDimension())
     {
-      cout << "error, " << Manager.GetString("left-state")  << " has a wrong dimension (" <<LeftState.GetVectorDimension() << ", should be " << LeftSpace->GetHilbertSpaceDimension() << ")" << endl;
+      cout << "error, " << Manager.GetString("left-state")  << " has a wrong dimension (" <<LeftStates[0].GetVectorDimension() << ", should be " << LeftSpace->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
   
 
-  ComplexVector RightState;
-  if (RightState.ReadVector (Manager.GetString("right-state")) == false)
+  ComplexVector* RightStates = new ComplexVector[NbrRightStates];
+  if (Manager.GetString("right-state") != 0)
     {
-      cout << "can't open vector file " << Manager.GetString("right-state") << endl;
-      return -1;      
+      if (RightStates[0].ReadVector (Manager.GetString("right-state")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("right-state") << endl;
+	  return -1;      
+	}
     }
+  else
+    {
+      MultiColumnASCIIFile DegenerateFile;
+      if (DegenerateFile.Parse(Manager.GetString("degenerate-rightstates")) == false)
+	{
+	  DegenerateFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (RightStates[0].ReadVector (DegenerateFile(0, 0)) == false)
+	{
+	  cout << "can't open vector file " << DegenerateFile(0, 0) << endl;
+	  return -1;      
+	}	  
+      for (int i = 1; i < NbrRightStates; ++i)
+	{
+	  if (RightStates[i].ReadVector (DegenerateFile(0, i)) == false)
+	    {
+	      cout << "can't open vector file " << DegenerateFile(0, i) << endl;
+	      return -1;      
+	    }	  
+	  if (RightStates[0].GetVectorDimension() != RightStates[i].GetVectorDimension())
+	    {
+	      cout << "error, " << DegenerateFile(0, 0) << " and " <<  DegenerateFile(0, i) << "don't have the same  dimension (" << RightStates[0].GetVectorDimension() << " and " << RightStates[i].GetVectorDimension()<< ")" << endl;
+	      return -1;
+	    }
+	}
+    }
+
   ParticleOnSphereWithSpin* RightSpace = 0;
   if (RightStatistics == true)
     {
@@ -166,9 +278,9 @@ int main(int argc, char** argv)
       cout << "not available for bosons" << endl;
       return -1;
     }
-  if (RightSpace->GetHilbertSpaceDimension() != RightState.GetVectorDimension())
+  if (RightSpace->GetHilbertSpaceDimension() != RightStates[0].GetVectorDimension())
     {
-      cout << "error, " << Manager.GetString("right-state")  << " has a wrong dimension (" <<RightState.GetVectorDimension() << ", should be " << RightSpace->GetHilbertSpaceDimension() << ")" << endl;
+      cout << "error, " << Manager.GetString("right-state")  << " has a wrong dimension (" << RightStates[0].GetVectorDimension() << ", should be " << RightSpace->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
 
@@ -179,20 +291,40 @@ int main(int argc, char** argv)
     File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(Manager.GetString("left-state"), "vec", "orderparam.dat");
-      if (TmpFileName == 0)
+      if (Manager.GetString("left-state") != 0)
 	{
-	  cout << "no vec extension was find in " << Manager.GetString("left-state") << " file name" << endl;
-	  return 0;
+	  char* TmpFileName = ReplaceExtensionToFileName(Manager.GetString("left-state"), "vec", "orderparam.dat");
+	  if (TmpFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << Manager.GetString("left-state") << " file name" << endl;
+	      return 0;
+	    }
+	  File.open(TmpFileName, ios::binary | ios::out);
+	  delete[] TmpFileName;
 	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
+      else
+	{
+	  MultiColumnASCIIFile DegenerateFile;
+	  if (DegenerateFile.Parse(Manager.GetString("degenerate-leftstates")) == false)
+	    {
+	      DegenerateFile.DumpErrors(cout);
+	      return -1;
+	    }
+	  char* TmpFileName = ReplaceExtensionToFileName(DegenerateFile(0, 0), "vec", "orderparam.dat");
+	  if (TmpFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << DegenerateFile(0, 0) << " file name" << endl;
+	      return 0;
+	    }
+	  File.open(TmpFileName, ios::binary | ios::out);
+	  delete[] TmpFileName;
+	}
     }
 
   File.precision(14);
   cout.precision(14);
   File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
-       << "# i j sigma sigma' <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> Norm(<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>) Arg(<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>)" << endl;
+       << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
   for (int i = 0; i < RightNbrSites; ++i)
     {
       int Index = i;
@@ -201,43 +333,129 @@ int main(int argc, char** argv)
 	  if ((RightGutzwillerFlag == false) && (LeftGutzwillerFlag == false))
 	    {
 	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUpDiag (RightSpace, i, 0, i, 1);
-	      OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftState, RightState, RightState.GetVectorDimension());
-	      OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-	      Complex Tmp = OperationDownUp.GetScalar();
-	      File << i << " " << i << " 0 1 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
+	      ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationDownUp.GetScalar();
+		  }
+	      File << i << " " << i << " 0 1";
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	      File << endl;
 	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDownDiag (RightSpace, i, 1, i, 0);
-	      OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftState, RightState, RightState.GetVectorDimension());
-	      OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
-	      Tmp = OperationUpDown.GetScalar();
-	      File << i << " " << i << " 1 0 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationUpDown.GetScalar();
+		  }
+	      File << i << " " << i << " 1 0";
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	      File << endl;
 	    }
 	  ++Index;
 	}
       for (int j = Index; j < RightNbrSites; ++j)
 	{
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownDown (RightSpace, i, 0, j, 0);
-	  OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftState, RightState, RightState.GetVectorDimension());
-	  OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
-	  Complex Tmp = OperationDownDown.GetScalar();
-	  File << i << " " << j << " 0 0 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
+	  ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
+	  for (int k = 0; k < NbrLeftStates; ++k)
+	    for (int l = 0; l < NbrRightStates; ++l)
+	      {
+		OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
+		TmpMatrix[l][k] = OperationDownDown.GetScalar();
+	      }
+	  File << i << " " << j << " 0 0 ";
+	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  File << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 0, j, 1);
-	  OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftState, RightState, RightState.GetVectorDimension());
-	  OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-	  Tmp = OperationDownUp.GetScalar();
-	  File << i << " " << j << " 0 1 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
+	  for (int k = 0; k < NbrLeftStates; ++k)
+	    for (int l = 0; l < NbrRightStates; ++l)
+	      {
+		OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
+		TmpMatrix[l][k] = OperationDownUp.GetScalar();
+	      }
+	  File << i << " " << j << " 0 1";
+	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  File << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDown (RightSpace, i, 1, j, 0);
-	  OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftState, RightState, RightState.GetVectorDimension());
-	  OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
-	  Tmp = OperationUpDown.GetScalar();
-	  File << i << " " << j << " 1 0 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
+	  for (int k = 0; k < NbrLeftStates; ++k)
+	    for (int l = 0; l < NbrRightStates; ++l)
+	      {
+		OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
+		TmpMatrix[l][k] = OperationUpDown.GetScalar();
+	      }
+	  File << i << " " << j << " 1 0";
+	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  File << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpUp (RightSpace, i, 1, j, 1);
-	  OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftState, RightState, RightState.GetVectorDimension());
-	  OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
-	  Tmp = OperationUpUp.GetScalar();
-	  File << i << " " << j << " 1 1 " << Tmp << " " << Norm(Tmp) << " " << Arg(Tmp) << endl;
+	  for (int k = 0; k < NbrLeftStates; ++k)
+	    for (int l = 0; l < NbrRightStates; ++l)
+	      {
+		OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
+		TmpMatrix[l][k] = OperationUpUp.GetScalar();
+	      }
+	  File << i << " " << j << " 1 1";
+	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  File << endl;
 	}
     }
   File.close();
 
   return 0;
+}
+
+// Diagionalize the superconductor order parameter matrix
+//
+// orderParameter = reference to the superconductor order parameter matrix
+// output = reference on the output stream
+
+void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderParameter, ostream& output)
+{
+  ComplexMatrix TmpConjugate;
+  TmpConjugate.Copy(orderParameter);
+  TmpConjugate.HermitianTranspose();
+  if (orderParameter.GetNbrRow() >= orderParameter.GetNbrColumn())
+    {      
+      HermitianMatrix TmpMatrix (TmpConjugate * orderParameter);
+      RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
+#ifdef __LAPACK__
+      TmpMatrix.LapackDiagonalize(TmpDiag);
+#else
+      TmpMatrix.Diagonalize(TmpDiag);
+#endif		  
+      TmpDiag.SortMatrixDownOrder();
+      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+	output << " " << TmpDiag[i];
+    }
+  else
+    {
+//       HermitianMatrix TmpMatrix1 (TmpConjugate * orderParameter);
+//       RealDiagonalMatrix TmpDiag1 (TmpMatrix1.GetNbrRow());
+// #ifdef __LAPACK__
+//       TmpMatrix1.LapackDiagonalize(TmpDiag1);
+// #else
+//       TmpMatrix1.Diagonalize(TmpDiag1);
+// #endif		  
+//       TmpDiag1.SortMatrixDownOrder();
+//       for (int i = 0; i < TmpDiag1.GetNbrRow(); ++i)
+// 	output << " " << TmpDiag1[i];
+      HermitianMatrix TmpMatrix2 (orderParameter * TmpConjugate);
+      RealDiagonalMatrix TmpDiag2 (TmpMatrix2.GetNbrRow());
+#ifdef __LAPACK__
+      TmpMatrix2.LapackDiagonalize(TmpDiag2);
+#else
+      TmpMatrix2.Diagonalize(TmpDiag2);
+#endif		  
+      TmpDiag2.SortMatrixDownOrder();
+      for (int i = 0; i < TmpDiag2.GetNbrRow(); ++i)
+	output << " " << TmpDiag2[i];
+    }
 }
