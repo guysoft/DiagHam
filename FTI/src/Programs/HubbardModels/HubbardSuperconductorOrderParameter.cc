@@ -325,6 +325,7 @@ int main(int argc, char** argv)
   cout.precision(14);
   File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
        << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
+  double NormalizationFactor = 1.0 / sqrt((double) (NbrLeftStates * NbrRightStates));
   for (int i = 0; i < RightNbrSites; ++i)
     {
       int Index = i;
@@ -339,7 +340,7 @@ int main(int argc, char** argv)
 		  {
 		    OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		    OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-		    TmpMatrix[l][k] = OperationDownUp.GetScalar();
+		    TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
 		  }
 	      File << i << " " << i << " 0 1";
 	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
@@ -350,7 +351,7 @@ int main(int argc, char** argv)
 		  {
 		    OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		    OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
-		    TmpMatrix[l][k] = OperationUpDown.GetScalar();
+		    TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
 		  }
 	      File << i << " " << i << " 1 0";
 	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
@@ -367,7 +368,7 @@ int main(int argc, char** argv)
 	      {
 		OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationDownDown.GetScalar();
+		TmpMatrix[l][k] = OperationDownDown.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 0 0 ";
 	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
@@ -378,7 +379,7 @@ int main(int argc, char** argv)
 	      {
 		OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationDownUp.GetScalar();
+		TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 0 1";
 	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
 	      {
 		OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationUpDown.GetScalar();
+		TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 1 0";
 	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
@@ -400,7 +401,7 @@ int main(int argc, char** argv)
 	      {
 		OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationUpUp.GetScalar();
+		TmpMatrix[l][k] = OperationUpUp.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 1 1";
 	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
