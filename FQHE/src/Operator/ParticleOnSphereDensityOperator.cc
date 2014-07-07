@@ -263,10 +263,11 @@ Complex ParticleOnSphereDensityOperator::PartialMatrixElement (ComplexVector& V1
 	{
 	  int TmpIndex;
 	  double TmpCoefficient = 0.0;
+	  int FullDim = this->Particle->GetTargetHilbertSpaceDimension();
 	  for (int i = firstComponent; i < Dim; ++i)
 	    {
 	      TmpIndex =  this->Particle->AdA(i, this->OperatorIndexDagger, this->OperatorIndex, TmpCoefficient);
-	      if (TmpCoefficient != 0.0)
+	      if ((TmpIndex != FullDim) && (TmpCoefficient != 0.0))
 		Element += Conj(V1[TmpIndex]) * V2[i] * TmpCoefficient;
 	    }
 	}

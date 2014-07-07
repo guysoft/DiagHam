@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "use-precomputed", "use precomputed matrix elements to perform the calculation");
   (*PlotOptionGroup) += new SingleStringOption ('\n', "output", "output file name (default output name replace the .vec extension of the input file with .impurities.dat)", 0);
-
+  (*PlotOptionGroup) += new BooleanOption ('\n', "binary-output", "export the eignestates as binary vectors instead of text files");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -205,7 +205,7 @@ int main(int argc, char** argv)
   for (int i = 0; i < InputVectors.GetNbrLines(); ++i)
     {
       RawPrecalculatedValues[i] = new ComplexMatrix[InputVectors.GetNbrLines()];
-      for (int j = i; j < InputVectors.GetNbrLines(); ++j)
+      for (int j = 0; j < InputVectors.GetNbrLines(); ++j)
 	RawPrecalculatedValues[i][j] = ComplexMatrix(ForceMaxMomentum + 1, ForceMaxMomentum + 1, true);
     }
   
@@ -224,14 +224,6 @@ int main(int argc, char** argv)
 					   LeftKxMomentum, LeftKyMomentum, Statistics, 
 					   LeftSpace, LeftState, Spaces, Manager.GetBoolean("recompute-hilbert")) == false)
 	    return -1;
-	  for (int m = 0; m <= ForceMaxMomentum; ++m)
-	    {
-	      ParticleOnSphereDensityOperator Operator (LeftSpace, m);
-	      OperatorMatrixElementOperation Operation(&Operator, LeftState, LeftState);
-	      Operation.ApplyOperation(Architecture.GetArchitecture());
-	      Complex Tmp = Operator.MatrixElement(LeftState, LeftState);
-	      RawPrecalculatedValues[i][i].AddToMatrixElement(m, m, Tmp);
-	    }
 	  for (int j = 0; j < InputVectors.GetNbrLines(); ++j)
 	    {
 	      ParticleOnSphere* RightSpace = 0;
@@ -253,14 +245,24 @@ int main(int argc, char** argv)
 		      int TotalKx2;
 		      int TotalKy2;
 		      TightBindingModel.GetLinearizedMomentumIndex(n, TotalKx2, TotalKy2);
-		      if ((((RightKxMomentum - TotalKx2) % NbrSitesX) == ((LeftKxMomentum - TotalKx1) % NbrSitesX))
-			  && (((RightKyMomentum - TotalKy2) % NbrSitesY) == ((LeftKyMomentum - TotalKy1) % NbrSitesY)))
+		      int TmpRightKxMomentum = RightKxMomentum - TotalKx2;
+		      if (TmpRightKxMomentum < 0)
+			TmpRightKxMomentum += NbrSitesX;
+		      int TmpLeftKxMomentum = LeftKxMomentum - TotalKx1;
+		      if (TmpLeftKxMomentum < 0)
+			TmpLeftKxMomentum += NbrSitesX;
+		      int TmpRightKyMomentum = RightKyMomentum - TotalKy2;
+		      if (TmpRightKyMomentum < 0)
+			TmpRightKyMomentum += NbrSitesY;
+		      int TmpLeftKyMomentum = LeftKyMomentum - TotalKy1;
+		      if (TmpLeftKyMomentum < 0)
+			TmpLeftKyMomentum += NbrSitesY;
+		      if ((TmpRightKxMomentum == TmpLeftKxMomentum) && (TmpRightKyMomentum == TmpLeftKyMomentum))
 			{
 			  ParticleOnSphereDensityOperator Operator (RightSpace, m, n);
-			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState);
+			  OperatorMatrixElementOperation Operation(&Operator, LeftState, RightState, RightState.GetLargeVectorDimension());
 			  Operation.ApplyOperation(Architecture.GetArchitecture());
-			  Complex Tmp = Operator.MatrixElement(LeftState, RightState);
-			  RawPrecalculatedValues[i][j].AddToMatrixElement(m, n, Tmp);
+			  RawPrecalculatedValues[i][j].AddToMatrixElement(m, n, Operation.GetScalar());
 			}
 		    }
 		}
@@ -290,26 +292,26 @@ int main(int argc, char** argv)
 
 
 
-  ofstream File;
-  File.precision(14);
   if (OutputName == 0)
     OutputName = ReplaceExtensionToFileName(Manager.GetString("input-states"), "dat", "coefficients.dat");
-  File.open(OutputName, ios::binary | ios::out);
-  File << "# density coefficients for " << Manager.GetString("input-states") << endl;
-  File << "#" << endl << "# state_index_left state_index_right m  n  c_{m,n}" << endl;
-  for (int m = 0; m < InputVectors.GetNbrLines(); ++m)
-    for (int n = m; n < InputVectors.GetNbrLines(); ++n)
-      for (int i = 0; i <= ForceMaxMomentum; ++i)
-	for (int j = 0; j <= ForceMaxMomentum; ++j)
-	  {
-	    if ((RawPrecalculatedValues[m][n][i][j].Re != 0.0) || (RawPrecalculatedValues[m][n][i][j].Im != 0.0))
-	      File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][i][j] << endl;
-	  }
-  File.close();
+  if (Manager.GetString("use-precomputed") == 0)
+    {	  
+      ofstream File;
+      File.precision(14);
+      File.open(OutputName, ios::binary | ios::out);
+      File << "# density coefficients for " << Manager.GetString("input-states") << endl;
+      File << "#" << endl << "# state_index_left state_index_right m  n  c_{m,n}" << endl;
+      for (int m = 0; m < InputVectors.GetNbrLines(); ++m)
+	for (int n = 0; n < InputVectors.GetNbrLines(); ++n)
+	  for (int i = 0; i <= ForceMaxMomentum; ++i)
+	    for (int j = 0; j <= ForceMaxMomentum; ++j)
+	      {
+		if ((RawPrecalculatedValues[m][n][j][i].Re != 0.0) || (RawPrecalculatedValues[m][n][j][i].Im != 0.0))
+		  File << m << " " << n << " " << i << " " << j << " " << RawPrecalculatedValues[m][n][j][i] << endl;
+	      }
+      File.close();
+    }
 
-
-
-  
   double Normalization = 1.0 /  ((double) (NbrSitesX * NbrSitesY));  
   int TmpHilbertSpaceDimension = InputVectors.GetNbrLines();
   HermitianMatrix HRep (TmpHilbertSpaceDimension, true);
@@ -330,8 +332,8 @@ int main(int argc, char** argv)
 		for (int p = 0; p < NbrImpurities; ++p)
 		  {
 		    TmpElement += (Phase(-2.0 * M_PI * ((double) ((TotalKx1 - TotalKx2) * ImpurityXPositions[p])) / ((double) NbrSitesX) 
-					- 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * ImpurityYPositions[p])) / ((double) NbrSitesY)) 
-				   * Conj(TightBindingModel.GetOneBodyMatrix(i)[BandIndex][ImpurityOrbitals[p]]) * TightBindingModel.GetOneBodyMatrix(j)[BandIndex][ImpurityOrbitals[p]] 
+					 - 2.0 * M_PI * ((double) ((TotalKy1 - TotalKy2) * ImpurityYPositions[p])) / ((double) NbrSitesY)) 
+				   * Conj(TightBindingModel.GetOneBodyMatrix(i)[BandIndex][ImpurityOrbitals[p]]) * (TightBindingModel.GetOneBodyMatrix(j)[BandIndex][ImpurityOrbitals[p]])
 				   * Normalization * RawPrecalculatedValues[m][n][i][j]);
 		  }
 	      }
@@ -339,10 +341,12 @@ int main(int argc, char** argv)
 	HRep.SetMatrixElement(m, n, TmpElement);
       }
 
+
+  
   RealDiagonalMatrix TmpDiag (TmpHilbertSpaceDimension);
+  ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension);	      
   if (TmpHilbertSpaceDimension > 1)
     {
-      ComplexMatrix TmpEigenvector (TmpHilbertSpaceDimension, TmpHilbertSpaceDimension);	      
       TmpEigenvector.SetToIdentity();
 #ifdef __LAPACK__
       HRep.LapackDiagonalize(TmpDiag, TmpEigenvector);
@@ -352,13 +356,50 @@ int main(int argc, char** argv)
     }
   else
     {
+      TmpEigenvector[0][0] = 1.0;
       TmpDiag[0] = HRep(0, 0);
     }
 
+  char* TruncatedOutputNameSpectrum = ReplaceExtensionToFileName(OutputName, ".dat", "");
+  char* TmpOutputNamePrefix = new char [strlen(OutputName) + strlen(Manager.GetString("impurities")) + 128];
+  sprintf (TmpOutputNamePrefix, "%s.%s", TruncatedOutputNameSpectrum, Manager.GetString("impurities"));
+  char* OutputNamePrefix = ReplaceExtensionToFileName(TmpOutputNamePrefix, ".dat", "");
+  char* OutputNameSpectrum = AddExtensionToFileName(OutputNamePrefix, "dat");
+  ofstream File2;
+  File2.precision(14);
+  File2.open(OutputNameSpectrum, ios::binary | ios::out);
   for (int i = 0; i < TmpHilbertSpaceDimension; ++i)
     {
-      cout << TmpDiag[i] << endl;
+      File2 << TmpDiag[i] << endl;
+      char* VectorSuffix = new char [128];
+      if (Manager.GetBoolean("binary-output"))
+	{
+	  sprintf(VectorSuffix, "%d.vec", i);
+	  char* OutputNameVector = AddExtensionToFileName(OutputNamePrefix, VectorSuffix);
+	  if (TmpEigenvector[i].WriteVector(OutputNameVector) == false)
+	    {
+	      cout << "can't write vector " << OutputNameVector << endl;
+	    }
+	  delete[] OutputNameVector;
+	}
+      else
+	{
+	  sprintf (VectorSuffix, "%d.vec.txt", i);
+	  char* OutputNameVector = AddExtensionToFileName(OutputNamePrefix, VectorSuffix);
+	  ofstream File3;
+	  File3.precision(14);
+	  File3.open(OutputNameVector, ios::binary | ios::out);
+	  File3 << "# vector coefficient" << endl;
+	  for (int j = 0; j < InputVectors.GetNbrLines(); ++j)
+	    {
+	      File3 << InputVectors(0, j) << " " << TmpEigenvector[i][j] << endl;
+	    }
+	  File3.close();	  
+	  delete[] OutputNameVector;
+	}
+      delete[] VectorSuffix;
     }
+  File2.close();
 
 }
 
