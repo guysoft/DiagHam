@@ -39,6 +39,8 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/QHEParticlePrecalculationOperation.h"
 
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 #include <iostream>
 #include <sys/time.h>
 
@@ -70,11 +72,28 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, char* geometryFile, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
   this->NbrSite = nbrSite;
+  this->NbrBonds = 0;
+  this->SitesA = 0;
+  this->SitesB = 0;
+  this->Bonds = 0;
+  if (geometryFile != 0)
+  {
+    MultiColumnASCIIFile LatticeFile;
+    if (LatticeFile.Parse(geometryFile) == false)
+    {
+      LatticeFile.DumpErrors(cout);
+    }
+    this->NbrBonds = LatticeFile.GetNbrLines();
+    this->SitesA = LatticeFile.GetAsIntegerArray(0);
+    this->SitesB = LatticeFile.GetAsIntegerArray(1);
+    this->Bonds = LatticeFile.GetAsIntegerArray(2);
+  }
+    
   this->LzMax = this->NbrSite - 1;
   this->UPotential = uPotential; //2.0 * uPotential / ((double) this->NbrParticles);
   this->HamiltonianShift = 0.0;//4.0 * uPotential;

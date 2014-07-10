@@ -53,6 +53,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "stripe", "model geometry is a stripe");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
 
+  (*SystemGroup) += new SingleStringOption  ('\n', "geometry-file", "name of an optional file that gives the position of the different bonds and their nature");
+  (*SystemGroup) += new SingleStringOption  ('\n', "geometry-name", "name of the geometry used", "unknown");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site (Hubbard) potential strength", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "isotropic-t", "isotropic spin nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropic-t", "anisotropic nearest neighbor hopping amplitude", 1.0);
@@ -89,6 +91,13 @@ int main(int argc, char** argv)
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   bool StripeFlag = Manager.GetBoolean("stripe");
   
+  if ( (StripeFlag == false) && (Manager.GetString("geometry-file") == 0))
+  {
+   cout << "Error. A lattice geometry has to be specified" << endl; 
+   return -1;
+  }
+  
+    
 //   if ((StripeFlag) && ((NbrSites % 4) != 2))
 //   {
 //    cout << "Error: number of sites should be of the form 4n + 2 for stripe geometry " << endl; 
@@ -118,6 +127,8 @@ int main(int argc, char** argv)
   char* FilePrefix = new char [256];
   if (StripeFlag)
     sprintf (FilePrefix, "%s_stripe_n_%d_x_%d", StatisticPrefix, NbrParticles, NbrSites);
+  else
+    sprintf (FilePrefix, "%s_%s_n_%d_x_%d", StatisticPrefix, Manager.GetString("geometry-name"), NbrParticles, NbrSites);
   
   
   char* FileParameterString = new char [256];
@@ -149,11 +160,8 @@ int main(int argc, char** argv)
   Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
   
-  if (StripeFlag)
-    Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
-  else
-    Hamiltonian = 0;
-	      
+  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+ 
   char* ContentPrefix = new char[256];
 //   sprintf (ContentPrefix, "%d %d", i, j);
   sprintf (ContentPrefix, "0");

@@ -57,7 +57,16 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian : public ParticleOnLa
   
   // number of sites
   int NbrSite;
- 
+  
+  //number of bonds in the file describing the bonds
+  int NbrBonds;
+  //sites in first column in file describing the bonds
+  int* SitesA;
+  //sites in second column in file describing the bonds
+  int* SitesB;
+  //third column in file describing the bonds: nature of each bond
+  int* Bonds;
+  
   //array that contains the information about the lattice geometry
   //first index = index of the site under consideration
   //second index 0 = index of the nearest neighbor linked with x link (= NbrSite if no x link)
@@ -99,7 +108,7 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian : public ParticleOnLa
   //j2Factor = strength of the anisotropic nearest neighbor spin interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, char* geometryFile, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -742,6 +751,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
   for (int i = 0; i < this->NbrSite; ++i)
     this->MapNearestNeighborBonds[i] = new int [3];
   
+  if (this->Bonds == 0)
+  {
   if ((this->NbrSite % 4) == 2)
   {
     for (int i = 0; i <= (this->NbrSite - 2)/4 ; ++i)
@@ -871,6 +882,25 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
      }
     }
   }
+  }
+  else
+  {
+   for (int i = 0; i < this->NbrSite; ++i)
+   {
+     for (int k = 0; k < 3; ++k)
+     {
+       this->MapNearestNeighborBonds[i][k] = this->NbrSite;
+       for (int j = 0; ((j < this->NbrBonds) && (this->MapNearestNeighborBonds[i][k] == this->NbrSite)); ++j)
+       {
+	 if ((this->SitesA[j] == i) && this->Bonds[j] == k)
+	 {
+	    this->MapNearestNeighborBonds[i][k] = this->SitesB[j];
+// 	    cout << this->SitesA[j] << " " << this->SitesB[j] << " " << this->Bonds[j] << " " << k << endl;
+	 }
+	}
+      }
+    }
+   }
 }
 
 //find the type of bond that links neighboring sites i and j
@@ -883,6 +913,8 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
 {
 //  cout << i << " " << j << endl;
   int diff = i - j;
+  if (this->NbrBonds == 0)
+  {
   //open chain of hexagons
   if ((this->NbrSite % 4) == 2)
     {
@@ -967,6 +999,14 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
 	}      
       }
     }
+  }
+  else
+  {
+    for (int k = 0; k < this->NbrBonds; ++k)
+      if ((this->SitesA[k] == i) && (this->SitesB[k] == j))
+	return this->Bonds[k];
+    return-1;
+  }
 }
 
 //get the index of the nearest neighbor linked with bond x
