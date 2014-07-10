@@ -886,15 +886,18 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearest
   else
   {
    for (int i = 0; i < this->NbrSite; ++i)
+    for (int k = 0; k < 3; ++k)
+     this->MapNearestNeighborBonds[i][k] = this->NbrSite;
+   for (int i = 0; i < this->NbrSite; ++i)
    {
      for (int k = 0; k < 3; ++k)
      {
-       this->MapNearestNeighborBonds[i][k] = this->NbrSite;
        for (int j = 0; ((j < this->NbrBonds) && (this->MapNearestNeighborBonds[i][k] == this->NbrSite)); ++j)
        {
-	 if ((this->SitesA[j] == i) && this->Bonds[j] == k)
+	 if ((this->SitesA[j] == i) && (this->Bonds[j] == k))
 	 {
 	    this->MapNearestNeighborBonds[i][k] = this->SitesB[j];
+	    this->MapNearestNeighborBonds[this->SitesB[j]][k] = i;
 // 	    cout << this->SitesA[j] << " " << this->SitesB[j] << " " << this->Bonds[j] << " " << k << endl;
 	 }
 	}
@@ -1003,7 +1006,7 @@ inline int ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::FindBondType(in
   else
   {
     for (int k = 0; k < this->NbrBonds; ++k)
-      if ((this->SitesA[k] == i) && (this->SitesB[k] == j))
+      if (((this->SitesA[k] == i) && (this->SitesB[k] == j)) || ((this->SitesA[k] == j) && (this->SitesB[k] == i)))
 	return this->Bonds[k];
     return-1;
   }
