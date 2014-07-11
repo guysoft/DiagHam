@@ -323,8 +323,16 @@ int main(int argc, char** argv)
 
   File.precision(14);
   cout.precision(14);
-  File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
-       << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
+  if ((NbrLeftStates == 1) && (NbrRightStates == 1))
+    {
+      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2 |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>| Arg(<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>)" << endl;
+    }
+  else
+    {
+      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
+    }
   double NormalizationFactor = 1.0 / sqrt((double) (NbrLeftStates * NbrRightStates));
   for (int i = 0; i < RightNbrSites; ++i)
     {
@@ -420,43 +428,40 @@ int main(int argc, char** argv)
 
 void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderParameter, ostream& output)
 {
-  ComplexMatrix TmpConjugate;
-  TmpConjugate.Copy(orderParameter);
-  TmpConjugate.HermitianTranspose();
-  if (orderParameter.GetNbrRow() >= orderParameter.GetNbrColumn())
-    {      
-      HermitianMatrix TmpMatrix (TmpConjugate * orderParameter);
-      RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
+  if ((orderParameter.GetNbrRow() > 1) || (orderParameter.GetNbrColumn() > 1))
+    {
+      ComplexMatrix TmpConjugate;
+      TmpConjugate.Copy(orderParameter);
+      TmpConjugate.HermitianTranspose();
+      if (orderParameter.GetNbrRow() >= orderParameter.GetNbrColumn())
+	{      
+	  HermitianMatrix TmpMatrix (TmpConjugate * orderParameter);
+	  RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
 #ifdef __LAPACK__
-      TmpMatrix.LapackDiagonalize(TmpDiag);
+	  TmpMatrix.LapackDiagonalize(TmpDiag);
 #else
-      TmpMatrix.Diagonalize(TmpDiag);
+	  TmpMatrix.Diagonalize(TmpDiag);
 #endif		  
-      TmpDiag.SortMatrixDownOrder();
-      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	output << " " << TmpDiag[i];
+	  TmpDiag.SortMatrixDownOrder();
+	  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
+	    output << " " << TmpDiag[i];
+	}
+      else
+	{
+	  HermitianMatrix TmpMatrix2 (orderParameter * TmpConjugate);
+	  RealDiagonalMatrix TmpDiag2 (TmpMatrix2.GetNbrRow());
+#ifdef __LAPACK__
+	  TmpMatrix2.LapackDiagonalize(TmpDiag2);
+#else
+	  TmpMatrix2.Diagonalize(TmpDiag2);
+#endif		  
+	  TmpDiag2.SortMatrixDownOrder();
+	  for (int i = 0; i < TmpDiag2.GetNbrRow(); ++i)
+	    output << " " << TmpDiag2[i];
+	}
     }
   else
     {
-//       HermitianMatrix TmpMatrix1 (TmpConjugate * orderParameter);
-//       RealDiagonalMatrix TmpDiag1 (TmpMatrix1.GetNbrRow());
-// #ifdef __LAPACK__
-//       TmpMatrix1.LapackDiagonalize(TmpDiag1);
-// #else
-//       TmpMatrix1.Diagonalize(TmpDiag1);
-// #endif		  
-//       TmpDiag1.SortMatrixDownOrder();
-//       for (int i = 0; i < TmpDiag1.GetNbrRow(); ++i)
-// 	output << " " << TmpDiag1[i];
-      HermitianMatrix TmpMatrix2 (orderParameter * TmpConjugate);
-      RealDiagonalMatrix TmpDiag2 (TmpMatrix2.GetNbrRow());
-#ifdef __LAPACK__
-      TmpMatrix2.LapackDiagonalize(TmpDiag2);
-#else
-      TmpMatrix2.Diagonalize(TmpDiag2);
-#endif		  
-      TmpDiag2.SortMatrixDownOrder();
-      for (int i = 0; i < TmpDiag2.GetNbrRow(); ++i)
-	output << " " << TmpDiag2[i];
+      output << " " << SqrNorm(orderParameter[0][0]) << " " << Norm(orderParameter[0][0]) << Arg(orderParameter[0][0]);
     }
 }
