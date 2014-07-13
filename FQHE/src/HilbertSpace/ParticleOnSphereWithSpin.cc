@@ -276,6 +276,37 @@ int ParticleOnSphereWithSpin::AduAd (int index, int m, double& coefficient)
   return this->AduAd(index, m, m, coefficient);
 }
 
+// apply a^+_m_u a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AduAu(index, m, m, coefficient);
+}
+  
+// apply a^+_m_d a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSpin::AddAd (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AddAd(index, m, m, coefficient);
+}
+  
+
 // apply a^+_m_u a_n_d operator to a given state 
 //
 // index = index of the state on which the operator has to be applied

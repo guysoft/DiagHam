@@ -197,6 +197,26 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, double& coefficient);
 
+  // apply a^+_m_u a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAu (int index, int m, int n, double& coefficient, int& nbrTranslation);
+  
+  // apply a^+_m_d a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAd (int index, int m, int n, double& coefficient, int& nbrTranslation);
+  
   // apply a^+_m_u a_m_d operator to a given state 
   //
   // index = index of the state on which the operator has to be applied

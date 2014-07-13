@@ -45,6 +45,9 @@ using std::hex;
 class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWithSpinAndMagneticTranslations
 {
 
+
+ protected:
+
   // number of fermions
   int NbrFermions;
 
@@ -127,7 +130,10 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
 
  public:
 
-  
+  // default constructor
+  // 
+  FermionOnTorusWithSpinAndMagneticTranslations ();  
+
   // basic constructor
   // 
   // nbrFermions= number of fermions
@@ -248,6 +254,26 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = coefficient obtained when applying a^+_m a_m
   double AduAu (int index, int m);
 
+  // apply a^+_m_u a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAu (int index, int m, int n, double& coefficient, int& nbrTranslation);
+  
+  // apply a^+_m_d a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAd (int index, int m, int n, double& coefficient, int& nbrTranslation);
+  
   // apply a^+_m_u a_n_d operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -334,7 +360,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
- private:
+ protected:
 
   // find canonical form of a state description
   //
@@ -371,7 +397,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // stateDescription = unsigned integer describing the state
   // maxMomentum = maximum Lz value reached by a fermion in the state
   // return value = corresponding index
-  int FindStateIndex(unsigned long stateDescription, int maxMomentum);
+  virtual int FindStateIndex(unsigned long stateDescription, int maxMomentum);
 
   // evaluate Hilbert space dimension for a given total momentum
   //
@@ -402,9 +428,18 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // generate all states corresponding to the constraints
   // 
   // fullSzFlag = if true, does not apply the Sz contraint
+  // fullKyFlag = if true, does not apply the Ky contraint
   // return value = hilbert space dimension
-  int GenerateStates(bool fullSzFlag = false);
+  virtual int GenerateStates(bool fullSzFlag = false, bool fullKyFlag = false);
  
+  // evaluate Hilbert space dimension without the translation symmmetry along x, Sz or Ky quantu numbers
+  //
+  // nbrFermions = number of fermions
+  // currentMomentum = current one-body momentum 
+  // pos = position in StateDescription array where to store states
+  // return value = Hilbert space dimension
+  virtual long RawGenerateStates(int nbrFermions, int currentMomentum, long pos);
+
   // evaluate Hilbert space dimension without the translation symmmetry along x
   //
   // nbrFermions = number of fermions
@@ -413,7 +448,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // totalSpinUp = number of particles with spin up
   // pos = position in StateDescription array where to store states
   // return value = Hilbert space dimension
-  long RawGenerateStates(int nbrFermions, int lzMax, int totalMomentum, int totalSpinUp, long pos);
+  virtual long RawGenerateStates(int nbrFermions, int lzMax, int totalMomentum, int totalSpinUp, long pos);
 
   // generate all states corresponding to the constraints without the translation symmmetry along x
   // 
@@ -423,7 +458,7 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // pos = position in StateDescription array where to store states
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
-  long RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, int currentMomentum);
+  virtual long RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, int currentMomentum);
 
 };
 

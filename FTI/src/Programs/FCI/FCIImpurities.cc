@@ -300,7 +300,7 @@ int main(int argc, char** argv)
       File.precision(14);
       File.open(OutputName, ios::binary | ios::out);
       File << "# density coefficients for " << Manager.GetString("input-states") << endl;
-      File << "#" << endl << "# state_index_left state_index_right m  n  c_{m,n}" << endl;
+      File << "#" << endl << "# state_index_left state_index_right m  n  <left|c^+_m c_n|right>" << endl;
       for (int m = 0; m < InputVectors.GetNbrLines(); ++m)
 	for (int n = 0; n < InputVectors.GetNbrLines(); ++n)
 	  for (int i = 0; i <= ForceMaxMomentum; ++i)
@@ -392,7 +392,7 @@ int main(int argc, char** argv)
 	  File3 << "# vector coefficient" << endl;
 	  for (int j = 0; j < InputVectors.GetNbrLines(); ++j)
 	    {
-	      File3 << InputVectors(0, j) << " " << TmpEigenvector[i][j] << endl;
+	      File3 << InputVectors(0, j) << " " << Conj(TmpEigenvector[i][j]) << endl;
 	    }
 	  File3.close();	  
 	  delete[] OutputNameVector;

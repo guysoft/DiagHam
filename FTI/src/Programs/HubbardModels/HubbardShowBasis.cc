@@ -1,5 +1,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -35,6 +37,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
+  (*SystemGroup) += new BooleanOption  ('\n', "xperiodic-boundary", "use periodic boundary conditions in the x direction");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "x-momentum", "momentum along the x direction", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "x-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the x direction", 4);
 //   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
   
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
@@ -73,13 +78,27 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (Manager.GetBoolean("gutzwiller") == false)
+      if (Manager.GetBoolean("xperiodic-boundary") == false)
 	{
-	  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+	  if (Manager.GetBoolean("gutzwiller") == false)
+	    {
+	      Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+	    }
+	  else
+	    {
+	      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+	    }
 	}
       else
 	{
-	  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+	  if (Manager.GetBoolean("gutzwiller") == false)
+	    {
+	      Space = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+	    }
+	  else
+	    {
+	      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+	    }
 	}
     }
   
@@ -196,27 +215,29 @@ int main(int argc, char** argv)
 		      Normalization += State[i] * State[i];
 		    }
 		}
-      else
-		for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
-		  {
-		    if (fabs(State[i]) > Error)
-		      {
-			
+	      else
+		{
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    {
+		      if (fabs(State[i]) > Error)
+			{
+			  
 			  if (AddIndex == true) 
 			    cout << i <<" ";
 			  Space->PrintState(cout, i) << " : " << State[i];
 			  cout<<endl;
-			
-			
-		      }
-		    else		     
-		      {
-			WeightHiddenComponents += State[i] * State[i];
-			++NbrHiddenComponents; 
-		      }
-		    Normalization += State[i] * State[i];
-		  }
-	      cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
+			  
+			  
+			}
+		      else		     
+			{
+			  WeightHiddenComponents += State[i] * State[i];
+			  ++NbrHiddenComponents; 
+			}
+		      Normalization += State[i] * State[i];
+		    }
+		  cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
+		}
 	    }
     cout << NbrHiddenComponents << " hidden components (square normalization error = " << WeightHiddenComponents << " / " << Normalization << ")" << endl;
     }
