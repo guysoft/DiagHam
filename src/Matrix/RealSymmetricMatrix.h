@@ -139,6 +139,18 @@ class RealSymmetricMatrix : public Matrix
   // x = new value for matrix element
   void SetMatrixElement(int i, int j, const Complex& x);
 
+  // set all matrix elements to the same value
+  // x = new value for all matrix elements
+  void SetAllEntries(double x);
+
+  // set all diagonal matrix elements to the same value
+  // x = new value for all matrix elements
+  void SetDiagonalEntries(double x);
+
+  // set all off diagonal matrix elements to the same value
+  // x = new value for all matrix elements
+  void SetOffDiagonalEntries(double x);
+
   // get a matrix element (real part if complex)
   //
   // i = line position

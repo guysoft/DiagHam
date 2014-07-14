@@ -318,6 +318,7 @@ double operator * (RealPtrVector& V1, RealVector& V2)
   double *OtherComponentPtr=V2.Components;
   double x = **MyComponentPtr++ * *OtherComponentPtr++;
   int L=V1.Dimension;
+  //#pragma simd
   for (int i = 1; i < L; ++i)
      x += **MyComponentPtr++ * *OtherComponentPtr++;     
   V1.Delocalize();
@@ -338,10 +339,27 @@ double operator * (RealVector& V1, RealPtrVector& V2)
   V2.Localize();  
   double *MyComponentPtr=V1.Components;
   double **OtherComponentPtr=V2.Components;
-  double x = *MyComponentPtr++ * **OtherComponentPtr++;
   int L=V1.Dimension;
+  //#define OTHER_METHOD
+#ifndef OTHER_METHOD
+  // baseline method: use pointers
+  double x = *MyComponentPtr++ * **OtherComponentPtr++;
+  // this pragma works, but does not appear to affect computer time significantly
+  //# pragma simd
   for (int i = 1; i < L; ++i)
-     x += *MyComponentPtr++ * **OtherComponentPtr++;   
+  // double *end = V1.Components+V1.Dimension;
+  // for (; MyComponentPtr < end; )
+    x += *MyComponentPtr++ * **OtherComponentPtr++;
+#else
+  // alternative method - no pointer arithmetic, but dereferencing: 2x slower than above!
+  double x=0.0;
+  // this pragma does not lead to vectorization:
+#pragma simd
+  for (int i = 0; i < L; ++i)
+    {
+      x += V1[i] * *V2[i];
+    }
+#endif
   V1.Delocalize();
   V2.Delocalize();
   return x;

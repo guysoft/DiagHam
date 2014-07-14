@@ -1,16 +1,14 @@
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2013 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
-//                        class author: Gunnar Möller                         //
 //                                                                            //
-//       class for generic tight binding models in reciprocal space           //
-//              modelling optical dressing and kinetic energy                 //
+//            class of tight binding model for the Checkerboard lattice       //
 //                                                                            //
-//                        last modification : 12/08/2013                      //
+//                        last modification : 08/05/2012                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -45,11 +43,7 @@
 
 class TightBindingModelOFLGenericLattice : public Abstract2DTightBindingModel
 {
- public:
-  enum {Rectangular=0,
-	Periodic=1,
-	AbsoluteValue=2};
-  
+
  protected:
 
   // number of k-points in the x-/y-direction
@@ -60,13 +54,9 @@ class TightBindingModelOFLGenericLattice : public Abstract2DTightBindingModel
   int NMax1;
   int NMax2;
   double CutOffMomentum;
-  int CutOffType;
   double LatticeDepth;
   double DeltaK1;
   double DeltaK2;
-
-  // number of bands to calculate
-  int NbrBandsToCalculate;
 
   RealVector LatticeVector1;
   RealVector LatticeVector2;
@@ -108,7 +98,7 @@ class TightBindingModelOFLGenericLattice : public Abstract2DTightBindingModel
   // cutOffMomentum = maximum (absolute value) of momenta considered
   // latticeDepth = parameter for the depth of the optical lattice in recoil energies
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelOFLGenericLattice(int nbrPoints1, int nbrPoints2, double gamma1, double gamma2, AbstractArchitecture* architecture, double latticeDepth, bool storeOneBodyMatrices=true);
+  TightBindingModelOFLGenericLattice(int nbrPoints1, int nbrPoints2, double gamma1, double gamma2, AbstractArchitecture* architecture, double cutOffMomentum, double latticeDepth, bool storeOneBodyMatrices=true);
 
   // destructor
   //
@@ -175,42 +165,19 @@ inline int TightBindingModelOFLGenericLattice::LinearizedReciprocalSpaceIndex(in
 {
   this->TmpVector.ClearVector();
   
-  if (this->CutOffType == TightBindingModelOFLGenericLattice::Periodic)
-    {
-      if (momentum1<0)
-	momentum1 +=2*this->NMax1 + 1;
-      if (momentum2<0)
-	momentum2 +=2*this->NMax2 + 1;
-      momentum1 %= (2*this->NMax1) + 1;
-      momentum2 %= (2*this->NMax1) + 1;
-    }
-  
-  int SignedMomentum1 = momentum1 - this->NMax1;
-  int SignedMomentum2 = momentum2 - this->NMax2;
-
-  TmpVector.AddLinearCombination(((double)SignedMomentum1)+crystalMomentum1,this->LatticeVector1);
-  TmpVector.AddLinearCombination(((double)SignedMomentum2)+crystalMomentum2,this->LatticeVector2);
+  int SignedMomentum1 = momentum1 - NMax1;
+  int SignedMomentum2 = momentum2 - NMax2;
+  TmpVector.AddLinearCombination((double)SignedMomentum1+crystalMomentum1,this->LatticeVector1);
+  TmpVector.AddLinearCombination((double)SignedMomentum2+crystalMomentum2,this->LatticeVector2);
   TmpVector+=this->SubLatticeVectors[subLattice];
 
+  if ((abs(SignedMomentum1)>NMax1)||(abs(SignedMomentum2)>NMax2))
+    {
+      inBounds = false;
+      return -1;
+    }
   norm = TmpVector.Norm();
-
-  if ( (this->CutOffType == TightBindingModelOFLGenericLattice::Rectangular) || (this->CutOffType == TightBindingModelOFLGenericLattice::AbsoluteValue) )
-    {
-      if ((abs(SignedMomentum1)>NMax1)||(abs(SignedMomentum2)>NMax2))
-	{
-	  inBounds = false;
-	  return -1;
-	}
-    }
-  
-  if (this->CutOffType == TightBindingModelOFLGenericLattice::AbsoluteValue)
-    {
-      inBounds = (norm < (this->CutOffMomentum));
-    }
-  else
-    {
-      inBounds = true;
-    }
+  inBounds = (norm<this->CutOffMomentum);
     
   return ( NbrSubLattices*(momentum1 * (2*NMax2+1) + momentum2 ) + subLattice );
 }

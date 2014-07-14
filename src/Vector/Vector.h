@@ -210,7 +210,7 @@ class Vector
   //
   // str = reference on output stream
   // v = vector to print
-  // return value = referenceint GetNumSites(){return this->NSites;} on output stream
+  // return value = reference on output stream
   friend ostream& operator << (ostream& str, Vector& v);
 
   // print a single component

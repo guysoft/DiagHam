@@ -30,11 +30,9 @@ using std::endl;
 
 using std::ofstream;
 
-
 int main(int argc, char** argv)
-{
+{  
   cout.precision(14);
-
 
   OptionManager Manager ("FQHESphereFermionsBilayer" , "0.01");
   OptionGroup* SystemGroup  = new OptionGroup ("system options");  
@@ -298,7 +296,7 @@ int main(int argc, char** argv)
 	  if (LzMax <= 13)
 #endif
 	  {  
-		if ((LzSymmetrizedBasis == false) || (L != 0))
+	    if ((LzSymmetrizedBasis == false) || (L != 0))
 	      Space = new FermionOnSphereWithSpinAllSz(NbrFermions, L, LzMax, MemorySpace);
 	    else
 	      {

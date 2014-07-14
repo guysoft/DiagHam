@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef MULTIPLEGEROPTION_H
+#ifndef MULTIPLEINTEGEROPTION_H
 #define MULTIPLEINTEGEROPTION_H
 
 

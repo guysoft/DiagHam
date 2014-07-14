@@ -409,6 +409,34 @@ void RealSymmetricMatrix::SetMatrixElement(int i, int j, const Complex& x)
     }
 }
 
+
+// set all matrix elements to the same value
+// x = new value for all matrix elements
+void RealSymmetricMatrix::SetAllEntries(double x)
+{
+  for (int i = 0; i<this->NbrRow; ++i)
+    this->DiagonalElements[i] = x;
+  for (int i=0; i<(this->NbrRow * (this->NbrRow - 1)) / 2; ++i)
+    this->OffDiagonalElements[i] = x;
+}
+
+// set all diagonal matrix elements to the same value
+// x = new value for all matrix elements
+void RealSymmetricMatrix::SetDiagonalEntries(double x)
+{
+  for (int i = 0; i<this->NbrRow; ++i)
+    this->DiagonalElements[i] = x;
+}
+
+// set all off diagonal matrix elements to the same value
+// x = new value for all matrix elements
+void RealSymmetricMatrix::SetOffDiagonalEntries(double x)
+{
+  for (int i=0; i<(this->NbrRow * (this->NbrRow - 1)) / 2; ++i)
+    this->OffDiagonalElements[i] = x;
+}
+
+
 // set a matrix element
 //
 // i = line position

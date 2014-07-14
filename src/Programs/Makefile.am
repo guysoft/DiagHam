@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii MatrixBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors VectorComplex2RealImaginary VectorRealImaginary2Complex GenericMatrixMultiplication
+bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii MatrixBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf TestDiagHamVectors ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors VectorComplex2RealImaginary VectorRealImaginary2Complex GenericMatrixMultiplication
 
 ExplicitMatrixExample_SOURCES=ExplicitMatrixExample.cc
 
@@ -23,6 +23,8 @@ GenerateRandomNumbers_SOURCES=GenerateRandomNumbers.cc
 BuildSuperPosition_SOURCES=BuildSuperPosition.cc
 
 TestDiagHamConf_SOURCES=TestDiagHamConf.cc
+
+TestDiagHamVectors_SOURCES=TestDiagHamVectors.cc
 
 ReorthogonalizeVectorSet_SOURCES=ReorthogonalizeVectorSet.cc
 
@@ -97,6 +99,10 @@ ExtractLinearlyIndependentVectors_LDADD=-L$(top_builddir)/src/Vector -L$(top_bui
 GenerateRandomNumbers_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a
 
 GenerateRandomNumbers_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -L$(top_builddir)/src/MathTools/RandomNumber -lMatrix -lVector  -lRandomNumber -lOptions -lGeneralTools -lOutput @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @SCALAPACK_LIBS@ @FORTRAN2C_LIBS@ @GMP_LIBS@ @INTELMKL_LIBS@
+
+TestDiagHamVectors_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MathTools/RandomNumber/libRandomNumber.a
+
+TestDiagHamVectors_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/Options -L$(top_builddir)/src/Output -L$(top_builddir)/src/MathTools/RandomNumber -lMatrix -lVector  -lRandomNumber -lOptions -lGeneralTools -lOutput @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @SCALAPACK_LIBS@ @FORTRAN2C_LIBS@ @GMP_LIBS@ @INTELMKL_LIBS@
 
 BuildSuperPosition_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MathTools/libMathTools.a 
 

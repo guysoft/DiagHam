@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "depth", "depth of the optical lattice", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-points1", "number of points in the first Brillioun zone along G1", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-points2", "number of points in the first Brillioun zone along G2", 10);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cut-off-momentum", "maximum (absolute value of) momentum to be considered", 20.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "singleparticle-spectrum", "only compute the one body spectrum");
@@ -94,7 +95,8 @@ int main(int argc, char** argv)
       if ((Manager.GetBoolean("export-onebody")) || (Manager.GetBoolean("export-onebodytext")) || (Manager.GetBoolean("singleparticle-chernnumber")) || (Manager.GetBoolean("singleparticle-curvature")) )
 	ExportOneBody = true;
       
-      TightBindingModelOFLGenericLattice TightBindingModel(Manager.GetInteger("nbr-points1"), Manager.GetInteger("nbr-points2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), LatticeDepth, ExportOneBody);
+      TightBindingModelOFLGenericLattice TightBindingModel(Manager.GetInteger("nbr-points1"), Manager.GetInteger("nbr-points2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
+							   Manager.GetDouble("cut-off-momentum"), LatticeDepth, ExportOneBody);
       
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)      
 	{
@@ -109,7 +111,7 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("singleparticle-curvature"))
 	{
 	  char CurvatureFileName[512];
-	  sprintf(CurvatureFileName,"GenericOFT_%s_x_%ld_y_%ld_curvature.dat",TightBindingModel.GetDescriptor(), Manager.GetInteger("nbr-points1"), Manager.GetInteger("nbr-points2"));
+	  sprintf(CurvatureFileName,"GenericOFL_%s_x_%ld_y_%ld_curvature.dat",TightBindingModel.GetDescriptor(), Manager.GetInteger("nbr-points1"), Manager.GetInteger("nbr-points2"));
 	  TightBindingModel.ComputeBerryCurvature(/*band */ 0, CurvatureFileName);
 	}
       
@@ -133,7 +135,6 @@ int main(int argc, char** argv)
 	}	  
       return 0;
     }
-  delete [] EigenvalueOutputFile;
   return 0;
 }
 

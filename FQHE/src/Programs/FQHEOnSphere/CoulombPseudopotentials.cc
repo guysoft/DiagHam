@@ -54,6 +54,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('t', "layer-thickness", "assume finite layer thickness",0.0);
   (*SystemGroup) += new MultipleIntegerOption ('\n', "rescale", "rescale separation and thickness for a particular number of particles, filling factor and shift (4 arguments N,p,q,Sigma)",',');
   
+  (*SystemGroup) += new SingleDoubleOption ('\n', "manual-scale", "scale all terms with a given prefactor",1.0);
+
+  
   (*SystemGroup) += new  SingleStringOption ('\n', "profile-type", "type of density-profile (1=infiniteWell, 2=Fang-Howard, 3=infiniteWellExc)","1");
 
   (*SystemGroup) += new  SingleStringOption ('\n', "other-profile", "type of density-profile for second layer (1=infiniteWell, 2=Fang-Howard, 3=infiniteWellExc)",NULL);
@@ -65,8 +68,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new  BooleanOption ('\n', "no-interpolation","do not use interpolation for finite width calculations");
 
-  (*SystemGroup) += new  BooleanOption ('n', "nbody", "add n-body potentials");
-  (*SystemGroup) += new  MultipleDoubleOption ('p', "nbody-potentials", "values of n-body potentials to be added (separated by ','",',');
+  (*SystemGroup) += new  BooleanOption ('n', "nbody", "add n-body potentials");  (*SystemGroup) += new  MultipleDoubleOption ('p', "nbody-potentials", "values of n-body potentials to be added (separated by ','",',');
+ 
   (*SystemGroup) += new SingleDoubleOption ('v', "add-v0", "add some amount to v_0",0.0);
   (*SystemGroup) += new SingleDoubleOption ('w', "add-v1", "add some amount to v_1",0.0);
   (*SystemGroup) += new SingleDoubleOption ('k', "kappa", "add three-body terms for Landau-level mixing according to Bishara-Nayak",0.0);
@@ -400,19 +403,29 @@ int main(int argc, char** argv)
 	    File << "# with \\delta V_0="<<Manager.GetDouble("add-v0")<<endl;
 	  if (Manager.GetDouble("add-v1")!=0.0)
 	    File << "# with \\delta V_1="<<Manager.GetDouble("add-v1")<<endl;
+	  double ManualScale=Manager.GetDouble("manual-scale");
+	  if (fabs(ManualScale-1.0)>1e-12)
+	    {
+	      cout << "Attention: overall scale factor "<<ManualScale<<" applied - but filename not changed in output"<<endl;
+	      File << "# Additional overall manual scale factor: "<<ManualScale<<endl;
+	    }
+
 	  File << "#" << endl
 	       << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
 	       << "Pseudopotentials =";
-	  File << " " << Pseudopotentials[0]+Manager.GetDouble("add-v0");
-	  File << " " << Pseudopotentials[1]+Manager.GetDouble("add-v1");
+
+	  File << " " << ManualScale*(Pseudopotentials[0]+Manager.GetDouble("add-v0"));
+	  File << " " << ManualScale*(Pseudopotentials[1]+Manager.GetDouble("add-v1"));
+	  
+	  
 	  for (int i = 2; i <= MaxMomentum; ++i)
-	    File << " " << Pseudopotentials[i];
+	    File << " " << ManualScale*Pseudopotentials[i];
 	  File << endl;
 	  if (OneBodyPotentials != 0)
 	    {
 	      File << endl << "Onebodypotentials =";
 	      for (int i = 0; i <= MaxMomentum; ++i)
-		File << " " << OneBodyPotentials[i];
+		File << " " << ManualScale*OneBodyPotentials[i];
 	      File << endl;
 	    }
 	  if (Manager.GetBoolean("nbody"))
@@ -424,7 +437,7 @@ int main(int argc, char** argv)
 		  File << endl << "NbrNBody = "<<Length-1<<endl;
 		  File << "Weights =";
 		  for (int i=0; i<Length; ++i)
-		    File <<" "<<potentials[i];
+		    File <<" "<<ManualScale*potentials[i];
 		  File <<endl;
 		}
 	      else
@@ -485,17 +498,22 @@ int main(int argc, char** argv)
 		   << " and V_south = " << ((SingleDoubleOption*) Manager["south-potential"])->GetDouble() << ")" << endl;
 	    }
 	  // xxx cout << "
+	  double ManualScale=Manager.GetDouble("manual-scale");
+	  if (fabs(ManualScale-1.0)>1e-12)
+	    {
+	      cout << "# Additional overall manual scale factor: "<<ManualScale<<endl;
+	    }
 	  cout << "#" << endl
 	       << "# Pseudopotentials = V_0 V_1 ..." << endl << endl
 	       << "Pseudopotentials =";
 	  for (int i = 0; i <= MaxMomentum; ++i)
-	    cout << " " << Pseudopotentials[i];
+	    cout << " " << ManualScale*Pseudopotentials[i];
 	  cout << endl;
 	  if (OneBodyPotentials != 0)
 	    {
 	      cout << endl << "Onebodypotentials =";
 	      for (int i = 0; i <= MaxMomentum; ++i)
-		cout << " " << OneBodyPotentials[i];
+		cout << " " << ManualScale*OneBodyPotentials[i];
 	      cout << endl;
 	    }
 	  if (Manager.GetBoolean("nbody"))
@@ -507,7 +525,7 @@ int main(int argc, char** argv)
 		  cout << endl << "NbrNBody = "<<Length-1<<endl;
 		  cout << "Weights =";
 		  for (int i=0; i<Length; ++i)
-		    cout <<" "<<potentials[i];
+		    cout <<" "<<ManualScale*potentials[i];
 		  cout <<endl;
 		}
 	      else

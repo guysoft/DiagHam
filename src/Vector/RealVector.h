@@ -1035,6 +1035,10 @@ class RealVector : public Vector
 
 #endif
 
+  // query whether blas is being used:
+  // verbose = flag indicating whether to print a message on screen
+  bool HaveBlas(bool verbose = false);
+
 };
 
 // return vector i-th coordinate (without testing if position is valid)

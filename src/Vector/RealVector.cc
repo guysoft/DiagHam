@@ -46,6 +46,9 @@
 // switch defining whether pointers should be used in loops
 //#define USE_POINTERS
 
+// define whether scalar product should use blas:
+// #define BLAS_VECTORS
+
 
 using std::cout;
 using std::ofstream;
@@ -675,6 +678,7 @@ double operator * (RealVector& V1, RealVector& V2)
 {
   V1.Localize();
   V2.Localize();
+#ifndef BLAS_VECTORS
   double x = V1.Components[0l] * V2.Components[0l];  
   if (V1.Dimension == -1)
     for (long i = 1; i < V1.LargeDimension; ++i)
@@ -686,6 +690,12 @@ double operator * (RealVector& V1, RealVector& V2)
       for (long i = 1; i < V1.LargeDimension; i++)
 	x += *++ptr1 * *++ptr2;
     }
+#else
+  // blas implementation:
+  int inca = 1, incb = 1;
+  double x;
+  cblas_ddotc_sub(V1.LargeDimension, V1.Components, inca, V2.Components, incb, &x );
+#endif
   V1.Delocalize();
   V2.Delocalize();
   return x;
@@ -4215,3 +4225,19 @@ Vector* RealVector::BroadcastEmptyClone(MPI::Intracomm& communicator, int id, bo
 }
 
 #endif
+
+
+// query whether blas is being used:
+bool RealVector::HaveBlas(bool verbose)
+{
+#ifdef BLAS_VECTORS
+  if (verbose)
+    std::cout << "RealVector using blas scalar product"<<endl;
+  return true;
+#else
+  if (verbose)
+    std::cout << "RealVector using straightforward scalar product"<<endl;
+  return false;
+#endif
+    
+}
