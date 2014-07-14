@@ -166,7 +166,10 @@ int main(int argc, char** argv)
     sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
 
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n");
+  if (Manager.GetBoolean("xperiodic-boundary") == false)
+    sprintf (CommentLine, "");
+  else
+    sprintf (CommentLine, "kx");
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetString("eigenvalue-file")!=0)
     strcpy(EigenvalueOutputFile, Manager.GetString("eigenvalue-file"));
@@ -246,7 +249,7 @@ int main(int argc, char** argv)
 	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"), Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
 
 	  char* ContentPrefix = new char[256];
-	  sprintf (ContentPrefix, "0");
+	  sprintf (ContentPrefix, "%d", XMomentum);
 	  char* EigenstateOutputFile;
 	  if (Manager.GetString("eigenstate-file") != 0)
 	    {

@@ -960,8 +960,8 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AddAd (int index, int m, int 
 {
   int StateHighestBit = this->StateHighestBit[index];
   unsigned long State = this->StateDescription[index];
-  m = (m << 1) + 1;
-  n = (n << 1) + 1;
+  m <<= 1;
+  n <<= 1;
   if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0) )
     {
       coefficient = 0.0;

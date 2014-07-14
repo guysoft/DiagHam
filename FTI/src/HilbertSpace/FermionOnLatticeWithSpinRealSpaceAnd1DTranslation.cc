@@ -474,7 +474,7 @@ int FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::FindStateIndex(char* stat
 
 int FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::FindStateIndex(unsigned long stateDescription, int maxMomentum)
 {
-  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+  if ((stateDescription < this->StateDescription[0]) || (stateDescription > this->StateDescription[this->HilbertSpaceDimension - 1]))
     return this->HilbertSpaceDimension;
   long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
   long PosMin = this->LookUpTable[maxMomentum][PosMax];

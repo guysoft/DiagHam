@@ -552,5 +552,170 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
   cout << "====================================" << endl;
 }
 
+//fill up the positions of the three types of nearest neighbor bonds
+//
+
+void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::PlotMapNearestNeighborBonds()
+{
+  int Index;
+  this->MapNearestNeighborBonds = new int* [this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
+    this->MapNearestNeighborBonds[i] = new int [3];
+  
+  if (this->Bonds == 0)
+    {
+      if ((this->NbrSite % 4) == 2)
+	{
+	  for (int i = 0; i <= (this->NbrSite - 2)/4 ; ++i)
+	    {
+	      Index = 4*i;
+	      if (i == 0)
+		this->MapNearestNeighborBonds[Index][0] = this->NbrSite;
+	      else
+		this->MapNearestNeighborBonds[Index][0] = Index - 2;
+	      if (i < (this->NbrSite - 2)/4)
+		this->MapNearestNeighborBonds[Index][1] = Index + 2;
+	      else
+		this->MapNearestNeighborBonds[Index][1] = this->NbrSite;
+	      this->MapNearestNeighborBonds[Index][2] = Index + 1;
+	      
+	      Index = 4*i + 1;
+	      if (i < (this->NbrSite - 2)/4)
+		this->MapNearestNeighborBonds[Index][0] = Index + 2;
+	      else
+		this->MapNearestNeighborBonds[Index][0] = this->NbrSite;
+	      if (i == 0)
+		this->MapNearestNeighborBonds[Index][1] = this->NbrSite;
+	      else
+		this->MapNearestNeighborBonds[Index][1] = Index - 2;
+	      this->MapNearestNeighborBonds[Index][2] = Index - 1;
+	      
+	      if (i < (this->NbrSite - 2)/4)
+		{
+		  Index = 4*i + 2;
+		  this->MapNearestNeighborBonds[Index][0] = Index + 2;
+		  this->MapNearestNeighborBonds[Index][1] = Index - 2;
+		  this->MapNearestNeighborBonds[Index][2] = this->NbrSite;
+      
+		  Index = 4*i + 3;
+		  this->MapNearestNeighborBonds[Index][0] = Index - 2;
+		  this->MapNearestNeighborBonds[Index][1] = Index + 2;
+		  this->MapNearestNeighborBonds[Index][2] = this->NbrSite;      
+		}
+	    }
+	}
+      else
+	{
+	  if (((this->NbrSite % 4) == 0) && (this->NbrSite > 4))
+	    {
+	      for (int i = 0; i < this->NbrSite /4 ; ++i)
+		{
+		  Index = 4*i;
+		  if (i == 0)
+		    this->MapNearestNeighborBonds[Index][0] = this->NbrSite - 2;
+		  else
+		    this->MapNearestNeighborBonds[Index][0] = Index - 2;
+		  this->MapNearestNeighborBonds[Index][1] = Index + 2;
+		  this->MapNearestNeighborBonds[Index][2] = Index + 1;
+		  
+		  Index = 4*i + 1;
+		  this->MapNearestNeighborBonds[Index][0] = Index + 2;
+		  if (i == 0)
+		    this->MapNearestNeighborBonds[Index][1] = this->NbrSite - 1;
+		  else
+		    this->MapNearestNeighborBonds[Index][1] = Index - 2;
+		  this->MapNearestNeighborBonds[Index][2] = Index - 1;
+		  
+		  
+		  Index = 4*i + 2;
+		  if (i == (this->NbrSite /4 - 1))
+		    this->MapNearestNeighborBonds[Index][0] = 0;
+		  else
+		    this->MapNearestNeighborBonds[Index][0] = Index + 2;
+		  this->MapNearestNeighborBonds[Index][1] = Index - 2;
+		  this->MapNearestNeighborBonds[Index][2] = this->NbrSite;
+		  
+		  Index = 4*i + 3;
+		  this->MapNearestNeighborBonds[Index][0] = Index - 2;
+		  if (i == (this->NbrSite /4 - 1))
+		    this->MapNearestNeighborBonds[Index][1] = 1;
+		  else
+		    this->MapNearestNeighborBonds[Index][1] = Index + 2;
+		  this->MapNearestNeighborBonds[Index][2] = this->NbrSite;      
+		  
+		}
+	    }
+	  else
+	    {
+	      if (this->NbrSite == 4)
+		{
+		  this->MapNearestNeighborBonds[0][0] = this->NbrSite;
+		  this->MapNearestNeighborBonds[0][1] = 1;
+		  this->MapNearestNeighborBonds[0][2] = this->NbrSite;
+		  this->MapNearestNeighborBonds[1][0] = 2;
+		  this->MapNearestNeighborBonds[1][1] = 0;
+		  this->MapNearestNeighborBonds[1][2] = this->NbrSite;
+		  this->MapNearestNeighborBonds[2][0] = 1;
+		  this->MapNearestNeighborBonds[2][1] = this->NbrSite;
+		  this->MapNearestNeighborBonds[2][2] = 3;
+		  this->MapNearestNeighborBonds[3][0] = this->NbrSite;
+		  this->MapNearestNeighborBonds[3][1] = this->NbrSite;
+		  this->MapNearestNeighborBonds[3][2] = 2;
+		}
+	      else
+		{
+		  for (int i = 0; i < this->NbrSite; ++i) 
+		    {
+		      if ((i % 2) != 0)
+			{
+			  if (i < this->NbrSite - 1)
+			    this->MapNearestNeighborBonds[i][0] = i + 1;
+			  else
+			    this->MapNearestNeighborBonds[i][0] = this->NbrSite;
+			  
+			  this->MapNearestNeighborBonds[i][1] = i - 1;
+			}
+		      else
+			{
+			  if (i > 0)
+			    this->MapNearestNeighborBonds[i][0] = i - 1;
+			  else
+			    this->MapNearestNeighborBonds[i][0] = this->NbrSite; 
+			  if (i < this->NbrSite - 1)
+			    this->MapNearestNeighborBonds[i][1] = i + 1;
+			  else
+			    this->MapNearestNeighborBonds[i][1] = this->NbrSite;
+			}
+		      this->MapNearestNeighborBonds[i][2] = this->NbrSite;
+		      
+		      //   cout << i << " " << this->MapNearestNeighborBonds[i][0] << " " << this->MapNearestNeighborBonds[i][1] << " " << this->MapNearestNeighborBonds[i][2] << endl;
+		    }  
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrSite; ++i)
+	for (int k = 0; k < 3; ++k)
+	  this->MapNearestNeighborBonds[i][k] = this->NbrSite;
+      for (int i = 0; i < this->NbrSite; ++i)
+	{
+	  for (int k = 0; k < 3; ++k)
+	    {
+	      for (int j = 0; ((j < this->NbrBonds) && (this->MapNearestNeighborBonds[i][k] == this->NbrSite)); ++j)
+		{
+		  if ((this->SitesA[j] == i) && (this->Bonds[j] == k))
+		    {
+		      this->MapNearestNeighborBonds[i][k] = this->SitesB[j];
+		      this->MapNearestNeighborBonds[this->SitesB[j]][k] = i;
+		      // 	    cout << this->SitesA[j] << " " << this->SitesB[j] << " " << this->Bonds[j] << " " << k << endl;
+		    }
+		}
+	    }
+	}
+    }
+}
+
 
 

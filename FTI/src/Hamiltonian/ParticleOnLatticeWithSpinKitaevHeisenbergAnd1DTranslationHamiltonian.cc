@@ -87,17 +87,17 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian::ParticleOn
   this->SitesB = 0;
   this->Bonds = 0;
   if (geometryFile != 0)
-  {
-    MultiColumnASCIIFile LatticeFile;
-    if (LatticeFile.Parse(geometryFile) == false)
     {
-      LatticeFile.DumpErrors(cout);
+      MultiColumnASCIIFile LatticeFile;
+      if (LatticeFile.Parse(geometryFile) == false)
+	{
+	  LatticeFile.DumpErrors(cout);
+	}
+      this->NbrBonds = LatticeFile.GetNbrLines();
+      this->SitesA = LatticeFile.GetAsIntegerArray(0);
+      this->SitesB = LatticeFile.GetAsIntegerArray(1);
+      this->Bonds = LatticeFile.GetAsIntegerArray(2);
     }
-    this->NbrBonds = LatticeFile.GetNbrLines();
-    this->SitesA = LatticeFile.GetAsIntegerArray(0);
-    this->SitesB = LatticeFile.GetAsIntegerArray(1);
-    this->Bonds = LatticeFile.GetAsIntegerArray(2);
-  }
     
   this->LzMax = this->NbrSite - 1;
   this->UPotential = uPotential; //2.0 * uPotential / ((double) this->NbrParticles);
@@ -170,10 +170,10 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian::~ParticleO
 
 void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian::EvaluateExponentialFactors()
 {
-  this->ExponentialFactors = new Complex[this->MaxMomentum];
-  for (int i = 0; i < this->MaxMomentum; ++i)
+  this->ExponentialFactors = new Complex[this->NbrSite];
+  for (int i = 0; i < this->NbrSite; ++i)
     {
-      this->ExponentialFactors[i] = Phase(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
+      this->ExponentialFactors[i] = Phase(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->NbrSite));
     }
 }
 
