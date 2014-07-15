@@ -331,7 +331,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 		      int Index2 = (kx2 * this->NbrSiteY) + ky2;
 		      DensityOperatorUpUp[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
 		      DensityOperatorDownDown[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
-		  
 		      DensityOperatorUpDown[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
 		      DensityOperatorDownUp[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
 
@@ -357,7 +356,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 				      
 					  DensityOperatorUpUp[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][0][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][0][ReciprocalVectorIndex2];
 					  DensityOperatorDownDown[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][1][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][1][ReciprocalVectorIndex2];
-
 					  DensityOperatorUpDown[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][0][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][1][ReciprocalVectorIndex2];
 					  DensityOperatorDownUp[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][1][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][0][ReciprocalVectorIndex2];
 					}
@@ -436,7 +434,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 			      {
 				this->InteractionFactorsupupupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index4][TmpIndex] * DensityOperatorUpUp[Spin2][Index2][Index3][TmpIndex2];
 				this->InteractionFactorsupupupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index2][Index4][TmpIndex] * DensityOperatorUpUp[Spin2][Index1][Index3][TmpIndex2];
-				
 				this->InteractionFactorsupupupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index3][TmpIndex] * DensityOperatorUpUp[Spin2][Index2][Index4][TmpIndex2];
 				this->InteractionFactorsupupupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index2][Index3][TmpIndex] * DensityOperatorUpUp[Spin2][Index1][Index4][TmpIndex2];
 			      }
@@ -602,8 +599,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 			}
 		    }
 
-		  
- 
 		  if (Index1 == Index2)
 		    this->InteractionFactorsdowndowndowndown[i][Index] *= 0.5;
 		  if (Index3 == Index4)

@@ -35,7 +35,7 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "GeneralTools/ConfigurationParser.h"
-#include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/FileNameTools.h"
 
 #include <iostream>
 #include <cmath>
@@ -221,6 +221,7 @@ TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatti
       else
 	{
           SubLatticeFlavours[i]=i % NbrSubLatticeFlavours;
+	  cout << "Assigned SubLatticeFlavours["<<i<<"]="<<SubLatticeFlavours[i]<<endl;
         }
       delete [] Components;
     }
@@ -231,7 +232,10 @@ TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatti
       for (int i=0; i<NbrSubLattices; ++i)
 	{
 	  if ( (n1>0) || (n2>0))
-	    SubLatticeFlavours[LinearizedSublatticeIndex(i,n1,n2)] = (SubLatticeFlavours[i] + n1 * FlavourOffset1 + n2 * FlavourOffset2) % NbrSubLatticeFlavours;
+	    {
+	      SubLatticeFlavours[LinearizedSublatticeIndex(i,n1,n2)] = (SubLatticeFlavours[i] + n1 * FlavourOffset1 + n2 * FlavourOffset2) % NbrSubLatticeFlavours;
+	      cout << "Assigned SubLatticeFlavours["<<LinearizedSublatticeIndex(i,n1,n2)<<"]="<<SubLatticeFlavours[LinearizedSublatticeIndex(i,n1,n2)]<<endl;
+	    }
         }
 
   // Parsing Lattice Parameters

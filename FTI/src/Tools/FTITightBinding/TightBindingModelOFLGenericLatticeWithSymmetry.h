@@ -348,11 +348,16 @@ inline int TightBindingModelOFLGenericLatticeWithSymmetry::TotalSublatticeIndex(
 {
   int sub=0;
   for (int i=0; i<ExtNbrSubLattices; ++i)
-    if (SubLatticeFlavours[i]==flavour) 
-      if (sub == flavourSublattice) 
-	return i;
-      else
-	++sub;
+    if (SubLatticeFlavours[i]==flavour)
+      {
+	if (sub == flavourSublattice)
+	  {
+	    //cout << "flavour="<<flavour<<", flavourSublattice="<<flavourSublattice<<", Total Sublattice ="<< i<<endl;
+	    return i;
+	  }
+	else
+	  ++sub;
+      }
   std::cout << "Error: flavourSublattice could not be decoded"<<endl;
   exit(1);
   return -1;

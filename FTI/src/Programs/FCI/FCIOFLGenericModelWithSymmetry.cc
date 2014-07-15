@@ -80,6 +80,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
+  (*SystemGroup) += new BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
+  (*SystemGroup) += new BooleanOption  ('\n', "test-hermitian", "Check hermitian symmetry, and exit");
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 1000);
 #ifdef __LAPACK__
@@ -88,6 +90,8 @@ int main(int argc, char** argv)
 #ifdef __SCALAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
+  (*MiscGroup) += new BooleanOption ('\n',"show-hamiltonian", "show Hamiltonian matrix, and exit");
+  (*MiscGroup) += new BooleanOption  ('\n', "test-hermitian", "Check hermitian symmetry, and exit");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   Manager.StandardProceedings(argv, argc, cout);
@@ -227,14 +231,14 @@ int main(int argc, char** argv)
     }
   
   int MinKx = 0;
-  int MaxKx = NbrSitesX - 1;
+  int MaxKx = NbrSitesX*TightBindingModel.GetSymmetryMultiplier1() - 1;
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
       MaxKx = MinKx;
     }
   int MinKy = 0;
-  int MaxKy = NbrSitesY - 1;
+  int MaxKy = NbrSitesY*TightBindingModel.GetSymmetryMultiplier2() - 1;
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");

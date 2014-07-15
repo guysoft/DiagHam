@@ -243,7 +243,7 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
 	    HRep.GetMatrixElement(j, i, Tmp2);
 	    if (Norm(Tmp1 - Conj(Tmp2)) > (MACHINE_PRECISION * AverageNorm))
 	      {
-		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << endl;
+		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " deviation "<<(Tmp1 - Conj(Tmp2))<<endl;
 	      }
 	  }
       cout << "check done" << endl;
