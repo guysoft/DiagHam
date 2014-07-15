@@ -575,10 +575,8 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
       for (int k2 = 0; k2 < this->NbrPoints2*SymmetryMultiplier2; ++k2)
 	{
 	  int Index = this->GetLinearizedMomentumIndex(k1, k2);
-	  cout << "Sector "<< (Index+1) <<"/"<<MaxStateIndex<<endl;
 	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	    {
-
 	      // assign matrix to collect eigenvectors
 	      ComplexMatrix TmpMatrix2(this->FullNbrBands, this->NbrBands, true);
 
@@ -602,20 +600,21 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
 			  TmpOneBodyHamiltonian.SetMatrixElement(InitialIndex, InitialIndex, InitialNorm*InitialNorm/(M_PI*M_PI));
 			}
 		      // hopping terms:
-		      for (int j=0; j<this->NbrJumpTerms; ++j)				{
-			InitialIndex=this->LinearizedReciprocalSpaceIndex(q1, q2, K1, K2, InitialSublattice[j], InitialNorm, InitialIndexInBounds);
-			if (InitialIndexInBounds)
-			  {
-			    FinalIndex=this->LinearizedReciprocalSpaceIndex(q1+DeltaG1[j], q2+DeltaG2[j], K1, K2, FinalSublattice[j], FinalNorm, FinalIndexInBounds);
-			    if (FinalIndexInBounds)
-			      {
-				TmpOneBodyHamiltonian.SetMatrixElement(InitialIndex, FinalIndex, this->LatticeDepth*this->JumpAmplitudes[j]);
+		      for (int j=0; j<this->NbrJumpTerms; ++j)				
+			{
+			  InitialIndex=this->LinearizedReciprocalSpaceIndex(q1, q2, K1, K2, InitialSublattice[j], InitialNorm, InitialIndexInBounds);
+			  if (InitialIndexInBounds)
+			    {
+			      FinalIndex=this->LinearizedReciprocalSpaceIndex(q1+DeltaG1[j], q2+DeltaG2[j], K1, K2, FinalSublattice[j], FinalNorm, FinalIndexInBounds);
+			      if (FinalIndexInBounds)
+				{
+				  TmpOneBodyHamiltonian.SetMatrixElement(InitialIndex, FinalIndex, this->LatticeDepth*this->JumpAmplitudes[j]);
 #ifdef DEBUG_OUTPUT
-				cout << "Added jump term "<<j<<": (" << q1 <<", "<<q2<<"; "<<InitialIndex <<")->("<<q1+DeltaG1[j]<<", "<<q2+DeltaG2[j]<<";"<<FinalIndex <<") = "<<this->LatticeDepth*this->JumpAmplitudes[j]<<endl;
+				  cout << "Added jump term "<<j<<": (" << q1 <<", "<<q2<<"; "<<InitialIndex <<")->("<<q1+DeltaG1[j]<<", "<<q2+DeltaG2[j]<<";"<<FinalIndex <<") = "<<this->LatticeDepth*this->JumpAmplitudes[j]<<endl;
 #endif
-			      }
-			  }
-		      }
+				}
+			    }
+			}
 		    }
 		}
 #ifdef DEBUG_OUTPUT
@@ -638,7 +637,7 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
 		  
 		  this->OneBodyBasis[Index] = TmpMatrix2;		  		 
 
-		  
+		  cout << "Sector "<< (Index+1) <<"/"<<MaxStateIndex<<endl;		 
 		  for (int i = 0; i < this->NbrBands; ++i)
 		    {
 		      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
@@ -650,35 +649,40 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
 		  double Norm, Weight=0.0;
 		  bool InBounds;
 		  for (int i=0; i<ExtNbrSubLattices; ++i)
-			    {
-			      for (int q1=0; q1< 2*NMax1+1 ; q1++)
-				{
-				  int RSIndex=this->LinearizedReciprocalSpaceIndex(q1, 0, 0.0, 0.0, i, Norm, InBounds);
-				  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
-				  RSIndex=this->LinearizedReciprocalSpaceIndex(q1, 2*NMax2, 0.0, 0.0, i, Norm, InBounds);
-				  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
-				}
-			      for (int q2=1; q2< 2*NMax2 ; q2++)
-				{
-				  int RSIndex=this->LinearizedReciprocalSpaceIndex(0, q2, 0.0, 0.0, i, Norm, InBounds);
-				  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
-				  RSIndex=this->LinearizedReciprocalSpaceIndex(2*NMax1, q2, 0.0, 0.0, i, Norm, InBounds);
-				  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
-				}
-			    }
-			  cout << "Weight in extremal unit-cells = "<<Weight<<endl;
-			}
-		      else
+		    {
+		      for (int q1=0; q1< 2*NMax1+1 ; q1++)
 			{
-			  RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-			  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
-#else
-			  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
-#endif
-			  for (int i = 0; i < this->NbrBands; ++i)
-			    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+			  int RSIndex=this->LinearizedReciprocalSpaceIndex(q1, 0, 0.0, 0.0, i, Norm, InBounds);
+			  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
+			  RSIndex=this->LinearizedReciprocalSpaceIndex(q1, 2*NMax2, 0.0, 0.0, i, Norm, InBounds);
+			  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
 			}
+		      for (int q2=1; q2< 2*NMax2 ; q2++)
+			{
+			  int RSIndex=this->LinearizedReciprocalSpaceIndex(0, q2, 0.0, 0.0, i, Norm, InBounds);
+			  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
+			  RSIndex=this->LinearizedReciprocalSpaceIndex(2*NMax1, q2, 0.0, 0.0, i, Norm, InBounds);
+			  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
+			}
+		    }
+		  cout << "Weight in extremal unit-cells = "<<Weight<<endl;
+		}
+	      else
+		{
+		  RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif
+		  cout << "Sector "<< (Index+1) <<"/"<<MaxStateIndex<<endl;
+		  for (int i = 0; i < this->NbrBands; ++i)
+		    {
+		      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		      cout << TmpDiag(i, i) << " ";
+		    }
+		  cout << endl;
+		}
 	    }
 	}
     }
