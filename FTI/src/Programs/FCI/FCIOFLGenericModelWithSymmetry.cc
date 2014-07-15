@@ -64,6 +64,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "depth", "depth of the optical lattice", 1.0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "cut-off-mode", "cut-off for calculation: 0:Periodic, 1:Square, 2:circular ", 0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "cut-off-momentum", "maximum absolute momentum to be considered (circular case)", 20.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "precision-threshold", "precision required in equality of symmetry related bands", 1e-6);  
   (*SystemGroup) += new MultipleIntegerOption  ('\n', "nmax", "cut-off for square or periodic case (units of enlarged unit cells)", ',', ',', "10,5");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
@@ -131,7 +132,7 @@ int main(int argc, char** argv)
 
   cout << "Creating TB model"<<endl;
   TightBindingModelOFLGenericLatticeWithSymmetry TightBindingModel(Manager.GetInteger("nbr-points1"), Manager.GetInteger("nbr-points2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), MyCutOffMode, 
-								       Manager.GetDouble("cut-off-momentum"), NMax1, NMax2, LatticeDepth, Manager.GetInteger("output-nbr-bands"), ExportOneBody);
+								       Manager.GetDouble("cut-off-momentum"), NMax1, NMax2, LatticeDepth, Manager.GetInteger("output-nbr-bands"), Manager.GetDouble("precision-threshold"), ExportOneBody);
 
 
   // assign filename

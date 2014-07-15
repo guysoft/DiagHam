@@ -57,7 +57,7 @@ using std::endl;
 // latticeDepth = parameter for the depth of the optical lattice in recoil energies
 // nbrBandsToKeep = number of bands that should be calculated / kept for outside processing (negative = keep all)
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatticeWithSymmetry(int nbrPoints1, int nbrPoints2, double gamma1, double gamma2, AbstractArchitecture* architecture, CutOffModes cutOffMode, double cutOffMomentum, int nMax1, int nMax2, double latticeDepth, int nbrBandsToKeep, bool storeOneBodyMatrices)
+TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatticeWithSymmetry(int nbrPoints1, int nbrPoints2, double gamma1, double gamma2, AbstractArchitecture* architecture, CutOffModes cutOffMode, double cutOffMomentum, int nMax1, int nMax2, double latticeDepth, int nbrBandsToKeep, double symmetryThreshold, bool storeOneBodyMatrices)
 {
   if (TightBindingModelOFLGenericLatticeWithSymmetry::Options==NULL)
     {
@@ -476,8 +476,6 @@ TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatti
 	 
   // end of parsing parameters; infer remaining variables:
 
-  this->TmpVector.ResizeAndClean(2);
-
   // choose NMax values such that all k-points within circle of radius CutOffMomentum
   // (might revise this to carefully look at all sublattices)
   if( this->Mode == Circular)
@@ -529,9 +527,36 @@ TightBindingModelOFLGenericLatticeWithSymmetry::TightBindingModelOFLGenericLatti
       this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
     }
 
-
+  // increase number of k-points by symmetry multipliers for compatibility with Abstract class
+  this->NbrSiteX *= SymmetryMultiplier1;
+  this->NbrSiteY *= SymmetryMultiplier2;
 
   this->ComputeBandStructure();  
+
+  // check if symmetries are realized sufficiently accurately:
+
+  for (int k1 = 0; k1 < this->NbrPoints1; ++k1)
+    for (int k2 = 0; k2 < this->NbrPoints2; ++k2)
+      {
+	int Index1 = this->GetLinearizedMomentumIndex(k1, k2);
+	for (int s1=0; s1<SymmetryMultiplier1; ++s1)
+	  for (int s2=0; s2<SymmetryMultiplier2; ++s2)
+	    {
+	      int Index2 = this->GetLinearizedMomentumIndex(k1+s1*this->NbrPoints1, k2+s2*this->NbrPoints2);
+	      for (int i = 0; i < this->NbrBands; ++i)
+		{		   
+		  if ( fabs(this->EnergyBandStructure[i][Index1] - this->EnergyBandStructure[i][Index2]) > symmetryThreshold)
+		    {
+		      cout << "Error: inaccurate energy bandstructure - try to increase cut-off radius"<<endl;
+		      if ( fabs(this->EnergyBandStructure[i][Index1] - this->EnergyBandStructure[i][Index2]) > 100.0*symmetryThreshold)
+			{
+			  cout << "Large inaccuracy: DeltaE[n="<<i<<", Index1="<<Index1<<", Index2="<<Index2<<"]="<<(fabs(this->EnergyBandStructure[i][Index1] - this->EnergyBandStructure[i][Index2])) <<"! Aborting calculation"<<endl;
+			  exit(1);
+			}
+		    }
+		}
+	    }
+      }	    
 }
 
 // destructor
@@ -637,7 +662,7 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
 		  
 		  this->OneBodyBasis[Index] = TmpMatrix2;		  		 
 
-		  cout << "Sector "<< (Index+1) <<"/"<<MaxStateIndex<<endl;		 
+		  cout << "Sector "<< (Index+1) <<"/"<<this->NbrStatePerBand<<endl;		 
 		  for (int i = 0; i < this->NbrBands; ++i)
 		    {
 		      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
@@ -675,7 +700,7 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
 #else
 		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif
-		  cout << "Sector "<< (Index+1) <<"/"<<MaxStateIndex<<endl;
+		  cout << "Sector "<< (Index+1) <<"/"<<this->NbrStatePerBand<<endl;
 		  for (int i = 0; i < this->NbrBands; ++i)
 		    {
 		      this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
@@ -736,9 +761,9 @@ bool TightBindingModelOFLGenericLatticeWithSymmetry::WriteAsciiSpectrum(char* fi
   //for (int i = 0; i < LimitOut ; ++i)
   //  File <<  "    E_" << i;
   File << endl;
-  for (int k1 = 0; k1 < this->NbrPoints1; ++k1)
+  for (int k1 = 0; k1 < this->NbrPoints1*SymmetryMultiplier1; ++k1)
     {
-      for (int k2 = 0; k2 < this->NbrPoints2; ++k2)
+      for (int k2 = 0; k2 < this->NbrPoints2*SymmetryMultiplier2; ++k2)
 	{
 	  int LinearizedMomentumIndex = this->GetLinearizedMomentumIndex(k1, k2);
 

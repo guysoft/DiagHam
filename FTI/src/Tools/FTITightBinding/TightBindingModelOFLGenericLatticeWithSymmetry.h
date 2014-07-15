@@ -138,7 +138,7 @@ class TightBindingModelOFLGenericLatticeWithSymmetry : public Abstract2DTightBin
   // latticeDepth = parameter for the depth of the optical lattice in recoil energies
   // nbrBandsToKeep = number of bands that should be calculated (total number is unbounded above)
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelOFLGenericLatticeWithSymmetry(int nbrPoints1, int nbrPoints2, double gamma1, double gamma2, AbstractArchitecture* architecture, CutOffModes cutOffMode, double cutOffMomentum, int nMax1, int nMax2, double latticeDepth, int nbrBandsToKeep=-1, bool storeOneBodyMatrices=true);
+  TightBindingModelOFLGenericLatticeWithSymmetry(int nbrPoints1, int nbrPoints2, double gamma1, double gamma2, AbstractArchitecture* architecture, CutOffModes cutOffMode, double cutOffMomentum, int nMax1, int nMax2, double latticeDepth, int nbrBandsToKeep=-1, double symmetryThreshold=1.0e-6, bool storeOneBodyMatrices=true);
 
   // destructor
   //
@@ -252,8 +252,6 @@ class TightBindingModelOFLGenericLatticeWithSymmetry : public Abstract2DTightBin
   // dG2 = amount of translation along G2
   void TranslateVector(ComplexVector &vectorIn, ComplexVector &vectorOut, int dG1, int dG2);
 
- private:
-  RealVector TmpVector;
 
 };
 
@@ -271,7 +269,7 @@ inline int TightBindingModelOFLGenericLatticeWithSymmetry::LinearizedReciprocalS
 {
   int SignedMomentum1, SignedMomentum2, Shift;
   // calculate absolute value of lattice vector
-  this->TmpVector.ClearVector();
+  RealVector TmpVector (2,true);
   SignedMomentum1 = momentum1 - NMax1;
   SignedMomentum2 = momentum2 - NMax2;
   int ElementarySublattice, S1, S2;

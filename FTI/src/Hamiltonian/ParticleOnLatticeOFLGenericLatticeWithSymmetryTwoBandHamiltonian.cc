@@ -77,9 +77,9 @@ ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::ParticleOnLatt
   this->NbrReciprocalVectors2 = this->LocalTightBindingModel->GetNbrReciprocalVectors2();
   this->SymmetryMultiplier1 = this->LocalTightBindingModel->GetSymmetryMultiplier1();
   this->SymmetryMultiplier2 = this->LocalTightBindingModel->GetSymmetryMultiplier2();
-  // enlarge Brillouin zone by symmetry multipliers!
-  this->NbrSiteX = this->LocalTightBindingModel->GetNbrSiteX() * SymmetryMultiplier1;
-  this->NbrSiteY = this->LocalTightBindingModel->GetNbrSiteY() * SymmetryMultiplier2;
+  // Brillouin zone is enlarged in tight binding model, taking into account symmetry multipliers!
+  this->NbrSiteX = this->LocalTightBindingModel->GetNbrSiteX();
+  this->NbrSiteY = this->LocalTightBindingModel->GetNbrSiteY();
   this->LzMax = NbrSiteX * NbrSiteY - 1;
   this->FlatBand = flatBandFlag;
   this->NoDispersionFlag = noDispersionFlag;
@@ -131,9 +131,9 @@ ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::ParticleOnLatt
   this->NbrReciprocalVectors2 = this->LocalTightBindingModel->GetNbrReciprocalVectors2();
   this->SymmetryMultiplier1 = this->LocalTightBindingModel->GetSymmetryMultiplier1();
   this->SymmetryMultiplier2 = this->LocalTightBindingModel->GetSymmetryMultiplier2();
-  // enlarge Brillouin zone by symmetry multipliers!
-  this->NbrSiteX = this->LocalTightBindingModel->GetNbrSiteX() * SymmetryMultiplier1;
-  this->NbrSiteY = this->LocalTightBindingModel->GetNbrSiteY() * SymmetryMultiplier2;
+  // Brillouin zone is enlarged in tight binding model, taking into account symmetry multipliers!
+  this->NbrSiteX = this->LocalTightBindingModel->GetNbrSiteX();
+  this->NbrSiteY = this->LocalTightBindingModel->GetNbrSiteY();
   this->LzMax = NbrSiteX * NbrSiteY - 1;
   this->FlatBand = flatBandFlag;
   this->NoDispersionFlag = noDispersionFlag;
