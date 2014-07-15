@@ -35,7 +35,7 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "GeneralTools/ConfigurationParser.h"
-#include "GeneralTools/FileNameTools.h"
+#include "GeneralTools/FilenameTools.h"
 
 #include <iostream>
 #include <cmath>
