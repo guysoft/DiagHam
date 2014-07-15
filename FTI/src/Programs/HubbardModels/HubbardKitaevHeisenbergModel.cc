@@ -20,6 +20,7 @@
 
 #include "MainTask/GenericComplexMainTask.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <iostream>
 #include <cstring>
@@ -51,7 +52,7 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "total number of sites direction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "total number of sites (if negartive, guess it from the geometry file)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new BooleanOption  ('\n', "stripe", "model geometry is a stripe");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
@@ -103,6 +104,35 @@ int main(int argc, char** argv)
       return -1;
     }
 
+  if ((Manager.GetString("geometry-file") != 0) && (NbrSites< 0))
+    {
+      MultiColumnASCIIFile GeometryFile;
+      if (GeometryFile.Parse(Manager.GetString("geometry-file")) == false)
+	{
+	  GeometryFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (GeometryFile.GetNbrColumns() < 3)
+	{
+	  cout << "Error. " << GeometryFile.GetNbrColumns() << " has a wrong number of columns" << endl;
+	  return -1;
+	}
+      int* TmpColumn = GeometryFile.GetAsIntegerArray(0);
+      int LargestSiteIndex = -1; 
+      for (int i = 0; i < GeometryFile.GetNbrLines(); ++i)
+	{
+	  if (TmpColumn[i] > LargestSiteIndex)
+	    LargestSiteIndex = TmpColumn[i];
+	}
+      TmpColumn = GeometryFile.GetAsIntegerArray(1);
+      for (int i = 0; i < GeometryFile.GetNbrLines(); ++i)
+	{
+	  if (TmpColumn[i] > LargestSiteIndex)
+	    LargestSiteIndex = TmpColumn[i];
+	}
+      NbrSites = LargestSiteIndex + 1;
+    }
+
   if ((Manager.GetBoolean("xperiodic-boundary") == true)  && ((NbrSites % Manager.GetInteger("x-periodicity")) != 0))
     {
       cout << "Error. The number of sites is not compatible with the periodicity in the x direction" << endl; 
@@ -115,6 +145,7 @@ int main(int argc, char** argv)
 //    return -1;
 //   }
   
+
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* StatisticPrefix = new char [64];
@@ -163,7 +194,7 @@ int main(int argc, char** argv)
   
   
   char* FileParameterString = new char [256];
-    sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
+  sprintf (FileParameterString, "t_%g_tK_%g_j1_%g_j2_%g", Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("j1"), Manager.GetDouble("j2"));
 
   char* CommentLine = new char [256];
   if (Manager.GetBoolean("xperiodic-boundary") == false)

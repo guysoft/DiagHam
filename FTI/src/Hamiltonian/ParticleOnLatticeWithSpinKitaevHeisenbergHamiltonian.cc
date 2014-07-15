@@ -115,7 +115,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->PlotMapNearestNeighborBonds();
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = false;
+  this->HermitianSymmetryFlag = true;
   
 //   for (int i = 0; i < this->NbrSite; ++i)
 //   {

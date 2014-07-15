@@ -226,19 +226,19 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	    for (int j = 0; j < this->NbrSite; ++j) 
 	      {
 		for (int k = 0; k < 3; ++k)
-		{
-		  int j2 = this->MapNearestNeighborBonds[j][k];
-		  if (j2 < this->NbrSite)
 		  {
-		    Index = particles->AduAu(i , j, j2, Coefficient);
-		    if (Index < particles->GetHilbertSpaceDimension())
-		      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
-		  
-		    Index = particles->AddAd(i , j, j2, Coefficient);
-		    if (Index < particles->GetHilbertSpaceDimension())
-		      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+		    int j2 = this->MapNearestNeighborBonds[j][k];
+		    if (j2 < this->NbrSite)
+		      {
+			Index = particles->AduAu(i , j, j2, Coefficient);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+			
+			Index = particles->AddAd(i , j, j2, Coefficient);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+		      }
 		  }
-		}
 	      }
 	  }
       }
@@ -250,15 +250,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	    for (int j = 0; j < this->NbrSite; ++j) 
 	      {
 		for (int k = 0; k < 3; ++k)
-		{
-		  int j2 = this->MapNearestNeighborBonds[j][k];
-		  if (j2 < this->NbrSite)
 		  {
-		    Index = particles->AduAu(i, j, j2, Coefficient);
-		    if (Index < particles->GetHilbertSpaceDimension())
-		      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+		    int j2 = this->MapNearestNeighborBonds[j][k];
+		    if (j2 < this->NbrSite)
+		      {
+			Index = particles->AduAu(i, j, j2, Coefficient);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+		      }
 		  }
-		}
 	      }
 	  }
       }
@@ -271,15 +271,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	    for (int j = 0; j < this->NbrSite; ++j) 
 	      {
 		for (int k = 0; k < 3; ++k)
-		{
-		  int j2 = this->MapNearestNeighborBonds[j][k];
-		  if (j2 < this->NbrSite)
 		  {
-		    Index = particles->AddAd(i, j, j2, Coefficient);
-		    if (Index < particles->GetHilbertSpaceDimension())
-		      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+		    int j2 = this->MapNearestNeighborBonds[j][k];
+		    if (j2 < this->NbrSite)
+		      {
+			Index = particles->AddAd(i, j, j2, Coefficient);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+		      }
 		  }
-		}
 	      }
 	  }
       }	
@@ -297,18 +297,18 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	  for (int j = 0; j < this->NbrSite; ++j)
 	    {
 	      for (int k = 0; k < 3; ++k)
-	      {
-		int j2 = this->MapNearestNeighborBonds[j][k];
-		if (j2 < this->NbrSite)
 		{
-		  Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient);
-		  if (Index < Dim)
-		      vDestination[Index] += (Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * Source;
-		  Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient);
-		  if (Index < Dim)
-		      vDestination[Index] += (Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k]) * Source;
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient);
+		      if (Index < Dim)
+			vDestination[Index] += (Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * Source;
+		      Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient);
+		      if (Index < Dim)
+			vDestination[Index] += (Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k]) * Source;
+		    }
 		}
-	      }
 	    }
 	}
     }
@@ -472,102 +472,207 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
   double Coefficient;
   int Index;
 //   cout << position << endl;
-  if ((this->OneBodyGenericInteractionFactorsdowndown != 0) && (this->OneBodyGenericInteractionFactorsupup != 0))
+  if (this->HermitianSymmetryFlag == false)
     {
-      for (int j = 0; j < this->NbrSite; ++j)
+      if ((this->OneBodyGenericInteractionFactorsdowndown != 0) && (this->OneBodyGenericInteractionFactorsupup != 0))
 	{
-	  for (int k = 0; k < 3; ++k)
-	  {
-	    int j2 = this->MapNearestNeighborBonds[j][k];
-	    if (j2 < this->NbrSite)
+	  for (int j = 0; j < this->NbrSite; ++j)
 	    {
-	      Index = particles->AduAu(index + this->PrecalculationShift, j, j2, Coefficient);
-	      if (Index < Dim)
-	      {
-		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k];
-		++position;
-	      }
-	      Index = particles->AddAd(index + this->PrecalculationShift, j, j2, Coefficient);
-	      if (Index < Dim)
-	      {
-		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k];
-		++position;
-	      }
+	      for (int k = 0; k < 3; ++k)
+		{
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AduAu(index + this->PrecalculationShift, j, j2, Coefficient);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k];
+			  ++position;
+			}
+		      Index = particles->AddAd(index + this->PrecalculationShift, j, j2, Coefficient);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+			  ++position;
+			}
+		    }
+		}
 	    }
-	  }
 	}
-      }
-   else
-   {
-     if (this->OneBodyGenericInteractionFactorsupup != 0)
-     {
-       for (int j = 0; j < this->NbrSite; ++j)
+      else
 	{
-	  for (int k = 0; k < 3; ++k)
-	  {
-	    int j2 = this->MapNearestNeighborBonds[j][k];
-	    if (j2 < this->NbrSite)
+	  if (this->OneBodyGenericInteractionFactorsupup != 0)
 	    {
-	      Index = particles->AduAu(index + this->PrecalculationShift, j, j2, Coefficient);
-	      if (Index < Dim)
-	      {
-		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k];
-		++position;
-	      }
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
+		    {
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
+			{
+			  Index = particles->AduAu(index + this->PrecalculationShift, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k];
+			      ++position;
+			    }
+			}
+		    }
+		}
 	    }
-	  }
+	  else
+	    if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	      {
+		for (int j = 0; j < this->NbrSite; ++j)
+		  {
+		    for (int k = 0; k < 3; ++k)
+		      {
+			int j2 = this->MapNearestNeighborBonds[j][k];
+			if (j2 < this->NbrSite)
+			  {
+			    Index = particles->AddAd(index + this->PrecalculationShift, j, j2, Coefficient);
+			    if (Index < Dim)
+			      {
+				indexArray[position] = Index;
+				coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+				++position;
+			      }
+			  }
+		      }
+		  }
+	      } 
 	}
-     }
-     else
-       if (this->OneBodyGenericInteractionFactorsdowndown != 0)
-       {
-	 for (int j = 0; j < this->NbrSite; ++j)
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
 	{
-	  for (int k = 0; k < 3; ++k)
-	  {
-	    int j2 = this->MapNearestNeighborBonds[j][k];
-	    if (j2 < this->NbrSite)
+	  for (int j = 0; j < this->NbrSite; ++j)
 	    {
-	      Index = particles->AddAd(index + this->PrecalculationShift, j, j2, Coefficient);
-	      if (Index < Dim)
-	      {
-		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k];
-		++position;
-	      }
+	      for (int k = 0; k < 3; ++k)
+		{
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AddAu(index + this->PrecalculationShift, j, j2, Coefficient);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
+			  ++position;
+			}
+		      Index = particles->AduAd(index + this->PrecalculationShift, j, j2, Coefficient);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k];
+			  ++position;
+			}
+		    }
+		}
 	    }
-	  }
 	}
-       } 
-   }
-  if (this->OneBodyGenericInteractionFactorsupdown != 0)
+    }
+  else
     {
-      for (int j = 0; j < this->NbrSite; ++j)
+      int AbsoluteIndex = index + this->PrecalculationShift;
+      if ((this->OneBodyGenericInteractionFactorsdowndown != 0) && (this->OneBodyGenericInteractionFactorsupup != 0))
 	{
-	  for (int k = 0; k < 3; ++k)
-	  {
-	    int j2 = this->MapNearestNeighborBonds[j][k];
-	    if (j2 < this->NbrSite)
+	  for (int j = 0; j < this->NbrSite; ++j)
 	    {
-	      Index = particles->AddAu(index + this->PrecalculationShift, j, j2, Coefficient);
-	      if (Index < Dim)
-	      {
-		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
-		++position;
-	      }
-	      Index = particles->AduAd(index + this->PrecalculationShift, j, j2, Coefficient);
-	      if (Index < Dim)
-	      {
-		indexArray[position] = Index;
-		coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k];
-		++position;
-	      }
+	      for (int k = 0; k < 3; ++k)
+		{
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AduAu(AbsoluteIndex, j, j2, Coefficient);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k];
+			  ++position;
+			}
+		      Index = particles->AddAd(AbsoluteIndex, j, j2, Coefficient);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+			  ++position;
+			}
+		    }
+		}
 	    }
-	  }
+	}
+      else
+	{
+	  if (this->OneBodyGenericInteractionFactorsupup != 0)
+	    {
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
+		    {
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
+			{
+			  Index = particles->AduAu(AbsoluteIndex, j, j2, Coefficient);
+			  if (Index <= AbsoluteIndex)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k];
+			      ++position;
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	      {
+		for (int j = 0; j < this->NbrSite; ++j)
+		  {
+		    for (int k = 0; k < 3; ++k)
+		      {
+			int j2 = this->MapNearestNeighborBonds[j][k];
+			if (j2 < this->NbrSite)
+			  {
+			    Index = particles->AddAd(AbsoluteIndex, j, j2, Coefficient);
+			    if (Index <= AbsoluteIndex)
+			      {
+				indexArray[position] = Index;
+				coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+				++position;
+			      }
+			  }
+		      }
+		  }
+	      } 
+	}
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
+	{
+	  for (int j = 0; j < this->NbrSite; ++j)
+	    {
+	      for (int k = 0; k < 3; ++k)
+		{
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AddAu(AbsoluteIndex, j, j2, Coefficient);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
+			  ++position;
+			}
+		      Index = particles->AduAd(AbsoluteIndex, j, j2, Coefficient);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k];
+			  ++position;
+			}
+		    }
+		}
+	    }
 	}
     }
 }
@@ -590,52 +695,50 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
   if (this->HermitianSymmetryFlag == false)
     {
       if (this->OneBodyGenericInteractionFactorsupup != 0) 
-      {
-	for (int i = firstComponent; i < lastComponent; ++i)
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
 	      for (int j=0; j< this->NbrSite; ++j)
 		{
 		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AduAu(i, j, j2, Coefficient);
-		      if (Index < Dim)
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-// 			  cout << i << " " << Index << " upup" << endl;
+			  Index = particles->AduAu(i, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
 			}
 		    }
-		  }
 		}
 	    }
-      }
-     
-     if (this->OneBodyGenericInteractionFactorsdowndown != 0) 
-      {
-	for (int i = firstComponent; i < lastComponent; ++i)
+	}
+      
+      if (this->OneBodyGenericInteractionFactorsdowndown != 0) 
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
 	      for (int j=0; j< this->NbrSite; ++j)
 		{
 		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AddAd(i, j, j2, Coefficient);
-		      if (Index < Dim)
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-// 			  cout << i << " " << Index << " upup" << endl;
+			  Index = particles->AddAd(i, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
 			}
 		    }
-		  }
 		}
 	    }
-      }
+	}
       if (this->OneBodyGenericInteractionFactorsupdown != 0)
 	{
 	  for (int i = firstComponent; i < lastComponent; ++i)
@@ -643,75 +746,75 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	      for (int j=0; j< this->NbrSite; ++j)
 		{
 		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AddAu(i, j, j2, Coefficient);
-		      if (Index < Dim)
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  Index = particles->AddAu(i, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
+			  Index = particles->AduAd(i, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
 			}
-		      Index = particles->AduAd(i, j, j2, Coefficient);
-		      if (Index < Dim)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
-		      }
 		    }
 		}
 	    }
 	}
     }
   else
-  {
-    if (this->OneBodyGenericInteractionFactorsupup != 0) 
-      {
-	for (int i = firstComponent; i < lastComponent; ++i)
+    {
+      if (this->OneBodyGenericInteractionFactorsupup != 0) 
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
 	      for (int j=0; j< this->NbrSite; ++j)
 		{
 		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AduAu(i, j, j2, Coefficient);
-		      if (Index <= i)
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  Index = particles->AduAu(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
 			}
 		    }
-		  }
 		}
 	    }
-      }
-     
-     if (this->OneBodyGenericInteractionFactorsdowndown != 0) 
-      {
-	for (int i = firstComponent; i < lastComponent; ++i)
+	}
+      
+      if (this->OneBodyGenericInteractionFactorsdowndown != 0) 
+	{
+	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
 	      for (int j=0; j< this->NbrSite; ++j)
 		{
 		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AddAd(i, j, j2, Coefficient);
-		      if (Index <= i)
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  Index = particles->AddAd(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
 			}
 		    }
-		  }
 		}
 	    }
-      }
+	}
       if (this->OneBodyGenericInteractionFactorsupdown != 0)
 	{
 	  for (int i = firstComponent; i < lastComponent; ++i)
@@ -719,23 +822,23 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 	      for (int j=0; j< this->NbrSite; ++j)
 		{
 		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AddAu(i, j, j2, Coefficient);
-		      if (Index <= i)
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
 			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  Index = particles->AddAu(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
+			  Index = particles->AduAd(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
 			}
-		      Index = particles->AduAd(i, j, j2, Coefficient);
-		      if (Index <= i)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
-		      }
 		    }
 		}
 	    }
