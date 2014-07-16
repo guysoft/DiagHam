@@ -378,7 +378,7 @@ int main(int argc, char** argv)
 		OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
 		TmpMatrix[l][k] = OperationDownDown.GetScalar() * NormalizationFactor;
 	      }
-	  File << i << " " << j << " 0 0 ";
+	  File << i << " " << j << " 0 0";
 	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
 	  File << endl;
 	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 0, j, 1);
@@ -462,6 +462,6 @@ void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderPa
     }
   else
     {
-      output << " " << SqrNorm(orderParameter[0][0]) << " " << Norm(orderParameter[0][0]) << Arg(orderParameter[0][0]);
+      output << " " << SqrNorm(orderParameter[0][0]) << " " << Norm(orderParameter[0][0]) << " " << Arg(orderParameter[0][0]);
     }
 }

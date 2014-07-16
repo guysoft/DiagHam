@@ -32,6 +32,7 @@
 #include "config.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithSpin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
@@ -43,6 +44,7 @@
 
 #include <cmath>
 #include <cstdlib>
+
 
 using std::cout;
 using std::endl;
@@ -1593,6 +1595,62 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, doubl
       nbrTranslation *= this->StateShift/2;
     }
   return TmpIndex;
+}
+
+// convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector FermionOnTorusWithSpinAndMagneticTranslations::ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space)  
+{
+  FermionOnTorusWithSpin* TmpSpace = (FermionOnTorusWithSpin*) space;
+  ComplexVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      int TmpMaxMomentum = this->StateHighestBit[i];
+      int Pos = TmpSpace->FindStateIndex(TmpState, TmpMaxMomentum);
+      if (Pos < TmpSpace->HilbertSpaceDimension)
+	{
+	  TmpVector[i] =  state[Pos] * sqrt((double) this->NbrStateInOrbit[i]);
+	}
+    }
+  return TmpVector;
+}
+
+// convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector FermionOnTorusWithSpinAndMagneticTranslations::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space)
+{
+  FermionOnTorusWithSpin* TmpSpace = (FermionOnTorusWithSpin*) space;
+  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  Complex* FourrierCoefficients = new Complex [this->MomentumModulo];
+  for (int i = 0; i < this->MomentumModulo; ++i)
+    FourrierCoefficients[i] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum)) / ((double) this->MomentumModulo));
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      int NbrTranslation = 0;
+      int TmpMaxMomentum = TmpSpace->StateHighestBit[i];
+      TmpState = this->FindCanonicalFormAndTestXMomentumConstraint(TmpState, TmpMaxMomentum, NbrTranslation);
+      if (NbrTranslation >= 0)
+	{
+	  int Pos = this->FindStateIndex(TmpState, TmpMaxMomentum);
+	  if (Pos < this->HilbertSpaceDimension)
+	    {
+	      TmpVector[i] =  (state[Pos] * (1.0 - (2.0 * ((double) ((this->ReorderingSign[Pos] >> NbrTranslation) & 0x1ul)))) * 
+			       FourrierCoefficients[NbrTranslation] / sqrt((double) this->NbrStateInOrbit[Pos]));
+	    }
+	}
+    }
+  delete[] FourrierCoefficients;
+  return TmpVector;
 }
 
 

@@ -41,6 +41,8 @@
 class FermionOnTorusWithSpin :  public FermionOnSphereWithSpin
 {
 
+  friend class FermionOnTorusWithSpinAndMagneticTranslations;
+
  public:
 
   // constructor with a constraint on total spin momentum and total momentum

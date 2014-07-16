@@ -360,6 +360,20 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
 
+  // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+
+  // convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+
  protected:
 
   // find canonical form of a state description
