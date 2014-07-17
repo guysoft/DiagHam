@@ -248,6 +248,72 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 	    this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = ((kx2 * this->NbrSiteY) + ky2);
 	    ++this->NbrInterSectorIndicesPerSum[TmpSum];
 	  }
+  int NbrSpinFlavours = this->LocalTightBindingModel->GetNbrSubLatticeFlavours();
+  int NbrFlavourSublattices = this->LocalTightBindingModel->GetNbrSubLatticesPerFlavour();
+
+  Complex **** DensityOperatorUpUp = new Complex *** [NbrSpinFlavours];
+  Complex **** DensityOperatorDownDown = new Complex *** [NbrSpinFlavours];
+  Complex **** DensityOperatorUpDown = new Complex *** [NbrSpinFlavours];
+  Complex **** DensityOperatorDownUp = new Complex *** [NbrSpinFlavours];
+      
+  for (int Spin = 0; Spin < NbrSpinFlavours; ++Spin)	
+    {
+      DensityOperatorUpUp[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
+      DensityOperatorDownDown[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
+      DensityOperatorUpDown[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
+      DensityOperatorDownUp[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	  {
+	    int Index1 = (kx1 * this->NbrSiteY) + ky1;
+	    DensityOperatorUpUp[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
+	    DensityOperatorDownDown[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
+	    DensityOperatorUpDown[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
+	    DensityOperatorDownUp[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
+	      
+	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		{
+		  int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		  DensityOperatorUpUp[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
+		  DensityOperatorDownDown[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
+		  DensityOperatorUpDown[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
+		  DensityOperatorDownUp[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
+
+		  for (int Nx = 0; Nx < this->NbrReciprocalVectors1; Nx++)
+		    {
+		      for (int Ny = 0; Ny < this->NbrReciprocalVectors2; Ny++)
+			{
+			  int TmpIndex =  Nx * this->NbrReciprocalVectors2 + Ny;
+			  
+			  DensityOperatorUpUp[Spin][Index1][Index2][TmpIndex] = 0;
+			  DensityOperatorDownDown[Spin][Index1][Index2][TmpIndex] = 0;
+			  DensityOperatorUpDown[Spin][Index1][Index2][TmpIndex] = 0;
+			  DensityOperatorDownUp[Spin][Index1][Index2][TmpIndex] = 0;
+			  for (int Subl = 0; Subl < NbrFlavourSublattices; Subl++)
+			    {	 
+			      for (int Nx1 = 0; Nx1 < this->NbrReciprocalVectors1; Nx1++)
+				{
+				  for (int Ny1 = 0; Ny1 < this->NbrReciprocalVectors2; Ny1++)
+				    {
+				      int TotalSubl =  this->LocalTightBindingModel->TotalSublatticeIndex(Spin, Subl);
+				      int ReciprocalVectorIndex1 =  this->LocalTightBindingModel->PeriodicLinearizedReciprocalSpaceIndex(Nx1,Ny1,TotalSubl);
+				      int ReciprocalVectorIndex2 =  this->LocalTightBindingModel->PeriodicLinearizedReciprocalSpaceIndex(Nx1 - Nx +  this->NbrReciprocalVectors1, Ny1 - Ny +  this->NbrReciprocalVectors2,TotalSubl);
+				      
+				      DensityOperatorUpUp[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][0][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][0][ReciprocalVectorIndex2];
+				      DensityOperatorDownDown[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][1][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][1][ReciprocalVectorIndex2];
+				      DensityOperatorUpDown[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][0][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][1][ReciprocalVectorIndex2];
+				      DensityOperatorDownUp[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][1][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][0][ReciprocalVectorIndex2];
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	  }
+    }
+
+
   
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
@@ -301,72 +367,7 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 	    this->UPotentialMatrix.SetAllEntries(1.0);
 	}
       this->UPotentialMatrix *= this->SymmetryMultiplier1 * this->SymmetryMultiplier2 * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
-      
-      int NbrSpinFlavours = this->LocalTightBindingModel->GetNbrSubLatticeFlavours();
-      int NbrFlavourSublattices = this->LocalTightBindingModel->GetNbrSubLatticesPerFlavour();
-
-      Complex **** DensityOperatorUpUp = new Complex *** [NbrSpinFlavours];
-      Complex **** DensityOperatorDownDown = new Complex *** [NbrSpinFlavours];
-      Complex **** DensityOperatorUpDown = new Complex *** [NbrSpinFlavours];
-      Complex **** DensityOperatorDownUp = new Complex *** [NbrSpinFlavours];
-      
-      for (int Spin = 0; Spin < NbrSpinFlavours; ++Spin)	
-	{
-	  DensityOperatorUpUp[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
-	  DensityOperatorDownDown[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
-	  DensityOperatorUpDown[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
-	  DensityOperatorDownUp[Spin] = new Complex ** [this->NbrSiteX* this->NbrSiteY];
-	  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		DensityOperatorUpUp[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
-		DensityOperatorDownDown[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
-		DensityOperatorUpDown[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
-		DensityOperatorDownUp[Spin][Index1] = new Complex * [this->NbrSiteX*this->NbrSiteY];
-	      
-		for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-		  for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-		    {
-		      int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		      DensityOperatorUpUp[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
-		      DensityOperatorDownDown[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
-		      DensityOperatorUpDown[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
-		      DensityOperatorDownUp[Spin][Index1][Index2] = new Complex [this->NbrReciprocalVectors1*this->NbrReciprocalVectors2];
-
-		      for (int Nx = 0; Nx < this->NbrReciprocalVectors1; Nx++)
-			{
-			  for (int Ny = 0; Ny < this->NbrReciprocalVectors2; Ny++)
-			    {
-			      int TmpIndex =  Nx * this->NbrReciprocalVectors2 + Ny;
-			  
-			      DensityOperatorUpUp[Spin][Index1][Index2][TmpIndex] = 0;
-			      DensityOperatorDownDown[Spin][Index1][Index2][TmpIndex] = 0;
-			      DensityOperatorUpDown[Spin][Index1][Index2][TmpIndex] = 0;
-			      DensityOperatorDownUp[Spin][Index1][Index2][TmpIndex] = 0;
-			      for (int Subl = 0; Subl < NbrFlavourSublattices; Subl++)
-				{	 
-				  for (int Nx1 = 0; Nx1 < this->NbrReciprocalVectors1; Nx1++)
-				    {
-				      for (int Ny1 = 0; Ny1 < this->NbrReciprocalVectors2; Ny1++)
-					{
-					  int TotalSubl =  this->LocalTightBindingModel->TotalSublatticeIndex(Spin, Subl);
-					  int ReciprocalVectorIndex1 =  this->LocalTightBindingModel->PeriodicLinearizedReciprocalSpaceIndex(Nx1,Ny1,TotalSubl);
-					  int ReciprocalVectorIndex2 =  this->LocalTightBindingModel->PeriodicLinearizedReciprocalSpaceIndex(Nx1 - Nx +  this->NbrReciprocalVectors1, Ny1 - Ny +  this->NbrReciprocalVectors2,TotalSubl);
-				      
-					  DensityOperatorUpUp[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][0][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][0][ReciprocalVectorIndex2];
-					  DensityOperatorDownDown[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][1][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][1][ReciprocalVectorIndex2];
-					  DensityOperatorUpDown[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][0][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][1][ReciprocalVectorIndex2];
-					  DensityOperatorDownUp[Spin][Index1][Index2][TmpIndex] += Conj(OneBodyBasis[Index1][1][ReciprocalVectorIndex1]) * OneBodyBasis[Index2][0][ReciprocalVectorIndex2];
-					}
-				    }
-				}
-			    }
-			}
-		    }
-	      }
-	}
-      
+            
       //  upup upup coefficient
       this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
       
@@ -437,7 +438,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 				this->InteractionFactorsupupupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index3][TmpIndex] * DensityOperatorUpUp[Spin2][Index2][Index4][TmpIndex2];
 				this->InteractionFactorsupupupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index2][Index3][TmpIndex] * DensityOperatorUpUp[Spin2][Index1][Index4][TmpIndex2];
 			      }
-			 
 			}
 		    }
 
@@ -550,7 +550,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 	      int kx4 = Index4 / this->NbrSiteY;
 	      int ky4 = Index4 % this->NbrSiteY;
 	      
-	      
 	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 		{
 		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
@@ -595,7 +594,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 				this->InteractionFactorsdowndowndowndown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorDownDown[Spin1][Index1][Index3][TmpIndex] * DensityOperatorDownDown[Spin2][Index2][Index4][TmpIndex2];
 				this->InteractionFactorsdowndowndowndown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorDownDown[Spin1][Index2][Index3][TmpIndex] * DensityOperatorDownDown[Spin2][Index1][Index4][TmpIndex2];
 			      }
-			  
 			}
 		    }
 
@@ -627,7 +625,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 	      int kx4 = Index4 / this->NbrSiteY;
 	      int ky4 = Index4 % this->NbrSiteY;
 	      
-	      
 	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 		{
 		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
@@ -636,7 +633,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 		  int ky1 = Index1 % this->NbrSiteY;
 		  int kx2 = Index2 / this->NbrSiteY;
 		  int ky2 = Index2 % this->NbrSiteY;
-		  
 		  
 		  this->InteractionFactorsdowndownupup[i][Index] = 0.0;
 		  
@@ -743,7 +739,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 			      {
 				this->InteractionFactorsupdownupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index4][TmpIndex] * DensityOperatorDownUp[Spin2][Index2][Index3][TmpIndex2];
 				this->InteractionFactorsupdownupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index3][TmpIndex] * DensityOperatorDownUp[Spin2][Index2][Index4][TmpIndex2];
-			  
 				this->InteractionFactorsupdownupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index3][TmpIndex2] * DensityOperatorDownUp[Spin2][Index2][Index4][TmpIndex];
 				this->InteractionFactorsupdownupup[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpUp[Spin1][Index1][Index4][TmpIndex2] * DensityOperatorDownUp[Spin2][Index2][Index3][TmpIndex];
 			      }
@@ -814,7 +809,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 			      {
 				this->InteractionFactorsupdowndowndown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpDown[Spin1][Index1][Index4][TmpIndex] * DensityOperatorDownDown[Spin2][Index2][Index3][TmpIndex2];
 				this->InteractionFactorsupdowndowndown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpDown[Spin1][Index1][Index3][TmpIndex] * DensityOperatorDownDown[Spin2][Index2][Index4][TmpIndex2];
-				
 				this->InteractionFactorsupdowndowndown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpDown[Spin1][Index1][Index3][TmpIndex2] * DensityOperatorDownDown[Spin2][Index2][Index4][TmpIndex];
 				this->InteractionFactorsupdowndowndown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorUpDown[Spin1][Index1][Index4][TmpIndex2] * DensityOperatorDownDown[Spin2][Index2][Index3][TmpIndex];
 			      }
@@ -919,7 +913,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 	      int kx4 = Index4 / this->NbrSiteY;
 	      int ky4 = Index4 % this->NbrSiteY;
 	      
-	      
 	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
 		{
 		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
@@ -928,7 +921,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 		  int ky1 = Index1 % this->NbrSiteY;
 		  int kx2 = Index2 / this->NbrSiteY;
 		  int ky2 = Index2 % this->NbrSiteY;
-		  
 		  
 		  this->InteractionFactorsdowndownupdown[i][Index] = 0;
 		  
@@ -961,7 +953,6 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 			      {
 				this->InteractionFactorsdowndownupdown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorDownDown[Spin1][Index1][Index4][TmpIndex] * DensityOperatorDownUp[Spin2][Index2][Index3][TmpIndex2];
 				this->InteractionFactorsdowndownupdown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorDownDown[Spin1][Index2][Index4][TmpIndex] * DensityOperatorDownUp[Spin2][Index1][Index3][TmpIndex2];
-				
 				this->InteractionFactorsdowndownupdown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorDownUp[Spin1][Index1][Index3][TmpIndex] * DensityOperatorDownDown[Spin2][Index2][Index4][TmpIndex2];
 				this->InteractionFactorsdowndownupdown[i][Index] +=  UPotentialMatrix(Spin1,Spin2) * DensityOperatorDownUp[Spin1][Index2][Index3][TmpIndex] * DensityOperatorDownDown[Spin2][Index1][Index4][TmpIndex2];
 			      }
@@ -1044,41 +1035,39 @@ void ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian::EvaluateI
 
 		}
 	    }
-		
 	}	  
-      cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
-      cout << "====================================" << endl;
-	  
-      for (int Spin = 0; Spin < NbrSpinFlavours; ++Spin)
-	{
-	  for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
-	    for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
-	      {
-		int Index1 = (kx1 * this->NbrSiteY) + ky1;
-		for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
-		  for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
-		    {
-		      int Index2 = (kx2 * this->NbrSiteY) + ky2;
-		      delete [] DensityOperatorUpUp[Spin][Index1][Index2];
-		      delete [] DensityOperatorDownDown[Spin][Index1][Index2];
-		      delete [] DensityOperatorUpDown[Spin][Index1][Index2];
-		      delete [] DensityOperatorDownUp[Spin][Index1][Index2];
-		    }
-	    
-		delete [] DensityOperatorUpUp[Spin][Index1];
-		delete [] DensityOperatorDownDown[Spin][Index1];
-		delete [] DensityOperatorUpDown[Spin][Index1];
-		delete [] DensityOperatorDownUp[Spin][Index1];
-	      }
-	  delete [] DensityOperatorUpUp[Spin];
-	  delete [] DensityOperatorDownDown[Spin];
-	  delete [] DensityOperatorUpDown[Spin];
-	  delete [] DensityOperatorDownUp[Spin];
-	}
-      delete [] DensityOperatorUpUp;
-      delete [] DensityOperatorDownDown;
-      delete [] DensityOperatorUpDown;
-      delete [] DensityOperatorDownUp;
-      delete [] OneBodyBasis;
     }
+  cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
+  cout << "====================================" << endl;
+	  
+  for (int Spin = 0; Spin < NbrSpinFlavours; ++Spin)
+    {
+      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+	for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
+	  {
+	    int Index1 = (kx1 * this->NbrSiteY) + ky1;
+	    for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
+	      for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
+		{
+		  int Index2 = (kx2 * this->NbrSiteY) + ky2;
+		  delete [] DensityOperatorUpUp[Spin][Index1][Index2];
+		  delete [] DensityOperatorDownDown[Spin][Index1][Index2];
+		  delete [] DensityOperatorUpDown[Spin][Index1][Index2];
+		  delete [] DensityOperatorDownUp[Spin][Index1][Index2];
+		}
+	    delete [] DensityOperatorUpUp[Spin][Index1];
+	    delete [] DensityOperatorDownDown[Spin][Index1];
+	    delete [] DensityOperatorUpDown[Spin][Index1];
+	    delete [] DensityOperatorDownUp[Spin][Index1];
+	  }
+      delete [] DensityOperatorUpUp[Spin];
+      delete [] DensityOperatorDownDown[Spin];
+      delete [] DensityOperatorUpDown[Spin];
+      delete [] DensityOperatorDownUp[Spin];
+    }
+  delete [] DensityOperatorUpUp;
+  delete [] DensityOperatorDownDown;
+  delete [] DensityOperatorUpDown;
+  delete [] DensityOperatorDownUp;
+  delete [] OneBodyBasis;
 }

@@ -1,11 +1,13 @@
 #include "Options/Options.h"
 
+#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
-#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 
 #include "Tools/FTITightBinding/TightBindingModelOFLGenericLatticeWithSymmetry.h"
 
+#include "Hamiltonian/ParticleOnLatticeOFLGenericLatticeWithSymmetrySingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeOFLGenericLatticeWithSymmetryTwoBandHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -265,8 +267,18 @@ int main(int argc, char** argv)
 	    {
 	    case 1: 
 	      {
-		cout << "Single band case not implemented at the moment"<<endl;
-		exit(1);
+		if (Manager.GetBoolean("boson") == false)
+		  {
+		    Space = new FermionOnSquareLatticeMomentumSpace(NbrParticles, NbrSitesX*TightBindingModel.GetSymmetryMultiplier1(), NbrSitesY*TightBindingModel.GetSymmetryMultiplier2(), i, j);
+		  }
+		else
+		  {
+		    Space = new BosonOnSquareLatticeMomentumSpace(NbrParticles, NbrSitesX*TightBindingModel.GetSymmetryMultiplier1(), NbrSitesY*TightBindingModel.GetSymmetryMultiplier2(), i, j);
+		  }
+		cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+		Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+		Hamiltonian = new ParticleOnLatticeOFLGenericLatticeWithSymmetrySingleBandHamiltonian((ParticleOnSphere*)Space, NbrParticles, &TightBindingModel, /* RealSymmetricMatrix &uPotentialMatrix */ Manager.GetDouble("u-potential"), Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion"), Architecture.GetArchitecture(), Memory);
+		
 		break;
 	      }
 	    case 2:

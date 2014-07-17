@@ -274,8 +274,8 @@ inline int TightBindingModelOFLGenericLatticeWithSymmetry::LinearizedReciprocalS
   SignedMomentum2 = momentum2 - NMax2;
   int ElementarySublattice, S1, S2;
   this->ElementarySubLatticeIndices(extSubLattice, ElementarySublattice, S1, S2);
-  TmpVector.AddLinearCombination((double)SignedMomentum1*SymmetryMultiplier1+S1+crystalMomentum1,this->LatticeVector1);
-  TmpVector.AddLinearCombination((double)SignedMomentum2*SymmetryMultiplier2+S2+crystalMomentum2,this->LatticeVector2);
+  TmpVector.AddLinearCombination((double)(SignedMomentum1*SymmetryMultiplier1+S1)+crystalMomentum1,this->LatticeVector1);
+  TmpVector.AddLinearCombination((double)(SignedMomentum2*SymmetryMultiplier2+S2)+crystalMomentum2,this->LatticeVector2);
   TmpVector+=this->SubLatticeVectors[ElementarySublattice];
   norm = TmpVector.Norm();
   //cout << "this->LatticeVector1="<<endl<<this->LatticeVector1<<"this->LatticeVector2="<<endl<<this->LatticeVector2<<"TmpVector="<<endl<<TmpVector;

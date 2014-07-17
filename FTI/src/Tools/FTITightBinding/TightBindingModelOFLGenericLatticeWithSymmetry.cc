@@ -690,7 +690,7 @@ void TightBindingModelOFLGenericLatticeWithSymmetry::CoreComputeBandStructure(lo
 			  Weight += SqrNorm(TmpMatrix2[0][RSIndex]);
 			}
 		    }
-		  cout << "Weight in extremal unit-cells = "<<Weight<<endl;
+		  cout << "Weight in extremal unit-cells = "<<Weight<<" (Norm: "<< TmpMatrix2[0].Norm()<<")"<<endl;
 		}
 	      else
 		{
@@ -761,9 +761,11 @@ bool TightBindingModelOFLGenericLatticeWithSymmetry::WriteAsciiSpectrum(char* fi
   //for (int i = 0; i < LimitOut ; ++i)
   //  File <<  "    E_" << i;
   File << endl;
-  for (int k1 = 0; k1 < this->NbrPoints1*SymmetryMultiplier1; ++k1)
+  //for (int k1 = 0; k1 < this->NbrPoints1*SymmetryMultiplier1; ++k1)
+  for (int k1 = 0; k1 < this->NbrPoints1; ++k1)
     {
-      for (int k2 = 0; k2 < this->NbrPoints2*SymmetryMultiplier2; ++k2)
+      //for (int k2 = 0; k2 < this->NbrPoints2*SymmetryMultiplier2; ++k2)
+      for (int k2 = 0; k2 < this->NbrPoints2; ++k2)
 	{
 	  int LinearizedMomentumIndex = this->GetLinearizedMomentumIndex(k1, k2);
 
