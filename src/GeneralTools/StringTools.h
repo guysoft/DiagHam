@@ -91,5 +91,14 @@ ostream& PrintMemorySize(ostream &str, long bytes);
 ostream& PrintMemorySize(ostream &str, unsigned long bytes);
 
 
+// replace a string of character by another one within a string 
+//
+// haystack = input string
+// oldNeedle = string that should be replaced
+// newNeedle = string that should replace oldNeedle
+// return value = new string (0 if oldNeedle was not found)
+char* ReplaceString(char* haystack, const char* oldNeedle, const char* newNeedle);
+
+
 
 #endif

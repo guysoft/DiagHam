@@ -165,6 +165,20 @@ class ParticleOnTorusWithSpinAndMagneticTranslations :  public ParticleOnSphereW
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);
   
+  // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+
+  // convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis
+  virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+
 };
 
 

@@ -380,6 +380,7 @@ ostream& PrintMemorySize(ostream &str, long bytes)
 // str = stream to write to
 // bytes = size in bytes
 // return = reference on stream
+
 ostream& PrintMemorySize(ostream &str, unsigned long bytes)
 {
   if (bytes >= 1024)
@@ -414,4 +415,27 @@ ostream& PrintMemorySize(ostream &str, unsigned long bytes)
   else
     str << bytes <<"b";
   return str;
+}
+
+
+// replace a string of character by another one within a string 
+//
+// haystack = input string
+// oldNeedle = string that should be replaced
+// newNeedle = string that should replace oldNeedle
+// return value = new string (0 if oldNeedle was not found)
+
+char* ReplaceString(char* haystack, const char* oldNeedle, const char* newNeedle)
+{
+  char* StringPosition = strstr(haystack, oldNeedle);
+  if (StringPosition == 0)
+    return 0;
+  long TmpLength = strlen(haystack) - strlen(oldNeedle) + strlen(newNeedle) + 1;
+  long TmpLength2 = strlen(oldNeedle);
+  char* TmpString = new char[TmpLength];
+  char TmpChar = StringPosition[0];
+  StringPosition[0] = '\0';
+  sprintf (TmpString, "%s%s%s", haystack, newNeedle, StringPosition + TmpLength2);
+  StringPosition[0] = TmpChar;
+  return TmpString;
 }

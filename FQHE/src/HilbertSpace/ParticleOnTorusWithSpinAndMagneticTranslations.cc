@@ -30,10 +30,14 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorusWithSpinAndMagneticTranslations.h"
+#include "Vector/ComplexVector.h"
 
 #include <iostream>
+
+
 using std::cout;
 using std::endl;
+
 
 // virtual destructor
 //
@@ -131,3 +135,28 @@ int ParticleOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, doub
 {
   return this->HilbertSpaceDimension;
 }
+
+// convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector ParticleOnTorusWithSpinAndMagneticTranslations::ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space)
+{
+  ComplexVector TmpVector;
+  return TmpVector;
+}
+
+// convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector ParticleOnTorusWithSpinAndMagneticTranslations::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space)
+{
+  ComplexVector TmpVector;
+  return TmpVector;
+}
+

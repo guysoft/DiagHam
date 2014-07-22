@@ -37,6 +37,8 @@ int main(int argc, char** argv)
   (*SystemGroup) +=  new BooleanOption  ('\n', "discard-zero", "do not compare components if the one the first start is strictly zero");
   (*SystemGroup) +=  new BooleanOption  ('\n', "relative-error", "compute relative error");
   (*SystemGroup) +=  new BooleanOption  ('\n', "rational", "input vectors are rational vectors");
+  (*SystemGroup) +=  new BooleanOption  ('\n', "complex", "input vectors are complex vectors");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "fix-phase", "fix the phase of a given component for each vector to be real and positive (negative if no phase fixing should be performed)", -1l);
 #ifdef __GMP__
   (*SystemGroup) += new BooleanOption  ('\n', "use-gmp", "use arbitrary precision integers instead of fixed precision integers in rational mode");
 #else
@@ -180,6 +182,112 @@ int main(int argc, char** argv)
 		  }
 	      }	    
 	  }
+      return 0;
+    }
+
+  if (Manager.GetBoolean("complex") == true)
+    {
+      ComplexVector State1;
+      if (State1.ReadVector (VectorFiles[0]) == false)
+	{
+	  cout << "can't open vector file " << VectorFiles[0] << endl;
+	  return -1;      
+	}
+      ComplexVector State2;
+      if (State2.ReadVector (VectorFiles[1]) == false)
+	{
+	  cout << "can't open vector file " << VectorFiles[1] << endl;
+	  return -1;      
+	}
+      if (State1.GetLargeVectorDimension() != State2.GetLargeVectorDimension() )
+	{
+	  cout << "Dimension of Hilbert spaces in input files does not coincide" << endl;
+	  return -2;
+	}
+      
+      long MinValue = 0l;
+      if (Manager.GetInteger("min-range") > 0l)
+	{
+	  if (Manager.GetInteger("min-range") < State1.GetLargeVectorDimension())
+	    MinValue = Manager.GetInteger("min-range");      
+	}
+      else
+	{
+	  long Tmp = State1.GetLargeVectorDimension() + Manager.GetInteger("min-range");
+	  if ((Tmp >= 0) && (Tmp < State1.GetLargeVectorDimension()))
+	    MinValue = Tmp;
+	}
+      long MaxValue = State1.GetLargeVectorDimension(); 
+      if ((Manager.GetInteger("max-range") < State1.GetLargeVectorDimension()) && (Manager.GetInteger("max-range") > MinValue))
+	MaxValue = Manager.GetInteger("max-range");
+
+      if (Manager.GetInteger("fix-phase") >= 0l)
+	{
+	  if (Manager.GetInteger("fix-phase") >= State1.GetLargeVectorDimension())
+	    {
+	      cout << "error, component required by fix-gauge (" << Manager.GetInteger("fix-phase") << ") exceed the vector dimension (" 
+		   << State1.GetLargeVectorDimension() << ")" << endl; 
+	      return -1;
+	    }
+	  Complex TmpPhase = Phase(-Arg(State1[Manager.GetInteger("fix-phase")]));
+	  State1 *= TmpPhase;
+	  TmpPhase = Phase(-Arg(State2[Manager.GetInteger("fix-phase")]));
+	  State2 *= TmpPhase;
+	}
+      if (Error == 0.0)
+	{
+	  if (DiscardZero == false)
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if (State1[i] != State2[i])
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if ((State1[i] != 0.0) && (State1[i] != State2[i]))
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if (DiscardZero == false)
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if (((fabs(State1[i].Re - State2[i].Re) > Error) && (fabs(State1[i].Re - State2[i].Re) > (Error * Norm(State1[i]))))
+		      || ((fabs(State1[i].Im - State2[i].Im) > Error) && (fabs(State1[i].Im - State2[i].Im) > (Error * Norm(State1[i])))))
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (long i = MinValue; i < MaxValue; ++i)
+		{
+		  if ((State1[i] != 0.0) && (((fabs(State1[i].Re - State2[i].Re) > Error) && (fabs(State1[i].Re - State2[i].Re) > (Error * Norm(State1[i]))))
+					     || ((fabs(State1[i].Im - State2[i].Im) > Error) && (fabs(State1[i].Im - State2[i].Im) > (Error * Norm(State1[i]))))))
+		    {
+		      cout << i << " : " << State1[i] << " " << State2[i] << endl;
+		      ++Count;
+			}
+		}
+	    }
+	}
+      cout << "total number of different components : " << Count << " / " << State1.GetLargeVectorDimension() << endl;
+      
       return 0;
     }
 

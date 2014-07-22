@@ -120,15 +120,8 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian::ParticleOn
   this->PlotMapNearestNeighborBonds();
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = false;
+  this->HermitianSymmetryFlag = true;
   
-//   for (int i = 0; i < this->NbrSite; ++i)
-//   {
-//     for (int k = 0; k < 3; ++k)
-//     {
-//       cout << i << " " << k << " " << this->MapNearestNeighborBonds[i][k] << endl;
-//     }
-//   }
   this->EvaluateExponentialFactors();
   this->EvaluateInteractionFactors();
     

@@ -53,5 +53,17 @@ bool FTIHubbardModelFindSystemInfoFromFileName(char* filename, int& nbrParticles
 // return value = true if no error occured
 bool FTIHubbardModelFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSites, bool& statistics, bool& gutzwiller);
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSites = reference on the number sites
+// xMomentum = reference on the momentum sector in the x direction
+// xPeriodicity = reference on the periodicity in the x direction with respect to site numbering 
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+bool FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSites, int& xMomentum, int& xPeriodicity, bool& statistics, bool& gutzwiller);
+
 
 #endif

@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 	}
       if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("left-state"), LeftNbrParticles, LeftNbrSites, LeftStatistics, LeftGutzwillerFlag) == false)
 	{
-	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("left-state")  << endl;
+	  cout << "error while retrieving system parameters from file name " << Manager.GetString("left-state") << endl;
 	  return -1;
 	}
     }
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
       NbrLeftStates = DegenerateFile.GetNbrLines();
       if (FTIHubbardModelFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), LeftNbrParticles, LeftNbrSites, LeftStatistics, LeftGutzwillerFlag) == false)
 	{
-	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("left-state")  << endl;
+	  cout << "error while retrieving system parameters from file name " << DegenerateFile(0, 0) << endl;
 	  return -1;
 	}
     }

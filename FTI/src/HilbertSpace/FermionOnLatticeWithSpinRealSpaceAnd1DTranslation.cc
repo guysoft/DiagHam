@@ -355,6 +355,11 @@ ostream& FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::PrintState (ostream&
 	  break;
 	}
     }
+//    Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
+//    if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
+//      {
+//        Str << "  error";
+//      }
   return Str;
 }
 
@@ -500,6 +505,6 @@ int FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::FindStateIndex(unsigned l
     if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
       return this->HilbertSpaceDimension;
     else
-      return PosMin;
+      return PosMax;
 }
 

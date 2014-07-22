@@ -1941,7 +1941,149 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
     }
   else
     {
-      cout << "not implemented" << endl;
+      int AbsoluteIndex = index + this->PrecalculationShift;
+      if ((this->OneBodyGenericInteractionFactorsdowndown != 0) && (this->OneBodyGenericInteractionFactorsupup != 0))
+	{
+	  for (int j = 0; j < this->NbrSite; ++j)
+	    {
+	      for (int k = 0; k < 3; ++k)
+		{
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AduAu(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  if (Index == AbsoluteIndex)
+			    {
+			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupup[j][k];
+			    }
+			  else
+			    {
+			      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupup[j][k];
+			    }
+			  ++position;
+			}
+		      Index = particles->AddAd(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  if (Index == AbsoluteIndex)
+			    {
+			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+			    }
+			  else
+			    {
+			      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+			    }
+			  ++position;
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if (this->OneBodyGenericInteractionFactorsupup != 0)
+	    {
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
+		    {
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
+			{
+			  Index = particles->AduAu(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
+			  if (Index <= AbsoluteIndex)
+			    {
+			      indexArray[position] = Index;
+			      if (Index == AbsoluteIndex)
+				{
+				  coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupup[j][k];
+				}
+			      else
+				{
+				  coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupup[j][k];
+				}
+			      ++position;
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+		{
+		  for (int j = 0; j < this->NbrSite; ++j)
+		    {
+		      for (int k = 0; k < 3; ++k)
+			{
+			  int j2 = this->MapNearestNeighborBonds[j][k];
+			  if (j2 < this->NbrSite)
+			    {
+			      Index = particles->AddAd(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
+			      if (Index <= AbsoluteIndex)
+				{
+				  indexArray[position] = Index;
+				  if (Index == AbsoluteIndex)
+				    {
+				      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+				    }
+				  else
+				    {
+				      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsdowndown[j][k];
+				    }
+				  ++position;
+				}
+			    }
+			}
+		    }
+		} 
+	    }
+	}
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
+	{
+	  for (int j = 0; j < this->NbrSite; ++j)
+	    {
+	      for (int k = 0; k < 3; ++k)
+		{
+		  int j2 = this->MapNearestNeighborBonds[j][k];
+		  if (j2 < this->NbrSite)
+		    {
+		      Index = particles->AddAu(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  if (Index == AbsoluteIndex)
+			    {
+			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
+			    }
+			  else
+			    {
+			      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslations] * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
+			    }
+			  ++position;
+			}
+		      Index = particles->AduAd(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= AbsoluteIndex)
+			{
+			  indexArray[position] = Index;
+			  if (Index == AbsoluteIndex)
+			    {
+			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupdown[j][k];
+			    }
+			  else
+			    {
+			      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupdown[j][k];
+			    }
+			  ++position;
+			}
+		    }
+		}
+	    }
+	}
     }
 }
 

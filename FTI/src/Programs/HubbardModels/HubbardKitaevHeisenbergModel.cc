@@ -162,9 +162,9 @@ int main(int argc, char** argv)
       else
 	{
 	  if (GutzwillerFlag == false)
-	    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_xmomentum");
+	    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_xmomentum_%d", (int) Manager.GetInteger("x-periodicity"));
 	  else
-	    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_xmomentum");
+	    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_xmomentum_%d", (int) Manager.GetInteger("x-periodicity"));
 	}
     }
   else
@@ -179,9 +179,9 @@ int main(int argc, char** argv)
       else
 	{
 	  if (GutzwillerFlag == false)
-	    sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_xmomentum");
+	    sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_xmomentum_%d", (int) Manager.GetInteger("x-periodicity"));
 	  else
-	    sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_gutzwiller_xmomentum");
+	    sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_gutzwiller_xmomentum_%d", (int) Manager.GetInteger("x-periodicity"));
 	}
     }
     

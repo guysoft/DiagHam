@@ -1889,11 +1889,11 @@ ostream& FermionOnTorusWithSpinAndMagneticTranslations::PrintState (ostream& Str
   for (int i = 0; i < this->MaxMomentum; ++i)
     Str << ((TmpState >> 2*i) & 0x1ul) << ((TmpState >> 2*i+1) & 0x1ul) << " ";
 //   Str << "  (" << hex << this->ReorderingSign[state] << dec << ")";
-//   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
-//   if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
-//     {
-//       Str << "  error";
-//     }
+//    Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
+//    if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
+//      {
+//        Str << "  error";
+//      }
   return Str;
 }
 
