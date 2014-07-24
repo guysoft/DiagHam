@@ -160,7 +160,9 @@ int main(int argc, char** argv)
 						      Manager.GetDouble("mass"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)
 	{
+	  cout<<"Begin computing Chern number "<<endl;
 	  cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
+	  cout<<"Finished computing Chern number "<<endl;
 	}
       TightBindingModel.WriteAsciiSpectrum(EigenvalueOutputFile);
       double BandSpread = TightBindingModel.ComputeBandSpread(0);

@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                        Copyright (C) 2001-2012 Bin Xu                      //
+//                        Copyright (C) 2012-2014 Bin Xu                      //
 //                                                                            //
 //                                                                            //
 //            class of tight binding model for the coupled wired model        //
@@ -124,6 +124,8 @@ void TightBindingModelCoupledWires::CoreComputeBandStructure(long minStateIndex,
 	      double txp = 2.0 * this->HoppingX * cos((2.0 * M_PI * double(kx)/((double) this->NbrSiteX) - this->PhiX/2.0 ));
 	      Complex Hopping2C = this->Hopping2 * Complex(cos(4.0 * 2.0 * M_PI * double(ky)/((double)this->NbrSiteY)),
 							   sin(4.0 * 2.0 * M_PI * double(ky)/((double)this->NbrSiteY)));
+	      Complex Hopping2Ccc = this->Hopping2 * Complex(cos(4.0 * 2.0 * M_PI * double(ky)/((double)this->NbrSiteY)),
+							   -sin(4.0 * 2.0 * M_PI * double(ky)/((double)this->NbrSiteY)));
 	      
 	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, this->mass - txm);//a few of them
 	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, this->mass - txp);//a few of them
@@ -134,7 +136,12 @@ void TightBindingModelCoupledWires::CoreComputeBandStructure(long minStateIndex,
 	      TmpOneBodyHamiltonian.SetMatrixElement(2, 1, -this->Hopping2);//a few of them
 	      TmpOneBodyHamiltonian.SetMatrixElement(3, 2, -this->Hopping1);//a few of them
 	      
-	      TmpOneBodyHamiltonian.SetMatrixElement(3, 0, -Hopping2C);//a few of them
+              TmpOneBodyHamiltonian.SetMatrixElement(0, 1, -this->Hopping1);//a few of them
+	      TmpOneBodyHamiltonian.SetMatrixElement(1, 2, -this->Hopping2);//a few of them
+	      TmpOneBodyHamiltonian.SetMatrixElement(2, 3, -this->Hopping1);//a few of them
+	      
+	      TmpOneBodyHamiltonian.SetMatrixElement(0, 3, -Hopping2C);//a few of them
+	      TmpOneBodyHamiltonian.SetMatrixElement(3, 0, -Hopping2Ccc);//a few of them
 	      
 	      if (this->OneBodyBasis != 0) 
 		{
@@ -146,6 +153,9 @@ void TightBindingModelCoupledWires::CoreComputeBandStructure(long minStateIndex,
 #else
 		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
+		  this->OneBodyBasis[Index] = TmpMatrix;
+		  for (int i = 0; i < this->NbrBands; ++i)
+		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
 		} 
 	      else 
 		{

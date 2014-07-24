@@ -3,7 +3,7 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                        Copyright (C) 2001-2012 Bin Xu                      //
+//                        Copyright (C) 2012-2014 Bin Xu                      //
 //                                                                            //
 //                                                                            //
 //            class of tight binding model for the coupled wired model        //
