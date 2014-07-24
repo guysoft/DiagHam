@@ -121,7 +121,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::Fermio
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
   cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
-  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+  if (this->LargeHilbertSpaceDimension >= (1l << 31))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
