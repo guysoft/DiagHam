@@ -269,63 +269,50 @@ int main(int argc, char** argv)
 	      return -1;      
 	    }      
 	  int NbrFluxQuanta = NbrFluxQuanta1 / Manager.GetInteger("nbr-orbitals");
-	  int TotalKy = (TotalKy1 % NbrFluxQuanta);
-	  bool GroupNeighbouringOrbitalsFlag = Manager.GetBoolean("sym-y");
 	  char* OutputFileName = 0;
-	  BosonOnTorusShort* TargetSpace = 0;
-	  RealVector OutputState;
-	  
-	  if (GroupNeighbouringOrbitalsFlag == false)
+	  char* FullOutputFileName = 0;
+	  RealVector* OutputStates = 0;
+	  int* KySectors = 0;
+	  int NbrKySectors = 0;
+	  if (Manager.GetBoolean("sym-y") == false)
 	    {
-	      if (Manager.GetString("output-file") != 0)
-		{
-		  OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
-		  strcpy (OutputFileName, Manager.GetString("output-file"));
-		}
-	      else
-		{
-		  OutputFileName = new char [512];
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalKy1, NbrParticles1, NbrFluxQuanta, TotalKy);
-		}
-	      TargetSpace = new BosonOnTorusShort(NbrParticles1, NbrFluxQuanta, TotalKy);
-	      OutputState = TargetSpace->SymmetrizeU1U1SingleState (State1 , Space1 , GroupNeighbouringOrbitalsFlag, UnnormalizedBasisFlag , Architecture.GetArchitecture());
-	      
-	      
-	      if (OutputState.WriteVector(OutputFileName) == false)
-		{
-		  cout << "error while writing output state " << OutputFileName << endl;
-		  return -1;
-		}
+	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture()); 
 	    }
 	  else
 	    {
-	      TotalKy = Manager.GetInteger("ky-momentum");
-	      TargetSpace = new BosonOnTorusShort(NbrParticles1, NbrFluxQuanta, TotalKy);
-	      OutputState = TargetSpace->SymmetrizeU1U1SingleState (State1 , Space1 , GroupNeighbouringOrbitalsFlag, UnnormalizedBasisFlag , Architecture.GetArchitecture());
-	      
-	      if (OutputState.Norm() != 0.0)
+	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture()); 	      
+	    }
+	  int NbrGeneratedStates = 0;
+	  if (Manager.GetString("output-file") != 0)
+	    {
+	      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+	      strcpy (OutputFileName, Manager.GetString("output-file"));
+	    }
+	  else
+	    {
+	      OutputFileName = new char [512];
+	      if (Manager.GetBoolean("sym-y") == false)
 		{
-		  if (Manager.GetString("output-file") != 0)
-		    {
-		      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
-		      strcpy (OutputFileName, Manager.GetString("output-file"));
-		    }
-		  else
-		    {
-		      OutputFileName = new char [512];
-		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalKy1, NbrParticles1, NbrFluxQuanta, TotalKy);
-		    }
-		  if (OutputState.WriteVector(OutputFileName) == false)
-		    {
-		      cout << "error while writing output state " << OutputFileName << endl;
-		      return -1;
-		    }
+		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized_n_%d_2s_%d", TotalKy1, NbrParticles1, NbrFluxQuanta);
 		}
 	      else
 		{
-		  cout << "Symmetrized state is zero. No output." << endl;
+		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_n_%d_2s_%d", TotalKy1, NbrParticles1, NbrFluxQuanta);
 		}
 	    }
+	  for (int i = 0; i < NbrKySectors; ++i)
+	    {
+	      cout << "state generated in the Ky=" << KySectors[i] << " sector" << endl;
+	      char* FullOutputFileName = new char [256 + strlen(OutputFileName)];
+	      sprintf (FullOutputFileName , "%s_ky_%d.0.vec", OutputFileName, KySectors[i]);	      
+	      if (OutputStates[i].WriteVector(FullOutputFileName) == false)
+		{
+		  cout << "error while writing output state " << FullOutputFileName << endl;
+		  return -1;
+		}
+	      delete[] FullOutputFileName;
+	    }
+	  cout << "Symmetrization has generated " << NbrKySectors << " state(s)" << endl;
 	}
     }
   else

@@ -400,9 +400,29 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
   // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
   // architecture = pointer to the architecture
+  // return value = symmetrized state
+  int SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture);
+
+  // symmetrize a vector by grouping neighbouring orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
   // return value = symmetrized state  
   virtual int SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, 
 								 int*& kySectors, AbstractArchitecture* architecture);
+
+  // symmetrize a vector by grouping distant and equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = symmetrized state
+  int SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture);
 
   // symmetrize a vector by grouping distant and equally separated orbitals
   //

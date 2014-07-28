@@ -1978,6 +1978,52 @@ void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVe
 // architecture = pointer to the architecture
 // return value = symmetrized state
 
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+{
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  ComplexVector TmpInputVector(inputVector, true);
+  this->SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore(TmpInputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  if (TmpNorm != 0.0)
+	    {
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }
+	}     
+    }  
+  delete[] TmpVectors;
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping neighbouring orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
 int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
 {
   int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
@@ -2082,6 +2128,52 @@ void BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (C
 	  delete TargetSpaces[i];
 	}
     }
+}
+
+// symmetrize a vector by grouping distant and equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+{
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  ComplexVector TmpInputVector(inputVector, true);
+  this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(TmpInputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  if (TmpNorm != 0.0)
+	    {
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }
+	}     
+    }  
+  delete[] TmpVectors;
+  return NbrGeneratedSectors;
 }
 
 // symmetrize a vector by grouping distant and equally separated orbitals
