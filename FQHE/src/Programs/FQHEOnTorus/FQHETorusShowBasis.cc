@@ -392,26 +392,57 @@ int main(int argc, char** argv)
 			  double WeightHiddenComponents = 0.0;
 			  double Normalization = 0.0;
 			  RealVector State;
-			  if (State.ReadVector(Manager.GetString("state")) == false)
+			  if (State.ReadVectorTest(Manager.GetString("state")) == true)
 			    {
-			      cout << "error while reading " << Manager.GetString("state") << endl;
-			      return -1;
-			    }
-			  if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
-			    {
-			      cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
-			      return -1;
-			    }
-			  if (Manager.GetDouble("hide-component") > 0.0)
-			    {
-			      double Error = Manager.GetDouble("hide-component");
-			      for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-				if (Norm(State[i]) > Error)
-				  Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+			      if (State.ReadVector(Manager.GetString("state")) == false)
+				{
+				  cout << "error while reading " << Manager.GetString("state") << endl;
+				  return -1;
+				}
+			      if (Space.GetHilbertSpaceDimension() != State.GetVectorDimension())
+				{
+				  cout << "dimension mismatch between the state (" << State.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
+				  return -1;
+				}
+			      if (Manager.GetDouble("hide-component") > 0.0)
+				{
+				  double Error = Manager.GetDouble("hide-component");
+				  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+				    if (Norm(State[i]) > Error)
+				      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+				}
+			      else
+				{
+				  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+				    Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+				}
 			    }
 			  else
-			    for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-			      Space.PrintState(cout, i) << " : "  << State[i] << endl;;
+			    {
+			      ComplexVector ComplexState;
+			      if (ComplexState.ReadVector(Manager.GetString("state")) == false)
+				{
+				  cout << "error while reading " << Manager.GetString("state") << endl;
+				  return -1;
+				}
+			      if (Space.GetHilbertSpaceDimension() != ComplexState.GetVectorDimension())
+				{
+				  cout << "dimension mismatch between the state (" << ComplexState.GetVectorDimension() << ") and the Hilbert space (" << Space.GetHilbertSpaceDimension() << ")" << endl;
+				  return -1;
+				}
+			      if (Manager.GetDouble("hide-component") > 0.0)
+				{
+				  double Error = Manager.GetDouble("hide-component");
+				  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+				    if (Norm(ComplexState[i]) > Error)
+				      Space.PrintState(cout, i) << " : "  << ComplexState[i] << endl;;
+				}
+			      else
+				{
+				  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
+				    Space.PrintState(cout, i) << " : "  << ComplexState[i] << endl;;
+				}
+			    }
 			}
 		    }
 		  else

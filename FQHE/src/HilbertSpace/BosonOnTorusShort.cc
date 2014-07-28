@@ -1848,10 +1848,10 @@ RealVector BosonOnTorusShort::SymmetrizeU1U1SingleState (RealVector& leftVector,
   unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
 //   timeval TotalStartingTime;
 //   gettimeofday (&TotalStartingTime, 0);
-  if (oneInTwoFlag == false)
-    this->SymmetrizeU1U1SingleStateCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-  else
-    this->SymmetrizeU1U1SingleStateOneInTwoCore ( SymmetrizedVector ,leftVector , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+//   if (oneInTwoFlag == false)
+//     this->SymmetrizeU1U1SingleStateCore (SymmetrizedVector, leftVector, leftSpace, firstComponent, nbrComponent);
+//   else
+//     this->SymmetrizeU1U1SingleStateOneInTwoCore (SymmetrizedVector, leftVector, leftSpace, firstComponent, nbrComponent);
   
   if ( unnormalizedBasisFlag == false )
   {
@@ -1868,9 +1868,10 @@ RealVector BosonOnTorusShort::SymmetrizeU1U1SingleState (RealVector& leftVector,
 // outputVector = reference on the vector which will contain the symmetrozed state
 // leftVector = reference on the vector to be symmetrized
 // leftSpace = pointer to the Hilbert space
-// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// groupNeighbouringOrbitals = group neighbouring orbitals instead of grouping orbitals separated by Nphi
 // return value = symmetrized state
-ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftVector,  BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+
+ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftVector,  BosonOnTorusShort* leftSpace, bool groupNeighbouringOrbitals, AbstractArchitecture* architecture)
 {
   ComplexVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
   Complex TmpCoefficient (0.0, -1.0);
@@ -1887,22 +1888,22 @@ ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftV
   unsigned long nbrComponent = leftSpace->GetHilbertSpaceDimension();
 //   timeval TotalStartingTime;
 //   gettimeofday (&TotalStartingTime, 0);
-  if (oneInTwoFlag == false)
-  {
-    this->SymmetrizeU1U1SingleStateCore ( TmpVector ,leftVectorImaginary , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-    SymmetrizedVector += TmpVector;
-    SymmetrizedVector *= TmpCoefficient;
-    TmpVector.ClearVector(); 
-    this->SymmetrizeU1U1SingleStateCore ( TmpVector ,leftVectorReal , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
-    SymmetrizedVector -= TmpVector;
-  }
-  else
+  if (groupNeighbouringOrbitals == false)
     {
-      this->SymmetrizeU1U1SingleStateOneInTwoCore ( TmpVector ,leftVectorImaginary , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+      this->SymmetrizeU1U1SingleStateCore (TmpVector, leftVectorImaginary, leftSpace, firstComponent, nbrComponent);
       SymmetrizedVector += TmpVector;
       SymmetrizedVector *= TmpCoefficient;
       TmpVector.ClearVector(); 
-      this->SymmetrizeU1U1SingleStateOneInTwoCore ( TmpVector ,leftVectorReal , leftSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+      this->SymmetrizeU1U1SingleStateCore (TmpVector, leftVectorReal, leftSpace, firstComponent, nbrComponent);
+      SymmetrizedVector -= TmpVector;
+    }
+  else
+    {
+      //      this->SymmetrizeU1U1SingleStateOneInTwoCore (TmpVector, leftVectorImaginary, leftSpace, firstComponent, nbrComponent);
+      SymmetrizedVector += TmpVector;
+      SymmetrizedVector *= TmpCoefficient;
+      TmpVector.ClearVector(); 
+      //      this->SymmetrizeU1U1SingleStateOneInTwoCore (TmpVector, leftVectorReal, leftSpace, firstComponent, nbrComponent);
       SymmetrizedVector -= TmpVector;
     }
   
@@ -1912,12 +1913,9 @@ ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftV
 //   gettimeofday (&TotalEndingTime, 0);
 //   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
 //   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
-  if ( unnormalizedBasisFlag == false )
-  {
-    if (SymmetrizedVector.Norm() != 0)
-      SymmetrizedVector /= SymmetrizedVector.Norm();
-  }
-
+  if (SymmetrizedVector.Norm() != 0)
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+  
   return SymmetrizedVector;
 }
 
@@ -1926,120 +1924,278 @@ ComplexVector BosonOnTorusShort::SymmetrizeU1U1SingleState (ComplexVector& leftV
 // symmetrizedVector = reference on the vector which will contain the symmetrozed state
 // leftVector = reference on the vector to be symmetrized
 // leftSpace = pointer to the Hilbert space
-// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-//first component = index of the first vector component 
-//last component = index of the last component
+// first component = index of the first vector component 
+// last component = index of the last component
 
-void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, unsigned long firstComponent, unsigned long nbrComponents)
 {
   unsigned long LastComponent = firstComponent + nbrComponents;
   
   FactorialCoefficient Factorial1;
   FactorialCoefficient Factorial2;
-  if (unnormalizedBasisFlag == true)
+  for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
     {
-      cout << "Unnormalized basis not implemented" << endl;
-    }
-  else
-    {
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+      this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
+			   leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
+      
+      for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
+	leftSpace->TemporaryState[k] = 0;
+      double TmpCoefficient = leftVector[i];
+      Factorial1.SetToOne();
+      Factorial1.Power2Divide(leftSpace->NbrBosons);
+      
+      for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
+	if (leftSpace->TemporaryState[k] > 1)
+	  Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+      
+      int k = 0;
+      for (; k < this->KyMax; ++k)
 	{
-	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
-			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
+	  this->TemporaryState[k] = leftSpace->TemporaryState[k] + leftSpace->TemporaryState[k + this->KyMax];
+	  if (leftSpace->TemporaryState[k] != 0 || leftSpace->TemporaryState[k + this->KyMax] != 0)
+	    this->TemporaryStateKyMax = k;
+	}
+      
+      int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+      if (TmpPos < this->HilbertSpaceDimension)
+	{
+	  for (k = 0; k <= this->TemporaryStateKyMax; ++k)
+	    if (this->TemporaryState[k] > 1)
+	      Factorial1.FactorialMultiply(this->TemporaryState[k]);	
 	  
-	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
-	    leftSpace->TemporaryState[k] = 0;
-	  double TmpCoefficient = leftVector[i];
-	  Factorial1.SetToOne();
-	  Factorial1.Power2Divide(leftSpace->NbrBosons);
-	  
-	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
-	    if (leftSpace->TemporaryState[k] > 1)
-	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
-	  
-	  int k = 0;
-	  for (; k < this->KyMax; ++k)
-	    {
-	      this->TemporaryState[k] = leftSpace->TemporaryState[k] + leftSpace->TemporaryState[k + this->KyMax];
-	      if (leftSpace->TemporaryState[k] != 0 || leftSpace->TemporaryState[k + this->KyMax] != 0)
-		this->TemporaryStateKyMax = k;
-	    }
-	  
-	  int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
-	  if (TmpPos < this->HilbertSpaceDimension)
-	    {
-	      for (k = 0; k <= this->TemporaryStateKyMax; ++k)
-		if (this->TemporaryState[k] > 1)
-		  Factorial1.FactorialMultiply(this->TemporaryState[k]);	
-		    
-		  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
-	    }
-		
-	  }
-      }  
+	  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	}
+      
+    }
 }
 
-// symmetrize a vector with even number of orbitals (multiplies torus aspect ratio by two)
+// symmetrize a vector by grouping neighbouring orbitals
 //
-// symmetrizedVector = reference on the vector which will contain the symmetrozed state
-// leftVector = reference on the vector to be symmetrized
-// leftSpace = pointer to the Hilbert space
-// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-//first component = index of the first vector component 
-//last component = index of the last component
-void BosonOnTorusShort::SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector,  BosonOnTorusShort* leftSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
 {
-  unsigned long LastComponent = firstComponent + nbrComponents;
-  
-  FactorialCoefficient Factorial1;
-  FactorialCoefficient Factorial2;
-  if (unnormalizedBasisFlag == true)
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  this->SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
     {
-      cout << "Unnormalized basis not implemented" << endl;
-    }
-  else
-    {
-      for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+      if (TmpVectors[i].GetVectorDimension() != 0)	
 	{
-	  this->FermionToBoson(leftSpace->StateDescription[i], leftSpace->StateKyMax[i] + leftSpace->NbrBosons - 1, 
-			       leftSpace->TemporaryState, leftSpace->TemporaryStateKyMax);
-	  
-	  for (int k = leftSpace->TemporaryStateKyMax + 1;  k < leftSpace->KyMax; ++k)
-	    leftSpace->TemporaryState[k] = 0;
-	  double TmpCoefficient = leftVector[i];
-	  Factorial1.SetToOne();
-	  Factorial1.Power2Divide(leftSpace->NbrBosons);
-	  
-	  for (int k = 0; k <= leftSpace->TemporaryStateKyMax; ++k)
-	    if (leftSpace->TemporaryState[k] > 1)
-	      Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
-	  
-	  int k = 0;
-	  int kyTot = 0;
-	  for (; k < this->KyMax; ++k)
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  if (TmpNorm != 0.0)
 	    {
-	      this->TemporaryState[k] = leftSpace->TemporaryState[2*k] + leftSpace->TemporaryState[2*k + 1];
-	      kyTot += this->TemporaryState[k]*k;
-	      if (leftSpace->TemporaryState[2*k] != 0 || leftSpace->TemporaryState[2*k + 1] != 0)
-		this->TemporaryStateKyMax = k;
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
 	    }
-	  
-	  int TmpPos;
-	  if ((kyTot % this->KyMax) != this->TotalKy)
-	    TmpPos = this->HilbertSpaceDimension;
-	  else
-	    TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
-	  if (TmpPos < this->HilbertSpaceDimension)
+	}     
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping neighbouring orbitals, core part
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// first component = index of the first vector component 
+// last component = index of the last component
+
+void BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  BosonOnTorusShort** TargetSpaces = new BosonOnTorusShort* [TargetSpaceNbrOrbitals];
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      TargetSpaces[i] = 0;
+    }  
+
+
+  FactorialCoefficient Factorial1;
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      Complex TmpCoefficient = inputVector[i];
+      this->FermionToBoson(this->StateDescription[i], this->StateKyMax[i] + this->NbrBosons - 1, 
+			   this->TemporaryState, this->TemporaryStateKyMax);
+      Factorial1.SetToOne();
+      Factorial1.Power2Divide(this->NbrBosons);
+      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial1.FactorialDivide(this->TemporaryState[k]);
+      for (int k = this->TemporaryStateKyMax + 1; k < this->KyMax; ++k)
+	this->TemporaryState[k] = 0x0ul;
+      int TmpTotalKy = 0;
+      for (int k = 0; k < TargetSpaceNbrOrbitals; ++k)
+	{
+	  unsigned long& TmpNbrParticles = TmpState[k];
+	  TmpNbrParticles = 0x0ul;
+	  for (int l = 0; l < nbrOrbitals; ++l)
+	    TmpNbrParticles += this->TemporaryState[k * nbrOrbitals + l];
+	  if (TmpNbrParticles > 1)
+	    Factorial1.FactorialMultiply(TmpNbrParticles);	
+	  TmpTotalKy += k * ((int) TmpNbrParticles);
+	}
+      TmpTotalKy %= TargetSpaceNbrOrbitals;
+
+      if (TargetSpaces[TmpTotalKy] == 0)
+	{
+	  TargetSpaces[TmpTotalKy] = new BosonOnTorusShort (this->NbrBosons, TargetSpaceNbrOrbitals, TmpTotalKy);
+	  symmetrizedVectors[TmpTotalKy] = ComplexVector(TargetSpaces[TmpTotalKy]->HilbertSpaceDimension, true);
+	}	  
+      int TmpKyMax = TargetSpaces[TmpTotalKy]->KyMax - 1;
+      while (TmpState[TmpKyMax] == 0x0ul)
+	--TmpKyMax;
+      int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TargetSpaces[TmpTotalKy]->BosonToFermion(TmpState, TmpKyMax), 
+							    TmpKyMax + this->NbrBosons - 1);
+      if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
+	{
+	  symmetrizedVectors[TmpTotalKy][TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	}
+    }
+  delete[] TmpState;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TargetSpaces[i] != 0)
+	{
+	  delete TargetSpaces[i];
+	}
+    }
+}
+
+// symmetrize a vector by grouping distant and equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+{
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  if (TmpNorm != 0.0)
 	    {
-	      for (k = 0; k <= this->TemporaryStateKyMax; ++k)
-		if (this->TemporaryState[k] > 1)
-		  Factorial1.FactorialMultiply(this->TemporaryState[k]);	
-		    
-		  symmetrizedVector[TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
 	    }
-		
-	  }
-      }  
+	}     
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping distant and equally separated orbitals, core part
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// first component = index of the first vector component 
+// last component = index of the last component
+
+void BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  BosonOnTorusShort** TargetSpaces = new BosonOnTorusShort* [TargetSpaceNbrOrbitals];
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      TargetSpaces[i] = 0;
+    }  
+
+  FactorialCoefficient Factorial1;
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      Complex TmpCoefficient = inputVector[i];
+      this->FermionToBoson(this->StateDescription[i], this->StateKyMax[i] + this->NbrBosons - 1, 
+			   this->TemporaryState, this->TemporaryStateKyMax);
+      Factorial1.SetToOne();
+      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+	if (this->TemporaryState[k] > 1)
+	  Factorial1.FactorialDivide(this->TemporaryState[k]);
+      for (int k = this->TemporaryStateKyMax + 1; k < this->KyMax; ++k)
+	this->TemporaryState[k] = 0x0ul;
+      int TmpTotalKy = 0;
+      for (int k = 0; k < TargetSpaceNbrOrbitals; ++k)
+	{
+	  unsigned long& TmpNbrParticles = TmpState[k];
+	  TmpNbrParticles = 0x0ul;
+	  for (int l = 0; l < nbrOrbitals; ++l)
+	    TmpNbrParticles += this->TemporaryState[k + (TargetSpaceNbrOrbitals * l)];
+	  if (TmpNbrParticles > 1)
+	    Factorial1.FactorialMultiply(TmpNbrParticles);	
+	  TmpTotalKy += k * ((int) TmpNbrParticles);
+	}
+      TmpTotalKy %= TargetSpaceNbrOrbitals;
+      if (TargetSpaces[TmpTotalKy] == 0)
+	{
+	  TargetSpaces[TmpTotalKy] = new BosonOnTorusShort (this->NbrBosons, TargetSpaceNbrOrbitals, TmpTotalKy);
+	  symmetrizedVectors[TmpTotalKy] = ComplexVector(TargetSpaces[TmpTotalKy]->HilbertSpaceDimension, true);
+	}	  
+      int TmpKyMax = TargetSpaces[TmpTotalKy]->KyMax - 1;
+      while (TmpState[TmpKyMax] == 0x0ul)
+	{
+	  --TmpKyMax;
+	}
+      int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TargetSpaces[TmpTotalKy]->BosonToFermion(TmpState, TmpKyMax), 
+							    TmpKyMax + this->NbrBosons - 1);
+      if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
+	{
+	  symmetrizedVectors[TmpTotalKy][TmpPos] += sqrt(Factorial1.GetNumericalValue()) * TmpCoefficient;
+	}
+    }
+  delete[] TmpState;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TargetSpaces[i] != 0)
+	{
+	  delete TargetSpaces[i];
+	}
+    }
 }
 
 // core part of the C4 rotation

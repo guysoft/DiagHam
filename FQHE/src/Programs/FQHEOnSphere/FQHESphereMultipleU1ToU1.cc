@@ -407,37 +407,37 @@ int main(int argc, char** argv)
 	      else
 	      {
 	      
-	      if (((NbrParticles1 * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
-	      {
-		cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
-		return -1;
-	      } 
-	      OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
-	      if (OutputState.Norm() < 1.0e-10)
-		{
-		  cout << "Symmetrized state is zero. No output." << endl;
-		  return -1;
-		}
-	      else
-		{		  
-		  if (Manager.GetBoolean("unnormalized-basis") == true)
-		    {
-		      int RootPosition = 0;
-		      while (abs(OutputState[RootPosition]) < 1.0e-12)
-			{
-			  RootPosition += 1;
-			}
-		      double RootCoef = OutputState[RootPosition];
-		      OutputState /= RootCoef;
-		    }
-		  else
+		if (((NbrParticles1 * NbrFluxQuanta) & 1) != (TotalLz & 1)) 
+		  {
+		    cout << "incompatible values for the number of particles, the number of flux quanta and twice the total lz value (nbr-particles * nbr-flux and lz-value should have the same parity)" << endl;
+		    return -1;
+		  } 
+		OutputState = TargetSpace->SymmetrizeU1U1SingleState(State1, Space1, Manager.GetBoolean("unnormalized-basis"));
+		if (OutputState.Norm() < 1.0e-10)
+		  {
+		    cout << "Symmetrized state is zero. No output." << endl;
+		    return -1;
+		  }
+		else
+		  {		  
+		    if (Manager.GetBoolean("unnormalized-basis") == true)
+		      {
+			int RootPosition = 0;
+			while (abs(OutputState[RootPosition]) < 1.0e-12)
+			  {
+			    RootPosition += 1;
+			  }
+			double RootCoef = OutputState[RootPosition];
+			OutputState /= RootCoef;
+		      }
+		    else
 		    OutputState /= OutputState.Norm();
-		  if (OutputState.WriteVector(FullOutputFileName) == false)
-		    {
-		      cout << "error while writing output state " << FullOutputFileName << endl;
-		      return -1;
-		    }
-		}
+		    if (OutputState.WriteVector(FullOutputFileName) == false)
+		      {
+			cout << "error while writing output state " << FullOutputFileName << endl;
+			return -1;
+		      }
+		  }
 	      }
 	    }
 	  else
