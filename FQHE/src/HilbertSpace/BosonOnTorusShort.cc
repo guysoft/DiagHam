@@ -2263,3 +2263,218 @@ ComplexVector& BosonOnTorusShort::CoreC4Rotation (ComplexVector& inputState, Par
   delete[] LogFactorialCoefficients;
   return outputState;
 }
+
+// symmetrized a product of several uncoupled states 
+//
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// architecture = pointer to the architecture 
+// return value = symmetrized state
+
+RealVector BosonOnTorusShort::SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture)
+{
+  RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension, true);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = inputSpaces[0]->GetHilbertSpaceDimension();
+  this->SymmetrizeU1U1StateCore (SymmetrizedVector, inputStates, inputSpaces, nbrStates, firstComponent, nbrComponent);
+  SymmetrizedVector /= SymmetrizedVector.Norm();
+  return SymmetrizedVector;
+}
+
+// symmetrize a product of several uncoupled states 
+//
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// architecture = pointer to the architecture 
+// return value = symmetrized state
+
+ComplexVector BosonOnTorusShort::SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture)
+{
+  ComplexVector SymmetrizedVector (this->LargeHilbertSpaceDimension, true);
+  unsigned long firstComponent = 0;
+  unsigned long nbrComponent = inputSpaces[0]->GetHilbertSpaceDimension();
+  this->SymmetrizeU1U1StateCore (SymmetrizedVector, inputStates, inputSpaces, nbrStates, firstComponent, nbrComponent);
+  SymmetrizedVector /= SymmetrizedVector.Norm();
+  return SymmetrizedVector;
+}  
+
+// symmetrize a product of several uncoupled states 
+//
+// outputState = reference on the output state
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+// nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+
+void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& outputState, RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  ComplexVector* TmpVectors = new ComplexVector[nbrStates];
+  for (int i = 0 ; i < nbrStates; ++i)
+    {
+      TmpVectors[i] = ComplexVector(inputStates[i]);
+    }
+  ComplexVector TmpOutputState (outputState.GetLargeVectorDimension(), true); 
+  this->SymmetrizeU1U1StateCore(TmpOutputState, TmpVectors, inputSpaces, nbrStates, firstComponent, nbrComponents);
+  for (long i = 0l; i < outputState.GetLargeVectorDimension(); ++i)
+    outputState[i] = TmpOutputState[i].Re;
+  delete[] TmpVectors;
+  return; 
+}
+  
+// symmetrized a product of several uncoupled states 
+//
+// outputState = reference on the output state
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+// nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+
+void BosonOnTorusShort::SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FactorialCoefficient* Factorials = new FactorialCoefficient[nbrStates];
+  for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    {
+      BosonOnTorusShort* TmpSpace1 = inputSpaces[0];
+      this->FermionToBoson(TmpSpace1->StateDescription[i], TmpSpace1->StateKyMax[i] + TmpSpace1->NbrBosons - 1, 
+			   TmpSpace1->TemporaryState, TmpSpace1->TemporaryStateKyMax);
+      
+      for (int k = TmpSpace1->TemporaryStateKyMax + 1;  k < TmpSpace1->KyMax; ++k)
+	TmpSpace1->TemporaryState[k] = 0;
+      Complex TmpCoefficient = inputStates[0][i];
+      Factorials[0].SetToOne();
+      Factorials[0].Power2Divide(TmpSpace1->NbrBosons);
+      for (int k = 0; k <= TmpSpace1->TemporaryStateKyMax; ++k)
+	if (TmpSpace1->TemporaryState[k] > 1)
+	  Factorials[0].FactorialDivide(TmpSpace1->TemporaryState[k]);
+      BosonOnTorusShort* TmpSpace2 = inputSpaces[1];            
+      for (long j2 = 0l; j2 < TmpSpace2->LargeHilbertSpaceDimension; ++j2)
+	{
+	  this->FermionToBoson(TmpSpace2->StateDescription[j2], TmpSpace2->StateKyMax[j2] + TmpSpace2->NbrBosons - 1, 
+			       TmpSpace2->TemporaryState, TmpSpace2->TemporaryStateKyMax);
+	  if (nbrStates == 2)
+	    {	  
+	      this->TemporaryStateKyMax = TmpSpace1->TemporaryStateKyMax;
+	      if (TmpSpace2->TemporaryStateKyMax > this->TemporaryStateKyMax)
+		this->TemporaryStateKyMax = TmpSpace2->TemporaryStateKyMax;
+	      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+		this->TemporaryState[k] = 0x0ul;
+	      for (int k = 0; k <= TmpSpace1->TemporaryStateKyMax; ++k)
+		this->TemporaryState[k] += TmpSpace1->TemporaryState[k];
+	      for (int k = 0; k <= TmpSpace2->TemporaryStateKyMax; ++k)
+		this->TemporaryState[k] += TmpSpace2->TemporaryState[k];
+	      int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  Factorials[1] = Factorials[0];
+		  for (int k = 0; k <= TmpSpace2->TemporaryStateKyMax; ++k)
+		    if (TmpSpace2->TemporaryState[k] > 1)
+		      Factorials[1].FactorialDivide(TmpSpace2->TemporaryState[k]);
+		  for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+		    if (this->TemporaryState[k] > 1)
+		      Factorials[1].FactorialMultiply(this->TemporaryState[k]);	
+		  
+		  outputState[TmpPos] += sqrt(Factorials[1].GetNumericalValue()) * TmpCoefficient * inputStates[1][j2];
+		}
+	    }
+	  else
+	    {
+	      Factorials[1] = Factorials[0];
+	      for (int k = 0; k <= TmpSpace2->TemporaryStateKyMax; ++k)
+		if (TmpSpace2->TemporaryState[k] > 1)
+		  Factorials[1].FactorialDivide(TmpSpace2->TemporaryState[k]);
+	      Complex TmpCoefficient2 = TmpCoefficient * inputStates[1][j2];
+	      BosonOnTorusShort* TmpSpace3 = inputSpaces[2];            
+	      for (long j3 = 0l; j3 < TmpSpace3->LargeHilbertSpaceDimension; ++j3)
+		{
+		  this->FermionToBoson(TmpSpace3->StateDescription[j3], TmpSpace3->StateKyMax[j3] + TmpSpace3->NbrBosons - 1, 
+				       TmpSpace3->TemporaryState, TmpSpace3->TemporaryStateKyMax);
+		  if (nbrStates == 3)
+		    {	  
+		      this->TemporaryStateKyMax = TmpSpace1->TemporaryStateKyMax;
+		      if (TmpSpace2->TemporaryStateKyMax > this->TemporaryStateKyMax)
+			this->TemporaryStateKyMax = TmpSpace2->TemporaryStateKyMax;
+		      if (TmpSpace3->TemporaryStateKyMax > this->TemporaryStateKyMax)
+			this->TemporaryStateKyMax = TmpSpace3->TemporaryStateKyMax;
+		      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+			this->TemporaryState[k] = 0x0ul;
+		      for (int k = 0; k <= TmpSpace1->TemporaryStateKyMax; ++k)
+			this->TemporaryState[k] += TmpSpace1->TemporaryState[k];
+		      for (int k = 0; k <= TmpSpace2->TemporaryStateKyMax; ++k)
+			this->TemporaryState[k] += TmpSpace2->TemporaryState[k];
+		      for (int k = 0; k <= TmpSpace3->TemporaryStateKyMax; ++k)
+			this->TemporaryState[k] += TmpSpace3->TemporaryState[k];
+		      int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+		      if (TmpPos < this->HilbertSpaceDimension)
+			{
+			  Factorials[2] = Factorials[1];
+			  for (int k = 0; k <= TmpSpace3->TemporaryStateKyMax; ++k)
+			    if (TmpSpace3->TemporaryState[k] > 1)
+			      Factorials[2].FactorialDivide(TmpSpace3->TemporaryState[k]);
+			  for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+			    if (this->TemporaryState[k] > 1)
+			      Factorials[2].FactorialMultiply(this->TemporaryState[k]);				  
+			  outputState[TmpPos] += sqrt(Factorials[2].GetNumericalValue()) * TmpCoefficient2 * inputStates[2][j3];
+			}
+		    }
+		  else
+		    {
+		      Factorials[2] = Factorials[1];
+		      for (int k = 0; k <= TmpSpace3->TemporaryStateKyMax; ++k)
+			if (TmpSpace3->TemporaryState[k] > 1)
+			  Factorials[1].FactorialDivide(TmpSpace3->TemporaryState[k]);
+		      Complex TmpCoefficient3 = TmpCoefficient2 * inputStates[2][j3];
+		      BosonOnTorusShort* TmpSpace4 = inputSpaces[3];            
+		      for (long j4 = 0l; j4 < TmpSpace4->LargeHilbertSpaceDimension; ++j4)
+			{
+			  this->FermionToBoson(TmpSpace4->StateDescription[j4], TmpSpace4->StateKyMax[j4] + TmpSpace4->NbrBosons - 1, 
+					       TmpSpace4->TemporaryState, TmpSpace4->TemporaryStateKyMax);
+			  if (nbrStates == 4)
+			    {	  
+			      this->TemporaryStateKyMax = TmpSpace1->TemporaryStateKyMax;
+			      if (TmpSpace2->TemporaryStateKyMax > this->TemporaryStateKyMax)
+				this->TemporaryStateKyMax = TmpSpace2->TemporaryStateKyMax;
+			      if (TmpSpace3->TemporaryStateKyMax > this->TemporaryStateKyMax)
+				this->TemporaryStateKyMax = TmpSpace3->TemporaryStateKyMax;
+			      if (TmpSpace4->TemporaryStateKyMax > this->TemporaryStateKyMax)
+				this->TemporaryStateKyMax = TmpSpace4->TemporaryStateKyMax;
+			      for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+				this->TemporaryState[k] = 0x0ul;
+			      for (int k = 0; k <= TmpSpace1->TemporaryStateKyMax; ++k)
+				this->TemporaryState[k] += TmpSpace1->TemporaryState[k];
+			      for (int k = 0; k <= TmpSpace2->TemporaryStateKyMax; ++k)
+				this->TemporaryState[k] += TmpSpace2->TemporaryState[k];
+			      for (int k = 0; k <= TmpSpace3->TemporaryStateKyMax; ++k)
+				this->TemporaryState[k] += TmpSpace3->TemporaryState[k];
+			      for (int k = 0; k <= TmpSpace4->TemporaryStateKyMax; ++k)
+				this->TemporaryState[k] += TmpSpace4->TemporaryState[k];
+			      int TmpPos = this->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax), this->TemporaryStateKyMax + this->NbrBosons - 1);
+			      if (TmpPos < this->HilbertSpaceDimension)
+				{
+				  Factorials[3] = Factorials[2];
+				  for (int k = 0; k <= TmpSpace4->TemporaryStateKyMax; ++k)
+				    if (TmpSpace4->TemporaryState[k] > 1)
+				      Factorials[3].FactorialDivide(TmpSpace4->TemporaryState[k]);
+				  for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
+				    if (this->TemporaryState[k] > 1)
+				      Factorials[3].FactorialMultiply(this->TemporaryState[k]);				  
+				  outputState[TmpPos] += sqrt(Factorials[3].GetNumericalValue()) * TmpCoefficient3 * inputStates[3][j4];
+				}
+			    }
+			  else
+			    {
+			      cout << "error, current code cannot symmetrized more than  states" << endl;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }  
+}
+  

@@ -42,15 +42,15 @@ using std::endl;
 //
 // particle = hilbert space associated to the particles
 // creationMomentumIndex = momentum index of the leftmost creation operator (from 0 to 2S)
-// creationSymmetryIndex = symmetry index of the leftmost creation operator (0 for up, 1 for plus)
+// creationSymmetryIndex = symmetry index of the leftmost creation operator (0 for down, 1 for up)
 // annihilationMomentumIndex = momentum index of the leftmost annihilation operator (from 0 to 2S)
-// annihilationSymmetryIndex = symmetry index of the leftmost annihilation operator (0 for up, 1 for plus)
+// annihilationSymmetryIndex = symmetry index of the leftmost annihilation operator (0 for down, 1 for up)
 
 ParticleOnSphereWithSpinDensityOperator::ParticleOnSphereWithSpinDensityOperator(ParticleOnSphereWithSpin* particle, 
 										 int creationMomentumIndex, int creationSymmetryIndex,
 										 int annihilationMomentumIndex, int annihilationSymmetryIndex)
 {
-  this->Particle= particle;
+  this->Particle = (ParticleOnSphereWithSpin*) (particle->Clone());
   this->CreationMomentumIndex = creationMomentumIndex;
   this->CreationSymmetryIndex = creationSymmetryIndex;
   this->AnnihilationMomentumIndex = annihilationMomentumIndex;
@@ -70,7 +70,7 @@ ParticleOnSphereWithSpinDensityOperator::~ParticleOnSphereWithSpinDensityOperato
 
 AbstractOperator* ParticleOnSphereWithSpinDensityOperator::Clone ()
 {
-  return 0;
+  return new ParticleOnSphereWithSpinDensityOperator(*this);
 }
 
 // set Hilbert space
@@ -119,21 +119,41 @@ Complex ParticleOnSphereWithSpinDensityOperator::PartialMatrixElement (RealVecto
     {
     case 0 :
       {
-	for (int i = (int) firstComponent; i < Dim; ++i)
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
 	  {
-	    int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
-	    if (Index != FullDim)
-	      Element += V1[Index] * V2[i] * Coefficient;      
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != FullDim)
+		  Element += V1[Index] * V2[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		Element += V1[i] * V2[i] * this->Particle->AddAd(i, this->CreationMomentumIndex);
+	      }
 	  }
       }
       break;
     case 3 :
       {
-	for (int i = (int) firstComponent; i < Dim; ++i)
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
 	  {
-	    int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
-	    if (Index != FullDim)
-	      Element += V1[Index] * V2[i] * Coefficient;      
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != FullDim)
+		  Element += V1[Index] * V2[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		Element += V1[i] * V2[i] * this->Particle->AduAu(i, this->CreationMomentumIndex);
+	      }
 	  }
       }
       break;
@@ -181,21 +201,204 @@ RealVector& ParticleOnSphereWithSpinDensityOperator::LowLevelAddMultiply(RealVec
     {
     case 0 :
       {
-	for (int i = firstComponent; i < Last; ++i)
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
 	  {
-	    int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
-	    if (Index != Dim)
-	      vDestination[Index] += vSource[i] * Coefficient;      
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += vSource[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		vDestination[i] += vSource[i] * this->Particle->AddAd(i, this->CreationMomentumIndex);      
+	      }
 	  }
       }
       break;
     case 3 :
       {
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += vSource[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		vDestination[i] += vSource[i] * this->Particle->AduAu(i, this->CreationMomentumIndex);      
+	      }
+	  }
+	break;
+      }
+    case 1 :
+      {
 	for (int i = firstComponent; i < Last; ++i)
 	  {
-	    int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+	    int Index = this->Particle->AddAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
 	    if (Index != Dim)
 	      vDestination[Index] += vSource[i] * Coefficient;      
+	  }
+ 	break;
+     }
+    case 2 :
+      {
+	for (int i = firstComponent; i < Last; ++i)
+	  {
+	    int Index = this->Particle->AduAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+	    if (Index != Dim)
+	      vDestination[Index] += vSource[i] * Coefficient;      
+	  }
+	break;
+      }
+    }
+  return vDestination;
+}
+
+// evaluate part of the matrix element, within a given of indices
+//
+// V1 = vector to left multiply with current matrix
+// V2 = vector to right multiply with current matrix
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = corresponding matrix element
+
+Complex ParticleOnSphereWithSpinDensityOperator::PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent)
+{
+  int Dim = (int) (firstComponent + nbrComponent);
+  int FullDim = this->Particle->GetHilbertSpaceDimension();
+  double Coefficient = 0.0;
+  Complex Element = 0.0;
+  int SymmetryIndex = (this->CreationSymmetryIndex << 1) | this->AnnihilationSymmetryIndex;
+  switch (SymmetryIndex)
+    {
+    case 0 :
+      {
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != FullDim)
+		  Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		Element += Conj(V1[i]) * V2[i] * this->Particle->AddAd(i, this->CreationMomentumIndex);
+	      }
+	  }
+      }
+      break;
+    case 3 :
+      {
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != FullDim)
+		  Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		Element += Conj(V1[i]) * V2[i] * this->Particle->AduAu(i, this->CreationMomentumIndex);
+	      }
+	  }
+      }
+      break;
+    case 1 :
+      {
+	for (int i = (int) firstComponent; i < Dim; ++i)
+	  {
+	    int Index = this->Particle->AddAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+	    if (Index != FullDim)
+	      Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	  }
+      }
+      break;
+    case 2 :
+      {
+	for (int i = (int) firstComponent; i < Dim; ++i)
+	  {
+	    int Index = this->Particle->AduAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+	    if (Index != FullDim)
+	      Element += Conj(V1[Index]) * V2[i] * Coefficient;      
+	  }
+      }
+      break;
+   }
+  return Complex(Element);
+}
+  
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+ComplexVector& ParticleOnSphereWithSpinDensityOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									    int firstComponent, int nbrComponent)
+{
+  int Last = firstComponent + nbrComponent;;
+  int Dim = this->Particle->GetHilbertSpaceDimension();
+  double Coefficient = 0.0;
+  int SymmetryIndex = (this->CreationSymmetryIndex << 1) | this->AnnihilationSymmetryIndex;
+  switch (SymmetryIndex)
+    {
+    case 0 :
+      {
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AddAd(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += vSource[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		vDestination[i] += vSource[i] * this->Particle->AddAd(i, this->CreationMomentumIndex);      
+	      }
+	  }
+      }
+      break;
+    case 3 :
+      {
+	if (this->CreationMomentumIndex != this->AnnihilationMomentumIndex)
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAu(i, this->CreationMomentumIndex, this->AnnihilationMomentumIndex, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += vSource[i] * Coefficient;      
+	      }
+	  }
+	else
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		vDestination[i] += vSource[i] * this->Particle->AduAu(i, this->CreationMomentumIndex);      
+	      }
 	  }
 	break;
       }

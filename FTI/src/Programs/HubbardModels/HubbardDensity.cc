@@ -19,7 +19,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 
-#include "Operator/ParticleOnSphereWithSpinSuperconductorOrderParameterOperator.h"
+#include "Operator/ParticleOnSphereWithSpinDensityOperator.h"
 
 
 #include <iostream>
@@ -36,16 +36,17 @@ using std::ios;
 using std::ofstream;
 
 
-// Diagionalize the superconductor order parameter matrix
+// Diagionalize the density matrix
 //
-// orderParameter = reference to the superconductor order parameter matrix
+// density = reference to the density matrix
 // output = reference on the output stream
-void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderParameter, ostream& output);
+// return value = sum of the eigenvalues (or just the sqrt if density has dimension one)
+Complex HubbardDensityMatrixDiagonalize(ComplexMatrix& density, ostream& output);
 
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("HubbardSuperconductorOrderParameter" , "0.01");
+  OptionManager Manager ("HubbardDensity" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
@@ -59,8 +60,9 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleStringOption  ('\n', "left-state", "name of the file corresponding to the state |Psi_L> (the order parameter being <Psi_L|c^+c^+|Psi_R>");
-  (*SystemGroup) += new SingleStringOption  ('\n', "right-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
+  (*SystemGroup) += new SingleStringOption  ('\n', "left-state", "name of the file corresponding to the state |Psi_L> (the order parameter being <Psi_L|c^+c|Psi_R>");
+  (*SystemGroup) += new SingleStringOption  ('\n', "right-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c|Psi_R>");
+  (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-leftstates", "single column file describing a set of degenerate left states");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-rightstates", "single column file describing a set of degenerate right states");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
@@ -68,7 +70,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type HubbardSuperconductorOrderParameter -h" << endl;
+      cout << "see man page for option syntax or type HubbardDensity -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
   int NbrLeftStates = 0;
   if ((Manager.GetString("left-state") == 0) && (Manager.GetString("degenerate-leftstates") == 0))
     {
-      cout << "error, a left state file should be provided. See man page for option syntax or type HubbardSuperconductorOrderParameter -h" << endl;
+      cout << "error, a left state file should be provided. See man page for option syntax or type HubbardDensity -h" << endl;
       return -1;
     }
   if (Manager.GetString("left-state") != 0)
@@ -124,7 +126,7 @@ int main(int argc, char** argv)
   int NbrRightStates = 0;
   if ((Manager.GetString("right-state") == 0) && (Manager.GetString("degenerate-rightstates") == 0))
     {
-      cout << "error, a right state file should be provided. See man page for option syntax or type HubbardSuperconductorOrderParameter -h" << endl;
+      cout << "error, a right state file should be provided. See man page for option syntax or type HubbardDensity -h" << endl;
       return -1;
     }
   if (Manager.GetString("right-state") != 0)
@@ -162,9 +164,9 @@ int main(int argc, char** argv)
       cout << "error, left and right states don't have the same number of sites" << endl;
     }
 
-  if (LeftNbrParticles != (RightNbrParticles + 2))
+  if (LeftNbrParticles != RightNbrParticles)
     {
-      cout << "error, left and right states don't have the proper number of particles" << endl;
+      cout << "error, left and right states don't have the same number of particles" << endl;
     }
 
   ComplexVector* LeftStates = new ComplexVector[NbrLeftStates];
@@ -203,22 +205,22 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  ParticleOnSphereWithSpin* LeftSpace = 0;
+  ParticleOnSphereWithSpin* Space = 0;
   if (LeftStatistics == true)
     {
       if (LeftGutzwillerFlag == false)
-	LeftSpace = new FermionOnLatticeWithSpinRealSpace (LeftNbrParticles, LeftNbrSites);
+	Space = new FermionOnLatticeWithSpinRealSpace (LeftNbrParticles, LeftNbrSites);
       else
-	LeftSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (LeftNbrParticles, LeftNbrSites);
+	Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (LeftNbrParticles, LeftNbrSites);
     }
   else
     {
       cout << "not available for bosons" << endl;
       return -1;
     }
-  if (LeftSpace->GetHilbertSpaceDimension() != LeftStates[0].GetVectorDimension())
+  if (Space->GetHilbertSpaceDimension() != LeftStates[0].GetVectorDimension())
     {
-      cout << "error, " << Manager.GetString("left-state")  << " has a wrong dimension (" <<LeftStates[0].GetVectorDimension() << ", should be " << LeftSpace->GetHilbertSpaceDimension() << ")" << endl;
+      cout << "error, " << Manager.GetString("left-state")  << " has a wrong dimension (" <<LeftStates[0].GetVectorDimension() << ", should be " << Space->GetHilbertSpaceDimension() << ")" << endl;
       return -1;
     }
   
@@ -260,27 +262,6 @@ int main(int argc, char** argv)
 	}
     }
 
-  ParticleOnSphereWithSpin* RightSpace = 0;
-  if (RightStatistics == true)
-    {
-      if (RightGutzwillerFlag == false)
-	RightSpace = new FermionOnLatticeWithSpinRealSpace (RightNbrParticles, RightNbrSites);
-      else
-	RightSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (RightNbrParticles, RightNbrSites);
-    }
-  else
-    {
-      cout << "not available for bosons" << endl;
-      return -1;
-    }
-  if (RightSpace->GetHilbertSpaceDimension() != RightStates[0].GetVectorDimension())
-    {
-      cout << "error, " << Manager.GetString("right-state")  << " has a wrong dimension (" << RightStates[0].GetVectorDimension() << ", should be " << RightSpace->GetHilbertSpaceDimension() << ")" << endl;
-      return -1;
-    }
-
-  RightSpace->SetTargetSpace(LeftSpace);
-    
   ofstream File;
   if (Manager.GetString("output-file") != 0)
     File.open(Manager.GetString("output-file"), ios::binary | ios::out);
@@ -288,7 +269,7 @@ int main(int argc, char** argv)
     {
       if (Manager.GetString("left-state") != 0)
 	{
-	  char* TmpFileName = ReplaceExtensionToFileName(Manager.GetString("left-state"), "vec", "orderparam.dat");
+	  char* TmpFileName = ReplaceExtensionToFileName(Manager.GetString("left-state"), "vec", "density.dat");
 	  if (TmpFileName == 0)
 	    {
 	      cout << "no vec extension was find in " << Manager.GetString("left-state") << " file name" << endl;
@@ -305,7 +286,7 @@ int main(int argc, char** argv)
 	      DegenerateFile.DumpErrors(cout);
 	      return -1;
 	    }
-	  char* TmpFileName = ReplaceExtensionToFileName(DegenerateFile(0, 0), "vec", "orderparam.dat");
+	  char* TmpFileName = ReplaceExtensionToFileName(DegenerateFile(0, 0), "vec", "density.dat");
 	  if (TmpFileName == 0)
 	    {
 	      cout << "no vec extension was find in " << DegenerateFile(0, 0) << " file name" << endl;
@@ -320,51 +301,24 @@ int main(int argc, char** argv)
   cout.precision(14);
   if ((NbrLeftStates == 1) && (NbrRightStates == 1))
     {
-      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
-	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2 |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>| Arg(<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>)" << endl;
+      File << "# <Psi_L| c^+_{i,sigma} c_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c_{j,sigma'} |Psi_R>|^2 |<Psi_L| c^+_{i,sigma} c_{j,sigma'} |Psi_R>| Arg(<Psi_L| c^+_{i,sigma} c_{j,sigma'} |Psi_R>)" << endl;
     }
   else
     {
-      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
-	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
+      File << "# <Psi_L| c^+_{i,sigma} c_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c_{j,sigma'} |Psi_R>|^2" << endl;
     }
   double NormalizationFactor = 1.0 / sqrt((double) (NbrLeftStates * NbrRightStates));
+
+  Complex SumUpUp = 0.0;
+  Complex SumDownDown = 0.0;
+  Complex Tmp;
   for (int i = 0; i < RightNbrSites; ++i)
     {
-      int Index = i;
-      if (RightStatistics == true)
+      for (int j = 0; j < RightNbrSites; ++j)
 	{
-	  if ((RightGutzwillerFlag == false) && (LeftGutzwillerFlag == false))
-	    {
-	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUpDiag (RightSpace, i, 0, i, 1);
-	      ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
-	      for (int k = 0; k < NbrLeftStates; ++k)
-		for (int l = 0; l < NbrRightStates; ++l)
-		  {
-		    OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		    OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-		    TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
-		  }
-	      File << i << " " << i << " 0 1";
-	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
-	      File << endl;
-	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDownDiag (RightSpace, i, 1, i, 0);
-	      for (int k = 0; k < NbrLeftStates; ++k)
-		for (int l = 0; l < NbrRightStates; ++l)
-		  {
-		    OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		    OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
-		    TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
-		  }
-	      File << i << " " << i << " 1 0";
-	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
-	      File << endl;
-	    }
-	  ++Index;
-	}
-      for (int j = Index; j < RightNbrSites; ++j)
-	{
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownDown (RightSpace, i, 0, j, 0);
+	  ParticleOnSphereWithSpinDensityOperator OperatorDownDown (Space, i, 0, j, 0);
 	  ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
 	  for (int k = 0; k < NbrLeftStates; ++k)
 	    for (int l = 0; l < NbrRightStates; ++l)
@@ -374,9 +328,11 @@ int main(int argc, char** argv)
 		TmpMatrix[l][k] = OperationDownDown.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 0 0";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  Tmp = HubbardDensityMatrixDiagonalize(TmpMatrix, File);
+	  if (i == j)
+	    SumDownDown += Tmp;
 	  File << endl;
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 0, j, 1);
+	  ParticleOnSphereWithSpinDensityOperator OperatorDownUp (Space, i, 0, j, 1);
 	  for (int k = 0; k < NbrLeftStates; ++k)
 	    for (int l = 0; l < NbrRightStates; ++l)
 	      {
@@ -385,9 +341,9 @@ int main(int argc, char** argv)
 		TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 0 1";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  HubbardDensityMatrixDiagonalize(TmpMatrix, File);
 	  File << endl;
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDown (RightSpace, i, 1, j, 0);
+	  ParticleOnSphereWithSpinDensityOperator OperatorUpDown (Space, i, 1, j, 0);
 	  for (int k = 0; k < NbrLeftStates; ++k)
 	    for (int l = 0; l < NbrRightStates; ++l)
 	      {
@@ -396,9 +352,9 @@ int main(int argc, char** argv)
 		TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 1 0";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  HubbardDensityMatrixDiagonalize(TmpMatrix, File);
 	  File << endl;
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpUp (RightSpace, i, 1, j, 1);
+	  ParticleOnSphereWithSpinDensityOperator OperatorUpUp (Space, i, 1, j, 1);
 	  for (int k = 0; k < NbrLeftStates; ++k)
 	    for (int l = 0; l < NbrRightStates; ++l)
 	      {
@@ -407,30 +363,36 @@ int main(int argc, char** argv)
 		TmpMatrix[l][k] = OperationUpUp.GetScalar() * NormalizationFactor;
 	      }
 	  File << i << " " << j << " 1 1";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	  Tmp = HubbardDensityMatrixDiagonalize(TmpMatrix, File);
+	  if (i == j)
+	    SumUpUp += Tmp;
 	  File << endl;
 	}
     }
   File.close();
-
+  cout << "N_up = " << SumUpUp << endl;
+  cout << "N_down = " << SumDownDown << endl;
+  cout << "N = " << (SumDownDown + SumUpUp) << endl;
   return 0;
 }
 
-// Diagionalize the superconductor order parameter matrix
+// Diagionalize the density matrix
 //
-// orderParameter = reference to the superconductor order parameter matrix
+// density = reference to the density matrix
 // output = reference on the output stream
+// return value = sum of the eigenvalues (or just the sqrt if density has dimension one)
 
-void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderParameter, ostream& output)
+Complex HubbardDensityMatrixDiagonalize(ComplexMatrix& density, ostream& output)
 {
-  if ((orderParameter.GetNbrRow() > 1) || (orderParameter.GetNbrColumn() > 1))
+  Complex Tmp = 0.0;
+  if ((density.GetNbrRow() > 1) || (density.GetNbrColumn() > 1))
     {
       ComplexMatrix TmpConjugate;
-      TmpConjugate.Copy(orderParameter);
+      TmpConjugate.Copy(density);
       TmpConjugate.HermitianTranspose();
-      if (orderParameter.GetNbrRow() >= orderParameter.GetNbrColumn())
+      if (density.GetNbrRow() >= density.GetNbrColumn())
 	{      
-	  HermitianMatrix TmpMatrix (TmpConjugate * orderParameter);
+	  HermitianMatrix TmpMatrix (TmpConjugate * density);
 	  RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
 #ifdef __LAPACK__
 	  TmpMatrix.LapackDiagonalize(TmpDiag);
@@ -439,11 +401,14 @@ void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderPa
 #endif		  
 	  TmpDiag.SortMatrixDownOrder();
 	  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
-	    output << " " << TmpDiag[i];
+	    {
+	      output << " " << TmpDiag[i];
+	      Tmp +=  TmpDiag[i];
+	    }
 	}
       else
 	{
-	  HermitianMatrix TmpMatrix2 (orderParameter * TmpConjugate);
+	  HermitianMatrix TmpMatrix2 (density * TmpConjugate);
 	  RealDiagonalMatrix TmpDiag2 (TmpMatrix2.GetNbrRow());
 #ifdef __LAPACK__
 	  TmpMatrix2.LapackDiagonalize(TmpDiag2);
@@ -452,11 +417,16 @@ void HubbardSuperconductorOrderParameterMatrixDiagonalize(ComplexMatrix& orderPa
 #endif		  
 	  TmpDiag2.SortMatrixDownOrder();
 	  for (int i = 0; i < TmpDiag2.GetNbrRow(); ++i)
-	    output << " " << TmpDiag2[i];
+	    {
+	      output << " " << TmpDiag2[i];
+	      Tmp +=  TmpDiag2[i];
+	    }
 	}
     }
   else
     {
-      output << " " << SqrNorm(orderParameter[0][0]) << " " << Norm(orderParameter[0][0]) << " " << Arg(orderParameter[0][0]);
+      output << " " << SqrNorm(density[0][0]) << " " << Norm(density[0][0]) << " " << Arg(density[0][0]);
+      Tmp =  density[0][0];
     }
+  return Tmp;
 }

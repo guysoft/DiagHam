@@ -318,6 +318,43 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = symmetrized state
   virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
   
+  // symmetrized a product of several uncoupled states 
+  //
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // architecture = pointer to the architecture 
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a product of several uncoupled states 
+  //
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // architecture = pointer to the architecture 
+  // return value = symmetrized state
+  virtual ComplexVector SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a product of several uncoupled states 
+  //
+  // outputState = reference on the output state
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+  virtual void SymmetrizeU1U1StateCore (RealVector& outputState, RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrized a product of several uncoupled states 
+  //
+  // outputState = reference on the output state
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
   
   // symmetrize a vector with even number of orbitals 
   //
