@@ -2,6 +2,8 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -40,7 +42,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "xperiodic-boundary", "use periodic boundary conditions in the x direction");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-momentum", "momentum along the x direction", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the x direction", 4);
-//   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "consider particles with SU(2) spin");
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1", 1);
   
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   
@@ -91,13 +94,27 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  if (Manager.GetBoolean("gutzwiller") == false)
+	  if (Manager.GetBoolean("szsymmetrized-basis") == false)
 	    {
-	      Space = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+	      if (Manager.GetBoolean("gutzwiller") == false)
+		{
+		  Space = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+		}
+	      else
+		{
+		  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+		}
 	    }
 	  else
 	    {
-	      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+	      bool MinusParitySector = true;
+	      if (Manager.GetInteger("sz-parity") == 1)
+		MinusParitySector = false;
+	      if (Manager.GetBoolean("gutzwiller") == false)
+		Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation (NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"), MinusParitySector);
+	      else
+		Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), 
+														Manager.GetInteger("x-periodicity"),MinusParitySector);
 	    }
 	}
     }

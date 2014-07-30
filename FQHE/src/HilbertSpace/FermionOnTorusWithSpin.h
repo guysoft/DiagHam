@@ -42,6 +42,7 @@ class FermionOnTorusWithSpin :  public FermionOnSphereWithSpin
 {
 
   friend class FermionOnTorusWithSpinAndMagneticTranslations;
+  friend class FermionOnTorusWithSpinSzSymmetryAndMagneticTranslations;
 
  public:
 
