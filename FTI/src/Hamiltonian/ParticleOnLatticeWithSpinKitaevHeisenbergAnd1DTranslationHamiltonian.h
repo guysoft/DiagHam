@@ -1064,7 +1064,6 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
     }
   else
     {
-      int AbsoluteIndex = index + this->PrecalculationShift;
       for (int j = 0; j < this->NbrIntraSectorSums; ++j)
 	{
 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
@@ -1080,9 +1079,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1101,9 +1100,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1122,9 +1121,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1147,9 +1146,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1168,9 +1167,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1189,9 +1188,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1217,9 +1216,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1238,9 +1237,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1259,9 +1258,9 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      if (Index <= index)
 			{
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
 			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslations] * (*TmpInteractionFactor);
@@ -1941,7 +1940,6 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
     }
   else
     {
-      int AbsoluteIndex = index + this->PrecalculationShift;
       if ((this->OneBodyGenericInteractionFactorsdowndown != 0) && (this->OneBodyGenericInteractionFactorsupup != 0))
 	{
 	  for (int j = 0; j < this->NbrSite; ++j)
@@ -1951,11 +1949,11 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  int j2 = this->MapNearestNeighborBonds[j][k];
 		  if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AduAu(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      Index = particles->AduAu(index, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= index)
 			{
 			  indexArray[position] = Index;
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupup[j][k];
 			    }
@@ -1965,11 +1963,11 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 			    }
 			  ++position;
 			}
-		      Index = particles->AddAd(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      Index = particles->AddAd(index, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= index)
 			{
 			  indexArray[position] = Index;
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsdowndown[j][k];
 			    }
@@ -1994,11 +1992,11 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		      int j2 = this->MapNearestNeighborBonds[j][k];
 		      if (j2 < this->NbrSite)
 			{
-			  Index = particles->AduAu(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
-			  if (Index <= AbsoluteIndex)
+			  Index = particles->AduAu(index, j, j2, Coefficient, NbrTranslations);
+			  if (Index <= index)
 			    {
 			      indexArray[position] = Index;
-			      if (Index == AbsoluteIndex)
+			      if (Index == index)
 				{
 				  coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupup[j][k];
 				}
@@ -2023,11 +2021,11 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 			  int j2 = this->MapNearestNeighborBonds[j][k];
 			  if (j2 < this->NbrSite)
 			    {
-			      Index = particles->AddAd(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
-			      if (Index <= AbsoluteIndex)
+			      Index = particles->AddAd(index, j, j2, Coefficient, NbrTranslations);
+			      if (Index <= index)
 				{
 				  indexArray[position] = Index;
-				  if (Index == AbsoluteIndex)
+				  if (Index == index)
 				    {
 				      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsdowndown[j][k];
 				    }
@@ -2052,11 +2050,11 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 		  int j2 = this->MapNearestNeighborBonds[j][k];
 		  if (j2 < this->NbrSite)
 		    {
-		      Index = particles->AddAu(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      Index = particles->AddAu(index, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= index)
 			{
 			  indexArray[position] = Index;
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]);
 			    }
@@ -2066,11 +2064,11 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian
 			    }
 			  ++position;
 			}
-		      Index = particles->AduAd(AbsoluteIndex, j, j2, Coefficient, NbrTranslations);
-		      if (Index <= AbsoluteIndex)
+		      Index = particles->AduAd(index, j, j2, Coefficient, NbrTranslations);
+		      if (Index <= index)
 			{
 			  indexArray[position] = Index;
-			  if (Index == AbsoluteIndex)
+			  if (Index == index)
 			    {
 			      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslations] * this->OneBodyGenericInteractionFactorsupdown[j][k];
 			    }
