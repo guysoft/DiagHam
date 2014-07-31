@@ -1,11 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <unistd.h>
-#include <math.h>
-#include <stdlib.h>
-
-
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
@@ -17,6 +9,12 @@
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <unistd.h>
+#include <math.h>
+#include <stdlib.h>
 
 using std::cout;
 using std::ifstream;

@@ -29,12 +29,11 @@
 
 #include "config.h"
 
-#include <iostream>
-
 #ifdef __MPI__
 #include <mpi.h>
 #endif
 
+#include <iostream>
 
 using std::ostream;
 

@@ -30,12 +30,13 @@
 #ifndef TRIANGULARWELLEIGENFUNCTION_H
 #define TRIANGULARWELLEIGENFUNCTION_H
 
+#include "config.h"
+
 //#include <cstring>
 //#include <stdio.h>
 //#include <cstdlib>
 #include <iostream>
 
-#include "config.h"
 #include <cmath>
 #ifdef __GSL__
 #include <gsl/gsl_sf_airy.h>

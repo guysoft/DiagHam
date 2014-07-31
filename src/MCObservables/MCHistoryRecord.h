@@ -31,6 +31,8 @@
 #ifndef MCHISTORYRECORD_H
 #define MCHISTORYRECORD_H
 
+#include "config.h"
+
 #include <fstream>
 #include "AbstractMCHistoryData.h"
 #include "AbstractMCHistoryRecord.h"

@@ -1,21 +1,14 @@
+#include "Tools/FQHEFiles/FQHEOnDiskFileTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
+#include "Options/Options.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <unistd.h>
 #include <math.h>
 #include <stdlib.h>
-
-
-#include "Tools/FQHEFiles/FQHEOnDiskFileTools.h"
-#include "GeneralTools/MultiColumnASCIIFile.h"
-
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleDoubleOption.h"
-#include "Options/SingleStringOption.h"
 
 
 using std::cout;

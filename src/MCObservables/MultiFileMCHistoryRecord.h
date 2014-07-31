@@ -31,6 +31,8 @@
 #ifndef MULTIFILEMCHISTORYRECORD_H
 #define MULTIFILEMCHISTORYRECORD_H
 
+#include "config.h"
+
 #include <fstream>
 #include "AbstractMCHistoryData.h"
 #include "AbstractMCHistoryRecord.h"

@@ -1,9 +1,3 @@
-#include <iostream>
-#include <stdlib.h>
-#include <math.h>
-#include <fstream>
-#include <iomanip>
-
 #include "Architecture/ArchitectureManager.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
@@ -31,6 +25,12 @@
 #include "Tools/FTITightBinding/TightBindingModelPyrochloreSlabLattice.h"
 #include "Tools/FTITightBinding/TightBindingModelChern3TwoOrbitalTriangularLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+
+#include <iostream>
+#include <stdlib.h>
+#include <math.h>
+#include <fstream>
+#include <iomanip>
 
 using std::cout;
 using std::endl;

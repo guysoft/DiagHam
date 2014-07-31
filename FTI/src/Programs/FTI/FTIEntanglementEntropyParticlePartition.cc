@@ -3,12 +3,7 @@
 #include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/ComplexMatrix.h"
 
-#include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleStringOption.h"
+#include "Options/Options.h"
 
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
@@ -65,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-na", "maximum size of the particles whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-subbands", "number of subbands", 1);
+  (*SystemGroup) += new MultipleIntegerOption  ('\n', "enhance", "symmetry-enhanced unit cell with respect to file-name (for OFL with symmetry model)", ',', ',', "1,1");
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume that the FTI states are made of two decoupled FCI copies");
   (*SystemGroup) += new BooleanOption  ('\n', "3d", "consider a 3d model instead of a 2d model");
   (*SystemGroup) += new BooleanOption  ('\n', "Wannier", "Wannier basis");
@@ -232,6 +228,17 @@ int main(int argc, char** argv)
 // 	  cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << NbrSiteZ << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalKz[i]  << endl;
 	}
     }
+
+  // decide whether to enhance the representation by symmetry factors
+  int l; 
+  int *SymmetryFactors = Manager.GetIntegers("enhance",l);
+  if (l!=2)
+    {
+      cout << "Error: symmetry factors need to be given for the x- and y-direction using --enhance sx,sy"<<endl;
+      exit(1);
+    }
+  NbrSiteX *= SymmetryFactors[0];
+  NbrSiteY *= SymmetryFactors[1];
 
   GroundStates = new ComplexVector [NbrSpaces];  
   int TotalNbrSites;

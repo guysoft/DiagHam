@@ -31,6 +31,8 @@
 #ifndef GROUPEDPERMUTATIONS_H
 #define GROUPEDPERMUTATIONS_H
 
+#include "config.h"
+
 #include "GeneralTools/SmallIntegerArray.h"
 #include "GeneralTools/OrderedList.h"
 #include "GeneralTools/UnsignedIntegerTools.h"

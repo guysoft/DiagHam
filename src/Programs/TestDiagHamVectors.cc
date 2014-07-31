@@ -26,11 +26,11 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "config.h"
+
 #include <iostream>
 using std::cout;
 using std::endl;
-
-#include "config.h"
 
 #include "Vector/RealVector.h";
 #include "Vector/RealPtrVector.h";

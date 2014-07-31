@@ -243,7 +243,7 @@ void ParticleOnLatticeFourBandHofstadterHamiltonian::EvaluateInteractionFactors(
 	    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndexSafe(kx1+kx2, ky1+ky2);
 	    this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
 	    this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
-	    ++this->NbrInterSectorIndicesPerSum[TmpSum];    
+	    ++this->NbrInterSectorIndicesPerSum[TmpSum];
 	  }
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)

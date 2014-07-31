@@ -122,17 +122,17 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
   this->InteractionFactorsdowndown = 0;
   this->InteractionFactorsupdown = 0;
 
-  int NbrSublattices = TightBindingModel->GetNbrBands();
+  int NbrSubLattices = TightBindingModel->GetNbrBands();
 
-  if (NbrSublattices<2)
+  if (NbrSubLattices<2)
     {
       cout << "Hofstadter model has insufficient number of bands"<<endl;
       exit(1);
     }
   if (LowerBandIndex<0)
     LowerBandIndex=0;
-  if (LowerBandIndex>NbrSublattices-2)
-    LowerBandIndex=NbrSublattices-2;
+  if (LowerBandIndex>NbrSubLattices-2)
+    LowerBandIndex=NbrSubLattices-2;
 
   cout << "LowerBandIndex="<<LowerBandIndex<<endl;
     
@@ -193,6 +193,24 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 	    this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 	    ++this->NbrInterSectorIndicesPerSum[TmpSum];    
 	  }
+
+  // build array of InteractionFactors to simplify the creation of matrix elements:
+
+  int NbrInternalIndices = 2;
+  Complex ****** InteractionFactorsSigma = new Complex***** [NbrInternalIndices];
+  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+    {
+      InteractionFactorsSigma[sigma3] = new Complex****  [NbrInternalIndices];
+      for (int sigma4 = sigma3; sigma4 < NbrInternalIndices; ++sigma4)
+	{
+	  InteractionFactorsSigma[sigma3][sigma4] = new Complex***[NbrInternalIndices];
+	  for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
+	    {
+	      InteractionFactorsSigma[sigma3][sigma4][sigma1] = new Complex**[NbrInternalIndices];
+	    }
+	}
+    }
+
   
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
@@ -423,40 +441,6 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 	    }
 	}
       //  updown downdown coefficient
-      this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupdowndowndown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-	    {
-	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      int kx3,ky3;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-	      int kx4,ky4;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
-		{
-		  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-		  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-		  int kx1,ky1;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-		  int kx2,ky2;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-
-		  Tmp = this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 1, 1, 0, 1, 1, 0) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx3, ky3);
-		  Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 1, 1, 0, 1, 1, 0) * this->ComputeTwoBodyMatrixElementAB(kx2, ky2, kx4, ky4);
-		  Tmp -= this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 0, 1, 1, 0, 1, 1, 0) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx3, ky3);
-		  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 0, 1, 1, 0, 1, 1, 0) * this->ComputeTwoBodyMatrixElementAB(kx1, ky1, kx4, ky4);
-		  
-                  this->InteractionFactorsupdowndowndown[i][Index] = -2.0 * FactorU * Tmp;
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
 
       //  upup updown coefficient
       this->InteractionFactorsupupupdown = new Complex* [this->NbrInterSectorSums];
@@ -610,405 +594,196 @@ void ParticleOnLatticeTwoBandHofstadterHamiltonian::EvaluateInteractionFactors()
 	FactorU *= this->UPotential;
       //double FactorV = this->VPotential * 0.5 / ((double) (this->NbrSiteX * this->NbrSiteY));
       
-      Complex Tmp;
+      Complex* TmpInteractionFactor;
+      int* TmpIndices;
+      int* TmpIndices2;
+      for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
+	{
+	  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+	    {
+	      InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1] = new Complex*[this->NbrIntraSectorSums];
+	      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		{
+		  InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
+		  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		  TmpIndices = this->IntraSectorIndicesPerSum[j];
+		  for (int i1 = 0; i1 < Lim; i1 += 2)
+		    {
+		      TmpInteractionFactor = &(InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma1][j][(i1 * Lim) >> 2]);
+		      int Index1 = TmpIndices[i1];
+		      int Index2 = TmpIndices[i1 + 1];
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Complex Tmp = 0.0;
+			  int Index3 = TmpIndices[i2];
+			  int Index4 = TmpIndices[i2 + 1];
+			  for (int s = 0; s < NbrSubLattices; ++s)
+			    {
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma3, sigma1, sigma1, s, s, s, s);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma3, sigma3, sigma1, sigma1, s, s, s, s);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma1, sigma1, s, s, s, s);
+			      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma1, sigma1, s, s, s, s);
+			    }
+			  Tmp *= FactorU;
+			  if (Index1 == Index2)
+			    Tmp *= 0.5;
+			  if (Index3 == Index4)
+			    Tmp *= 0.5;
+			  (*TmpInteractionFactor) = 2.0*Tmp;
+
+			  if (this->VPotential != 0.0)		    
+			    {
+			      cout<< "VPotential yet needs to be implemented!"<<endl;
+			      exit(1);
+			    }
+			  
+			  ++TmpInteractionFactor;
+			}
+		    }
+		}
+	    }
+	  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+	    {
+	      for (int sigma4 = sigma3 + 1; sigma4 < NbrInternalIndices; ++sigma4)
+		{
+		  InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1] = new Complex*[this->NbrIntraSectorSums];
+		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		    {
+		      InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j] = new Complex [this->NbrIntraSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+		      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		      TmpIndices = this->IntraSectorIndicesPerSum[j];
+		      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+		      TmpIndices2 = this->InterSectorIndicesPerSum[j];
+		      for (int i1 = 0; i1 < Lim; i1 += 2)
+			{
+			  TmpInteractionFactor = &(InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma1][j][(i1 * Lim2) >> 2]);
+			  int Index1 = TmpIndices[i1];
+			  int Index2 = TmpIndices[i1 + 1];
+			  for (int i2 = 0; i2 < Lim2; i2 += 2)
+			    {
+			      Complex Tmp = 0.0;
+			      int Index3 = TmpIndices2[i2];
+			      int Index4 = TmpIndices2[i2 + 1];
+			      for (int s = 0; s < NbrSubLattices; ++s)
+				{
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma4, sigma1, sigma1, s, s, s, s);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma4, sigma3, sigma1, sigma1, s, s, s, s);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma1, sigma1, s, s, s, s);
+				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma1, sigma1, s, s, s, s);
+				}
+			      if (Index1 == Index2)
+				Tmp *= 0.5;
+			      Tmp *= FactorU;
+			      (*TmpInteractionFactor) = 2.0*Tmp;
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
+	    }			  
+	}
+      for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
+	{
+	  for (int sigma2 = sigma1 + 1; sigma2 < NbrInternalIndices; ++sigma2)
+	    {
+	      for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+		{
+		  InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
+		  for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+		    {
+		      InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrIntraSectorIndicesPerSum[j]];
+		      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+		      TmpIndices = this->IntraSectorIndicesPerSum[j];
+		      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+		      TmpIndices2 = this->InterSectorIndicesPerSum[j];
+		      for (int i1 = 0; i1 < Lim2; i1 += 2)
+			{
+			  TmpInteractionFactor = &(InteractionFactorsSigma[sigma3][sigma3][sigma1][sigma2][j][(i1 * Lim) >> 2]);
+			  int Index1 = TmpIndices2[i1];
+			  int Index2 = TmpIndices2[i1 + 1];
+			  for (int i2 = 0; i2 < Lim; i2 += 2)
+			    {
+			      Complex Tmp = 0.0;
+			      int Index3 = TmpIndices[i2];
+			      int Index4 = TmpIndices[i2 + 1];
+			      for (int s = 0; s < NbrSubLattices; ++s)
+				{
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma3, sigma1, sigma2, s, s, s, s);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma3, sigma3, sigma1, sigma2, s, s, s, s);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma3, sigma2, sigma1, s, s, s, s);
+ 				  Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma3, sigma3, sigma2, sigma1, s, s, s, s);
+				}
+			      if (Index3 == Index4)
+				Tmp *= 0.5;
+			      Tmp *= FactorU;
+			      (*TmpInteractionFactor) = 2.0*Tmp;
+			      ++TmpInteractionFactor;
+			    }
+			}
+		    }
+		}
+	      for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
+		{
+		  for (int sigma4 = sigma3 + 1; sigma4 < NbrInternalIndices; ++sigma4)
+		    {
+		      InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2] = new Complex*[this->NbrIntraSectorSums];
+		      for (int j = 0; j < this->NbrIntraSectorSums; ++j)
+			{
+			  InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j] = new Complex [this->NbrInterSectorIndicesPerSum[j] * this->NbrInterSectorIndicesPerSum[j]];
+// 			  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
+// 			  TmpIndices = this->IntraSectorIndicesPerSum[j];
+			  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+			  TmpIndices2 = this->InterSectorIndicesPerSum[j];
+			  for (int i1 = 0; i1 < Lim2; i1 += 2)
+			    {
+			      TmpInteractionFactor = &(InteractionFactorsSigma[sigma3][sigma4][sigma1][sigma2][j][(i1 * Lim2) >> 2]);
+			      int Index1 = TmpIndices2[i1];
+			      int Index2 = TmpIndices2[i1 + 1];
+			      for (int i2 = 0; i2 < Lim2; i2 += 2)
+				{
+				  Complex Tmp = 0.0;
+				  int Index3 = TmpIndices2[i2];
+				  int Index4 = TmpIndices2[i2 + 1];
+				  for (int s = 0; s < NbrSubLattices; ++s)
+				    {
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, sigma3, sigma4, sigma1, sigma2, s, s, s, s);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, sigma4, sigma3, sigma1, sigma2, s, s, s, s);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, sigma3, sigma4, sigma2, sigma1, s, s, s, s);
+ 				      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, sigma4, sigma3, sigma2, sigma1, s, s, s, s);
+				    }
+				  Tmp *= FactorU;
+				  (*TmpInteractionFactor) = 2.0*Tmp;
+				  ++TmpInteractionFactor;
+				}
+			    }
+			}
+		    }
+		}			  
+	    }
+	}
 
       //  upup upup coefficient
-      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupupupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1,ky1;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-	      int kx2,ky2;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-	      
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3,ky3;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-		  int kx4,ky4;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-
-		  Tmp=0.0;
-
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index3 == Index4)
-		    Tmp *= 0.5;
-		  if (Index1 == Index2)
-		    Tmp *= 0.5;
-
-		  this->InteractionFactorsupupupup[i][Index] = 2.0 * FactorU * Tmp;
-		  
-		  if (this->VPotential != 0.0)		    
-		    {
-		      cout<< "VPotential yet needs to be implemented!"<<endl;
-		      exit(1);
-		    }
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
-
+      this->InteractionFactorsupupupup = InteractionFactorsSigma[0][0][0][0];
       //  upup downdown coefficient
-      this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupupdowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1,ky1;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-	      int kx2,ky2;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3,ky3;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-		  int kx4,ky4;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index3 == Index4)
-		    Tmp *= 0.5;
-		  if (Index1 == Index2)
-		    Tmp *= 0.5;
-
-		  this->InteractionFactorsupupdowndown[i][Index] = 2.0 * FactorU * Tmp;
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
-
+      this->InteractionFactorsupupdowndown = InteractionFactorsSigma[1][1][0][0];
       //  downdown downdown coefficient
-      this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsdowndowndowndown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-
-	      int kx1,ky1;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-	      int kx2,ky2;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3,ky3;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-		  int kx4,ky4;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index3 == Index4)
-		    Tmp *= 0.5;
-		  if (Index1 == Index2)
-		    Tmp *= 0.5;
-		  
-                  this->InteractionFactorsdowndowndowndown[i][Index] = 2.0 * FactorU * Tmp;
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
-
+      this->InteractionFactorsdowndowndowndown = InteractionFactorsSigma[1][1][1][1];
       //  downdown upup coefficient
-      this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsdowndownupup[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1,ky1;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-	      int kx2,ky2;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-	      for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3,ky3;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-		  int kx4,ky4;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index3 == Index4)
-		    Tmp *= 0.5;
-		  if (Index1 == Index2)
-		    Tmp *= 0.5;
-		  
-                  this->InteractionFactorsdowndownupup[i][Index] = 2.0 * FactorU * Tmp;
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
+      this->InteractionFactorsdowndownupup = InteractionFactorsSigma[0][0][1][1];
 
       //  updown upup coefficient
-      this->InteractionFactorsupdownupup = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupdownupup[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-	    {
-	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      int kx3,ky3;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-	      int kx4,ky4;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
-		{
-		  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-		  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-		  int kx1,ky1;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-		  int kx2,ky2;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 0, 0, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index3 == Index4)
-		    Tmp *= 0.5;
-		    
-                  this->InteractionFactorsupdownupup[i][Index] = 2.0 * FactorU * Tmp;
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
+      this->InteractionFactorsupdownupup = InteractionFactorsSigma[0][1][0][0];
       //  updown downdown coefficient
-      this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->InteractionFactorsupdowndowndown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrIntraSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j2 = 0; j2 < this->NbrIntraSectorIndicesPerSum[i]; ++j2)
-	    {
-	      int Index3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
-	      int Index4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      int kx3,ky3;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-	      int kx4,ky4;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-	      for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
-		{
-		  int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-		  int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-		  int kx1,ky1;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-		  int kx2,ky2;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 0, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 0, 1, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index3 == Index4)
-		    Tmp *= 0.5;
-		  
-                  this->InteractionFactorsupdowndowndown[i][Index] = 2.0 * FactorU * Tmp;
-		  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
+      this->InteractionFactorsupdowndowndown = InteractionFactorsSigma[0][1][1][1];
 
       //  upup updown coefficient
-      this->InteractionFactorsupupupdown = new Complex* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-	{
-	  this->InteractionFactorsupupupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
-	    {
-	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      int kx3,ky3;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-	      int kx4,ky4;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-		{
-		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-		  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-		  int kx1,ky1;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
-		  int kx2,ky2;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
-
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 0, 0, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 0, 1, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 0, 0, 0, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 0, 0, 1, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index1 == Index2)
-		    Tmp *= 0.5;
-
-                  this->InteractionFactorsupupupdown[i][Index] = 2.0 * FactorU * Tmp;
-                  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
-
+      this->InteractionFactorsupupupdown = InteractionFactorsSigma[0][0][0][1];
       //  downdown updown coefficient
-      this->InteractionFactorsdowndownupdown = new Complex* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-	{
-	  this->InteractionFactorsdowndownupdown[i] = new Complex[this->NbrIntraSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
-	    {
-	      int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-	      int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-	      int kx3,ky3;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-	      int kx4,ky4;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-	      for (int j1 = 0; j1 < this->NbrIntraSectorIndicesPerSum[i]; ++j1)
-		{
-		  int Index1 = this->IntraSectorIndicesPerSum[i][j1 << 1];
-		  int Index2 = this->IntraSectorIndicesPerSum[i][(j1 << 1) + 1];
-		  int kx1,ky1;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-		  int kx2,ky2;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
+      this->InteractionFactorsdowndownupdown = InteractionFactorsSigma[1][1][0][1];
 
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 1, 1, 0, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 1, 1, 1, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 1, 0, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 1, 1, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-                  	  
-		  if (Index1 == Index2)
-		    Tmp *= 0.5;
-		  
-                  this->InteractionFactorsdowndownupdown[i][Index] = 2.0 * FactorU * Tmp;
-                  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
+      //  updown updown coefficient      
+      this->InteractionFactorsupdownupdown = InteractionFactorsSigma[0][1][0][1];
 
-
-      //  updown updown coefficient
-      this->InteractionFactorsupdownupdown = new Complex* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-	{
-	  this->InteractionFactorsupdownupdown[i] = new Complex[this->NbrInterSectorIndicesPerSum[i] * this->NbrInterSectorIndicesPerSum[i]];
-	  int Index = 0;
-	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
-	    {
-	      int Index1 = this->InterSectorIndicesPerSum[i][j1 << 1];
-	      int Index2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
-	      int kx1,ky1;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index1,kx1, ky1);
-	      int kx2,ky2;
-	      this->TightBindingModel->GetLinearizedMomentumIndex(Index2,kx2, ky2);
-	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
-		{
-		  int Index3 = this->InterSectorIndicesPerSum[i][j2 << 1];
-		  int Index4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  int kx3,ky3;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
-		  int kx4,ky4;
-		  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-
-		  Tmp=0.0;
-		  for (int s=0; s<NbrSublattices; ++s)
-		    {
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index3, Index4, 0, 1, 0, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index1, Index2, Index4, Index3, 0, 1, 1, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx2, ky2, kx4, ky4);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index3, Index4, 1, 0, 0, 1, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx3, ky3);
-		      Tmp += this->ComputeTransfomationBasisContribution(OneBodyBasis, Index2, Index1, Index4, Index3, 1, 0, 1, 0, s, s, s, s);// * this->ComputeTwoBodyMatrixElementOnSite(kx1, ky1, kx4, ky4);		  
-		    }		 		  
-		  
-                  this->InteractionFactorsupdownupdown[i][Index] = 2.0 * FactorU * Tmp;
-                  
-		  ++TotalNbrInteractionFactors;
-		  ++Index;
-		}
-	    }
-	}
     }
   
 

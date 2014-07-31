@@ -25,6 +25,8 @@
 #ifndef WEIGHTEDCOMPLEXVECTOROBSERVABLE_H
 #define WEIGHTEDCOMPLEXVECTOROBSERVABLE_H
 
+#include "config.h"
+
 #include <vector>
 #include <string>
 #include <ostream>
