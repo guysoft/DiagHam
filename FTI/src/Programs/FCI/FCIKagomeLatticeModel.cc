@@ -78,7 +78,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sitex", "number of sites along the x direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);  
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-kx", "maximum of range of x-momentum sectors (if set, --only-kx value sets minimum; negative if all kx sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-ky", "maximum of range of y-momentum sectors (if set, --only-ky value sets minimum; negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kx", "Calculate all kx subspaces", false);
+  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-ky", "Calculate all ky subspaces", false);
+
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
 
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
@@ -313,17 +318,29 @@ int main(int argc, char** argv)
 
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
+  if ((Manager.GetBoolean("redundant-kx")==false) && (fabs(Manager.GetDouble("gamma-x"))<1e-12)) // want to reduce zone, and no offset?
+    MaxKx = NbrSitesX/2;
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
       MaxKx = MinKx;
     }
+  if (Manager.GetInteger("max-kx") >= MinKx)
+    {						
+      MaxKx = Manager.GetInteger("max-kx");
+    }
   int MinKy = 0;
   int MaxKy = NbrSitesY - 1;
+  if ((Manager.GetBoolean("redundant-ky")==false) && (fabs(Manager.GetDouble("gamma-y"))<1e-12)) // want to reduce zone, and no offset?
+    MaxKy = NbrSitesY/2;
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
+    }
+  if (Manager.GetInteger("max-ky") >= MinKy)
+    {						
+      MaxKy = Manager.GetInteger("max-ky");
     }
   
   Abstract2DTightBindingModel* TightBindingModel;

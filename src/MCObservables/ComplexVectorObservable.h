@@ -25,6 +25,8 @@
 #ifndef COMPLEXVECTOROBSERVABLE_H
 #define COMPLEXVECTOROBSERVABLE_H
 
+#include "config.h"
+
 #include <vector>
 #include <string>
 #include <ostream>
