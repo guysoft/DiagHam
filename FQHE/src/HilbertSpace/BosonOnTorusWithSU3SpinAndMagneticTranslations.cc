@@ -125,6 +125,7 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
 	    this->HilbertSpaceDimension = 0;
 	  else
 	    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+	  SortTripleElementArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, this->LargeHilbertSpaceDimension);
 	  this->GenerateLookUpTable(1000000);
 	  this->Flag.Initialize();
 #ifdef __DEBUG__
@@ -141,6 +142,9 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
 #endif    
 	}
     }
+  for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
+    this->PrintState(cout , i) << endl;
+
 }
 
 // copy constructor (without duplicating datas)
@@ -816,7 +820,6 @@ int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long
     PosMid = PosMax;
   PosMin = TmpFirstIndexUniqueStateDescription2[PosMid];
   PosMax = PosMin + TmpUniqueStateDescriptionSubArraySize2[PosMid] - 1;
-//  cout << "pass2 : " << PosMin << " " << PosMax << endl;
   PosMid = (PosMin + PosMax) >> 1;
   CurrentState = this->StateDescription3[PosMid];
   while ((PosMax > PosMin) && (CurrentState != stateDescription3))
@@ -837,7 +840,6 @@ int BosonOnTorusWithSU3SpinAndMagneticTranslations::FindStateIndex(unsigned long
   else
     return PosMid;
 }
-
 // print a given State
 //
 // Str = reference on current output stream 
@@ -855,6 +857,10 @@ ostream& BosonOnTorusWithSU3SpinAndMagneticTranslations::PrintState (ostream& St
     {
       Str << "(" << this->TemporaryState1[i] << "," << this->TemporaryState2[i] << "," << this->TemporaryState3[i] << ") | ";
     }
+  int TmpIndex = this->FindStateIndex(this->StateDescription1[state], this->StateDescription2[state], this->StateDescription3[state]);
+  Str << state << " " << TmpIndex;
+  if (state != TmpIndex)
+    Str << " error";
   return Str;
 }
 
@@ -954,7 +960,6 @@ void BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateLookUpTable(unsigne
 	}
       ++TmpUniquePartition;
     }
-
 
   this->RescalingFactors = new double* [2 * this->MaxMomentum];
   for (int i = 1; i <= this->MaxMomentum; ++i)

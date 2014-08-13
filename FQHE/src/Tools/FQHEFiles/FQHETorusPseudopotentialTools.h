@@ -25,8 +25,7 @@
 //    along with this program; if not, write to the Free Software             //
 //    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.               //
 //                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
+//////////////////////////////////////////////////////////////////////////////// 
 
 #ifndef FQHETORUSPSEUDOPOTENTIALTOOLS_H
 #define FQHETORUSPSEUDOPOTENTIALTOOLS_H
@@ -73,10 +72,10 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
 // nbrPseudoPotentials = number of pseudopotentials per interaction type
 // pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
-// oneBobyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
+// oneBodyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
 //                            first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // return value = true if no error occured
-bool FQHETorusSU2GetPseudopotentials (char* fileName, int nbrFluxQuanta, int* nbrPseudoPotentials, double** pseudoPotentials, double** oneBobyPseudoPotentials);
+bool FQHETorusSU2GetPseudopotentials (char* fileName, int nbrFluxQuanta, int* nbrPseudoPotentials, double** pseudoPotentials, double** oneBodyPseudoPotentials);
 
 // get the one-body pseudopototentials for particles on torus with SU(2) spin from file
 // 
@@ -86,7 +85,6 @@ bool FQHETorusSU2GetPseudopotentials (char* fileName, int nbrFluxQuanta, int* nb
 // pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
 //                   first index refered to the spin sector (sorted as up-up, down-down, up-down)
 // return value = true if no error occured
-
 bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int nbrFluxQuanta, double*& oneBodyPotentialUpUp, double*& oneBodyPotentialDownDown, double*& oneBodyPotentialUpDown);
 
 // get pseudopototentials for particles on torus with SU(3) spin from file
@@ -97,6 +95,28 @@ bool FQHETorusSU2GetOneBodyPseudopotentials (char* fileName, int nbrFluxQuanta, 
 //                   first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
 // return value = true if no error occured
 bool FQHETorusSU3GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, double** pseudoPotentials);
+
+// get pseudopototentials for particles on torus with SU(3) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
+// oneBodyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
+//                            first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
+// return value = true if no error occured
+bool FQHETorusSU3GetPseudopotentials (char* fileName, int nbrFluxQuanta, int* nbrPseudoPotentials, double** pseudoPotentials, double** oneBodyPseudoPotentials);
+
+// get pseudopototentials for particles on torus with SU(3) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// oneBodyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
+//                            first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
+// return value = true if no error occured
+bool FQHETorusSU3GetOneBodyPseudopotentials (char* fileName, int nbrFluxQuanta, double** oneBodyPseudoPotentials);
 
 // get pseudopototentials for particles on torus with SU(4) spin from file
 // 

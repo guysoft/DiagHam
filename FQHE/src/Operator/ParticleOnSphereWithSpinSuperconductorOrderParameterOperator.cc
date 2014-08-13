@@ -57,6 +57,37 @@ ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWi
   this->CreationSymmetryIndex1 = creationSymmetryIndex1;
   this->CreationMomentumIndex2 = creationMomentumIndex2;
   this->CreationSymmetryIndex2 = creationSymmetryIndex2;
+  this->CombinationFlag = false;
+  this->CreationSymmetryIndex1SecondTerm = creationSymmetryIndex1;
+  this->CreationSymmetryIndex2SecondTerm = creationSymmetryIndex2;
+  this->CombinationSign = 0.0;  
+}
+
+// constructor for operator such as a+_{sigma_1,i_1} a+_{sigma_2,i_2} +/- a+_{sigma_3,i_1} a+_{sigma_4,i_2}
+//
+// particle = hilbert space associated to the particles with the small number of particles
+// creationMomentumIndex1 = momentum index of the leftmost creation operator (from 0 to 2S)
+// creationSymmetryIndex1 = symmetry index of the leftmost creation operator (0 for down, 1 for up)
+// creationMomentumIndex2 = momentum index of the rightmost creation operator (from 0 to 2S)
+// creationSymmetryIndex2 = symmetry index of the rightmost creation operator (0 for down, 1 for up)
+// creationSymmetryIndex1SecondTerm = symmetry index of the rightmost creation operator for the second term
+// creationSymmetryIndex2SecondTerm = symmetry index of the leftmost creation operator for the second term
+// sign = sign in front of the second term
+
+ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
+															   int creationMomentumIndex2, int creationSymmetryIndex2,
+															   int creationSymmetryIndex1SecondTerm, int creationSymmetryIndex2SecondTerm, 
+															   double sign)
+{
+  this->Particle = (ParticleOnSphereWithSpin*) (particle->Clone());
+  this->CreationMomentumIndex1 = creationMomentumIndex1;
+  this->CreationSymmetryIndex1 = creationSymmetryIndex1;
+  this->CreationMomentumIndex2 = creationMomentumIndex2;
+  this->CreationSymmetryIndex2 = creationSymmetryIndex2;
+  this->CombinationFlag = true;
+  this->CreationSymmetryIndex1SecondTerm = creationSymmetryIndex1SecondTerm;
+  this->CreationSymmetryIndex2SecondTerm = creationSymmetryIndex2SecondTerm;
+  this->CombinationSign = sign;
 }
 
 // copy constructor
@@ -69,6 +100,10 @@ ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWi
   this->CreationSymmetryIndex1 = oper.CreationSymmetryIndex1;
   this->CreationMomentumIndex2 = oper.CreationMomentumIndex2;
   this->CreationSymmetryIndex2 = oper.CreationSymmetryIndex2;
+  this->CombinationFlag = oper.CombinationFlag;
+  this->CombinationSign = oper.CombinationSign;  
+  this->CreationSymmetryIndex1SecondTerm = oper.CreationSymmetryIndex1SecondTerm;
+  this->CreationSymmetryIndex2SecondTerm = oper.CreationSymmetryIndex2SecondTerm;
   
 }
 
@@ -177,6 +212,53 @@ Complex ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::PartialMat
       }
       break;
    }
+  if (this->CombinationFlag == true)
+    {
+      SymmetryIndex = (this->CreationSymmetryIndex1SecondTerm << 1) | this->CreationSymmetryIndex2SecondTerm;
+      switch (SymmetryIndex)
+	{
+	case 0 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AddAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != FullDim)
+		  Element += V1[Index] * V2[i] * this->CombinationSign * Coefficient;      
+	      }
+	  }
+	  break;
+	case 3 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAdu(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != FullDim)
+		  Element += V1[Index] * V2[i] * this->CombinationSign * Coefficient;      
+	      }
+	  }
+	  break;
+	case 1 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex2, this->CreationMomentumIndex1, Coefficient);
+		if (Index != FullDim)
+		  Element += V1[Index] * V2[i] * (Sign * this->CombinationSign * Coefficient);      
+	      }
+	  }
+	  break;
+	case 2 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != FullDim)
+		  Element += V1[Index] * V2[i] * this->CombinationSign * Coefficient;      
+	      }
+	  }
+	  break;
+	}
+    }
   return Complex(Element);
 }
   
@@ -241,6 +323,53 @@ RealVector& ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::LowLev
 	  }
 	break;
       }
+    }
+  if (this->CombinationFlag == true)
+    {
+      SymmetryIndex = (this->CreationSymmetryIndex1SecondTerm << 1) | this->CreationSymmetryIndex2SecondTerm;
+      switch (SymmetryIndex)
+	{
+	case 0 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AddAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * Coefficient;      
+	      }
+	  }
+	  break;
+	case 3 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAdu(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * Coefficient;      
+	      }
+	    break;
+	  }
+	case 1 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex2, this->CreationMomentumIndex1, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * (Sign * Coefficient);      
+	      }
+	    break;
+	  }
+	case 2 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * Coefficient;      
+	      }
+	break;
+	  }
+	}
     }
   return vDestination;
 }
@@ -308,6 +437,55 @@ Complex ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::PartialMat
       }
       break;
    }
+  if (this->CombinationFlag == true)
+    {
+      SymmetryIndex = (this->CreationSymmetryIndex1SecondTerm << 1) | this->CreationSymmetryIndex2SecondTerm; 
+      switch (SymmetryIndex)
+	{
+	case 0 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AddAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != FullDim)
+		  Element += Conj(V1[Index]) * V2[i] * (this->CombinationSign * Coefficient);      
+	      }
+	  }
+	  break;
+	case 3 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAdu(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != FullDim)
+		  {
+		    Element += Conj(V1[Index]) * V2[i] * (this->CombinationSign * Coefficient);      
+		  }
+	      }
+	  }
+	  break;
+	case 1 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex2, this->CreationMomentumIndex1, Coefficient);
+		if (Index != FullDim)
+		  Element += Conj(V1[Index]) * V2[i] * (this->CombinationSign * Sign * Coefficient);      
+	      }
+	  }
+	  break;
+	case 2 :
+	  {
+	    for (int i = (int) firstComponent; i < Dim; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != FullDim)
+		  Element += Conj(V1[Index]) * V2[i] * (this->CombinationSign * Coefficient);      
+	      }
+	  }
+	  break;
+	}
+   }
   return Complex(Element);
 }
   
@@ -372,6 +550,53 @@ ComplexVector& ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::Low
 	  }
 	break;
       }
+    }
+  if (this->CombinationFlag == true)
+    {
+      SymmetryIndex = (this->CreationSymmetryIndex1SecondTerm << 1) | this->CreationSymmetryIndex2SecondTerm;
+      switch (SymmetryIndex)
+	{
+	case 0 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AddAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * Coefficient;      
+	      }
+	  }
+	  break;
+	case 3 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAdu(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * Coefficient;      
+	      }
+	    break;
+	  }
+	case 1 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex2, this->CreationMomentumIndex1, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * (Sign * Coefficient);      
+	      }
+	    break;
+	  }
+	case 2 :
+	  {
+	    for (int i = firstComponent; i < Last; ++i)
+	      {
+		int Index = this->Particle->AduAdd(i, this->CreationMomentumIndex1, this->CreationMomentumIndex2, Coefficient);
+		if (Index != Dim)
+		  vDestination[Index] += this->CombinationSign * vSource[i] * Coefficient;      
+	      }
+	break;
+	  }
+	}
     }
   return vDestination;
 }

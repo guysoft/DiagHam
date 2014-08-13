@@ -215,6 +215,33 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
 	  cout << HRep << endl;
 	}
     }  
+  this->FriendlyShowHamiltonian = false;
+  if (((*options)["friendlyshow-hamiltonian"] != 0) && (options->GetBoolean("friendlyshow-hamiltonian") == true))
+    {
+      this->FriendlyShowHamiltonian = true;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  
+	  ComplexMatrix HRep (this->Space->GetHilbertSpaceDimension(), this->Space->GetHilbertSpaceDimension());
+	  this->Hamiltonian->GetHamiltonian(HRep);
+	  for (int i = 0; i < this->Space->GetHilbertSpaceDimension(); ++i)
+	    {
+	      if (HRep[i].Norm() != 0.0)
+		{
+		  cout << i << " : ";
+		  this->Space->PrintState(cout, i) << endl;
+		  for (int j = 0; j < this->Space->GetHilbertSpaceDimension(); ++j)
+		    {
+		      if (Norm(HRep[i][j]) != 0.0)
+			{
+			  cout << "    " << j << " : ";
+			  this->Space->PrintState(cout, j) << " : " << HRep[i][j] << endl;
+			}
+		    }
+		}
+	    }
+	}
+    }  
   if (((*options)["export-hamiltonian"] != 0) && (options->GetString("export-hamiltonian") != 0))
     {
       HermitianMatrix HRep (this->Hamiltonian->GetHilbertSpaceDimension(), true);

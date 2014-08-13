@@ -56,7 +56,17 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   int CreationMomentumIndex2;
   // symmetry index of the rightmost creation operator
   int CreationSymmetryIndex2;
-  
+
+  // compute combination such as  a+_{sigma_1,i_1} a+_{sigma_2,i_2} +/- a+_{sigma_3,i_1} a+_{sigma_4,i_2}
+  bool CombinationFlag;
+  // symmetry index of the rightmost creation operator for the second term
+  int CreationSymmetryIndex1SecondTerm;
+  // symmetry index of the leftmost creation operator for the second term
+  int CreationSymmetryIndex2SecondTerm;
+  // sign in front of the second term
+  double CombinationSign;
+
+
  public:
   
   // constructor from default datas
@@ -68,6 +78,21 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   // creationSymmetryIndex2 = symmetry index of the rightmost creation operator (0 for down, 1 for up)
   ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
 							       int creationMomentumIndex2, int creationSymmetryIndex2);
+
+  // constructor for operator such as a+_{sigma_1,i_1} a+_{sigma_2,i_2} +/- a+_{sigma_3,i_1} a+_{sigma_4,i_2}
+  //
+  // particle = hilbert space associated to the particles with the small number of particles
+  // creationMomentumIndex1 = momentum index of the leftmost creation operator (from 0 to 2S)
+  // creationSymmetryIndex1 = symmetry index of the leftmost creation operator (0 for down, 1 for up)
+  // creationMomentumIndex2 = momentum index of the rightmost creation operator (from 0 to 2S)
+  // creationSymmetryIndex2 = symmetry index of the rightmost creation operator (0 for down, 1 for up)
+  // creationSymmetryIndex1SecondTerm = symmetry index of the rightmost creation operator for the second term
+  // creationSymmetryIndex2SecondTerm = symmetry index of the leftmost creation operator for the second term
+  // sign = sign in front of the second term
+  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
+							       int creationMomentumIndex2, int creationSymmetryIndex2,
+							       int creationSymmetryIndex1SecondTerm, int creationSymmetryIndex2SecondTerm, 
+							       double sign);
 
   // copy constructor
   //

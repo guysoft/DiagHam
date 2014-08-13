@@ -150,6 +150,98 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian::ParticleOn
     }
 }
 
+// constructor from the explicit the bond description
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrSites = number of sites
+// nbrBonds = number of bonds
+// sitesA = array of A sites for each bond
+// sitesB = array of B sites for each bond
+// bondTypes = array that describe each type of bond (0 for x, 1 fo y, 2 for z)
+// momentum = momentum sector
+// periodicity = periodicity with respect to site numbering 
+// kineticFactorIntra = multiplicative factor in front of the intraspin kinetic term
+// uPotential = Hubbard potential strength
+// j1Factor = strength of the isotropic nearest neighbor spin interaction
+// j2Factor = strength of the anisotropic nearest neighbor spin interaction
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, 
+																	   int nbrBonds,  int* sitesA, int* sitesB, int* bondTypes,
+																	   int momentum, int periodicity, 
+																	   double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, 
+																	   AbstractArchitecture* architecture, long memory)
+{
+  this->Particles = particles;
+  this->NbrParticles = nbrParticles;
+  this->NbrSite = nbrSite;
+  this->XMomentum = momentum;
+  this->XIncrement = periodicity;
+  this->MaxMomentum = this->XMomentum / this->XIncrement;
+  this->NbrBonds = nbrBonds;
+  this->SitesA = new int [this->NbrBonds];
+  this->SitesB = new int [this->NbrBonds];
+  this->Bonds = new int [this->NbrBonds];
+  for (int i = 0; i < this->NbrBonds; ++i)
+    {
+      this->SitesA[i] = sitesA[i];
+      this->SitesB[i] = sitesB[i];
+      this->Bonds[i] = bondTypes[i];
+    }
+    
+  this->LzMax = this->NbrSite - 1;
+  this->UPotential = uPotential;
+  this->HamiltonianShift = 0.0;
+  this->KineticFactorIsotropic = kineticFactorIsotropic;
+  this->KineticFactorAnisotropic = kineticFactorAnisotropic;
+  this->J1Factor = j1Factor;
+  this->J2Factor = j2Factor;
+  this->Architecture = architecture;
+  this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  this->OneBodyGenericInteractionFactorsupup = 0;
+  this->OneBodyGenericInteractionFactorsdowndown = 0;
+  this->OneBodyGenericInteractionFactorsupdown = 0;
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->PlotMapNearestNeighborBonds();
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->HermitianSymmetryFlag = true;
+  
+  this->EvaluateExponentialFactors();
+  this->EvaluateInteractionFactors();
+    
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+      this->EnableFastMultiplication();
+    }
+}
+
 // destructor
 //
 

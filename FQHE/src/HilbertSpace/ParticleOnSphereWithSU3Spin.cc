@@ -31,6 +31,12 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSU3Spin.h"
 
+#include <iostream>
+
+
+using std::cout;
+using std::endl;
+
 
 // virtual destructor
 //
@@ -75,6 +81,693 @@ double ParticleOnSphereWithSU3Spin::AdA (long index, int m)
   return (this->Ad1A1(index, m) + this->Ad2A2(index, m) + this->Ad3A3(index, m));
 }
 
+// apply a^+_m_1 a_m_1 operator to a given state (only state 1 Tz=+1/2, Y=+1/3)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m_1 a_m_1
+
+double ParticleOnSphereWithSU3Spin::Ad1A1 (int index, int m)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A1 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m_2 a_m_2
+
+double ParticleOnSphereWithSU3Spin::Ad2A2 (int index, int m)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A2 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m_3 a_m_3
+
+double ParticleOnSphereWithSU3Spin::Ad3A3 (int index, int m)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m_1 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A1 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A2 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A3 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A1 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A2 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A3 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A1 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A2 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A3 (int index, int m, int n, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A1 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A2 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_1 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1A3 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1A3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A1 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A2 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_2 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2A3 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2A3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_1 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A1 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_2 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A2 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_3 a_n_3 operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3A3 (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3A3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2 
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// sigma1 = SU(3) index for the first annihilation operator
+// sigma2 = SU(3) index for the second annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::AsigmaAsigma not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2 
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// sigma1 = SU(3) index for the first annihilation operator
+// sigma2 = SU(3) index for the second annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::AsigmaAsigma not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A1A1 (int index, int n1, int n2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A1A1 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A1A2 (int index, int n1, int n2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A1A2 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A1A3 (int index, int n1, int n2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A1A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A2A2 (int index, int n1, int n2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A2A2 not implemented" << endl;
+  return 0.0;
+}
+
+
+// apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A2A3 (int index, int n1, int n2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A2A3 not implemented" << endl;
+  return 0.0;
+}
+
+
+// apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A3A3 (int index, int n1, int n2)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A3A3 not implemented" << endl;
+  return 0.0;
+}
+
+
+// apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A1A1 (int index, int n1, int n2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A1A1 not implemented" << endl;
+  return 0.0;
+}
+
+
+// apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A1A2 (int index, int n1, int n2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A1A2 not implemented" << endl;
+  return 0.0;
+}
+
+
+// apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A1A3 (int index, int n1, int n2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A1A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A2A2 (int index, int n1, int n2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A2A2 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A2A3 (int index, int n1, int n2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A2A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// n2 = second index for annihilation operator
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value =  multiplicative factor 
+
+double ParticleOnSphereWithSU3Spin::A3A3 (int index, int n1, int n2, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::A3A3 not implemented" << endl;
+  return 0.0;
+}
+
+// apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0, 1 or 2
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// sigma1 = SU(3) index for the first creation operator
+// sigma2 = SU(3) index for the second creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::AdsigmaAdsigma not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0, 1 or 2
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// sigma1 = SU(3) index for the first creation operator
+// sigma2 = SU(3) index for the second creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::AdsigmaAdsigma not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1Ad1 (int m1, int m2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1Ad1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1Ad2 (int m1, int m2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1Ad2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1Ad3 (int m1, int m2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1Ad3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2Ad2 (int m1, int m2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2Ad2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2Ad3 (int m1, int m2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2Ad3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3Ad3 (int m1, int m2, double& coefficient)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3Ad3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1Ad1 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1Ad1 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1Ad2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad1Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad1Ad3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2Ad2 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad2Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad2Ad3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnSphereWithSU3Spin::Ad3Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation)
+{  
+  cout << "ParticleOnSphereWithSU3Spin::Ad3Ad3 not implemented" << endl;
+  return this->HilbertSpaceDimension;
+}
 
 // evaluate wave function in real space using a given basis
 //
@@ -144,123 +837,6 @@ void ParticleOnSphereWithSU3Spin::InitializeWaveFunctionEvaluation (bool timeCoh
 {
 }
                                     
-// apply a^+_m_1 a_n_1 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad1A1 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_1 a_n_2 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad1A2 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_1 a_n_3 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad1A3 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_2 a_n_1 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad2A1 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_2 a_n_2 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad2A2 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_2 a_n_3 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad2A3 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_3 a_n_1 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad3A1 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_3 a_n_2 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad3A2 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
-// apply a^+_m_3 a_n_3 operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// return value = index of the destination state 
-
-int ParticleOnSphereWithSU3Spin::Ad3A3 (int index, int m, int n, double& coefficient)
-{
-  return this->HilbertSpaceDimension;
-}
-
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Lz sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 

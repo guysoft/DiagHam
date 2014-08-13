@@ -63,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "right-state", "name of the file corresponding to the state |Psi_R> (the order parameter being <Psi_L|c^+c^+|Psi_R>");   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-leftstates", "single column file describing a set of degenerate left states");
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerate-rightstates", "single column file describing a set of degenerate right states");
+  (*SystemGroup) += new BooleanOption ('\n', "only-cc", "compute only the parameters c^+_sigma c^+_sigma' instead of their linear combinations");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -318,99 +319,200 @@ int main(int argc, char** argv)
 
   File.precision(14);
   cout.precision(14);
-  if ((NbrLeftStates == 1) && (NbrRightStates == 1))
+
+
+  if (Manager.GetBoolean("only-cc") == true)
     {
-      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
-	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2 |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>| Arg(<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>)" << endl;
-    }
-  else
-    {
-      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
-	   << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
-    }
-  double NormalizationFactor = 1.0 / sqrt((double) (NbrLeftStates * NbrRightStates));
-  for (int i = 0; i < RightNbrSites; ++i)
-    {
-      int Index = i;
-      if (RightStatistics == true)
+      if ((NbrLeftStates == 1) && (NbrRightStates == 1))
 	{
-	  if ((RightGutzwillerFlag == false) && (LeftGutzwillerFlag == false))
+	  File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	       << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2 |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>| Arg(<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>)" << endl;
+	}
+      else
+	{
+	  File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	       << "# i j sigma sigma' |<Psi_L| c^+_{i,sigma} c^+_{j,sigma'} |Psi_R>|^2" << endl;
+	}
+      double NormalizationFactor = 1.0 / sqrt((double) (NbrLeftStates * NbrRightStates));
+      for (int i = 0; i < RightNbrSites; ++i)
+	{
+	  int Index = i;
+	  if (RightStatistics == true)
 	    {
-	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUpDiag (RightSpace, i, 0, i, 1);
+	      if ((RightGutzwillerFlag == false) && (LeftGutzwillerFlag == false))
+		{
+		  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUpDiag (RightSpace, i, 0, i, 1);
+		  ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
+		  for (int k = 0; k < NbrLeftStates; ++k)
+		    for (int l = 0; l < NbrRightStates; ++l)
+		      {
+			OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+			OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
+			TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
+		      }
+		  File << i << " " << i << " 0 1";
+		  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+		  File << endl;
+		  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDownDiag (RightSpace, i, 1, i, 0);
+		  for (int k = 0; k < NbrLeftStates; ++k)
+		    for (int l = 0; l < NbrRightStates; ++l)
+		      {
+			OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+			OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
+			TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
+		      }
+		  File << i << " " << i << " 1 0";
+		  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+		  File << endl;
+		}
+	      ++Index;
+	    }
+	  for (int j = Index; j < RightNbrSites; ++j)
+	    {
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownDown (RightSpace, i, 0, j, 0);
 	      ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
 	      for (int k = 0; k < NbrLeftStates; ++k)
 		for (int l = 0; l < NbrRightStates; ++l)
 		  {
-		    OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		    OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-		    TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
+		    OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationDownDown.GetScalar() * NormalizationFactor;
 		  }
-	      File << i << " " << i << " 0 1";
+	      File << i << " " << j << " 0 0";
 	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
 	      File << endl;
-	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDownDiag (RightSpace, i, 1, i, 0);
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 0, j, 1);
 	      for (int k = 0; k < NbrLeftStates; ++k)
 		for (int l = 0; l < NbrRightStates; ++l)
 		  {
-		    OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		    OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
-		    TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
+		    OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
 		  }
-	      File << i << " " << i << " 1 0";
+	      File << i << " " << j << " 0 1";
 	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
 	      File << endl;
-	    }
-	  ++Index;
-	}
-      for (int j = Index; j < RightNbrSites; ++j)
-	{
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownDown (RightSpace, i, 0, j, 0);
-	  ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
-	  for (int k = 0; k < NbrLeftStates; ++k)
-	    for (int l = 0; l < NbrRightStates; ++l)
-	      {
-		OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationDownDown.GetScalar() * NormalizationFactor;
-	      }
-	  File << i << " " << j << " 0 0";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
-	  File << endl;
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 0, j, 1);
-	  for (int k = 0; k < NbrLeftStates; ++k)
-	    for (int l = 0; l < NbrRightStates; ++l)
-	      {
-		OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
-	      }
-	  File << i << " " << j << " 0 1";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
-	  File << endl;
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDown (RightSpace, i, 1, j, 0);
-	  for (int k = 0; k < NbrLeftStates; ++k)
-	    for (int l = 0; l < NbrRightStates; ++l)
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDown (RightSpace, i, 1, j, 0);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
 	      {
 		OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
 		OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
 		TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
 	      }
-	  File << i << " " << j << " 1 0";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
-	  File << endl;
-	  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpUp (RightSpace, i, 1, j, 1);
-	  for (int k = 0; k < NbrLeftStates; ++k)
-	    for (int l = 0; l < NbrRightStates; ++l)
-	      {
-		OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
-		OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
-		TmpMatrix[l][k] = OperationUpUp.GetScalar() * NormalizationFactor;
-	      }
-	  File << i << " " << j << " 1 1";
-	  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
-	  File << endl;
+	      File << i << " " << j << " 1 0";
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	      File << endl;
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpUp (RightSpace, i, 1, j, 1);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationUpUp.GetScalar() * NormalizationFactor;
+		  }
+	      File << i << " " << j << " 1 1";
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+	      File << endl;
+	    }
 	}
     }
+  else
+    {
+      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} +/- c^+_{i,sigma} c^+_{j,sigma'}|Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl;
+      File << "# i j ";
+      if ((NbrLeftStates == 1) && (NbrRightStates == 1))
+	{
+	  File << "<Psi_L| (c^+_{i,up} c^+_{j,up} + c^+_{i,down} c^+_{j,down} |Psi_R> <Psi_L| (c^+_{i,up} c^+_{j,up} - c^+_{i,down} c^+_{j,down} |Psi_R> <Psi_L| (c^+_{i,up} c^+_{j,down} + c^+_{i,up} c^+_{j,down} |Psi_R> <Psi_L| (c^+_{i,down} c^+_{j,up} - c^+_{i,down} c^+_{j,up} |Psi_R>" << endl;
+	}
+      else
+	{
+	  File << "|<Psi_L| (c^+_{i,up} c^+_{j,up} + c^+_{i,down} c^+_{j,down} |Psi_R> |^2 |<Psi_L| (c^+_{i,up} c^+_{j,up} - c^+_{i,down} c^+_{j,down} |Psi_R> |^2 |<Psi_L| (c^+_{i,up} c^+_{j,down} + c^+_{i,down} c^+_{j,up} |Psi_R> |^2 |<Psi_L| (c^+_{i,up} c^+_{j,down} - c^+_{i,down} c^+_{j,up} |Psi_R> |^2" << endl;
+	}
+      double NormalizationFactor = 1.0 / sqrt((double) (NbrLeftStates * NbrRightStates));
+      for (int i = 0; i < RightNbrSites; ++i)
+	{
+	  int Index = i;
+	  if (RightStatistics == true)
+	    {
+	      if ((RightGutzwillerFlag == false) && (LeftGutzwillerFlag == false))
+		{
+		  ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
+		  File << i << " " << i << " (0,0) 0 0 (0,0) 0 0";
+
+		  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUpDiag (RightSpace, i, 0, i, 1, 1, 0, 1.0);
+		  for (int k = 0; k < NbrLeftStates; ++k)
+		    for (int l = 0; l < NbrRightStates; ++l)
+		      {
+			OperatorMatrixElementOperation OperationDownUp(&OperatorDownUpDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+			OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
+			TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
+		      }
+		  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+
+		  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDownDiag (RightSpace, i, 1, i, 0, 1, 0, 1.0);
+		  for (int k = 0; k < NbrLeftStates; ++k)
+		    for (int l = 0; l < NbrRightStates; ++l)
+		      {
+			OperatorMatrixElementOperation OperationUpDown(&OperatorUpDownDiag, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+			OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
+			TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
+		      }
+		  HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+		  File << endl;
+		}
+	      ++Index;
+	    }
+	  for (int j = Index; j < RightNbrSites; ++j)
+	    {
+	      ComplexMatrix TmpMatrix (NbrLeftStates, NbrRightStates);
+	      File << i << " " << j << " ";
+
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpUp (RightSpace, i, 1, j, 1, 0, 0, 1.0);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationUpUp(&OperatorUpUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationUpUp.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationUpUp.GetScalar() * NormalizationFactor;
+		  }
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownDown (RightSpace, i, 1, j, 1, 0, 0, -1.0);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationDownDown(&OperatorDownDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationDownDown.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationDownDown.GetScalar() * NormalizationFactor;
+		  }
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorDownUp (RightSpace, i, 1, j, 0, 0, 1, 1.0);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationDownUp(&OperatorDownUp, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationDownUp.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationDownUp.GetScalar() * NormalizationFactor;
+		  }
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+
+	      ParticleOnSphereWithSpinSuperconductorOrderParameterOperator OperatorUpDown (RightSpace, i, 1, j, 0, 0, 1, -1.0);
+	      for (int k = 0; k < NbrLeftStates; ++k)
+		for (int l = 0; l < NbrRightStates; ++l)
+		  {
+		    OperatorMatrixElementOperation OperationUpDown(&OperatorUpDown, LeftStates[k], RightStates[l], RightStates[0].GetVectorDimension());
+		    OperationUpDown.ApplyOperation(Architecture.GetArchitecture());
+		    TmpMatrix[l][k] = OperationUpDown.GetScalar() * NormalizationFactor;
+		  }
+	      HubbardSuperconductorOrderParameterMatrixDiagonalize(TmpMatrix, File);
+
+	      File << endl;
+	    }
+	}
+    }
+
   File.close();
 
   return 0;

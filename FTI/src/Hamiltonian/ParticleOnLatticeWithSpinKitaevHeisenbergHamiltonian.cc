@@ -63,8 +63,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 //
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
-// nbrSiteX = number of sites in the x direction
-// nbrSiteY = number of sites in the y direction
+// nbrSite = number of sites
 // kineticFactor = multiplicative factor in front of the kinetic term
 // uPotential = Hubbard potential strength
 // bandParameter = band parameter
@@ -72,7 +71,8 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, char* geometryFile, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, char* geometryFile, 
+													   double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -82,21 +82,21 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->SitesB = 0;
   this->Bonds = 0;
   if (geometryFile != 0)
-  {
-    MultiColumnASCIIFile LatticeFile;
-    if (LatticeFile.Parse(geometryFile) == false)
     {
-      LatticeFile.DumpErrors(cout);
+      MultiColumnASCIIFile LatticeFile;
+      if (LatticeFile.Parse(geometryFile) == false)
+	{
+	  LatticeFile.DumpErrors(cout);
+	}
+      this->NbrBonds = LatticeFile.GetNbrLines();
+      this->SitesA = LatticeFile.GetAsIntegerArray(0);
+      this->SitesB = LatticeFile.GetAsIntegerArray(1);
+      this->Bonds = LatticeFile.GetAsIntegerArray(2);
     }
-    this->NbrBonds = LatticeFile.GetNbrLines();
-    this->SitesA = LatticeFile.GetAsIntegerArray(0);
-    this->SitesB = LatticeFile.GetAsIntegerArray(1);
-    this->Bonds = LatticeFile.GetAsIntegerArray(2);
-  }
-    
+  
   this->LzMax = this->NbrSite - 1;
-  this->UPotential = uPotential; //2.0 * uPotential / ((double) this->NbrParticles);
-  this->HamiltonianShift = 0.0;//4.0 * uPotential;
+  this->UPotential = uPotential;
+  this->HamiltonianShift = 0.0;
   this->KineticFactorIsotropic = kineticFactorIsotropic;
   this->KineticFactorAnisotropic = kineticFactorAnisotropic;
   this->J1Factor = j1Factor;
@@ -116,14 +116,90 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;
-  
-//   for (int i = 0; i < this->NbrSite; ++i)
-//   {
-//     for (int k = 0; k < 3; ++k)
-//     {
-//       cout << i << " " << k << " " << this->MapNearestNeighborBonds[i][k] << endl;
-//     }
-//   }
+  this->EvaluateInteractionFactors();
+    
+  if (memory > 0)
+    {
+      long TmpMemory = this->FastMultiplicationMemory(memory);
+      if (TmpMemory < 1024)
+	cout  << "fast = " <<  TmpMemory << "b ";
+      else
+	if (TmpMemory < (1 << 20))
+	  cout  << "fast = " << (TmpMemory >> 10) << "kb ";
+	else
+	  if (TmpMemory < (1 << 30))
+	    cout  << "fast = " << (TmpMemory >> 20) << "Mb ";
+	  else
+	    {
+	      cout  << "fast = " << (TmpMemory >> 30) << ".";
+	      TmpMemory -= ((TmpMemory >> 30) << 30);
+	      TmpMemory *= 100l;
+	      TmpMemory >>= 30;
+	      if (TmpMemory < 10l)
+		cout << "0";
+	      cout  << TmpMemory << " Gb ";
+	    }
+      this->EnableFastMultiplication();
+    }
+}
+
+// constructor from the ecplicit the bond description
+//
+// particles = Hilbert space associated to the system
+// nbrParticles = number of particles
+// nbrSite = number of sites
+// nbrBonds = number of bonds
+// sitesA = array of A sites for each bond
+// sitesB = array of B sites for each bond
+// bondTypes = array that describe each type of bond (0 for x, 1 fo y, 2 for z)
+// kineticFactor = multiplicative factor in front of the kinetic term
+// uPotential = Hubbard potential strength
+// j1Factor = strength of the isotropic nearest neighbor spin interaction
+// j2Factor = strength of the anisotropic nearest neighbor spin interaction
+// architecture = architecture to use for precalculation
+// memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+
+ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, 
+													   int nbrBonds,  int* sitesA, int* sitesB, int* bondTypes, 
+													   double kineticFactorIsotropic, double kineticFactorAnisotropic, 
+													   double uPotential, double j1Factor, double j2Factor, 
+													   AbstractArchitecture* architecture, long memory)
+{
+  this->Particles = particles;
+  this->NbrParticles = nbrParticles;
+  this->NbrSite = nbrSite;
+  this->NbrBonds = nbrBonds;
+  this->SitesA = new int [this->NbrBonds];
+  this->SitesB = new int [this->NbrBonds];
+  this->Bonds = new int [this->NbrBonds];
+  for (int i = 0; i < this->NbrBonds; ++i)
+    {
+      this->SitesA[i] = sitesA[i];
+      this->SitesB[i] = sitesB[i];
+      this->Bonds[i] = bondTypes[i];
+    }
+  this->LzMax = this->NbrSite - 1;
+  this->UPotential = uPotential;
+  this->HamiltonianShift = 0.0;
+  this->KineticFactorIsotropic = kineticFactorIsotropic;
+  this->KineticFactorAnisotropic = kineticFactorAnisotropic;
+  this->J1Factor = j1Factor;
+  this->J2Factor = j2Factor;
+  this->Architecture = architecture;
+  this->Memory = memory;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  this->OneBodyGenericInteractionFactorsupup = 0;
+  this->OneBodyGenericInteractionFactorsdowndown = 0;
+  this->OneBodyGenericInteractionFactorsupdown = 0;
+  this->FastMultiplicationFlag = false;
+  long MinIndex;
+  long MaxIndex;
+  this->PlotMapNearestNeighborBonds();
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  this->PrecalculationShift = (int) MinIndex;  
+  this->HermitianSymmetryFlag = true;
   this->EvaluateInteractionFactors();
     
   if (memory > 0)

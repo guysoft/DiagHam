@@ -352,11 +352,12 @@ ostream& FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation::PrintState
 	  break;
 	}
     }
-//    Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
-//    if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
-//      {
-//        Str << "  error";
-//      }
+  Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
+  if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
+    {
+      Str << "  error";
+    }
+  Str << " orb. size=" << this->NbrStateInOrbit[state];
   return Str;
 }
 
@@ -476,14 +477,19 @@ int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation::FindStateIndex(
 
 int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation::FindStateIndex(unsigned long stateDescription, int maxMomentum)
 {
-  if ((stateDescription < this->StateDescription[0]) || (stateDescription > this->StateDescription[this->HilbertSpaceDimension - 1]))
+  if ((stateDescription > this->StateDescription[0]) || 
+      (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
     return this->HilbertSpaceDimension;
-  long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
-  long PosMin = this->LookUpTable[maxMomentum][PosMax];
-  PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
+
+//   long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
+//   long PosMin = this->LookUpTable[maxMomentum][PosMax];
+//   PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
+
+  long PosMax = 0l;
+  long PosMin = this->LargeHilbertSpaceDimension - 1l;
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
-  while ((PosMin != PosMid) && (CurrentState != stateDescription))
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
 	{
@@ -496,12 +502,40 @@ int FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation::FindStateIndex(
       PosMid = (PosMin + PosMax) >> 1;
       CurrentState = this->StateDescription[PosMid];
     }
+  //  cout << hex << CurrentState << " " <<  stateDescription << " " << this->StateDescription[0] << " " << this->StateDescription[this->HilbertSpaceDimension - 1] << dec << " " << PosMid << " " << PosMin << " " << PosMax << endl;
   if (CurrentState == stateDescription)
     return PosMid;
   else
     if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
       return this->HilbertSpaceDimension;
     else
-      return PosMax;
+      return PosMin;
+//   if ((stateDescription < this->StateDescription[0]) || (stateDescription > this->StateDescription[this->HilbertSpaceDimension - 1]))
+//     return this->HilbertSpaceDimension;
+//   long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
+//   long PosMin = this->LookUpTable[maxMomentum][PosMax];
+//   PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
+//   long PosMid = (PosMin + PosMax) >> 1;
+//   unsigned long CurrentState = this->StateDescription[PosMid];
+//   while ((PosMin != PosMid) && (CurrentState != stateDescription))
+//     {
+//       if (CurrentState > stateDescription)
+// 	{
+// 	  PosMax = PosMid;
+// 	}
+//       else
+// 	{
+// 	  PosMin = PosMid;
+// 	} 
+//       PosMid = (PosMin + PosMax) >> 1;
+//       CurrentState = this->StateDescription[PosMid];
+//     }
+//   if (CurrentState == stateDescription)
+//     return PosMid;
+//   else
+//     if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+//       return this->HilbertSpaceDimension;
+//     else
+//       return PosMax;
 }
 

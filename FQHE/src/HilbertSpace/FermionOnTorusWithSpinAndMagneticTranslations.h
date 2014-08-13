@@ -42,6 +42,9 @@ using std::dec;
 using std::hex;
 
 
+#define FERMION_TORUS_SU2_SZ_MASK 0x5555555555555555ul
+
+
 class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWithSpinAndMagneticTranslations
 {
 
@@ -473,6 +476,18 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
   virtual long RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, int currentMomentum);
+  
+  // compute the parity of the number of spin singlets 
+  //
+  // state = reference on the state whose parity has to be evaluated
+  // return value = parity of the number of spin singlets (0 for even, 1 for odd)
+  virtual unsigned long GetStateSingletParity(unsigned long state);
+
+  // apply the spin flip symmetry on a given state
+  //
+  // stateDescription= state on which the spin flip symmetry has to be applied
+  // return value = resulting state
+  virtual unsigned long ApplySpinFlipSymmetry(unsigned long stateDescription);
 
 };
 
@@ -485,6 +500,37 @@ inline int FermionOnTorusWithSpinAndMagneticTranslations::GetParticleStatistic()
   return ParticleOnTorusWithSpinAndMagneticTranslations::FermionicStatistic;
 }
 
+// compute the parity of the number of spin singlets 
+//
+// state = reference on the state whose parity has to be evaluated
+// return value = parity of the number of spin singlets (0 for even, 1 for odd)
+
+inline unsigned long FermionOnTorusWithSpinAndMagneticTranslations::GetStateSingletParity(unsigned long state)
+{
+  state &= (state >> 1);
+  state &= FERMION_TORUS_SU2_SZ_MASK;
+#ifdef __64_BITS__
+  state ^= (state >> 32);
+#endif
+  state ^= (state >> 16);
+  state ^= (state >> 8);
+  state ^= (state >> 4);
+  state ^= (state >> 2);
+  return (state & 0x1ul);
+}
+
+// apply the spin flip symmetry on a given state
+//
+// stateDescription= state on which the spin flip symmetry has to be applied
+// return value = resulting state
+
+inline unsigned long FermionOnTorusWithSpinAndMagneticTranslations::ApplySpinFlipSymmetry(unsigned long stateDescription)
+{
+  unsigned long TmpState = ((stateDescription >> 1) ^ stateDescription) & FERMION_TORUS_SU2_SZ_MASK;
+  TmpState |= TmpState << 1;
+  TmpState ^= stateDescription; 
+  return TmpState;
+}
 
 #endif // FERMIONONTORUSWITHSPINANDMAGNETICTRANSLATIONS_H
 

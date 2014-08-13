@@ -276,6 +276,18 @@ class FermionOnTorusWithSpinSzSymmetryAndMagneticTranslations :  public FermionO
   // return value = number of translation needed to obtain the same state
   virtual int FindNumberXTranslation(unsigned long stateDescription);
 
+  // find the size of the orbit for a given configuration
+  //
+  // stateDescription = state description
+  // return value = orbit size
+  virtual int FindOrbitSize(unsigned long stateDescription);
+
+  // test if a given configuration satisfies the discrete symmetry contraints
+  //
+  // stateDescription = state description
+  // return value = true if the configuration satisfies the discrete symmetry contraints
+  virtual bool TestDiscreteSymmetryContraints(unsigned long stateDescription);
+
   // test if a state and its translated version can be used to create a state corresponding to the x momentum constraint
   //
   // stateDescription = unsigned integer describing the state
@@ -290,6 +302,19 @@ class FermionOnTorusWithSpinSzSymmetryAndMagneticTranslations :  public FermionO
   // return value = hilbert space dimension
   virtual int GenerateStates(bool fullSzFlag = false, bool fullKyFlag = false);
  
+  // generate look-up table associated to current Hilbert space
+  // 
+  // memory = memory size that can be allocated for the look-up table
+  virtual void GenerateLookUpTable(unsigned long memory);
+
+  // find state index
+  //
+  // stateDescription = unsigned integer describing the state
+  // lzmax = maximum Lz value reached by a fermion in the state
+  // return value = corresponding index
+  virtual int FindStateIndex(unsigned long stateDescription, int lzmax);
+
+
 };
 
 #endif

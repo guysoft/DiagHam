@@ -2478,3 +2478,5 @@ long FermionOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimensio
   Count += this->EvaluateHilbertSpaceDimension(nbrFermions, currentKy - 1, currentTotalKy);
   return Count;
 }
+
+

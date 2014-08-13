@@ -80,21 +80,21 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_1 a_m_1
-  virtual double Ad1A1 (int index, int m) = 0;
+  virtual double Ad1A1 (int index, int m);
 
   // apply a^+_m_2 a_m_2 operator to a given state (only state 2 Tz=-1/2, Y=+1/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_2 a_m_2
-  virtual double Ad2A2 (int index, int m) = 0;
+  virtual double Ad2A2 (int index, int m);
 
   // apply a^+_m_3 a_m_3 operator to a given state (only state 3 Tz=0, Y=-2/3)
   //
   // index = index of the state on which the operator has to be applied
   // m = index of the creation and annihilation operator
   // return value = coefficient obtained when applying a^+_m_3 a_m_3
-  virtual double Ad3A3 (int index, int m) = 0;
+  virtual double Ad3A3 (int index, int m);
 
   // apply a^+_m_1 a_n_1 operator to a given state 
   //
@@ -177,6 +177,96 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int Ad3A3 (int index, int m, int n, double& coefficient);
 
+  // apply a^+_m_1 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad1A1 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_1 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad1A2 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_1 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad1A3 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_2 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad2A1 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_2 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad2A2 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_2 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad2A3 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_3 a_n_1 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad3A1 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_3 a_n_2 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad3A2 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_3 a_n_3 operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad3A3 (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
   // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2 
   //
   // index = index of the state on which the operator has to be applied
@@ -185,7 +275,18 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // sigma1 = SU(3) index for the first annihilation operator
   // sigma2 = SU(3) index for the second annihilation operator
   // return value =  multiplicative factor 
-  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2) = 0;
+  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2);
+
+  // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0, 1 or 2 
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // sigma1 = SU(3) index for the first annihilation operator
+  // sigma2 = SU(3) index for the second annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double AsigmaAsigma (int index, int n1, int n2, int sigma1, int sigma2, int& nbrTranslation);
 
   // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -193,7 +294,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A1A1 (int index, int n1, int n2) = 0;
+  virtual double A1A1 (int index, int n1, int n2);
 
   // apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -201,7 +302,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A1A2 (int index, int n1, int n2) = 0;
+  virtual double A1A2 (int index, int n1, int n2);
 
   // apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -209,7 +310,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A1A3 (int index, int n1, int n2) = 0;
+  virtual double A1A3 (int index, int n1, int n2);
 
   // apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -217,7 +318,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A2A2 (int index, int n1, int n2) = 0;
+  virtual double A2A2 (int index, int n1, int n2);
 
   // apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -225,7 +326,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A2A3 (int index, int n1, int n2) = 0;
+  virtual double A2A3 (int index, int n1, int n2);
 
   // apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
   //
@@ -233,7 +334,61 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // n1 = first index for annihilation operator
   // n2 = second index for annihilation operator
   // return value =  multiplicative factor 
-  virtual double A3A3 (int index, int n1, int n2) = 0;
+  virtual double A3A3 (int index, int n1, int n2);
+
+  // apply a_n1_1 a_n2_1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double A1A1 (int index, int n1, int n2, int& nbrTranslation);
+
+  // apply a_n1_1 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double A1A2 (int index, int n1, int n2, int& nbrTranslation);
+
+  // apply a_n1_1 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double A1A3 (int index, int n1, int n2, int& nbrTranslation);
+
+  // apply a_n1_2 a_n2_2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double A2A2 (int index, int n1, int n2, int& nbrTranslation);
+
+  // apply a_n1_2 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double A2A3 (int index, int n1, int n2, int& nbrTranslation);
+
+  // apply a_n1_3 a_n2_3 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator
+  // n2 = second index for annihilation operator
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value =  multiplicative factor 
+  virtual double A3A3 (int index, int n1, int n2, int& nbrTranslation);
 
   // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0, 1 or 2
   //
@@ -243,7 +398,18 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // sigma2 = SU(3) index for the second creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient) = 0;
+  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient);
+
+  // apply a^+_m1_sigma1 a^+_m2_sigma2 operator to the state produced using A*A* method (without destroying it). Sigma is 0, 1 or 2
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // sigma1 = SU(3) index for the first creation operator
+  // sigma2 = SU(3) index for the second creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AdsigmaAdsigma (int m1, int m2, int sigma1, int sigma2, double& coefficient, int& nbrTranslation);
 
   // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
   //
@@ -251,7 +417,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad1Ad1 (int m1, int m2, double& coefficient) = 0;
+  virtual int Ad1Ad1 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
   //
@@ -259,7 +425,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad1Ad2 (int m1, int m2, double& coefficient) = 0;
+  virtual int Ad1Ad2 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
@@ -267,7 +433,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad1Ad3 (int m1, int m2, double& coefficient) = 0;
+  virtual int Ad1Ad3 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
   //
@@ -275,7 +441,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad2Ad2 (int m1, int m2, double& coefficient) = 0;
+  virtual int Ad2Ad2 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
@@ -283,7 +449,7 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad2Ad3 (int m1, int m2, double& coefficient) = 0;
+  virtual int Ad2Ad3 (int m1, int m2, double& coefficient);
 
   // apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
   //
@@ -291,7 +457,61 @@ class ParticleOnSphereWithSU3Spin :  public ParticleOnSphere
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
-  virtual int Ad3Ad3 (int m1, int m2, double& coefficient) = 0;
+  virtual int Ad3Ad3 (int m1, int m2, double& coefficient);
+
+  // apply a^+_m1_1 a^+_m2_1 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad1Ad1 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_1 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad1Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_1 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad1Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_2 a^+_m2_2 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad2Ad2 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_2 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad2Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_3 a^+_m2_3 operator to the state produced using A*A* method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Ad3Ad3 (int m1, int m2, double& coefficient, int& nbrTranslation);
 
   // evaluate wave function in real space using a given basis
   //

@@ -121,6 +121,8 @@ class GenericComplexMainTask: public AbstractMainTask
   char* ReducedHilbertSpaceDescription;  
   // show the hamiltonian
   bool ShowHamiltonian;
+  // show the hamiltonian in a friendly way, showing only non-zero matrix elements
+  bool FriendlyShowHamiltonian;
   // define Lanczos precision for eigenvalues (0 if automatically defined by the program)
   double LanczosPrecision;
   // use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm to get the ground state

@@ -55,9 +55,12 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
-  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "total number of sites (if negartive, guess it from the geometry file)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "total number of sites (if negative, guess it from the geometry file)", -1);
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new BooleanOption  ('\n', "stripe", "model geometry is a stripe");
+  (*SystemGroup) += new BooleanOption  ('\n', "torus", "model geometry is a torus");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-x", "number of sites in the x direction for the torus geometry", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-y", "number of sites in the y direction for the torus geometry", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
@@ -84,6 +87,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "friendlyshow-hamiltonian", "show matrix representation of the hamiltonian, displaying only non-zero matrix elements");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -102,15 +106,19 @@ int main(int argc, char** argv)
   int NbrSites = Manager.GetInteger("nbr-sites"); 
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   bool SzSymmetryFlag = Manager.GetBoolean("szsymmetrized-basis");
-  bool StripeFlag = Manager.GetBoolean("stripe");
-  
-  if ((StripeFlag == false) && (Manager.GetString("geometry-file") == 0))
+  bool StripeFlag = Manager.GetBoolean("stripe"); 
+  bool TorusFlag = Manager.GetBoolean("torus");
+  int NbrSitesX = Manager.GetInteger("nbrsites-x"); 
+  int NbrSitesY = Manager.GetInteger("nbrsites-y"); 
+
+ 
+  if ((StripeFlag == false) && (TorusFlag == false) && (Manager.GetString("geometry-file") == 0))
     {
       cout << "Error. A lattice geometry has to be specified" << endl; 
       return -1;
     }
 
-  if ((Manager.GetString("geometry-file") != 0) && (NbrSites< 0))
+  if ((Manager.GetString("geometry-file") != 0) && (NbrSites < 0))
     {
       MultiColumnASCIIFile GeometryFile;
       if (GeometryFile.Parse(Manager.GetString("geometry-file")) == false)
@@ -139,7 +147,9 @@ int main(int argc, char** argv)
       NbrSites = LargestSiteIndex + 1;
     }
 
-  if ((Manager.GetBoolean("xperiodic-boundary") == true)  && ((NbrSites % Manager.GetInteger("x-periodicity")) != 0))
+  if ((Manager.GetBoolean("xperiodic-boundary") == true)  && 
+      (((TorusFlag == false) && ((NbrSites % Manager.GetInteger("x-periodicity")) != 0)) ||
+       ((TorusFlag == true) && ((NbrSitesX % Manager.GetInteger("x-periodicity")) != 0))))
     {
       cout << "Error. The number of sites is not compatible with the periodicity in the x direction" << endl; 
       return -1;
@@ -213,10 +223,21 @@ int main(int argc, char** argv)
   
 
   char* FilePrefix = new char [256];
-  if (StripeFlag)
-    sprintf (FilePrefix, "%s_stripe_n_%d_x_%d", StatisticPrefix, NbrParticles, NbrSites);
+  if (StripeFlag == true)
+    {
+      sprintf (FilePrefix, "%s_stripe_n_%d_x_%d", StatisticPrefix, NbrParticles, NbrSites);
+    }
   else
-    sprintf (FilePrefix, "%s_%s_n_%d_x_%d", StatisticPrefix, Manager.GetString("geometry-name"), NbrParticles, NbrSites);
+    {
+      if (TorusFlag == true)
+	{
+	  sprintf (FilePrefix, "%s_torus_nx_%d_ny_%d_n_%d_x_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+	}
+      else
+	{
+	  sprintf (FilePrefix, "%s_%s_n_%d_x_%d", StatisticPrefix, Manager.GetString("geometry-name"), NbrParticles, NbrSites);
+	}
+    }
   
   
   char* FileParameterString = new char [256];
@@ -262,7 +283,9 @@ int main(int argc, char** argv)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       
-      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+									     Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), 
+									     Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
       
       char* ContentPrefix = new char[256];
       sprintf (ContentPrefix, "0");
@@ -341,7 +364,11 @@ int main(int argc, char** argv)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	      
-	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"), Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"), 
+												     Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+												     Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
+												     Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
+												     Architecture.GetArchitecture(), Memory);
 	      
 	      char* ContentPrefix = new char[256];
 	      if (SzSymmetryFlag == false)

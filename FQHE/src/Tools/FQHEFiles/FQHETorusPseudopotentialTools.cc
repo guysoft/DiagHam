@@ -394,6 +394,94 @@ bool FQHETorusSU3GetPseudopotentials (char* fileName, int* nbrPseudoPotentials, 
   return true;
 }
 
+// get pseudopototentials for particles on torus with SU(3) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// pseudoPotentials = array with the pseudo-potentials (sorted such that the first element corresponds to the delta interaction)
+//                   first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
+// oneBodyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
+//                            first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
+// return value = true if no error occured
+
+bool FQHETorusSU3GetPseudopotentials (char* fileName, int nbrFluxQuanta, int* nbrPseudoPotentials, double** pseudoPotentials, double** oneBodyPseudoPotentials)
+{
+  if (FQHETorusSU3GetPseudopotentials(fileName, nbrPseudoPotentials, pseudoPotentials) == false)
+    return  false;
+  return FQHETorusSU3GetOneBodyPseudopotentials (fileName, nbrFluxQuanta, oneBodyPseudoPotentials);
+}
+// get pseudopototentials for particles on torus with SU(3) spin from file
+// 
+// fileName = name of the file that contains the pseudopotantial description
+// nbrFluxQuanta = number of flux quanta
+// nbrPseudoPotentials = number of pseudopotentials per interaction type
+// oneBodyPseudoPotentials  = array with the one body pseudo-potentials (sorted from the ky=0 to the ky=nphi-1)
+//                            first index refered to the spin sector (sorted as 11, 12, 13, 22, 23, 33)
+// return value = true if no error occured
+
+bool FQHETorusSU3GetOneBodyPseudopotentials (char* fileName, int nbrFluxQuanta, double** oneBodyPseudoPotentials)
+{
+  int TmpNbrPseudoPotentials;
+  ConfigurationParser InteractionDefinition;
+  for (int i = 0; i < 6; ++i)
+    oneBodyPseudoPotentials[i] = 0;
+  if (InteractionDefinition.Parse(fileName) == false)
+    {
+      InteractionDefinition.DumpErrors(cout) << endl;
+      return false;
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential11", ' ', oneBodyPseudoPotentials[0], TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotential11 has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential12", ' ', oneBodyPseudoPotentials[1], TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotential12 has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential13", ' ', oneBodyPseudoPotentials[2], TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotential13 has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential22", ' ', oneBodyPseudoPotentials[3], TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotential22 has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential23", ' ', oneBodyPseudoPotentials[4], TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotential23 has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  if (InteractionDefinition.GetAsDoubleArray("OneBodyPotential33", ' ', oneBodyPseudoPotentials[5], TmpNbrPseudoPotentials) == true)
+    {
+      if (TmpNbrPseudoPotentials != nbrFluxQuanta)
+	{
+	  cout << "OneBodyPotential33 has a wrong number of components or has a wrong value in " << fileName << endl;
+	  return false;
+	}
+    }
+  return true;
+}
+
 // get pseudopototentials for particles on torus with SU(4) spin from file
 // 
 // fileName = name of the file that contains the pseudopotantial description

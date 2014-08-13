@@ -86,6 +86,29 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian : pub
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, int momentum, int periodicity, char* geometryFile, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory = -1);
 
+  // constructor from the explicit the bond description
+  //
+  // particles = Hilbert space associated to the system
+  // nbrParticles = number of particles
+  // nbrSites = number of sites
+  // nbrBonds = number of bonds
+  // sitesA = array of A sites for each bond
+  // sitesB = array of B sites for each bond
+  // bondTypes = array that describe each type of bond (0 for x, 1 fo y, 2 for z)
+  // momentum = momentum sector
+  // periodicity = periodicity with respect to site numbering 
+  // kineticFactorIntra = multiplicative factor in front of the intraspin kinetic term
+  // uPotential = Hubbard potential strength
+  // j1Factor = strength of the isotropic nearest neighbor spin interaction
+  // j2Factor = strength of the anisotropic nearest neighbor spin interaction
+  // architecture = architecture to use for precalculation
+  // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
+  ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, 
+								       int nbrBonds,  int* sitesA, int* sitesB, int* bondTypes,
+								       int momentum, int periodicity, 
+								       double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, 
+								       AbstractArchitecture* architecture, long memory = -1);
+
   // destructor
   //
   virtual ~ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian();
