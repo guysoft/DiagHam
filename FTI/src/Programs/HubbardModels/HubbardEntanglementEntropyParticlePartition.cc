@@ -59,6 +59,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "show-time", "show time required for each operation");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with partent extension");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "store the eigenvalues of the partial density matrices in the a given file");
+  (*OutputGroup) += new BooleanOption ('\n', "density-eigenstate", "compute the eigenstates of the reduced density matrix");
+  (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -245,19 +247,65 @@ int main(int argc, char** argv)
 	      gettimeofday (&(TotalStartingTime), 0);
 	    }
 	  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
-#ifdef __LAPACK__
-	  if (LapackFlag == true)
+	  if (Manager.GetBoolean("density-eigenstate") == false)
 	    {
-	      PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+#ifdef __LAPACK__
+	      if (LapackFlag == true)
+		{
+		  PartialDensityMatrix.LapackDiagonalize(TmpDiag);
+		}
+	      else
+		{
+		  PartialDensityMatrix.Diagonalize(TmpDiag);
+		}
+#else
+	      PartialDensityMatrix.Diagonalize(TmpDiag);
+#endif		  
+	      TmpDiag.SortMatrixDownOrder();
 	    }
 	  else
 	    {
-	      PartialDensityMatrix.Diagonalize(TmpDiag);
-	    }
+	      ComplexMatrix TmpEigenstates (PartialDensityMatrix.GetNbrRow(), PartialDensityMatrix.GetNbrRow());
+	      TmpEigenstates.SetToIdentity();
+#ifdef __LAPACK__
+	      if (LapackFlag == true)
+		{
+		  PartialDensityMatrix.LapackDiagonalize(TmpDiag, TmpEigenstates);
+		}
+	      else
+		{
+		  PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
+		}
 #else
-	  PartialDensityMatrix.Diagonalize(TmpDiag);
+	      PartialDensityMatrix.Diagonalize(TmpDiag, TmpEigenstates);
 #endif		  
-	  TmpDiag.SortMatrixDownOrder();
+	      TmpDiag.SortMatrixDownOrder();
+	      int TmpNbrEigenstates = Manager.GetInteger("nbr-eigenstates");
+	      if (TmpNbrEigenstates == 0)
+		{
+		  TmpNbrEigenstates = PartialDensityMatrix.GetNbrRow();
+		}
+	      char* TmpEigenstateName = new char[1024];
+	      char* TmpEigenstateNamePrefix = new char[1024];	    	      
+	      char* TmpString = strstr (GroundStateFiles[0], "_n_");
+	      TmpString[0] = '\0';
+	      sprintf (TmpEigenstateNamePrefix, "%s_n_%d", GroundStateFiles[0], SubsystemNbrParticles);
+	      TmpString[0] = '_';
+	      TmpString = strstr (GroundStateFiles[0], "_x_");
+	      sprintf (TmpEigenstateNamePrefix + strlen(TmpEigenstateNamePrefix), "%s", TmpString);
+	      RemoveExtensionFromFileName(TmpEigenstateNamePrefix, "vec");
+	      TmpString = strrchr(TmpEigenstateNamePrefix, '.');
+	      sprintf (TmpString, ".reduceddensitymatrix");
+	      for (int i = 0; i < TmpNbrEigenstates; ++i)
+		{
+		  if (TmpDiag[i] > 1e-14)
+		    {
+		      sprintf(TmpEigenstateName, "%s.%d.vec", TmpEigenstateNamePrefix, i);
+		      TmpEigenstates[i].WriteVector(TmpEigenstateName);		      
+		    }
+		}
+	      delete[] TmpEigenstateName;
+	    }
 	  if (DensityMatrixFileName != 0)
 	    {
 	      ofstream DensityMatrixFile;
@@ -283,7 +331,7 @@ int main(int argc, char** argv)
 	      cout << "diagonalization done in " << Dt << "s" << endl;
 	    }
 	}
-          File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
+      File << SubsystemNbrParticles << " " << (-EntanglementEntropy) << " " << DensitySum << " " << (1.0 - DensitySum) << endl;
     }
   File.close();
 

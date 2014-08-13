@@ -419,7 +419,8 @@ int main(int argc, char** argv)
     }
   else
     {
-      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} +/- c^+_{i,sigma} c^+_{j,sigma'}|Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl;
+      File << "# <Psi_L| c^+_{i,sigma} c^+_{j,sigma'} +/- c^+_{i,sigma} c^+_{j,sigma'}|Psi_R> with sigma,sigma' = 0 (down) or 1 (up)" << endl
+	   << "# for each case is given the (norm)^2, the norm and teh argument" << endl;
       File << "# i j ";
       if ((NbrLeftStates == 1) && (NbrRightStates == 1))
 	{
