@@ -1107,7 +1107,7 @@ inline void AbstractQHEOnTorusWithSU3SpinAndMagneticTranslationsHamiltonian::Eva
 		      ++TmpInteractionFactor;
 		    }
 		}
-	    }
+ 	    } 
 	}  
     }
 }

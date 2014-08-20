@@ -224,6 +224,42 @@ class FermionOnSphereWithSpinLzSzSymmetry :  public FermionOnSphereWithSpin
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AduAu (int index, int m);
 
+  // apply a^+_m_u a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAu (int index, int m, int n, double& coefficient);
+  
+  // apply a^+_m_d a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAd (int index, int m, int n, double& coefficient);
+  
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, int n, double& coefficient);
+  
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient);
+
   // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
   //
   // index = index of the state on which the operator has to be applied

@@ -646,6 +646,7 @@ double FermionOnSphereWithSpin::AddAd (int index, int m)
 // n = index of the annihilation operator
 // coefficient = reference on the double where the multiplicative factor has to be stored
 // return value = index of the destination state 
+
 int FermionOnSphereWithSpin::AduAu (int index, int m, int n, double& coefficient)
 {
   int StateHighestBit = this->StateHighestBit[index];

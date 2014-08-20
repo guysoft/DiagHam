@@ -3,13 +3,18 @@
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -72,9 +77,14 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "anisotropic-t", "anisotropic nearest neighbor hopping amplitude", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j1", "strength of the neareast neighbor Heisenberg interaction", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "j2", "strength of the neareast neighbor anisotropic interaction", 1.0);
+
   (*SystemGroup) += new BooleanOption  ('\n', "xperiodic-boundary", "use periodic boundary conditions in the x direction");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-momentum", "set the momentum along the x direction (negative if all momentum sectors have to be evaluated)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the x direction", 4);
+  (*SystemGroup) += new BooleanOption  ('\n', "2dperiodic-boundaries", "use periodic boundary conditions in the x and y directions");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "y-momentum", "set the momentum along the y direction (negative if all momentum sectors have to be evaluated)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "y-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the y direction", 2);
+
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by .#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -169,10 +179,32 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("xperiodic-boundary") == false)
 	{
-	  if (GutzwillerFlag == false)
-	    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg");
+	  if (Manager.GetBoolean("2dperiodic-boundaries") == false)
+	    {
+	      if (SzSymmetryFlag == false)
+		{
+		  if (GutzwillerFlag == false)
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg");
+		  else
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller");
+		}
+	      else
+		{
+		  if (GutzwillerFlag == false)
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_szsym");
+		  else
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_szsym");
+		}
+	    }
 	  else
-	    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller");
+	    {
+	      if (GutzwillerFlag == false)
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_xymomentum_%d_%d", (int) Manager.GetInteger("x-periodicity"), 
+			 (int) Manager.GetInteger("y-periodicity"));
+	      else
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_xymomentum_%d_%d", (int) Manager.GetInteger("x-periodicity"),
+			 (int) Manager.GetInteger("y-periodicity"));
+	    }
 	}
       else
 	{
@@ -245,7 +277,16 @@ int main(int argc, char** argv)
 
   char* CommentLine = new char [256];
   if (Manager.GetBoolean("xperiodic-boundary") == false)
-    sprintf (CommentLine, "");
+    {
+      if (Manager.GetBoolean("2dperiodic-boundaries") == false)
+	{
+	  sprintf (CommentLine, "");
+	}
+      else
+	{
+	  sprintf (CommentLine, "kx ky");
+	}
+    }
   else
     {
       if (SzSymmetryFlag == false)
@@ -269,50 +310,93 @@ int main(int argc, char** argv)
     }
 
   bool FirstRunFlag = true;
-  if (Manager.GetBoolean("xperiodic-boundary") == false)
+  if ((Manager.GetBoolean("xperiodic-boundary") == false) && (Manager.GetBoolean("2dperiodic-boundaries") == false))
     {
-      ParticleOnSphereWithSpin* Space = 0;
-      AbstractHamiltonian* Hamiltonian = 0;
-      if (GutzwillerFlag == false)
-	Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
-      else
-	Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
-      
-      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-	Memory = Architecture.GetArchitecture()->GetLocalMemory();
-      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-      
-      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
-									     Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), 
-									     Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
-      
-      char* ContentPrefix = new char[256];
-      sprintf (ContentPrefix, "0");
-      char* EigenstateOutputFile;
-      if (Manager.GetString("eigenstate-file") != 0)
+      int SzParitySector = -1;
+      int MaxSzParitySector = 1;
+      if (SzSymmetryFlag == false)
 	{
-	  EigenstateOutputFile = new char [512];
-	  sprintf (EigenstateOutputFile, "%s", Manager.GetString("eigenstate-file"));
+	  SzParitySector = 1;
 	}
       else
 	{
-	  char* TmpExtention = new char [512];
-	  sprintf (TmpExtention, "");
-	  //       sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
-	  EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+	  if (Manager.GetInteger("sz-parity") != 0)
+	    {
+	      SzParitySector = Manager.GetInteger("sz-parity");
+	      MaxSzParitySector = SzParitySector;
+	    }
 	}
-      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-      FirstRunFlag = false;
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      cout << "------------------------------------" << endl;
-      delete Hamiltonian;
-      delete Space;
-      delete[] EigenstateOutputFile;
-      delete[] ContentPrefix;
+      for (; SzParitySector <= MaxSzParitySector; SzParitySector += 2)
+	{
+	  ParticleOnSphereWithSpin* Space = 0;
+	  AbstractHamiltonian* Hamiltonian = 0;
+	  if (SzSymmetryFlag == false)
+	    {
+	      if (GutzwillerFlag == false)
+		Space = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+	      else
+		Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+	    }
+	  else
+	    {
+	      bool MinusParitySector = true;
+	      if (SzParitySector == 1)
+		MinusParitySector = false;
+	      if (GutzwillerFlag == false)
+		Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace (NbrParticles, NbrSites, MinusParitySector);
+	      else
+		Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites, MinusParitySector);
+	    }
+	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+	  
+	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+										 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), 
+										 Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+	  
+	  char* ContentPrefix = new char[256];
+	  if (SzSymmetryFlag == false)
+	    {
+	      sprintf (ContentPrefix, "");
+	    }
+	  else
+	    {
+	      sprintf (ContentPrefix, "%d", SzParitySector);
+	    }
+
+	  char* EigenstateOutputFile;
+	  if (Manager.GetString("eigenstate-file") != 0)
+	    {
+	      EigenstateOutputFile = new char [512];
+	      sprintf (EigenstateOutputFile, "%s", Manager.GetString("eigenstate-file"));
+	    }
+	  else
+	    {
+	      char* TmpExtention = new char [512];
+	      if (SzSymmetryFlag == false)
+		{
+		  sprintf (TmpExtention, "");
+		}
+	      else
+		{
+		  sprintf (TmpExtention, "_szp_%d", SzParitySector);
+		}
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+	    }
+	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+	  FirstRunFlag = false;
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  cout << "------------------------------------" << endl;
+	  delete Hamiltonian;
+	  delete Space;
+	  delete[] EigenstateOutputFile;
+	  delete[] ContentPrefix;
+	}
     }
-  else
+  if (Manager.GetBoolean("xperiodic-boundary") == false)
     {
       int XPeriodicity = Manager.GetInteger("x-periodicity");
       int MinXMomentum = 0;
@@ -411,6 +495,119 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  
+  else
+    {
+      int XPeriodicity = Manager.GetInteger("x-periodicity");
+      int MinXMomentum = 0;
+      int MaxXMomentum = (NbrSites / XPeriodicity) - 1;
+      if (Manager.GetInteger("x-momentum") >= 0)
+	{
+	  MaxXMomentum = Manager.GetInteger("x-momentum");
+	  MinXMomentum = MaxXMomentum;
+	}
+      for (int XMomentum = MinXMomentum; XMomentum <= MaxXMomentum; ++XMomentum)
+	{
+	  int MinYMomentum = 0;
+	  int MaxYMomentum = Manager.GetInteger("y-periodicity") - 1;
+	  if (Manager.GetInteger("y-momentum") >= 0)
+	    {
+	      MaxYMomentum = Manager.GetInteger("y-momentum");
+	      MinYMomentum = MaxYMomentum;
+	    }
+	  for (int YMomentum = MinYMomentum; YMomentum <= MaxYMomentum; ++YMomentum)
+	    {
+	      int SzParitySector = -1;
+	      int MaxSzParitySector = 1;
+	      if (SzSymmetryFlag == false)
+		{
+		  SzParitySector = 1;
+		}
+	      else
+		{
+		  if (Manager.GetInteger("sz-parity") != 0)
+		    {
+		      SzParitySector = Manager.GetInteger("sz-parity");
+		      MaxSzParitySector = SzParitySector;
+		    }
+		}
+	      for (; SzParitySector <= MaxSzParitySector; SzParitySector += 2)
+		{
+		  ParticleOnSphereWithSpin* Space = 0;
+		  AbstractHamiltonian* Hamiltonian = 0;
+		  if (SzSymmetryFlag == false)
+		    {
+		      if (GutzwillerFlag == false)
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"),
+										       YMomentum, Manager.GetInteger("y-momentum"));
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"),
+													      YMomentum, Manager.GetInteger("y-momentum"));
+		    }
+		  else
+		    {
+		      bool MinusParitySector = true;
+		      if (SzParitySector == 1)
+			MinusParitySector = false;
+// 		      if (GutzwillerFlag == false)
+// 			Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"), MinusParitySector);
+// 		      else
+// 			Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, 
+// 															Manager.GetInteger("x-periodicity"),MinusParitySector);
+		      cout << "error, 2d translations and Sz<->-Sz is not an implemented symmetry" << endl;
+		      return -1;
+		    }
+		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+		  
+		  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, (NbrSites / XPeriodicity),
+													 YMomentum, Manager.GetInteger("y-momentum"),
+													 Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+													 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
+													 Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
+													 Architecture.GetArchitecture(), Memory);
+		  
+		  char* ContentPrefix = new char[256];
+		  if (SzSymmetryFlag == false)
+		    {
+		      sprintf (ContentPrefix, "%d %d", XMomentum, YMomentum);
+		    }
+		  else
+		    {
+		      sprintf (ContentPrefix, "%d %d %d", XMomentum, YMomentum, SzParitySector);
+		    }
+		  char* EigenstateOutputFile;
+		  if (Manager.GetString("eigenstate-file") != 0)
+		    {
+		      EigenstateOutputFile = new char [512];
+		      sprintf (EigenstateOutputFile, "%s", Manager.GetString("eigenstate-file"));
+		    }
+		  else
+		    {
+		      char* TmpExtention = new char [512];
+		      if (SzSymmetryFlag == false)
+			{
+			  sprintf (TmpExtention, "_kx_%d_ky%d", XMomentum, YMomentum);
+			}
+		      else
+			{
+			  sprintf (TmpExtention, "_szp_%d_kx_%d_ky_%d", SzParitySector, XMomentum, YMomentum);
+			}
+		      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+		    }
+		  
+		  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+		  FirstRunFlag = false;
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  cout << "------------------------------------" << endl;
+		  delete Hamiltonian;
+		  delete Space;
+		  delete[] EigenstateOutputFile;
+		  delete[] ContentPrefix;
+		}
+	    }
+	}
+    }  
   return 0;
 }

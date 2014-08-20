@@ -197,6 +197,23 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, double& coefficient);
 
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, double& coefficient);
+
   // apply a^+_m_u a_n_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -236,23 +253,6 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, int n, double& coefficient, int& nbrTranslation);
 
-  // apply a^+_m_d a_n_u operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation operator
-  // n = index of the annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AddAu (int index, int m, int n, double& coefficient);
-
-  // apply a^+_m_d a_n_u operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation/annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // return value = index of the destination state 
-  virtual int AddAu (int index, int m, double& coefficient);
-
   // apply a^+_m_d a_m_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -271,6 +271,70 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int AddAu (int index, int m, int n, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_u a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a^+_m_d a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a^+_m_u a_m_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m_u a_n_d operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m_d a_m_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation/annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m_d a_n_u operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // apply a_n1_sigma1 a_n2_sigma2 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad*Ad* call. Sigma is 0 for up and 1 for down
   //
@@ -393,6 +457,36 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAdu (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
   //

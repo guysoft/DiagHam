@@ -133,7 +133,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::FermionOnLatticeWithSp
       this->StateHighestBit = new int [this->HilbertSpaceDimension];  
       this->StateDescription[0] = 0x0ul;
       this->StateHighestBit[0] = 0;
-      this->GenerateLookUpTable(memory);
+      //      this->GenerateLookUpTable(memory);
     }    
 }
 

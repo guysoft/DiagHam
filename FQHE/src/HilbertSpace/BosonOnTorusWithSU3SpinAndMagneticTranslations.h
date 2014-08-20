@@ -786,8 +786,11 @@ inline int BosonOnTorusWithSU3SpinAndMagneticTranslations::AdiAdj (int m1, int m
       return this->HilbertSpaceDimension;
     }
   int TmpIndex = this->FindStateIndex(TmpState1, TmpState2, TmpState3);
-  coefficient *= this->ProdANbrStateInOrbit[this->NbrStateInOrbit[TmpIndex]];
-  nbrTranslation *= this->StateShift;
+  if (TmpIndex < this->HilbertSpaceDimension)
+    {
+      coefficient *= this->ProdANbrStateInOrbit[this->NbrStateInOrbit[TmpIndex]];
+      nbrTranslation *= this->StateShift;
+    }
   return TmpIndex;
 }
 

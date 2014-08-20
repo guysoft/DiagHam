@@ -239,6 +239,55 @@ FQHEOnTorusMainTask::FQHEOnTorusMainTask(OptionManager* options, AbstractHilbert
 	    } 
 	}
     }
+  if (((*options)["friendlyshow-hamiltonian"] != 0) && (options->GetBoolean("friendlyshow-hamiltonian") == true))
+    {
+      this->ShowHamiltonian = true;
+      if (this->ReducedHilbertSpaceDescription == 0)
+	{
+	  if (RealFlag)  
+	    {	  
+	      RealMatrix HRep (this->Space->GetHilbertSpaceDimension(), this->Space->GetHilbertSpaceDimension());
+	      this->Hamiltonian->GetHamiltonian(HRep);
+	      for (int i = 0; i < this->Space->GetHilbertSpaceDimension(); ++i)
+		{
+		  if (HRep[i].Norm() != 0.0)
+		    {
+		      cout << i << " : ";
+		      this->Space->PrintState(cout, i) << endl;
+		      for (int j = 0; j < this->Space->GetHilbertSpaceDimension(); ++j)
+			{
+			  if (HRep[i][j] != 0.0)
+			    {
+			      cout << "    " << j << " : ";
+			      this->Space->PrintState(cout, j) << " : " << HRep[i][j] << endl;
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    {	  
+	      ComplexMatrix HRep (this->Space->GetHilbertSpaceDimension(), this->Space->GetHilbertSpaceDimension());
+	      this->Hamiltonian->GetHamiltonian(HRep);
+	      for (int i = 0; i < this->Space->GetHilbertSpaceDimension(); ++i)
+		{
+		  if (HRep[i].Norm() != 0.0)
+		    {
+		      cout << i << " : ";
+		      this->Space->PrintState(cout, i) << endl;
+		      for (int j = 0; j < this->Space->GetHilbertSpaceDimension(); ++j)
+			{
+			  if (Norm(HRep[i][j]) != 0.0)
+			    {
+			      cout << "    " << j << " : ";
+			      this->Space->PrintState(cout, j) << " : " << HRep[i][j] << endl;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }  
   if (((*options)["lanczos-precision"] != 0) && (((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble() > 0))
     {
       this->LanczosPrecision = ((SingleDoubleOption*) (*options)["lanczos-precision"])->GetDouble();

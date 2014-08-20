@@ -117,6 +117,7 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
       this->StateDescription2 = new unsigned long[this->LargeHilbertSpaceDimension];
       this->StateDescription3 = new unsigned long[this->LargeHilbertSpaceDimension];
       long TmpLargeHilbertSpaceDimension = this->RawGenerateStates(this->NbrBosons, this->KyMax, this->KyMax, this->KyMax, 0, this->NbrBosons1, this->NbrBosons2, this->NbrBosons3, 0l);     
+      SortTripleElementArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, this->LargeHilbertSpaceDimension);
       this->LargeHilbertSpaceDimension = this->GenerateStates();
       cout  << "Dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->LargeHilbertSpaceDimension > 0l)
@@ -125,7 +126,6 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
 	    this->HilbertSpaceDimension = 0;
 	  else
 	    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-	  SortTripleElementArrayDownOrdering<unsigned long>(this->StateDescription1, this->StateDescription2, this->StateDescription3, this->LargeHilbertSpaceDimension);
 	  this->GenerateLookUpTable(1000000);
 	  this->Flag.Initialize();
 #ifdef __DEBUG__
@@ -142,9 +142,6 @@ BosonOnTorusWithSU3SpinAndMagneticTranslations::BosonOnTorusWithSU3SpinAndMagnet
 #endif    
 	}
     }
-  for (int i = 0 ; i < this->HilbertSpaceDimension; ++i)
-    this->PrintState(cout , i) << endl;
-
 }
 
 // copy constructor (without duplicating datas)
@@ -861,6 +858,7 @@ ostream& BosonOnTorusWithSU3SpinAndMagneticTranslations::PrintState (ostream& St
   Str << state << " " << TmpIndex;
   if (state != TmpIndex)
     Str << " error";
+  Str << " nbr states in orbit " << this->NbrStateInOrbit[state] << endl;
   return Str;
 }
 
@@ -1044,14 +1042,12 @@ long BosonOnTorusWithSU3SpinAndMagneticTranslations::GenerateStates()
 long BosonOnTorusWithSU3SpinAndMagneticTranslations::RawGenerateStates(int nbrBosons, int currentKy1, int currentKy2, int currentKy3, int currentTotalKy, 
 								       int nbrN1, int nbrN2, int nbrN3, long pos)
 {
-//  cout << nbrBosons << " | " << currentKy1 << " " << currentKy2 << " " << currentKy3 << " | " << currentTotalKy << "  | " << nbrN1 << " " << nbrN2 << " " << nbrN3 << " | " << pos << endl;
   if ((nbrBosons < 0) || (nbrN1 < 0) || (nbrN2 < 0) || (nbrN3 < 0))
     return pos;
   if (nbrBosons == 0)
     {
       if ((currentTotalKy % this->MaxMomentum) == this->KyMomentum)
 	{
-//	  cout << "OK" << endl;
 	  this->StateDescription1[pos] = 0x0ul;
 	  this->StateDescription2[pos] = 0x0ul;
 	  this->StateDescription3[pos] = 0x0ul;

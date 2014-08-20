@@ -895,6 +895,226 @@ double FermionOnSphereWithSpinLzSzSymmetry::AddAd (int index, int m)
     return 0.0;
 }
 
+// apply a^+_m_u a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinLzSzSymmetry::AduAu (int index, int m, int n, double& coefficient)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  m = (m<<1) + 1;
+  n = (n<<1) + 1;
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0) )
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  this->ProdASignature = State & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (NewLargestBit == n)
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= (0x1ul << m);
+}
+
+// apply a^+_m_d a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+int FermionOnSphereWithSpinLzSzSymmetry::AddAd (int index, int m, int n, double& coefficient)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  m <<= 1;
+  n <<= 1;
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0) )
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  this->ProdASignature = State & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (NewLargestBit == n)
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(State, coefficient);
+}
+
+
+// apply a^+_m_u a_n_d operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+int FermionOnSphereWithSpinLzSzSymmetry::AduAd (int index, int m, int n, double& coefficient)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  m = (m << 1) + 1;
+  n <<= 1;
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0) )
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  this->ProdASignature = State & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (NewLargestBit == n)
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(State, coefficient);
+}
+
+
+
+// apply a^+_m_d a_n_u operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+int FermionOnSphereWithSpinLzSzSymmetry::AddAu (int index, int m, int n, double& coefficient)
+{
+  int StateHighestBit = this->StateHighestBit[index];
+  unsigned long State = this->StateDescription[index];
+  m <<= 1;
+  n = (n << 1) + 1;  
+  if ((n > StateHighestBit) || ((State & (0x1ul << n)) == 0))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  this->ProdASignature = State & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  State &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  int NewLargestBit = StateHighestBit;
+  coefficient = this->SignLookUpTable[(State >> n) & this->SignLookUpTableMask[n]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(State >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  coefficient *= this->SignLookUpTable[(State >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  State &= ~(0x1ul << n);
+  if (NewLargestBit == n)
+    while ((State >> NewLargestBit) == 0)
+      --NewLargestBit;
+
+  if ((State & (0x1ul << m))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  if (m > NewLargestBit)
+    {
+      NewLargestBit = m;
+    }
+  else
+    {
+      coefficient *= this->SignLookUpTable[(State >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(State >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  State |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(State, coefficient);
+}
+
+
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
 //
 // index = index of the state on which the operator has to be applied
