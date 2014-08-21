@@ -396,7 +396,7 @@ int main(int argc, char** argv)
 	  delete[] ContentPrefix;
 	}
     }
-  if (Manager.GetBoolean("xperiodic-boundary") == false)
+  if (Manager.GetBoolean("xperiodic-boundary") == true)
     {
       int XPeriodicity = Manager.GetInteger("x-periodicity");
       int MinXMomentum = 0;
