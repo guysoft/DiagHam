@@ -669,7 +669,7 @@ int main(int argc, char** argv)
 			    DensityMatrixFile.close();
 			  }		  
 		      }
-		}
+		} //complex
 	      else
 		{
 		  HermitianMatrix PartialDensityMatrix;

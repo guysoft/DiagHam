@@ -68,6 +68,7 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleIntegerOption  ('\n', "lza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Lz value", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "sza-eigenstate", "compute the eigenstates of the reduced density matrix only for a subsystem with a fixed total Sz value", 0);
   (*OutputGroup) += new SingleIntegerOption  ('\n', "nbr-eigenstates", "number of reduced density matrix eigenstates to compute (0 if all)", 0);
+  (*ToolsGroup) += new BooleanOption  ('\n', "use-svd", "use singular value decomposition instead of diagonalization to compute the entropy");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
   (*ToolsGroup) += new SingleDoubleOption  ('\n', "diag-precision", "convergence precision in non LAPACK mode", 1e-7);
@@ -103,6 +104,7 @@ int main(int argc, char** argv)
       cout << " an input file has to be provided" << endl;
       return -1;
     }
+  bool SVDFlag = Manager.GetBoolean("use-svd");
 
   int NbrParticles=0;
   int LzMax=0;
@@ -270,7 +272,7 @@ int main(int argc, char** argv)
       
       cout << (-EntanglementEntropy) << " " << DensitySum;
     }
-  else
+  else //standard orbital partitioning
     {
       if (DensityMatrixFileName != 0)
 	{
@@ -378,10 +380,31 @@ int main(int argc, char** argv)
 			    {
 			      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Lz=" << SubsystemTrueTotalLz << " subsystem total Sz=" << SubsystemTotalSz << endl;
 			      cout << "test " << ShiftedTotalLz << " " << SubsystemTotalLz << " "  << ComplementarySubsystemMinTotalLz << " " << ComplementarySubsystemMaxTotalLz << endl;
-			      RealSymmetricMatrix PartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, GroundState);
-			      if (PartialDensityMatrix.GetNbrRow() > 1)
+
+                              RealSymmetricMatrix PartialDensityMatrix;
+                              RealMatrix PartialEntanglementMatrix; 
+                              if (SVDFlag == false)
+                                 {
+ 			            RealSymmetricMatrix TmpPartialDensityMatrix = Space->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, GroundState);
+			            if (PartialDensityMatrix.GetNbrRow() == 0)
+				       PartialDensityMatrix = TmpPartialDensityMatrix;
+			            else
+				       PartialDensityMatrix += TmpPartialDensityMatrix;
+                                 }
+                              else
+                                 {
+                                    RealMatrix TmpPartialEntanglementMatrix = Space->EvaluatePartialEntanglementMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTrueTotalLz, SubsystemTotalSz, GroundState);
+			            if (PartialEntanglementMatrix.GetNbrRow() == 0)
+				       PartialEntanglementMatrix = TmpPartialEntanglementMatrix;
+			            else
+				       PartialEntanglementMatrix += TmpPartialEntanglementMatrix;				
+                                 }
+
+                              if ((PartialDensityMatrix.GetNbrRow() > 1) || ((PartialEntanglementMatrix.GetNbrRow() >= 1) && (PartialEntanglementMatrix.GetNbrColumn() >= 1)))
 				{
 				  RealDiagonalMatrix TmpDiag (PartialDensityMatrix.GetNbrRow());
+		                  if (SVDFlag == false)
+                                  {
 #ifdef __LAPACK__
 				  if (LapackFlag == true)
 				    {
@@ -492,7 +515,47 @@ int main(int argc, char** argv)
 				      TmpDiag.SortMatrixDownOrder();
 				    }
 #endif		  
-				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+
+                                  } //SVD
+		                else
+				{
+                                 cout<<"Using SVD. "<<endl;  
+			  	 if ((PartialEntanglementMatrix.GetNbrRow() > 1) && (PartialEntanglementMatrix.GetNbrColumn() > 1))
+			    	   {	
+			      		cout << "PartialEntanglementMatrix = " << PartialEntanglementMatrix.GetNbrRow() << " x " << PartialEntanglementMatrix.GetNbrColumn() << endl;
+			      		double* TmpValues = PartialEntanglementMatrix.SingularValueDecomposition();
+			      		int TmpDimension = PartialEntanglementMatrix.GetNbrColumn();
+			      		if (TmpDimension > PartialEntanglementMatrix.GetNbrRow())
+					  {
+				  		TmpDimension = PartialEntanglementMatrix.GetNbrRow();
+					  }
+				      for (int i = 0; i < TmpDimension; ++i)
+                                        {
+					  TmpValues[i] *= TmpValues[i];
+                                        }
+				      TmpDiag = RealDiagonalMatrix(TmpValues, TmpDimension);
+				      TmpDiag.SortMatrixDownOrder();
+				    }
+				  else
+				    {
+				      double TmpValue = 0.0;
+				      if (PartialEntanglementMatrix.GetNbrRow() == 1)
+					{
+					  for (int i = 0; i < PartialEntanglementMatrix.GetNbrColumn(); ++i)
+					    TmpValue += PartialEntanglementMatrix[i][0] * PartialEntanglementMatrix[i][0];
+					}
+				      else
+					{
+					  for (int i = 0; i < PartialEntanglementMatrix.GetNbrRow(); ++i)
+					    TmpValue += PartialEntanglementMatrix[0][i] * PartialEntanglementMatrix[0][i];				  
+					}
+				      TmpDiag = RealDiagonalMatrix(1, 1);
+				      TmpDiag[0] = TmpValue;
+				    }
+				  }   
+
+
+				  for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
 				    {
 				      if (TmpDiag[i] > 1e-14)
 					{
@@ -505,7 +568,7 @@ int main(int argc, char** argv)
 				      ofstream DensityMatrixFile;
 				      DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 
 				      DensityMatrixFile.precision(14);
-				      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				      for (int i = 0; i < TmpDiag.GetNbrRow(); ++i)
 					DensityMatrixFile << SubsystemSize << " " << SubsystemNbrParticles << " " << SubsystemTrueTotalLz << " " << SubsystemTotalSz << " " << TmpDiag[i] << endl;
 				      DensityMatrixFile.close();
 				    }
