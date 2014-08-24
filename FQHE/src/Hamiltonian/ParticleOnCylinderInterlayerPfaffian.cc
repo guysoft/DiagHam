@@ -77,6 +77,19 @@ ParticleOnCylinderInterlayerPfaffian::ParticleOnCylinderInterlayerPfaffian(Parti
   this->InvRatio = 1.0 / ratio;
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
+
+  this->OneBodyUpUp = 0;
+  this->OneBodyDownDown = 0;
+  this->OneBodyUpDown = new Complex[this->NbrLzValue];
+
+  Complex Infinity(1000.0, 0.0);
+  Complex Zero(0.0, 0.0);
+  this->OneBodyUpDown[0] = Infinity;
+  this->OneBodyUpDown[this->MaxMomentum] = Infinity;
+
+  for (int i = 1; i < this->MaxMomentum; i++)
+	this->OneBodyUpDown[i] = Zero;
+    
   this->EnergyShift = 0.0;
 
   if (precalculationFileName == 0)
@@ -123,6 +136,10 @@ ParticleOnCylinderInterlayerPfaffian::~ParticleOnCylinderInterlayerPfaffian()
   delete[] this->M4Value32;
   delete[] this->M5Value32;
   delete[] this->M6Value32;
+
+  delete[] this->OneBodyUpUp;
+  delete[] this->OneBodyUpDown;
+  delete[] this->OneBodyDownDown;
 
 
   if (this->FastMultiplicationFlag == true)
@@ -348,6 +365,12 @@ Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficient12(i
      GaussianExp = exp(-Xr * Xr - Xs * Xs - Xr * Xs) * exp(-Xrp * Xrp - Xsp * Xsp - Xrp * Xsp);
 
      Coefficient.Re = GaussianExp * (Xr - Xs) * (Xrp - Xsp) * (1.0 +  (2.0 * Xr + Xs) * (2.0 * Xs + Xr) * (2.0 * Xrp + Xsp) * (2.0 * Xsp + Xrp) + (Xr + Xs) * (Xrp + Xsp) );
+      //Coefficient.Re = GaussianExp * ( 2.0 * (Xr - Xs) * (Xrp - Xsp) + (Xr - Xs) * (Xr + Xs) * (Xrp - Xsp) * (Xrp + Xsp) );
+
+      //Coefficient.Re = GaussianExp * (Xr - Xs) * (Xrp - Xsp) * (2.0 + (Xr + Xs) * (Xrp + Xsp) + (1.0/3.0)*(Xr*Xr + Xs*Xs + Xr*Xs - 1.0) * (Xrp*Xrp + Xsp*Xsp + Xrp*Xsp - 1.0) );
+     
+
+//+ 3.0 * (Xr * Xr + Xr * Xs + Xs * Xs - 1.0) * (Xrp * Xrp + Xrp * Xsp + Xsp * Xsp - 1.0)
      Coefficient.Im = 0.0;
 
      return (-Coefficient * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
@@ -568,6 +591,60 @@ ComplexVector& ParticleOnCylinderInterlayerPfaffian::LowLevelAddMultiply(Complex
 	 vDestination[i] += this->EnergyShift * vSource[i];
 	}
 
+      //One-body terms
+      double TmpUp, TmpDown; 
+      for (int i = firstComponent; i < LastComponent; ++i)
+	  { 
+            Complex TmpDiagonal(0, 0);
+ 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+                TmpUp = TmpParticles->AduAu(i, j); 
+                TmpDown = TmpParticles->AddAd(i, j); 
+                if (this->OneBodyUpUp != 0)
+			TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                if (this->OneBodyDownDown != 0)
+			TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                if (this->OneBodyUpDown != 0)
+			TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	      }
+
+           //TmpUp = TmpParticles->AduAu(i, this->MaxMomentum); 
+           //TmpDown = TmpParticles->AddAd(i, this->MaxMomentum); 
+           //if ((TmpUp==0) && (TmpDown==0))
+           //    TmpDiagonal += 1000.0;
+           //if ((TmpUp==1) && (TmpDown==1))
+           //   TmpDiagonal += 1000.0;
+  
+           //TmpUp = TmpParticles->AduAu(i, 0); 
+           //TmpDown = TmpParticles->AddAd(i, 0); 
+           //if ((TmpUp==0) && (TmpDown==0))
+           //    TmpDiagonal += 1000.0;
+           //if ((TmpUp==1) && (TmpDown==1))
+           //    TmpDiagonal += 1000.0;
+
+ 
+	    vDestination[i] += (TmpDiagonal * vSource[i]);
+	  }
+
+
+/*
+         for (int i = firstComponent; i < LastComponent; ++i)
+	  { 
+ 	    for (int j = 0; j < this->MaxMomentum; ++j) 
+	      {
+                Index = TmpParticles->AduAd(i, j, j+1, Coefficient); 
+	        if (Index < Dim)
+ 		  vDestination[Index] += Coefficient * 100.0 * vSource[i];
+
+                Index = TmpParticles->AddAu(i, j+1, j, Coefficient); 
+	        if (Index < Dim)
+ 		  vDestination[Index] += Coefficient * 100.0 * vSource[i];
+	      }
+           }
+
+*/
+
+
       delete TmpParticles;
     }
   else
@@ -592,6 +669,27 @@ ComplexVector& ParticleOnCylinderInterlayerPfaffian::LowLevelAddMultiply(Complex
                }
 	      vDestination[i] += Shift * vSource[i];
 	    }
+
+
+        //One-body terms
+        double TmpUp, TmpDown; 
+        for (int i = firstComponent; i < LastComponent; ++i)
+	  { 
+            Complex TmpDiagonal(0, 0);;
+ 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+                TmpUp = TmpParticles->AduAu(i, j); 
+                TmpDown = TmpParticles->AddAd(i, j); 
+                if (this->OneBodyUpUp != 0)
+			TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                if (this->OneBodyDownDown != 0)
+			TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                if (this->OneBodyUpDown != 0)
+			TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	      }
+	    vDestination[i] += (TmpDiagonal * vSource[i]);
+	  }
+
         
           delete TmpParticles;
 	}
@@ -623,6 +721,27 @@ ComplexVector& ParticleOnCylinderInterlayerPfaffian::LowLevelAddMultiply(Complex
 	      vDestination[i] += Shift * vSource[i];
 	      ++Pos;
 	    }
+
+
+        //One-body terms
+        double TmpUp, TmpDown; 
+        for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	  { 
+            Complex TmpDiagonal(0, 0);;
+ 	    for (int j = 0; j <= this->MaxMomentum; ++j) 
+	      {
+                TmpUp = TmpParticles->AduAu(i, j); 
+                TmpDown = TmpParticles->AddAd(i, j); 
+                if (this->OneBodyUpUp != 0)
+			TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                if (this->OneBodyDownDown != 0)
+			TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                if (this->OneBodyUpDown != 0)
+			TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	      }
+	    vDestination[i] += (TmpDiagonal * vSource[i]);
+	  }
+
 
 	  int Index;
 	  int m1;
@@ -794,6 +913,26 @@ ComplexVector& ParticleOnCylinderInterlayerPfaffian::LowLevelAddMultiply(Complex
 		  {
 		    vDestination[i] += this->EnergyShift * vSource[i];
 		  }
+
+              //One-body terms
+              double TmpUp, TmpDown; 
+              for (int i = PosMod + firstComponent; i < LastComponent; i += this->FastMultiplicationStep)
+	        { 
+                  Complex TmpDiagonal(0, 0);;
+ 	          for (int j = 0; j <= this->MaxMomentum; ++j) 
+	            {
+                       TmpUp = TmpParticles->AduAu(i, j); 
+                       TmpDown = TmpParticles->AddAd(i, j); 
+                       if (this->OneBodyUpUp != 0)
+	  		   TmpDiagonal += this->OneBodyUpUp[j] * TmpUp;
+                       if (this->OneBodyDownDown != 0)
+			   TmpDiagonal += this->OneBodyDownDown[j] * TmpDown;
+                       if (this->OneBodyUpDown != 0)
+			   TmpDiagonal += this->OneBodyUpDown[j] * TmpUp * TmpDown;
+	            }
+	          vDestination[i] += (TmpDiagonal * vSource[i]);
+	        }
+
                 
 	      }
 	  delete TmpParticles;

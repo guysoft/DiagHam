@@ -76,6 +76,12 @@ class ParticleOnCylinderInterlayerPfaffian : public AbstractQHEOnCylinderThreeBo
   int* M5Value32;
   int* M6Value32;
 
+  //one body terms c_{mu}^+ c_{mu}, c_{md}^+ c_{md}, and c_{Xm}^+ c_{Xm}
+  Complex* OneBodyUpUp;
+  Complex* OneBodyUpDown;
+  Complex* OneBodyDownDown;
+
+
  public:
 
   // constructor from default datas

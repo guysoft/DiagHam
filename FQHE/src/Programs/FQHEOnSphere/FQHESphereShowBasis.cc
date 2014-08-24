@@ -6,6 +6,9 @@
 #include "HilbertSpace/FermionOnSphereUnlimited.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnSphereWithSpinHaldaneBasis.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinSzSymmetry.h"
+#include "HilbertSpace/FermionOnSphereWithSpinLzSymmetry.h"
 #include "HilbertSpace/FermionOnSphereWithSU4Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSU3Spin.h"
 #include "HilbertSpace/FermionOnSphereWithSpin.h"
@@ -71,6 +74,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "tzZ3symmetrized-basis", "use Tz <-> -Tz and Z3 permutations symmetrized version of the CP2 basis (only valid if total-tz=0 and total-y = 0)");
   (*SystemGroup) += new BooleanOption  ('\n', "minus-tzparity", "select the  Tz <-> -Tz symmetric sector with negative parity");
   (*SystemGroup) += new SingleIntegerOption  ('s', "total-sz", "twice the z component of the total spin of the system (only useful in su(2)/su(4) mode)", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "lzsymmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use Sz <-> -Sz symmetrized version of the basis (only valid if total-sz=0)");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-szparity", "select the  Sz <-> -Sz symmetric sector with negative parity");
+  (*SystemGroup) += new BooleanOption  ('\n', "minus-lzparity", "select the  Lz <-> -Lz symmetric sector with negative parity");
   (*SystemGroup) += new BooleanOption  ('\n', "all-sz", "consider particles with SU(2) spin all Sz components");
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   (*SystemGroup) += new BooleanOption  ('\n', "add-szvalue", "add Sz value to each Hilbert space vector (valid only for all-sz)");
@@ -119,6 +126,8 @@ int main(int argc, char** argv)
   int YValue = Manager.GetInteger("y-value");
   bool AllLzFlag = Manager.GetBoolean("all-lz");
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
+  bool LzSymmetrizedBasis = Manager.GetBoolean("lzsymmetrized-basis");
+  bool SzSymmetrizedBasis = Manager.GetBoolean("szsymmetrized-basis");
   bool AllSzFlag = Manager.GetBoolean("all-sz");
   bool AddIndex = Manager.GetBoolean("add-index");
   bool AddSzValue = Manager.GetBoolean("add-szvalue");
@@ -306,8 +315,24 @@ int main(int argc, char** argv)
  	if (SU2SpinFlag == true)
 	  {
 	    if (HaldaneBasisFlag == false)
-	      {
-		Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+	      {                 
+                if ((SzSymmetrizedBasis == false) && (LzSymmetrizedBasis == false))
+		    Space = new FermionOnSphereWithSpin(NbrParticles, TotalLz, NbrFluxQuanta, TotalSz);
+                else //either Lz or Sz symmetrized basis
+                 {
+	           if ((SzSymmetrizedBasis == true)  && (TotalSz == 0) && (LzSymmetrizedBasis == true) && (TotalLz == 0))
+		     {
+		        Space = new FermionOnSphereWithSpinLzSzSymmetry(NbrParticles, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"),
+								    Manager.GetBoolean("minus-lzparity"));
+		     }
+		   else 
+                     if ((SzSymmetrizedBasis == true)  && (TotalSz == 0))
+                       {
+		           Space = new FermionOnSphereWithSpinSzSymmetry(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetBoolean("minus-szparity"));
+                       }
+		     else
+			   Space = new FermionOnSphereWithSpinLzSymmetry(NbrParticles, NbrFluxQuanta, TotalSz, Manager.GetBoolean("minus-lzparity"));
+                 }
 	      }
 	    else
 	      {
