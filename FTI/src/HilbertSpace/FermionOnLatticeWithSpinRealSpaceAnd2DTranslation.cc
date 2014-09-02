@@ -114,12 +114,27 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->NbrSite / xTranslation;
   cout << "MomentumModulo=" << MomentumModulo<<endl;
-  this->XMomentum = xMomentum % this->MomentumModulo;
-  this->YMomentum = yMomentum;
-  this->StateShift = 1;
+
+  this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+
+  this->XMomentum = xMomentum % this->MomentumModulo;
+  this->StateXShift = xTranslation;
+  this->ComplementaryStateXShift = 2 * this->MaxMomentum - this->StateXShift;
+  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+
+  this->YMomentum = yMomentum;
+  this->StateYShift = 2;
+  this->YMomentumBlockSize = this->StateYShift * yPeriodicity;
+  this->NbrYMomentumBlocks = this->NbrSite / yPeriodicity;
+  this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
+  this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
+  this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
+
+  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
+
 
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
@@ -132,7 +147,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
     {
       this->Flag.Initialize();
       this->GenerateSignLookUpTable();
-      this->LargeHilbertSpaceDimension  = this->GenerateStates(true, true);
+      this->LargeHilbertSpaceDimension  = this->GenerateStates();
       this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
       cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->HilbertSpaceDimension > 0)
@@ -354,6 +369,66 @@ ostream& FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::PrintState (ostream&
   return Str;
 }
 
+
+// generate all states corresponding to the constraints
+//
+// return value = Hilbert space dimension
+
+long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateStates()
+{
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+  long TmpLargeHilbertSpaceDimension = 0l;
+  int NbrTranslationX;
+  int NbrTranslationY;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
+	{
+	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
+	    {
+	      ++TmpLargeHilbertSpaceDimension;
+	    }
+	}
+      else
+	{
+	  this->StateDescription[i] = 0x0ul;
+	}
+    }
+  cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
+  unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
+  this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
+  this->ReorderingSign = new unsigned long [TmpLargeHilbertSpaceDimension];
+  TmpLargeHilbertSpaceDimension = 0l;
+  for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      if (this->StateDescription[i] != 0x0ul)
+	{
+	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
+	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
+	  unsigned long& TmpSign = this->ReorderingSign[TmpLargeHilbertSpaceDimension];
+	  TmpSign = 0x0ul;	  
+	  int Index = 1;
+	  unsigned long TmpState =  this->StateDescription[i];
+	  for (int m = 0; m < this->MaxYMomentum; ++m)
+	    {
+	      unsigned long TmpState2 = TmpState;
+	      for (int n = 1; n < this->MaxXMomentum; ++n)
+		{
+		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+		  ++Index;
+		}
+	      TmpSign |= this->GetSignAndApplySingleYTranslation(TmpState) << Index;
+	      ++Index;
+	    }
+	  ++TmpLargeHilbertSpaceDimension;
+	}
+    }
+  delete[] this->StateDescription;
+  this->StateDescription = TmpStateDescription;
+  return TmpLargeHilbertSpaceDimension;
+}
+
 // generate all states corresponding to the constraints
 // 
 // nbrFermions = number of fermions
@@ -408,6 +483,105 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::EvaluateHilbertSpaceDime
   return dimension;
 }
 
+// generate look-up table associated to current Hilbert space
+// 
+// memory = memory size that can be allocated for the look-up table
+
+void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateLookUpTable(unsigned long memory)
+{
+  // get every highest bit poisition
+  unsigned long TmpPosition = this->StateDescription[0];
+#ifdef __64_BITS__
+  int CurrentHighestBit = 63;
+#else
+  int CurrentHighestBit = 31;
+#endif
+  while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+    --CurrentHighestBit;  
+
+  // evaluate look-up table size
+  memory /= (sizeof(int*) * this->NbrFermionStates);
+  this->MaximumLookUpShift = 1;
+  while (memory > 0)
+    {
+      memory >>= 1;
+      ++this->MaximumLookUpShift;
+    }
+  if (this->MaximumLookUpShift > this->NbrFermionStates)
+    this->MaximumLookUpShift = this->NbrFermionStates;
+  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
+
+  // construct  look-up tables for searching states
+  this->LookUpTable = new int* [this->NbrFermionStates];
+  this->LookUpTableShift = new int [this->NbrFermionStates];
+  for (int i = 0; i < this->NbrFermionStates; ++i)
+    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+  int CurrentLargestBit = CurrentHighestBit;
+  int* TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
+  if (CurrentLargestBit < this->MaximumLookUpShift)
+    this->LookUpTableShift[CurrentLargestBit] = 0;
+  else
+    this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
+  int CurrentShift = this->LookUpTableShift[CurrentLargestBit];
+  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
+  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
+  while (CurrentLookUpTableValue > TmpLookUpTableValue)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = 0;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[CurrentLookUpTableValue] = 0;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {     
+      TmpPosition = this->StateDescription[i];
+      while ((TmpPosition & (0x1ul << CurrentHighestBit)) == 0x0ul)
+	--CurrentHighestBit;  
+      if (CurrentLargestBit != CurrentHighestBit)
+	{
+	  while (CurrentLookUpTableValue > 0)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      --CurrentLookUpTableValue;
+	    }
+	  TmpLookUpTable[0] = i;
+ 	  CurrentLargestBit = CurrentHighestBit;
+	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
+	  if (CurrentLargestBit < this->MaximumLookUpShift)
+	    this->LookUpTableShift[CurrentLargestBit] = 0;
+	  else
+	    this->LookUpTableShift[CurrentLargestBit] = CurrentLargestBit + 1 - this->MaximumLookUpShift;
+	  CurrentShift = this->LookUpTableShift[CurrentLargestBit];
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
+	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      --CurrentLookUpTableValue;
+	    }
+	  TmpLookUpTable[CurrentLookUpTableValue] = i;
+	}
+      else
+	{
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
+	    {
+	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
+		{
+		  TmpLookUpTable[CurrentLookUpTableValue] = i;
+		  --CurrentLookUpTableValue;
+		}
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	    }
+	}
+    }
+  while (CurrentLookUpTableValue > 0)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+
+}
 
 // find state index from a string
 //

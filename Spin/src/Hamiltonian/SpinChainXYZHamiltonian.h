@@ -102,7 +102,12 @@ class SpinChainXYZHamiltonian : public SpinChainZ2InteractingHamiltonian
 						  int firstComponent, int nbrComponent);
 
 
- private:
+ protected:
+
+  // evaluate diagonal matrix elements
+  // 
+  virtual void EvaluateDiagonalMatrixElements();
+
  
 
 };

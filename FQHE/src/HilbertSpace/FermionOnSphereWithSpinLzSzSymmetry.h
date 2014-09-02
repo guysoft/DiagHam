@@ -571,7 +571,7 @@ inline void FermionOnSphereWithSpinLzSzSymmetry::GetStateSingletParity(unsigned 
   TmpState ^= (TmpState >> 8);
   TmpState ^= (TmpState >> 4);
   TmpState ^= (TmpState >> 2);
-  initialState |= (TmpState & 1) << FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT;
+  initialState |= (TmpState & 0x1ul) << FERMION_SPHERE_SU2_SINGLETPARITY_SHIFT;
 }
 
 // factorized code that is used to symmetrize result of the AdxAdy operations

@@ -254,3 +254,36 @@ RealVector* SpinChainXYZHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSo
   return vDestinations;
 }
 
+// evaluate diagonal matrix elements
+// 
+
+void SpinChainXYZHamiltonian::EvaluateDiagonalMatrixElements()
+{
+  int dim = this->Chain->GetHilbertSpaceDimension();
+
+  for (int i = 0; i < dim; i++)
+    {
+      // SzSz part
+      double Tmp = 0.0;
+      double Tmp2;
+      double Tmp3;
+      this->Chain->Szi(0, i, Tmp2);
+      Tmp2 *= this->FFactors[0]; 
+      for (int j = 1; j < this->NbrSpin; ++j)
+	{
+	  Tmp += this->Chain->SziSzj(j - 1, j, i);
+	  this->Chain->Szi(j, i, Tmp3);
+	  Tmp2 += this->FFactors[j] * Tmp3;
+	}
+      this->SzSzContributions[i] = -this->InteractionStrength * 4.0 * Tmp + Tmp2;
+      this->Parities[i] = 1.0 - 2.0 * ((double) this->Chain->Parity(i));  
+    }
+  if (this->BoundaryCondition != 0.0)
+    {
+      for (int i = 0; i < dim; i++)
+	{
+	  this->SzSzContributions[i] += 4.0 * this->InteractionStrength * this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
+	}
+    }
+}
+

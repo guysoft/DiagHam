@@ -561,7 +561,7 @@ int main(int argc, char** argv)
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 		  
 		  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, (NbrSites / XPeriodicity),
-													 YMomentum, Manager.GetInteger("y-momentum"),
+													 YMomentum, Manager.GetInteger("y-periodicity"),
 													 Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
 													 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
 													 Manager.GetDouble("j1"), Manager.GetDouble("j2"), 

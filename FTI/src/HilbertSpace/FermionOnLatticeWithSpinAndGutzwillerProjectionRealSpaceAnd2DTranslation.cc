@@ -115,13 +115,29 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->NbrMomentum = this->MaxMomentum + 1;
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->NbrSite / xTranslation;
-  cout << "MomentumModulo=" << MomentumModulo<<endl;
-  this->XMomentum = xMomentum % this->MomentumModulo;
-  this->YMomentum = 0;
-  this->StateShift = 2 * xTranslation;
+  cout << "MomentumModulo=" << MomentumModulo<< endl;
+
+  this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+  
+  this->MaxXMomentum = this->NbrSite / xTranslation;
+  this->XMomentum = xMomentum % this->MaxXMomentum;
+  this->StateXShift = xTranslation;
+  this->ComplementaryStateXShift = 2 * this->MaxMomentum - this->StateXShift;
+  this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+
+  this->MaxYMomentum = yPeriodicity;
+  this->YMomentum = yMomentum % this->MaxYMomentum;
+  this->NbrYMomentumBlocks = this->NbrSite / this->MaxXMomentum;
+  this->StateYShift = 2 * (this->NbrYMomentumBlocks / this->MaxYMomentum);
+  this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
+  this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
+  this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
+  this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
+
+  this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
 
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
@@ -134,7 +150,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
     {
       this->Flag.Initialize();
       this->GenerateSignLookUpTable();
-      this->LargeHilbertSpaceDimension  = this->GenerateStates(true, true);
+      this->LargeHilbertSpaceDimension  = this->GenerateStates();
       this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
       cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->HilbertSpaceDimension > 0)

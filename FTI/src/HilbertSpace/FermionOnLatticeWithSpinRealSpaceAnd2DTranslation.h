@@ -54,6 +54,36 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // flag to indicate that the Hilbert space should preserve Sz
   bool SzFlag;
 
+  // number of momentum sectors in the x direction 
+  int MaxXMomentum;
+  // bit shift that has to applied to perform a translation in the x direction 
+  int StateXShift;
+  // binary mask for the StateXShift first bits 
+  unsigned long XMomentumMask;
+  // bit shift to apply to move the first StateXShift bits at the end of a state description
+  int ComplementaryStateXShift;
+
+  // number of momentum sectors in the y direction 
+  int MaxYMomentum;
+  // bit shift that has to applied to perform a translation in the y direction 
+  int StateYShift;
+  // binary mask for the StateYShift first bits 
+  unsigned long YMomentumMask;
+  // bit shift to apply to move the first StateYShift bits at the end of a state description
+  int ComplementaryStateYShift;
+  // number of bits that are related by a translation along the y direction 
+  int YMomentumBlockSize;
+  // binary mask corresponding to YMomentumBlockSize
+  unsigned long YMomentumBlockMask;
+  // number of independant blockse related by translations in the y direction 
+  int NbrYMomentumBlocks;
+
+  // parity of the number of fermions, 0x1ul if even, 0x0ul if odd
+  unsigned long NbrFermionsParity;
+
+  // temporary variables when using AdAd / ProdAd operations
+  int ProdATemporaryNbrStateInOrbit;
+
  public:
 
   // default constructor
@@ -194,12 +224,10 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
 
-  // evaluate Hilbert space dimension with a fixed number of fermions with spin up
+  // generate all states corresponding to the constraints
   //
-  // nbrFermions = number of fermions
-  // nbrSpinUp = number of fermions with spin up
   // return value = Hilbert space dimension
-//   virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp);
+  virtual long GenerateStates();
 
   // generate all states corresponding to the constraints
   // 
@@ -208,6 +236,11 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long RawGenerateStates(int nbrFermions, int currentSite, long pos);
+
+  // generate look-up table associated to current Hilbert space
+  // 
+  // memory = memory size that can be allocated for the look-up table
+  virtual void GenerateLookUpTable(unsigned long memory);
 
   // apply a^+_m_sigma a_n_sigma operator to a given state 
   //
@@ -244,11 +277,51 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
   // stateDescription = unsigned integer describing the state
-  // stateHighestBit = reference on the highest non-zero bit in the canonical representation
   // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
   // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  unsigned long FindCanonicalFormAndTestMomentumConstraint(unsigned long& stateDescription, int& stateHighestBit, int& nbrTranslationX, int& nbrTranslationY);
+  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
+
+  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
+  //
+  // stateDescription = unsigned integer describing the state
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
+  virtual unsigned long FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
+
+  //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
+  //
+  // stateDescription = unsigned integer describing the state
+  // return value = true if the state satisfies the momentum constraint
+  virtual bool TestMomentumConstraint(unsigned long stateDescription);
+
+  // find the size of the orbit for a given state
+  //
+  // return value = orbit size
+  inline int FindOrbitSize(unsigned long stateDescription);
+
+  // apply a single translation in the x direction for a state description
+  //
+  // stateDescription = reference on the state description
+  virtual void ApplySingleXTranslation(unsigned long& stateDescription);
+
+  // apply a single translation in the y direction for a state description
+  //
+  // stateDescription = reference on the state description  
+  virtual void ApplySingleYTranslation(unsigned long& stateDescription);
+
+  // get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
+  //
+  // stateDescription = reference on state description
+  // return value = 0 if the sign is +1, 1 if the sign is -1
+  unsigned long GetSignAndApplySingleXTranslation(unsigned long& stateDescription);
+
+  // get the fermonic sign when performing a single translation in the y direction on a state description, and apply the single translation
+  //
+  // stateDescription = reference on state description
+  // return value = 0 if the sign is +1, 1 if the sign is -1
+  virtual unsigned long GetSignAndApplySingleYTranslation(unsigned long& stateDescription);
 
 };
 
@@ -366,28 +439,270 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdd (int m1, in
 inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
-  int TmpMaxMomentum = 0;
-  this->FindCanonicalFormAndTestMomentumConstraint(state, TmpMaxMomentum, nbrTranslationX, nbrTranslationY);
+  this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
   if (nbrTranslationX < 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-/*   coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]]; */
-/*   coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul))); */
-  return this->HilbertSpaceDimension;
+  int TmpMaxMomentum = 2 * this->NbrSite;
+  while ((state >> TmpMaxMomentum) == 0x0ul)
+    --TmpMaxMomentum;
+  int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
+  if (TmpIndex < this->HilbertSpaceDimension)
+    {
+      coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationX * this->MaxYMomentum) + nbrTranslationY)) & 0x1ul))); 
+    }
+  return TmpIndex;
+}
+
+
+// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+// return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
+
+inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long CanonicalState = stateDescription;
+  unsigned long stateDescriptionReference = stateDescription;  
+  unsigned long TmpStateDescription;  
+  nbrTranslationX = 0;
+  nbrTranslationY = 0;
+  cout << "toto" << endl;
+  for (int m = 0; (m < this->MaxYMomentum) && (stateDescription != 0x0ul) ; ++m)
+    {
+      TmpStateDescription = stateDescription;
+      for (int n = 1; n < this->MaxXMomentum; ++n)
+	{
+	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
+	  this->ApplySingleXTranslation(TmpStateDescription);      
+	  if (TmpStateDescription < CanonicalState)
+	    {
+	      CanonicalState = TmpStateDescription;
+	      nbrTranslationX = n;	      
+	      nbrTranslationY = m;	      
+	    }
+	  if  (TmpStateDescription == stateDescription)
+	    n = this->MaxXMomentum;
+	}
+      this->ApplySingleYTranslation(stateDescription);      
+      if (stateDescription == stateDescriptionReference)
+	{
+	  m = this->MaxYMomentum;
+	}
+      else
+	{
+	  if (stateDescription < CanonicalState)
+	    {
+	      CanonicalState = stateDescription;
+	      nbrTranslationX = 0;	      
+	      nbrTranslationY = m;	      
+	    }
+	}
+    }
+  return CanonicalState;
 }
 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
 //
 // stateDescription = unsigned integer describing the state
-// stateHighestBit = reference on the highest non-zero bit in the canonical representation
 // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long& stateDescription, int& stateHighestBit, int& nbrTranslationX, int& nbrTranslationY)
+inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
+  unsigned long CanonicalState = stateDescription;
+  unsigned long stateDescriptionReference = stateDescription;  
+  unsigned long TmpStateDescription;  
+  nbrTranslationX = 0;
+  nbrTranslationY = 0;
+  for (int m = 0; (m < this->MaxYMomentum) && (stateDescriptionReference != stateDescription) ; ++m)
+    {
+      TmpStateDescription = stateDescription;
+      for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription != stateDescription) ; ++n)
+	{
+	  if (TmpStateDescription < CanonicalState)
+	    {
+	      CanonicalState = TmpStateDescription;
+	      nbrTranslationX = n;	      
+	      nbrTranslationY = m;	      
+	    }
+	  this->ApplySingleXTranslation(TmpStateDescription);      
+	}
+      this->ApplySingleYTranslation(stateDescription);      
+    }
+  return CanonicalState;  
+}
+
+//  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
+//
+// stateDescription = unsigned integer describing the state
+// return value = true if the state satisfies the momentum constraint
+
+inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
+{
+  unsigned long TmpStateDescription = stateDescription;
+  unsigned long TmpStateDescription2 = stateDescription;
+  int XSize = 1;
+  this->ApplySingleXTranslation(TmpStateDescription);   
+  unsigned long TmpSign= 0x0ul;
+  while (stateDescription != TmpStateDescription)
+    {
+      ++XSize;
+      TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
+    }
+  if ((((2 * this->XMomentum * XSize) + (((int) TmpSign) * this->MaxXMomentum)) % (2 * this->MaxXMomentum)) != 0)
+    return false;
+  int YSize = this->MaxYMomentum;
+  int TmpXSize = 0;
+  TmpSign = 0x0ul;
+  unsigned long TmpSign2;
+  for (int m = 1; m < YSize; ++m)
+    {
+      TmpSign ^= this->GetSignAndApplySingleYTranslation(stateDescription); 
+      TmpSign2 = TmpSign;
+      TmpStateDescription = TmpStateDescription2;
+      TmpXSize = 0;
+      while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
+	{	  
+	  ++TmpXSize;
+	  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
+	}
+      if (TmpXSize < XSize)
+	{
+	  YSize = m;
+	}
+    } 
+  if ((((2 * this->YMomentum * YSize * this->MaxXMomentum)
+	- (2 * this->XMomentum * TmpXSize * this->MaxYMomentum)
+	+ (((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxXMomentum)) != 0)
+    return false;
+  return true;
+}
+
+// find the size of the orbit for a given state
+//
+// return value = orbit size
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
+{
+  unsigned long TmpStateDescription = stateDescription;
+  unsigned long TmpStateDescription2 = stateDescription;
+  int XSize = 1;
+  this->ApplySingleXTranslation(TmpStateDescription);      
+  while (stateDescription != TmpStateDescription)
+    {
+      ++XSize;
+      this->ApplySingleXTranslation(TmpStateDescription);      
+    }
+  int YSize = this->MaxYMomentum;
+  for (int m = 1; m < YSize; ++m)
+    {
+      this->ApplySingleYTranslation(stateDescription); 
+      TmpStateDescription = TmpStateDescription2;
+      int TmpXSize = 0;
+      while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
+	{	  
+	  ++TmpXSize;
+	  this->ApplySingleXTranslation(TmpStateDescription);      
+	}
+      if (TmpXSize < XSize)
+	{
+	  YSize = m;
+	}
+    }
+  return (XSize * YSize);
+}
+
+// apply a single translation in the x direction for a state description
+//
+// stateDescription = reference on the state description
+
+inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
+{
+  stateDescription = (stateDescription >> this->StateXShift) | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
+}
+
+// apply a single translation in the y direction for a state description
+//
+// stateDescription = reference on the state description
+
+inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
+{
+  unsigned long TmpState = 0x0ul;
+  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+    {
+      TmpState |= (((stateDescription & this->YMomentumBlockMask) >> this->StateYShift) | ((stateDescription & this->YMomentumMask) << this->ComplementaryStateYShift)) << (this->YMomentumBlockSize * i);
+      stateDescription >>= this->YMomentumBlockSize;
+    }
+  stateDescription = TmpState;
+}
+
+// get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
+//
+// stateDescription = reference on state description
+// return value = 0 if the sign is +1, 1 if the sign is -1
+
+inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetSignAndApplySingleXTranslation(unsigned long& stateDescription)
+{
+  unsigned long TmpSign =  stateDescription >> this->StateXShift;
+  stateDescription = TmpSign | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
+#ifdef __64_BITS__
+  TmpSign ^= (TmpSign >> 32);
+#endif
+  TmpSign ^= (TmpSign >> 16);
+  TmpSign ^= (TmpSign >> 8);
+  TmpSign ^= (TmpSign >> 4);
+  TmpSign ^= (TmpSign >> 2);
+  TmpSign ^= (TmpSign >> 1);
+  TmpSign &= this->NbrFermionsParity;
+  return TmpSign;
+}
+
+// get the fermonic sign when performing a single translation in the y direction on a state description, and apply the single translation
+//
+// stateDescription = reference on state description
+// return value = 0 if the sign is +1, 1 if the sign is -1
+
+inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetSignAndApplySingleYTranslation(unsigned long& stateDescription)
+{
+  unsigned long TmpState = 0x0ul;
+  unsigned long TmpSign =  0x0ul;
+  unsigned long TmpSign2;
+  unsigned long TmpSign3;
+  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+    {
+      TmpSign2 = (stateDescription & this->YMomentumBlockMask) >> this->StateYShift;
+      TmpSign3 = (stateDescription & this->YMomentumMask) << this->ComplementaryStateYShift;
+      TmpState |= (TmpSign2 | TmpSign3) << (this->YMomentumBlockSize * i);
+#ifdef __64_BITS__
+      TmpSign2 ^= (TmpSign2 >> 32);
+#endif
+      TmpSign2 ^= (TmpSign2 >> 16);
+      TmpSign2 ^= (TmpSign2 >> 8);
+      TmpSign2 ^= (TmpSign2 >> 4);
+      TmpSign2 ^= (TmpSign2 >> 2);
+      TmpSign2 ^= (TmpSign2 >> 1);
+#ifdef __64_BITS__
+      TmpSign3 ^= (TmpSign3 >> 32);
+#endif
+      TmpSign3 ^= (TmpSign3 >> 16);
+      TmpSign3 ^= (TmpSign3 >> 8);
+      TmpSign3 ^= (TmpSign3 >> 4);
+      TmpSign3 ^= (TmpSign3 >> 2);
+      TmpSign3 ^= (TmpSign3 >> 1);
+      TmpSign2 *= TmpSign3;
+      TmpSign2 &= 0x1ul;
+      TmpSign ^= TmpSign2;
+      stateDescription >>= this->YMomentumBlockSize;
+    }
+  stateDescription = TmpState;
+  return TmpSign;
 }
 
 #endif

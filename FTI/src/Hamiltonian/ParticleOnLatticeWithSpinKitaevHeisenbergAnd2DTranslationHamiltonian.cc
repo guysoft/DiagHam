@@ -261,6 +261,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian::~ParticleO
 
 void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian::EvaluateExponentialFactors()
 {
+  cout << this->MaxXMomentum << " " << this->MaxYMomentum << endl;
   this->ExponentialFactors = new Complex*[this->MaxXMomentum];
   for (int i = 0; i < this->MaxXMomentum; ++i)
     { 
