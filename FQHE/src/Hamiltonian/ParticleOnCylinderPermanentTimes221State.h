@@ -52,15 +52,30 @@ class ParticleOnCylinderPermanentTimes221State : public AbstractQHEOnCylinderThr
 
  protected:
 
+  //consider spinful Gaffnian (instead of permanent times 221) or not
+  bool GaffnianFlag;
+  //consider NASS state at nu=4/3 or not
+  bool NASSFlag;
+
   // array containing all interaction factors 
-  Complex* InteractionFactors;
+  Complex* InteractionFactorsIntra;
   // number of interaction factors
-  int NbrInteractionFactors;
+  int NbrInteractionFactorsIntra;
   // arrays for indices attached to each interaction factor
-  int* M1Value;
-  int* M2Value;
-  int* M3Value;
-  int* M4Value;
+  int* M1ValueIntra;
+  int* M2ValueIntra;
+  int* M3ValueIntra;
+  int* M4ValueIntra;
+
+  // array containing all interaction factors 
+  Complex* InteractionFactorsInter;
+  // number of interaction factors
+  int NbrInteractionFactorsInter;
+  // arrays for indices attached to each interaction factor
+  int* M1ValueInter;
+  int* M2ValueInter;
+  int* M3ValueInter;
+  int* M4ValueInter;
 
   // array containing all interaction factors 
   Complex* InteractionFactors12;
@@ -100,13 +115,12 @@ class ParticleOnCylinderPermanentTimes221State : public AbstractQHEOnCylinderThr
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
-  // confinement = amplitude of the quadratic confinement potential
-  // electricFieldParameter = amplitude of the electric field along the cylinder
-  // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
+  // gaffnianFlag = consider spinful Gaffnian instead of permanent times 221
+  // nassFlag = consider NASS state at nu=4/3
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderPermanentTimes221State(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
+  ParticleOnCylinderPermanentTimes221State(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum, double ratio, bool gaffnianFlag, bool nassFlag, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
@@ -169,9 +183,10 @@ class ParticleOnCylinderPermanentTimes221State : public AbstractQHEOnCylinderThr
   // m5 = fifth index
   // m6 = sixth index
   // return value = numerical coefficient
-  Complex EvaluateInteractionCoefficient12(int m1, int m2, int m3, int m4, int m5, int m6);
-  Complex EvaluateInteractionCoefficient32(int m1, int m2, int m3, int m4, int m5, int m6);
-  Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
+  Complex EvaluateInteractionCoefficient12(int m1, int m2, int m3, int m4, int m5, int m6, bool gaffnianFlag, bool nassFlag);
+  Complex EvaluateInteractionCoefficient32(int m1, int m2, int m3, int m4, int m5, int m6, bool gaffnianFlag, bool nassFlag);
+  Complex EvaluateInteractionCoefficientIntra(int m1, int m2, int m3, int m4, bool gaffnianFlag, bool nassFlag);
+  Complex EvaluateInteractionCoefficientInter(int m1, int m2, int m3, int m4, bool gaffnianFlag, bool nassFlag);
 
   int NumberOfPermutations32(int n1, int n2, int n3);
   int NumberOfPermutations12(int n1, int n2);

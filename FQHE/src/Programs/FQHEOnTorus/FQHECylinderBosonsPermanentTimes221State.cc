@@ -73,6 +73,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new BooleanOption  ('\n', "spinful-gaffnian", "consider the spinful Gaffnian Hamiltonian instead of 221 times permanent");
+  (*SystemGroup) += new BooleanOption  ('\n', "nass-state", "consider the NASS state at nu=4/3");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -104,6 +106,8 @@ int main(int argc, char** argv)
   int Momentum = ((SingleIntegerOption*) Manager["ky-momentum"])->GetInteger();
   int NbrKy = Manager.GetInteger("nbr-ky");
   double XRatio = ((SingleDoubleOption*) Manager["ratio"])->GetDouble();
+  bool GaffnianFlag = ((BooleanOption*) Manager["spinful-gaffnian"])->GetBoolean();  
+  bool NASSFlag = ((BooleanOption*) Manager["nass-state"])->GetBoolean();
 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
@@ -160,7 +164,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderPermanentTimes221State (Space, NbrParticles, MaxMomentum, XRatio, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderPermanentTimes221State (Space, NbrParticles, MaxMomentum, XRatio, GaffnianFlag, NASSFlag, Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);
