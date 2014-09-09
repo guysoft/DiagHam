@@ -278,8 +278,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m = index of the creation operator
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AduAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
@@ -289,8 +289,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m = index of the creation operator
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AddAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
@@ -299,8 +299,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // index = index of the state on which the operator has to be applied
   // m = index of the creation/annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -310,8 +310,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m = index of the creation/annihilation operator
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AduAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -320,8 +320,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // index = index of the state on which the operator has to be applied
   // m = index of the creation/annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AddAu (int index, int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -331,8 +331,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m = index of the creation operator
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AddAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -463,8 +463,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m1 = first index for creation operator (spin up)
   // m2 = second index for creation operator (spin up)
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AduAdu (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -473,8 +473,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m1 = first index for creation operator (spin down)
   // m2 = second index for creation operator (spin down)
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AddAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -483,8 +483,8 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // m1 = first index for creation operator (spin up)
   // m2 = second index for creation operator (spin down)
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 

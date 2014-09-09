@@ -275,6 +275,21 @@ int ParticleOnSphere::AdAd (int m1, int m2, double& coefficient, int& nbrTransla
   return this->AdAd(m1, m2, coefficient);
 }
 
+// apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphere::AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  nbrTranslationY = 0;
+  return this->AdAd(m1, m2, coefficient, nbrTranslationX);
+}
+
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
 //
 // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
@@ -299,6 +314,21 @@ int ParticleOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient, int& 
 {
   nbrTranslation = 0;
   return this->ProdAd(m, nbrIndices, coefficient);
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphere::ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  nbrTranslationY = 0;
+  return this->ProdAd(m, nbrIndices, coefficient, nbrTranslationX);
 }
 
 // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
@@ -388,8 +418,40 @@ long ParticleOnSphere::AdA (long index, int m, int n, Complex& coefficient)
   return this->AdA(index, m, n, coefficient.Re);
 }
 
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient, int& nbrTranslation)
+{
+  nbrTranslation = 0;
+  return this->AdA(index, m, n, coefficient);
+}
+    
+// apply a^+_m a_n operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator
+// n = index of the annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  nbrTranslationY = 0;
+  return this->AdA(index, m, n, coefficient, nbrTranslationX);
+}
+    
 // check whether HilbertSpace implements ordering of operators
 //
+
 bool ParticleOnSphere::HaveOrder ()
 {
   return false;

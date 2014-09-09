@@ -194,9 +194,19 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // m1 = first index for creation operator
   // m2 = second index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // nbrTranslation = reference on the number of translations to apply to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // m2 = second index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   //
@@ -211,9 +221,19 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
   // nbrIndices = number of creation (or annihilation) operators
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // nbrTranslation = reference on the number of translations to apply to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation);
+
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
   // use double when calculating normalization factors to avoid overflow
@@ -273,6 +293,27 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // coefficient = reference on the double where the multiplicative factor has to be stored
   virtual unsigned long Ad (unsigned long state, int m, double& coefficient);
 
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslation);
+    
+  // apply a^+_m a_n operator to a given state 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation operator
+  // n = index of the annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+    
   // check whether HilbertSpace implements ordering of operators
   //
   virtual bool HaveOrder ();

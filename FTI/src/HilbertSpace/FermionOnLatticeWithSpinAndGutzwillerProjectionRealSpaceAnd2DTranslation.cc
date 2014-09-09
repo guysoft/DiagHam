@@ -124,7 +124,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   
   this->MaxXMomentum = this->NbrSite / xTranslation;
   this->XMomentum = xMomentum % this->MaxXMomentum;
-  this->StateXShift = xTranslation;
+  this->StateXShift = 2 * xTranslation;
   this->ComplementaryStateXShift = 2 * this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
@@ -136,7 +136,12 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-
+  cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
+  cout << "this->StateYShift=" << this->StateYShift << endl;
+  cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
+  cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
+  cout << "this->YMomentumMask=" << this->YMomentumMask << endl;
+  cout << "this->YMomentumBlockMask=" << this->YMomentumBlockMask << endl;
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
 
   this->MaximumSignLookUp = 16;

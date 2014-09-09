@@ -45,6 +45,8 @@ using std::hex;
 class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagneticTranslations
 {
 
+ protected:
+
   // number of fermions
   int NbrFermions;
   // number of fermions plus 1
@@ -117,6 +119,10 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
 //  unsigned long* TranslationSign;
 
  public:
+
+  // default constructor
+  // 
+  FermionOnTorusWithMagneticTranslations ();
 
   // basic constructor
   // 

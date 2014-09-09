@@ -6,12 +6,12 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                   class of fermions on lattice with spin                   //
+//                        class of fermions on lattice                        //
 //       in real space with translation invariance in two directions          //
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//                        last modification : 20/08/2014                      //
+//                        last modification : 09/09/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,29 +31,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONLATTICEWITHSPINREALSPACEAND2DTRANSLATION_H
-#define FERMIONONLATTICEWITHSPINREALSPACEAND2DTRANSLATION_H
+#ifndef FERMIONONLATTICEREALSPACEAND2DTRANSLATION_H
+#define FERMIONONLATTICEREALSPACEAND2DTRANSLATION_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 
 #include <iostream>
 
 
 
-class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusWithSpinAndMagneticTranslations
+class FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagneticTranslations
 {
-
-  friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
 
  protected:
 
   // total number of sites
   int NbrSite;
   
-  // flag to indicate that the Hilbert space should preserve Sz
-  bool SzFlag;
-
   // number of momentum sectors in the x direction 
   int MaxXMomentum;
   // bit shift that has to applied to perform a translation in the x direction 
@@ -88,7 +83,7 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
 
   // default constructor
   // 
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ();
+  FermionOnLatticeRealSpaceAnd2DTranslation ();
 
   // basic constructor
   // 
@@ -99,23 +94,23 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // yMomentum = momentum sector in the y direction
   // yPeriodicity = periodicity in the y direction with respect to site numbering 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int xTranslation,
-						     int yMomentum, int yPeriodicity, unsigned long memory = 10000000);
+  FermionOnLatticeRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int xTranslation,
+					     int yMomentum, int yPeriodicity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(const FermionOnLatticeWithSpinRealSpaceAnd2DTranslation& fermions);
+  FermionOnLatticeRealSpaceAnd2DTranslation(const FermionOnLatticeRealSpaceAnd2DTranslation& fermions);
 
   // destructor
   //
-  ~FermionOnLatticeWithSpinRealSpaceAnd2DTranslation ();
+  ~FermionOnLatticeRealSpaceAnd2DTranslation ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation& operator = (const FermionOnLatticeWithSpinRealSpaceAnd2DTranslation& fermions);
+  FermionOnLatticeRealSpaceAnd2DTranslation& operator = (const FermionOnLatticeRealSpaceAnd2DTranslation& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -135,73 +130,20 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // m = index of the creation operator
   // n = index of the annihilation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
-  virtual int AduAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
-  // apply a^+_m_d a_n_d operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation operator
-  // n = index of the annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AddAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-  
-  // apply a^+_m_u a_n_d operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation/annihilation operator
-  // n = index of the annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AduAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
-  // apply a^+_m_d a_n_u operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation operator
-  // n = index of the annihilation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AddAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
   // m2 = second index for creation operator (spin up)
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
-  virtual int AduAdu (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
-  // apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin down)
-  // m2 = second index for creation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AddAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
-  // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator (spin up)
-  // m2 = second index for creation operator (spin down)
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // find state index from a string
   //
@@ -237,38 +179,12 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = position from which new states have to be stored
   virtual long RawGenerateStates(int nbrFermions, int currentSite, long pos);
 
-  // generate look-up table associated to current Hilbert space
-  // 
-  // memory = memory size that can be allocated for the look-up table
-  virtual void GenerateLookUpTable(unsigned long memory);
-
-  // apply a^+_m_sigma a_n_sigma operator to a given state 
-  //
-  // index = index of the state on which the operator has to be applied
-  // m = index of the creation operator including the orbital and the spin index
-  // n = index of the annihilation operator including the orbital and the spin index
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AdsigmaAsigma (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
-  // apply a^+_m1_sigma a^+_m2_sigma operator to the state produced using AuAu method (without destroying it)
-  //
-  // m1 = first index for creation operator
-  // m2 = second index for creation operator
-  // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = index of the destination state 
-  virtual int AdsigmaAdsigma (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
-
   // factorized code that is used to symmetrize the result of any operator action
   //
   // state = reference on the state that has been produced with the operator action
   // coefficient = reference on the double where the multiplicative factor has to be stored
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state  
   virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 				   int& nbrTranslationX, int& nbrTranslationY);
@@ -277,16 +193,16 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
   // stateDescription = unsigned integer describing the state
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
   virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
 
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
   // stateDescription = unsigned integer describing the state
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
   virtual unsigned long FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
 
@@ -326,117 +242,15 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
 };
 
 
-// apply a^+_m_u a_n_u operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAsigma(index, (m << 1) + 1, (n << 1) + 1, coefficient, nbrTranslationX, nbrTranslationY);
-}
-  
-// apply a^+_m_d a_n_d operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAsigma(index, (m << 1), (n << 1), coefficient, nbrTranslationX, nbrTranslationY);
-}
-  
-// apply a^+_m_u a_n_d operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation/annihilation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAd (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAsigma(index, (m << 1) + 1, (n << 1), coefficient, nbrTranslationX, nbrTranslationY);
-}
-
-// apply a^+_m_d a_n_u operator to a given state 
-//
-// index = index of the state on which the operator has to be applied
-// m = index of the creation operator
-// n = index of the annihilation operator
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAsigma(index, (m << 1), (n << 1) + 1, coefficient, nbrTranslationX, nbrTranslationY);
-}
-
-// apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
-//
-// m1 = first index for creation operator (spin up)
-// m2 = second index for creation operator (spin up)
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdu (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAdsigma((m1 << 1) + 1, (m2 << 1) + 1, coefficient, nbrTranslationX, nbrTranslationY);
-}
-
-// apply a^+_m1_d a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-//
-// m1 = first index for creation operator (spin down)
-// m2 = second index for creation operator (spin down)
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAdsigma((m1 << 1), (m2 << 1), coefficient, nbrTranslationX, nbrTranslationY);
-}
-
-// apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
-//
-// m1 = first index for creation operator (spin up)
-// m2 = second index for creation operator (spin down)
-// coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = index of the destination state 
-
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
-{
-  return this->AdsigmaAdsigma((m1 << 1) + 1, (m2 << 1), coefficient, nbrTranslationX, nbrTranslationY);
-}
-
 // factorized code that is used to symmetrize the result of any operator action
 //
 // state = reference on the state that has been produced with the operator action
 // coefficient = reference on the double where the multiplicative factor has to be stored
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
 // return value = index of the destination state  
 
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
+inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
   this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
@@ -461,11 +275,11 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResu
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
 //
 // stateDescription = unsigned integer describing the state
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
+inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
@@ -509,11 +323,11 @@ inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCano
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
 //
 // stateDescription = unsigned integer describing the state
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
+inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
@@ -543,7 +357,7 @@ inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCano
 // stateDescription = unsigned integer describing the state
 // return value = true if the state satisfies the momentum constraint
 
-inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
+inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
@@ -599,7 +413,7 @@ inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConst
 //
 // return value = orbit size
 
-inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
+inline int FermionOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
@@ -633,7 +447,7 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindOrbitSize(unsi
 //
 // stateDescription = reference on the state description
 
-inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
+inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
 {
   stateDescription = (stateDescription >> this->StateXShift) | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
 }
@@ -642,7 +456,7 @@ inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleXTrans
 //
 // stateDescription = reference on the state description
 
-inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
+inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
 {
   unsigned long TmpState = 0x0ul;
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
@@ -658,7 +472,7 @@ inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleYTrans
 // stateDescription = reference on state description
 // return value = 0 if the sign is +1, 1 if the sign is -1
 
-inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetSignAndApplySingleXTranslation(unsigned long& stateDescription)
+inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::GetSignAndApplySingleXTranslation(unsigned long& stateDescription)
 {
   unsigned long TmpSign =  stateDescription >> this->StateXShift;
   stateDescription = TmpSign | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
@@ -679,7 +493,7 @@ inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetSignA
 // stateDescription = reference on state description
 // return value = 0 if the sign is +1, 1 if the sign is -1
 
-inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetSignAndApplySingleYTranslation(unsigned long& stateDescription)
+inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::GetSignAndApplySingleYTranslation(unsigned long& stateDescription)
 {
   unsigned long TmpState = 0x0ul;
   unsigned long TmpSign =  0x0ul;

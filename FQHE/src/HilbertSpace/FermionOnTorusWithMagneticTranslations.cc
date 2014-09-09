@@ -60,6 +60,13 @@ extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimension
 				     const int* leadingDimensionA, const int *ipiv, const int *info);
 
 
+// default constructor
+// 
+
+FermionOnTorusWithMagneticTranslations::FermionOnTorusWithMagneticTranslations ()
+{
+}
+
 // basic constructor
 // 
 // nbrFermions = number of fermions
