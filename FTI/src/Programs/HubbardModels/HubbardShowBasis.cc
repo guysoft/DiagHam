@@ -6,6 +6,8 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeRealSpace.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -39,6 +41,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "number of flux quanta", 20);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new SingleStringOption ('\n', "get-index", "find the index of a given n-body state");
   (*SystemGroup) += new BooleanOption  ('\n', "xperiodic-boundary", "use periodic boundary conditions in the x direction");
@@ -81,8 +84,31 @@ int main(int argc, char** argv)
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
-      cout << "bosonic Hubbard model not implemented" << endl;
-      return -1;
+      if (Manager.GetBoolean("xperiodic-boundary") == false)
+	{
+	  if (Manager.GetBoolean("2dperiodic-boundaries") == false)
+	    {
+	      if (Manager.GetBoolean("su2-spin") == false)
+		{
+		  Space = new BosonOnLatticeRealSpace(NbrParticles, NbrSites);
+		}
+	      else
+		{
+		  cout << "This bosonic Hubbard model not implemented" << endl;
+		  return -1;
+		}
+	    }
+	  else
+	    {
+	      cout << "This bosonic Hubbard model not implemented" << endl;
+	      return -1;
+	    }
+	}
+      else
+	{
+	  cout << "This bosonic Hubbard model not implemented" << endl;
+	  return -1;
+	}
     }
   else
     {
@@ -90,13 +116,20 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("2dperiodic-boundaries") == false)
 	    {
-	      if (Manager.GetBoolean("gutzwiller") == false)
+	      if (Manager.GetBoolean("su2-spin") == false)
 		{
-		  Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+		  Space = new FermionOnLatticeRealSpace(NbrParticles, NbrSites);
 		}
 	      else
 		{
-		  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+		  if (Manager.GetBoolean("gutzwiller") == false)
+		    {
+		      Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites); 
+		    }
+		  else
+		    {
+		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+		    }
 		}
 	    }
 	  else
