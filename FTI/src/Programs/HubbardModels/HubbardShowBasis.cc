@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -90,7 +91,14 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("su2-spin") == false)
 		{
-		  Space = new BosonOnLatticeRealSpace(NbrParticles, NbrSites);
+		  if (Manager.GetBoolean("gutzwiller") == false)
+		    {
+		      Space = new BosonOnLatticeRealSpace(NbrParticles, NbrSites);
+		    }
+		  else
+		    {
+		      Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+		    }
 		}
 	      else
 		{

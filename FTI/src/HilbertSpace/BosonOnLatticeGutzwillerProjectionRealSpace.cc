@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "HilbertSpace/FermionOnLatticeRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -60,10 +60,10 @@ using std::ios;
 // default constructor
 // 
 
-FermionOnLatticeRealSpace::FermionOnLatticeRealSpace ()
+BosonOnLatticeGutzwillerProjectionRealSpace::BosonOnLatticeGutzwillerProjectionRealSpace ()
 {
-  this->NbrFermions = 0;
-  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrBosons = 0;
+  this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = 0;
   this->NbrSite = 0;
   this->LzMax = this->NbrSite - 1;
@@ -82,16 +82,16 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace ()
 // nbrSite = total number of sites 
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSite, unsigned long memory)
+BosonOnLatticeGutzwillerProjectionRealSpace::BosonOnLatticeGutzwillerProjectionRealSpace (int nbrBosons, int nbrSite, unsigned long memory)
 {  
-  this->NbrFermions = nbrFermions;
-  this->IncNbrFermions = this->NbrFermions + 1;
+  this->NbrBosons = nbrBosons;
+  this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = 0;
   this->NbrSite = nbrSite;
   this->LzMax = this->NbrSite - 1;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
-  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons);
   cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
   if (this->LargeHilbertSpaceDimension >= (1l << 30))
     this->HilbertSpaceDimension = 0;
@@ -102,7 +102,7 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
       this->Flag.Initialize();
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
-      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->NbrSite - 1, 0l);
       this->StateLzMax = new int [this->LargeHilbertSpaceDimension];  
       int CurrentLzMax = this->NbrLzValue;
       while (((this->StateDescription[0] >> CurrentLzMax) & 0x1ul) == 0x0ul)
@@ -145,44 +145,32 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
     }
 }
 
-// basic constructor when Sz is preserved
-// 
-// nbrFermions = number of fermions
-//nbrSite = number of sites
-// nbrSpinUp = number of particles with spin up
-// memory = amount of memory granted for precalculations
-
-// FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSite, unsigned long memory)
-// {
-//   
-// }
-
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy
 
-FermionOnLatticeRealSpace::FermionOnLatticeRealSpace(const FermionOnLatticeRealSpace& fermions)
+BosonOnLatticeGutzwillerProjectionRealSpace::BosonOnLatticeGutzwillerProjectionRealSpace(const BosonOnLatticeGutzwillerProjectionRealSpace & bosons)
 {
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
-  this->Flag = fermions.Flag;
-  this->NbrFermions = fermions.NbrFermions;
-  this->IncNbrFermions = fermions.IncNbrFermions;
-  this->TotalLz = fermions.TotalLz;
-  this->NbrSite = fermions.NbrSite;
-  this->LzMax = fermions.LzMax;
-  this->NbrLzValue = fermions.NbrLzValue;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;  
-  this->SignLookUpTable = fermions.SignLookUpTable;
-  this->SignLookUpTableMask = fermions.SignLookUpTableMask;
-  this->MaximumSignLookUp = fermions.MaximumSignLookUp;
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
+  this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
+  this->Flag = bosons.Flag;
+  this->NbrBosons = bosons.NbrBosons;
+  this->IncNbrBosons = bosons.IncNbrBosons;
+  this->TotalLz = bosons.TotalLz;
+  this->NbrSite = bosons.NbrSite;
+  this->LzMax = bosons.LzMax;
+  this->NbrLzValue = bosons.NbrLzValue;
+  this->StateDescription = bosons.StateDescription;
+  this->StateLzMax = bosons.StateLzMax;
+  this->MaximumLookUpShift = bosons.MaximumLookUpShift;
+  this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
+  this->LookUpTableShift = bosons.LookUpTableShift;
+  this->LookUpTable = bosons.LookUpTable;  
+  this->SignLookUpTable = bosons.SignLookUpTable;
+  this->SignLookUpTableMask = bosons.SignLookUpTableMask;
+  this->MaximumSignLookUp = bosons.MaximumSignLookUp;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
   else
     this->TargetSpace = this;
 }
@@ -190,7 +178,7 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace(const FermionOnLatticeRealS
 // destructor
 //
 
-FermionOnLatticeRealSpace::~FermionOnLatticeRealSpace ()
+BosonOnLatticeGutzwillerProjectionRealSpace::~BosonOnLatticeGutzwillerProjectionRealSpace ()
 {
 }
 
@@ -199,32 +187,32 @@ FermionOnLatticeRealSpace::~FermionOnLatticeRealSpace ()
 // fermions = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
-FermionOnLatticeRealSpace& FermionOnLatticeRealSpace::operator = (const FermionOnLatticeRealSpace& fermions)
+BosonOnLatticeGutzwillerProjectionRealSpace& BosonOnLatticeGutzwillerProjectionRealSpace::operator = (const BosonOnLatticeGutzwillerProjectionRealSpace& bosons)
 {
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
       delete[] this->StateLzMax;
     }
-  if (fermions.TargetSpace != &fermions)
-    this->TargetSpace = fermions.TargetSpace;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
   else
     this->TargetSpace = this;
-  this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
-  this->Flag = fermions.Flag;
-  this->NbrFermions = fermions.NbrFermions;
-  this->IncNbrFermions = fermions.IncNbrFermions;
-  this->TotalLz = fermions.TotalLz;
-  this->LzMax = fermions.LzMax;
-  this->NbrSite = fermions.NbrSite;
-  this->NbrLzValue = fermions.NbrLzValue;
-  this->StateDescription = fermions.StateDescription;
-  this->StateLzMax = fermions.StateLzMax;
-  this->MaximumLookUpShift = fermions.MaximumLookUpShift;
-  this->LookUpTableMemorySize = fermions.LookUpTableMemorySize;
-  this->LookUpTableShift = fermions.LookUpTableShift;
-  this->LookUpTable = fermions.LookUpTable;  
+  this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = bosons.LargeHilbertSpaceDimension;
+  this->Flag = bosons.Flag;
+  this->NbrBosons = bosons.NbrBosons;
+  this->IncNbrBosons = bosons.IncNbrBosons;
+  this->TotalLz = bosons.TotalLz;
+  this->LzMax = bosons.LzMax;
+  this->NbrSite = bosons.NbrSite;
+  this->NbrLzValue = bosons.NbrLzValue;
+  this->StateDescription = bosons.StateDescription;
+  this->StateLzMax = bosons.StateLzMax;
+  this->MaximumLookUpShift = bosons.MaximumLookUpShift;
+  this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
+  this->LookUpTableShift = bosons.LookUpTableShift;
+  this->LookUpTable = bosons.LookUpTable;  
   return *this;
 }
 
@@ -232,80 +220,19 @@ FermionOnLatticeRealSpace& FermionOnLatticeRealSpace::operator = (const FermionO
 //
 // return value = pointer to cloned Hilbert space
 
-AbstractHilbertSpace* FermionOnLatticeRealSpace::Clone()
+AbstractHilbertSpace* BosonOnLatticeGutzwillerProjectionRealSpace::Clone()
 {
-  return new FermionOnLatticeRealSpace(*this);
+  return new BosonOnLatticeGutzwillerProjectionRealSpace(*this);
 }
-
-// generate all states corresponding to the constraints
-// 
-// nbrFermions = number of fermions
-// currentSite = current site index
-// pos = position in StateDescription array where to store states
-// return value = position from which new states have to be stored
-
-long FermionOnLatticeRealSpace::GenerateStates(int nbrFermions, int currentSite, long pos)
-{
-  if (nbrFermions == 0)
-    {
-      this->StateDescription[pos] = 0x0ul;	  
-      return (pos + 1l);
-    }
-  if ((currentSite < 0) || (nbrFermions < 0))
-    return pos;
-  if (nbrFermions == 1)
-    {
-      for (int j = currentSite; j >= 0; --j)
-	{
-	  this->StateDescription[pos] = 0x1ul << j;
-	  ++pos;
-	}
-      return pos;
-    }
-  long TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, pos);
-  unsigned long Mask = 0x1ul << currentSite;
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
-  return this->GenerateStates(nbrFermions, currentSite - 1, pos);
-}
-
-// evaluate Hilbert space dimension
-//
-// nbrFermions = number of fermions
-// return value = Hilbert space dimension
-long FermionOnLatticeRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions)
-{
-  BinomialCoefficients binomials(this->NbrSite);
-  long dimension = binomials(this->NbrSite, nbrFermions);
-  return dimension;
-}
-
-
-// evaluate Hilbert space dimension with a fixed number of fermions with spin up
-//
-// nbrFermions = number of fermions
-// currentKx = current momentum along x for a single particle
-// currentKy = current momentum along y for a single particle
-// currentTotalKx = current total momentum along x
-// currentTotalKy = current total momentum along y
-// nbrSpinUp = number of fermions with spin up
-// return value = Hilbert space dimension
-
-// long FermionOnLatticeRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
-// {
-//  
-// }
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
-// kxSector = kx sector in which the density matrix has to be evaluated 
-// kySector = kx sector in which the density matrix has to be evaluated 
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-HermitianMatrix FermionOnLatticeRealSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+HermitianMatrix BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
   if (nbrParticleSector == 0)
     {
@@ -313,16 +240,16 @@ HermitianMatrix FermionOnLatticeRealSpace::EvaluatePartialDensityMatrixParticleP
       TmpDensityMatrix(0, 0) = 1.0;
       return TmpDensityMatrix;
     }
-  if (nbrParticleSector == this->NbrFermions)
+  if (nbrParticleSector == this->NbrBosons)
     {
       HermitianMatrix TmpDensityMatrix(1, true);
       TmpDensityMatrix(0, 0) = 1.0;
       return TmpDensityMatrix;
     }
-  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
-  FermionOnLatticeRealSpace SubsytemSpace (nbrParticleSector, this->NbrSite);
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  BosonOnLatticeGutzwillerProjectionRealSpace SubsytemSpace (nbrParticleSector, this->NbrSite);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite);
+  BosonOnLatticeGutzwillerProjectionRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
@@ -345,11 +272,11 @@ HermitianMatrix FermionOnLatticeRealSpace::EvaluatePartialDensityMatrixParticleP
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = entanglement matrix of the subsytem
 
-ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture)
+ComplexMatrix BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture)
 {
-  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
-  if ((nbrParticleSector > (2 * nbrKeptOrbitals)) || 
-      (ComplementaryNbrParticles > (2 * (this->NbrSite - nbrKeptOrbitals))))
+  int ComplementaryNbrParticles = this->NbrBosons - nbrParticleSector;
+  if ((nbrParticleSector >  nbrKeptOrbitals) || 
+      (ComplementaryNbrParticles > (this->NbrSite - nbrKeptOrbitals)))
     {
       ComplexMatrix TmpEntanglementMatrix;
       return TmpEntanglementMatrix;
@@ -373,7 +300,7 @@ ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int 
     }
   if (nbrKeptOrbitals == this->NbrSite)
     {
-      if (nbrParticleSector == this->NbrFermions)
+      if (nbrParticleSector == this->NbrBosons)
 	{
 	  ComplexMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1, true);
 	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
@@ -391,8 +318,8 @@ ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int 
   this->KeptOrbitals = new int [nbrKeptOrbitals];
   for (int i = 0 ; i < nbrKeptOrbitals; ++i) 
     this->KeptOrbitals[i] = keptOrbitals[i];
-  FermionOnLatticeRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals);
-  FermionOnLatticeRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals);
+  BosonOnLatticeGutzwillerProjectionRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals);
+  BosonOnLatticeGutzwillerProjectionRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals);
   ComplexMatrix TmpEntanglementMatrix (SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySpace.HilbertSpaceDimension, true);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
@@ -419,11 +346,11 @@ ComplexMatrix FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrix (int 
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
+long BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialEntanglementMatrixCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								       ComplexVector& groundState, ComplexMatrix* entanglementMatrix)
 {
-  FermionOnLatticeRealSpace* TmpHilbertSpace = (FermionOnLatticeRealSpace*) complementaryHilbertSpace;
-  FermionOnLatticeRealSpace* TmpDestinationHilbertSpace = (FermionOnLatticeRealSpace*) destinationHilbertSpace;
+  BosonOnLatticeGutzwillerProjectionRealSpace* TmpHilbertSpace = (BosonOnLatticeGutzwillerProjectionRealSpace*) complementaryHilbertSpace;
+  BosonOnLatticeGutzwillerProjectionRealSpace* TmpDestinationHilbertSpace = (BosonOnLatticeGutzwillerProjectionRealSpace*) destinationHilbertSpace;
   long TmpNbrNonZeroElements = 0;
   int* TraceOutOrbitals = new int [this->LzMax - TmpDestinationHilbertSpace->LzMax];
   int MaxIndex = minIndex + nbrIndex;
@@ -453,32 +380,7 @@ long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIn
 	  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
-	      double Coefficient = 1.0;
-	      unsigned long Sign = 0x0ul;
-	      int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
-	      while ((Pos2 > 0) && (TmpState2 != 0x0ul))
-		{
-		  while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
-		    --Pos2;
-		  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
-#ifdef  __64_BITS__
-		  TmpState3 ^= TmpState3 >> 32;
-#endif	
-		  TmpState3 ^= TmpState3 >> 16;
-		  TmpState3 ^= TmpState3 >> 8;
-		  TmpState3 ^= TmpState3 >> 4;
-		  TmpState3 ^= TmpState3 >> 2;
-		  TmpState3 ^= TmpState3 >> 1;
-		  Sign ^= TmpState3;
-		  TmpState2 &= ~(0x1ul << Pos2);
-		  --Pos2;
-		}
-	      if ((Sign & 0x1ul) == 0x0ul)		  
-		Coefficient *= 1.0;
-	      else
-		Coefficient *= -1.0;
-	      
-	      entanglementMatrix->AddToMatrixElement(j, minIndex, Coefficient * groundState[TmpPos]);
+	      entanglementMatrix->AddToMatrixElement(j, minIndex,groundState[TmpPos]);
 	      ++TmpNbrNonZeroElements;
 	    }
 	}

@@ -14,5 +14,5 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.cc \
 FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.cc \
 FermionOnLatticeRealSpace.cc \
 FermionOnLatticeRealSpaceAnd2DTranslation.cc \
-BosonOnLatticeRealSpace.cc 
-
+BosonOnLatticeRealSpace.cc \
+BosonOnLatticeGutzwillerProjectionRealSpace.cc 
