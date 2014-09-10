@@ -110,19 +110,31 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
-  this->XMomentum = xMomentum % this->MomentumModulo;
+  this->MaxXMomentum = this->NbrSite / xTranslation;
+  this->XMomentum = xMomentum % this->MaxXMomentum;
   this->StateXShift = xTranslation;
-  this->ComplementaryStateXShift = 2 * this->MaxMomentum - this->StateXShift;
+  this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+  cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
+  cout << "this->XMomentum=" << this->XMomentum << endl;
+  cout << "this->StateXShift=" << this->StateXShift << endl;
+  cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
+  cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
-  this->YMomentum = yMomentum;
-  this->StateYShift = 2;
-  this->YMomentumBlockSize = this->StateYShift * yPeriodicity;
-  this->NbrYMomentumBlocks = this->NbrSite / yPeriodicity;
+  this->MaxYMomentum = yPeriodicity;
+  this->YMomentum = yMomentum % this->MaxYMomentum;
+  this->NbrYMomentumBlocks = this->NbrSite / this->MaxXMomentum;
+  this->StateYShift = (this->NbrYMomentumBlocks / this->MaxYMomentum);
+  this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-
+  cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
+  cout << "this->StateYShift=" << this->StateYShift << endl;
+  cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
+  cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
+  cout << "this->YMomentumMask=" << hex << this->YMomentumMask << dec << endl;
+  cout << "this->YMomentumBlockMask=" << hex << this->YMomentumBlockMask << dec << endl;
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
 
 
@@ -141,7 +153,20 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
       this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
       cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
       if (this->HilbertSpaceDimension > 0)
-	this->GenerateLookUpTable(memory);
+	{
+	  this->StateMaxMomentum = new int [this->LargeHilbertSpaceDimension];  
+	  int CurrentMaxMomentum = this->MaxMomentum;
+	  while (((this->StateDescription[0] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+	    --CurrentMaxMomentum;
+	  this->StateMaxMomentum[0] = CurrentMaxMomentum;
+	  for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
+	    {
+	      while (((this->StateDescription[i] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+		--CurrentMaxMomentum;
+	      this->StateMaxMomentum[i] = CurrentMaxMomentum;
+	    }
+	  this->GenerateLookUpTable(memory);
+	}
       
 #ifdef __DEBUG__
       long UsedMemory = 0;
@@ -396,25 +421,15 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::RawGenerateStates(int nbrFermion
     {
       for (int j = currentSite; j >= 0; --j)
 	{
-	  this->StateDescription[pos] = 0x2ul << (j << 1);
-	  ++pos;
-	  this->StateDescription[pos] = 0x1ul << (j << 1);
+	  this->StateDescription[pos] = 0x1ul << j;
 	  ++pos;
 	}
       return pos;
     }
-  long TmpPos = this->RawGenerateStates(nbrFermions - 2, currentSite - 1, pos);
-  unsigned long Mask = 0x3ul << (currentSite << 1);
+  long TmpPos = this->RawGenerateStates(nbrFermions - 1, currentSite - 1, pos);
+  unsigned long Mask = 0x1ul << currentSite;
   for (; pos < TmpPos; ++pos)
     this->StateDescription[pos] |= Mask;
-  TmpPos = this->RawGenerateStates(nbrFermions - 1, currentSite - 1, pos);
-  Mask = 0x2ul << ((currentSite) << 1);
-  for (; pos < TmpPos; ++pos)
-    this->StateDescription[pos] |= Mask;
-   TmpPos = this->RawGenerateStates(nbrFermions - 1, currentSite - 1, pos);
-   Mask = 0x1ul << (currentSite << 1);
-   for (; pos < TmpPos; ++pos)
-     this->StateDescription[pos] |= Mask;
   return this->RawGenerateStates(nbrFermions, currentSite - 1, pos);
 }
 
@@ -425,8 +440,8 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::RawGenerateStates(int nbrFermion
 
 long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluateHilbertSpaceDimension(int nbrFermions)
 {
-  BinomialCoefficients binomials(2*this->NbrSite);
-  long dimension = binomials(2*this->NbrSite, this->NbrFermions);
+  BinomialCoefficients binomials(this->NbrSite);
+  long dimension = binomials(this->NbrSite, this->NbrFermions);
   return dimension;
 }
 

@@ -97,13 +97,23 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
-  if ( this->LargeHilbertSpaceDimension > 0l)
+  if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->Flag.Initialize();
       this->TargetSpace = this;
-      this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-      this->StateLzMax = new int [this->HilbertSpaceDimension];  
+      this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+      this->StateLzMax = new int [this->LargeHilbertSpaceDimension];  
+      int CurrentLzMax = this->NbrLzValue;
+      while (((this->StateDescription[0] >> CurrentLzMax) & 0x1ul) == 0x0ul)
+	--CurrentLzMax;
+      this->StateLzMax[0] = CurrentLzMax;
+      for (long i = 1l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  while (((this->StateDescription[i] >> CurrentLzMax) & 0x1ul) == 0x0ul)
+	    --CurrentLzMax;
+	  this->StateLzMax[i] = CurrentLzMax;
+ 	}
       if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
 	{
 	  cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;

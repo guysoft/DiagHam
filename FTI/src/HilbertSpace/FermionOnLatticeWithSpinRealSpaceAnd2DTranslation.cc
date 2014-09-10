@@ -419,7 +419,7 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateStates()
     {
       if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
 	{
-	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
+	  if (true)//this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
 	      ++TmpLargeHilbertSpaceDimension;
 	    }

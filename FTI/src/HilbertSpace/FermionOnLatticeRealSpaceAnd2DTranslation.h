@@ -117,13 +117,6 @@ class FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagne
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
-  // print a given State
-  //
-  // Str = reference on current output stream 
-  // state = ID of the state to print
-  // return value = reference on current output stream 
-  virtual ostream& PrintState (ostream& Str, int state);
-
   // apply a^+_m_u a_n_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied

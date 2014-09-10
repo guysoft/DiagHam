@@ -7,6 +7,7 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 
 #include "Vector/Vector.h"
@@ -134,16 +135,24 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      if (Manager.GetBoolean("gutzwiller") == false)
+	      if (Manager.GetBoolean("su2-spin") == false)
 		{
-		  Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"),
+		  Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"),
 										Manager.GetInteger("y-momentum"), Manager.GetInteger("y-periodicity"));
 		}
 	      else
 		{
-		  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
-												       Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"),
-												       Manager.GetInteger("y-momentum"), Manager.GetInteger("y-periodicity"));
+		  if (Manager.GetBoolean("gutzwiller") == false)
+		    {
+		      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"),
+										    Manager.GetInteger("y-momentum"), Manager.GetInteger("y-periodicity"));
+		    }
+		  else
+		    {
+		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
+													   Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"),
+													   Manager.GetInteger("y-momentum"), Manager.GetInteger("y-periodicity"));
+		    }
 		}
 	    }
 	}
