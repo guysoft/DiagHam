@@ -66,7 +66,7 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace ()
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = 0;
   this->NbrSite = 0;
-  this->LzMax = this->NbrSite;
+  this->LzMax = this->NbrSite - 1;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 0;
   this->LargeHilbertSpaceDimension = 0l;
@@ -88,7 +88,7 @@ FermionOnLatticeRealSpace::FermionOnLatticeRealSpace (int nbrFermions, int nbrSi
   this->IncNbrFermions = this->NbrFermions + 1;
   this->TotalLz = 0;
   this->NbrSite = nbrSite;
-  this->LzMax = this->NbrSite;
+  this->LzMax = this->NbrSite - 1;
   this->NbrLzValue = this->LzMax + 1;
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions);

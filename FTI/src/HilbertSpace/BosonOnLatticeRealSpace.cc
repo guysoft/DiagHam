@@ -86,10 +86,13 @@ BosonOnLatticeRealSpace::BosonOnLatticeRealSpace (int nbrBosons, int nbrSite, un
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = 0;
   this->NbrSite = nbrSite;
-  this->LzMax = this->NbrSite;
-  this->NbrLzValue = this->LzMax + 1;
+  this->LzMax = this->NbrSite -1;
+  this->NbrLzValue = this->LzMax;
   this->FermionBasis = new FermionOnLatticeRealSpace (this->NbrBosons, this->NbrSite+this->NbrBosons - 1);
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons);
+  this->TemporaryState = new unsigned long [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
+  
   if (this->FermionBasis->GetHilbertSpaceDimension() != this->LargeHilbertSpaceDimension)
     {
       cout << "error while generating the Hilbert space, " << this->FermionBasis->GetHilbertSpaceDimension() << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
@@ -126,6 +129,8 @@ BosonOnLatticeRealSpace::BosonOnLatticeRealSpace(const BosonOnLatticeRealSpace& 
     this->TargetSpace = bosons.TargetSpace;
   else
     this->TargetSpace = this;
+  this->TemporaryState = new unsigned long [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
 }
 
 // destructor
@@ -136,6 +141,8 @@ BosonOnLatticeRealSpace::~BosonOnLatticeRealSpace ()
   if(this->FermionBasis != 0 )
     delete this->FermionBasis;
   this->FermionBasis = 0;
+  delete [] this->TemporaryState;
+  delete [] this->ProdATemporaryState;
 }
 
 // assignement (without duplicating datas)
@@ -159,6 +166,8 @@ BosonOnLatticeRealSpace & BosonOnLatticeRealSpace::operator = (const BosonOnLatt
   this->NbrSite = bosons.NbrSite;
   this->NbrLzValue = bosons.NbrLzValue;
   this->FermionBasis = (FermionOnLatticeRealSpace *) bosons.FermionBasis->Clone();
+  this->TemporaryState = new unsigned long [this->NbrLzValue];
+  this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
   return *this;
 }
 
@@ -171,35 +180,6 @@ AbstractHilbertSpace* BosonOnLatticeRealSpace::Clone()
   return new BosonOnLatticeRealSpace(*this);
 }
 
-/*
-// print a given State
-//
-// Str = reference on current output stream 
-// state = ID of the state to print
-// return value = reference on current output stream 
-
-ostream& BosonOnLatticeRealSpace::PrintState (ostream& Str, int state)
-{
-  this->FermionToBoson(this->FermionBasis()unsigned long TmpState = this->StateDescription[state];
-  unsigned long Tmp;
-  for (int i = 0; i < this->LzMax; ++i)
-    {
-      Tmp = (TmpState >> i) & 01ul;
-      switch (Tmp)
-	{
-	case 0x0ul:
-	  Str << "0 ";
-	  break;
-	case 0x1ul:
-	  Str << "1 ";
-	  break;
-	}
-    }
-  return Str;
-  }
-*/
-	     
-		 
 // evaluate Hilbert space dimension
 //
 // nbrBosons = number of bosons
@@ -210,91 +190,3 @@ ostream& BosonOnLatticeRealSpace::PrintState (ostream& Str, int state)
   long dimension = binomials(this->NbrSite+this->NbrBosons - 1, this->NbrBosons);
   return dimension;
 }
-
-/*
-// find state index
-//
-// stateDescription = unsigned integer describing the state
-// lzmax = maximum Lz value reached by a fermion in the state
-// return value = corresponding index
-
-int BosonOnLatticeRealSpace::FindStateIndex(unsigned long stateDescription, int lzmax)
-{
-  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
-  long PosMin = this->LookUpTable[lzmax][PosMax];
-  PosMax = this->LookUpTable[lzmax][PosMax + 1];
-  long PosMid = (PosMin + PosMax) >> 1;
-  unsigned long CurrentState = this->StateDescription[PosMid];
-  while ((PosMax != PosMid) && (CurrentState != stateDescription))
-    {
-      if (CurrentState > stateDescription)
-	{
-	  PosMax = PosMid;
-	}
-      else
-	{
-	  PosMin = PosMid;
-	} 
-      PosMid = (PosMin + PosMax) >> 1;
-      CurrentState = this->StateDescription[PosMid];
-    }
-  if (CurrentState == stateDescription)
-    return PosMid;
-  else
-    return PosMin;
-}  
-
-// find state index from a string
-//
-// stateDescription = string describing the state
-// return value = corresponding index, -1 if an error occured
-
-int BosonOnLatticeRealSpace::FindStateIndex(char* stateDescription)
-{
-  char** TmpDescription;
-  if (SplitLine(stateDescription, TmpDescription, ' ') != this->LzMax)
-    return -1;
-  unsigned long TmpState = 0x0ul;
-  int TmpNbrParticles = 0;
-  for (int i = 0; i < this->LzMax; ++i)
-    {
-      if (TmpDescription[i][0] == 'u')
-	{
-	  TmpState |= 0x2ul << (2 * i);
-	  ++TmpNbrParticles;	  
-	}
-      else
-	{
-	  if (TmpDescription[i][0] == 'd')
-	    {
-	      TmpState |= 0x1ul << (2 * i);
-	      ++TmpNbrParticles;	  
-	    }
-	  else
-	    {
-	      if (TmpDescription[i][0] == 'X')
-		{
-		  TmpState |= 0x3ul << (2 * i);
-		  TmpNbrParticles += 2;	  
-		}
-	      else
-		{
-		  if (TmpDescription[i][0] != '0')
-		    {
-		      return -1;
-		    }
-		}
-	    }
-	}
-      delete[] TmpDescription[i];
-    }
-  delete[] TmpDescription;
-  if (TmpNbrParticles != this->NbrFermions)
-    return -1;
-  int TmpLzMax = 2 * this->LzMax + 1;
-  while (((TmpState >> TmpLzMax) & 0x1ul) == 0x0ul)
-    --TmpLzMax;
-  return this->FindStateIndex(TmpState, TmpLzMax);
-}
-
-*/
