@@ -10,6 +10,7 @@
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 #include "Vector/Vector.h"
 #include "Vector/ComplexVector.h"
@@ -108,8 +109,23 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      cout << "This bosonic Hubbard model not implemented" << endl;
-	      return -1;
+		if (Manager.GetBoolean("su2-spin") == false)
+		{
+		  if (Manager.GetBoolean("gutzwiller") == false)
+		    {
+		  cout << "This bosonic Hubbard model not implemented" << endl;
+		  return -1;
+		    }
+		  else
+		    {
+		      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites);
+		    }
+		}
+	      else
+		{
+		  cout << "This bosonic Hubbard model not implemented" << endl;
+		  return -1;
+		}
 	    }
 	}
       else

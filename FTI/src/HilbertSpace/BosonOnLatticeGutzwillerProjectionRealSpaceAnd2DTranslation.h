@@ -6,12 +6,12 @@
 //                    Copyright (C) 2001-2011 Nicolas Regnault                //
 //                                                                            //
 //                                                                            //
-//                        class of fermions on lattice                        //
+//                        class of bosons hardcore on lattice                 //
 //       in real space with translation invariance in two directions          //
 //                                                                            //
-//                        class author: Nicolas Regnault                      //
+//                        class author: Antoine Sterdyniak                    //
 //                                                                            //
-//                        last modification : 09/09/2014                      //
+//                        last modification : 11/09/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,86 +31,59 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FERMIONONLATTICEREALSPACEAND2DTRANSLATION_H
-#define FERMIONONLATTICEREALSPACEAND2DTRANSLATION_H
+#ifndef BOSONONLATTICEGUTZWILLERPROJECTIONREALSPACEAND2DTRANSLATION_H
+#define BOSONONLATTICEGUTZWILLERPROJECTIONREALSPACEAND2DTRANSLATION_H
 
 #include "config.h"
-#include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 
 #include <iostream>
 
 
 
-class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagneticTranslations
+class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  FermionOnLatticeRealSpaceAnd2DTranslation
 {
 
  protected:
 
-  // total number of sites
-  int NbrSite;
-  
-  // number of momentum sectors in the x direction 
-  int MaxXMomentum;
-  // bit shift that has to applied to perform a translation in the x direction 
-  int StateXShift;
-  // binary mask for the StateXShift first bits 
-  unsigned long XMomentumMask;
-  // bit shift to apply to move the first StateXShift bits at the end of a state description
-  int ComplementaryStateXShift;
+   // number of bosons
+   int NbrBosons;	
 
-  // number of momentum sectors in the y direction 
-  int MaxYMomentum;
-  // bit shift that has to applied to perform a translation in the y direction 
-  int StateYShift;
-  // binary mask for the StateYShift first bits 
-  unsigned long YMomentumMask;
-  // bit shift to apply to move the first StateYShift bits at the end of a state description
-  int ComplementaryStateYShift;
-  // number of bits that are related by a translation along the y direction 
-  int YMomentumBlockSize;
-  // binary mask corresponding to YMomentumBlockSize
-  unsigned long YMomentumBlockMask;
-  // number of independant blockse related by translations in the y direction 
-  int NbrYMomentumBlocks;
-
-  // parity of the number of fermions, 0x1ul if even, 0x0ul if odd
-  unsigned long NbrFermionsParity;
-
-  // temporary variables when using AdAd / ProdAd operations
-  int ProdATemporaryNbrStateInOrbit;
+   // number of bosons + 1
+   int IncNbrBosons;
 
  public:
 
-  // default constructor
+  // default constructor		
   // 
-  FermionOnLatticeRealSpaceAnd2DTranslation ();
+  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation ();
 
   // basic constructor
   // 
-  // nbrFermions = number of fermions
+  // nbrBosons = number of fermions
   // nbrSite = number of sites
   // xMomentum = momentum sector in the x direction
   // xTranslation = translation that has to be applied on the site index to connect two sites with a translation in the x direction
   // yMomentum = momentum sector in the y direction
   // yPeriodicity = periodicity in the y direction with respect to site numbering 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int xTranslation,
+  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int xTranslation,
 					     int yMomentum, int yPeriodicity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
-  FermionOnLatticeRealSpaceAnd2DTranslation(const FermionOnLatticeRealSpaceAnd2DTranslation& fermions);
+  // bosons = reference on the hilbert space to copy to copy
+  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (const BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& bosons);
 
   // destructor
   //
-  ~FermionOnLatticeRealSpaceAnd2DTranslation ();
+  ~BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation ();
 
   // assignement (without duplicating datas)
   //
   // fermions = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  FermionOnLatticeRealSpaceAnd2DTranslation& operator = (const FermionOnLatticeRealSpaceAnd2DTranslation& fermions);
+  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& operator = (const BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& fermions);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -138,39 +111,12 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
-  // find state index from a string
-  //
-  // stateDescription = string describing the state
-  // return value = corresponding index, -1 if an error occured
-  virtual int FindStateIndex(char* stateDescription);
-
  protected:
-
-  // find state index
-  //
-  // stateDescription = unsigned integer describing the state
-  // maxMomentum = maximum Lz value reached by a fermion in the state
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long stateDescription, int maxMomentum);
-
-  // evaluate Hilbert space dimension
-  //
-  // nbrFermions = number of fermions
-  // return value = Hilbert space dimension
-  virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
 
   // generate all states corresponding to the constraints
   //
   // return value = Hilbert space dimension
   virtual long GenerateStates();
-
-  // generate all states corresponding to the constraints
-  // 
-  // nbrFermions = number of fermions
-  // currentSite = current site index in real state
-  // pos = position in StateDescription array where to store states
-  // return value = position from which new states have to be stored
-  virtual long RawGenerateStates(int nbrFermions, int currentSite, long pos);
 
   // factorized code that is used to symmetrize the result of any operator action
   //
@@ -220,18 +166,6 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // stateDescription = reference on the state description  
   virtual void ApplySingleYTranslation(unsigned long& stateDescription);
 
-  // get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
-  //
-  // stateDescription = reference on state description
-  // return value = 0 if the sign is +1, 1 if the sign is -1
-  unsigned long GetSignAndApplySingleXTranslation(unsigned long& stateDescription);
-
-  // get the fermonic sign when performing a single translation in the y direction on a state description, and apply the single translation
-  //
-  // stateDescription = reference on state description
-  // return value = 0 if the sign is +1, 1 if the sign is -1
-  virtual unsigned long GetSignAndApplySingleYTranslation(unsigned long& stateDescription);
-
 };
 
 
@@ -243,7 +177,7 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
 // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
 // return value = index of the destination state  
 
-inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
+inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
   this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
@@ -259,7 +193,6 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsig
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
-      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationX * this->MaxYMomentum) + nbrTranslationY)) & 0x1ul))); 
     }
   return TmpIndex;
 }
@@ -272,7 +205,7 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsig
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
+inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
 //  cout << "checking state " << hex << stateDescription << dec << endl;
   unsigned long CanonicalState = stateDescription;
@@ -321,7 +254,7 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFor
 // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
 // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
 
-inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
+inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
@@ -351,35 +284,29 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFor
 // stateDescription = unsigned integer describing the state
 // return value = true if the state satisfies the momentum constraint
 
-inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
+inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMomentumConstraint(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
   int XSize = 1;
-  unsigned long TmpSign = this->GetSignAndApplySingleXTranslation(TmpStateDescription);   
   unsigned long TmpSign2 = 0x0ul;
   while (stateDescription != TmpStateDescription)
     {
       ++XSize;
-      TmpSign ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
     }
-  if ((((this->XMomentum * XSize) + ((((int) TmpSign) * this->MaxXMomentum) >> 1)) % this->MaxXMomentum) != 0)
+  if (((this->XMomentum * XSize) % this->MaxXMomentum) != 0)
     return false;
   int YSize = this->MaxYMomentum;
   int TmpXSize = 0;
-  TmpSign = 0x0ul;
   TmpStateDescription2 = stateDescription;
   for (int m = 1; m < YSize; ++m)
     {
-      TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
 //      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
-      TmpSign2 = TmpSign;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
-	  TmpSign2 ^= this->GetSignAndApplySingleXTranslation(TmpStateDescription);      
 	}
       if (TmpXSize < XSize)
 	{
@@ -390,15 +317,10 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
 	  TmpXSize = 0;
 	}
     } 
-  if (YSize == this->MaxYMomentum)
-    {
-      TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
-      TmpSign2 = TmpSign;
-    }
+
 //  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
-  if ((((this->YMomentum * YSize * this->MaxXMomentum)
-	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
-	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+  if (((this->YMomentum * YSize * this->MaxXMomentum)
+	- (this->XMomentum * TmpXSize * this->MaxYMomentum) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   return true;
 }
@@ -407,7 +329,7 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
 //
 // return value = orbit size
 
-inline int FermionOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
+inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
@@ -441,7 +363,7 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned lon
 //
 // stateDescription = reference on the state description
 
-inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
+inline void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
 {
   stateDescription = (stateDescription >> this->StateXShift) | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
 }
@@ -450,7 +372,7 @@ inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(u
 //
 // stateDescription = reference on the state description
 
-inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
+inline void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
 {
   unsigned long TmpState = 0x0ul;
   for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
@@ -461,67 +383,6 @@ inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(u
   stateDescription = TmpState;
 }
 
-// get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
-//
-// stateDescription = reference on state description
-// return value = 0 if the sign is +1, 1 if the sign is -1
-
-inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::GetSignAndApplySingleXTranslation(unsigned long& stateDescription)
-{
-  unsigned long TmpSign =  stateDescription >> this->StateXShift;
-  stateDescription = TmpSign | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
-#ifdef __64_BITS__
-  TmpSign ^= (TmpSign >> 32);
-#endif
-  TmpSign ^= (TmpSign >> 16);
-  TmpSign ^= (TmpSign >> 8);
-  TmpSign ^= (TmpSign >> 4);
-  TmpSign ^= (TmpSign >> 2);
-  TmpSign ^= (TmpSign >> 1);
-  TmpSign &= this->NbrFermionsParity;
-  return TmpSign;
-}
-
-// get the fermonic sign when performing a single translation in the y direction on a state description, and apply the single translation
-//
-// stateDescription = reference on state description
-// return value = 0 if the sign is +1, 1 if the sign is -1
-
-inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::GetSignAndApplySingleYTranslation(unsigned long& stateDescription)
-{
-  unsigned long TmpState = 0x0ul;
-  unsigned long TmpSign =  0x0ul;
-  unsigned long TmpSign2;
-  unsigned long TmpSign3;
-  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
-    {
-      TmpSign2 = (stateDescription & this->YMomentumBlockMask) >> this->StateYShift;
-      TmpSign3 = (stateDescription & this->YMomentumMask) << this->ComplementaryStateYShift;
-      TmpState |= (TmpSign2 | TmpSign3) << (this->YMomentumBlockSize * i);
-#ifdef __64_BITS__
-      TmpSign2 ^= (TmpSign2 >> 32);
-#endif
-      TmpSign2 ^= (TmpSign2 >> 16);
-      TmpSign2 ^= (TmpSign2 >> 8);
-      TmpSign2 ^= (TmpSign2 >> 4);
-      TmpSign2 ^= (TmpSign2 >> 2);
-      TmpSign2 ^= (TmpSign2 >> 1);
-#ifdef __64_BITS__
-      TmpSign3 ^= (TmpSign3 >> 32);
-#endif
-      TmpSign3 ^= (TmpSign3 >> 16);
-      TmpSign3 ^= (TmpSign3 >> 8);
-      TmpSign3 ^= (TmpSign3 >> 4);
-      TmpSign3 ^= (TmpSign3 >> 2);
-      TmpSign3 ^= (TmpSign3 >> 1);
-      TmpSign2 *= TmpSign3;
-      TmpSign2 &= 0x1ul;
-      TmpSign ^= TmpSign2;
-      stateDescription >>= this->YMomentumBlockSize;
-    }
-  stateDescription = TmpState;
-  return TmpSign;
-}
 
 #endif
 
