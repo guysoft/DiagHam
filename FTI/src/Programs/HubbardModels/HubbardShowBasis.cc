@@ -113,12 +113,13 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-		  cout << "This bosonic Hubbard model not implemented" << endl;
-		  return -1;
+	                cout << "This bosonic Hubbard model not implemented" << endl;
+			return -1;
 		    }
 		  else
 		    {
-		      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites);
+		      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"),
+										Manager.GetInteger("y-momentum"), Manager.GetInteger("y-periodicity"));
 		    }
 		}
 	      else
