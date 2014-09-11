@@ -162,7 +162,7 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("su2-spin") == false)
 		{
-		  Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
+		   Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
 										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-momentum-y"));
 		}
 	      else
@@ -262,7 +262,7 @@ int main(int argc, char** argv)
 	    {
 	      
 		  if (AddIndex == true) 
-		    File << i << " ";
+		    File << i << " : ";
 		  Space->PrintState(File, i);
 		  File<<endl;
 		
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 	    {
 	      
 		  if (AddIndex == true) 
-		    cout << i <<" ";
+		    cout << i << " : ";
 		  Space->PrintState(cout, i);
 		  cout<<endl;
 		
@@ -309,7 +309,7 @@ int main(int argc, char** argv)
 		      if (fabs(State[i]) > Error)
 			{
 			    if (AddIndex == true) 
-			      File << i << " ";	
+			      File << i << " : ";	
 			    Space->PrintState(File, i) << " : " << State[i];
 			    File<<endl;
 			}
@@ -329,7 +329,7 @@ int main(int argc, char** argv)
 			{
 			  
 			  if (AddIndex == true) 
-			    cout << i <<" ";
+			    cout << i <<" : ";
 			  Space->PrintState(cout, i) << " : " << State[i];
 			  cout<<endl;
 			  
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
 		      if (Norm(State[i]) > Error)
 			{
 			  if (AddIndex == true) 
-			    File << i << " ";	
+			    File << i << " : ";	
 			  Space->PrintState(File, i) << " : " << State.Re(i)<<" "<<State.Im(i);
 			  File<<endl;
 			}
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
 		      if (Norm(State[i]) > Error)
 			{
 			  if (AddIndex == true) 
-			    cout << i <<" ";
+			    cout << i <<" : ";
 			  Space->PrintState(cout, i) << " : " << State.Re(i)<<" "<<State.Im(i);
 			  cout<<endl;
 			}
@@ -415,7 +415,7 @@ int main(int argc, char** argv)
 		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		    {
 		      if (AddIndex == true) 
-			File << i << " ";	
+			File << i << " : ";	
 		      Space->PrintState(File, i) << " : " << " " << State.Re(i) << " " << State.Im(i) << endl;		  
 		    }
 		}
@@ -425,7 +425,7 @@ int main(int argc, char** argv)
 		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		    {
 		      if (AddIndex == true) 
-			cout << i << " ";	
+			cout << i << " : ";	
 		      Space->PrintState(cout, i) << " : " << " " << State.Re(i) << " " << State.Im(i) << endl;
 		    }
 		}	      	      
