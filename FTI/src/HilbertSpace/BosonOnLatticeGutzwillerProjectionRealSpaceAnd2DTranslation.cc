@@ -336,6 +336,7 @@ long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GenerateStates
     {
       if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
 	{
+	cout <<  this->StateDescription[i] <<endl;
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
 	      ++TmpLargeHilbertSpaceDimension;
@@ -350,7 +351,7 @@ long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GenerateStates
 	  this->StateDescription[i] = 0x0ul;
 	}
     }
-//  cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
+  cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
   unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
   this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
   TmpLargeHilbertSpaceDimension = 0l;

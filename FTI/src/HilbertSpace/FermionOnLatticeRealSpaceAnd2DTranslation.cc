@@ -440,7 +440,7 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::RawGenerateStates(int nbrFermion
 long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluateHilbertSpaceDimension(int nbrFermions)
 {
   BinomialCoefficients binomials(this->NbrSite);
-  long dimension = binomials(this->NbrSite, this->NbrFermions);
+  long dimension = binomials(this->NbrSite, nbrFermions);
   return dimension;
 }
 

@@ -186,7 +186,7 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int TmpMaxMomentum = 2 * this->NbrSite;
+  int TmpMaxMomentum = this->NbrSite;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
@@ -289,10 +289,11 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
   int XSize = 1;
-  unsigned long TmpSign2 = 0x0ul;
+  this->ApplySingleXTranslation(TmpStateDescription);
   while (stateDescription != TmpStateDescription)
     {
       ++XSize;
+	this->ApplySingleXTranslation(TmpStateDescription);
     }
   if (((this->XMomentum * XSize) % this->MaxXMomentum) != 0)
     return false;
@@ -301,12 +302,14 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
   TmpStateDescription2 = stateDescription;
   for (int m = 1; m < YSize; ++m)
     {
-//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
+      this->ApplySingleYTranslation(TmpStateDescription2);	
+      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec <<endl;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
+      this->ApplySingleXTranslation(TmpStateDescription);
 	}
       if (TmpXSize < XSize)
 	{
@@ -317,6 +320,11 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
 	  TmpXSize = 0;
 	}
     } 
+
+   if (YSize == this->MaxYMomentum)
+    {
+      this->ApplySingleYTranslation(TmpStateDescription2); 
+    }
 
 //  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
   if (((this->YMomentum * YSize * this->MaxXMomentum)
