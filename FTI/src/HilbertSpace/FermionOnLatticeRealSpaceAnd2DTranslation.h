@@ -274,6 +274,7 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsig
 
 inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
+//  cout << "checking state " << hex << stateDescription << dec << endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
@@ -284,8 +285,8 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFor
       TmpStateDescription = stateDescription;
       for (int n = 1; n < this->MaxXMomentum; ++n)
 	{
-	  //	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  this->ApplySingleXTranslation(TmpStateDescription);      
+//	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;
@@ -296,7 +297,7 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFor
 	    n = this->MaxXMomentum;
 	}
       this->ApplySingleYTranslation(stateDescription);      
-      if (stateDescription == stateDescriptionReference)
+     if (stateDescription == stateDescriptionReference)
 	{
 	  m = this->MaxYMomentum;
 	}
@@ -371,7 +372,7 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
   for (int m = 1; m < YSize; ++m)
     {
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
-      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
+//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
       TmpSign2 = TmpSign;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
@@ -394,7 +395,7 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpSign2 = TmpSign;
     }
-  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
+//  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
   if ((((this->YMomentum * YSize * this->MaxXMomentum)
 	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
 	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)

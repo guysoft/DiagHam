@@ -564,7 +564,7 @@ inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConst
   for (int m = 1; m < YSize; ++m)
     {
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
-      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
+//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
       TmpSign2 = TmpSign;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
@@ -587,7 +587,7 @@ inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConst
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpSign2 = TmpSign;
     }
-  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
+//  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
   if ((((this->YMomentum * YSize * this->MaxXMomentum)
 	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
 	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
