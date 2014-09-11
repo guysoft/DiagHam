@@ -94,14 +94,14 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
 // nbrFermions = number of fermions
 // nbrSite = total number of sites 
 // xMomentum = momentum sector in the x direction
-// xTranslation = translation that has to be applied on the site index to connect two sites with a translation in the x direction
+// maxXMomentum = maximum momentum in the x direction
 // yMomentum = momentum sector in the y direction
-// yPeriodicity = periodicity in the y direction with respect to site numbering 
+// maxYMomentum = maximum momentum in the y direction
 // memory = amount of memory granted for precalculations
 
 FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, 
-																		    int xMomentum, int xTranslation,
-																		    int yMomentum, int yPeriodicity,
+																		    int xMomentum, int maxXMomentum,
+																		    int yMomentum, int maxYMomentum,
 																		    unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
@@ -113,17 +113,17 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->NbrSite = nbrSite;
   this->MaxMomentum =  this->NbrSite;
   this->NbrMomentum = this->MaxMomentum + 1;
+  this->MaxXMomentum = maxXMomentum;
   this->NbrFermionStates = 2 * this->NbrMomentum;
-  this->MomentumModulo = this->NbrSite / xTranslation;
+  this->MomentumModulo = this->MaxXMomentum;
 
   this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
   
-  this->MaxXMomentum = this->NbrSite / xTranslation;
   this->XMomentum = xMomentum % this->MaxXMomentum;
-  this->StateXShift = 2 * xTranslation;
+  this->StateXShift = 2 * (this->NbrSite /this->MaxXMomentum);
   this->ComplementaryStateXShift = 2 * this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 //   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
@@ -132,10 +132,10 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
 //   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
 //   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
-  this->MaxYMomentum = yPeriodicity;
+  this->MaxYMomentum = maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
-  this->NbrYMomentumBlocks = this->NbrSite / xTranslation;
-  this->StateYShift = ((2 * xTranslation) / this->MaxYMomentum);
+  this->NbrYMomentumBlocks = this->MaxXMomentum;
+  this->StateYShift = (this->StateXShift / this->MaxYMomentum);
   this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;

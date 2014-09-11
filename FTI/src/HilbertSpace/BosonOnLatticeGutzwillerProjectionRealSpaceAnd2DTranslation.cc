@@ -87,31 +87,31 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
 // basic constructor
 // 
 // nbrBosons = number of fermions
-// nbrSite = total number of sites 
+// nbrSite = number of sites
 // xMomentum = momentum sector in the x direction
-// xTranslation = translation that has to be applied on the site index to connect two sites with a translation in the x direction
+// maxXMomentum = maximum momentum in the x direction
 // yMomentum = momentum sector in the y direction
-// yPeriodicity = periodicity in the y direction with respect to site numbering 
+// maxYMomentum = maximum momentum in the y direction 
 // memory = amount of memory granted for precalculations
 
-BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int xTranslation,
-										      int yMomentum, int yPeriodicity, unsigned long memory)
+BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int  maxXMomentum,
+										      int yMomentum, int maxYMomentum, unsigned long memory)
 {  
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->NbrSite = nbrSite;
   this->MaxMomentum =  this->NbrSite;
   this->NbrMomentum = this->MaxMomentum + 1;
-  this->MomentumModulo = this->NbrSite / xTranslation;
+  this->MaxXMomentum = maxXMomentum;
+  this->MomentumModulo = this->MaxXMomentum;
 
   this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrBosons * this->StateShift / 2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
-  this->MaxXMomentum = this->NbrSite / xTranslation;
   this->XMomentum = xMomentum % this->MaxXMomentum;
-  this->StateXShift = xTranslation;
+  this->StateXShift = this->NbrSite / this->MaxXMomentum;
   this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 //   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
@@ -120,10 +120,10 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
 //   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
 //   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
-  this->MaxYMomentum = yPeriodicity;
+  this->MaxYMomentum = maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
-  this->NbrYMomentumBlocks = this->NbrSite / xTranslation;
-  this->StateYShift = (xTranslation / this->MaxYMomentum);
+  this->NbrYMomentumBlocks = this->MaxXMomentum;
+  this->StateYShift = (this->NbrSite / (this->MaxXMomentum * this->MaxYMomentum));
   this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
@@ -337,7 +337,7 @@ long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GenerateStates
     {
       if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
 	{
-	cout <<  this->StateDescription[i] <<endl;
+	//cout <<  this->StateDescription[i] <<endl;
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
 	      ++TmpLargeHilbertSpaceDimension;
@@ -352,7 +352,7 @@ long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GenerateStates
 	  this->StateDescription[i] = 0x0ul;
 	}
     }
-  cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
+  //cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
   unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
   this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
   TmpLargeHilbertSpaceDimension = 0l;

@@ -90,12 +90,12 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // nbrFermions = number of fermions
   // nbrSite = number of sites
   // xMomentum = momentum sector in the x direction
-  // xTranslation = translation that has to be applied on the site index to connect two sites with a translation in the x direction
+  // maxXMomentum = maximum momentum in the x direction
   // yMomentum = momentum sector in the y direction
-  // yPeriodicity = periodicity in the y direction with respect to site numbering 
+  // maxYMomentum = maximum momentum in the y direction 
   // memory = amount of memory granted for precalculations
-  FermionOnLatticeRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int xTranslation,
-					     int yMomentum, int yPeriodicity, unsigned long memory = 10000000);
+  FermionOnLatticeRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int maxXMomentum,
+					     int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -252,7 +252,7 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsig
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int TmpMaxMomentum = 2 * this->NbrSite;
+  int TmpMaxMomentum = this->NbrSite;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);

@@ -94,24 +94,24 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
 // yPeriodicity = periodicity in the y direction with respect to site numbering 
 // memory = amount of memory granted for precalculations
 
-FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int xTranslation,
-										      int yMomentum, int yPeriodicity, unsigned long memory)
+FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum,  int maxXMomentum,
+										      int yMomentum,  int maxYMomentum, unsigned long memory)
 {  
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->NbrSite = nbrSite;
   this->MaxMomentum =  this->NbrSite;
   this->NbrMomentum = this->MaxMomentum + 1;
-  this->MomentumModulo = this->NbrSite / xTranslation;
+  this->MaxXMomentum =  maxXMomentum;
+  this->MomentumModulo =  this->MaxXMomentum;
 
   this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift / 2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
-  this->MaxXMomentum = this->NbrSite / xTranslation;
   this->XMomentum = xMomentum % this->MaxXMomentum;
-  this->StateXShift = xTranslation;
+  this->StateXShift = this->NbrSite / this->MaxXMomentum;
   this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 //   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
@@ -120,10 +120,10 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
 //   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
 //   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
-  this->MaxYMomentum = yPeriodicity;
+  this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
-  this->NbrYMomentumBlocks = this->NbrSite / xTranslation;
-  this->StateYShift = (xTranslation / this->MaxYMomentum);
+  this->NbrYMomentumBlocks = this->NbrSite / this->StateXShift;
+  this->StateYShift = (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
   this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
