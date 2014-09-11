@@ -68,7 +68,7 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // yPeriodicity = periodicity in the y direction with respect to site numbering 
   // memory = amount of memory granted for precalculations
   BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int xTranslation,
-					     int yMomentum, int yPeriodicity, unsigned long memory = 10000000);
+							       int yMomentum, int yPeriodicity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -135,14 +135,6 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
-
-  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
-  //
-  // stateDescription = unsigned integer describing the state
-  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
-  // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
   virtual unsigned long FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
 
   //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
@@ -151,20 +143,6 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // return value = true if the state satisfies the momentum constraint
   virtual bool TestMomentumConstraint(unsigned long stateDescription);
 
-  // find the size of the orbit for a given state
-  //
-  // return value = orbit size
-  inline int FindOrbitSize(unsigned long stateDescription);
-
-  // apply a single translation in the x direction for a state description
-  //
-  // stateDescription = reference on the state description
-  virtual void ApplySingleXTranslation(unsigned long& stateDescription);
-
-  // apply a single translation in the y direction for a state description
-  //
-  // stateDescription = reference on the state description  
-  virtual void ApplySingleYTranslation(unsigned long& stateDescription);
 
 };
 
@@ -198,54 +176,6 @@ inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::Symmetri
 }
 
 
-// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
-//
-// stateDescription = unsigned integer describing the state
-// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-
-inline unsigned long BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
-{
-//  cout << "checking state " << hex << stateDescription << dec << endl;
-  unsigned long CanonicalState = stateDescription;
-  unsigned long stateDescriptionReference = stateDescription;  
-  unsigned long TmpStateDescription;  
-  nbrTranslationX = 0;
-  nbrTranslationY = 0;
-  for (int m = 0; (m < this->MaxYMomentum) && (stateDescription != 0x0ul) ; ++m)
-    {
-      TmpStateDescription = stateDescription;
-      for (int n = 1; n < this->MaxXMomentum; ++n)
-	{
-	  this->ApplySingleXTranslation(TmpStateDescription);      
-//	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
-	  if (TmpStateDescription < CanonicalState)
-	    {
-	      CanonicalState = TmpStateDescription;
-	      nbrTranslationX = n;	      
-	      nbrTranslationY = m;	      
-	    }
-	  if  (TmpStateDescription == stateDescription)
-	    n = this->MaxXMomentum;
-	}
-      this->ApplySingleYTranslation(stateDescription);      
-     if (stateDescription == stateDescriptionReference)
-	{
-	  m = this->MaxYMomentum;
-	}
-      else
-	{
-	  if (stateDescription < CanonicalState)
-	    {
-	      CanonicalState = stateDescription;
-	      nbrTranslationX = 0;	      
-	      nbrTranslationY = m;	      
-	    }
-	}
-    }
-  return CanonicalState;
-}
 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
 //
@@ -303,13 +233,13 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
   for (int m = 1; m < YSize; ++m)
     {
       this->ApplySingleYTranslation(TmpStateDescription2);	
-      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec <<endl;
+//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec <<endl;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
-      this->ApplySingleXTranslation(TmpStateDescription);
+	  this->ApplySingleXTranslation(TmpStateDescription);
 	}
       if (TmpXSize < XSize)
 	{
@@ -320,75 +250,12 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
 	  TmpXSize = 0;
 	}
     } 
-
-   if (YSize == this->MaxYMomentum)
-    {
-      this->ApplySingleYTranslation(TmpStateDescription2); 
-    }
-
-//  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
-  if (((this->YMomentum * YSize * this->MaxXMomentum)
-	- (this->XMomentum * TmpXSize * this->MaxYMomentum) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+    
+//  cout << "YSize=" << YSize << " TmpXSize=" << TmpXSize << endl;
+  if ((((this->YMomentum * YSize * this->MaxXMomentum)
+	- (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   return true;
-}
-
-// find the size of the orbit for a given state
-//
-// return value = orbit size
-
-inline int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
-{
-  unsigned long TmpStateDescription = stateDescription;
-  unsigned long TmpStateDescription2 = stateDescription;
-  int XSize = 1;
-  this->ApplySingleXTranslation(TmpStateDescription);      
-  while (stateDescription != TmpStateDescription)
-    {
-      ++XSize;
-      this->ApplySingleXTranslation(TmpStateDescription);      
-    }
-  int YSize = this->MaxYMomentum;
-  for (int m = 1; m < YSize; ++m)
-    {
-      this->ApplySingleYTranslation(stateDescription); 
-      TmpStateDescription = TmpStateDescription2;
-      int TmpXSize = 0;
-      while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
-	{	  
-	  ++TmpXSize;
-	  this->ApplySingleXTranslation(TmpStateDescription);      
-	}
-      if (TmpXSize < XSize)
-	{
-	  YSize = m;
-	}
-    }
-  return (XSize * YSize);
-}
-
-// apply a single translation in the x direction for a state description
-//
-// stateDescription = reference on the state description
-
-inline void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
-{
-  stateDescription = (stateDescription >> this->StateXShift) | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
-}
-
-// apply a single translation in the y direction for a state description
-//
-// stateDescription = reference on the state description
-
-inline void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
-{
-  unsigned long TmpState = 0x0ul;
-  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
-    {
-      TmpState |= (((stateDescription & this->YMomentumBlockMask) >> this->StateYShift) | ((stateDescription & this->YMomentumMask) << this->ComplementaryStateYShift)) << (this->YMomentumBlockSize * i);
-      stateDescription >>= this->YMomentumBlockSize;
-    }
-  stateDescription = TmpState;
 }
 
 

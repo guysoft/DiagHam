@@ -128,6 +128,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
+//   cout << "this->MaxYMomentum=" << this->MaxYMomentum << endl;
 //   cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
 //   cout << "this->StateYShift=" << this->StateYShift << endl;
 //   cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
