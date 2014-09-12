@@ -34,6 +34,7 @@
 
 #include "config.h"
 #include "Matrix/ComplexMatrix.h"
+#include "Matrix/HermitianMatrix.h"
 #include "Architecture/AbstractArchitecture.h"
 
 #include <iostream>
@@ -96,6 +97,11 @@ class AbstractTightBindingModel
   // return value = reference on the one body transformation matrix
   virtual ComplexMatrix& GetOneBodyMatrix(int momentumIndex) = 0;
 
+  // get the tight binding hamiltonian in real space 
+  // 
+  // return value = tight binding hamiltonian
+  virtual HermitianMatrix GetRealSpaceTightBindingHamiltonian();
+
   // write the energy spectrum in an ASCII file
   //
   // fileName = name of the ASCII file 
@@ -140,7 +146,6 @@ class AbstractTightBindingModel
   // bands = number of bands used in groundstate configuration
   // return value =  total groundstate energy
   virtual double ComputeGroundstateEnergy(int nbrFermions, int &bands, bool verbose = false);
-
   
   // return the energy of the lowest energy single-particle state
   // 

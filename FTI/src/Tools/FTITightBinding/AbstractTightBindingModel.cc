@@ -399,3 +399,13 @@ void AbstractTightBindingModel::ComputeBandStructure()
   cout << "One-body diagonalization done in " << Dt << " s" << endl;
 }
 
+// get the tight binding hamiltonian in real space 
+// 
+// return value = tight binding hamiltonian
+
+HermitianMatrix AbstractTightBindingModel::GetRealSpaceTightBindingHamiltonian()
+{
+  cout << "warning, tight binding hamiltonian in real space is not available" << endl;
+  return HermitianMatrix();
+}
+
