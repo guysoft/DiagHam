@@ -9,6 +9,7 @@
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
@@ -114,8 +115,8 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-	                cout << "This bosonic Hubbard model not implemented" << endl;
-			return -1;
+	                Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
+										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-momentum-y"));
 		    }
 		  else
 		    {
