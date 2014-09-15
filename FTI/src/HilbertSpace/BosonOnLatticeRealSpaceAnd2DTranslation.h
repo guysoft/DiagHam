@@ -45,11 +45,11 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
 {
 
  protected:
-
+  
   // total number of sites
   int NbrSite;
   
-
+  
   int NbrMomentum;
   // number of momentum sectors in the x direction 
   int MaxXMomentum;
@@ -59,7 +59,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   unsigned long XMomentumMask;
   // bit shift to apply to move the first StateXShift bits at the end of a state description
   int ComplementaryStateXShift;
-
+  
   // number of momentum sectors in the y direction 
   int MaxYMomentum;
   // bit shift that has to applied to perform a translation in the y direction 
@@ -97,7 +97,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   //
   // bosons = reference on the hilbert space to copy to copy
   BosonOnLatticeRealSpaceAnd2DTranslation (const BosonOnLatticeRealSpaceAnd2DTranslation& bosons);
-
+  
   // destructor
   //
   ~BosonOnLatticeRealSpaceAnd2DTranslation ();
@@ -175,7 +175,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   //virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
   //int& nbrTranslationX, int& nbrTranslationY);
 
-    // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
+  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
   // stateDescription = unsigned integer describing the state
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
@@ -261,28 +261,28 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFormA
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
- for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
-{
-    this->TemporaryState[i] = 0;
-}
-
+  for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
+    {
+      this->TemporaryState[i] = 0;
+    }
+  
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
- for(int i =  this->ProdATemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
-{
-    this->ProdATemporaryState[i] = 0;
-}
-
+  for(int i =  this->ProdATemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
+    {
+      this->ProdATemporaryState[i] = 0;
+    }
+  
   unsigned long TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
   for (int m = 0; (m < this->MaxYMomentum) && (stateDescriptionReference != stateDescription) ; ++m)
     {
-for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
-{
-    this->TemporaryState[i] =  this->ProdATemporaryState[i];
-}
+      for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
+	{
+	  this->TemporaryState[i] =  this->ProdATemporaryState[i];
+	}
       TmpStateDescription = stateDescription;
-     	
+      
       for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription != stateDescription) ; ++n)
 	{
 	  if (TmpStateDescription < CanonicalState)
@@ -291,16 +291,17 @@ for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
 	      nbrTranslationX = n;	      
 	      nbrTranslationY = m;	      
 	    }
+	  
 	  this->ApplySingleXTranslation(this->TemporaryState);      
           int TmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
-    --TmpMomentumMax;
+	  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
+	    --TmpMomentumMax;
           TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
 	}
       this->ApplySingleYTranslation(this->ProdATemporaryState);
       int ProdATmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
-    --ProdATmpMomentumMax;
+      while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
+	--ProdATmpMomentumMax;
       stateDescription = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
     }
   return CanonicalState;  
@@ -315,62 +316,62 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
 {
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
   for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
-{
-    this->TemporaryState[i] = 0;
-}
+    {
+      this->TemporaryState[i] = 0;
+    }
+  
   unsigned long TmpStateDescription = stateDescription;
   unsigned long TmpStateDescription2 = stateDescription;
   int XSize = 1;
-
-	  this->ApplySingleXTranslation(this->TemporaryState);      
-          int TmpMomentumMax =  this->NbrMomentum - 1;
+  
+  this->ApplySingleXTranslation(this->TemporaryState);      
+  int TmpMomentumMax =  this->NbrMomentum - 1;
   while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
     --TmpMomentumMax;
-          TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
-
+  TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
+  
   while (stateDescription != TmpStateDescription)
     {
       ++XSize;
-	  this->ApplySingleXTranslation(this->TemporaryState);      
-          int TmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
-    --TmpMomentumMax;
-          TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
+      this->ApplySingleXTranslation(this->TemporaryState);      
+      int TmpMomentumMax =  this->NbrMomentum - 1;
+      while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
+	--TmpMomentumMax;
+      TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
     }
   if (((this->KxMomentum * XSize) % this->MaxXMomentum) != 0)
     return false;
   int YSize = this->MaxYMomentum;
   int TmpXSize = 0;
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
- for(int i =  this->ProdATemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
-{
-    this->ProdATemporaryState[i] = 0;
-}
+  for(int i =  this->ProdATemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
+    {
+      this->ProdATemporaryState[i] = 0;
+    }
   TmpStateDescription2 = stateDescription;
   for (int m = 1; m < YSize; ++m)
     {
-
       this->ApplySingleYTranslation(this->ProdATemporaryState);	 
       int ProdATmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
-    --ProdATmpMomentumMax;
-       TmpStateDescription2 = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
-
-//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec <<endl;
+      while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
+	--ProdATmpMomentumMax;
+      TmpStateDescription2 = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
+      
+      //      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec <<endl;
       TmpStateDescription = TmpStateDescription2;
       for(int i = 0 ; i < this->NbrMomentum ; i++)
-      {
-	  this->TemporaryState[i] =    this->ProdATemporaryState[i] ;
+	{
+	  this->TemporaryState[i] = this->ProdATemporaryState[i] ;
 	}
-
+      
       TmpXSize = 0;
       while ((TmpXSize < XSize) && (stateDescription != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
 	  this->ApplySingleXTranslation(this->TemporaryState);      
           int TmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
-    --TmpMomentumMax;
+	  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
+	    --TmpMomentumMax;
           TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
 	}
       if (TmpXSize < XSize)
@@ -382,8 +383,8 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
 	  TmpXSize = 0;
 	}
     } 
-    
-//  cout << "YSize=" << YSize << " TmpXSize=" << TmpXSize << endl;
+  
+  //  cout << "YSize=" << YSize << " TmpXSize=" << TmpXSize << endl;
   if ((((this->KyMomentum * YSize * this->MaxXMomentum)
 	- (this->KxMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
@@ -397,52 +398,16 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
 
 inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long * stateDescription)
 {
-// cout << stateDescription<<endl;
-
-//  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
-
-/*  for (int i = 0; i < this->NbrMomentum ; i++)
-{
-cout << this->stateDescription[i]<<" ";
-}
-cout <<endl;
-*/
   unsigned long Tmp;
-for (int i = 0; i <  this->StateXShift ; i++)
-  {
- Tmp = stateDescription[i];
-  for (int k = 1; k < this->MaxXMomentum - 1; k++)
-  {
-    stateDescription[i+(k-1)*this->StateXShift] = this->TemporaryState[i+k*this->StateXShift];
- }
-  stateDescription[i + (this->MaxXMomentum - 1)*this->StateXShift] = Tmp;
-}
-
-/*
-for (int i = 0; i < this->NbrMomentum ; i++)
-{
-cout <<this->stateDescription[i]<<" ";
-}
-cout <<endl;*/
-
-/*  for (int i = 0; i < this->StateShift;)
+  for (int i = 0; i <  this->StateXShift ; i++)
     {
-      while ((i < this->StateShift) && ((stateDescription & 0x1ul) == 0x0ul))
+      Tmp = stateDescription[i];
+      for (int k = 1; k < this->MaxXMomentum ; k++)
 	{
-	  stateDescription >>= 1;
-	  ++i;
+	  stateDescription[i+(k-1)*this->StateXShift] = this->TemporaryState[i+k*this->StateXShift];
 	}
-      if (i < this->StateShift)
-	{
-	  while ((stateDescription & 0x1ul) == 0x1ul)
-	    {
-	      stateDescription >>= 1;
-	      stateDescription |= this->LastMomentumMask;
-	    }
-	  stateDescription >>= 1;	  
-	  ++i;
-	}
-    }*/
+      stateDescription[i + (this->MaxXMomentum - 1)*this->StateXShift] = Tmp;
+    }
 }
 
 // apply a single translation to a bosonic state in its fermionic representation
@@ -451,54 +416,19 @@ cout <<endl;*/
 
 inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long * stateDescription)
 {
-//  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
-
-for (int i = 0; i < this->NbrMomentum ; i++)
-{
-cout << stateDescription[i]<<" ";
-}
-cout <<endl;
-
   unsigned long Tmp;
-for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+  for (int i = 0; i < this->NbrYMomentumBlocks; i++)
     { 	
-	for (int j = 0; j<this->StateYShift ;j++)
+      for (int j = 0; j<this->StateYShift ;j++)
 	{
-	   Tmp = stateDescription[i*this->StateXShift + (this->MaxYMomentum - 1) * this->StateYShift + j];
-	   for (int k = this->MaxYMomentum - 1; k > 0; k--)
-		{
-		    stateDescription[i*this->StateXShift + k * this->StateYShift + j] = stateDescription[i*this->StateXShift + j + (k-1) * this->StateYShift];			
-		}
+	  Tmp = stateDescription[i*this->StateXShift + (this->MaxYMomentum - 1) * this->StateYShift + j];
+	  for (int k = this->MaxYMomentum - 1; k > 0; k--)
+	    {
+	      stateDescription[i*this->StateXShift + k * this->StateYShift + j] = stateDescription[i*this->StateXShift + j + (k-1) * this->StateYShift];			
+	    }
 	  stateDescription[i*this->StateXShift + j] = Tmp;
 	}
     }
-
-
-for (int i = 0; i < this->NbrMomentum ; i++)
-{
-cout <<stateDescription[i]<<" ";
-}
-cout <<endl;
-	
- /* for (int i = 0; i < this->StateShift;)
-    {
-      while ((i < this->StateShift) && ((stateDescription & 0x1ul) == 0x0ul))
-	{
-	  stateDescription >>= 1;
-	  ++i;
-	}
-      if (i < this->StateShift)
-	{
-	  while ((stateDescription & 0x1ul) == 0x1ul)
-	    {
-	      stateDescription >>= 1;
-	      stateDescription |= this->LastMomentumMask;
-	    }
-	  stateDescription >>= 1;	  
-	  ++i;
-	}
-    }
-*/
 }
 
 
@@ -509,60 +439,58 @@ cout <<endl;
 
 inline int BosonOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long stateDescription)
 {
-    this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
-    for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
-	{
-    		this->TemporaryState[i] = 0;
- 	}
-
+  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
+  for(int i =  this->TemporaryStateKyMax + 1; i < this->NbrMomentum ; i++)
+    {
+      this->TemporaryState[i] = 0;
+    }
+  
   unsigned long TmpStateDescription = stateDescription;
-    this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
-    for(int i =  this->ProdATemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
-	{
-    		this->ProdATemporaryState[i] = 0;
- 	}
+  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
+  for(int i =  this->ProdATemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
+    {
+      this->ProdATemporaryState[i] = 0;
+    }
 
   unsigned long TmpStateDescription2 = stateDescription;
   int XSize = 1;
-	  this->ApplySingleXTranslation(this->TemporaryState);      
-          int TmpMomentumMax =  this->NbrMomentum - 1;
+  this->ApplySingleXTranslation(this->TemporaryState);      
+  int TmpMomentumMax =  this->NbrMomentum - 1;
   while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
     --TmpMomentumMax;
-          TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
+  TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
   while (stateDescription != TmpStateDescription)
     {
       ++XSize;
-	  this->ApplySingleXTranslation(this->TemporaryState);      
-          int TmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
-    --TmpMomentumMax;
-          TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
+      this->ApplySingleXTranslation(this->TemporaryState);      
+      int TmpMomentumMax =  this->NbrMomentum - 1;
+      while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
+	--TmpMomentumMax;
+      TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
     }
   int YSize = this->MaxYMomentum;
   for (int m = 1; m < YSize; ++m)
     {
-       this->ApplySingleYTranslation(this->ProdATemporaryState);	 
+      this->ApplySingleYTranslation(this->ProdATemporaryState);	 
       int ProdATmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
-    --ProdATmpMomentumMax;
-       TmpStateDescription2 = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
-
-
-    this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
-    for(int i =  this->TemporaryStateKyMax ; i < this->NbrMomentum ; i++)
+      while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
+	--ProdATmpMomentumMax;
+      TmpStateDescription2 = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
+      this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
+      for(int i =  this->TemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
 	{
-    		this->TemporaryState[i] = 0;
+	  this->TemporaryState[i] = 0;
  	}
-
+      
       TmpStateDescription = stateDescription;
       int TmpXSize = 0;
       while ((TmpXSize < XSize) && (TmpStateDescription2 != TmpStateDescription))
 	{	  
 	  ++TmpXSize;
-		  this->ApplySingleXTranslation(this->TemporaryState);      
+	  this->ApplySingleXTranslation(this->TemporaryState);      
           int TmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
-    --TmpMomentumMax;
+	  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
+	    --TmpMomentumMax;
           TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
 	}
       if (TmpXSize < XSize)
@@ -585,21 +513,20 @@ inline int BosonOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long 
 
 inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
- // cout << "checking state " << hex << stateDescription << dec << endl;
+  //  cout << "checking state " << hex << stateDescription << dec << endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
   for(int i =  this->TemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
-	{
-    		this->TemporaryState[i] = 0;
- 	}
-
-
+    {
+      this->TemporaryState[i] = 0;
+    }
+  
   this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->ProdATemporaryState, this->ProdATemporaryStateKyMax);
   for(int i =  this->ProdATemporaryStateKyMax + 1 ; i < this->NbrMomentum ; i++)
-	{
-    		this->ProdATemporaryState[i] = 0;
- 	}
+    {
+      this->ProdATemporaryState[i] = 0;
+    }
   
   
   unsigned long TmpStateDescription;  
@@ -608,21 +535,21 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
   for (int m = 0; (m < this->MaxYMomentum) && (stateDescription != 0x0ul) ; ++m)
     {
       TmpStateDescription = stateDescriptionReference;
-
-  for(int i =  0; i < this->NbrMomentum ; i++)
+      
+      for(int i =  0; i < this->NbrMomentum ; i++)
 	{
-    		this->TemporaryState[i] = this->ProdATemporaryState[i];
+	  this->TemporaryState[i] = this->ProdATemporaryState[i];
  	}
-
+      
       for (int n = 1; n < this->MaxXMomentum; ++n)
 	{
-
-		  this->ApplySingleXTranslation(this->TemporaryState);      
+	  
+	  this->ApplySingleXTranslation(this->TemporaryState);      
           int TmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
-    --TmpMomentumMax;
+	  while (this->TemporaryState[ TmpMomentumMax] == 0x0ul)
+	    --TmpMomentumMax;
           TmpStateDescription = this->BosonToFermion( this->TemporaryState, TmpMomentumMax);
-
+	  
 	  // cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  if (TmpStateDescription < CanonicalState)
 	    {
@@ -633,13 +560,13 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
 	  if  (TmpStateDescription == stateDescription)
 	    n = this->MaxXMomentum;
 	}
-             this->ApplySingleYTranslation(this->ProdATemporaryState);	 
+      this->ApplySingleYTranslation(this->ProdATemporaryState);	 
       int ProdATmpMomentumMax =  this->NbrMomentum - 1;
-  while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
-    --ProdATmpMomentumMax;
-       stateDescriptionReference = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
-
-     if (stateDescription == stateDescriptionReference)
+      while (this->ProdATemporaryState[ProdATmpMomentumMax] == 0x0ul)
+	--ProdATmpMomentumMax;
+      stateDescriptionReference = this->BosonToFermion( this->ProdATemporaryState,ProdATmpMomentumMax);
+      
+      if (stateDescription == stateDescriptionReference)
 	{
 	  m = this->MaxYMomentum;
 	}
