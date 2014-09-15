@@ -926,12 +926,18 @@ void FermionOnTorusWithMagneticTranslations::GenerateLookUpTable(int memory)
 	      TmpLookUpTable[CurrentLookUpTableValue] = i;
 	      ++CurrentLookUpTableValue;
 	    }
+	  --CurrentMaxMomentum;
+ 	  while (CurrentMaxMomentum > this->StateMaxMomentum[i])
+ 	    {
+ 	      this->LookUpTableShift[CurrentMaxMomentum] = -1;
+ 	      --CurrentMaxMomentum;
+ 	    }
  	  CurrentMaxMomentum = this->StateMaxMomentum[i];
-	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
 	  if (CurrentMaxMomentum < this->MaximumLookUpShift)
 	    this->LookUpTableShift[CurrentMaxMomentum] = 0;
 	  else
 	    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
+	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
 	  CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
 	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
 	  CurrentLookUpTableValue = 0;

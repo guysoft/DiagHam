@@ -1237,3 +1237,33 @@ bool Abstract2DTightBindingModel::SetEmbeddingFromAsciiFile(char* embeddingFileN
   }
  
 }
+
+// build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+//
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
+{
+  HermitianMatrix TmpHamiltonian(this->NbrBands * this->NbrSiteX * this->NbrSiteY, true);
+  for (int i = 0; i < this->NbrSiteX; ++i)
+    {
+      for (int j = 0; j < this->NbrSiteY; ++j)
+	{
+	  for (int k = 0; k < this->NbrBands; ++k)
+	    {
+	      int Index2 = this->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, k);
+	      for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
+		{
+		  int Index1 = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l << 1] + i, spatialIndices[k][(l << 1) + 1] + j, orbitalIndices[k][l]);
+		  TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]);
+		}
+	    }
+	}      
+    }
+  return TmpHamiltonian;
+}
+

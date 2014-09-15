@@ -76,9 +76,6 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // parity of the number of fermions, 0x1ul if even, 0x0ul if odd
   unsigned long NbrFermionsParity;
 
-  // temporary variables when using AdAd / ProdAd operations
-  int ProdATemporaryNbrStateInOrbit;
-
  public:
 
   // default constructor
@@ -244,14 +241,9 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
 // return value = index of the destination state  
 
 inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
-										   int& nbrTranslationX, int& nbrTranslationY)
+									   int& nbrTranslationX, int& nbrTranslationY)
 {
-  this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
-  if (nbrTranslationX < 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
+  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY);
   int TmpMaxMomentum = this->NbrSite;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
@@ -280,33 +272,34 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFor
   unsigned long TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
-  for (int m = 0; (m < this->MaxYMomentum) && (stateDescription != 0x0ul) ; ++m)
+  TmpStateDescription = stateDescription;
+  for (int n = 1; n < this->MaxXMomentum; ++n)
     {
+      this->ApplySingleXTranslation(TmpStateDescription);      
+      if (TmpStateDescription < CanonicalState)
+	{
+	  CanonicalState = TmpStateDescription;
+	  nbrTranslationX = n;	      
+	  nbrTranslationY = 0;	      
+	}
+    }
+  for (int m = 1; m < this->MaxYMomentum; ++m)
+    {
+      this->ApplySingleYTranslation(stateDescription);      
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslationX = 0;	      
+	  nbrTranslationY = m;	      
+	}
       TmpStateDescription = stateDescription;
       for (int n = 1; n < this->MaxXMomentum; ++n)
 	{
 	  this->ApplySingleXTranslation(TmpStateDescription);      
-//	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;
 	      nbrTranslationX = n;	      
-	      nbrTranslationY = m;	      
-	    }
-	  if  (TmpStateDescription == stateDescription)
-	    n = this->MaxXMomentum;
-	}
-      this->ApplySingleYTranslation(stateDescription);      
-     if (stateDescription == stateDescriptionReference)
-	{
-	  m = this->MaxYMomentum;
-	}
-      else
-	{
-	  if (stateDescription < CanonicalState)
-	    {
-	      CanonicalState = stateDescription;
-	      nbrTranslationX = 0;	      
 	      nbrTranslationY = m;	      
 	    }
 	}

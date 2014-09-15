@@ -114,11 +114,6 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->StateXShift = this->NbrSite / this->MaxXMomentum;
   this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
-//   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
-//   cout << "this->XMomentum=" << this->XMomentum << endl;
-//   cout << "this->StateXShift=" << this->StateXShift << endl;
-//   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
-//   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
   this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
@@ -128,12 +123,6 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-//   cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
-//   cout << "this->StateYShift=" << this->StateYShift << endl;
-//   cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
-//   cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
-//   cout << "this->YMomentumMask=" << hex << this->YMomentumMask << dec << endl;
-//   cout << "this->YMomentumBlockMask=" << hex << this->YMomentumBlockMask << dec << endl;
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
 
 
@@ -198,40 +187,34 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
 
 FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTranslation(const FermionOnLatticeRealSpaceAnd2DTranslation& fermions)
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->StateDescription;
-      delete[] this->StateMaxMomentum;
-
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrMomentum; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
-
-      delete[] this->SignLookUpTable;
-      delete[] this->NbrParticleLookUpTable;
-
-      for (int i = 1; i <= this->MaxMomentum ; ++i)
-	delete[] this->RescalingFactors[i];
-      delete[] this->RescalingFactors;
-      delete[] this->NbrStateInOrbit;
-    }
   this->NbrFermions = fermions.NbrFermions;  
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->NbrSite = fermions.NbrSite;
 
+  this->MaxXMomentum = fermions.MaxXMomentum;
+  this->XMomentum = fermions.XMomentum;
+  this->StateXShift = fermions.StateXShift;
+  this->ComplementaryStateXShift = fermions.ComplementaryStateXShift;
+  this->XMomentumMask = fermions.XMomentumMask;
+  this->MaxYMomentum = fermions.MaxYMomentum;
+  this->YMomentum = fermions.YMomentum;
+  this->NbrYMomentumBlocks = fermions.NbrYMomentumBlocks;
+  this->StateYShift = fermions.StateYShift;
+  this->YMomentumBlockSize = fermions.YMomentumBlockSize;
+  this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
+  this->YMomentumMask = fermions.YMomentumMask;
+  this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+
   this->MaxMomentum = fermions.MaxMomentum;
   this->NbrMomentum = fermions.NbrMomentum;
   this->MomentumModulo = fermions.MomentumModulo;
-  this->XMomentum = fermions.XMomentum;
-  this->YMomentum = fermions.YMomentum;
-
   this->MomentumIncrement = fermions.MomentumIncrement;
   this->StateShift = fermions.StateShift;
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
   this->MomentumMask = fermions.MomentumMask;
 
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateMaxMomentum = fermions.StateMaxMomentum;
 
@@ -252,7 +235,6 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
 
   this->Flag = fermions.Flag;
 
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
 }
 
 // destructor
@@ -291,18 +273,31 @@ FermionOnLatticeRealSpaceAnd2DTranslation& FermionOnLatticeRealSpaceAnd2DTransla
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->NbrSite = fermions.NbrSite;
 
+ 
+  this->MaxXMomentum = fermions.MaxXMomentum;
+  this->XMomentum = fermions.XMomentum;
+  this->StateXShift = fermions.StateXShift;
+  this->ComplementaryStateXShift = fermions.ComplementaryStateXShift;
+  this->XMomentumMask = fermions.XMomentumMask;
+  this->MaxYMomentum = fermions.MaxYMomentum;
+  this->YMomentum = fermions.YMomentum;
+  this->NbrYMomentumBlocks = fermions.NbrYMomentumBlocks;
+  this->StateYShift = fermions.StateYShift;
+  this->YMomentumBlockSize = fermions.YMomentumBlockSize;
+  this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
+  this->YMomentumMask = fermions.YMomentumMask;
+  this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+
   this->MaxMomentum = fermions.MaxMomentum;
   this->NbrMomentum = fermions.NbrMomentum;
   this->MomentumModulo = fermions.MomentumModulo;
-  this->XMomentum = fermions.XMomentum;
-  this->YMomentum = fermions.YMomentum;
-
   this->MomentumIncrement = fermions.MomentumIncrement;
   this->StateShift = fermions.StateShift;
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
   this->MomentumMask = fermions.MomentumMask;
 
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateMaxMomentum = fermions.StateMaxMomentum;
 
@@ -323,7 +318,6 @@ FermionOnLatticeRealSpaceAnd2DTranslation& FermionOnLatticeRealSpaceAnd2DTransla
 
   this->Flag = fermions.Flag;
 
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   return *this;
 }
 
@@ -366,7 +360,6 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
 	  this->StateDescription[i] = 0x0ul;
 	}
     }
-//  cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
   unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
   this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
   this->ReorderingSign = new unsigned long [TmpLargeHilbertSpaceDimension];
@@ -489,7 +482,9 @@ int FermionOnLatticeRealSpaceAnd2DTranslation::FindStateIndex(char* stateDescrip
 
 int FermionOnLatticeRealSpaceAnd2DTranslation::FindStateIndex(unsigned long stateDescription, int maxMomentum)
 {
-  if ((stateDescription < this->StateDescription[0]) || (stateDescription > this->StateDescription[this->HilbertSpaceDimension - 1]))
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    return this->HilbertSpaceDimension;
+  if (this->LookUpTableShift[maxMomentum] < 0)
     return this->HilbertSpaceDimension;
   long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
   long PosMin = this->LookUpTable[maxMomentum][PosMax];
@@ -515,7 +510,7 @@ int FermionOnLatticeRealSpaceAnd2DTranslation::FindStateIndex(unsigned long stat
     if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
       return this->HilbertSpaceDimension;
     else
-      return PosMax;
+      return PosMin;
 }
 
 // apply a^+_m_sigma a_n_sigma operator to a given state 
@@ -555,6 +550,7 @@ int FermionOnLatticeRealSpaceAnd2DTranslation::AdA (int index, int m, int n, dou
   coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
   State |= (0x1ul << m);
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
   

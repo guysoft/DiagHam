@@ -96,7 +96,7 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //
   // kx = momentum along the x direction
   // ky = momentum along the y direction
-  // return value = inearized momentum index
+  // return value = linearized momentum index
   virtual int GetLinearizedMomentumIndex(int kx, int ky);
 
   // get momentum value from a linearized momentum index
@@ -104,14 +104,14 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // index = linearized momentum index
   // kx = reference on the momentum along the x direction
   // ky = reference on the momentum along the y direction
-  // return value = inearized momentum index
+  // return value = linearized momentum index
   virtual void GetLinearizedMomentumIndex(int index, int& kx, int& ky);
 
   // get the linearized momentum index, without assuming k to be in the first BZ
   //
   // kx = momentum along the x direction
   // ky = momentum along the y direction
-  // return value = inearized momentum index
+  // return value = linearized momentum index
   virtual int GetLinearizedMomentumIndexSafe(int kx, int ky);
 
   // get momentum value from a linearized momentum index, without assuming k to be in the first BZ
@@ -121,6 +121,30 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // ky = reference on the momentum along the y direction
   // return value = inearized momentum index
   virtual void GetLinearizedMomentumIndexSafe(int index, int& kx, int& ky);
+
+  // get the index of the real space tight binding model from the real space coordinates
+  //
+  // x = x coordinate of the unit cell
+  // y = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndex(int x, int y, int orbitalIndex);
+  
+  // get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates
+  //
+  // x = x coordinate of the unit cell
+  // y = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital / site within the unit cell
+  // return value = linearized index  
+  virtual int GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex);
+
+  // get the real space coordinates from the index of the real space tight binding model
+  //
+  // index = linearized index of the real space tight binding model
+  // x = reference on the x coordinate of the unit cell
+  // y = reference on the y coordinate of the unit cell
+  // orbitalIndex = reference on the index of the orbital / site within the unit cell
+  virtual void GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int y, int& orbitalIndex);
 
   // get the angle between the two primitive lattice vectors
   //
@@ -313,7 +337,16 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //
   virtual void ComputeAllProjectedMomenta();
   
-  
+
+  // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+  //
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space 
+  virtual HermitianMatrix BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
+
 };
 
 // get the linearized momentum index
@@ -372,6 +405,54 @@ inline void Abstract2DTightBindingModel::GetLinearizedMomentumIndexSafe(int inde
   index %= n;
   kx = index / this->NbrSiteY;
   ky = index % this->NbrSiteY;
+}
+
+// get the index of the real space tight binding model from the real space coordinates
+//
+// x = x coordinate of the unit cell
+// y = y coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int Abstract2DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int x, int y, int orbitalIndex)
+{
+  return (orbitalIndex + ((y  + x * this->NbrSiteY) * this->NbrBands)); 
+}
+
+// get the index of the real space tight binding model from the real space coordinates, without assumption on the coordinates
+//
+// x = x coordinate of the unit cell
+// y = y coordinate of the unit cell
+// orbitalIndex = index of the orbital / site within the unit cell
+// return value = linearized index  
+
+inline int Abstract2DTightBindingModel::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex)
+{
+  orbitalIndex %= this->NbrBands;
+  if (orbitalIndex < 0)
+    orbitalIndex +=  this->NbrBands;
+  x %= this->NbrSiteX;
+  if (x < 0)
+    x +=  this->NbrSiteX;
+  y %= this->NbrSiteY;
+  if (y < 0)
+    y +=  this->NbrSiteY;
+  return this->GetRealSpaceTightBindingLinearizedIndex(x, y, orbitalIndex); 
+}
+
+// get the real space coordinates from the index of the real space tight binding model
+//
+// index = linearized index of the real space tight binding model
+// x = reference on the x coordinate of the unit cell
+// y = reference on the y coordinate of the unit cell
+// orbitalIndex = reference on the index of the orbital / site within the unit cell
+
+inline void Abstract2DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int y, int& orbitalIndex)
+{
+  orbitalIndex = index % this->NbrBands;
+  index /= this->NbrBands;
+  y = index % this->NbrSiteY;
+  x = index / this->NbrSiteY;
 }
 
 // get the angle between the two primitive lattice vectors

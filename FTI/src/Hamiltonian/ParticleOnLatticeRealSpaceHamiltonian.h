@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
 //        class of generic hamiltonian for interacting spinless particles     //
-//         on lattice written in real space and handling 2d translations      //
+//                       on lattice written in real space                     //
 //                                                                            //
-//                        last modification : 11/09/2014                      //
+//                        last modification : 12/09/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,13 +28,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONLATTICEREALSPACEAND2DTRANSLATIONHAMILTONIAN_H
-#define PARTICLEONLATTICEREALSPACEAND2DTRANSLATIONHAMILTONIAN_H
+#ifndef PARTICLEONLATTICEREALSPACEHAMILTONIAN_H
+#define PARTICLEONLATTICEREALSPACEHAMILTONIAN_H
 
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphere.h"
-#include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
@@ -50,52 +50,46 @@ using std::endl;
 class AbstractArchitecture;
 
 
-class ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian : public ParticleOnLatticeRealSpaceHamiltonian
+class ParticleOnLatticeRealSpaceHamiltonian : public ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian
 {
 
  protected:
 
-  // momentum along the x direction
-  int XMomentum;
-  // periodicity in the x direction
-  int MaxXMomentum;
-
-  // momentum along the y direction
-  int YMomentum;
-  // periodicity in the y direction
-  int MaxYMomentum;
+  // number of sites 
+  int NbrSites;
   
-  //array containing all the phase factors that are needed when computing matrix elements
-  Complex** ExponentialFactors;
+  // optional array to store the hamiltonian diagonal elements
+  double* DiagonalElements;
 
+  // array that contains the number of sites connected to each site
+  int* OneBodyGenericNbrConnectedSites;
+  // array that contains the indices of the site connected to each site
+  int** OneBodyGenericConnectedSites;
+  // array that contains all one-body interaction factors
+  Complex** OneBodyGenericInteractionFactors;
 
  public:
 
   // default constructor
   //
-  ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian();
+  ParticleOnLatticeRealSpaceHamiltonian();
 
   // constructor
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
   // nbrSites = number of sites
-  // xMomentum = momentum sector in the x direction
-  // maxXMomentum = number of momentum sectors in the x direction
-  // yMomentum = momentum sector in the x direction
-  // maxYMomentum = number of momentum sectors in the x direction
   // tightBinding = hamiltonian corresponding to the tight-binding model in real space
   // densityDensity = matrix that gives the amplitude of each density-density interaction term
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSites, 
-							int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, 
-							HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
-							AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeRealSpaceHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSites, 
+					HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
+					AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
-  virtual ~ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian();
+  virtual ~ParticleOnLatticeRealSpaceHamiltonian();
 
   
  protected:
@@ -197,9 +191,15 @@ class ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian : public ParticleOnL
   // memory = reference on the amount of memory required for precalculations
   virtual void EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory);
 
-  // evaluate all exponential factors
-  //   
-  virtual void EvaluateExponentialFactors();
+  // evaluate the one body interaction factors from a tight-binding matrix
+  //
+  // tightBinding = hamiltonian corresponding to the tight-binding model in real space
+  virtual void EvaluateOneBodyFactorsFromTightBingding (HermitianMatrix& tightBinding);
+
+  // evaluate the two body interaction factors from a generic density-density interaction
+  //
+  // densityDensity = matrix that gives the amplitude of each density-density interaction term
+  virtual void EvaluateInteractionFactorsFromDensityDensity (RealSymmetricMatrix& densityDensity);
   
 };
 
@@ -210,7 +210,7 @@ class ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian : public ParticleOnL
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -220,8 +220,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   for (int j = 0; j < this->NbrSectorSums; ++j)
     {
       int Lim = 2 * this->NbrSectorIndicesPerSum[j];
@@ -236,10 +234,10 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 	      Coefficient4 *= Coefficient3;
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		  if (Index < Dim)
 		    {
-		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -257,7 +255,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 // nbrVectors = number of vectors that have to be evaluated together
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 												      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
@@ -267,8 +265,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
   int* TmpIndices;
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   for (int j = 0; j < this->NbrSectorSums; ++j)
     {
       int Lim = 2 * this->NbrSectorIndicesPerSum[j];
@@ -283,10 +279,10 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		  if (Index < Dim)
 		    for (int p = 0; p < nbrVectors; ++p)
-		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
 		  ++TmpInteractionFactor;
 		}
 	    }
@@ -301,7 +297,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added  
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
+inline void ParticleOnLatticeRealSpaceHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector& vSource, ComplexVector& vDestination)
 {
   //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -312,8 +308,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEval
   Complex* TmpInteractionFactor;
   int Index;
   Complex TmpSum = 0.0;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   for (int j = 0; j < this->NbrSectorSums; ++j)
     {
       int Lim = 2 * this->NbrSectorIndicesPerSum[j];
@@ -328,7 +322,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEval
 	      Coefficient4 *= Coefficient3;
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		  if (Index <= index)
 		    {
 		      if (Index < index)
@@ -352,7 +346,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEval
 // nbrVectors = number of vectors that have to be evaluated together
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
+inline void ParticleOnLatticeRealSpaceHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, ComplexVector* vSources, 
 																 ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   //int Dim = particles->GetHilbertSpaceDimension();
@@ -363,8 +357,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEval
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
   Complex* TmpSum = new Complex[nbrVectors];
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   for (int j = 0; j < this->NbrSectorSums; ++j)
     {
       int Lim = 2 * this->NbrSectorIndicesPerSum[j];
@@ -379,7 +371,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEval
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
-		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		  if (Index <= index)
 		    {
 		      if (Index < index)
@@ -416,7 +408,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::HermitianEval
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 															       int* indexArray, Complex* coefficientArray, long& position)
 {
   int Dim = particles->GetHilbertSpaceDimension();
@@ -427,8 +419,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
 
   if (this->HermitianSymmetryFlag == false)
     {
@@ -444,11 +434,11 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 		  TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
-		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index < Dim)
 			{
 			  indexArray[position] = Index;
-			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
 			  ++position;
 			}
 		      ++TmpInteractionFactor;
@@ -471,19 +461,19 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 		  TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
-		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		      if (Index <= index)
 			{
 			  if (Index == index)
 			    {
 			      indexArray[position] = Index;
-			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * (*TmpInteractionFactor);
 			      ++position;
 			    }
 			  else
 			    {
 			      indexArray[position] = Index;
-			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
 			      ++position;
 			    }
 			}
@@ -502,7 +492,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNTwoBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -512,8 +502,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
   int* TmpIndices2;
   Complex* TmpInteractionFactor;
   int Index;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
 
   if (this->HermitianSymmetryFlag == false)
     {
@@ -531,7 +519,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 		      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
-			  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index < Dim)
 			    {
 			      ++memory;
@@ -560,7 +548,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 		      TmpInteractionFactor = &(this->InteractionFactors[j][(i1 * Lim) >> 2]);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
-			  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  Index = particles->AdAd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 			  if (Index <= i)
 			    {
 			      ++memory;
@@ -585,13 +573,11 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 // vSource = vector to be multiplied
 // vDestination = vector at which result has to be added
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
 															int step, ComplexVector& vSource, ComplexVector& vDestination)
 {
   int Index;
   double Coefficient;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   if (this->OneBodyGenericInteractionFactors != 0)
     {
       for (int i = firstComponent; i < lastComponent; i += step)
@@ -604,9 +590,9 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 	      Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 	      for (int k = 0; k < TmpNbrConnectedSites; ++k)
 		{
-		  Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient);
 		  if (Index < particles->GetHilbertSpaceDimension())
-		    vDestination[Index] += Coefficient * TmpInteractionFactors[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		    vDestination[Index] += Coefficient * TmpInteractionFactors[k] * vSource[i];
 		}
 	    }
 	}
@@ -634,14 +620,12 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 // vDestinations = array of vectors at which result has to be added
 // nbrVectors = number of vectors that have to be evaluated together
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
 													 int step, ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   int Index;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   if (this->OneBodyGenericInteractionFactors != 0) 
     {
       for (int p = 0; p < nbrVectors; ++p)
@@ -661,9 +645,9 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 		  Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 		  for (int k = 0; k < TmpNbrConnectedSites; ++k)
 		    {
-		      Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient);
 		      if (Index < Dim)
-			TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k] * TmpSourceVector[i];
+			TmpDestinationVector[Index] += Coefficient * TmpInteractionFactors[k] * TmpSourceVector[i];
 		    }
 		}
 	    }
@@ -701,7 +685,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
 															       int* indexArray, Complex* coefficientArray, long& position)
 {
   if (this->OneBodyGenericInteractionFactors == 0)
@@ -710,8 +694,6 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   int Index;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
 
   if (this->HermitianSymmetryFlag == false)
     {
@@ -722,11 +704,11 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 	  Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 	  for (int k = 0; k < TmpNbrConnectedSites; ++k)
 	    {
-	      Index = particles->AdA(index, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+	      Index = particles->AdA(index, j, TmpConnectedSites[k], Coefficient);
 	      if (Index < Dim)
 		{
 		  indexArray[position] = Index;
-		  coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k];
+		  coefficientArray[position] = Coefficient * TmpInteractionFactors[k];
 		  ++position;
 		}
 	    }
@@ -741,17 +723,17 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 	  Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 	  for (int k = 0; k < TmpNbrConnectedSites; ++k)
 	    {
-	      Index = particles->AdA(index, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+	      Index = particles->AdA(index, j, TmpConnectedSites[k], Coefficient);
 	      if (Index <= index)
 		{
 		  indexArray[position] = Index;
 		  if (Index == index)
 		    {
-		      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k];
+		      coefficientArray[position] = 0.5 * Coefficient * TmpInteractionFactors[k];
 		    }
 		  else
 		    {
-		      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k];
+		      coefficientArray[position] = Coefficient * TmpInteractionFactors[k];
 		    }
 		  ++position;
 		}
@@ -768,14 +750,12 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 // lastComponent  = index of the last component that has to be precalcualted
 // memory = reference on the amount of memory required for precalculations
 
-inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
+inline void ParticleOnLatticeRealSpaceHamiltonian::EvaluateMNOneBodyFastMultiplicationMemoryComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent, long& memory)
 {
   if (this->OneBodyGenericInteractionFactors == 0) 
     return;
   int Index;
   double Coefficient = 0.0;
-  int NbrTranslationsX;
-  int NbrTranslationsY;
   int Dim = particles->GetHilbertSpaceDimension();
   
   if (this->HermitianSymmetryFlag == false)
@@ -788,7 +768,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 	      int* TmpConnectedSites = this->OneBodyGenericConnectedSites[j];
 	      for (int k = 0; k < TmpNbrConnectedSites; ++k)
 		{
-		  Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient);
 		  if (Index < Dim)
 		    {
 		      ++memory;
@@ -808,7 +788,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 	      int* TmpConnectedSites = this->OneBodyGenericConnectedSites[j];
 	      for (int k = 0; k < TmpNbrConnectedSites; ++k)
 		{
-		  Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AdA(i, j, TmpConnectedSites[k], Coefficient);
 		  if (Index <= i)
 		    {
 		      ++memory;

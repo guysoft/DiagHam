@@ -73,6 +73,11 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   //
   ~TightBindingModelCheckerboardLattice();
 
+  // get the tight binding hamiltonian in real space 
+  // 
+  // return value = tight binding hamiltonian
+  virtual HermitianMatrix GetRealSpaceTightBindingHamiltonian();
+
  protected :
 
   // core part that compute the band structure

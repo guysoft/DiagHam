@@ -197,24 +197,6 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
 
 FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(const FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation& fermions)
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->StateDescription;
-      delete[] this->StateHighestBit;
-
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrMomentum; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
-
-      delete[] this->SignLookUpTable;
-      delete[] this->NbrParticleLookUpTable;
-
-      for (int i = 1; i <= this->MaxMomentum ; ++i)
-	delete[] this->RescalingFactors[i];
-      delete[] this->RescalingFactors;
-      delete[] this->NbrStateInOrbit;
-    }
   this->NbrFermionsUp = fermions.NbrFermionsUp;
   this->NbrFermionsDown = fermions.NbrFermionsDown;
   this->NbrFermions = fermions.NbrFermions;  
@@ -223,13 +205,24 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
 
+  this->MaxXMomentum = fermions.MaxXMomentum;
+  this->XMomentum = fermions.XMomentum;
+  this->StateXShift = fermions.StateXShift;
+  this->ComplementaryStateXShift = fermions.ComplementaryStateXShift;
+  this->XMomentumMask = fermions.XMomentumMask;
+  this->MaxYMomentum = fermions.MaxYMomentum;
+  this->YMomentum = fermions.YMomentum;
+  this->NbrYMomentumBlocks = fermions.NbrYMomentumBlocks;
+  this->StateYShift = fermions.StateYShift;
+  this->YMomentumBlockSize = fermions.YMomentumBlockSize;
+  this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
+  this->YMomentumMask = fermions.YMomentumMask;
+  this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+
+  this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
   this->NbrMomentum = fermions.NbrMomentum;
-  this->NbrFermionStates = fermions.NbrFermionStates;
   this->MomentumModulo = fermions.MomentumModulo;
-  this->XMomentum = fermions.XMomentum;
-  this->YMomentum = fermions.YMomentum;
-
   this->MomentumIncrement = fermions.MomentumIncrement;
   this->StateShift = fermions.StateShift;
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
@@ -299,13 +292,24 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation& Fermio
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
 
+  this->MaxXMomentum = fermions.MaxXMomentum;
+  this->XMomentum = fermions.XMomentum;
+  this->StateXShift = fermions.StateXShift;
+  this->ComplementaryStateXShift = fermions.ComplementaryStateXShift;
+  this->XMomentumMask = fermions.XMomentumMask;
+  this->MaxYMomentum = fermions.MaxYMomentum;
+  this->YMomentum = fermions.YMomentum;
+  this->NbrYMomentumBlocks = fermions.NbrYMomentumBlocks;
+  this->StateYShift = fermions.StateYShift;
+  this->YMomentumBlockSize = fermions.YMomentumBlockSize;
+  this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
+  this->YMomentumMask = fermions.YMomentumMask;
+  this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+
+  this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
   this->NbrMomentum = fermions.NbrMomentum;
-  this->NbrFermionStates = fermions.NbrFermionStates;
   this->MomentumModulo = fermions.MomentumModulo;
-  this->XMomentum = fermions.XMomentum;
-  this->YMomentum = fermions.YMomentum;
-
   this->MomentumIncrement = fermions.MomentumIncrement;
   this->StateShift = fermions.StateShift;
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
