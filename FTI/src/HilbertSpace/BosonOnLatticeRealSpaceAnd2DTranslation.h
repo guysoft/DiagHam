@@ -134,6 +134,13 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   // return value = index of the destination state 
   //virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  ostream & PrintState (ostream& Str, int state);
+
  protected:
 
 
@@ -330,7 +337,46 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
 
 inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
 {
-  for (int i = 0; i < this->StateShift;)
+// cout << stateDescription<<endl;
+
+  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
+
+/*  for (int i = 0; i < this->NbrMomentum ; i++)
+{
+cout <<this->TemporaryState[i]<<" ";
+}
+cout <<endl;
+*/
+  unsigned long * NewTemporaryState = new unsigned long[this->NbrMomentum];
+  for (int i = 0; i < this->NbrMomentum ; i++)
+  {
+    int Tmp = i - this->StateXShift;
+//cout <<" Tm = "<<Tmp<<" ";
+    if( Tmp < 0)
+	Tmp +=  this->NbrMomentum;
+//cout <<Tmp<<" "<<endl;
+    if (Tmp > this->TemporaryStateKyMax)	
+ 	 NewTemporaryState[i] = 0;
+	else
+	  NewTemporaryState[i] = this->TemporaryState[Tmp];
+ }
+  delete [] this->TemporaryState;
+
+ this->TemporaryState = NewTemporaryState;
+/*
+for (int i = 0; i < this->NbrMomentum ; i++)
+{
+cout <<this->TemporaryState[i]<<" ";
+}
+cout <<endl;*/
+
+  this->TemporaryState = NewTemporaryState;
+  this->TemporaryStateKyMax =  this->MaxMomentum ;
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0x0ul)
+    --this->TemporaryStateKyMax;
+stateDescription = this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax);
+
+/*  for (int i = 0; i < this->StateShift;)
     {
       while ((i < this->StateShift) && ((stateDescription & 0x1ul) == 0x0ul))
 	{
@@ -347,7 +393,7 @@ inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(uns
 	  stateDescription >>= 1;	  
 	  ++i;
 	}
-    }
+    }*/
 }
 
 // apply a single translation to a bosonic state in its fermionic representation
@@ -356,7 +402,28 @@ inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(uns
 
 inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
 {
-  for (int i = 0; i < this->StateShift;)
+  this->FermionToBoson(stateDescription, this->FermionicMaxMomentum, this->TemporaryState, this->TemporaryStateKyMax);
+
+  unsigned long * NewTemporaryState = new unsigned long[this->NbrMomentum];
+  for (int i = 0; i < this->NbrMomentum ; i++)
+  {
+    int Tmp = i - this->StateYShift;
+    if( Tmp < 0)
+	Tmp +=  this->NbrMomentum;
+    if (Tmp > this->TemporaryStateKyMax)	
+       NewTemporaryState[i] = 0;
+    else
+     NewTemporaryState[i] = this->TemporaryState[Tmp];
+}
+
+  delete [] this->TemporaryState;
+  this->TemporaryState = NewTemporaryState;
+  this->TemporaryStateKyMax =  this->MaxMomentum;
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0x0ul)
+    --this->TemporaryStateKyMax;
+stateDescription = this->BosonToFermion(this->TemporaryState, this->TemporaryStateKyMax);
+	
+ /* for (int i = 0; i < this->StateShift;)
     {
       while ((i < this->StateShift) && ((stateDescription & 0x1ul) == 0x0ul))
 	{
@@ -374,6 +441,7 @@ inline void BosonOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(uns
 	  ++i;
 	}
     }
+*/
 }
 
 
@@ -424,7 +492,7 @@ inline int BosonOnLatticeRealSpaceAnd2DTranslation::FindOrbitSize(unsigned long 
 
 inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
-//  cout << "checking state " << hex << stateDescription << dec << endl;
+ // cout << "checking state " << hex << stateDescription << dec << endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
@@ -436,7 +504,7 @@ inline unsigned long BosonOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(
       for (int n = 1; n < this->MaxXMomentum; ++n)
 	{
 	  this->ApplySingleXTranslation(TmpStateDescription);      
-//	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
+	  // cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;

@@ -98,7 +98,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->NbrSite = nbrSite;
-  this->MaxMomentum =  this->NbrSite;
+  this->MaxMomentum =  this->NbrSite -1;
   this->FermionicMaxMomentum = this->MaxMomentum + this->NbrBosons - 1;
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MaxXMomentum = maxXMomentum;
@@ -132,7 +132,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
 //   cout << "this->MaxYMomentum=" << this->MaxYMomentum << endl;
 //   cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
-//   cout << "this->StateYShift=" << this->StateYShift << endl;
+//  cout << "this->StateYShift=" << this->StateYShift << endl;
 //   cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
 //   cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
 //   cout << "this->YMomentumMask=" << hex << this->YMomentumMask << dec << endl;
@@ -388,6 +388,7 @@ long BosonOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
   int NbrTranslationY;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
+//cout <<"state "<<i<<endl;
       if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
 	{
 	//cout <<  this->StateDescription[i] <<endl;
@@ -421,4 +422,23 @@ long BosonOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
   return TmpLargeHilbertSpaceDimension;
+}
+
+
+ 
+// print a given State
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnLatticeRealSpaceAnd2DTranslation::PrintState (ostream& Str, int state)
+{
+  this->FermionToBoson(this->StateDescription[state], this->MaxMomentum + this->NbrBosons - 1, this->TemporaryState, this->TemporaryStateKyMax);
+  int i = 0;
+  for (; i <= this->TemporaryStateKyMax; ++i)
+    Str << this->TemporaryState[i] << " ";
+  for (; i < this->NbrMomentum; ++i)
+    Str << "0 ";
+ return Str;
 }
