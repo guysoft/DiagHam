@@ -188,3 +188,39 @@ void TightBindingModel2DAtomicLimitLattice::CoreComputeBandStructure(long minSta
 	}
     }
 }
+
+// get the tight binding hamiltonian in real space 
+// 
+// return value = tight binding hamiltonian
+
+HermitianMatrix TightBindingModel2DAtomicLimitLattice::GetRealSpaceTightBindingHamiltonian()
+{
+  int* NbrConnectedOrbitals = new int [this->NbrBands];
+  int** OrbitalIndices = new int* [this->NbrBands];
+  int** SpatialIndices = new int* [this->NbrBands];
+  Complex** HoppingAmplitudes = new Complex* [this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      NbrConnectedOrbitals[i] = 1;
+      OrbitalIndices[i] = new int[NbrConnectedOrbitals[i]];
+      SpatialIndices[i] = new int[2 * NbrConnectedOrbitals[i]];
+      HoppingAmplitudes[i] = new Complex[NbrConnectedOrbitals[i]];
+      OrbitalIndices[i][0] = i;
+      SpatialIndices[i][0] = 0;
+      SpatialIndices[i][1] = 0;
+      HoppingAmplitudes[i][0] = this->ChemicalPotentials[i];
+    }
+  HermitianMatrix TmpMatrix = this->BuildTightBindingHamiltonianRealSpace(NbrConnectedOrbitals, OrbitalIndices, SpatialIndices, HoppingAmplitudes);
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      delete[] HoppingAmplitudes[i];
+      delete[] SpatialIndices[i];
+      delete[] OrbitalIndices[i];
+    }
+  delete[] HoppingAmplitudes;
+  delete[] SpatialIndices;
+  delete[] OrbitalIndices;
+  delete[] NbrConnectedOrbitals;
+  return TmpMatrix;
+}
+

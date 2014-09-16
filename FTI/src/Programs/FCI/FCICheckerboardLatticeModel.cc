@@ -20,6 +20,7 @@
 
 #include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
+#include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -273,6 +274,8 @@ int main(int argc, char** argv)
     {
       TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
     }      
+//   TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
+// 								Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {

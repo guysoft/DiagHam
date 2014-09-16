@@ -85,6 +85,11 @@ class TightBindingModel2DAtomicLimitLattice : public Abstract2DTightBindingModel
   //
   ~TightBindingModel2DAtomicLimitLattice();
 
+  // get the tight binding hamiltonian in real space 
+  // 
+  // return value = tight binding hamiltonian
+  virtual HermitianMatrix GetRealSpaceTightBindingHamiltonian();
+
  protected :
 
   // core part that compute the band structure

@@ -229,6 +229,11 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // return value = 0 if the sign is +1, 1 if the sign is -1
   virtual unsigned long GetSignAndApplySingleYTranslation(unsigned long& stateDescription);
 
+  // generate look-up table associated to current Hilbert space
+  // 
+  // memory = memory size that can be allocated for the look-up table
+  void GenerateLookUpTable(unsigned long memory);
+
 };
 
 
@@ -251,7 +256,9 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsig
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
-      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationX * this->MaxYMomentum) + nbrTranslationY)) & 0x1ul))); 
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
+      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul))); 
     }
   return TmpIndex;
 }

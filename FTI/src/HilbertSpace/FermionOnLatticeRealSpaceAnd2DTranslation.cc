@@ -331,6 +331,101 @@ AbstractHilbertSpace* FermionOnLatticeRealSpaceAnd2DTranslation::Clone()
 }
 
 
+// generate look-up table associated to current Hilbert space
+// 
+// memory = memory size that can be allocated for the look-up table
+
+void FermionOnLatticeRealSpaceAnd2DTranslation::GenerateLookUpTable(unsigned long memory)
+{
+  // evaluate look-up table size
+  memory /= (sizeof(int*) * this->NbrMomentum);
+  this->MaximumLookUpShift = 1;
+  while (memory > 0)
+    {
+      memory >>= 1;
+      ++this->MaximumLookUpShift;
+    }
+  if (this->MaximumLookUpShift > this->NbrMomentum)
+    this->MaximumLookUpShift = this->NbrMomentum;
+  this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
+
+  // construct  look-up tables for searching states
+  this->LookUpTable = new int* [this->NbrMomentum];
+  this->LookUpTableShift = new int [this->NbrMomentum];
+  for (int i = 0; i < this->NbrMomentum; ++i)
+    this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+  int CurrentMaxMomentum = this->StateMaxMomentum[0];
+  int* TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
+  if (CurrentMaxMomentum < this->MaximumLookUpShift)
+    this->LookUpTableShift[CurrentMaxMomentum] = 0;
+  else
+    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
+  int CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
+  unsigned long CurrentLookUpTableValue = this->LookUpTableMemorySize;
+  unsigned long TmpLookUpTableValue = this->StateDescription[0] >> CurrentShift;
+  while (CurrentLookUpTableValue > TmpLookUpTableValue)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = 0;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[CurrentLookUpTableValue] = 0;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      if (CurrentMaxMomentum != this->StateMaxMomentum[i])
+	{
+	  while (CurrentLookUpTableValue > 0)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      --CurrentLookUpTableValue;
+	    }
+	  TmpLookUpTable[0] = i;
+ 	  CurrentMaxMomentum = this->StateMaxMomentum[i];
+	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
+	  if (CurrentMaxMomentum < this->MaximumLookUpShift)
+	    this->LookUpTableShift[CurrentMaxMomentum] = 0;
+	  else
+	    this->LookUpTableShift[CurrentMaxMomentum] = CurrentMaxMomentum + 1 - this->MaximumLookUpShift;
+	  CurrentShift = this->LookUpTableShift[CurrentMaxMomentum];
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  CurrentLookUpTableValue = this->LookUpTableMemorySize;
+	  while (CurrentLookUpTableValue > TmpLookUpTableValue)
+	    {
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	      --CurrentLookUpTableValue;
+	    }
+	  TmpLookUpTable[CurrentLookUpTableValue] = i;
+	}
+      else
+	{
+	  TmpLookUpTableValue = this->StateDescription[i] >> CurrentShift;
+	  if (TmpLookUpTableValue != CurrentLookUpTableValue)
+	    {
+	      while (CurrentLookUpTableValue > TmpLookUpTableValue)
+		{
+		  TmpLookUpTable[CurrentLookUpTableValue] = i;
+		  --CurrentLookUpTableValue;
+		}
+	      TmpLookUpTable[CurrentLookUpTableValue] = i;
+	    }
+	}
+    }
+  while (CurrentLookUpTableValue > 0)
+    {
+      TmpLookUpTable[CurrentLookUpTableValue] = this->HilbertSpaceDimension - 1;
+      --CurrentLookUpTableValue;
+    }
+  TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
+  this->RescalingFactors = new double* [this->NbrMomentum];
+  for (int i = 1; i <= this->MaxMomentum; ++i)
+    {
+      this->RescalingFactors[i] = new double [this->NbrMomentum];
+      for (int j = 1; j <= this->MaxMomentum; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
+    }
+}
+
 // generate all states corresponding to the constraints
 //
 // return value = Hilbert space dimension
@@ -379,10 +474,11 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
 	      unsigned long TmpState2 = TmpState;
 	      for (int n = 1; n < this->MaxXMomentum; ++n)
 		{
-		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
+ 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
 		  ++Index;
 		}
-	      TmpSign |= this->GetSignAndApplySingleYTranslation(TmpState) << Index;
+	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
+			  ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) << this->MaxXMomentum));
 	      ++Index;
 	    }
 	  ++TmpLargeHilbertSpaceDimension;
@@ -504,6 +600,7 @@ int FermionOnLatticeRealSpaceAnd2DTranslation::FindStateIndex(unsigned long stat
       PosMid = (PosMin + PosMax) >> 1;
       CurrentState = this->StateDescription[PosMid];
     }
+
   if (CurrentState == stateDescription)
     return PosMid;
   else
