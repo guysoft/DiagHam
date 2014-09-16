@@ -164,7 +164,7 @@ int main(int argc, char** argv)
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
 
-      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderPermanentTimes221State (Space, NbrParticles, MaxMomentum, XRatio, GaffnianFlag, NASSFlag, Architecture.GetArchitecture(), Memory);
+      AbstractQHEHamiltonian* Hamiltonian = new ParticleOnCylinderPermanentTimes221State (Space, NbrParticles, MaxMomentum, SzTotal, XRatio, GaffnianFlag, NASSFlag, Architecture.GetArchitecture(), Memory);
 
       double Shift = -10.0;
       Hamiltonian->ShiftHamiltonian(Shift);

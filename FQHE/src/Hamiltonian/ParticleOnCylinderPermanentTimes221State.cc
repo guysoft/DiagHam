@@ -67,7 +67,7 @@ using std::ostream;
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnCylinderPermanentTimes221State::ParticleOnCylinderPermanentTimes221State(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum,
+ParticleOnCylinderPermanentTimes221State::ParticleOnCylinderPermanentTimes221State(ParticleOnSphereWithSpin* particles, int nbrParticles, int maxMomentum, int totalSpin,
 										   double ratio, bool gaffnianFlag, bool nassFlag, AbstractArchitecture* architecture, long memory, char* precalculationFileName)
 {
   this->Particles = particles;
@@ -86,12 +86,23 @@ ParticleOnCylinderPermanentTimes221State::ParticleOnCylinderPermanentTimes221Sta
 
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
-
+	
   this->OneBodyUpUp = 0;
   this->OneBodyDownDown = 0;
   this->OneBodyUpDown = 0; 
 
-  this->EnergyShift = 0.0;
+  if (this->GaffnianFlag)
+    {
+      this->OneBodyUpUp = new Complex[this->NbrLzValue];
+      this->OneBodyDownDown = new Complex[this->NbrLzValue];
+      for (int i = 0; i <= this->MaxMomentum; i++)
+        {
+          this->OneBodyUpUp[i] = 0.5;
+          this->OneBodyDownDown[i] = 0.5;
+        }
+    }
+
+  this->EnergyShift = 0;
 
   if (precalculationFileName == 0)
     {
@@ -284,7 +295,7 @@ void ParticleOnCylinderPermanentTimes221State::EvaluateInteractionFactors()
 	         m4 = m1 + m2 - m3;
 	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
   	             {
- 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientInter(m1, m2, m4, m3, this->GaffnianFlag, this->NASSFlag)                               + this->EvaluateInteractionCoefficientInter(m2, m1, m3, m4, this->GaffnianFlag, this->NASSFlag);
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientInter(m1, m2, m4, m3, this->GaffnianFlag, this->NASSFlag);
 		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
 		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
 		       ++Pos;
@@ -481,12 +492,12 @@ Complex ParticleOnCylinderPermanentTimes221State::EvaluateInteractionCoefficient
   double Xrp = kappa * (m3 - m4)/2.0;
   double Sigma, Sigmap;
 
-  Complex Coefficient(0,0);
+  Complex Coefficient(0.0, 0.0);
 
   Sigma = Xr * Xr;
   Sigmap = Xrp * Xrp;
   
-  Coefficient.Re = exp(-Sigma) * exp(-Sigmap);
+  Coefficient.Re += exp(-Sigma) * exp(-Sigmap);
   Coefficient.Im = 0.0;
   return (Coefficient /sqrt(this->Ratio * this->NbrLzValue));
  
@@ -511,14 +522,15 @@ Complex ParticleOnCylinderPermanentTimes221State::EvaluateInteractionCoefficient
 
   Complex Coefficient(0.0, 0.0);
 
-  if (gaffnianFlag)
+  if ((gaffnianFlag) && (m1==m3))
     {	
  	Sigma = Xr * Xr;
   	Sigmap = Xrp * Xrp;
   
-  	Coefficient.Re = exp(-Sigma) * exp(-Sigmap);
+  	Coefficient.Re += 1.0; //2.0 * exp(-Sigma) * exp(-Sigmap);
     }
-  return (Coefficient /sqrt(this->Ratio * this->NbrLzValue));
+  //return (Coefficient /sqrt(this->Ratio * this->NbrLzValue));
+  return Coefficient;
 }
 
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term
