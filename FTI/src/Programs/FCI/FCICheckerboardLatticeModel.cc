@@ -9,6 +9,9 @@
 
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
+
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian.h"
@@ -318,6 +321,10 @@ int main(int argc, char** argv)
 		  RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
 		  if (Manager.GetBoolean("boson") == true)
 		    {
+ 		      Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+ 									    i, NbrSitesX, j, NbrSitesY);
+// 		      Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+
 		      double UPotential = Manager.GetDouble("u-potential");
 		      double VPotential = Manager.GetDouble("v-potential");
 		      for (int x = 0; x < NbrSitesX; ++x)
@@ -339,8 +346,6 @@ int main(int argc, char** argv)
 									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y - 1, 1), VPotential);
 			    }
 			}
-		      cout << "error, bosons are not yet implemented for the real space representation" << endl;
-		      return 0;
 		    }
 		  else
 		    {

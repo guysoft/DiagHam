@@ -98,9 +98,9 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
   this->NbrSite = nbrSite;
-  this->MaxMomentum =  this->NbrSite -1;
+  this->MaxMomentum =  this->NbrSite;
   this->FermionicMaxMomentum = this->MaxMomentum + this->NbrBosons - 1;
-  this->NbrMomentum = this->MaxMomentum + 1;
+  this->NbrMomentum = this->MaxMomentum;
   this->MaxXMomentum = maxXMomentum;
   this->MomentumModulo = this->MaxXMomentum;
 
@@ -194,27 +194,10 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
 
 // copy constructor (without duplicating datas)
 //
-// fermions = reference on the hilbert space to copy to copy
+// bosons = reference on the hilbert space to copy to copy
 
 BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation(const BosonOnLatticeRealSpaceAnd2DTranslation& bosons)
 {
-  if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
-    {
-      delete[] this->StateDescription;
-
-      delete[] this->LookUpTableShift;
-      for (int i = 0; i < this->NbrMomentum; ++i)
-	delete[] this->LookUpTable[i];
-      delete[] this->LookUpTable;
-
-      for (int i = 1; i <= this->MaxMomentum ; ++i)
-	delete[] this->RescalingFactors[i];
-      delete[] this->RescalingFactors;
-      delete[] this->NbrStateInOrbit;
-
-      delete[] this->TemporaryState;
-      delete[] this->ProdATemporaryState;
-    }
   this->NbrBosons = bosons.NbrBosons;  
   this->IncNbrBosons = bosons.IncNbrBosons;
   this->NbrSite = bosons.NbrSite;
@@ -224,6 +207,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->MomentumModulo = bosons.MomentumModulo;
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
+  this->FermionicMaxMomentum = bosons.FermionicMaxMomentum;
 
   this->MomentumIncrement = bosons.MomentumIncrement;
   this->StateShift = bosons.StateShift;
@@ -289,6 +273,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation& BosonOnLatticeRealSpaceAnd2DTranslation
   this->MomentumModulo = bosons.MomentumModulo;
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
+  this->FermionicMaxMomentum = bosons.FermionicMaxMomentum;
 
   this->MomentumIncrement = bosons.MomentumIncrement;
   this->StateShift = bosons.StateShift;
@@ -441,4 +426,68 @@ ostream& BosonOnLatticeRealSpaceAnd2DTranslation::PrintState (ostream& Str, int 
   for (; i < this->NbrMomentum; ++i)
     Str << "0 ";
  return Str;
+}
+
+
+
+// apply a^+_m_sigma a_n_sigma operator to a given state 
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation operator including the orbital and the spin index
+// n = index of the annihilation operator including the orbital and the spin index
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int BosonOnLatticeRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  this->FermionToBoson(this->StateDescription[index], this->FermionicMaxMomentum,this->TemporaryState,this->TemporaryStateKyMax); 
+  if ((n > this->TemporaryStateKyMax)||(this->TemporaryState[n]==0))
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }	
+
+  coefficient = (double) this->TemporaryState[n];
+  --this->TemporaryState[n];
+
+  if (m >  this->TemporaryStateKyMax)
+	{
+		for(int i = this->TemporaryStateKyMax +1; i <= m; i++)
+	   	 this->TemporaryState[i] =0;
+                this->TemporaryStateKyMax = m;
+	}
+  this->TemporaryState[m]++;
+  coefficient *= this->TemporaryState[m];
+  coefficient = sqrt(coefficient); 
+  this->ProdATemporaryStateNbrStateInOrbit =  this->NbrStateInOrbit[index];
+  unsigned long TmpState = this->BosonToFermion(this->TemporaryState,this->TemporaryStateKyMax);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
+}
+  
+// apply a^+_m1_sigma a^+_m2_sigma operator to the state produced using AuAu method (without destroying it)
+//
+// m1 = first index for creation operator
+// m2 = second index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int BosonOnLatticeRealSpaceAnd2DTranslation::AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  for(int i =0; i < this->NbrMomentum ;i++)
+      this->TemporaryState[i] = this->ProdATemporaryState[i];
+  ++this->TemporaryState[m2];
+  coefficient = this->TemporaryState[m2];
+  ++this->TemporaryState[m1];
+  coefficient *= this->TemporaryState[m1];
+  coefficient = sqrt(coefficient);
+
+  this->TemporaryStateKyMax = this->MaxMomentum - 1;
+  while (this->TemporaryState[this->TemporaryStateKyMax] == 0)
+    --this->TemporaryStateKyMax; 
+  unsigned long TmpState = this->BosonToFermion(this->TemporaryState,this->TemporaryStateKyMax);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }

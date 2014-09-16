@@ -122,7 +122,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
-  //virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
@@ -132,7 +132,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
-  //virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // print a given State
   //
@@ -172,8 +172,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state  
-  //virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
-  //int& nbrTranslationX, int& nbrTranslationY);
+  virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
@@ -218,7 +217,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
 
 };
 
-/*
+
 // factorized code that is used to symmetrize the result of any operator action
 //
 // state = reference on the state that has been produced with the operator action
@@ -227,26 +226,28 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
 // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
 // return value = index of the destination state  
 
-inline int BosonOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
-										   int& nbrTranslationX, int& nbrTranslationY)
+inline int BosonOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
   this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
+
   if (nbrTranslationX < 0)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
     }
-  int TmpMaxMomentum = this->NbrSite;
+  int TmpMaxMomentum =  this->FermionicMaxMomentum;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
-  int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
+  cout <<"state = "<< state<<endl;
+  cout <<"TmpMaxMomentum = "<<TmpMaxMomentum<<endl;
+  int TmpIndex = this->FindStateIndex(state,TmpMaxMomentum);
   if (TmpIndex < this->HilbertSpaceDimension)
     {
-      coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+      coefficient *= this->RescalingFactors[this->ProdATemporaryStateNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
     }
   return TmpIndex;
 }
-*/
+
 
 
 // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
