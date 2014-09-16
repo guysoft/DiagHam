@@ -203,12 +203,18 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->NbrSite = bosons.NbrSite;
 
   this->MaxMomentum = bosons.MaxMomentum;
+  this->MaxXMomentum = bosons.MaxXMomentum;
+  this->MaxYMomentum = bosons.MaxYMomentum;
   this->NbrMomentum = bosons.NbrMomentum;
   this->MomentumModulo = bosons.MomentumModulo;
   this->KxMomentum = bosons.KxMomentum;
   this->KyMomentum = bosons.KyMomentum;
   this->FermionicMaxMomentum = bosons.FermionicMaxMomentum;
 
+  this->StateXShift = bosons.StateXShift;
+  this->StateYShift = bosons.StateYShift;
+  this->NbrYMomentumBlocks = bosons.NbrYMomentumBlocks;
+ 
   this->MomentumIncrement = bosons.MomentumIncrement;
   this->StateShift = bosons.StateShift;
   this->ComplementaryStateShift = bosons.ComplementaryStateShift;
@@ -269,6 +275,8 @@ BosonOnLatticeRealSpaceAnd2DTranslation& BosonOnLatticeRealSpaceAnd2DTranslation
   this->NbrSite = bosons.NbrSite;
 
   this->MaxMomentum = bosons.MaxMomentum;
+  this->MaxXMomentum = bosons.MaxXMomentum;
+  this->MaxYMomentum = bosons.MaxYMomentum;
   this->NbrMomentum = bosons.NbrMomentum;
   this->MomentumModulo = bosons.MomentumModulo;
   this->KxMomentum = bosons.KxMomentum;
@@ -282,7 +290,10 @@ BosonOnLatticeRealSpaceAnd2DTranslation& BosonOnLatticeRealSpaceAnd2DTranslation
 
   this->HilbertSpaceDimension = bosons.HilbertSpaceDimension;
   this->StateDescription = bosons.StateDescription;
-
+  this->StateXShift = bosons.StateXShift;
+  this->StateYShift = bosons.StateYShift;
+  this->NbrYMomentumBlocks = bosons.NbrYMomentumBlocks;
+ 
 
   this->MaximumLookUpShift = bosons.MaximumLookUpShift;
   this->LookUpTableMemorySize = bosons.LookUpTableMemorySize;
@@ -401,6 +412,7 @@ long BosonOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
 	{
 	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
 	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
+          cout <<this->StateDescription[i]<<" " << this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension]<<endl;
 	  ++TmpLargeHilbertSpaceDimension;
 	}	
     }
@@ -409,7 +421,46 @@ long BosonOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
   return TmpLargeHilbertSpaceDimension;
 }
 
+// find state index
+//
+// stateDescription = array describing the state
+// lzmax = maximum Lz value reached by a boson in the state
+// return value = corresponding index
 
+int BosonOnLatticeRealSpaceAnd2DTranslation::FindStateIndex(unsigned long stateDescription, int lzmax)
+{
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    return this->HilbertSpaceDimension;
+  if (this->LookUpTableShift[lzmax] < 0)
+    return this->HilbertSpaceDimension;
+
+  long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
+  long PosMin = this->LookUpTable[lzmax][PosMax];
+  PosMax = this->LookUpTable[lzmax][PosMax + 1];
+  long PosMid = (PosMin + PosMax) >> 1;
+  unsigned long CurrentState = this->StateDescription[PosMid];
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
+    {
+      if (CurrentState > stateDescription)
+	{
+	  PosMax = PosMid;
+	}
+      else
+	{
+	  PosMin = PosMid;
+	} 
+      PosMid = (PosMin + PosMax) >> 1;
+      CurrentState = this->StateDescription[PosMid];
+    }
+
+  if (CurrentState == stateDescription)
+    return PosMid;
+  else
+    if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
+      return this->HilbertSpaceDimension;
+    else
+      return PosMin;
+}
  
 // print a given State
 //
@@ -442,6 +493,8 @@ ostream& BosonOnLatticeRealSpaceAnd2DTranslation::PrintState (ostream& Str, int 
 
 int BosonOnLatticeRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
+  cout <<"AdA ( " << index<<" "<< m<<" "<<n<<endl;
+  cout <<this->PrintState(cout,index)<<endl;
   this->FermionToBoson(this->StateDescription[index], this->FermionicMaxMomentum,this->TemporaryState,this->TemporaryStateKyMax); 
   if ((n > this->TemporaryStateKyMax)||(this->TemporaryState[n]==0))
     {
@@ -459,9 +512,9 @@ int BosonOnLatticeRealSpaceAnd2DTranslation::AdA (int index, int m, int n, doubl
                 this->TemporaryStateKyMax = m;
 	}
   this->TemporaryState[m]++;
-  coefficient *= this->TemporaryState[m];
+  coefficient *= (double) this->TemporaryState[m];
   coefficient = sqrt(coefficient); 
-  this->ProdATemporaryStateNbrStateInOrbit =  this->NbrStateInOrbit[index];
+  this->ProdATemporaryStateNbrStateInOrbit  =  this->NbrStateInOrbit[index];
   unsigned long TmpState = this->BosonToFermion(this->TemporaryState,this->TemporaryStateKyMax);
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
