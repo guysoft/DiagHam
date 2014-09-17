@@ -384,10 +384,8 @@ long BosonOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
   int NbrTranslationY;
   for (long i = 0; i < this->LargeHilbertSpaceDimension; ++i)
     {
-//cout <<"state "<<i<<endl;
       if ((this->FindCanonicalForm(this->StateDescription[i], NbrTranslationX, NbrTranslationY) == this->StateDescription[i]))
 	{
-	//cout <<  this->StateDescription[i] <<endl;
 	  if (this->TestMomentumConstraint(this->StateDescription[i]) == true)
 	    {
 	      ++TmpLargeHilbertSpaceDimension;
@@ -412,7 +410,6 @@ long BosonOnLatticeRealSpaceAnd2DTranslation::GenerateStates()
 	{
 	  TmpStateDescription[TmpLargeHilbertSpaceDimension] = this->StateDescription[i];
 	  this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension] = this->FindOrbitSize(this->StateDescription[i]);
-          cout <<this->StateDescription[i]<<" " << this->NbrStateInOrbit[TmpLargeHilbertSpaceDimension]<<endl;
 	  ++TmpLargeHilbertSpaceDimension;
 	}	
     }
@@ -493,8 +490,7 @@ ostream& BosonOnLatticeRealSpaceAnd2DTranslation::PrintState (ostream& Str, int 
 
 int BosonOnLatticeRealSpaceAnd2DTranslation::AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
 {
-  cout <<"AdA ( " << index<<" "<< m<<" "<<n<<endl;
-  cout <<this->PrintState(cout,index)<<endl;
+
   this->FermionToBoson(this->StateDescription[index], this->FermionicMaxMomentum,this->TemporaryState,this->TemporaryStateKyMax); 
   if ((n > this->TemporaryStateKyMax)||(this->TemporaryState[n]==0))
     {
