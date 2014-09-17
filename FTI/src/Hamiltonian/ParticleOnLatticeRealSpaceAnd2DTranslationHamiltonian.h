@@ -725,19 +725,10 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNOne
 	      Index = particles->AdA(index, j, TmpConnectedSites[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
 	      if (Index < Dim)
 		{
-/* 		  cout << index << " " << Index << " : " << j << " " << TmpConnectedSites[k] << " : " << Coefficient  */
-/* 		       << " " << this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] << " " <<  TmpInteractionFactors[k] << " : " */
-/* 		       << NbrTranslationsX << " " << NbrTranslationsY << endl; */
 		  indexArray[position] = Index;
 		  coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactors[k];
 		  ++position;
 		}
-/* 	      else */
-/* 		{ */
-/* 		  cout << index << " " << Index << " : " << j << " " << TmpConnectedSites[k] << " : " << Coefficient  */
-/* 		       << " " << TmpInteractionFactors[k] << " : " */
-/* 		       << NbrTranslationsX << " " << NbrTranslationsY << endl; */
-/* 		} */
 	    }
 	}
     }

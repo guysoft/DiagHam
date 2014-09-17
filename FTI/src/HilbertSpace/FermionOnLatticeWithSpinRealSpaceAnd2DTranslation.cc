@@ -753,18 +753,7 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AdsigmaAsigma (int index,
 #endif
   State |= (0x1ul << m);
   this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
-
-  if (index == 0)
-    {
-      cout << hex << State << dec << " : ";
-    }
-  int Dummy = this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
-  if (index == 0)
-    {
-      cout <<  m << " " << n << " : " << Dummy << " " <<  coefficient << " " <<  nbrTranslationX << " " << nbrTranslationY << endl;
-    }
-  return Dummy;
-//  return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
+  return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
   
 // apply a_n1_sigma a_n2_sigma operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdsigmaAdsigma call

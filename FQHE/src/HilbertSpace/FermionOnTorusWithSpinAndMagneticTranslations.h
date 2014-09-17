@@ -122,6 +122,8 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   int ProdAHighestBit;
   // Index of the initial state when applying ProdA operator
   int ProdAIndex;
+  //  number of states in the orbit of the  temporary state used when applying ProdA operator
+  int ProdATemporaryNbrStateInOrbit;
 
   // sign due to state reordering when applying translation operator 
   unsigned long* ReorderingSign;

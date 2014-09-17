@@ -81,9 +81,6 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // parity of the number of fermions, 0x1ul if even, 0x0ul if odd
   unsigned long NbrFermionsParity;
 
-  // temporary variables when using AdAd / ProdAd operations
-  int ProdATemporaryNbrStateInOrbit;
-
  public:
 
   // default constructor

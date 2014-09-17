@@ -2143,7 +2143,6 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
   
   if (this->HermitianSymmetryFlag == false)
     {
-      cout << "HELP" << endl;
       if ((this->OneBodyGenericInteractionFactorsupup != 0) && (this->OneBodyGenericInteractionFactorsdowndown != 0))
 	{
 	  for (int i = firstComponent; i < lastComponent; ++i)
