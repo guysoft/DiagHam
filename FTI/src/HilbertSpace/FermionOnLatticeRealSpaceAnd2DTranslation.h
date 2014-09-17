@@ -188,14 +188,6 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
   virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
 
-  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
-  //
-  // stateDescription = unsigned integer describing the state
-  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
-  // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  virtual unsigned long FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
-
   //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
   //
   // stateDescription = unsigned integer describing the state
@@ -273,7 +265,6 @@ inline int FermionOnLatticeRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsig
 
 inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
 {
-//  cout << "checking state " << hex << stateDescription << dec << endl;
   unsigned long CanonicalState = stateDescription;
   unsigned long stateDescriptionReference = stateDescription;  
   unsigned long TmpStateDescription;  
@@ -314,38 +305,6 @@ inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFor
   return CanonicalState;
 }
 
-// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
-//
-// stateDescription = unsigned integer describing the state
-// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-
-inline unsigned long FermionOnLatticeRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
-{
-  unsigned long CanonicalState = stateDescription;
-  unsigned long stateDescriptionReference = stateDescription;  
-  unsigned long TmpStateDescription;  
-  nbrTranslationX = 0;
-  nbrTranslationY = 0;
-  for (int m = 0; (m < this->MaxYMomentum) && (stateDescriptionReference != stateDescription) ; ++m)
-    {
-      TmpStateDescription = stateDescription;
-      for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription != stateDescription) ; ++n)
-	{
-	  if (TmpStateDescription < CanonicalState)
-	    {
-	      CanonicalState = TmpStateDescription;
-	      nbrTranslationX = n;	      
-	      nbrTranslationY = m;	      
-	    }
-	  this->ApplySingleXTranslation(TmpStateDescription);      
-	}
-      this->ApplySingleYTranslation(stateDescription);      
-    }
-  return CanonicalState;  
-}
-
 //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
 //
 // stateDescription = unsigned integer describing the state
@@ -372,7 +331,6 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
   for (int m = 1; m < YSize; ++m)
     {
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
-//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
       TmpSign2 = TmpSign;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
@@ -395,7 +353,6 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpSign2 = TmpSign;
     }
-//  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
   if ((((this->YMomentum * YSize * this->MaxXMomentum)
 	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
 	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)

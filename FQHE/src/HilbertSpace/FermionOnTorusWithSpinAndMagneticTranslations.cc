@@ -296,9 +296,12 @@ FermionOnTorusWithSpinAndMagneticTranslations::~FermionOnTorusWithSpinAndMagneti
 	    delete[] this->LookUpTable[i];
 	  delete[] this->LookUpTable;	  
 	  
-	  for (int i = 1; i <= this->MaxMomentum ; ++i)
-	    delete[] this->RescalingFactors[i];
-	  delete[] this->RescalingFactors;	  
+	  if (this->RescalingFactors != 0)
+	    {
+	      for (int i = 1; i <= this->MaxMomentum ; ++i)
+		delete[] this->RescalingFactors[i];
+	      delete[] this->RescalingFactors;	  
+	    }
 	}
     }
 }
@@ -1231,6 +1234,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAuV (int index, int n1, 
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return coefficient;
 }
 
@@ -1270,6 +1274,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AdAd (int index, int n1, i
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return coefficient;
 }
 
@@ -1310,6 +1315,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAd (int index, int n1, i
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return coefficient;
 }
 
@@ -1350,6 +1356,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AdAu (int index, int n1, i
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return coefficient;
 }
 

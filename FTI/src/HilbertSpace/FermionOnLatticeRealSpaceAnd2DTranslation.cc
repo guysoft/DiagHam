@@ -105,7 +105,6 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->MaxXMomentum =  maxXMomentum;
   this->MomentumModulo =  this->MaxXMomentum;
 
-  this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift / 2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
@@ -379,6 +378,12 @@ void FermionOnLatticeRealSpaceAnd2DTranslation::GenerateLookUpTable(unsigned lon
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
+	  --CurrentMaxMomentum;
+	  while (CurrentMaxMomentum > this->StateMaxMomentum[i])
+	    {
+	      this->LookUpTableShift[CurrentMaxMomentum] = -1;
+	      --CurrentMaxMomentum;
+	    }
  	  CurrentMaxMomentum = this->StateMaxMomentum[i];
 	  TmpLookUpTable = this->LookUpTable[CurrentMaxMomentum];
 	  if (CurrentMaxMomentum < this->MaximumLookUpShift)

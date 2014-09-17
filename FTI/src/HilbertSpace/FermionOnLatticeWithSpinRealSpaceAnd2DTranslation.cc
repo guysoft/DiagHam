@@ -87,6 +87,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->StateDescription = 0;
   this->StateHighestBit = 0;  
   this->LargeHilbertSpaceDimension = 0;
+  this->RescalingFactors = 0;
 }
 
 // basic constructor
@@ -116,36 +117,23 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->MaxXMomentum;
 
-  this->StateXShift = 1;
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
-
   this->XMomentum = xMomentum % this->MaxXMomentum;
-  this->StateXShift = 2 * (this->NbrSite/ this->MaxXMomentum);
+  this->StateXShift = 2 * (this->NbrSite / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this->MaxMomentum) - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
-//   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
-//   cout << "this->XMomentum=" << this->XMomentum << endl;
-//   cout << "this->StateXShift=" << this->StateXShift << endl;
-//   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
-//   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
+  this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
-  this->NbrYMomentumBlocks = this->MaxYMomentum;
-  this->StateYShift = ((this->StateXShift) / this->MaxYMomentum);
+  this->NbrYMomentumBlocks = (2 * this->NbrSite) / this->StateXShift;
+  this->StateYShift = 2 * (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
   this->YMomentumBlockSize = this->StateYShift * this->MaxYMomentum;
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-//   cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
-//   cout << "this->StateYShift=" << this->StateYShift << endl;
-//   cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
-//   cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
-//   cout << "this->YMomentumMask=" << hex << this->YMomentumMask << dec << endl;
-//   cout << "this->YMomentumBlockMask=" << hex << this->YMomentumBlockMask << dec << endl;
-
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
 
 
@@ -379,11 +367,11 @@ ostream& FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::PrintState (ostream&
 	  break;
 	}
     }
-//    Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
-//    if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
-//      {
-//        Str << "  error";
-//      }
+   Str << " " << this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]);
+   if (this->FindStateIndex(this->StateDescription[state], this->StateHighestBit[state]) != state)
+     {
+       Str << "  error";
+     }
   return Str;
 }
 
@@ -396,40 +384,6 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateStates()
 {
   this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
   this->RawGenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
-//   for (long j = 0; j < this->LargeHilbertSpaceDimension; ++j)
-//     {
-//       unsigned long Tmp2 = this->StateDescription[j];
-//       for (int k = 0; k < this->MaxYMomentum; ++k)
-// 	{
-// 	  for (int l = 0; l < this->MaxXMomentum; ++l)
-// 	    {
-// 	      cout << l << " " << k << " : ";
-// 	      for (int i = 0; i < this->MaxMomentum; ++i)
-// 		{
-// 		  unsigned long Tmp = (Tmp2 >> (i << 1)) & 0x3ul;
-// 		  switch (Tmp)
-// 		    {
-// 		    case 0x0ul:
-// 		      cout << "0 ";
-// 		      break;
-// 		    case 0x1ul:
-// 		      cout << "d ";
-// 		      break;
-// 		    case 0x2ul:
-// 		      cout << "u ";
-// 		      break;
-// 		    case 0x3ul:
-// 		      cout << "X ";
-// 		      break;
-// 		    }
-// 		}
-// 	      cout << endl;
-// 	      this->ApplySingleXTranslation(Tmp2);      
-// 	    }
-// 	  this->ApplySingleYTranslation(Tmp2);      
-// 	}
-//       cout << endl;
-//     }
   long TmpLargeHilbertSpaceDimension = 0l;
   int NbrTranslationX;
   int NbrTranslationY;
@@ -451,7 +405,8 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateStates()
 	  this->StateDescription[i] = 0x0ul;
 	}
     }
-//  cout << "new dim = " << TmpLargeHilbertSpaceDimension << endl;
+  if (TmpLargeHilbertSpaceDimension == 0l)
+    return 0l;
   unsigned long* TmpStateDescription = new unsigned long [TmpLargeHilbertSpaceDimension];  
   this->NbrStateInOrbit = new int [TmpLargeHilbertSpaceDimension];
   this->ReorderingSign = new unsigned long [TmpLargeHilbertSpaceDimension];
@@ -474,7 +429,8 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateStates()
 		  TmpSign |= (this->GetSignAndApplySingleXTranslation(TmpState2) << Index) ^ ((TmpSign & (0x1ul << (Index - 1))) << 1);
 		  ++Index;
 		}
-	      TmpSign |= this->GetSignAndApplySingleYTranslation(TmpState) << Index;
+	      TmpSign |= ((this->GetSignAndApplySingleYTranslation(TmpState) << Index) 
+			  ^ ((TmpSign & (0x1ul << (Index - this->MaxXMomentum))) << this->MaxXMomentum));
 	      ++Index;
 	    }
 	  ++TmpLargeHilbertSpaceDimension;
@@ -482,6 +438,18 @@ long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateStates()
     }
   delete[] this->StateDescription;
   this->StateDescription = TmpStateDescription;
+
+  this->StateHighestBit = new int [TmpLargeHilbertSpaceDimension];  
+  int CurrentMaxMomentum = (2 * this->MaxMomentum) + 1;
+  while (((this->StateDescription[0] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+    --CurrentMaxMomentum;
+  this->StateHighestBit[0] = CurrentMaxMomentum;
+  for (long i = 1l; i < TmpLargeHilbertSpaceDimension; ++i)
+    {
+      while (((this->StateDescription[i] >> CurrentMaxMomentum) & 0x1ul) == 0x0ul)
+	--CurrentMaxMomentum;
+      this->StateHighestBit[i] = CurrentMaxMomentum;
+    }
   return TmpLargeHilbertSpaceDimension;
 }
 
@@ -600,6 +568,12 @@ void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateLookUpTable(unsi
 	      --CurrentLookUpTableValue;
 	    }
 	  TmpLookUpTable[0] = i;
+	  --CurrentLargestBit;
+	  while (CurrentLargestBit > CurrentHighestBit)
+	    {
+	      this->LookUpTableShift[CurrentLargestBit] = -1;
+	      --CurrentLargestBit;
+	    }
  	  CurrentLargestBit = CurrentHighestBit;
 	  TmpLookUpTable = this->LookUpTable[CurrentLargestBit];
 	  if (CurrentLargestBit < this->MaximumLookUpShift)
@@ -637,6 +611,15 @@ void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateLookUpTable(unsi
     }
   TmpLookUpTable[0] = this->HilbertSpaceDimension - 1;
 
+  this->RescalingFactors = new double* [this->NbrMomentum];
+  for (int i = 1; i <= this->MaxMomentum; ++i)
+    {
+      this->RescalingFactors[i] = new double [this->NbrMomentum];
+      for (int j = 1; j <= this->MaxMomentum; ++j)
+	{
+	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
+	}
+    }
 }
 
 // find state index from a string
@@ -700,7 +683,9 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindStateIndex(char* stat
 
 int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindStateIndex(unsigned long stateDescription, int maxMomentum)
 {
-  if ((stateDescription < this->StateDescription[0]) || (stateDescription > this->StateDescription[this->HilbertSpaceDimension - 1]))
+  if ((stateDescription > this->StateDescription[0]) || (stateDescription < this->StateDescription[this->HilbertSpaceDimension - 1]))
+    return this->HilbertSpaceDimension;
+  if (this->LookUpTableShift[maxMomentum] < 0)
     return this->HilbertSpaceDimension;
   long PosMax = stateDescription >> this->LookUpTableShift[maxMomentum];
   long PosMin = this->LookUpTable[maxMomentum][PosMax];
@@ -720,13 +705,14 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindStateIndex(unsigned l
       PosMid = (PosMin + PosMax) >> 1;
       CurrentState = this->StateDescription[PosMid];
     }
+
   if (CurrentState == stateDescription)
     return PosMid;
   else
     if ((this->StateDescription[PosMin] != stateDescription) && (this->StateDescription[PosMax] != stateDescription))
       return this->HilbertSpaceDimension;
     else
-      return PosMax;
+      return PosMin;
 }
 
 // apply a^+_m_sigma a_n_sigma operator to a given state 
@@ -766,9 +752,53 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AdsigmaAsigma (int index,
   coefficient *= this->SignLookUpTable[(State >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
   State |= (0x1ul << m);
-  return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
+
+  if (index == 0)
+    {
+      cout << hex << State << dec << " : ";
+    }
+  int Dummy = this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
+  if (index == 0)
+    {
+      cout <<  m << " " << n << " : " << Dummy << " " <<  coefficient << " " <<  nbrTranslationX << " " << nbrTranslationY << endl;
+    }
+  return Dummy;
+//  return this->SymmetrizeAdAdResult(State, coefficient, nbrTranslationX, nbrTranslationY);
 }
   
+// apply a_n1_sigma a_n2_sigma operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdsigmaAdsigma call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin up)
+// return value =  multiplicative factor 
+
+double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AsigmaAsigma (int index, int n1, int n2)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  if (((this->ProdATemporaryState & (0x1ul << n1)) == 0) || 
+      ((this->ProdATemporaryState & (0x1ul << n2)) == 0) || (n1 == n2))
+    return 0.0;  
+  double coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n2) & this->SignLookUpTableMask[n2]];
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 16))  & this->SignLookUpTableMask[n2 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 32)) & this->SignLookUpTableMask[n2 + 32]];
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n2 + 48)) & this->SignLookUpTableMask[n2 + 48]];
+#endif
+  ProdATemporaryState &= ~(0x1ul << n2);
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> n1) & this->SignLookUpTableMask[n1]];
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 16))  & this->SignLookUpTableMask[n1 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 32)) & this->SignLookUpTableMask[n1 + 32]];
+  coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n1 + 48)) & this->SignLookUpTableMask[n1 + 48]];
+#endif
+  ProdATemporaryState &= ~(0x1ul << n1);
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
+  return coefficient;
+}
+
+
 // apply a^+_m1_sigma a^+_m2_sigma operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator

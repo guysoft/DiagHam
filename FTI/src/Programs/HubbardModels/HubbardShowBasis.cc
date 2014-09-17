@@ -50,10 +50,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "xperiodic-boundary", "use periodic boundary conditions in the x direction");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the x direction (use only for 1d)", 4);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-momentum", "momentum along the x direction", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-momentum-x", "number of momentum in the x direction", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-xmomentum", "number of momentum in the x direction", 4);
   (*SystemGroup) += new BooleanOption  ('\n', "2dperiodic-boundaries", "use periodic boundary conditions in the x and y directions");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "y-momentum", "set the momentum along the y direction", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n',  "max-momentum-y", "number of momentum in the y direction",2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n',  "max-ymomentum", "number of momentum in the y direction",2);
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1", 1);
   
@@ -115,13 +115,13 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-	                Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
-										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-momentum-y"));
+	                Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
 		    }
 		  else
 		    {
-		      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
-										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-momentum-y"));
+		      Space = new BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
 		    }
 		}
 	      else
@@ -163,21 +163,21 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("su2-spin") == false)
 		{
-		   Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
-										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-momentum-y"));
+		   Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+										Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
 		}
 	      else
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-		      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-momentum-x"),
-										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-momentum-y"));
+		      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
 		    }
 		  else
 		    {
 		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
-													   Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-momentum-x"),
-													   Manager.GetInteger("y-momentum"),  Manager.GetInteger("max-momentum-y"));
+													   Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"),
+													   Manager.GetInteger("y-momentum"),  Manager.GetInteger("max-ymomentum"));
 		    }
 		}
 	    }

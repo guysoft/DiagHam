@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("boson") == true)
 		    {
  		      Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
- 									    i, NbrSitesX, j, NbrSitesY);
+									  i, NbrSitesX, j, NbrSitesY);
 // 		      Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
 
 		      double UPotential = Manager.GetDouble("u-potential");

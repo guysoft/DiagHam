@@ -123,7 +123,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian::ParticleOn
   this->PlotMapNearestNeighborBonds();
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = true;
+  this->HermitianSymmetryFlag = false;//true;
   
   this->EvaluateExponentialFactors();
   this->EvaluateInteractionFactors();
@@ -219,7 +219,6 @@ ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian::ParticleOn
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;
-  
   this->EvaluateExponentialFactors();
   this->EvaluateInteractionFactors();
     

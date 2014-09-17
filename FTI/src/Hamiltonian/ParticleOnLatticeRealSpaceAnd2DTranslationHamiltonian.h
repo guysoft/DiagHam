@@ -448,7 +448,7 @@ inline void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwo
 		      if (Index < Dim)
 			{
 			  indexArray[position] = Index;
-			  coefficientArray[position] = 0.0 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
 			  ++position;
 			}
 		      ++TmpInteractionFactor;

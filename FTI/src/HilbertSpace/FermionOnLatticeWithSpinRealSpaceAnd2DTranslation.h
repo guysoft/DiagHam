@@ -173,6 +173,30 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = index of the destination state 
   virtual int AddAu (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
+  // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  virtual double AuAu (int index, int n1, int n2);
+
+  // apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin down)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double AdAd (int index, int n1, int n2);
+
+  // apply a_n1_u a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double AuAd (int index, int n1, int n2);
+
   // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
   //
   // m1 = first index for creation operator (spin up)
@@ -253,7 +277,15 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = index of the destination state 
   virtual int AdsigmaAsigma (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
-  // apply a^+_m1_sigma a^+_m2_sigma operator to the state produced using AuAu method (without destroying it)
+  // apply a_n1_sigma a_n2_sigma operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdsigmaAdsigma call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // n2 = second index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  virtual double AsigmaAsigma (int index, int n1, int n2);
+
+  // apply a^+_m1_sigma a^+_m2_sigma operator to the state produced using AsigmaAsigma method (without destroying it)
   //
   // m1 = first index for creation operator
   // m2 = second index for creation operator
@@ -281,14 +313,6 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
   virtual unsigned long FindCanonicalForm(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
-
-  // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
-  //
-  // stateDescription = unsigned integer describing the state
-  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-  // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-  virtual unsigned long FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY);
 
   //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
   //
@@ -386,6 +410,42 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAu (int index, 
   return this->AdsigmaAsigma(index, (m << 1), (n << 1) + 1, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
+// apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin up)
+// return value =  multiplicative factor 
+
+inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AuAu (int index, int n1, int n2)
+{
+  return this->AsigmaAsigma(index, (n1 << 1) + 1, (n2 << 1) + 1);
+}
+
+// apply a_n1_d a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin down)
+// n2 = second index for annihilation operator (spin down)
+// return value =  multiplicative factor 
+
+inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AdAd (int index, int n1, int n2)
+{
+  return this->AsigmaAsigma(index, (n1 << 1), (n2 << 1));
+}
+
+// apply a_n1_u a_n2_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator (spin up)
+// n2 = second index for annihilation operator (spin down)
+// return value =  multiplicative factor 
+
+inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AuAd (int index, int n1, int n2)
+{
+  return this->AsigmaAsigma(index, (n1 << 1) + 1, (n2 << 1));
+}
+
 // apply a^+_m1_u a^+_m2_u operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator (spin up)
@@ -439,20 +499,17 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdd (int m1, in
 inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
-  this->FindCanonicalFormAndTestMomentumConstraint(state, nbrTranslationX, nbrTranslationY);
-  if (nbrTranslationX < 0)
-    {
-      coefficient = 0.0;
-      return this->HilbertSpaceDimension;
-    }
-  int TmpMaxMomentum = 2 * this->NbrSite;
+  state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY);
+  int TmpMaxMomentum = 2 * this->NbrSite + 1;
   while ((state >> TmpMaxMomentum) == 0x0ul)
     --TmpMaxMomentum;
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
   if (TmpIndex < this->HilbertSpaceDimension)
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
-      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationX * this->MaxYMomentum) + nbrTranslationY)) & 0x1ul))); 
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
+      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul))); 
     }
   return TmpIndex;
 }
@@ -472,70 +529,39 @@ inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCano
   unsigned long TmpStateDescription;  
   nbrTranslationX = 0;
   nbrTranslationY = 0;
-  for (int m = 0; (m < this->MaxYMomentum) && (stateDescription != 0x0ul) ; ++m)
+  TmpStateDescription = stateDescription;
+  for (int n = 1; n < this->MaxXMomentum; ++n)
     {
+      this->ApplySingleXTranslation(TmpStateDescription);      
+      if (TmpStateDescription < CanonicalState)
+	{
+	  CanonicalState = TmpStateDescription;
+	  nbrTranslationX = n;	      
+	  nbrTranslationY = 0;	      
+	}
+    }
+  for (int m = 1; m < this->MaxYMomentum; ++m)
+    {
+      this->ApplySingleYTranslation(stateDescription);      
+      if (stateDescription < CanonicalState)
+	{
+	  CanonicalState = stateDescription;
+	  nbrTranslationX = 0;	      
+	  nbrTranslationY = m;	      
+	}
       TmpStateDescription = stateDescription;
       for (int n = 1; n < this->MaxXMomentum; ++n)
 	{
-	  //	  cout << "m=" << m << " n=" << n << " " << hex << TmpStateDescription << " " << stateDescription << " " << stateDescriptionReference << dec << endl;
 	  this->ApplySingleXTranslation(TmpStateDescription);      
 	  if (TmpStateDescription < CanonicalState)
 	    {
 	      CanonicalState = TmpStateDescription;
 	      nbrTranslationX = n;	      
-	      nbrTranslationY = m;	      
-	    }
-	  if  (TmpStateDescription == stateDescription)
-	    n = this->MaxXMomentum;
-	}
-      this->ApplySingleYTranslation(stateDescription);      
-      if (stateDescription == stateDescriptionReference)
-	{
-	  m = this->MaxYMomentum;
-	}
-      else
-	{
-	  if (stateDescription < CanonicalState)
-	    {
-	      CanonicalState = stateDescription;
-	      nbrTranslationX = 0;	      
 	      nbrTranslationY = m;	      
 	    }
 	}
     }
   return CanonicalState;
-}
-
-// find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
-//
-// stateDescription = unsigned integer describing the state
-// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
-// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
-// return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint
-
-inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindCanonicalFormAndTestMomentumConstraint(unsigned long stateDescription, int& nbrTranslationX, int& nbrTranslationY)
-{
-  unsigned long CanonicalState = stateDescription;
-  unsigned long stateDescriptionReference = stateDescription;  
-  unsigned long TmpStateDescription;  
-  nbrTranslationX = 0;
-  nbrTranslationY = 0;
-  for (int m = 0; (m < this->MaxYMomentum) && (stateDescriptionReference != stateDescription) ; ++m)
-    {
-      TmpStateDescription = stateDescription;
-      for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription != stateDescription) ; ++n)
-	{
-	  if (TmpStateDescription < CanonicalState)
-	    {
-	      CanonicalState = TmpStateDescription;
-	      nbrTranslationX = n;	      
-	      nbrTranslationY = m;	      
-	    }
-	  this->ApplySingleXTranslation(TmpStateDescription);      
-	}
-      this->ApplySingleYTranslation(stateDescription);      
-    }
-  return CanonicalState;  
 }
 
 //  test if the state and its translated version can be used to create a state corresponding to the momentum constraint
@@ -564,7 +590,6 @@ inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConst
   for (int m = 1; m < YSize; ++m)
     {
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
-//      cout << hex << stateDescription << " " << TmpStateDescription2 << " " << dec << TmpSign <<endl;
       TmpSign2 = TmpSign;
       TmpStateDescription = TmpStateDescription2;
       TmpXSize = 0;
@@ -587,7 +612,6 @@ inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConst
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpSign2 = TmpSign;
     }
-//  cout << "YSize=" << YSize << " TmpSign2=" << TmpSign2 << " TmpXSize=" << TmpXSize << endl;
   if ((((this->YMomentum * YSize * this->MaxXMomentum)
 	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
 	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)

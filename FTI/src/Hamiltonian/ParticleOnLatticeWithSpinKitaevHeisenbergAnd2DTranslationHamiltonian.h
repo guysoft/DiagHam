@@ -2143,7 +2143,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
   
   if (this->HermitianSymmetryFlag == false)
     {
-      if (this->OneBodyGenericInteractionFactorsupup != 0) 
+      cout << "HELP" << endl;
+      if ((this->OneBodyGenericInteractionFactorsupup != 0) && (this->OneBodyGenericInteractionFactorsdowndown != 0))
 	{
 	  for (int i = firstComponent; i < lastComponent; ++i)
 	    {
@@ -2160,28 +2161,61 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			      ++memory;
 			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
 			    }
-			}
-		    }
-		}
-	    }
-	}
-      
-      if (this->OneBodyGenericInteractionFactorsdowndown != 0) 
-	{
-	  for (int i = firstComponent; i < lastComponent; ++i)
-	    {
-	      for (int j=0; j< this->NbrSite; ++j)
-		{
-		  for (int k = 0; k < 3; ++k)
-		    {
-		      int j2 = this->MapNearestNeighborBonds[j][k];
-		      if (j2 < this->NbrSite)
-			{
 			  Index = particles->AddAd(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index < Dim)
 			    {
 			      ++memory;
 			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if (this->OneBodyGenericInteractionFactorsupup != 0)
+	    {
+	      for (int i = firstComponent; i < lastComponent; ++i)
+		{
+		  for (int j=0; j< this->NbrSite; ++j)
+		    {
+		      for (int k = 0; k < 3; ++k)
+			{
+			  int j2 = this->MapNearestNeighborBonds[j][k];
+			  if (j2 < this->NbrSite)
+			    {
+			      Index = particles->AduAu(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
+			      if (Index < Dim)
+				{
+				  ++memory;
+				  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (this->OneBodyGenericInteractionFactorsdowndown != 0) 
+		{
+		  for (int i = firstComponent; i < lastComponent; ++i)
+		    {
+		      for (int j=0; j< this->NbrSite; ++j)
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AddAd(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
+				  if (Index < Dim)
+				    {
+				      ++memory;
+				      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+				    }
+				}
 			    }
 			}
 		    }

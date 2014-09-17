@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the x direction", 4);
   (*SystemGroup) += new BooleanOption  ('\n', "2dperiodic-boundaries", "use periodic boundary conditions in the x and y directions");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "y-momentum", "set the momentum along the y direction (negative if all momentum sectors have to be evaluated)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "y-periodicity", "periodicity in the number of site index that implements the periodic boundary condition in the y direction", 2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "max-ymomentum", "periodicity in the number of site index that implements the periodic boundary condition in the y direction", 2);
 
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by .#.vec");
@@ -200,10 +200,10 @@ int main(int argc, char** argv)
 	    {
 	      if (GutzwillerFlag == false)
 		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_xymomentum_%d_%d", (int) Manager.GetInteger("x-periodicity"), 
-			 (int) Manager.GetInteger("y-periodicity"));
+			 (int) Manager.GetInteger("max-ymomentum"));
 	      else
 		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_xymomentum_%d_%d", (int) Manager.GetInteger("x-periodicity"),
-			 (int) Manager.GetInteger("y-periodicity"));
+			 (int) Manager.GetInteger("max-ymomentum"));
 	    }
 	}
       else
@@ -395,6 +395,7 @@ int main(int argc, char** argv)
 	  delete[] EigenstateOutputFile;
 	  delete[] ContentPrefix;
 	}
+      return 0;
     }
   if (Manager.GetBoolean("xperiodic-boundary") == true)
     {
@@ -508,7 +509,7 @@ int main(int argc, char** argv)
       for (int XMomentum = MinXMomentum; XMomentum <= MaxXMomentum; ++XMomentum)
 	{
 	  int MinYMomentum = 0;
-	  int MaxYMomentum = Manager.GetInteger("y-periodicity") - 1;
+	  int MaxYMomentum = Manager.GetInteger("max-ymomentum") - 1;
 	  if (Manager.GetInteger("y-momentum") >= 0)
 	    {
 	      MaxYMomentum = Manager.GetInteger("y-momentum");
@@ -537,11 +538,11 @@ int main(int argc, char** argv)
 		  if (SzSymmetryFlag == false)
 		    {
 		      if (GutzwillerFlag == false)
-			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"),
-										       YMomentum, Manager.GetInteger("y-momentum"));
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, NbrSites / Manager.GetInteger("x-periodicity"),
+										       YMomentum, Manager.GetInteger("max-ymomentum"));
 		      else
-			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("x-periodicity"),
-													      YMomentum, Manager.GetInteger("y-momentum"));
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, NbrSites / Manager.GetInteger("x-periodicity"),
+													      YMomentum, Manager.GetInteger("max-ymomentum"));
 		    }
 		  else
 		    {
@@ -561,7 +562,7 @@ int main(int argc, char** argv)
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 		  
 		  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, (NbrSites / XPeriodicity),
-													 YMomentum, Manager.GetInteger("y-periodicity"),
+													 YMomentum, Manager.GetInteger("max-ymomentum"),
 													 Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
 													 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
 													 Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
