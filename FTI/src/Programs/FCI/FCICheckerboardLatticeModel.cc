@@ -94,6 +94,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
+  (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenstate-file", "filename for eigenstates output; to be appended by _kx_#_ky_#.#.vec");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
@@ -265,10 +266,10 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   Abstract2DTightBindingModel* TightBindingModel;
+
   if (Manager.GetString("import-onebody") == 0)
     {
-      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"),
-								    Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModel->WriteBandStructure(BandStructureOutputFile);
@@ -276,9 +277,9 @@ int main(int argc, char** argv)
   else
     {
       TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
-    }      
-//   TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 
-// 								Architecture.GetArchitecture());
+    }
+      
+//   TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),  								Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -321,9 +322,11 @@ int main(int argc, char** argv)
 		  RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
 		  if (Manager.GetBoolean("boson") == true)
 		    {
- 		      Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+			if(Manager.GetBoolean("no-translation") == true)
+		 		     Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			else
+ 		     		    Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
 									  i, NbrSitesX, j, NbrSitesY);
-// 		      Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
 
 		      double UPotential = Manager.GetDouble("u-potential");
 		      double VPotential = Manager.GetDouble("v-potential");
