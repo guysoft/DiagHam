@@ -134,4 +134,5 @@ ParticleOnLatticeWithSU3SpinChernInsulatorHamiltonian.cc \
 AbstractQHEOnTorusWithSU3SpinAndMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusWithSU3SpinAndMagneticTranslationsGenericHamiltonian.cc \
 ParticleOnCylinderInterlayerPfaffian.cc \
-ParticleOnCylinderPermanentTimes221State.cc
+ParticleOnCylinderPermanentTimes221State.cc \
+ParticleOnCylinderOneQuarterPfaffian.cc

@@ -346,42 +346,37 @@ void ParticleOnCylinderHaffnianHamiltonian::EvaluateInteractionFactors()
 
 Complex ParticleOnCylinderHaffnianHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int m5, int m6)
 {
-/*
-  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+  double Length = sqrt(2.0 * M_PI * this->NbrLzValue * this->Ratio);
   double kappa = 2.0 * M_PI/Length;
   double Xr = kappa * (2.0 * m1 - m2 - m3)/3.0;
   double Xs = kappa * (2.0 * m2 - m1 - m3)/3.0;
   double Xrp = kappa * (2.0 * m4 - m6 - m5)/3.0;
   double Xsp = kappa * (2.0 * m5 - m4 - m6)/3.0;
-  double GaussianExp;
+  double GaussianExp1, GaussianExp2, A, Ap, Y, Yp;
 
   Complex Coefficient(0,0);
 
+  GaussianExp1 = Xr * Xr + Xs * Xs + Xr * Xs;
+  GaussianExp2 = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
+
+  A = (Xr - Xs) * (Xr + 2.0 * Xs) * ( Xs + 2.0 * Xr);  
+  Ap = (Xrp - Xsp) * (Xrp + 2.0 * Xsp) * ( Xsp + 2.0 * Xrp);  
+
+  Y = -27.0 * Xr * Xs * (Xr + Xs);
+  Yp = -27.0 * Xrp * Xsp * (Xrp + Xsp);  
+
   if (this->ElectricField == 0)
    {
-     GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs;
-     Coefficient.Re = exp(-GaussianExp) * (Xr - Xs) * (2.0 * Xr + Xs) * (2.0 * Xs + Xr);
-     Coefficient.Im = 0.0;
-
-     GaussianExp = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
-     Coefficient.Re *= (exp(-GaussianExp) * (Xrp - Xsp) * (2.0 * Xrp + Xsp) * (2.0 * Xsp + Xrp));
-     Coefficient.Im = 0.0;
-     return (Coefficient * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
+  Coefficient.Re = (A * Ap + 2.0 * A * (2.0 - GaussianExp1) * Ap * (2.0 - GaussianExp2) + 3.0 * (9.0/5.0) * A * Ap * Y * Yp/729.0) * exp(- GaussianExp1 - GaussianExp2);
    }
   else
    {
-     
-     //double alpha = sqrt(1.0 + this->ElectricField);
-     //Coefficient.Re = exp(-pow(Xm1-Xm3,2.0)/(2.0*pow(alpha,3.0))-pow(Xm1-Xm4,2.0)/(2.0 * pow(alpha,3.0))) * (pow(Xm1-Xm3,2.0)-alpha*alpha*pow(Xm1-Xm4,2.0)+alpha*alpha-alpha*alpha*alpha);
-     //Coefficient.Im = 0.0;
-     //return (Coefficient/sqrt(this->Ratio * this->NbrLzValue * alpha * alpha * alpha));
-     
-     cout<<"Not implemented for electric fields!" << endl;
-     exit(1);
+      cout << "Electric field not implemented."<<endl;
+      exit(1);
    }
-*/
-   cout<<"Fermions unsupported"<<endl;
-   exit(1);
+
+  Coefficient.Im = 0.0;
+  return (Coefficient * this->ThreeBodyCoupling * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
 }
 
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term for bosons
@@ -411,14 +406,7 @@ Complex ParticleOnCylinderHaffnianHamiltonian::EvaluateInteractionCoefficientBos
      GaussianExp1 = Xr * Xr + Xs * Xs + Xr * Xs;
      GaussianExp2 = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
 
-     int rtimes3= 2.0*m1-m2-m3;
-     int stimes3= 2.0*m2-m1-m3;
-     int rptimes3= 2.0*m4-m5-m6;
-     int sptimes3= 2.0*m5-m4-m6;
-     if ((rtimes3*rtimes3+stimes3*stimes3+rtimes3*stimes3+rptimes3*rptimes3+sptimes3*sptimes3+rptimes3*sptimes3) <= 5400000)
-        Coefficient.Re = (3.0 + 2.0 * (1.0 - 2.0 * GaussianExp1 - 2.0 * GaussianExp2 + 4.0 * GaussianExp1 * GaussianExp2) + 18.0 * Xr * Xs * (Xr+ Xs) * Xrp * Xsp * (Xrp + Xsp)) * exp(- GaussianExp1 - GaussianExp2);    
-     else
-        Coefficient.Re = 0.0;
+     Coefficient.Re = (3.0 + 2.0 * (1.0 - 2.0 * GaussianExp1 - 2.0 * GaussianExp2 + 4.0 * GaussianExp1 * GaussianExp2) + 18.0 * Xr * Xs * (Xr+ Xs) * Xrp * Xsp * (Xrp + Xsp)) * exp(- GaussianExp1 - GaussianExp2);    
      Coefficient.Im = 0.0;
      return (Coefficient * this->ThreeBodyCoupling * (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
    }
