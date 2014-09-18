@@ -521,6 +521,7 @@ double BosonOnSphereShort::AdA (long index, int m)
 int BosonOnSphereShort::AdA (int index, int m, int n, double& coefficient)
 {
   this->FermionToBoson(this->FermionBasis->StateDescription[index], this->FermionBasis->StateLzMax[index], this->TemporaryState, this->TemporaryStateLzMax);
+
   if ((this->TemporaryStateLzMax < n)  || (this->TemporaryState[n] == 0))
     { 
       coefficient = 0.0;
@@ -530,7 +531,7 @@ int BosonOnSphereShort::AdA (int index, int m, int n, double& coefficient)
   --this->TemporaryState[n];
   if ((this->TemporaryStateLzMax == n) && (this->TemporaryState[n] == 0))
     {
-      while (this->TemporaryState[this->TemporaryStateLzMax] == 0)
+      while ((this->TemporaryState[this->TemporaryStateLzMax] == 0)&&( this->TemporaryStateLzMax > 0 ))
 	--this->TemporaryStateLzMax;
     }
   if (this->TemporaryStateLzMax < m) 

@@ -94,8 +94,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
 // maxYMomentum = maximum momentum in the y direction 
 // memory = amount of memory granted for precalculations
 
-BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int  maxXMomentum,
-										      int yMomentum, int maxYMomentum, unsigned long memory)
+BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation (int nbrBosons, int nbrSite, int xMomentum, int  maxXMomentum,  int yMomentum, int maxYMomentum, unsigned long memory)
 {  
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -187,6 +186,8 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
 #endif
 	}
     }
+ this->SignLookUpTable = 0;
+ this->NbrParticleLookUpTable = 0;
 }
 
 // copy constructor (without duplicating datas)
@@ -425,3 +426,81 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdAd (int m1, i
   TmpState |= (0x1ul << m1);
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
+
+
+void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GetCompositeFermionWavefunction(ComplexVector & trialState, ComplexMatrix & jastrowEigenVecs,ComplexMatrix & cFEigenVecs)
+{
+
+  Complex ** ExponentialFactors = new Complex*[this->MaxXMomentum];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    { 
+      ExponentialFactors[i] = new Complex[this->MaxYMomentum];
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	{ 
+	  ExponentialFactors[i][j] = Phase(2.0 * M_PI * ((this->XMomentum * ((double) i) / ((double) this->MaxXMomentum))
+							       + (this->YMomentum * ((double) j) / ((double) this->MaxYMomentum))));
+	}
+    }
+
+#ifdef __LAPACK__
+  ComplexLapackDeterminant SlaterCF(NbrBosons);
+  ComplexLapackDeterminant SlaterJastrow(NbrBosons);
+#else
+  ComplexMatrix SlaterCF(NbrBosons, NbrBosons);
+  ComplexMatrix SlaterJastrow(NbrBosons, NbrBosons);
+#endif
+
+ int NbrTranslation;
+ unsigned long * TemporaryState = new unsigned long [this->NbrBosons];
+ 
+ for(int i = 0; i < this->HilbertSpaceDimension ; i++)
+ {
+
+ NbrTranslation = 0;
+ unsigned long  TmpStateDescription  = this->StateDescription[i];
+ unsigned long  TmpStateDescription2  = this->StateDescription[i];
+ for (int m = 0; (m < this->MaxYMomentum) && (TmpStateDescription !=  this->StateDescription[i]) ; ++m)
+    {
+      TmpStateDescription2 = TmpStateDescription;
+      for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription2 != TmpStateDescription) ; ++n)
+	{
+          int  TmpMaxMomentum = this->NbrSite;
+          while ((( TmpStateDescription2 >> TmpMaxMomentum) & 0x1ul) == 0x0ul)
+	       --TmpMaxMomentum;
+          this->ConvertToMonomial(TmpStateDescription2,TemporaryState);
+
+  for (int p = 0; p < NbrBosons; ++p)
+  {
+
+   for (int q = 0; q < NbrBosons; ++q)
+	{
+		  // need to consider proper ordering of matrix elements
+		  // in Hilbert-space, largest quantum number q corresponds to position 0!
+		  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][TemporaryState[q]]);
+ 		  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][TemporaryState[q]]);
+	}	      
+       }
+        trialState[i] +=  ExponentialFactors[n][m] * SlaterCF.Determinant() * SlaterJastrow.Determinant();
+        ++NbrTranslation;
+        this->ApplySingleXTranslation(TmpStateDescription2);      
+	}
+      this->ApplySingleYTranslation(TmpStateDescription);      
+    }
+
+   
+  trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
+  if(NbrTranslation != this->NbrStateInOrbit[i])
+   {
+	cout <<"Wrong Number of Translation for state !"  << i <<endl;
+  }
+
+}
+   for (int i = 0; i < this->MaxXMomentum; ++i)
+    { 
+      delete [] ExponentialFactors[i];
+    }
+   delete []  ExponentialFactors;
+}
+
+
+

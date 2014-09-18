@@ -145,7 +145,10 @@ int main(int argc, char** argv)
 	}
       else
 	{
+         if ( Manager.GetBoolean("no-translation") == false)
 	  sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	else
+	  sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	}
     }
   else
@@ -265,6 +268,12 @@ int main(int argc, char** argv)
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
+  if(Manager.GetBoolean("no-translation") == true)
+{  
+ MaxKx = 0;
+ MaxKy = 0;
+ }
+
   Abstract2DTightBindingModel* TightBindingModel;
 
   if (Manager.GetString("import-onebody") == 0)
@@ -280,7 +289,7 @@ int main(int argc, char** argv)
     }
       
 //   TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),  								Architecture.GetArchitecture());
-  bool FirstRunFlag = true;
+    bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
       for (int j = MinKy; j <= MaxKy; ++j)

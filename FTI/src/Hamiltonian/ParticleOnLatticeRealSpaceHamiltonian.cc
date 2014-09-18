@@ -143,6 +143,9 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateOneBodyFactorsFromTightBingd
   this->OneBodyGenericConnectedSites = new int* [this->NbrSites];
   this->OneBodyGenericInteractionFactors = new Complex* [this->NbrSites];
   Complex Tmp;
+  double Sign = 1.0;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    Sign = -1.0;
   for (int i = 0; i < this->NbrSites; ++i)
     {
       this->OneBodyGenericNbrConnectedSites[i] = 0;
@@ -163,7 +166,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateOneBodyFactorsFromTightBingd
 	      if ((Tmp.Re != 0.0) || (Tmp.Im != 0.0))
 		{
 		  this->OneBodyGenericConnectedSites[i][this->OneBodyGenericNbrConnectedSites[i]] = j;
-		  this->OneBodyGenericInteractionFactors[i][this->OneBodyGenericNbrConnectedSites[i]] = -Tmp;
+		  this->OneBodyGenericInteractionFactors[i][this->OneBodyGenericNbrConnectedSites[i]] = Sign*Tmp;
 		  ++this->OneBodyGenericNbrConnectedSites[i];
 		}
 	    }
@@ -204,9 +207,6 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensit
       this->InteractionFactors[i] = new Complex [1];
     }
   this->NbrSectorSums = 0;
-  double Sign = 1.0;
-  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-    Sign = -1.0;
 
   for (int i = 0; i < densityDensity.GetNbrRow(); ++i)
     {
@@ -218,7 +218,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensit
 	    {
 	      this->SectorIndicesPerSum[this->NbrSectorSums][0] = i;
 	      this->SectorIndicesPerSum[this->NbrSectorSums][1] = j;
-	      this->InteractionFactors[this->NbrSectorSums][0] = Sign * Tmp;
+	      this->InteractionFactors[this->NbrSectorSums][0] =  Tmp;
 	      ++this->NbrSectorSums;
 	    }
 	}

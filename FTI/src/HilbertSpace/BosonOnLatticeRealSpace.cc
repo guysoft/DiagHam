@@ -86,8 +86,8 @@ BosonOnLatticeRealSpace::BosonOnLatticeRealSpace (int nbrBosons, int nbrSite, un
   this->IncNbrBosons = this->NbrBosons + 1;
   this->TotalLz = 0;
   this->NbrSite = nbrSite;
-  this->LzMax = this->NbrSite -1;
-  this->NbrLzValue = this->LzMax;
+  this->LzMax = this->NbrSite - 1;
+  this->NbrLzValue = this->LzMax + 1;
   this->FermionBasis = new FermionOnLatticeRealSpace (this->NbrBosons, this->NbrSite+this->NbrBosons - 1);
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons);
   this->TemporaryState = new unsigned long [this->NbrLzValue];
@@ -141,8 +141,6 @@ BosonOnLatticeRealSpace::~BosonOnLatticeRealSpace ()
   if(this->FermionBasis != 0 )
     delete this->FermionBasis;
   this->FermionBasis = 0;
-  delete [] this->TemporaryState;
-  delete [] this->ProdATemporaryState;
 }
 
 // assignement (without duplicating datas)
