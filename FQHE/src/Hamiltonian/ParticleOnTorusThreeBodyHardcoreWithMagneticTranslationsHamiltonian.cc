@@ -277,6 +277,7 @@ void ParticleOnTorusThreeBodyHardcoreWithMagneticTranslationsHamiltonian::Evalua
 			}
 		    }
 		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;
+		  
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}

@@ -102,10 +102,44 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
 	
   // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term
   //
-  // mIndices = array that contains the creation indices
-  // nIndices = array that contains the annihilation indices
+  // creationCoefficients = array that contains the creation coefficients
+  // annihilationCoefficients = array that contains the annihilation coefficients
+  // nbrPermutations1 = number of permutations of the creation indexes
+  // nbrPermutations2 = number of permutations of the annihilation indexes
   // return value = numerical coefficient  
-  virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices);
+  virtual double EvaluateInteractionCoefficient(double** creationCoefficients, double** annihilationCoefficients, int nbrPermutations1, int nbrPermutations2);
+  
+  // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation operators only) for each integer modulo the NBodyValue
+  //
+  // mIndices = array that contains the creation indices
+  // momentumTransfer = momentum transfer operated by the \prod_i a+_mi \prod_j a_nj operator, in units of the number of flux quanta
+  // return value = array of numerical coefficients 
+  double* EvaluateInteractionCoefficientCreation(int* mIndices, int momentumTransfer);
+  
+  
+  // evaluate the two nested Gaussian sum for a three body interaction
+  //
+  // momFactor = array of indices that contains the information of the creation (or annihilation) indices
+  // TmpIndices = array of indices that gives the initial indices that will be incremented in the sum
+  // return value = value of the sum
+  double EvaluateGaussianSum(int* momFactor, int* TmpIndices);
+  
+  
+  // evaluate the N nested infinite sums of EvaluateInteractionCoefficientCreation
+  //
+  // nBodyValue = current index being incremented 
+  //TmpIndices = array containing the current value of all indices
+  // Sum = current value of the sum
+  // countIter = array of integers giving, for each TmpIndices[i], the number of times it has been incremented
+  // momFactor = array of indices that contains the information of the creation (or annihilation) indices
+  //return value = value of the coefficient
+  double EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor);
+  
+  // Evaluate the number of permutations of a set of indices
+  //
+  // mIndices = array that contains the creation indices
+  //return value = number of permutations
+  int EvaluateNumberOfPermutations(int* mIndices);
   
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //

@@ -452,6 +452,7 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 		  this->InteractionFactorsupupdowndown[i][Index] = 0.0;
 		}	      	      
 // 	      cout << Index1 << " " << Index2 << " " << Index3 << " " << Index4 << " t=" << this->FindBondType(Index1, Index2)
+// 	      << endl;
 // 		   << " : uuuu=" << this->InteractionFactorsupupupup[i][Index]
 // 		   << " dddd=" << this->InteractionFactorsdowndowndowndown[i][Index]
 // 		   << " uudd=" << this->InteractionFactorsupupdowndown[i][Index]
