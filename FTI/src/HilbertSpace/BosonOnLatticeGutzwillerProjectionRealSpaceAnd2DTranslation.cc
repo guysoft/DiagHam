@@ -113,11 +113,6 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->StateXShift = this->NbrSite / this->MaxXMomentum;
   this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
-//   cout << "this->MaxXMomentum=" << this->MaxXMomentum << endl;
-//   cout << "this->XMomentum=" << this->XMomentum << endl;
-//   cout << "this->StateXShift=" << this->StateXShift << endl;
-//   cout << "this->ComplementaryStateXShift=" << this->ComplementaryStateXShift << endl;
-//   cout << "this->XMomentumMask=" << hex << this->XMomentumMask << dec << endl;
 
   this->MaxYMomentum = maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
@@ -127,13 +122,12 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
-//   cout << "this->MaxYMomentum=" << this->MaxYMomentum << endl;
-//   cout << "this->NbrYMomentumBlocks=" << this->NbrYMomentumBlocks << endl;
-//   cout << "this->StateYShift=" << this->StateYShift << endl;
-//   cout << "this->YMomentumBlockSize=" << this->YMomentumBlockSize << endl;
-//   cout << "this->ComplementaryStateYShift=" << this->ComplementaryStateYShift << endl;
-//   cout << "this->YMomentumMask=" << hex << this->YMomentumMask << dec << endl;
-//   cout << "this->YMomentumBlockMask=" << hex << this->YMomentumBlockMask << dec << endl;
+  this->YMomentumFullMask = 0x0ul;
+  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+    {
+      this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
+    }
+  this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 	
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons);
   cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
@@ -192,7 +186,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
 
 // copy constructor (without duplicating datas)
 //
-// fermions = reference on the hilbert space to copy to copy
+// bosons = reference on the hilbert space to copy to copy
 
 BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation(const BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& bosons)
 {
@@ -213,6 +207,8 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::BosonOnLatticeGutzw
   this->ComplementaryStateYShift = bosons.ComplementaryStateYShift;
   this->YMomentumMask = bosons.YMomentumMask;
   this->YMomentumBlockMask = bosons.YMomentumBlockMask;  
+  this->ComplementaryStateShift = bosons.ComplementaryStateShift;
+  this->MomentumMask = bosons.MomentumMask;
 
   this->MaxMomentum = bosons.MaxMomentum;
   this->NbrMomentum = bosons.NbrMomentum;
@@ -250,7 +246,7 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::~BosonOnLatticeGutz
 
 // assignement (without duplicating datas)
 //
-// fermions = reference on the hilbert space to copy to copy
+// bosons = reference on the hilbert space to copy to copy
 // return value = reference on current hilbert space
 
 BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::operator = (const BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& bosons)
@@ -289,6 +285,8 @@ BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& BosonOnLatticeGutzw
   this->ComplementaryStateYShift = bosons.ComplementaryStateYShift;
   this->YMomentumMask = bosons.YMomentumMask;
   this->YMomentumBlockMask = bosons.YMomentumBlockMask;  
+  this->ComplementaryStateShift = bosons.ComplementaryStateShift;
+  this->MomentumMask = bosons.MomentumMask;
 
   this->MaxMomentum = bosons.MaxMomentum;
   this->NbrMomentum = bosons.NbrMomentum;

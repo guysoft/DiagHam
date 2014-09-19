@@ -69,7 +69,7 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   int StateYShift;
   // binary mask for the StateYShift first bits 
   unsigned long YMomentumMask;
-  // binary mask for the StateYShift first bits 
+  // binary mask for the StateYShift first bits of each group
   unsigned long YMomentumFullMask;
   // binary mask for the ~YMomentumFullMask
   unsigned long ComplementaryYMomentumFullMask;

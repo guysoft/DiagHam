@@ -60,7 +60,7 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
 
   // basic constructor
   // 
-  // nbrBosons = number of fermions
+  // nbrBosons = number of bosons
   // nbrSite = number of sites
   // xMomentum = momentum sector in the x direction
   // maxXMomentum = maximum momentum in the x direction
@@ -81,9 +81,9 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
 
   // assignement (without duplicating datas)
   //
-  // fermions = reference on the hilbert space to copy to copy
+  // bosons = reference on the hilbert space to copy to copy
   // return value = reference on current hilbert space
-  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& operator = (const BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& fermions);
+  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& operator = (const BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation& bosons);
 
   // clone Hilbert space (without duplicating datas)
   //
@@ -253,9 +253,8 @@ inline bool BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::TestMom
 	}
     } 
     
-//  cout << "YSize=" << YSize << " TmpXSize=" << TmpXSize << endl;
   if ((((this->YMomentum * YSize * this->MaxXMomentum)
-	- (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	+ (this->XMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   return true;
 }

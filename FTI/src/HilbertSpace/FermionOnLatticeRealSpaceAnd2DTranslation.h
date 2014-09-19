@@ -64,6 +64,10 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   int StateYShift;
   // binary mask for the StateYShift first bits 
   unsigned long YMomentumMask;
+  // binary mask for the StateYShift first bits of each group
+  unsigned long YMomentumFullMask;
+  // binary mask for the ~YMomentumFullMask
+  unsigned long ComplementaryYMomentumFullMask;
   // bit shift to apply to move the first StateYShift bits at the end of a state description
   int ComplementaryStateYShift;
   // number of bits that are related by a translation along the y direction 
@@ -409,13 +413,8 @@ inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleXTranslation(u
 
 inline void FermionOnLatticeRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
 {
-  unsigned long TmpState = 0x0ul;
-  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
-    {
-      TmpState |= (((stateDescription & this->YMomentumBlockMask) >> this->StateYShift) | ((stateDescription & this->YMomentumMask) << this->ComplementaryStateYShift)) << (this->YMomentumBlockSize * i);
-      stateDescription >>= this->YMomentumBlockSize;
-    }
-  stateDescription = TmpState;
+  stateDescription = (((stateDescription & this->ComplementaryYMomentumFullMask) >> this->StateYShift) | 
+		      ((stateDescription & this->YMomentumFullMask) << this->ComplementaryStateYShift));
 }
 
 // get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
