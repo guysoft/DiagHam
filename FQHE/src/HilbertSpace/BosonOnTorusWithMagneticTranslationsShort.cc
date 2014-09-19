@@ -469,9 +469,6 @@ ostream& BosonOnTorusWithMagneticTranslationsShort::PrintStateMonomial (ostream&
 int BosonOnTorusWithMagneticTranslationsShort::FindStateIndex(unsigned long stateDescription, int lzmax)
 {
   long PosMax = stateDescription >> this->LookUpTableShift[lzmax];
-  cout <<PosMax<< "  " << endl;
-  cout <<lzmax <<" "<<endl;
-  cout <<this->LookUpTable[lzmax][PosMax]<<endl;
   long PosMin = this->LookUpTable[lzmax][PosMax];
   PosMax = this->LookUpTable[lzmax][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
@@ -619,9 +616,7 @@ void BosonOnTorusWithMagneticTranslationsShort::GenerateLookUpTable(int memory)
     }
   if (this->MaximumLookUpShift > TmpNbrKyValue)
     this->MaximumLookUpShift = TmpNbrKyValue;
-  cout << "TmpNbrKyValue = "<< TmpNbrKyValue<<endl;
   this->LookUpTableMemorySize = 1 << this->MaximumLookUpShift;
-  cout <<"this->LookUpTableMemorySize =" << this->LookUpTableMemorySize<<endl;
   // construct  look-up tables for searching states
   this->LookUpTable = new int* [TmpNbrKyValue];
   this->LookUpTableShift = new int [TmpNbrKyValue];
