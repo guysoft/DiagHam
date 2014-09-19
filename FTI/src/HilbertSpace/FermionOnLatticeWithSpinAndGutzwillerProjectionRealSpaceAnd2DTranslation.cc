@@ -134,6 +134,12 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->ComplementaryStateYShift = this->YMomentumBlockSize - this->StateYShift;
   this->YMomentumMask = (0x1ul << this->StateYShift) - 0x1ul;
   this->YMomentumBlockMask = (0x1ul << this->YMomentumBlockSize) - 0x1ul;  
+  this->YMomentumFullMask = 0x0ul;
+  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
+    {
+      this->YMomentumFullMask |= this->YMomentumMask << (i *  this->YMomentumBlockSize);
+    }
+  this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
 
   this->MaximumSignLookUp = 16;
@@ -207,6 +213,8 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
   this->YMomentumMask = fermions.YMomentumMask;
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+  this->YMomentumFullMask = fermions.YMomentumFullMask;
+  this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
@@ -294,6 +302,8 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation& Fermio
   this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
   this->YMomentumMask = fermions.YMomentumMask;
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+  this->YMomentumFullMask = fermions.YMomentumFullMask;
+  this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;

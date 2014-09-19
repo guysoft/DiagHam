@@ -69,6 +69,10 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   int StateYShift;
   // binary mask for the StateYShift first bits 
   unsigned long YMomentumMask;
+  // binary mask for the StateYShift first bits 
+  unsigned long YMomentumFullMask;
+  // binary mask for the ~YMomentumFullMask
+  unsigned long ComplementaryYMomentumFullMask;
   // bit shift to apply to move the first StateYShift bits at the end of a state description
   int ComplementaryStateYShift;
   // number of bits that are related by a translation along the y direction 
@@ -229,11 +233,6 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
-
-  // perform sanity check on the current Hilbert space
-  //
-  // return value = tryue if no error occured
-  bool CheckHilbertSpace();
 
  protected:
 
@@ -670,13 +669,8 @@ inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleXTrans
 
 inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ApplySingleYTranslation(unsigned long& stateDescription)
 {
-  unsigned long TmpState = 0x0ul;
-  for (int i = 0; i < this->NbrYMomentumBlocks; ++i)
-    {
-      TmpState |= (((stateDescription & this->YMomentumBlockMask) >> this->StateYShift) | ((stateDescription & this->YMomentumMask) << this->ComplementaryStateYShift)) << (this->YMomentumBlockSize * i);
-      stateDescription >>= this->YMomentumBlockSize;
-    }
-  stateDescription = TmpState;
+  stateDescription = (((stateDescription & this->ComplementaryYMomentumFullMask) >> this->StateYShift) | 
+		      ((stateDescription & this->YMomentumFullMask) << this->ComplementaryStateYShift));
 }
 
 // get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
