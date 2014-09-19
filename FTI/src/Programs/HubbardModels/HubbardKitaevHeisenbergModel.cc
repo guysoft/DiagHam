@@ -99,6 +99,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*ToolsGroup) += new BooleanOption  ('\n', "friendlyshow-hamiltonian", "show matrix representation of the hamiltonian, displaying only non-zero matrix elements");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
+  (*ToolsGroup) += new SingleDoubleOption ('\n', "testhermitian-error", "error threshold when testing hermiticy (0 for machine accuracy)", 0.0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -537,6 +538,7 @@ int main(int argc, char** argv)
 		  AbstractHamiltonian* Hamiltonian = 0;
 		  if (SzSymmetryFlag == false)
 		    {
+		      cout << "Kx = " << XMomentum << "  Ky = " << YMomentum << endl;
 		      if (GutzwillerFlag == false)
 			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("max-xmomentum"),
 										       YMomentum, Manager.GetInteger("max-ymomentum"));

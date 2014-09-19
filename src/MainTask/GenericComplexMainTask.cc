@@ -256,6 +256,11 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
       Complex Tmp2;
       cout << "check hermiticity" << endl;
       double AverageNorm = 0.0;
+      double Error = MACHINE_PRECISION;
+      if (((*options)["testhermitian-error"] != 0) && (options->GetDouble("testhermitian-error") != 0.0))
+	{
+	  Error = options->GetDouble("testhermitian-error");
+	}
       for (int i = 0; i < this->Hamiltonian->GetHilbertSpaceDimension(); ++i)
 	for (int j = i; j < this->Hamiltonian->GetHilbertSpaceDimension(); ++j)
 	  {
@@ -268,9 +273,9 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
 	  {
 	    HRep.GetMatrixElement(i, j, Tmp1);
 	    HRep.GetMatrixElement(j, i, Tmp2);
-	    if (Norm(Tmp1 - Conj(Tmp2)) > (MACHINE_PRECISION * AverageNorm))
+	    if (Norm(Tmp1 - Conj(Tmp2)) > (Error * AverageNorm))
 	      {
-		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (MACHINE_PRECISION * AverageNorm) << ")" << endl;
+		cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (Error * AverageNorm) << ")" << endl;
 	      }
 	  }
       cout << "check done" << endl;

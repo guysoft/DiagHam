@@ -230,6 +230,11 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
 
+  // perform sanity check on the current Hilbert space
+  //
+  // return value = tryue if no error occured
+  bool CheckHilbertSpace();
+
  protected:
 
   // find state index
@@ -609,9 +614,9 @@ inline bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::TestMomentumConst
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpSign2 = TmpSign;
     }
-  if ((((this->YMomentum * YSize * this->MaxXMomentum)
-	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
-	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+  if ((((2 * this->YMomentum * YSize * this->MaxXMomentum)
+	+ (2 * this->XMomentum * TmpXSize * this->MaxYMomentum)
+	+ (((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   return true;
 }

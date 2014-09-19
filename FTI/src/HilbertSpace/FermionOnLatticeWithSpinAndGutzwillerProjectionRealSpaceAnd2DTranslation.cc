@@ -153,6 +153,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
       if (this->LargeHilbertSpaceDimension > 0l)
 	{
 	  this->GenerateLookUpTable(memory);	  
+//	  this->CheckHilbertSpace();
 #ifdef __DEBUG__
 	  long UsedMemory = 0;
 	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));

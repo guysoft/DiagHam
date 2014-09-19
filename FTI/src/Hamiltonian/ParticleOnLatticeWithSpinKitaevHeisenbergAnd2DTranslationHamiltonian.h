@@ -1815,9 +1815,6 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 	      }
 	  }
       }	
-//   for (int i = firstComponent; i < lastComponent; i += step)
-//      cout << vDestinations[i] << " ";
-//   cout << endl;
   for (int p = 0; p < nbrVectors; ++p)
     {
       ComplexVector& TmpSourceVector = vSources[p];
@@ -1825,8 +1822,6 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
       for (int i = firstComponent; i < lastComponent; i += step)
 	TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
     }
-//   for (int i = firstComponent; i < lastComponent; i += step)
-//      cout << vDestinations[i] << " ";
   if (this->OneBodyGenericInteractionFactorsupdown != 0)
     {
       for (int i = firstComponent; i < lastComponent; i += step)

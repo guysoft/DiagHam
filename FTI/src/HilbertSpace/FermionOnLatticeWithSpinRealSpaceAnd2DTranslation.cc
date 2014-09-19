@@ -372,6 +372,7 @@ ostream& FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::PrintState (ostream&
      {
        Str << "  error";
      }
+   Str << " orb=" << this->NbrStateInOrbit[state];
   return Str;
 }
 
@@ -622,6 +623,90 @@ void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GenerateLookUpTable(unsi
     }
 }
 
+// perform sanity check on the current Hilbert space
+//
+// return value = tryue if no error occured
+
+bool FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::CheckHilbertSpace()
+{
+  cout << "checking index search" << endl;
+  int CurrentMaxMomentum = 2 * this->MaxMomentum + 1;
+  bool NoErrorFlag = true;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      while ((this->StateDescription[i]  >> CurrentMaxMomentum) == 0x0ul)
+	--CurrentMaxMomentum;
+      if (this->FindStateIndex(this->StateDescription[i], CurrentMaxMomentum) != i)
+	{
+	  cout << "error at " << i << " :";
+	  this->PrintState(cout, i) << ", found state index is " 
+				    << this->FindStateIndex(this->StateDescription[i], CurrentMaxMomentum) << endl;
+	  NoErrorFlag = false;
+	}
+    }
+  cout << "checking AduAu hermiticity" << endl;
+  int NbrTranslationsX1;
+  int NbrTranslationsY1;
+  int NbrTranslationsX2;
+  int NbrTranslationsY2;
+  double Coefficient1;
+  double Coefficient2;
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      for (int m = 0; m < this->NbrMomentum; ++m)
+	for (int n = 0; n < this->NbrMomentum; ++n)
+	  {
+	    int Index1 = this->AduAu(i, m, n, Coefficient1, NbrTranslationsX1, NbrTranslationsY1);
+	    if (Index1 !=  this->HilbertSpaceDimension)
+	      {
+		int TmpXM = m / this->StateXShift;
+		int TmpYM = (m % this->StateXShift) / this->StateYShift; 
+// 		TmpXM += NbrTranslationsX1;
+// 		TmpXM %= this->MaxXMomentum;
+// 		TmpYM += NbrTranslationsY1;
+// 		TmpYM %= this->MaxYMomentum;
+		TmpXM -= NbrTranslationsX1;
+		if (TmpXM < 0)
+		  TmpXM += this->MaxXMomentum;
+		TmpYM -= NbrTranslationsY1;
+		if (TmpYM < 0)
+		  TmpYM += this->MaxYMomentum;
+		int TmpM = (m % this->StateYShift) + TmpXM * this->StateXShift + TmpYM * this->StateYShift;
+		int TmpXN = m / this->StateXShift;
+		int TmpYN = (m % this->StateXShift) / this->StateYShift; 
+// 		TmpXN += NbrTranslationsX1;
+// 		TmpXN %= this->MaxXMomentum;
+// 		TmpYN += NbrTranslationsY1;
+// 		TmpYN %= this->MaxYMomentum;
+ 		TmpXN -= NbrTranslationsX1;
+		if (TmpXN < 0)
+		  TmpXN += this->MaxXMomentum;
+		TmpYN -= NbrTranslationsY1;
+		if (TmpYN < 0)
+		  TmpYN += this->MaxYMomentum;
+		int TmpN = (n % this->StateYShift) + TmpXN * this->StateXShift + TmpYN * this->StateYShift;
+		int Index2 = this->AduAu(Index1, TmpN, TmpM, Coefficient2, NbrTranslationsX2, NbrTranslationsY2);
+		if ((Index2 !=  this->HilbertSpaceDimension) && (Index2 != i))
+		  {
+		    cout << "error, AduAu(" << m << "," << n<< ") |" << i << "> = |" << Index1 << ">, AduAu(" << TmpN << "," << TmpM << ") |" << Index1 << "> = |" << Index2 << ">" << endl;
+		    this->PrintState(cout, i) << " | ";
+		    this->PrintState(cout, Index1) << endl;
+		    NoErrorFlag = false;
+		  }
+		else
+		  {
+// 		    if (Coefficient1 != Coefficient2) 
+// 		      {
+// 		      }
+		  }
+	      }
+	  }
+    }
+
+  return NoErrorFlag;
+}
+
+
 // find state index from a string
 //
 // stateDescription = string describing the state
@@ -692,7 +777,7 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FindStateIndex(unsigned l
   PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
-  while ((PosMin != PosMid) && (CurrentState != stateDescription))
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
 	{

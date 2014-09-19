@@ -353,9 +353,9 @@ inline bool FermionOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(un
       TmpSign ^= this->GetSignAndApplySingleYTranslation(TmpStateDescription2); 
       TmpSign2 = TmpSign;
     }
-  if ((((this->YMomentum * YSize * this->MaxXMomentum)
-	- (this->XMomentum * TmpXSize * this->MaxYMomentum)
-	+ ((((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum) >> 1)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+  if ((((2 * this->YMomentum * YSize * this->MaxXMomentum)
+	+ (2 * this->XMomentum * TmpXSize * this->MaxYMomentum)
+	+ (((int) TmpSign2) * this->MaxXMomentum * this->MaxYMomentum)) % (2 * this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   return true;
 }

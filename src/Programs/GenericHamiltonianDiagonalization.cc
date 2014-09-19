@@ -59,7 +59,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "skip-lines", "skip the first n-tf lines of the input file", 0);
   (*SystemGroup) += new  SingleIntegerOption ('\n', "data-column", "index of the column that contains the matrix elements (or their real part)", 0);
   (*SystemGroup) += new BooleanOption  ('c', "complex", "indicate that the Hamiltonian is complex");
-  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "shift-spectrum", "shift the spectrum by a constant value during the diagonalization", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");  
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "prefix to use for output file names", "dummy");
   (*OutputGroup) += new SingleStringOption ('\n', "eigenstate-file", "prefix to use for the eigenstate output file names", "dummy");
 #ifdef __LAPACK__
@@ -110,16 +111,18 @@ int main(int argc, char** argv)
   sprintf (CommentLine, "eigenvalues of %s\n #", Manager.GetString("hamiltonian"));
 
   char* EigenvectorFileName = Manager.GetString("eigenstate-file");
-  
+
+  Hamiltonian->ShiftHamiltonian(Manager.GetDouble("shift-spectrum"));
+
   if (Manager.GetBoolean("complex") == false)
     {
-      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"), true, EigenvectorFileName);
+      GenericRealMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, Manager.GetDouble("shift-spectrum"),  Manager.GetString("output-file"), true, EigenvectorFileName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
     }
   else
     {
-      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, 0.0,  Manager.GetString("output-file"), true, EigenvectorFileName);
+      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, " ", CommentLine, Manager.GetDouble("shift-spectrum"),  Manager.GetString("output-file"), true, EigenvectorFileName);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
     }

@@ -1191,6 +1191,7 @@ double FermionOnTorusWithSpinAndMagneticTranslations::AuAu (int index, int n1, i
   if (ProdAHighestBit == n1)
     while ((ProdAHighestBit)&&(ProdATemporaryState >> ProdAHighestBit) == 0)
       --ProdAHighestBit;
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
   return coefficient;
 }
 
@@ -1883,6 +1884,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::FindStateIndex(unsigned long 
   else
     return PosMax;
 }
+
 
 // print a given State
 //
