@@ -143,139 +143,84 @@ void AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian::GetIndices()
   for (int i = 0; i < this->NbrNBodySectorSums; ++i)
     this->NbrNBodySectorIndicesPerSum[i] = 0;      
   this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
+  
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+  {
   switch (this->NBodyValue)
     {
     case 3:
       {
-	if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-	  {
-	    for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	      for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-		for (int ky3 = ky2 + 1; ky3 <= this->LzMax; ++ky3) 
-		  {
-		    int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
-		    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		  }
-	    for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
+	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
+	    for (int ky3 = ky2 + 1; ky3 <= this->LzMax; ++ky3) 
 	      {
-		if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-		  {
-		    this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-		    this->NbrNBodySectorIndicesPerSum[i] = 0;
-		  }
+		int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
+		++this->NbrNBodySectorIndicesPerSum[TmpSum];    
 	      }
-	    for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	      for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-		for (int ky3 = ky2 + 1; ky3 <= this->LzMax; ++ky3) 
-		  {
-		    int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
-		    this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = ky1;
-		    this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky2;
-		    this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky3;
-		    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		  }
-	  }
-	else
+	for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	  {
-	    for (int ky1 = 0; ky1 <= this->LzMax; ++ky1)
-	      for (int ky2 = ky1; ky2 <= this->LzMax; ++ky2) 
-		for (int ky3 = ky2; ky3 <= this->LzMax; ++ky3) 
-		  {
-		    int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
-		    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		  }
-	    for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	    if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
 	      {
-		if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-		  {
-		    this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-		    this->NbrNBodySectorIndicesPerSum[i] = 0;
-		  }
+		this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
+		this->NbrNBodySectorIndicesPerSum[i] = 0;
 	      }
-	    for (int ky1 = 0; ky1 <= this->LzMax; ++ky1)
-	      for (int ky2 = ky1; ky2 <= this->LzMax; ++ky2) 
-		for (int ky3 = ky2; ky3 <= this->LzMax; ++ky3) 
-		  {
-		    int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
-		    this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = ky1;
-		    this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky2;
-		    this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky3;
-		    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		  }
 	  }
+	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
+	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
+	    for (int ky3 = ky2 + 1; ky3 <= this->LzMax; ++ky3) 
+	      {
+		int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
+		this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = ky1;
+		this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky2;
+		this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky3;
+		++this->NbrNBodySectorIndicesPerSum[TmpSum];    
+	      }
       }
-      break;
+     break;
 
     case 4:
       {
-	if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-	  {
-	    for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	      for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-		for (int ky3 = ky2 + 1; ky3 < this->LzMax; ++ky3) 
-		  for (int ky4 = ky3 + 1; ky4 <= this->LzMax; ++ky4) 
-		    {
-		      int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
-		      ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		    }
-	    for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	      {
-		if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
+	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
+	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
+	    for (int ky3 = ky2 + 1; ky3 < this->LzMax; ++ky3) 
+		for (int ky4 = ky3 + 1; ky4 <= this->LzMax; ++ky4) 
 		  {
-		    this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-		    this->NbrNBodySectorIndicesPerSum[i] = 0;
+		    int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
+		    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
 		  }
-	      }
-	    for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	      for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-		for (int ky3 = ky2 + 1; ky3 < this->LzMax; ++ky3) 
-		  for (int ky4 = ky3 + 1; ky4 <= this->LzMax; ++ky4) 
-		    {
-		      int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
-		      this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 4] = ky1;
-		      this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky2;
-		      this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky3;
-		      this->NBodySectorIndicesPerSum[TmpSum][3 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky4;
-		      ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		    }
-	  }
-	else
+	for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	  {
-	    for (int ky1 = 0; ky1 <= this->LzMax; ++ky1)
-	      for (int ky2 = ky1; ky2 <= this->LzMax; ++ky2) 
-		for (int ky3 = ky2; ky3 <= this->LzMax; ++ky3) 
-		  for (int ky4 = ky3; ky4 <= this->LzMax; ++ky4) 
-		    {
-		      int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
-		      ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		    }
-	    for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	    if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
 	      {
-		if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-		  {
-		    this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-		    this->NbrNBodySectorIndicesPerSum[i] = 0;
-		  }
+		this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
+		this->NbrNBodySectorIndicesPerSum[i] = 0;
 	      }
-	    for (int ky1 = 0; ky1 <= this->LzMax; ++ky1)
-	      for (int ky2 = ky1; ky2 <= this->LzMax; ++ky2) 
-		for (int ky3 = ky2; ky3 <= this->LzMax; ++ky3) 
-		  for (int ky4 = ky3; ky4 <= this->LzMax; ++ky4) 
-		    {
-		      int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
-		      this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 4] = ky1;
-		      this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky2;
-		      this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky3;
-		      this->NBodySectorIndicesPerSum[TmpSum][3 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky4;
-		      ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		    }
 	  }
+	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
+	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 	
+	    for (int ky3 = ky2 + 1; ky3 < this->LzMax; ++ky3) 
+	      for (int ky4 = ky3 + 1; ky4 <= this->LzMax; ++ky4) 
+		{
+		  int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
+		  this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 4] = ky1;
+		  this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky2;
+		  this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky3;
+		  this->NBodySectorIndicesPerSum[TmpSum][3 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky4;
+		  ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
+		}
       }
-      break;
+    break;
 
     default:
       cout << "warning : " << this->NBodyValue << "-body interaction is not implemented in AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian" << endl;
     }
+  }
+ else
+   {
+      double** SortedIndicesPerSumSymmetryFactor;
+      this->GetAllSymmetricIndices(this->NbrLzValue, this->NBodyValue, this->NbrNBodySectorIndicesPerSum, this->NBodySectorIndicesPerSum, SortedIndicesPerSumSymmetryFactor);
+      delete[] SortedIndicesPerSumSymmetryFactor;
+   }
 }
 
 // get all indices needed to characterize a completly symmetric tensor, sorted by the sum of the indices

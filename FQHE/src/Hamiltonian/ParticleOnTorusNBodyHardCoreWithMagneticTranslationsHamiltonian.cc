@@ -87,64 +87,83 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
   this->PrecalculationShift = (int) MinIndex;
   this->EvaluateExponentialFactors();
-//   this->NbrEntryPrecalculatedInteractionCoefficients = this->MaxMomentum;
-//   for (int i = 1; i < this->NBodyValue; ++i)
-//     this->NbrEntryPrecalculatedInteractionCoefficients *= this->MaxMomentum;
-//   this->PrecalculatedInteractionCoefficients = new double* [this->NbrEntryPrecalculatedInteractionCoefficients];
-//   for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
-//     {      
-//       this->PrecalculatedInteractionCoefficients[m1] = new double [this->NbrEntryPrecalculatedInteractionCoefficients];
-//     }
-//   char* InteractionCoefficientFileName = new char [512];
-//   sprintf (InteractionCoefficientFileName, "%dbodydelta_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NBodyValue, this->NbrLzValue, this->Ratio);
-//   if (IsFile(InteractionCoefficientFileName))
-//     {
-//       ifstream File;
-//       File.open(InteractionCoefficientFileName, ios::binary | ios::in);
-//       if (!File.is_open())
-// 	{
-// 	  cout << "cannot open " << InteractionCoefficientFileName << endl;
-// 	}
-//       else
-// 	{
-// 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
-// 	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
-// 	  File.close();
-// 	}
-//     }
-//   else
-//     {
-//       ofstream File;
-//       File.open(InteractionCoefficientFileName, ios::binary | ios::out);
-//       if (!File.is_open())
-// 	{
-// 	  cout << "cannot create " << InteractionCoefficientFileName << endl;
-// 	}
-//       else
-// 	{
-// 	  int** TmpIndices = new int* [this->NbrEntryPrecalculatedInteractionCoefficients];
-// 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
-// 	    {
-// 	      TmpIndices[m1] = new int [this->MaxMomentum];
-// 	      int Tmp = m1;
-// 	      for (int i = 0; i < this->MaxMomentum; ++i)
-// 		{
-// 		  TmpIndices[m1][i] = Tmp % this->MaxMomentum;
-// 		  Tmp /= this->MaxMomentum;
-// 		}
-// 	    }
-// 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
-// 	    {
-// 	      for (int m2 = 0; m2 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m2)
-// 		this->PrecalculatedInteractionCoefficients[m1][m2] = this->EvaluateInteractionCoefficient(TmpIndices[m1], TmpIndices[m2]);
-// 	      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
-// 	    }
-// 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
-// 	    delete[] TmpIndices[m1];
-// 	  delete[] TmpIndices;
-// 	  File.close();
-// 	}
-//     }
+  
+  /*
+  this->NbrEntryPrecalculatedInteractionCoefficients = this->MaxMomentum;
+  for (int i = 1; i < this->NBodyValue; ++i)
+    this->NbrEntryPrecalculatedInteractionCoefficients *= this->MaxMomentum;
+  this->PrecalculatedInteractionCoefficients = new double* [this->NbrEntryPrecalculatedInteractionCoefficients];
+  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+    {      
+      this->PrecalculatedInteractionCoefficients[m1] = new double [this->NbrEntryPrecalculatedInteractionCoefficients];
+    }
+  char* InteractionCoefficientFileName = new char [512];
+  sprintf (InteractionCoefficientFileName, "%dbodydelta_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NBodyValue, this->NbrLzValue, this->Ratio);
+  if (IsFile(InteractionCoefficientFileName))
+    {
+      ifstream File;
+      File.open(InteractionCoefficientFileName, ios::binary | ios::in);
+      if (!File.is_open())
+	{
+	  cout << "cannot open " << InteractionCoefficientFileName << endl;
+	}
+      else
+	{
+	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
+	  File.close();
+	}
+    }
+  else
+    {
+      ofstream File;
+      File.open(InteractionCoefficientFileName, ios::binary | ios::out);
+      if (!File.is_open())
+	{
+	  cout << "cannot create " << InteractionCoefficientFileName << endl;
+	}
+      else
+	{
+	  int** TmpIndices = new int* [this->NbrEntryPrecalculatedInteractionCoefficients];
+	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+	    {
+	      TmpIndices[m1] = new int [this->MaxMomentum];
+	      int Tmp = m1;
+	      for (int i = 0; i < this->MaxMomentum; ++i)
+		{
+		  TmpIndices[m1][i] = Tmp % this->MaxMomentum;
+		  Tmp /= this->MaxMomentum;
+		}
+	    }
+	    
+	  int* NbrPermutations = new int [this->NbrNBodySectorIndicesPerSum[i]];
+	  for (int j1 = 0; j1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++j1)
+	    {
+	      int* TmpNIndices = &(this->NBodySectorIndicesPerSum[i][j1 * this->NBodyValue]);
+	      NbrPermutations[j1] = this->EvaluateNumberOfPermutations(TmpNIndices);
+	    }
+	  double** CoefficientCreation = new double*[this->NBodyValue];
+	  double** CoefficientAnnihilation = new double*[this->NBodyValue];
+	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+	    {
+	      CoefficientCreation = this->EvaluateInteractionCoefficientCreation(TmpIndices[m1], 0);
+	      for (int m2 = 0; m2 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m2)
+		int momentumTransfer = ;
+		CoefficientAnnihilation = this->EvaluateInteractionCoefficientCreation(TmpIndices[m2], momentumTransfer);
+	      
+		this->PrecalculatedInteractionCoefficients[m1][m2] = this->EvaluateInteractionCoefficient(CoefficientCreation, CoefficientAnnihilation, int nbrPermutations1, int nbrPermutations2);
+	      
+	      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
+	    }
+	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+	    delete[] TmpIndices[m1];
+	  delete[] TmpIndices;
+	  File.close();
+	}
+    }*/
+  
+  
+  
   this->HamiltonianShift = 0.0;
   this->EvaluateInteractionFactors();
   if (precalculationFileName == 0)
@@ -197,6 +216,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 {
   long TotalNbrInteractionFactors = 0l;
   this->GetIndices();
+  
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
     }
@@ -204,6 +224,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
     {
       int* TmpMIndices2 = new int[this->NBodyValue];
       int* TmpNIndices2 = new int[this->NBodyValue];
+      
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
       
  
@@ -230,7 +251,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 	      for (int k = 0 ; k < this->NBodyValue; ++k)
 		TmpNIndices2[k] = TmpNIndices[k];
 	      int PermutationIndex = 1;
-	      while (std::next_permutation(TmpNIndices2, TmpNIndices2 + this->NBodyValue))
+	      while (std::prev_permutation(TmpNIndices2, TmpNIndices2 + this->NBodyValue))
 		{
 		  CoefficientCreation[PermutationIndex] = this->EvaluateInteractionCoefficientCreation(TmpNIndices2, 0);
 		  PermutationIndex += 1;
@@ -249,7 +270,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 		  double** CoefficientAnnihilation = new double*[nbrPermutations2];
 		  CoefficientAnnihilation[0] = this->EvaluateInteractionCoefficientCreation(TmpMIndices, momentumTransfer);
 		  PermutationIndex = 1;
-		  while (std::next_permutation(TmpMIndices2, TmpMIndices2 + this->NBodyValue))
+		  while (std::prev_permutation(TmpMIndices2, TmpMIndices2 + this->NBodyValue))
 		    {
 		      CoefficientAnnihilation[PermutationIndex] = this->EvaluateInteractionCoefficientCreation(TmpMIndices2, momentumTransfer);
 		      PermutationIndex += 1;
@@ -552,7 +573,7 @@ int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateNum
   int* TmpMIndices = new int[this->NBodyValue];
   for (int k = 0 ; k < this->NBodyValue; ++k)
     TmpMIndices[k] = mIndices[k];
-  while (std::next_permutation(mIndices, mIndices + this->NBodyValue))
+  while (std::prev_permutation(mIndices, mIndices + this->NBodyValue))
     nbrPermutations += 1;
   
   delete[] TmpMIndices;

@@ -117,7 +117,7 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   double* EvaluateInteractionCoefficientCreation(int* mIndices, int momentumTransfer);
   
   
-  // evaluate the two nested Gaussian sum for a three body interaction
+  // evaluate the two nested Gaussian sum for a three body interaction (for test purposes)
   //
   // momFactor = array of indices that contains the information of the creation (or annihilation) indices
   // TmpIndices = array of indices that gives the initial indices that will be incremented in the sum
