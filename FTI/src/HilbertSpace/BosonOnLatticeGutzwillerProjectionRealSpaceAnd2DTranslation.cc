@@ -453,15 +453,15 @@ void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GetCompositeFe
  
  for(int i = 0; i < this->HilbertSpaceDimension ; i++)
  {
-
+ cout << this->StateDescription[i]<<" " <<this->NbrStateInOrbit[i]<<endl;
  NbrTranslation = 0;
  unsigned long  TmpStateDescription  = this->StateDescription[i];
  unsigned long  TmpStateDescription2  = this->StateDescription[i];
- for (int m = 0; (m < this->MaxYMomentum) && (TmpStateDescription !=  this->StateDescription[i]) ; ++m)
-    {
+ int m=0;
+ do{
       TmpStateDescription2 = TmpStateDescription;
-      for (int n = 0; (n < this->MaxXMomentum) && (TmpStateDescription2 != TmpStateDescription) ; ++n)
-	{
+        int n=0;
+	do{  
           int  TmpMaxMomentum = this->NbrSite;
           while ((( TmpStateDescription2 >> TmpMaxMomentum) & 0x1ul) == 0x0ul)
 	       --TmpMaxMomentum;
@@ -474,24 +474,32 @@ void BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::GetCompositeFe
 	{
 		  // need to consider proper ordering of matrix elements
 		  // in Hilbert-space, largest quantum number q corresponds to position 0!
-		  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][TemporaryState[q]]);
- 		  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][TemporaryState[q]]);
+                  int PosX = TemporaryState[q]/this->StateXShift;
+                  int PosY = TemporaryState[q]%this->StateXShift;
+                  int Rst = PosX + PosY*(this->NbrSite/this->StateXShift);
+     		  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][Rst]);
+ 		  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][Rst]);
 	}	      
        }
+        
         trialState[i] +=  ExponentialFactors[n][m] * SlaterCF.Determinant() * SlaterJastrow.Determinant();
+cout << TmpStateDescription2 <<" "<< SlaterJastrow.Determinant() <<endl;
         ++NbrTranslation;
-        this->ApplySingleXTranslation(TmpStateDescription2);      
-	}
+        this->ApplySingleXTranslation(TmpStateDescription2);
+       ++n;        
+	} while((n < this->MaxXMomentum) && (TmpStateDescription2 != TmpStateDescription));
       this->ApplySingleYTranslation(TmpStateDescription);      
-    }
+       ++m;  
+    }while ((m < this->MaxYMomentum) && (TmpStateDescription !=  this->StateDescription[i]));
 
    
   trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
   if(NbrTranslation != this->NbrStateInOrbit[i])
    {
 	cout <<"Wrong Number of Translation for state !"  << i <<endl;
+        cout <<NbrTranslation<< " " << this->NbrStateInOrbit[i]<<endl;
   }
-
+   
 }
    for (int i = 0; i < this->MaxXMomentum; ++i)
     { 

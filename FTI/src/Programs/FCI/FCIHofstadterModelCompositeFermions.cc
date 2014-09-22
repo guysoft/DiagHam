@@ -306,8 +306,9 @@ double SolenoidX=0.0, SolenoidY=0.0;
   ComplexVector TrialState(Space.GetHilbertSpaceDimension(),true);
 
   Space.GetCompositeFermionWavefunction(TrialState, JastrowEigenVecs, CFEigenVecs);
-
-
+  
+for (int i = 0;  i < Space.GetHilbertSpaceDimension();i++)
+    cout << Space.PrintState(cout,i)<<" "<<TrialState[i]<<endl;
  delete CFSpace;
  delete JastrowSpace;
  return 0;

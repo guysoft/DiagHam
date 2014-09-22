@@ -386,7 +386,7 @@ inline bool BosonOnLatticeRealSpaceAnd2DTranslation::TestMomentumConstraint(unsi
   
   //  cout << "YSize=" << YSize << " TmpXSize=" << TmpXSize << endl;
   if ((((this->KyMomentum * YSize * this->MaxXMomentum)
-	- (this->KxMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
+	+ (this->KxMomentum * TmpXSize * this->MaxYMomentum)) % (this->MaxXMomentum * this->MaxYMomentum)) != 0)
     return false;
   return true;
 }
