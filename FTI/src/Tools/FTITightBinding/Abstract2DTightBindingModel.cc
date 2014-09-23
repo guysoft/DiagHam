@@ -1259,7 +1259,8 @@ HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRealSpa
 	      for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
 		{
 		  int Index1 = this->GetRealSpaceTightBindingLinearizedIndexSafe(spatialIndices[k][l << 1] + i, spatialIndices[k][(l << 1) + 1] + j, orbitalIndices[k][l]);
-		  TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]);
+                        if(Index1 >= Index2)
+ 			  TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]);
 		}
 	    }
 	}      
