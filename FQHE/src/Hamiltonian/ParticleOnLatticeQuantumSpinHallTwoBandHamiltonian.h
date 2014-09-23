@@ -799,10 +799,10 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluat
 	  Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim2) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
 		  if (Index <= index)
@@ -825,7 +825,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluat
 		    }
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim2) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
@@ -852,7 +852,7 @@ inline void ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::HermitianEvaluat
 	      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
 		{
-		  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient);
 		  if (Index <= index)
 		    {
 		      if (Index < index)
