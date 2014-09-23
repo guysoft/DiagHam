@@ -88,7 +88,7 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
   this->PrecalculationShift = (int) MinIndex;
   this->EvaluateExponentialFactors();
   
-  /*
+  
   this->NbrEntryPrecalculatedInteractionCoefficients = this->MaxMomentum;
   for (int i = 1; i < this->NBodyValue; ++i)
     this->NbrEntryPrecalculatedInteractionCoefficients *= this->MaxMomentum;
@@ -112,6 +112,7 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
 	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
 	  File.close();
+	  cout << "read" << endl;
 	}
     }
   else
@@ -123,44 +124,82 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 	  cout << "cannot create " << InteractionCoefficientFileName << endl;
 	}
       else
-	{
+	{    
+	    
 	  int** TmpIndices = new int* [this->NbrEntryPrecalculatedInteractionCoefficients];
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
 	    {
-	      TmpIndices[m1] = new int [this->MaxMomentum];
+	      TmpIndices[m1] = new int [this->NBodyValue];
 	      int Tmp = m1;
-	      for (int i = 0; i < this->MaxMomentum; ++i)
+	      for (int i = 0; i < this->NBodyValue; ++i)
 		{
 		  TmpIndices[m1][i] = Tmp % this->MaxMomentum;
 		  Tmp /= this->MaxMomentum;
 		}
 	    }
-	    
-	  int* NbrPermutations = new int [this->NbrNBodySectorIndicesPerSum[i]];
-	  for (int j1 = 0; j1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++j1)
+	  double** CoefficientCreation = new double* [1];
+	  double** CoefficientAnnihilation = new double* [1];
+	  CoefficientCreation[0] = new double [this->NBodyValue];
+	  CoefficientAnnihilation[0] = new double [this->NBodyValue];
+	  
+	  int SumCreationIndices;
+	  int SumAnnihilationIndices;
+	  int momentumTransfer;
+	  
+	  double*** Coefficient = new double** [this->NbrEntryPrecalculatedInteractionCoefficients];
+	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+	  {
+	    Coefficient[m1] = new double* [2*this->NBodyValue - 1];
+	    for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
 	    {
-	      int* TmpNIndices = &(this->NBodySectorIndicesPerSum[i][j1 * this->NBodyValue]);
-	      NbrPermutations[j1] = this->EvaluateNumberOfPermutations(TmpNIndices);
+	      int momentumTransfer = j - this->NBodyValue + 1;
+	      Coefficient[m1][j] = new double [this->NBodyValue];
+	      Coefficient[m1][j] = this->EvaluateInteractionCoefficientCreation(TmpIndices[m1], momentumTransfer);
 	    }
-	  double** CoefficientCreation = new double*[this->NBodyValue];
-	  double** CoefficientAnnihilation = new double*[this->NBodyValue];
+	  }
+	  
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
 	    {
-	      CoefficientCreation = this->EvaluateInteractionCoefficientCreation(TmpIndices[m1], 0);
+	      CoefficientCreation[0] = Coefficient[m1][this->NBodyValue - 1];
+	      SumCreationIndices = 0;
+	      for (int i = 0; i < this->NBodyValue; ++i)
+		SumCreationIndices += TmpIndices[m1][i];
+	      
 	      for (int m2 = 0; m2 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m2)
-		int momentumTransfer = ;
-		CoefficientAnnihilation = this->EvaluateInteractionCoefficientCreation(TmpIndices[m2], momentumTransfer);
+	      {
+		SumAnnihilationIndices = 0;
+		for (int i = 0; i < this->NBodyValue; ++i)
+		  SumAnnihilationIndices += TmpIndices[m2][i];
+		momentumTransfer = (SumAnnihilationIndices - SumCreationIndices);
+		if (((momentumTransfer + this->NbrLzValue) % this->NbrLzValue) == 0 )
+		{
+		  momentumTransfer /= this->NbrLzValue;
+		  CoefficientAnnihilation[0] = Coefficient[m2][momentumTransfer + this->NBodyValue - 1];
 	      
-		this->PrecalculatedInteractionCoefficients[m1][m2] = this->EvaluateInteractionCoefficient(CoefficientCreation, CoefficientAnnihilation, int nbrPermutations1, int nbrPermutations2);
-	      
+		  this->PrecalculatedInteractionCoefficients[m1][m2] = this->EvaluateInteractionCoefficient(CoefficientCreation, CoefficientAnnihilation, 1, 1);
+		}
+		else
+		  this->PrecalculatedInteractionCoefficients[m1][m2] = 0.0;		  
+	      }
 	      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
 	    }
+	  
+	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
+	  {
+	    for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
+	    {
+	      delete[] Coefficient[m1][j];
+	    }
+	    delete[] Coefficient[m1];
+	  }
+	  delete[] Coefficient;
+	  
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
 	    delete[] TmpIndices[m1];
 	  delete[] TmpIndices;
 	  File.close();
 	}
-    }*/
+    }
   
   
   
@@ -209,8 +248,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ShiftHamil
   this->HamiltonianShift = shift;
 }
 
-// evaluate all interaction factors
-//   
+
 
 void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
 {
@@ -221,65 +259,20 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
     {
     }
   else
-    {
-      int* TmpMIndices2 = new int[this->NBodyValue];
-      int* TmpNIndices2 = new int[this->NBodyValue];
-      
+    {      
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
-      
- 
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
 	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
 	  int Index = 0;  
-	  
-	  int* NbrPermutations = new int [this->NbrNBodySectorIndicesPerSum[i]];
+	  	  
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
 	    {
 	      int* TmpNIndices = &(this->NBodySectorIndicesPerSum[i][j1 * this->NBodyValue]);
-	      NbrPermutations[j1] = this->EvaluateNumberOfPermutations(TmpNIndices);
-	    }	  
-	  
-	  
-	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
-	    {
-	      int* TmpNIndices = &(this->NBodySectorIndicesPerSum[i][j1 * this->NBodyValue]);
-	      
-	      int nbrPermutations1 = NbrPermutations[j1];
-	      double** CoefficientCreation = new double*[nbrPermutations1];
-	      CoefficientCreation[0] = this->EvaluateInteractionCoefficientCreation(TmpNIndices, 0);
-	      for (int k = 0 ; k < this->NBodyValue; ++k)
-		TmpNIndices2[k] = TmpNIndices[k];
-	      int PermutationIndex = 1;
-	      while (std::prev_permutation(TmpNIndices2, TmpNIndices2 + this->NBodyValue))
-		{
-		  CoefficientCreation[PermutationIndex] = this->EvaluateInteractionCoefficientCreation(TmpNIndices2, 0);
-		  PermutationIndex += 1;
-		}    
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
 		  int* TmpMIndices = &(this->NBodySectorIndicesPerSum[i][j2 * this->NBodyValue]);
-		  double TmpInteraction = 0.0;
-		  for (int k = 0 ; k < this->NBodyValue; ++k)
-		    TmpMIndices2[k] = TmpMIndices[k];
-		  int momentumTransfer = 0;
-		  for (int k = 0; k < this->NBodyValue; ++k)
-		    momentumTransfer += (TmpMIndices[k] - TmpNIndices[k]);
-		  momentumTransfer /=  this->NbrLzValue;
-		  int nbrPermutations2 = NbrPermutations[j2];
-		  double** CoefficientAnnihilation = new double*[nbrPermutations2];
-		  CoefficientAnnihilation[0] = this->EvaluateInteractionCoefficientCreation(TmpMIndices, momentumTransfer);
-		  PermutationIndex = 1;
-		  while (std::prev_permutation(TmpMIndices2, TmpMIndices2 + this->NBodyValue))
-		    {
-		      CoefficientAnnihilation[PermutationIndex] = this->EvaluateInteractionCoefficientCreation(TmpMIndices2, momentumTransfer);
-		      PermutationIndex += 1;
-		    }
-		  
-		  TmpInteraction = this->EvaluateInteractionCoefficient(CoefficientCreation, CoefficientAnnihilation, nbrPermutations1, nbrPermutations2);
-		  
-
-		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;
+		  this->NBodyInteractionFactors[i][Index] = this->EvaluateInteractionNIndexSymmetrizedCoefficient(TmpNIndices, TmpMIndices);
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -289,6 +282,8 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
   cout << "nbr interaction = " << TotalNbrInteractionFactors << endl;
   cout << "====================================" << endl;
 }
+
+
 
 
 // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation or the annihilation operators only) for each integer modulo the NBodyValue
@@ -328,7 +323,93 @@ double* ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluat
 }
 
 
-// Evaluate gaussian sum for the three body interaction
+
+// evaluate the N nested infinite sums of EvaluateInteractionCoefficientCreation
+//
+// nBodyValue = current index being incremented 
+//TmpIndices = array containing the current value of all indices
+// Sum = current value of the sum
+// countIter = array of integers giving, for each TmpIndices[i], the number of times it has been incremented
+// momFactor = array of indices that contains the information of the creation (or annihilation) indices
+//return value = value of the coefficient
+double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor)
+{
+  if (nBodyValue == this->NBodyValue - 1)
+    return 0.0;
+  
+  double DoubleNbrLzValue = (double) this->NbrLzValue;
+  double PIOnM = M_PI / DoubleNbrLzValue ;
+  double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
+  int MinIter = 3;
+  int TmpIndex = TmpIndices[0];
+  double ExpFactor;
+
+  
+  for (int i = nBodyValue; i < this->NBodyValue - 1; ++i)
+    {
+      TmpIndices[i] = TmpIndex;
+      countIter[i] = 0;
+    }
+  ExpFactor = 0.0;
+  for (int j = 0; j < this->NBodyValue - 1; ++j)
+    for (int k = j; k < this->NBodyValue - 1; ++k)
+      ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
+  double Coefficient = exp(-Factor*ExpFactor);
+  
+  while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
+  {
+    countIter[nBodyValue] += 1;
+    Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
+    if (nBodyValue == this->NBodyValue - 2)
+      Sum += Coefficient;
+    TmpIndices[nBodyValue] += this->NBodyValue;
+    for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
+      TmpIndices[i] = TmpIndex;
+    ExpFactor = 0;
+    for (int j = 0; j < this->NBodyValue - 1; ++j)
+      for (int k = j; k < this->NBodyValue - 1; ++k)
+	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
+    Coefficient = exp(-Factor*ExpFactor);
+    
+  }
+  
+  TmpIndices[nBodyValue] = TmpIndex - this->NBodyValue;
+  countIter[nBodyValue] = 0;
+  for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
+  {
+    TmpIndices[i] = TmpIndex;
+    countIter[i] = 0;
+  }
+    
+  ExpFactor = 0.0;
+  for (int j = 0; j < this->NBodyValue - 1; ++j)
+    for (int k = j; k < this->NBodyValue - 1; ++k)
+      ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
+  Coefficient = exp(-Factor*ExpFactor);
+  
+  
+  while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
+  {
+    countIter[nBodyValue] += 1;
+    Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
+    if (nBodyValue == this->NBodyValue - 2)
+      Sum += Coefficient;
+    TmpIndices[nBodyValue] -= this->NBodyValue;
+    ExpFactor = 0;
+    for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
+      TmpIndices[i] = TmpIndex;
+    for (int j = 0; j < this->NBodyValue - 1; ++j)
+      for (int k = j; k < this->NBodyValue - 1; ++k)
+	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
+    Coefficient = exp(-Factor*ExpFactor);    
+  }
+  
+  return Sum;
+  
+}
+  
+
+// Evaluate gaussian sum for the three body interaction (for test purposes only)
 //
 // momFactor = array of indices that contains the information of the creation (or annihilation) indices
 // TmpIndices = array of indices that gives the initial indices that will be incremented in the sum
@@ -443,92 +524,6 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
 }
 
 
-// evaluate the N nested infinite sums of EvaluateInteractionCoefficientCreation
-//
-// nBodyValue = current index being incremented 
-//TmpIndices = array containing the current value of all indices
-// Sum = current value of the sum
-// countIter = array of integers giving, for each TmpIndices[i], the number of times it has been incremented
-// momFactor = array of indices that contains the information of the creation (or annihilation) indices
-//return value = value of the coefficient
-double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor)
-{
-  if (nBodyValue == this->NBodyValue - 1)
-    return 0.0;
-  
-  double DoubleNbrLzValue = (double) this->NbrLzValue;
-  double PIOnM = M_PI / DoubleNbrLzValue ;
-  double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
-  int MinIter = 3;
-  int TmpIndex = TmpIndices[0];
-  double ExpFactor;
-
-  
-  for (int i = nBodyValue; i < this->NBodyValue - 1; ++i)
-    {
-      TmpIndices[i] = TmpIndex;
-      countIter[i] = 0;
-    }
-  ExpFactor = 0.0;
-  for (int j = 0; j < this->NBodyValue - 1; ++j)
-    for (int k = j; k < this->NBodyValue - 1; ++k)
-      ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  double Coefficient = exp(-Factor*ExpFactor);
-  
-  while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
-  {
-    countIter[nBodyValue] += 1;
-    Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
-    if (nBodyValue == this->NBodyValue - 2)
-      Sum += Coefficient;
-    TmpIndices[nBodyValue] += this->NBodyValue;
-    for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
-      TmpIndices[i] = TmpIndex;
-    ExpFactor = 0;
-    for (int j = 0; j < this->NBodyValue - 1; ++j)
-      for (int k = j; k < this->NBodyValue - 1; ++k)
-	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = exp(-Factor*ExpFactor);
-    
-  }
-  
-  TmpIndices[nBodyValue] = TmpIndex - this->NBodyValue;
-  countIter[nBodyValue] = 0;
-  for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
-  {
-    TmpIndices[i] = TmpIndex;
-    countIter[i] = 0;
-  }
-    
-  ExpFactor = 0.0;
-  for (int j = 0; j < this->NBodyValue - 1; ++j)
-    for (int k = j; k < this->NBodyValue - 1; ++k)
-      ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  Coefficient = exp(-Factor*ExpFactor);
-  
-  
-  while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
-  {
-    countIter[nBodyValue] += 1;
-    Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
-    if (nBodyValue == this->NBodyValue - 2)
-      Sum += Coefficient;
-    TmpIndices[nBodyValue] -= this->NBodyValue;
-    ExpFactor = 0;
-    for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
-      TmpIndices[i] = TmpIndex;
-    for (int j = 0; j < this->NBodyValue - 1; ++j)
-      for (int k = j; k < this->NBodyValue - 1; ++k)
-	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = exp(-Factor*ExpFactor);    
-  }
-  
-  return Sum;
-  
-  }
-  
-   
-  
 	
 // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term
 //
@@ -563,22 +558,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   return (Coefficient/ (FactorialNBody.GetNumericalValue()));
 }
 
-// Evaluate the number of permutations of a set of indices
-//
-// mIndices = array that contains the creation indices
-//return value = number of permutations
-int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateNumberOfPermutations(int* mIndices)
-{
-  int nbrPermutations = 1;
-  int* TmpMIndices = new int[this->NBodyValue];
-  for (int k = 0 ; k < this->NBodyValue; ++k)
-    TmpMIndices[k] = mIndices[k];
-  while (std::prev_permutation(mIndices, mIndices + this->NBodyValue))
-    nbrPermutations += 1;
-  
-  delete[] TmpMIndices;
-  return nbrPermutations;
-}
+
   
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
 //

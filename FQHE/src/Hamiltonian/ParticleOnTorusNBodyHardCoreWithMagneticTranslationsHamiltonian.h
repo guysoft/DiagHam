@@ -38,6 +38,7 @@
 #include "Hamiltonian/AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian.h"
 
 #include <iostream>
+#include <algorithm>
 
 
 using std::ostream;
@@ -109,6 +110,13 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // return value = numerical coefficient  
   virtual double EvaluateInteractionCoefficient(double** creationCoefficients, double** annihilationCoefficients, int nbrPermutations1, int nbrPermutations2);
   
+  // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term in the case where they have been precalculated
+  //
+  //mIndices  = array that contains the creation indices
+  //nIndices = array that contains the annihilation indices
+  //return value = numerical coefficient
+  virtual double EvaluateInteractionNIndexSymmetrizedCoefficient(int* mIndices, int* nIndices);
+
   // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation operators only) for each integer modulo the NBodyValue
   //
   // mIndices = array that contains the creation indices
@@ -135,12 +143,7 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   //return value = value of the coefficient
   double EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor);
   
-  // Evaluate the number of permutations of a set of indices
-  //
-  // mIndices = array that contains the creation indices
-  //return value = number of permutations
-  int EvaluateNumberOfPermutations(int* mIndices);
-  
+   
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
   //
   // m1 = first index
@@ -152,6 +155,77 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
 
 
 };
+
+inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionNIndexSymmetrizedCoefficient(int* mIndices, int* nIndices)
+{
+  
+ int* mIndices2 = new int[this->NBodyValue];
+ int* nIndices2 = new int[this->NBodyValue];
+  
+  
+ double TmpInteraction; 
+ int m1 = mIndices[0];
+ int m2 = nIndices[0];
+ 
+ int Factor = this->NbrLzValue;
+ for (int k = 1; k < this->NBodyValue; ++k)
+ {
+  m1 += mIndices[k]*Factor;
+  m2 += nIndices[k]*Factor;
+  Factor *= this->NbrLzValue;
+ }
+ int m2Initial = m2;
+ 
+ 
+ TmpInteraction = this->PrecalculatedInteractionCoefficients[m1][m2];
+ 
+ for (int k = 0 ; k < this->NBodyValue; ++k)
+   nIndices2[k] = nIndices[k];
+ while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
+    {
+      m2 = nIndices2[0];
+      Factor = this->NbrLzValue;
+      for (int k = 1 ; k < this->NBodyValue; ++k)
+	{
+	  m2 += nIndices2[k]*Factor;
+	  Factor *= this->NbrLzValue;
+	}
+ 
+      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2];
+    }
+ 
+ 
+ for (int k = 0 ; k < this->NBodyValue; ++k)
+  mIndices2[k] = mIndices[k];
+ while (std::prev_permutation(mIndices2, mIndices2 + this->NBodyValue))
+  {
+    m1 = mIndices2[0];
+    Factor = this->NbrLzValue;
+    for (int k = 1 ; k < this->NBodyValue; ++k)
+      {
+	m1 += mIndices2[k]*Factor;
+	Factor *= this->NbrLzValue;
+      }
+    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2Initial];
+    for (int k = 0 ; k < this->NBodyValue; ++k)
+      nIndices2[k] = nIndices[k];
+    while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
+    {
+      
+      m2 = nIndices2[0];
+      Factor = this->NbrLzValue;
+      for (int k = 1 ; k < this->NBodyValue; ++k)
+	{
+	  m2 += nIndices2[k]*Factor;
+	  Factor *= this->NbrLzValue;
+	}
+ 
+      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2];
+    }
+  }    
+ 
+ return TmpInteraction;
+}
 
 
 #endif
