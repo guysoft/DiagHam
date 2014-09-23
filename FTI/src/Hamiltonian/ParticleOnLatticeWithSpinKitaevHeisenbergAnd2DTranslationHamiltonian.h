@@ -545,8 +545,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -557,8 +557,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -569,8 +569,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -587,8 +587,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -599,8 +599,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -611,8 +611,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -632,8 +632,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -644,8 +644,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -656,8 +656,8 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		  if (Index <= index)
 		    {
 		      if (Index < index)
-			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj(*TmpInteractionFactor);
-		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor)) * Coefficient4;
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
 		    }
 		  ++TmpInteractionFactor;
 		}
@@ -712,15 +712,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -736,15 +736,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -760,15 +760,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -790,15 +790,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -814,15 +814,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -838,15 +838,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -859,10 +859,10 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 	  Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim2) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
 		  if (Index <= index)
@@ -871,21 +871,21 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
 		  ++TmpInteractionFactor;
 		}
-	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim2) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -895,15 +895,15 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
@@ -912,22 +912,22 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 	      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
 		{
-		  Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
 		  if (Index <= index)
 		    {
 		      if (Index < index)
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
-			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor)) * vSources[p][Index];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
 			    }
 			}
 		      else
 			{
 			  for (int p = 0; p < nbrVectors; ++p)
 			    {
-			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * tmpCoefficients[p];
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
 			    }
 			}
 		    }
