@@ -209,6 +209,9 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
   this->YMomentumMask = fermions.YMomentumMask;
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+  this->YMomentumFullMask = fermions.YMomentumFullMask;
+  this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
   this->MomentumMask = fermions.MomentumMask;
 
@@ -294,6 +297,9 @@ FermionOnLatticeRealSpaceAnd2DTranslation& FermionOnLatticeRealSpaceAnd2DTransla
   this->ComplementaryStateYShift = fermions.ComplementaryStateYShift;
   this->YMomentumMask = fermions.YMomentumMask;
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
+  this->YMomentumFullMask = fermions.YMomentumFullMask;
+  this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+
   this->ComplementaryStateShift = fermions.ComplementaryStateShift;
   this->MomentumMask = fermions.MomentumMask;
 
