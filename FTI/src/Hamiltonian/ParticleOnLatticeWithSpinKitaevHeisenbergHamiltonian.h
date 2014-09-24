@@ -108,9 +108,9 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian : public ParticleOnLa
   // j2Factor = strength of the anisotropic nearest neighbor spin interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, char* geometryFile, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, int** geometryDescription, int nbrBonds, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory = -1);
   
-  // constructor from the explicit the bond description
+  // constructor from the explicit bond description
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles

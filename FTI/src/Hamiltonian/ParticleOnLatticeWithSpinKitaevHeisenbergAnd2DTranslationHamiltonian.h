@@ -93,7 +93,7 @@ class ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian : pub
 								       char* geometryFile, double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, 
 								       double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory = -1);
 
-  // constructor from the explicit the bond description
+  // constructor from the explicit bond description
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles

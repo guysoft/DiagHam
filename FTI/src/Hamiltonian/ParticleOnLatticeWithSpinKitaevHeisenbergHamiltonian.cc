@@ -71,7 +71,7 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, char* geometryFile, 
+ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSite, int** geometryDescription, int nbrBonds, 
 													   double kineticFactorIsotropic, double kineticFactorAnisotropic, double uPotential, double j1Factor, double j2Factor, AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -81,17 +81,12 @@ ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::ParticleOnLatticeWithSpinK
   this->SitesA = 0;
   this->SitesB = 0;
   this->Bonds = 0;
-  if (geometryFile != 0)
+  if (geometryDescription != 0)
     {
-      MultiColumnASCIIFile LatticeFile;
-      if (LatticeFile.Parse(geometryFile) == false)
-	{
-	  LatticeFile.DumpErrors(cout);
-	}
-      this->NbrBonds = LatticeFile.GetNbrLines();
-      this->SitesA = LatticeFile.GetAsIntegerArray(0);
-      this->SitesB = LatticeFile.GetAsIntegerArray(1);
-      this->Bonds = LatticeFile.GetAsIntegerArray(2);
+      this->NbrBonds = nbrBonds;
+      this->SitesA = geometryDescription[0];
+      this->SitesB = geometryDescription[1];
+      this->Bonds = geometryDescription[2];
     }
   
   this->LzMax = this->NbrSite - 1;

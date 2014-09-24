@@ -121,15 +121,20 @@ int main(int argc, char** argv)
   bool TorusFlag = Manager.GetBoolean("torus");
   int NbrSitesX = Manager.GetInteger("nbrsites-x"); 
   int NbrSitesY = Manager.GetInteger("nbrsites-y"); 
-
+  int* SitesA = 0;
+  int* SitesB = 0;
+  int* BondTypes = 0;
+  int NbrBonds = 0;
+  
+  
  
   if ((StripeFlag == false) && (TorusFlag == false) && (Manager.GetString("geometry-file") == 0))
     {
       cout << "Error. A lattice geometry has to be specified" << endl; 
       return -1;
     }
-
-  if ((Manager.GetString("geometry-file") != 0) && (NbrSites < 0))
+    
+  if (Manager.GetString("geometry-file") != 0)
     {
       MultiColumnASCIIFile GeometryFile;
       if (GeometryFile.Parse(Manager.GetString("geometry-file")) == false)
@@ -142,18 +147,23 @@ int main(int argc, char** argv)
 	  cout << "Error. " << GeometryFile.GetNbrColumns() << " has a wrong number of columns" << endl;
 	  return -1;
 	}
-      int* TmpColumn = GeometryFile.GetAsIntegerArray(0);
+      
+      SitesA = GeometryFile.GetAsIntegerArray(0);
+      SitesB = GeometryFile.GetAsIntegerArray(1);
+      BondTypes = GeometryFile.GetAsIntegerArray(2);
+      
       int LargestSiteIndex = -1; 
+      NbrBonds = GeometryFile.GetNbrLines();
       for (int i = 0; i < GeometryFile.GetNbrLines(); ++i)
 	{
-	  if (TmpColumn[i] > LargestSiteIndex)
-	    LargestSiteIndex = TmpColumn[i];
+	  if (SitesA[i] > LargestSiteIndex)
+	    LargestSiteIndex = SitesA[i];
 	}
-      TmpColumn = GeometryFile.GetAsIntegerArray(1);
+      
       for (int i = 0; i < GeometryFile.GetNbrLines(); ++i)
 	{
-	  if (TmpColumn[i] > LargestSiteIndex)
-	    LargestSiteIndex = TmpColumn[i];
+	  if (SitesB[i] > LargestSiteIndex)
+	    LargestSiteIndex = SitesB[i];
 	}
       NbrSites = LargestSiteIndex + 1;
     }
@@ -165,6 +175,63 @@ int main(int argc, char** argv)
       cout << "Error. The number of sites is not compatible with the periodicity in the x direction" << endl; 
       return -1;
     }
+  
+    
+  if (TorusFlag == true)
+  {
+    if (Manager.GetBoolean("2dperiodic-boundaries") == true)
+    {
+      NbrSitesX = Manager.GetInteger("max-xmomentum");
+      NbrSitesY = Manager.GetInteger("max-ymomentum");
+    }
+    
+    if ((NbrSitesX == 0) || (NbrSitesY == 0))
+    {
+      cout << "Error. The number of sites in directions x and y must be specified in torus geometry" << endl;
+      return -1; 
+    }
+    
+    if (2*NbrSitesX * NbrSitesY != NbrSites)
+    {
+     cout << "Error. The number of sites is not compatible with the periodicity of the torus" << endl;
+     return -1;
+    }
+    
+    int TmpIndex = 0;
+    NbrBonds = 3*NbrSitesX*NbrSitesY;
+    SitesA = new int [NbrBonds];
+    SitesB = new int [NbrBonds];
+    BondTypes = new int [NbrBonds];
+    
+    for (int indexX = 0; indexX < NbrSitesX; ++indexX)
+     {
+      for (int indexY = 0; indexY < NbrSitesY; ++indexY)
+	{
+	  int indexA = 2 * ((indexX * NbrSitesY) + indexY);
+	  int indexB = 2 * ((indexX * NbrSitesY) + indexY) + 1;
+	  int indexA10 = 2 * ((((indexX + 1) % NbrSitesX) * NbrSitesY) + indexY);
+	  int shiftedIndexX = indexX - 1;
+	  if (shiftedIndexX < 0)
+	    {
+	      shiftedIndexX += NbrSitesX;
+	    }
+	  int indexB1m1 = 2 * ((shiftedIndexX * NbrSitesY) + ((indexY + 1) % NbrSitesY)) + 1;
+	  SitesA [3*TmpIndex] = indexA;
+	  SitesB [3*TmpIndex] = indexB;
+	  BondTypes [3*TmpIndex] = 0;
+	  
+	  SitesA [3*TmpIndex + 1] = indexB;
+	  SitesB [3*TmpIndex + 1] = indexA10;
+	  BondTypes [3*TmpIndex + 1] = 1;
+	  
+	  SitesA [3*TmpIndex  + 2] = indexA;
+	  SitesB [3*TmpIndex + 2] = indexB1m1;
+	  BondTypes [3*TmpIndex + 2] = 2;
+	  	  
+	  TmpIndex += 1;
+	}
+    }
+  }
     
 //   if ((StripeFlag) && ((NbrSites % 4) != 2))
 //   {
@@ -353,9 +420,13 @@ int main(int argc, char** argv)
 	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  
-	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 											SitesB, BondTypes, Manager.GetDouble("isotropic-t"), 
 										 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), 
 										 Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
+	  
+// // 	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, GeometryFile, Manager.GetDouble("isotropic-t"), 
+// // 										 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), 
+// // 										 Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
 	  
 	  char* ContentPrefix = new char[256];
 	  if (SzSymmetryFlag == false)
@@ -450,8 +521,8 @@ int main(int argc, char** argv)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	      
-	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, XPeriodicity, 
-												     Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 											SitesB, BondTypes, XMomentum, XPeriodicity, 
+												     Manager.GetDouble("isotropic-t"), 
 												     Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
 												     Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
 												     Architecture.GetArchitecture(), Memory);
@@ -563,9 +634,9 @@ int main(int argc, char** argv)
 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 		  
-		  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, XMomentum, Manager.GetInteger("max-xmomentum"),
+		  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 											SitesB, BondTypes, XMomentum, Manager.GetInteger("max-xmomentum"),
 													 YMomentum, Manager.GetInteger("max-ymomentum"),
-													 Manager.GetString("geometry-file"), Manager.GetDouble("isotropic-t"), 
+													 Manager.GetDouble("isotropic-t"), 
 													 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
 													 Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
 													 Architecture.GetArchitecture(), Memory);
