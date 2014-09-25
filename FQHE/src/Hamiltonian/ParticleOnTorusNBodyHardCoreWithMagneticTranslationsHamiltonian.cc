@@ -227,6 +227,9 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 
 ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::~ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian()
 {
+  for (int i = 0; i < this->NbrEntryPrecalculatedInteractionCoefficients; ++i)
+    delete[] this->PrecalculatedInteractionCoefficients[i];  
+  delete[] this->PrecalculatedInteractionCoefficients;
 }
   
 // set Hilbert space
