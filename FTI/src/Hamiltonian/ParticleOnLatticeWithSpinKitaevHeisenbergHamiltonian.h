@@ -239,95 +239,234 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
 {
   int Index;
   double Coefficient;
-  if (this->OneBodyGenericInteractionFactorsupup != 0)
-    if (this->OneBodyGenericInteractionFactorsdowndown != 0)
-      {
-	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    for (int j = 0; j < this->NbrSite; ++j) 
-	      {
-		for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
-		      {
-			Index = particles->AduAu(i , j, j2, Coefficient);
-			if (Index < particles->GetHilbertSpaceDimension())
-			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
-			
-			Index = particles->AddAd(i , j, j2, Coefficient);
-			if (Index < particles->GetHilbertSpaceDimension())
-			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
-		      }
-		  }
-	      }
-	  }
-      }
-    else
-      {
-	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    Coefficient = 0.0;
-	    for (int j = 0; j < this->NbrSite; ++j) 
-	      {
-		for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
-		      {
-			Index = particles->AduAu(i, j, j2, Coefficient);
-			if (Index < particles->GetHilbertSpaceDimension())
-			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
-		      }
-		  }
-	      }
-	  }
-      }
-  else
-    if (this->OneBodyGenericInteractionFactorsdowndown != 0)
-      {
-	for (int i = firstComponent; i < lastComponent; i += step)
-	  { 
-	    Coefficient = 0.0;
-	    for (int j = 0; j < this->NbrSite; ++j) 
-	      {
-		for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
-		      {
-			Index = particles->AddAd(i, j, j2, Coefficient);
-			if (Index < particles->GetHilbertSpaceDimension())
-			  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
-		      }
-		  }
-	      }
-	  }
-      }	
-  for (int i = firstComponent; i < lastComponent; i += step)
-    vDestination[i] += this->HamiltonianShift * vSource[i];
-  if (this->OneBodyGenericInteractionFactorsupdown != 0)
+  if (this->HermitianSymmetryFlag == false)
     {
-      double Coefficient;
-      Complex Source;
-      int Dim = particles->GetHilbertSpaceDimension();
-      int Index;
-      for (int i = firstComponent; i < lastComponent; i += step)
+      if (this->OneBodyGenericInteractionFactorsupup != 0)
+	if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	  {
+	    for (int i = firstComponent; i < lastComponent; i += step)
+	      { 
+		for (int j = 0; j < this->NbrSite; ++j) 
+		  {
+		    for (int k = 0; k < 3; ++k)
+		      {
+			int j2 = this->MapNearestNeighborBonds[j][k];
+			if (j2 < this->NbrSite)
+			  {
+			    Index = particles->AduAu(i , j, j2, Coefficient);
+			    if (Index < particles->GetHilbertSpaceDimension())
+			      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+			    
+			    Index = particles->AddAd(i , j, j2, Coefficient);
+			    if (Index < particles->GetHilbertSpaceDimension())
+			      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+			  }
+		      }
+		  }
+	      }
+	  }
+	else
+	  {
+	    for (int i = firstComponent; i < lastComponent; i += step)
+	      { 
+		Coefficient = 0.0;
+		for (int j = 0; j < this->NbrSite; ++j) 
+		  {
+		    for (int k = 0; k < 3; ++k)
+		      {
+			int j2 = this->MapNearestNeighborBonds[j][k];
+			if (j2 < this->NbrSite)
+			  {
+			    Index = particles->AduAu(i, j, j2, Coefficient);
+			    if (Index < particles->GetHilbertSpaceDimension())
+			      vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+			  }
+		      }
+		  }
+	      }
+	  }
+      else
 	{
-	  Source = vSource[i];
-	  for (int j = 0; j < this->NbrSite; ++j)
+	  if (this->OneBodyGenericInteractionFactorsdowndown != 0)
 	    {
-	      for (int k = 0; k < 3; ++k)
-		{
-		  int j2 = this->MapNearestNeighborBonds[j][k];
-		  if (j2 < this->NbrSite)
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		{ 
+		  Coefficient = 0.0;
+		  for (int j = 0; j < this->NbrSite; ++j) 
 		    {
-		      Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient);
-		      if (Index < Dim)
-			vDestination[Index] += (Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * Source;
-		      Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient);
-		      if (Index < Dim)
-			vDestination[Index] += (Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k]) * Source;
+		      for (int k = 0; k < 3; ++k)
+			{
+			  int j2 = this->MapNearestNeighborBonds[j][k];
+			  if (j2 < this->NbrSite)
+			    {
+			      Index = particles->AddAd(i, j, j2, Coefficient);
+			      if (Index < particles->GetHilbertSpaceDimension())
+				vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+			    }
+			}
+		    }
+		}
+	    }	
+	}
+      for (int i = firstComponent; i < lastComponent; i += step)
+	vDestination[i] += this->HamiltonianShift * vSource[i];
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
+	{
+	  double Coefficient;
+	  Complex Source;
+	  int Dim = particles->GetHilbertSpaceDimension();
+	  int Index;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    {
+	      Source = vSource[i];
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
+		    {
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
+			{
+			  Index = particles->AddAu(i, j, j2, Coefficient);
+			  if (Index < Dim)
+			    vDestination[Index] += (Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * Source;
+			  Index = particles->AduAd(i, j, j2, Coefficient);
+			  if (Index < Dim)
+			    vDestination[Index] += (Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k]) * Source;
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      if (this->OneBodyGenericInteractionFactorsupup != 0)
+	if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	  {
+	    for (int i = firstComponent; i < lastComponent; i += step)
+	      { 
+		for (int j = 0; j < this->NbrSite; ++j) 
+		  {
+		    for (int k = 0; k < 3; ++k)
+		      {
+			int j2 = this->MapNearestNeighborBonds[j][k];
+			if (j2 < this->NbrSite)
+			  {
+			    Index = particles->AduAu(i, j, j2, Coefficient);
+			    if (Index <= i)
+			      {
+				vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+				if (Index < i)
+				  {
+				    vDestination[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupup[j][k]) * vSource[Index];
+				  }
+			      }			    
+			    Index = particles->AddAd(i , j, j2, Coefficient);
+			    if (Index <= i)
+			      {
+				vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+				if (Index < i)
+				  {
+				    vDestination[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsdowndown[j][k]) * vSource[Index];		  
+				  }
+			      }
+			  }
+		      }
+		  }
+	      }
+	  }
+	else
+	  {
+	    for (int i = firstComponent; i < lastComponent; i += step)
+	      { 
+		Coefficient = 0.0;
+		for (int j = 0; j < this->NbrSite; ++j) 
+		  {
+		    for (int k = 0; k < 3; ++k)
+		      {
+			int j2 = this->MapNearestNeighborBonds[j][k];
+			if (j2 < this->NbrSite)
+			  {
+			    Index = particles->AduAu(i, j, j2, Coefficient);
+			    if (Index <= i)
+			      {
+				vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * vSource[i];
+				if (Index < i)
+				  {
+				    vDestination[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupup[j][k]) * vSource[Index];
+				  }
+			      }
+			  }
+		      }
+		  }
+	      }
+	  }
+      else
+	{
+	  if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	    {
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		{ 
+		  Coefficient = 0.0;
+		  for (int j = 0; j < this->NbrSite; ++j) 
+		    {
+		      for (int k = 0; k < 3; ++k)
+			{
+			  int j2 = this->MapNearestNeighborBonds[j][k];
+			  if (j2 < this->NbrSite)
+			    {
+			      Index = particles->AddAd(i, j, j2, Coefficient);
+			      if (Index <= i)
+				{
+				  vDestination[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * vSource[i];		  
+				  if (Index < i)
+				    {
+				      vDestination[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsdowndown[j][k]) * vSource[Index];		  
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }	
+	}
+      for (int i = firstComponent; i < lastComponent; i += step)
+	vDestination[i] += this->HamiltonianShift * vSource[i];
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
+	{
+	  double Coefficient;
+	  Complex Source;
+	  int Dim = particles->GetHilbertSpaceDimension();
+	  int Index;
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    {
+	      Source = vSource[i];
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
+		    {
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
+			{
+			  Index = particles->AddAu(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      vDestination[Index] += (Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * Source;
+			      if (Index < i)
+				{
+				  vDestination[i] += (Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSource[Index];
+				}
+			    }
+			  Index = particles->AduAd(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      vDestination[Index] += (Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k]) * Source;
+			      if (Index < i)
+				{
+				  vDestination[i] += (Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * vSource[Index];
+				}
+			    }
+			}
 		    }
 		}
 	    }
@@ -351,131 +490,300 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateMNOneB
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient = 0.0;
   int Index;
-  if (this->OneBodyGenericInteractionFactorsupup != 0) 
-  {
-    if (this->OneBodyGenericInteractionFactorsdowndown != 0)
-      {
-	for (int p = 0; p < nbrVectors; ++p)
+  if (this->HermitianSymmetryFlag == false)
+    {
+      if (this->OneBodyGenericInteractionFactorsupup != 0)
+	{
+	  if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	    {
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  ComplexVector& TmpSourceVector = vSources[p];
+		  ComplexVector& TmpDestinationVector = vDestinations[p];
+		  
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      for (int j = 0; j < this->NbrSite; ++j)
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AduAu(i, j, j2, Coefficient);
+				  if (Index < Dim)
+				    TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * TmpSourceVector[i];
+				  
+				  Index = particles->AddAd(i, j, j2, Coefficient);
+				  if (Index < Dim)
+				    TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * TmpSourceVector[i];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  ComplexVector& TmpSourceVector = vSources[p];
+		  ComplexVector& TmpDestinationVector = vDestinations[p];  
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      for (int j = 0; j < this->NbrSite; ++j)
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AduAu(i, j, j2, Coefficient);
+				  if (Index < Dim)
+				    TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * TmpSourceVector[i];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	    {
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  ComplexVector& TmpSourceVector = vSources[p];
+		  ComplexVector& TmpDestinationVector = vDestinations[p];  
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    {
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      for (int j = 0; j < this->NbrSite; ++j)
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AddAd(i, j, j2, Coefficient);
+				  if (Index < Dim)
+				    TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * TmpSourceVector[i];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      for (int p = 0; p < nbrVectors; ++p)
 	{
 	  ComplexVector& TmpSourceVector = vSources[p];
 	  ComplexVector& TmpDestinationVector = vDestinations[p];
-   
 	  for (int i = firstComponent; i < lastComponent; i += step)
-	      { 
-		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-		for (int j = 0; j < this->NbrSite; ++j) 
-		  {
-		    for (int k = 0; k < 3; ++k)
+	    TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	}
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
+	{
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    {
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
 		    {
 		      int j2 = this->MapNearestNeighborBonds[j][k];
 		      if (j2 < this->NbrSite)
-		      {
-			Index = particles->AduAu(i, j, j2, Coefficient);
-			if (Index < Dim)
-			  TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * TmpSourceVector[i];
-		      
-			Index = particles->AddAd(i, j, j2, Coefficient);
-			if (Index < Dim)
-			  TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * TmpSourceVector[i];
-		      }
+			{
+			  Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      for (int p = 0; p < nbrVectors; ++p)
+				vDestinations[p][Index] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSources[p][i];
+			    }
+			  Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient);
+			  if (Index < Dim)
+			    {
+			      for (int p = 0; p < nbrVectors; ++p)
+				vDestinations[p][Index] += Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k] * vSources[p][i];
+			    }
+			}
 		    }
-		  }
-	      }
-	  }
-      }
-    else
-      {
-	for (int p = 0; p < nbrVectors; ++p)
-	{
-	  ComplexVector& TmpSourceVector = vSources[p];
-	  ComplexVector& TmpDestinationVector = vDestinations[p];   
-	  for (int i = firstComponent; i < lastComponent; i += step)
-	      { 
-		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-		for (int j = 0; j < this->NbrSite; ++j) 
-		{
-		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
-		    {
-		      Index = particles->AduAu(i, j, j2, Coefficient);
-			if (Index < Dim)
-			  TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * TmpSourceVector[i];
-		    }
-		  }
 		}
-	      }
-	  }
-      }
-  }
-  else
-    if (this->OneBodyGenericInteractionFactorsdowndown != 0)
-      {
-	for (int p = 0; p < nbrVectors; ++p)
-	{
-	  ComplexVector& TmpSourceVector = vSources[p];
-	  ComplexVector& TmpDestinationVector = vDestinations[p];   
-	  for (int i = firstComponent; i < lastComponent; i += step)
-	      { 
-		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-		for (int j = 0; j < this->NbrSite; ++j) 
-		{
-		  for (int k = 0; k < 3; ++k)
-		  {
-		    int j2 = this->MapNearestNeighborBonds[j][k];
-		    if (j2 < this->NbrSite)
-		    {
-		      Index = particles->AddAd(i, j, j2, Coefficient);
-			if (Index < Dim)
-			  TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * TmpSourceVector[i];
-		    }
-		  }
-		}
-	      }
-	  }
-      }	
-//   for (int i = firstComponent; i < lastComponent; i += step)
-//      cout << vDestinations[i] << " ";
-//   cout << endl;
-  for (int p = 0; p < nbrVectors; ++p)
-    {
-      ComplexVector& TmpSourceVector = vSources[p];
-      ComplexVector& TmpDestinationVector = vDestinations[p];
-      for (int i = firstComponent; i < lastComponent; i += step)
-	TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
-    }
-//   for (int i = firstComponent; i < lastComponent; i += step)
-//      cout << vDestinations[i] << " ";
-  if (this->OneBodyGenericInteractionFactorsupdown != 0)
-    {
-      for (int i = firstComponent; i < lastComponent; i += step)
-	{
-	  for (int j = 0; j < this->NbrSite; ++j)
-	    {
-	      for (int k = 0; k < 3; ++k)
-		{
-		  int j2 = this->MapNearestNeighborBonds[j][k];
-		  if (j2 < this->NbrSite)
-		  {
-		    Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient);
-		    if (Index < Dim)
-		      {
-			for (int p = 0; p < nbrVectors; ++p)
-			  vDestinations[p][Index] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSources[p][i];
-		      }
-		    Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient);
-		    if (Index < Dim)
-		    {
-		      for (int p = 0; p < nbrVectors; ++p)
-			vDestinations[p][Index] += Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k] * vSources[p][i];
-		    }
-		  }
-	      }
 	    }
-	  }
-      }
-
+	}
+    }
+  else
+    {
+      if (this->OneBodyGenericInteractionFactorsupup != 0) 
+	{
+	  if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	    {
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  ComplexVector& TmpSourceVector = vSources[p];
+		  ComplexVector& TmpDestinationVector = vDestinations[p];
+		  
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    { 
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      for (int j = 0; j < this->NbrSite; ++j) 
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AduAu(i, j, j2, Coefficient);
+				  if (Index <= i)
+				    {
+				      TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * TmpSourceVector[i];
+				      if (Index < i)
+					{
+					  TmpDestinationVector[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupup[j][k]) * TmpSourceVector[Index];
+					}
+				    }
+				  
+				  Index = particles->AddAd(i, j, j2, Coefficient);
+				  if (Index <= i)
+				    {
+				      TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * TmpSourceVector[i];
+				      if (Index < i)
+					{
+					  TmpDestinationVector[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsdowndown[j][k]) * TmpSourceVector[Index];
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  ComplexVector& TmpSourceVector = vSources[p];
+		  ComplexVector& TmpDestinationVector = vDestinations[p];   
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    { 
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      for (int j = 0; j < this->NbrSite; ++j) 
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AduAu(i, j, j2, Coefficient);
+				  if (Index <= i)
+				    {
+				      TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsupup[j][k] * TmpSourceVector[i];
+				      if (Index < i)
+					{
+					  TmpDestinationVector[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupup[j][k]) * TmpSourceVector[Index];
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  if (this->OneBodyGenericInteractionFactorsdowndown != 0)
+	    {
+	      for (int p = 0; p < nbrVectors; ++p)
+		{
+		  ComplexVector& TmpSourceVector = vSources[p];
+		  ComplexVector& TmpDestinationVector = vDestinations[p];   
+		  for (int i = firstComponent; i < lastComponent; i += step)
+		    { 
+		      TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+		      for (int j = 0; j < this->NbrSite; ++j) 
+			{
+			  for (int k = 0; k < 3; ++k)
+			    {
+			      int j2 = this->MapNearestNeighborBonds[j][k];
+			      if (j2 < this->NbrSite)
+				{
+				  Index = particles->AddAd(i, j, j2, Coefficient);
+				  if (Index <= i)
+				    {
+				      TmpDestinationVector[Index] += Coefficient * this->OneBodyGenericInteractionFactorsdowndown[j][k] * TmpSourceVector[i];
+				      if (Index < i)
+					{
+					  TmpDestinationVector[i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsdowndown[j][k]) * TmpSourceVector[Index];
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }	
+	  for (int p = 0; p < nbrVectors; ++p)
+	    {
+	      ComplexVector& TmpSourceVector = vSources[p];
+	      ComplexVector& TmpDestinationVector = vDestinations[p];
+	      for (int i = firstComponent; i < lastComponent; i += step)
+		TmpDestinationVector[i] += this->HamiltonianShift * TmpSourceVector[i];
+	    }
+	}
+      if (this->OneBodyGenericInteractionFactorsupdown != 0)
+	{
+	  for (int i = firstComponent; i < lastComponent; i += step)
+	    {
+	      for (int j = 0; j < this->NbrSite; ++j)
+		{
+		  for (int k = 0; k < 3; ++k)
+		    {
+		      int j2 = this->MapNearestNeighborBonds[j][k];
+		      if (j2 < this->NbrSite)
+			{
+			  Index = particles->AddAu(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      if (Index < i)
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    {
+				      vDestinations[p][Index] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSources[p][i];
+				      vDestinations[p][i] += Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k] * vSources[p][Index];
+				    }
+				}
+			      else
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    vDestinations[p][Index] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSources[p][i];
+				}
+			    }
+			  Index = particles->AduAd(i, j, j2, Coefficient);
+			  if (Index <= i)
+			    {
+			      if (Index < i)
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    {
+				      vDestinations[p][Index] += Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k] * vSources[p][i];
+				      vDestinations[p][i] += Coefficient * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSources[p][Index];
+				    }
+				}
+			      else
+				{
+				  for (int p = 0; p < nbrVectors; ++p)
+				    vDestinations[p][Index] += Coefficient * this->OneBodyGenericInteractionFactorsupdown[j][k] * vSources[p][i];
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
 }
 
 // core part of the FastMultiplication method involving the one-body interaction

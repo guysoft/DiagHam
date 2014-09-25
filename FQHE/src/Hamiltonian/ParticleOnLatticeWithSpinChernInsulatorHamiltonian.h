@@ -1036,23 +1036,65 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
       Complex Source;
       int Dim = particles->GetHilbertSpaceDimension();
       int Index;
-      for (int i = firstComponent; i < lastComponent; i += step)
+       if (this->HermitianSymmetryFlag == false)
 	{
-	  Source = vSource[i];
-	  for (int j = 0; j <= this->LzMax; ++j)
+	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      Index = particles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
-	      if (Index < Dim)
+	      Source = vSource[i];
+	      for (int j = 0; j <= this->LzMax; ++j)
 		{
-		  vDestination[Index] += (Coefficient * Conj(OneBodyInteractionFactorsupdown[j])) * Source;
-		}
-	      Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
-	      if (Index < Dim)
-		{
-		  vDestination[Index] += (Coefficient * OneBodyInteractionFactorsupdown[j]) * Source;
+		  Index = particles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * Conj(OneBodyInteractionFactorsupdown[j])) * Source;
+		    }
+		  Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * OneBodyInteractionFactorsupdown[j]) * Source;
+		    }
 		}
 	    }
 	}
+       else
+	 {
+	   for (int i = firstComponent; i < lastComponent; i += step)
+	     {
+	       Source = vSource[i];
+	       for (int j = 0; j <= this->LzMax; ++j)
+		 {
+		   Index = particles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
+		   if (Index <= i)
+		     {
+		       if (Index < i)
+			 {
+			   vDestination[Index] += (Coefficient * Conj(OneBodyInteractionFactorsupdown[j])) * Source;
+			   vDestination[i] += (Coefficient * OneBodyInteractionFactorsupdown[j]) * vSource[Index];
+			 }
+		       else
+			 {
+			   vDestination[Index] += (Coefficient * Conj(OneBodyInteractionFactorsupdown[j])) * Source;
+			 }
+		     }
+		   Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
+		   if (Index < Dim)
+		     {
+		       if (Index <= i)
+			 {
+			   if (Index < i)
+			     {
+			       vDestination[Index] += (Coefficient * OneBodyInteractionFactorsupdown[j]) * Source;
+			       vDestination[i] += (Coefficient * Conj(OneBodyInteractionFactorsupdown[j])) * vSource[Index];
+			     }
+			   else
+			     {
+			       vDestination[Index] += (Coefficient * OneBodyInteractionFactorsupdown[j]) * Source;
+			     }
+			 }
+		     }
+		 }
+	     }
+	 }
     }
 }
 
@@ -1142,26 +1184,73 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNOneBod
       double Coefficient;
       int Dim = particles->GetHilbertSpaceDimension();
       int Index;
-      for (int i = firstComponent; i < lastComponent; i += step)
+      if (this->HermitianSymmetryFlag == false)
 	{
-	  for (int j = 0; j <= this->LzMax; ++j)
+ 	  for (int i = firstComponent; i < lastComponent; i += step)
 	    {
-	      Index = particles->AddAu(i + this->PrecalculationShift, j, j, Coefficient);
-	      if (Index < Dim)
+	      for (int j = 0; j <= this->LzMax; ++j)
 		{
-		  for (int p = 0; p < nbrVectors; ++p)
-		    vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdown[j]) * vSources[p][i];
+		  Index = particles->AddAu(i, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdown[j]) * vSources[p][i];
+		    }
+		  Index = particles->AduAd(i, j, j, Coefficient);
+		  if (Index < Dim)
+		    {
+		      for (int p = 0; p < nbrVectors; ++p)
+			vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		    }
 		}
-	      Index = particles->AduAd(i + this->PrecalculationShift, j, j, Coefficient);
-	      if (Index < Dim)
+	    }
+	}
+      else
+	{
+ 	  for (int i = firstComponent; i < lastComponent; i += step)
+	    {
+	      for (int j = 0; j <= this->LzMax; ++j)
 		{
-		  for (int p = 0; p < nbrVectors; ++p)
-		    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+		  Index = particles->AddAu(i, j, j, Coefficient);
+		  if (Index <= i)
+		    {
+		      if (Index < i)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdown[j]) * vSources[p][i];
+			      vDestinations[p][i] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * Conj(OneBodyInteractionFactorsupdown[j]) * vSources[p][i];
+			    }
+			}
+		    }
+		  Index = particles->AduAd(i, j, j, Coefficient);
+		  if (Index <= i)
+		    {
+		      if (Index < i)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+			      vDestinations[p][i] += Coefficient * Conj(OneBodyInteractionFactorsupdown[j]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    vDestinations[p][Index] += Coefficient * OneBodyInteractionFactorsupdown[j] * vSources[p][i];
+			}
+		    }
 		}
 	    }
 	}
     }
-
 }
 
 // core part of the FastMultiplication method involving the one-body interaction
