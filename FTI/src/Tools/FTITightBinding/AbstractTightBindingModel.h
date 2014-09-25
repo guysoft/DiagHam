@@ -59,6 +59,15 @@ class AbstractTightBindingModel
   // pointer to the architecture
   AbstractArchitecture* Architecture;
 
+  //  array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  int* NbrConnectedOrbitals;
+  // array that gives the orbital indices of the connected orbitals
+  int** ConnectedOrbitalIndices;
+  // array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  int** ConnectedOrbitalSpatialIndices;
+  // array that gives the hopping amplitudes for each pair of connected orbitals
+  Complex** ConnectedOrbitalHoppingAmplitudes;
+
  public:
 
   // default constructor
@@ -151,6 +160,15 @@ class AbstractTightBindingModel
   // 
   virtual double SingleParticleGroundstateEnergy();
   
+  // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+  //
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space 
+  virtual HermitianMatrix BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
+
  protected:
 
   // write an header that describes the tight binding model
@@ -175,6 +193,10 @@ class AbstractTightBindingModel
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates) = 0;
+
+  // find the orbitals connected to those located at the origin unit cell
+  // 
+  virtual void FindConnectedOrbitals();
 
 };
 

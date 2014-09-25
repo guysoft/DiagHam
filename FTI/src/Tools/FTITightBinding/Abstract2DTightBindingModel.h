@@ -337,6 +337,11 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //
   virtual void ComputeAllProjectedMomenta();
   
+  // core part that compute the band structure
+  //
+  // minStateIndex = minimum index of the state to compute
+  // nbrStates = number of states to compute
+  virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
 
   // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
   //
@@ -346,6 +351,18 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
   // return value = tight binding hamiltonian in real space 
   virtual HermitianMatrix BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
+
+  // build the tight binding hamiltonian in recirpocal space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+  //
+  // kx = momentum along the x direction (in 2pi /N_x unit) for which the hamiltonian in recirpocal space has to be computed
+  // ky = momentum along the y direction (in 2pi /N_y unit) for which the hamiltonian in recirpocal space has to be computed
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space 
+  virtual HermitianMatrix BuildTightBindingHamiltonianReciprocalSpace(int kx, int ky, int* nbrConnectedOrbitals, int** orbitalIndices, 
+								      int** spatialIndices, Complex** hoppingAmplitudes);
 
 };
 

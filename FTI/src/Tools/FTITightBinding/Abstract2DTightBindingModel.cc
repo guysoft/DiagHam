@@ -32,6 +32,7 @@
 #include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexDiagonalMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
@@ -1266,5 +1267,88 @@ HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRealSpa
 	}      
     }
   return TmpHamiltonian;
+}
+
+// build the tight binding hamiltonian in recirpocal space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+//
+// kx = momentum along the x direction (in 2pi /N_x unit) for which the hamiltonian in recirpocal space has to be computed
+// ky = momentum along the y direction (in 2pi /N_y unit) for which the hamiltonian in recirpocal space has to be computed
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianReciprocalSpace(int kx, int ky, int* nbrConnectedOrbitals, int** orbitalIndices, 
+											 int** spatialIndices, Complex** hoppingAmplitudes)
+{
+   HermitianMatrix TmpHamiltonian(this->NbrBands, true);
+   for (int k = 0; k < this->NbrBands; ++k)
+     {
+       for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
+	 {
+	   double TmpPhase = ((this->KxFactor * (((double) kx) + this->GammaX) * ((double) spatialIndices[k][l << 1])) 
+			      + (this->KyFactor * (((double) ky) + this->GammaY) * ((double) spatialIndices[k][(l << 1) + 1])));
+	   if (k >= orbitalIndices[k][l])
+	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], hoppingAmplitudes[k][l] * Phase(TmpPhase));
+	 }
+     }
+  return TmpHamiltonian;
+ 
+}
+
+// core part that compute the band structure
+//
+// minStateIndex = minimum index of the state to compute
+// nbrStates = number of states to compute
+
+void Abstract2DTightBindingModel::CoreComputeBandStructure(long minStateIndex, long nbrStates)
+{
+  this->FindConnectedOrbitals();
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      if (nbrStates == 0l)
+	nbrStates = this->NbrStatePerBand;
+      long MaxStateIndex = minStateIndex + nbrStates;
+      double KX;
+      double KY;
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
+	{
+	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
+	    {
+	      int Index = this->GetLinearizedMomentumIndex(kx, ky);
+	      if ((Index >= minStateIndex) && (Index < MaxStateIndex))
+		{
+		  HermitianMatrix TmpOneBodyHamiltonian = this->BuildTightBindingHamiltonianReciprocalSpace(kx, ky, this->NbrConnectedOrbitals, this->ConnectedOrbitalIndices,
+													    this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
+		  if (this->OneBodyBasis != 0)
+		    {
+		      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+		      TmpMatrix.SetToIdentity();
+		      RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+		      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+#else
+		      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+#endif
+		      this->OneBodyBasis[Index] = TmpMatrix;
+		      for (int i = 0; i < this->NbrBands; ++i)
+			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		    }
+		  else
+		    {
+		      RealDiagonalMatrix TmpDiag;
+#ifdef __LAPACK__
+		      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+#else
+		      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+#endif
+		      for (int i = 0; i < this->NbrBands; ++i)
+			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		    }
+		}
+	    }
+	}
+    }
 }
 

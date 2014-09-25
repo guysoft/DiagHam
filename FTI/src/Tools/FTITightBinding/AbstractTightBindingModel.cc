@@ -47,6 +47,10 @@ using std::endl;
 AbstractTightBindingModel::AbstractTightBindingModel()
 {
   this->Architecture = 0;
+  this->NbrConnectedOrbitals = 0;
+  this->ConnectedOrbitalIndices = 0;
+  this->ConnectedOrbitalSpatialIndices = 0;
+  this->ConnectedOrbitalHoppingAmplitudes = 0;
 }
 
 
@@ -55,6 +59,19 @@ AbstractTightBindingModel::AbstractTightBindingModel()
 
 AbstractTightBindingModel::~AbstractTightBindingModel()
 {
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
+	{
+	  delete[] this->ConnectedOrbitalIndices[i];
+	  delete[] this->ConnectedOrbitalSpatialIndices[i];
+	  delete[] this->ConnectedOrbitalHoppingAmplitudes[i];
+	}
+      delete[] this->ConnectedOrbitalIndices;
+      delete[] this->ConnectedOrbitalSpatialIndices;
+      delete[] this->ConnectedOrbitalHoppingAmplitudes;
+      delete[] this->NbrConnectedOrbitals;
+    }
 }
 
 // write an ASCII header that describes the tight binding model
@@ -399,13 +416,41 @@ void AbstractTightBindingModel::ComputeBandStructure()
   cout << "One-body diagonalization done in " << Dt << " s" << endl;
 }
 
+// build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions 
+//
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+HermitianMatrix AbstractTightBindingModel::BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
+{
+  HermitianMatrix TmpHamiltonian;
+  return TmpHamiltonian;
+}
+
 // get the tight binding hamiltonian in real space 
 // 
 // return value = tight binding hamiltonian
 
 HermitianMatrix AbstractTightBindingModel::GetRealSpaceTightBindingHamiltonian()
 {
-  cout << "warning, tight binding hamiltonian in real space is not available" << endl;
-  return HermitianMatrix();
+  HermitianMatrix TmpMatrix;
+  this->FindConnectedOrbitals();
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      TmpMatrix = this->BuildTightBindingHamiltonianRealSpace(this->NbrConnectedOrbitals, this->ConnectedOrbitalIndices,
+							      this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
+    }
+  return TmpMatrix;
+}
+
+// find the orbitals connected to those located at the origin unit cell
+// 
+  
+void AbstractTightBindingModel::FindConnectedOrbitals()
+{
+   cout << "warning, tight binding model does not have access to connected orbitals" << endl; 
 }
 

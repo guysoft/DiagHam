@@ -73,11 +73,6 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   //
   ~TightBindingModelCheckerboardLattice();
 
-  // get the tight binding hamiltonian in real space 
-  // 
-  // return value = tight binding hamiltonian
-  virtual HermitianMatrix GetRealSpaceTightBindingHamiltonian();
-
  protected :
 
   // core part that compute the band structure
@@ -85,6 +80,10 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex, long nbrStates);
+
+  // find the orbitals connected to those located at the origin unit cell
+  // 
+  virtual void FindConnectedOrbitals();
 
 };
 
