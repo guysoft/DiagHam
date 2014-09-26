@@ -51,6 +51,9 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   // four times the sublattice staggered chemical potential 
   double MuS;
 
+  // use the Bloch form instead of the the traditional form
+  bool BlochFormFlag;
+
  public:
 
   // default constructor
@@ -65,9 +68,10 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  // blochFormFlag = use the Bloch form instead of the the traditional form
   TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double t2p, double mus, 
 				       double gammaX, double gammaY, 
-				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
 
   // destructor
   //

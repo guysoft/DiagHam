@@ -280,7 +280,7 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("import-onebody") == 0)
     {
-      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModel->WriteBandStructure(BandStructureOutputFile);
@@ -291,7 +291,7 @@ int main(int argc, char** argv)
     }
       
 //   TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),  								Architecture.GetArchitecture());
-    bool FirstRunFlag = true;
+  bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
       for (int j = MinKy; j <= MaxKy; ++j)

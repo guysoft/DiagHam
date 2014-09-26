@@ -47,9 +47,10 @@
 // gammaY = boundary condition twisting angle along y
 // architecture = pointer to the architecture
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+// blochFormFlag = use the Bloch form instead of the the traditional form
 
 TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double t2p, double mus, 
-									   double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices)
+									   double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices, bool blochFormFlag)
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
@@ -64,6 +65,7 @@ TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice(int n
   this->NbrBands = 2;
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
+  this->BlochFormFlag = blochFormFlag;
 
   if (storeOneBodyMatrices == true)
     {
@@ -95,56 +97,63 @@ TightBindingModelCheckerboardLattice::~TightBindingModelCheckerboardLattice()
 
 void TightBindingModelCheckerboardLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
-  if (nbrStates == 0l)
-    nbrStates = this->NbrStatePerBand;
-  long MaxStateIndex = minStateIndex + nbrStates;
-  double KX;
-  double KY;
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+  if (this->BlochFormFlag == false)
     {
-      for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      if (nbrStates == 0l)
+	nbrStates = this->NbrStatePerBand;
+      long MaxStateIndex = minStateIndex + nbrStates;
+      double KX;
+      double KY;
+      for (int kx = 0; kx < this->NbrSiteX; ++kx)
 	{
-	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
-	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
+	  for (int ky = 0; ky < this->NbrSiteY; ++ky)
 	    {
-	      Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-							   sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	      double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
-	      double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
-								    - cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY))));
-
-	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	      TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	      TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	      
-	      if (this->OneBodyBasis != 0)
+	      int Index = this->GetLinearizedMomentumIndex(kx, ky);
+	      if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 		{
-		  ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
-		  TmpMatrix.SetToIdentity();
-		  RealDiagonalMatrix TmpDiag;
+		  Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
+							       sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
+		  double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
+		  double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
+									- cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY))));
+		  
+		  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
+		  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
+		  TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
+		  TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
+		  
+		  if (this->OneBodyBasis != 0)
+		    {
+		      ComplexMatrix TmpMatrix(this->NbrBands, this->NbrBands, true);
+		      TmpMatrix.SetToIdentity();
+		      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
+		      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
 #else
-		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
+		      TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
 #endif
-		  this->OneBodyBasis[Index] = TmpMatrix;
-		  for (int i = 0; i < this->NbrBands; ++i)
-		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
-		}
-	      else
-		{
-		  RealDiagonalMatrix TmpDiag;
+		      this->OneBodyBasis[Index] = TmpMatrix;
+		      for (int i = 0; i < this->NbrBands; ++i)
+			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		    }
+		  else
+		    {
+		      RealDiagonalMatrix TmpDiag;
 #ifdef __LAPACK__
-		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
+		      TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
-		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
+		      TmpOneBodyHamiltonian.Diagonalize(TmpDiag);
 #endif
-		  for (int i = 0; i < this->NbrBands; ++i)
-		    this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		      for (int i = 0; i < this->NbrBands; ++i)
+			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+		    }
 		}
 	    }
 	}
+    }
+  else
+    {
+      this->Abstract2DTightBindingModel::CoreComputeBandStructure(minStateIndex, nbrStates);
     }
 }
 
