@@ -144,7 +144,7 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // x = reference on the x coordinate of the unit cell
   // y = reference on the y coordinate of the unit cell
   // orbitalIndex = reference on the index of the orbital / site within the unit cell
-  virtual void GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int y, int& orbitalIndex);
+  virtual void GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int& y, int& orbitalIndex);
 
   // get the angle between the two primitive lattice vectors
   //
@@ -464,7 +464,7 @@ inline int Abstract2DTightBindingModel::GetRealSpaceTightBindingLinearizedIndexS
 // y = reference on the y coordinate of the unit cell
 // orbitalIndex = reference on the index of the orbital / site within the unit cell
 
-inline void Abstract2DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int y, int& orbitalIndex)
+inline void Abstract2DTightBindingModel::GetRealSpaceTightBindingLinearizedIndex(int index, int& x, int& y, int& orbitalIndex)
 {
   orbitalIndex = index % this->NbrBands;
   index /= this->NbrBands;
