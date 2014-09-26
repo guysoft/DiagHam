@@ -20,6 +20,7 @@
 #include "Hamiltonian/ParticleOnLatticeCheckerboardLatticeSingleBandFiveBodyHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
@@ -453,6 +454,53 @@ int main(int argc, char** argv)
  	      AbstractQHEHamiltonian* Hamiltonian = 0;
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 		{ 
+//  test code for the generic density-density
+// 		  int* NbrInteractingOrbitals = new int[2];
+// 		  int** InteractingOrbitalsOrbitalIndices = new int*[2];
+// 		  int** InteractingOrbitalsSpatialIndices = new int*[2];
+// 		  double** InteractingOrbitalsPotentials = new double*[2];
+// 		  if (Manager.GetBoolean("boson") == true)
+// 		    {
+// 		      NbrInteractingOrbitals[0] = 1;
+// 		      InteractingOrbitalsOrbitalIndices[0] = new int[NbrInteractingOrbitals[0]];
+// 		      InteractingOrbitalsSpatialIndices[0] = new int[NbrInteractingOrbitals[0] * 2];
+// 		      InteractingOrbitalsPotentials[0] = new double[NbrInteractingOrbitals[0]];
+// 		      InteractingOrbitalsOrbitalIndices[0][0] = 0;
+// 		      InteractingOrbitalsSpatialIndices[0][0] = 0;
+// 		      InteractingOrbitalsSpatialIndices[0][1] = 0;
+// 		      InteractingOrbitalsPotentials[0][0] = Manager.GetDouble("u-potential");
+// 		      NbrInteractingOrbitals[1] = 1;
+// 		      InteractingOrbitalsOrbitalIndices[1] = new int[NbrInteractingOrbitals[1]];
+// 		      InteractingOrbitalsSpatialIndices[1] = new int[NbrInteractingOrbitals[1] * 2];
+// 		      InteractingOrbitalsPotentials[1] = new double[NbrInteractingOrbitals[1]];
+// 		      InteractingOrbitalsOrbitalIndices[1][0] = 1;
+// 		      InteractingOrbitalsSpatialIndices[1][0] = 0;
+// 		      InteractingOrbitalsSpatialIndices[1][1] = 0;
+// 		      InteractingOrbitalsPotentials[1][0] = Manager.GetDouble("u-potential");		  
+// 		    }
+// 		  else
+// 		    {
+// 		      NbrInteractingOrbitals[0] = 1;
+// 		      InteractingOrbitalsOrbitalIndices[0] = new int[NbrInteractingOrbitals[0]];
+// 		      InteractingOrbitalsSpatialIndices[0] = new int[NbrInteractingOrbitals[0] * 2];
+// 		      InteractingOrbitalsPotentials[0] = new double[NbrInteractingOrbitals[0]];
+// 		      InteractingOrbitalsOrbitalIndices[0][0] = 0;
+// 		      InteractingOrbitalsSpatialIndices[0][0] = 0;
+// 		      InteractingOrbitalsSpatialIndices[0][1] = 0;
+// 		      InteractingOrbitalsPotentials[0][0] = Manager.GetDouble("u-potential");
+// 		      NbrInteractingOrbitals[1] = 1;
+// 		      InteractingOrbitalsOrbitalIndices[1] = new int[NbrInteractingOrbitals[1]];
+// 		      InteractingOrbitalsSpatialIndices[1] = new int[NbrInteractingOrbitals[1] * 2];
+// 		      InteractingOrbitalsPotentials[1] = new double[NbrInteractingOrbitals[1]];
+// 		      InteractingOrbitalsOrbitalIndices[1][0] = 1;
+// 		      InteractingOrbitalsSpatialIndices[1][0] = 0;
+// 		      InteractingOrbitalsSpatialIndices[1][1] = 0;
+// 		      InteractingOrbitalsPotentials[1][0] = Manager.GetDouble("u-potential");		  
+// 		    }
+// 		  Hamiltonian = new ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, 0,
+// 												    NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
+// 												    InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+// 												    TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 											      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
 											      TightBindingModel,Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
