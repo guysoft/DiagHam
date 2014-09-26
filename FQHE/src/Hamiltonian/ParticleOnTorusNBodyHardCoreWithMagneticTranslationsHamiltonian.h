@@ -105,10 +105,8 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   //
   // creationCoefficients = array that contains the creation coefficients
   // annihilationCoefficients = array that contains the annihilation coefficients
-  // nbrPermutations1 = number of permutations of the creation indexes
-  // nbrPermutations2 = number of permutations of the annihilation indexes
   // return value = numerical coefficient  
-  virtual double EvaluateInteractionCoefficient(double** creationCoefficients, double** annihilationCoefficients, int nbrPermutations1, int nbrPermutations2);
+  virtual double EvaluateInteractionCoefficient(double* creationCoefficients, double* annihilationCoefficients);
   
   // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term in the case where they have been precalculated
   //
@@ -223,6 +221,9 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
       TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2];
     }
   }    
+  
+  delete[] mIndices2;
+  delete[] nIndices2;
  
  return TmpInteraction;
 }

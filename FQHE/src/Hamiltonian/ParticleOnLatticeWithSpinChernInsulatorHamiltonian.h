@@ -825,10 +825,14 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+		      
 		      if (Index < Dim)
 			{
                           indexArray[position] = Index;
 			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+// 			  cout << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " " << TmpIndices[i2] << " " << TmpIndices[i2 + 1 ] << " " << coefficientArray[position] << " " ;
+// 			  this->Particles->PrintState(cout, Index);
+// 			  cout << endl;
 			  ++position;
 			}
 		      ++TmpInteractionFactor;
@@ -845,6 +849,9 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 			{
                           indexArray[position] = Index;
 			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+// 			  cout << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " " << TmpIndices[i2] << " " << TmpIndices[i2 + 1 ] << " " << coefficientArray[position] << " " ;
+// 			  this->Particles->PrintState(cout, Index);
+// 			  cout << endl;
 			  ++position;
 			}
 		      ++TmpInteractionFactor;
@@ -865,12 +872,12 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
-		      cout << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " : " 
-			   << TmpIndices[i2] << " " <<  TmpIndices[i2 + 1] << " = " << Index << "  " << Coefficient << endl;
 		      if (Index < Dim)
 			{
                           indexArray[position] = Index;
 			  coefficientArray[position] = Coefficient * Coefficient2 * (*TmpInteractionFactor);
+// 			  cout << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " : " 
+// 			   << TmpIndices[i2] << " " <<  TmpIndices[i2 + 1] << " = " << Index << "  " << coefficientArray[position] << endl;
 			  ++position;
 			}
 		      ++TmpInteractionFactor;

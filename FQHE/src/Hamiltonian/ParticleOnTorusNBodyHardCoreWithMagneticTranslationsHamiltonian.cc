@@ -137,10 +137,10 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 		  Tmp /= this->MaxMomentum;
 		}
 	    }
-	  double** CoefficientCreation = new double* [1];
-	  double** CoefficientAnnihilation = new double* [1];
-	  CoefficientCreation[0] = new double [this->NBodyValue];
-	  CoefficientAnnihilation[0] = new double [this->NBodyValue];
+// 	  double* CoefficientCreation = new double [this->NBodyValue];
+// 	  double* CoefficientAnnihilation = new double [this->NBodyValue];
+	  double* CoefficientCreation;
+	  double* CoefficientAnnihilation;
 	  
 	  int SumCreationIndices;
 	  int SumAnnihilationIndices;
@@ -160,7 +160,7 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 	  
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
 	    {
-	      CoefficientCreation[0] = Coefficient[m1][this->NBodyValue - 1];
+	      CoefficientCreation = Coefficient[m1][this->NBodyValue - 1];
 	      SumCreationIndices = 0;
 	      for (int i = 0; i < this->NBodyValue; ++i)
 		SumCreationIndices += TmpIndices[m1][i];
@@ -174,9 +174,9 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 		if (((momentumTransfer + this->NbrLzValue) % this->NbrLzValue) == 0 )
 		{
 		  momentumTransfer /= this->NbrLzValue;
-		  CoefficientAnnihilation[0] = Coefficient[m2][momentumTransfer + this->NBodyValue - 1];
+		  CoefficientAnnihilation = Coefficient[m2][momentumTransfer + this->NBodyValue - 1];
 	      
-		  this->PrecalculatedInteractionCoefficients[m1][m2] = this->EvaluateInteractionCoefficient(CoefficientCreation, CoefficientAnnihilation, 1, 1);
+		  this->PrecalculatedInteractionCoefficients[m1][m2] = this->EvaluateInteractionCoefficient(CoefficientCreation, CoefficientAnnihilation);
 		}
 		else
 		  this->PrecalculatedInteractionCoefficients[m1][m2] = 0.0;		  
@@ -184,6 +184,7 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 	      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients);
 	    }
 	  
+	  delete[] InteractionCoefficientFileName;
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients; ++m1)
 	  {
 	    for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
@@ -322,6 +323,8 @@ double* ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluat
   }
   delete[] TmpIndices;
   delete[] momFactor;
+  delete[] countIter;
+  
   return Coefficient;
 }
 
@@ -536,7 +539,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
 // nbrPermutations2 = number of permutations of the annihilation indexes
 // return value = numerical coefficient  
 
-double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(double** creationCoefficients, double** annihilationCoefficients, int nbrPermutations1, int nbrPermutations2)
+double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(double* creationCoefficients, double* annihilationCoefficients)
 {
   double Coefficient = 0.0;
   double DoubleNbrLzValue = (double) this->NbrLzValue;
@@ -544,17 +547,10 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   FactorialNBody.SetToOne();
   FactorialNBody.FactorialMultiply(this->NBodyValue);
 
-  
-  for (int i1 = 0; i1 < nbrPermutations1; ++i1)
-  {
-   for (int i2 = 0; i2 < nbrPermutations2; ++i2)
-   {
-    for (int j = 0; j < this->NBodyValue; ++j)
-    {
-      Coefficient += creationCoefficients[i1][j]*annihilationCoefficients[i2][j];
-    }
-   }
-  }
+ 
+  for (int j = 0; j < this->NBodyValue; ++j)
+    Coefficient += creationCoefficients[j]*annihilationCoefficients[j];
+
   for (int i = 0; i < this->NBodyValue; ++i)
     Coefficient /= (M_PI * DoubleNbrLzValue);
   
