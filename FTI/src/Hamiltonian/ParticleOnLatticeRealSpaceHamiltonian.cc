@@ -208,6 +208,9 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensit
     }
   this->NbrSectorSums = 0;
 
+  double Sign = 1.0;
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    Sign = -1.0;
   for (int i = 0; i < densityDensity.GetNbrRow(); ++i)
     {
       for (int j = i; j < densityDensity.GetNbrRow(); ++j)
@@ -218,7 +221,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensit
 	    {
 	      this->SectorIndicesPerSum[this->NbrSectorSums][0] = i;
 	      this->SectorIndicesPerSum[this->NbrSectorSums][1] = j;
-	      this->InteractionFactors[this->NbrSectorSums][0] =  Tmp;
+	      this->InteractionFactors[this->NbrSectorSums][0] =  Sign * Tmp;
 	      ++this->NbrSectorSums;
 	    }
 	}
