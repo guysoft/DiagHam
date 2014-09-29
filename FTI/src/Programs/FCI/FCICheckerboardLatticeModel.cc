@@ -109,6 +109,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest enregy band");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "flatband-gap", "when using the flat band model with two bands, set the one-body gap between the two bands", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -344,16 +345,19 @@ int main(int argc, char** argv)
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
-		  Hamiltonian = new ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-													0, 1, 
-													NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
-													InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
-													TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), 
-													Memory);
+// 		  Hamiltonian = new ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+// 													0, 1, 
+// 													NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
+// 													InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+// 													TightBindingModel, Manager.GetBoolean("flat-band"), 
+// 													Manager.GetDouble("flatband-gap"),
+// 													Architecture.GetArchitecture(), 
+// 													Memory);
 
-//		  Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,TightBindingModel,
-//											    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),	     
-//											    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,TightBindingModel,
+											    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),	     
+											    Manager.GetBoolean("flat-band"), Manager.GetDouble("flatband-gap"),
+											    Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{

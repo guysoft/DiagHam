@@ -76,6 +76,8 @@ class ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian : publ
   
   // use flat band model
   bool FlatBand;
+  //  gap between the first band and the second band when using the flat band model   
+  double FlatBandOneBodyGap;
 
  public:
 
@@ -97,13 +99,15 @@ class ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian : publ
   // interactingOrbitalsPotentials = intensity of each density-density term 
   // tightBindingModel = pointer to the tight binding model
   // flatBandFlag = use flat band model
+  // flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY,
 								      int bandIndex1, int bandIndex2, 
 								      int* nbrInteractingOrbitals, int** interactingOrbitalsOrbitalIndices,
 								      int** interactingOrbitalsSpatialIndices, double** interactingOrbitalsPotentials,
-								      Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+								      Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, double flatBandOneBodyGap, 
+								      AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

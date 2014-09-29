@@ -65,11 +65,15 @@ ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian::ParticleOnLatticeWithSp
 // uPotential = strength of the repulsive on-site interaction
 // vPotential = strength of the repulsive two body neareast neighbor interaction
 // flatBandFlag = use flat band model
+// flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian::ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-												   int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,double uPotential, double vPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+														 int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel,
+														 double uPotential, double vPotential, 
+														 bool flatBandFlag, double flatBandOneBodyGap, 
+														 AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -80,6 +84,7 @@ ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian::ParticleOnLatticeWithSp
   this->VPotential = vPotential;
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
+  this->FlatBandOneBodyGap = flatBandOneBodyGap;
   this->HamiltonianShift = 0.0;
   this->Architecture = architecture;
   this->Memory = memory;
@@ -172,7 +177,7 @@ void ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian::EvaluateInteractio
     this->NbrInterSectorIndicesPerSum[i] = 0;
   
   ComplexMatrix* OneBodyBasis = new ComplexMatrix[this->TightBindingModel->GetNbrStatePerBand()];
-  if (this->FlatBand == false)
+  if ((this->FlatBand == false) || (this->FlatBandOneBodyGap != 0.0))
     {
       this->OneBodyInteractionFactorsupup = new double [NbrSites];
       this->OneBodyInteractionFactorsdowndown = new double [NbrSites];
@@ -185,6 +190,14 @@ void ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian::EvaluateInteractio
 	    {
 	      this->OneBodyInteractionFactorsupup[Index] = this->TightBindingModel->GetEnergy(0, Index);
 	      this->OneBodyInteractionFactorsdowndown[Index] = this->TightBindingModel->GetEnergy(1, Index);
+	    }
+	  else
+	    {
+	      if (this->FlatBandOneBodyGap != 0.0)
+		{
+		  this->OneBodyInteractionFactorsupup[Index] = 0.0;
+		  this->OneBodyInteractionFactorsdowndown[Index] = this->FlatBandOneBodyGap;		
+		}
 	    }
 	  OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
 	}

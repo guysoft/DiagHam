@@ -58,6 +58,9 @@ class ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian : public ParticleO
   //strength of the NN interaction
   double VPotential;
   
+  //  gap between the first band and the second band when using the flat band model   
+  double FlatBandOneBodyGap;
+
  public:
 
   // default constructor
@@ -77,9 +80,12 @@ class ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian : public ParticleO
   // gammaX = boundary condition twisting angle along x
   // gammaY = boundary condition twisting angle along y
   // flatBandFlag = use flat band model
+  // flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, double uPotential, double vPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+							  Abstract2DTightBindingModel* tightBindingModel, double uPotential, double vPotential, 
+							  bool flatBandFlag, double flatBandOneBodyGap, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //

@@ -70,6 +70,7 @@ ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::ParticleOnL
 // interactingOrbitalsPotentials = intensity of each density-density term 
 // tightBindingModel = pointer to the tight binding model
 // flatBandFlag = use flat band model
+// flatBandOneBodyGap = set the gap between the first band and the second band when using the flat band model
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
@@ -77,7 +78,8 @@ ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::ParticleOnL
 																	 int nbrSiteY, int bandIndex1, int bandIndex2,
 																	 int* nbrInteractingOrbitals, int** interactingOrbitalsOrbitalIndices,
 																	 int** interactingOrbitalsSpatialIndices, double** interactingOrbitalsPotentials,
-																	 Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, 
+																	 Abstract2DTightBindingModel* tightBindingModel, 
+																	 bool flatBandFlag, double flatBandOneBodyGap,
 																	 AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -90,6 +92,7 @@ ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::ParticleOnL
   this->HamiltonianShift = 0.0;
   this->TightBindingModel = tightBindingModel;
   this->FlatBand = flatBandFlag;
+  this->FlatBandOneBodyGap = flatBandOneBodyGap;
   this->NbrInteractingOrbitals = new int[this->TightBindingModel->GetNbrBands()];
   this->InteractingOrbitalsOrbitalIndices = new int*[this->TightBindingModel->GetNbrBands()];
   this->InteractingOrbitalsSpatialIndices = new int*[this->TightBindingModel->GetNbrBands()];
@@ -188,7 +191,7 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
   SigmaToBand[0] = this->BandIndex1;
   SigmaToBand[1] = this->BandIndex2;
 
-  if (this->FlatBand == false)
+  if ((this->FlatBand == false) || (this->FlatBandOneBodyGap != 0.0))
     {
       this->OneBodyInteractionFactorsupup = new double [this->TightBindingModel->GetNbrStatePerBand()];
       this->OneBodyInteractionFactorsdowndown = new double [this->TightBindingModel->GetNbrStatePerBand()];
@@ -201,6 +204,14 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 	  {
 	    this->OneBodyInteractionFactorsupup[Index] = this->TightBindingModel->GetEnergy(this->BandIndex1, Index);
 	    this->OneBodyInteractionFactorsdowndown[Index] = this->TightBindingModel->GetEnergy(this->BandIndex2, Index);
+	  }
+	else
+	  {
+	    if (this->FlatBandOneBodyGap != 0.0)
+	      {
+		this->OneBodyInteractionFactorsupup[Index] = 0.0;
+		this->OneBodyInteractionFactorsdowndown[Index] = this->FlatBandOneBodyGap;		
+	      }
 	  }
 	OneBodyBasis[Index] =  this->TightBindingModel->GetOneBodyMatrix(Index);
       }
