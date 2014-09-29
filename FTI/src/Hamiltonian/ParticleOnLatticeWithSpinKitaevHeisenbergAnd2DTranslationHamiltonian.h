@@ -1829,7 +1829,7 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		      int j2 = this->MapNearestNeighborBonds[j][k];
 		      if (j2 < this->NbrSite)
 			{
-			  Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  Index = particles->AddAu(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index <= i)
 			    {
 			      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k])) * Source;
@@ -1838,13 +1838,13 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 				  vDestination[i] += (Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSource[Index];
 				}
 			    }
-			  Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  Index = particles->AduAd(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index <= i)
 			    {
 			      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * this->OneBodyGenericInteractionFactorsupdown[j][k]) * Source;
 			      if (Index < i)
 				{
-				  vDestination[Index] += (Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * this->OneBodyGenericInteractionFactorsupdown[j][k])) * vSource[Index];
+				  vDestination[i] += (Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * this->OneBodyGenericInteractionFactorsupdown[j][k])) * vSource[Index];
 				}
 			    }
 			}
@@ -2126,7 +2126,7 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 		      int j2 = this->MapNearestNeighborBonds[j][k];
 		      if (j2 < this->NbrSite)
 			{
-			  Index = particles->AddAu(i + this->PrecalculationShift, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  Index = particles->AddAu(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index <= i)
 			    {
 			      if (Index < i)
@@ -2143,7 +2143,7 @@ inline void ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian
 				    vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * Conj(this->OneBodyGenericInteractionFactorsupdown[j][k]) * vSources[p][i];
 				}
 			    }
-			  Index = particles->AduAd(i + this->PrecalculationShift, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  Index = particles->AduAd(i, j, j2, Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index <= i)
 			    {
 			      if (Index < i)
