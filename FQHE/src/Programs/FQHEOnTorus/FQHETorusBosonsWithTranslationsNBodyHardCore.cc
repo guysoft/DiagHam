@@ -330,6 +330,9 @@ int main(int argc, char** argv)
       delete Space;
     }
   File.close();
+  delete[] XMomenta;
+  delete[] YMomenta;
+  delete[] OutputName;
   
   return 0;
 }

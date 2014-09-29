@@ -34,9 +34,10 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeWithSpinChernInsulatorHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 #include "MathTools/Complex.h"
+#include "Matrix/ComplexMatrix.h"
 
 #include <iostream>
 
@@ -49,22 +50,14 @@ using std::endl;
 class AbstractArchitecture;
 
 
-class ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian : public ParticleOnLatticeWithSpinChernInsulatorHamiltonian
+class ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian : public ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian
 {
 
  protected:
   
-  // hoping amplitude between neareast neighbor sites
-  double NNHoping;
-  // hoping amplitude between next neareast neighbor sites
-  double NextNNHoping;
-  // hoping amplitude between second next neareast neighbor sites
-  double SecondNextNNHoping;
-  // boundary condition twisting angle along x
-  double GammaX;
-  // boundary condition twisting angle along y
-  double GammaY;
-
+  //strength of the NN interaction
+  double VPotential;
+  
  public:
 
   // default constructor
@@ -86,7 +79,7 @@ class ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian : public ParticleO
   // flatBandFlag = use flat band model
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
-  ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, double uPotential, double t1, double t2, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
+  ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, Abstract2DTightBindingModel* tightBindingModel, double uPotential, double vPotential, bool flatBandFlag, AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
   //
@@ -105,8 +98,50 @@ class ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian : public ParticleO
   // kx2 = momentum along x for the B site
   // ky2 = momentum along y for the B site
   // return value = corresponding matrix element
-  Complex ComputeTwoBodyMatrixElementUpDown(int kx1, int ky1, int kx2, int ky2);
+  Complex ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2);
+  
+  
+  // compute the transformation basis contribution to the interaction matrix element
+// 
+// oneBodyBasis = array of transformation basis matrices
+// momentumIndex1 = compact momentum index of the first creation operator
+// momentumIndex2 = compact momentum index of the second creation operator
+// momentumIndex3 = compact momentum index of the first annihilation operator
+// momentumIndex4 = compact momentum index of the second annihiliation operator
+// energyIndex1 = energy index of the first creation operator
+// energyIndex2 = energy index of the second creation operator
+// energyIndex3 = energy index of the first annihilation operator
+// energyIndex4 = energy index of the second annihiliation operator
+// siteIndex1 = site index of the first creation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex2 = site index of the second creation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex3 = site index of the first annihilation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex4 = site index of the second annihiliation operator (0,...,3 = up, 4,...,7 = down)
+  Complex ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis, int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,  int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4);
 
 };
+
+// compute the transformation basis contribution to the interaction matrix element
+// 
+// oneBodyBasis = array of transformation basis matrices
+// momentumIndex1 = compact momentum index of the first creation operator
+// momentumIndex2 = compact momentum index of the second creation operator
+// momentumIndex3 = compact momentum index of the first annihilation operator
+// momentumIndex4 = compact momentum index of the second annihiliation operator
+// energyIndex1 = energy index of the first creation operator
+// energyIndex2 = energy index of the second creation operator
+// energyIndex3 = energy index of the first annihilation operator
+// energyIndex4 = energy index of the second annihiliation operator
+// siteIndex1 = site index of the first creation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex2 = site index of the second creation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex3 = site index of the first annihilation operator (0,...,3 = up, 4,...,7 = down)
+// siteIndex4 = site index of the second annihiliation operator (0,...,3 = up, 4,...,7 = down)
+
+inline Complex ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian::ComputeTransfomationBasisContribution(ComplexMatrix* oneBodyBasis,
+													    int momentumIndex1, int momentumIndex2, int momentumIndex3, int momentumIndex4, 
+													    int energyIndex1, int energyIndex2, int energyIndex3, int energyIndex4,
+													    int siteIndex1, int siteIndex2, int siteIndex3, int siteIndex4)
+{
+  return (Conj(oneBodyBasis[momentumIndex1][energyIndex1][siteIndex1]) * Conj(oneBodyBasis[momentumIndex2][energyIndex2][siteIndex2]) * oneBodyBasis[momentumIndex3][energyIndex3][siteIndex3] * oneBodyBasis[momentumIndex4][energyIndex4][siteIndex4]);
+}
 
 #endif

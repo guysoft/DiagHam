@@ -280,7 +280,15 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("import-onebody") == 0)
     {
-      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+      if (Manager.GetBoolean("single-band") == false)
+      {
+	 TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, true);
+      }
+     else
+     {
+       TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
+     }
+     
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModel->WriteBandStructure(BandStructureOutputFile);
@@ -322,9 +330,8 @@ int main(int argc, char** argv)
 		    }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-		  Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
-											    Manager.GetDouble("u-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
-											    Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x") * 2.0 * M_PI, Manager.GetDouble("gamma-y") * 2.0 * M_PI, 		     
+		  Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,TightBindingModel,
+											    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),	     
 											    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
@@ -339,8 +346,8 @@ int main(int argc, char** argv)
  		     		    Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
 									  i, NbrSitesX, j, NbrSitesY);
 
-		      double UPotential = Manager.GetDouble("u-potential");
-		      double VPotential = Manager.GetDouble("v-potential");
+		      double UPotential = 0.5*Manager.GetDouble("u-potential") ;
+		      double VPotential = 0.5*Manager.GetDouble("v-potential");
 		      for (int x = 0; x < NbrSitesX; ++x)
 			{
 			  for (int y = 0; y < NbrSitesY; ++y)
@@ -366,8 +373,8 @@ int main(int argc, char** argv)
  		      Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
  									    i, NbrSitesX, j, NbrSitesY);
 // 		      Space = new FermionOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-		      double UPotential = Manager.GetDouble("u-potential");
-		      double VPotential = Manager.GetDouble("v-potential");
+		      double UPotential = 0.5*Manager.GetDouble("u-potential");
+		      double VPotential = 0.5*Manager.GetDouble("v-potential");
 		      for (int x = 0; x < NbrSitesX; ++x)
 			{
 			  for (int y = 0; y < NbrSitesY; ++y)

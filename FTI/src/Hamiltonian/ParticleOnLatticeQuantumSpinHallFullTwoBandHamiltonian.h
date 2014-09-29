@@ -660,6 +660,9 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::HermitianEva
 inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
 													     int* indexArray, Complex* coefficientArray, long& position)
 {
+//   cout << endl;
+//   this->Particles->PrintState(cout, index);
+//   cout << endl;
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
   double Coefficient3;
@@ -695,6 +698,9 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNTw
 				{
 				  indexArray[position] = Index;
 				  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+// 				  cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
+// 				  this->Particles->PrintState(cout, Index);
+// 				  cout << endl;
 				  ++position;
 				}
 			      ++TmpInteractionFactor;
@@ -712,6 +718,9 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNTw
 				    {
 				      indexArray[position] = Index;
 				      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+// 				      cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
+// 				      this->Particles->PrintState(cout, Index);
+// 				      cout << endl;
 				      ++position;
 				    }
 				  ++TmpInteractionFactor;
@@ -740,6 +749,9 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNTw
 				    {
 				      indexArray[position] = Index;
 				      coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+// 				      cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
+// 				      this->Particles->PrintState(cout, Index);
+// 				      cout << endl;
 				      ++position;
 				    }
 				  ++TmpInteractionFactor;
@@ -757,6 +769,9 @@ inline void ParticleOnLatticeQuantumSpinHallFullTwoBandHamiltonian::EvaluateMNTw
 					{
 					  indexArray[position] = Index;
 					  coefficientArray[position] = Coefficient * Coefficient3 * (*TmpInteractionFactor);
+// 					  cout <<  Coefficient3 << " " << Coefficient << " " << (*TmpInteractionFactor) << " " << coefficientArray[position];
+// 					  this->Particles->PrintState(cout, Index);
+// 					  cout << endl;
 					  ++position;
 					}
 				      ++TmpInteractionFactor;
