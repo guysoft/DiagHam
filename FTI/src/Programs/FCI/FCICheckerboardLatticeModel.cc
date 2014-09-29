@@ -21,6 +21,7 @@
 #include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
 #include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
@@ -49,6 +50,20 @@ using std::cout;
 using std::endl;
 using std::ios;
 using std::ofstream;
+
+
+// compute the description of the density-density interaction for the unit cell at the origin
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+							   bool bosonFlag, double uPotential, double vPotential);
 
 
 int main(int argc, char** argv)
@@ -226,9 +241,9 @@ int main(int argc, char** argv)
       double DirectBandGap = TightBindingModel.ComputeDirectBandGap(0);
       cout << "Spread = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
       if (Manager.GetBoolean("singleparticle-chernnumber") == true)
-      {
-	cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
-      }
+	{
+	  cout << "Chern number = " << TightBindingModel.ComputeChernNumber(0) << endl;
+	}
       if (ExportOneBody == true)
 	{
 	  char* BandStructureOutputFile = new char [512];
@@ -271,24 +286,16 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   if(Manager.GetBoolean("no-translation") == true)
-{  
- MaxKx = 0;
- MaxKy = 0;
- }
+    {  
+      MaxKx = 0;
+      MaxKy = 0;
+    }
 
   Abstract2DTightBindingModel* TightBindingModel;
 
   if (Manager.GetString("import-onebody") == 0)
     {
-      if (Manager.GetBoolean("single-band") == false)
-      {
-	 TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, true);
-      }
-     else
-     {
-       TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true);
-     }
-     
+      TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModel->WriteBandStructure(BandStructureOutputFile);
@@ -298,7 +305,6 @@ int main(int argc, char** argv)
       TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
     }
       
-//   TightBindingModel = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"),  								Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
@@ -311,6 +317,13 @@ int main(int argc, char** argv)
 	      AbstractQHEHamiltonian* Hamiltonian = 0;
 	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
+	      int* NbrInteractingOrbitals;
+	      int** InteractingOrbitalsOrbitalIndices;
+	      int** InteractingOrbitalsSpatialIndices;
+	      double** InteractingOrbitalsPotentials;
+	      FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices, 
+								    InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+								    Manager.GetBoolean("boson"), Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"));
 	      if (Manager.GetBoolean("real-space") == false)
 		{
 		  if (Manager.GetBoolean("boson") == false)
@@ -329,96 +342,73 @@ int main(int argc, char** argv)
 			  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
 		    }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-		  Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,TightBindingModel,
-											    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),	     
-											    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+
+		  Hamiltonian = new ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
+													0, 1, 
+													NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
+													InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+													TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), 
+													Memory);
+
+//		  Hamiltonian = new ParticleOnLatticeWithSpinCheckerboardLatticeHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,TightBindingModel,
+//											    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),	     
+//											    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	      else
 		{
 		  ParticleOnSphere* Space = 0;
 		  RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
-		  if (Manager.GetBoolean("boson") == true)
+		  for (int x = 0; x < NbrSitesX; ++x)
 		    {
-			if(Manager.GetBoolean("no-translation") == true)
-		 		     Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-			else
- 		     		    Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-									  i, NbrSitesX, j, NbrSitesY);
-
-		      double UPotential = 0.5*Manager.GetDouble("u-potential") ;
-		      double VPotential = 0.5*Manager.GetDouble("v-potential");
-		      for (int x = 0; x < NbrSitesX; ++x)
+		      for (int y = 0; y < NbrSitesY; ++y)
 			{
-			  for (int y = 0; y < NbrSitesY; ++y)
+			  for (int OrbitalIndex = 0; OrbitalIndex < TightBindingModel->GetNbrBands(); ++OrbitalIndex)
 			    {
-			      for (int k = 0; k < TightBindingModel->GetNbrBands(); ++k)
+			      for (int k = 0; k < NbrInteractingOrbitals[OrbitalIndex]; ++k)
 				{
-				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), UPotential);
+				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, OrbitalIndex), 
+									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x + InteractingOrbitalsSpatialIndices[OrbitalIndex][2 * k], 
+																	    y + InteractingOrbitalsSpatialIndices[OrbitalIndex][(2 * k) + 1], 
+																	    InteractingOrbitalsOrbitalIndices[OrbitalIndex][k]), 
+									     InteractingOrbitalsPotentials[OrbitalIndex][k]);
+				  
 				}
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 1), VPotential);
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x - 1, y, 1), VPotential);
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x - 1, y - 1, 1), VPotential);
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y - 1, 1), VPotential);
 			    }
 			}
 		    }
+		  if (Manager.GetBoolean("boson") == true)
+		    {
+			if (Manager.GetBoolean("no-translation") == true)
+			  Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+			else
+			  Space = new BosonOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+									      i, NbrSitesX, j, NbrSitesY);
+		    }
 		  else
 		    {
- 		      Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
- 									    i, NbrSitesX, j, NbrSitesY);
-// 		      Space = new FermionOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-		      double UPotential = 0.5*Manager.GetDouble("u-potential");
-		      double VPotential = 0.5*Manager.GetDouble("v-potential");
-		      for (int x = 0; x < NbrSitesX; ++x)
-			{
-			  for (int y = 0; y < NbrSitesY; ++y)
-			    {
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 1), UPotential);
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x - 1, y, 1), UPotential);
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x - 1, y - 1, 1), UPotential);
-			      DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, 0), 
-									 TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y - 1, 1), UPotential);
-			      for (int k = 0; k < TightBindingModel->GetNbrBands(); ++k)
-				{
-				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x + 1, y, k), VPotential);
-				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x - 1, y, k), VPotential);
-				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y - 1, k), VPotential);
-				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y + 1, k), VPotential);
-				}
-			    }
-			}
+		      if (Manager.GetBoolean("no-translation") == true)
+			Space = new FermionOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+		      else
+			Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+									      i, NbrSitesX, j, NbrSitesY);
 		    }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 		  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-// 		  cout << TightBindingMatrix << endl;
-// 		  HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
-// 		  RealDiagonalMatrix TmpHam2(TmpHam.GetNbrRow());
-// 		  TmpHam.LapackDiagonalize(TmpHam2);
-// 		  for (int k = 0; k < TmpHam.GetNbrRow(); ++k)
-// 		    {
-// 		      cout << k << " : " << TmpHam2[k] << endl;
-// 		    }
- 		  Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
- 											   i, NbrSitesX, j, NbrSitesY,
- 											   TightBindingMatrix, DensityDensityInteraction,
- 											   Architecture.GetArchitecture(), Memory);
-// 		  Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
-// 									   TightBindingMatrix, DensityDensityInteraction,
-// 									   Architecture.GetArchitecture(), Memory);
+		  if (Manager.GetBoolean("no-translation") == true)
+		    {
+		      Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+									       TightBindingMatrix, DensityDensityInteraction,
+									       Architecture.GetArchitecture(), Memory);
+		    }
+		  else
+		    {
+		      Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+											       i, NbrSitesX, j, NbrSitesY,
+											       TightBindingMatrix, DensityDensityInteraction,
+											       Architecture.GetArchitecture(), Memory);
+		    }
 		}
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
@@ -462,52 +452,17 @@ int main(int argc, char** argv)
 	      if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 		{ 
 //  test code for the generic density-density
-// 		  int* NbrInteractingOrbitals = new int[2];
-// 		  int** InteractingOrbitalsOrbitalIndices = new int*[2];
-// 		  int** InteractingOrbitalsSpatialIndices = new int*[2];
-// 		  double** InteractingOrbitalsPotentials = new double*[2];
-// 		  if (Manager.GetBoolean("boson") == true)
-// 		    {
-// 		      NbrInteractingOrbitals[0] = 1;
-// 		      InteractingOrbitalsOrbitalIndices[0] = new int[NbrInteractingOrbitals[0]];
-// 		      InteractingOrbitalsSpatialIndices[0] = new int[NbrInteractingOrbitals[0] * 2];
-// 		      InteractingOrbitalsPotentials[0] = new double[NbrInteractingOrbitals[0]];
-// 		      InteractingOrbitalsOrbitalIndices[0][0] = 0;
-// 		      InteractingOrbitalsSpatialIndices[0][0] = 0;
-// 		      InteractingOrbitalsSpatialIndices[0][1] = 0;
-// 		      InteractingOrbitalsPotentials[0][0] = Manager.GetDouble("u-potential");
-// 		      NbrInteractingOrbitals[1] = 1;
-// 		      InteractingOrbitalsOrbitalIndices[1] = new int[NbrInteractingOrbitals[1]];
-// 		      InteractingOrbitalsSpatialIndices[1] = new int[NbrInteractingOrbitals[1] * 2];
-// 		      InteractingOrbitalsPotentials[1] = new double[NbrInteractingOrbitals[1]];
-// 		      InteractingOrbitalsOrbitalIndices[1][0] = 1;
-// 		      InteractingOrbitalsSpatialIndices[1][0] = 0;
-// 		      InteractingOrbitalsSpatialIndices[1][1] = 0;
-// 		      InteractingOrbitalsPotentials[1][0] = Manager.GetDouble("u-potential");		  
-// 		    }
-// 		  else
-// 		    {
-// 		      NbrInteractingOrbitals[0] = 1;
-// 		      InteractingOrbitalsOrbitalIndices[0] = new int[NbrInteractingOrbitals[0]];
-// 		      InteractingOrbitalsSpatialIndices[0] = new int[NbrInteractingOrbitals[0] * 2];
-// 		      InteractingOrbitalsPotentials[0] = new double[NbrInteractingOrbitals[0]];
-// 		      InteractingOrbitalsOrbitalIndices[0][0] = 0;
-// 		      InteractingOrbitalsSpatialIndices[0][0] = 0;
-// 		      InteractingOrbitalsSpatialIndices[0][1] = 0;
-// 		      InteractingOrbitalsPotentials[0][0] = Manager.GetDouble("u-potential");
-// 		      NbrInteractingOrbitals[1] = 1;
-// 		      InteractingOrbitalsOrbitalIndices[1] = new int[NbrInteractingOrbitals[1]];
-// 		      InteractingOrbitalsSpatialIndices[1] = new int[NbrInteractingOrbitals[1] * 2];
-// 		      InteractingOrbitalsPotentials[1] = new double[NbrInteractingOrbitals[1]];
-// 		      InteractingOrbitalsOrbitalIndices[1][0] = 1;
-// 		      InteractingOrbitalsSpatialIndices[1][0] = 0;
-// 		      InteractingOrbitalsSpatialIndices[1][1] = 0;
-// 		      InteractingOrbitalsPotentials[1][0] = Manager.GetDouble("u-potential");		  
-// 		    }
+// 		  int* NbrInteractingOrbitals;
+// 		  int** InteractingOrbitalsOrbitalIndices;
+// 		  int** InteractingOrbitalsSpatialIndices;
+// 		  double** InteractingOrbitalsPotentials;
+// 		  FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices, 
+// 									InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+// 									Manager.GetBoolean("boson"), Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"));
 // 		  Hamiltonian = new ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, 0,
-// 												    NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
-// 												    InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
-// 												    TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+// 													   NbrInteractingOrbitals, InteractingOrbitalsOrbitalIndices,
+// 													   InteractingOrbitalsSpatialIndices, InteractingOrbitalsPotentials,
+// 													   TightBindingModel, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		  Hamiltonian = new ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,
 											      Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), 
 											      TightBindingModel,Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
@@ -566,3 +521,141 @@ int main(int argc, char** argv)
   return 0;
 }
 
+// compute the description of the density-density interaction for the unit cell at the origin
+//
+// nbrInteractingOrbitals = number of orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsOrbitalIndices = orbital indices of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsSpatialIndices = spatial indices (sorted as 2 consecutive integers) of the orbitals interacting with each orbital within the unit cell at the origin through a density-density term
+// interactingOrbitalsPotentials = intensity of each density-density term 
+// bosonFlag = true if we are dealing with bosons
+// uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
+// vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+
+void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
+							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
+							   bool bosonFlag, double uPotential, double vPotential)
+{
+  nbrInteractingOrbitals = new int[2];
+  interactingOrbitalsOrbitalIndices = new int*[2];
+  interactingOrbitalsSpatialIndices = new int*[2];
+  interactingOrbitalsPotentials = new double*[2];
+  if (bosonFlag == false)
+    {
+      nbrInteractingOrbitals[0] = 1;
+      nbrInteractingOrbitals[1] = 3;
+      if (vPotential != 0.0)
+	{
+	  nbrInteractingOrbitals[0] += 2;
+	  nbrInteractingOrbitals[1] += 2;
+	}
+      interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
+      interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
+      interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
+      interactingOrbitalsOrbitalIndices[1] = new int[nbrInteractingOrbitals[1]];
+      interactingOrbitalsSpatialIndices[1] = new int[nbrInteractingOrbitals[1] * 2];
+      interactingOrbitalsPotentials[1] = new double[nbrInteractingOrbitals[1]];
+
+      int Index = 0;
+      interactingOrbitalsOrbitalIndices[0][Index] = 1;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+      if (vPotential != 0.0)
+	{
+	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = 1;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+	  interactingOrbitalsPotentials[0][Index] = uPotential;
+	  ++Index;	  
+	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 1;
+	  interactingOrbitalsPotentials[0][Index] = uPotential;
+	  ++Index;	  
+	}
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[1][Index] = 0;
+      interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      ++Index;
+      interactingOrbitalsOrbitalIndices[1][Index] = 0;
+      interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      ++Index;
+      interactingOrbitalsOrbitalIndices[1][Index] = 0;
+      interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+      interactingOrbitalsPotentials[1][Index] = uPotential;		  
+      ++Index;
+      if (vPotential != 0.0)
+	{
+	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+	  interactingOrbitalsPotentials[1][Index] = uPotential;
+	  ++Index;	  
+	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+	  interactingOrbitalsPotentials[1][Index] = uPotential;
+	  ++Index;	  
+	}
+    }
+  else
+    {
+      nbrInteractingOrbitals[0] = 1;
+      nbrInteractingOrbitals[1] = 1;
+      if (vPotential != 0.0)
+	{
+	  nbrInteractingOrbitals[0] += 1;
+	  nbrInteractingOrbitals[1] += 3;
+	}
+      interactingOrbitalsOrbitalIndices[0] = new int[nbrInteractingOrbitals[0]];
+      interactingOrbitalsSpatialIndices[0] = new int[nbrInteractingOrbitals[0] * 2];
+      interactingOrbitalsPotentials[0] = new double[nbrInteractingOrbitals[0]];
+      interactingOrbitalsOrbitalIndices[1] = new int[nbrInteractingOrbitals[1]];
+      interactingOrbitalsSpatialIndices[1] = new int[nbrInteractingOrbitals[1] * 2];
+      interactingOrbitalsPotentials[1] = new double[nbrInteractingOrbitals[1]];
+  
+      int Index = 0;
+      interactingOrbitalsOrbitalIndices[0][Index] = 0;
+      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[0][Index] = uPotential;
+      ++Index;
+      if (vPotential != 0.0)
+	{
+	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+	  interactingOrbitalsPotentials[0][Index] = uPotential;	  
+	}
+      Index = 0;
+      interactingOrbitalsOrbitalIndices[1][Index] = 1;
+      interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+      interactingOrbitalsPotentials[1][Index] = uPotential;
+      ++Index;
+      if (vPotential != 0.0)
+	{
+	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+	  interactingOrbitalsPotentials[1][Index] = uPotential;		  
+	  ++Index;
+	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+	  interactingOrbitalsPotentials[1][Index] = uPotential;		  
+	  ++Index;
+	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+	  interactingOrbitalsPotentials[1][Index] = uPotential;		  
+	  ++Index;
+	}
+    }
+}

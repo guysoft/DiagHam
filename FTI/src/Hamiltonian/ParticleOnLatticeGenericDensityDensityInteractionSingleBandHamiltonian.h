@@ -7,7 +7,8 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//          class of a generic density-density two body interaction,          //
+//          class of a generic density-density two body interaction           //
+//                     projected onto a single band and                       //
 //              assuming a Bloch form for the tight binding model             //
 //                                                                            //
 //                        last modification : 25/09/2014                      //

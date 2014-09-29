@@ -7,7 +7,8 @@
 //                                                                            //
 //                        class author: Nicolas Regnault                      //
 //                                                                            //
-//          class of a generic density-density two body interaction,          //
+//          class of a generic density-density two body interaction           //
+//                     projected onto a single band and                       //
 //              assuming a Bloch form for the tight binding model             //
 //                                                                            //
 //                        last modification : 25/09/2014                      //
@@ -240,19 +241,19 @@ void ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian::Eva
 			  int XOrbital2 = this->InteractingOrbitalsSpatialIndices[Orbital1][2 * k];
 			  int YOrbital2 = this->InteractingOrbitalsSpatialIndices[Orbital1][(2 * k) + 1];
 			  double TmpPotential = this->InteractingOrbitalsPotentials[Orbital1][k];
-			  SumU += (Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
+			  SumU -= (Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
 				   * Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2]
 				   * TmpPotential * Phase ((this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2))) 
 							   + (this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
-			  SumU -= (Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
+			  SumU += (Conj(OneBodyBasis[Index1][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
 				   * Conj(OneBodyBasis[Index2][this->BandIndex][Orbital2]) * OneBodyBasis[Index3][this->BandIndex][Orbital2]
 				   * TmpPotential * Phase ((this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2))) 
 							   + (this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
-			  SumU -= (Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
+			  SumU += (Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index3][this->BandIndex][Orbital1]
 				   * Conj(OneBodyBasis[Index1][this->BandIndex][Orbital2]) * OneBodyBasis[Index4][this->BandIndex][Orbital2]
 				   * TmpPotential * Phase ((this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2))) 
 							   + (this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
-			  SumU += (Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
+			  SumU -= (Conj(OneBodyBasis[Index2][this->BandIndex][Orbital1]) * OneBodyBasis[Index4][this->BandIndex][Orbital1]
 				   * Conj(OneBodyBasis[Index1][this->BandIndex][Orbital2]) * OneBodyBasis[Index3][this->BandIndex][Orbital2]
 				   * TmpPotential * Phase ((this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2))) 
 							   + (this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
