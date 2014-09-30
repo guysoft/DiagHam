@@ -621,7 +621,10 @@ void BosonOnTorusWithMagneticTranslationsShort::GenerateLookUpTable(int memory)
   this->LookUpTable = new int* [TmpNbrKyValue];
   this->LookUpTableShift = new int [TmpNbrKyValue];
   for (int i = 0; i < TmpNbrKyValue; ++i)
+{
     this->LookUpTable[i] = new int [this->LookUpTableMemorySize + 1];
+    this->LookUpTableShift[i] = -1;
+}
   int CurrentLzMax = this->MaxMomentum + this->NbrBosons - 1;
   while ((this->StateDescription[0] >> CurrentLzMax) == 0x0ul)
     --CurrentLzMax;
@@ -699,7 +702,9 @@ void BosonOnTorusWithMagneticTranslationsShort::GenerateLookUpTable(int memory)
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
-
+    cout <<"i this->LookUpTableShift [i]"<<endl;
+for (int i =0; i < TmpNbrKyValue; i++)
+        cout <<i<<" "<<  this->LookUpTableShift [i] <<endl;
 }
 
 // evaluate Hilbert space dimension

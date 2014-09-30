@@ -256,8 +256,6 @@ BosonOnLatticeRealSpaceAnd2DTranslation& BosonOnLatticeRealSpaceAnd2DTranslation
   if ((this->HilbertSpaceDimension != 0) && (this->Flag.Shared() == false) && (this->Flag.Used() == true))
     {
       delete[] this->StateDescription;
-
-
       delete[] this->LookUpTableShift;
       for (int i = 0; i < this->NbrMomentum; ++i)
 	delete[] this->LookUpTable[i];
