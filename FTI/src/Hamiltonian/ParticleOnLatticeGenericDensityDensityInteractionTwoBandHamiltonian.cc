@@ -268,7 +268,7 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
  
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
+    for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
 	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
 	    for (int ky2 = 0; ky2 < this->NbrSiteY; ++ky2) 
@@ -276,7 +276,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 		int Index1 = this->TightBindingModel->GetLinearizedMomentumIndex(kx1, ky1);
 		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 < Index2)
-		  ++this->NbrIntraSectorIndicesPerSum[this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, (ky1 + ky2) % this->NbrSiteY)];    
+		  {
+		    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, (ky1 + ky2) % this->NbrSiteY);
+		    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
+		  }
 	      }
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
@@ -296,12 +299,15 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 		int Index2 = this->TightBindingModel->GetLinearizedMomentumIndex(kx2, ky2);
 		if (Index1 < Index2)
 		  {
-		    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, (ky1 + ky2) % this->NbrSiteY);
+		    int TmpSum = this->TightBindingModel->GetLinearizedMomentumIndex((kx1 + kx2) % this->NbrSiteX, 
+										     (ky1 + ky2) % this->NbrSiteY);
 		    this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = Index1;
 		    this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = Index2;
 		    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
 		  }
 	      }
+      
+
       Complex Tmp;
       Complex* TmpInteractionFactor;
 
@@ -370,6 +376,7 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 										      + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
 				}
 			    }
+			  
 			  ++TmpInteractionFactor;
 			}
 		    }
@@ -441,6 +448,8 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 											  + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
 				    }
 				}
+			      
+			     
 			      ++TmpInteractionFactor;
 			    }
 			}
@@ -516,6 +525,8 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 											  + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
 				    }
 				}			      
+			      if (Index3 == Index4)
+				(*TmpInteractionFactor) *= 0.5;
 			      ++TmpInteractionFactor;
 			    }
 			}
@@ -551,8 +562,7 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 				  int kx4, ky4;
 				  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
 
-				  (*TmpInteractionFactor) = 0.0;
-				  
+				  (*TmpInteractionFactor) = 0.0;				  
 				  for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
 				    {
 				      for (int k = 0; k < this->NbrInteractingOrbitals[Orbital1]; ++k)
@@ -595,6 +605,9 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 		}			  
 	    }
 	}
+      
+      
+      
     }
   else
     {
