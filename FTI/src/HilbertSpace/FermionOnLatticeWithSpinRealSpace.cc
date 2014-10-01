@@ -148,14 +148,66 @@ FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFer
 // basic constructor when Sz is preserved
 // 
 // nbrFermions = number of fermions
-//nbrSite = number of sites
-// nbrSpinUp = number of particles with spin up
+// totalSpin = twice the total spin value
+// nbrSite = number of sites in the x direction
 // memory = amount of memory granted for precalculations
 
-// FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSite, unsigned long memory)
-// {
-//   
-// }
+FermionOnLatticeWithSpinRealSpace::FermionOnLatticeWithSpinRealSpace (int nbrFermions, int totalSpin, int nbrSite, unsigned long memory)
+{
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->SzFlag = true;
+  this->TotalLz = 0;
+  this->TotalSpin = totalSpin;
+  this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
+  this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
+  this->NbrSite = nbrSite;
+  this->LzMax = this->NbrSite;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFermionsUp);
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if ( this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->Flag.Initialize();
+      this->TargetSpace = this;
+      this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
+      this->StateHighestBit = new int [this->HilbertSpaceDimension];  
+      long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrFermionsUp, 0l);
+      if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+	{
+	  cout << "error while generating the Hilbert space, " << TmpLargeHilbertSpaceDimension << " generated states, should be " << this->LargeHilbertSpaceDimension << endl;
+	}
+      this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrLzValue * sizeof(int);
+      UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
 
 // copy constructor (without duplicating datas)
 //
@@ -328,10 +380,49 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
 // pos = position in StateDescription array where to store states
 // return value = position from which new states have to be stored
 
-// long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
-// {
-//   
-// }
+long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
+{
+  if ((nbrFermions == 0) && (nbrSpinUp == 0))
+    {
+      this->StateDescription[pos] = 0x0ul;	  
+      return (pos + 1l);
+    }
+  if ((currentSite < 0) || (nbrFermions < 0) || (nbrSpinUp > nbrFermions) || (nbrSpinUp < 0))
+    return pos;
+  if (nbrFermions == 1)
+    {
+      if (nbrSpinUp == 1)
+	{
+	  for (int j = currentSite; j >= 0; --j)
+	    {
+	      this->StateDescription[pos] = 0x2ul << (j << 1);
+	      ++pos;
+	    }
+	}
+      else
+	{
+	  for (int j = currentSite; j >= 0; --j)
+	    {
+	      this->StateDescription[pos] = 0x1ul << (j << 1);
+	      ++pos;
+	    }
+	}
+      return pos;
+    }
+  long TmpPos = this->GenerateStates(nbrFermions - 2, currentSite - 1, nbrSpinUp - 1, pos);
+  unsigned long Mask = 0x3ul << (currentSite << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, nbrSpinUp - 1, pos);
+  Mask = 0x2ul << ((currentSite) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, nbrSpinUp, pos);
+  Mask = 0x1ul << (currentSite << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  return this->GenerateStates(nbrFermions, currentSite - 1, nbrSpinUp, pos);   
+}
 
 // evaluate Hilbert space dimension
 //
@@ -339,9 +430,9 @@ long FermionOnLatticeWithSpinRealSpace::GenerateStates(int nbrFermions, int curr
 // return value = Hilbert space dimension
 long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions)
 {
-  BinomialCoefficients binomials(2*this->NbrSite);
-  long dimension = binomials(2*this->NbrSite, this->NbrFermions);
-  return dimension;
+  BinomialCoefficients binomials(2 * this->NbrSite);
+  long Dimension = binomials(2 * this->NbrSite, this->NbrFermions);
+  return Dimension;
 }
 
 
@@ -355,10 +446,13 @@ long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFer
 // nbrSpinUp = number of fermions with spin up
 // return value = Hilbert space dimension
 
-// long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
-// {
-//  
-// }
+long FermionOnLatticeWithSpinRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
+{
+  BinomialCoefficients binomials(this->NbrSite);
+  long Dimension = binomials(this->NbrSite, this->NbrFermionsUp);
+  Dimension *= binomials(this->NbrSite, this->NbrFermionsDown);
+  return Dimension;
+}
 
 // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
 // 
