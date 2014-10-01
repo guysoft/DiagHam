@@ -36,6 +36,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
 #include "Hamiltonian/AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian.h"
+#include "MathTools/FactorialCoefficient.h" 
 
 #include <iostream>
 #include <algorithm>
@@ -52,8 +53,10 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
 
   // array where the interaction coefficients are stored
   double** PrecalculatedInteractionCoefficients;
-  // number of entries in PrecalculatedInteractionCoefficients
-  int NbrEntryPrecalculatedInteractionCoefficients;
+  // number of rows in PrecalculatedInteractionCoefficients
+  int NbrEntryPrecalculatedInteractionCoefficients1;
+  // number of columns in PrecalculatedInteractionCoefficients
+  int NbrEntryPrecalculatedInteractionCoefficients2;
 
  public:
 
@@ -157,9 +160,25 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
 inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionNIndexSymmetrizedCoefficient(int* mIndices, int* nIndices)
 {
   
+  
+  double DoubleNbrLzValue = (double) this->NbrLzValue;
+  FactorialCoefficient FactorialNBody;
+  FactorialNBody.SetToOne();
+  FactorialNBody.FactorialMultiply(this->NBodyValue);
+  double FinalFactor = FactorialNBody.GetNumericalValue();
+  for (int i = 0; i < this->NBodyValue; ++i)
+    FinalFactor *= (M_PI * DoubleNbrLzValue);
+ 
+  
  int* mIndices2 = new int[this->NBodyValue];
  int* nIndices2 = new int[this->NBodyValue];
-  
+ 
+ int momentumTransfer = 0;
+ for (int i = 0; i < this->NBodyValue; ++i)
+   momentumTransfer += (nIndices[i] - mIndices[i]);
+ momentumTransfer /= this->NbrLzValue;
+ int shiftedMomentumTransfer = momentumTransfer + this->NBodyValue - 1;
+ int shift =  (this->NBodyValue - 1)*this->NBodyValue;
   
  double TmpInteraction; 
  int m1 = mIndices[0];
@@ -174,8 +193,11 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
  }
  int m2Initial = m2;
  
- 
- TmpInteraction = this->PrecalculatedInteractionCoefficients[m1][m2];
+ TmpInteraction = 0.0;
+ for (int g = 0; g < this->NBodyValue; ++g)
+ {
+    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+ }
  
  for (int k = 0 ; k < this->NBodyValue; ++k)
    nIndices2[k] = nIndices[k];
@@ -189,7 +211,8 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 	  Factor *= this->NbrLzValue;
 	}
  
-      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2];
+      for (int g = 0; g < this->NBodyValue; ++g)
+	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
     }
  
  
@@ -204,7 +227,9 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 	m1 += mIndices2[k]*Factor;
 	Factor *= this->NbrLzValue;
       }
-    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2Initial];
+    for (int g = 0; g < this->NBodyValue; ++g)
+	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+    
     for (int k = 0 ; k < this->NBodyValue; ++k)
       nIndices2[k] = nIndices[k];
     while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
@@ -218,14 +243,17 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 	  Factor *= this->NbrLzValue;
 	}
  
-      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][m2];
+      for (int g = 0; g < this->NBodyValue; ++g)
+	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
     }
   }    
   
   delete[] mIndices2;
   delete[] nIndices2;
- 
- return TmpInteraction;
+  
+
+  TmpInteraction /= FinalFactor;
+  return TmpInteraction;
 }
 
 
