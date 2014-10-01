@@ -608,7 +608,7 @@ int FermionOnLatticeRealSpaceAnd2DTranslation::FindStateIndex(unsigned long stat
   PosMax = this->LookUpTable[maxMomentum][PosMax + 1];
   long PosMid = (PosMin + PosMax) >> 1;
   unsigned long CurrentState = this->StateDescription[PosMid];
-  while ((PosMin != PosMid) && (CurrentState != stateDescription))
+  while ((PosMax != PosMid) && (CurrentState != stateDescription))
     {
       if (CurrentState > stateDescription)
 	{
