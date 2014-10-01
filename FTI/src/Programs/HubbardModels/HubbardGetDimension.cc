@@ -27,7 +27,7 @@ using std::ofstream;
 // nbrSites = number of sites
 //gutzwillerFlag = false if double occupations are allowed
 // return value = Hilbert space dimension
-long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int nbrSites, bool gutzwillerFlag);
+long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int nbrSites, bool gutzwillerFlag, int nbrSpinUp = -1);
 
 // save dimensions in a given file
 //
@@ -51,6 +51,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "number of flux quanta", 20);
+  (*SystemGroup) += new BooleanOption  ('\n', "conserve-sz", "Sz is a good quantum number");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-spin", "twice the total spin value", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "fermion", "use fermionic statistic instead of bosonic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
@@ -68,12 +70,28 @@ int main(int argc, char** argv)
       Manager.DisplayHelp (cout);
       return 0;
     }
-    
-  int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int NbrParticles = Manager.GetInteger("nbr-particles");
+  int TotalSz = Manager.GetInteger("total-spin");
+  if ((Manager.GetBoolean("conserve-sz")) && ((TotalSz % 2) != (NbrParticles % 2)))
+  {
+   cout << "Number of particles and total spin should have the same parity" << endl;
+   return 0;
+  }   
+  int NbrSpinUp = (TotalSz + NbrParticles) >> 1;
+  if ((Manager.GetBoolean("conserve-sz")) && (NbrSpinUp < 0))
+  {
+   cout << "Number of up spins is negative" << endl;
+   return 0;
+  }
+  
   int NbrSites = Manager.GetInteger("nbr-sites"); 
   bool GutzwillerFlag = Manager.GetBoolean("gutzwiller");
   
-  long TotalDimension = FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrSites, GutzwillerFlag);
+  long TotalDimension;
+  if (Manager.GetBoolean("conserve-sz") == false)
+    TotalDimension = FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrSites, GutzwillerFlag);
+  else
+    TotalDimension = FermionEvaluateHilbertSpaceDimension(NbrParticles, NbrSites, GutzwillerFlag, NbrSpinUp);
   
   if (Manager.GetBoolean("save-disk") == true)
     {
@@ -85,7 +103,10 @@ int main(int argc, char** argv)
 	    sprintf (OutputFileName, "bosons_hubbard_n_%d_2s_%d.dim", NbrParticles, NbrSites);
 	  else
 	    if (GutzwillerFlag == false)
-	      sprintf (OutputFileName, "fermions_hubbard_n_%d_2s_%d.dim", NbrParticles, NbrSites);
+	      if (Manager.GetBoolean("conserve-sz") == false)
+		sprintf (OutputFileName, "fermions_hubbard_n_%d_2s_%d.dim", NbrParticles, NbrSites);
+	      else
+		sprintf (OutputFileName, "fermions_hubbard_n_%d_2s_%d_sz_%d.dim", NbrParticles, NbrSites, TotalSz);
 	    else
 	      sprintf (OutputFileName, "fermions_hubbard_gutzwiller_n_%d_2s_%d.dim", NbrParticles, NbrSites);
 	}
@@ -113,13 +134,22 @@ int main(int argc, char** argv)
 //nbrSites = number of sites
 // return value = Hilbert space dimension
 
-long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int nbrSites, bool gutzwillerFlag)
+long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int nbrSites, bool gutzwillerFlag, int nbrSpinUp)
 {
   long dimension;
   if (gutzwillerFlag == false)
   {
-   BinomialCoefficients binomials(2*nbrSites);
-   dimension = binomials(2*nbrSites, nbrFermions); 
+    if (nbrSpinUp == -1)
+    {
+      BinomialCoefficients binomials(2*nbrSites);
+      dimension = binomials(2*nbrSites, nbrFermions); 
+    }
+    else
+    {
+     BinomialCoefficients binomials(nbrSites);
+     dimension = binomials(nbrSites, nbrSpinUp); 
+     dimension *= binomials(nbrSites, (nbrFermions - nbrSpinUp));
+    }
   }
   else
   {
