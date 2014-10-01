@@ -43,6 +43,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   (*SystemGroup) += new SingleIntegerOption  ('p', "nbr-particles", "number of particles", 4);
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbr-sites", "number of flux quanta", 20);
+  (*SystemGroup) += new BooleanOption  ('\n', "conserve-sz", "Sz is a good quantum number");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "total-spin", "twice the total spin value", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistic");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "use bosonic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
@@ -79,6 +81,18 @@ int main(int argc, char** argv)
     }
 
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
+  int TotalSz = Manager.GetInteger("total-spin");
+  if ((Manager.GetBoolean("conserve-sz")) && ((TotalSz % 2) != (NbrParticles % 2)))
+  {
+   cout << "Number of particles and total spin should have the same parity" << endl;
+   return 0;
+  }   
+  int NbrSpinUp = (TotalSz + NbrParticles) >> 1;
+  if ((Manager.GetBoolean("conserve-sz")) && (NbrSpinUp < 0))
+  {
+   cout << "Number of up spins is negative" << endl;
+   return 0;
+  }
   int NbrSites = Manager.GetInteger("nbr-sites"); 
   bool AddIndex = Manager.GetBoolean("add-index");
   bool ComplexFlag = Manager.GetBoolean("complex-vector");
@@ -151,7 +165,10 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-		      Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites); 
+		      if (Manager.GetBoolean("conserve-sz") == false)
+			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites); 
+		      else
+			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, TotalSz, NbrSites);
 		    }
 		  else
 		    {
