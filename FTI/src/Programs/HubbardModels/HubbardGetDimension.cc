@@ -153,11 +153,22 @@ long FermionEvaluateHilbertSpaceDimension(int nbrFermions, int nbrSites, bool gu
   }
   else
   {
-    BinomialCoefficients binomials(nbrSites);
-    int NbrHoles = nbrSites - nbrFermions;
-    dimension = binomials(nbrSites, NbrHoles);
-    for (int i = 0; i < nbrFermions; ++i)
-      dimension *= 2l;
+     if (nbrSpinUp == -1)
+    {
+      BinomialCoefficients binomials(nbrSites);
+      int NbrHoles = nbrSites - nbrFermions;
+      dimension = binomials(nbrSites, NbrHoles);
+      for (int i = 0; i < nbrFermions; ++i)
+	dimension *= 2l;
+    }
+    else
+    {
+      BinomialCoefficients binomials(nbrSites);
+      int NbrHoles = nbrSites - nbrFermions;
+      dimension = binomials(nbrSites, NbrHoles);
+      BinomialCoefficients binomials1(nbrFermions);
+      dimension *= binomials1(nbrFermions, nbrSpinUp);
+    }
   }
   
   return dimension;

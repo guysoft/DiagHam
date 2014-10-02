@@ -160,6 +160,80 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::Fermio
     }
 }
 
+
+// basic constructor when Sz is conserved
+// 
+// nbrFermions = number of fermions
+// nbrSite = total number of sites 
+// momentum = momentum sector
+// periodicity = periodicity with respect to site numbering 
+// memory = amount of memory granted for precalculations
+
+FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (int nbrFermions, int totalSpin, int nbrSite, int momentum, int periodicity, unsigned long memory)
+{  
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->SzFlag = true;
+  this->TotalSpin = totalSpin;
+  this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
+  this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
+  this->NbrSite = nbrSite;
+  this->MaxMomentum =  this->NbrSite;
+  this->NbrMomentum = this->MaxMomentum + 1;
+  this->NbrFermionStates = 2 * this->NbrMomentum;
+  this->MomentumModulo = this->NbrSite / periodicity;
+  cout << "MomentumModulo=" << MomentumModulo<<endl;
+  this->XMomentum = momentum % this->MomentumModulo;
+  this->YMomentum = 0;
+  this->StateShift = 2 * periodicity;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
+  this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFermionsUp);
+  cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  if (this->LargeHilbertSpaceDimension >= (1l << 31))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->Flag.Initialize();
+      this->GenerateSignLookUpTable();
+      this->LargeHilbertSpaceDimension  = this->GenerateStates(false, true);
+      this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+      cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+      if (this->HilbertSpaceDimension > 0)
+	this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrMomentum * sizeof(int);
+      UsedMemory += this->NbrMomentum * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }
+}
+
+
+
 // copy constructor (without duplicating datas)
 //
 // fermions = reference on the hilbert space to copy to copy
@@ -365,6 +439,58 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::R
      return this->RawGenerateStatesWithHoleCounting(nbrFermions, currentSite - 1, nbrHoles - 1, pos);
 }
 
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// currentSite = current site index
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
+{
+  this->RawGenerateStatesWithHoleCounting(nbrFermions, currentSite, currentSite - nbrFermions + 1, nbrSpinUp, pos);
+}
+
+// generate all states corresponding to the constraints with Sz conserved
+// 
+// nbrFermions = number of fermions
+// currentSite = current site index
+// nbrHoles = number of unoccupied sites
+// nbrSpinUp = number of fermions with spin up
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::RawGenerateStatesWithHoleCounting(int nbrFermions, int currentSite, int nbrHoles, int nbrSpinUp, long pos)
+{
+ if ((nbrFermions == 0) && (nbrSpinUp == 0))
+    {
+      if (nbrHoles == (currentSite + 1))
+	{
+	  this->StateDescription[pos] = 0x0ul;	  
+	  return (pos + 1l);
+	}
+      else
+	{
+	  return pos;
+	}
+    }
+   if ((currentSite < 0) || (nbrFermions < 0) || (nbrSpinUp > nbrFermions) || (nbrSpinUp < 0))
+    return pos;
+   
+  long TmpPos = this->RawGenerateStatesWithHoleCounting(nbrFermions - 1, currentSite - 1, nbrHoles, nbrSpinUp - 1, pos);
+  unsigned long Mask = 0x2ul << ((currentSite) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->RawGenerateStatesWithHoleCounting(nbrFermions - 1, currentSite - 1, nbrHoles, nbrSpinUp, pos);
+   Mask = 0x1ul << ((currentSite) << 1);
+   for (; pos < TmpPos; ++pos)
+     this->StateDescription[pos] |= Mask;
+   if (nbrHoles == 0)
+     return pos;
+   else
+     return this->RawGenerateStatesWithHoleCounting(nbrFermions, currentSite - 1, nbrHoles - 1, nbrSpinUp, pos); 
+}
+
 // evaluate Hilbert space dimension
 //
 // nbrFermions = number of fermions
@@ -380,3 +506,19 @@ long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::E
   return dimension;
 }
 
+
+// evaluate Hilbert space dimension
+//
+// nbrFermions = number of fermions
+// nbrSpinUp = number of spin up
+// return value = Hilbert space dimension
+
+long FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation::EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp)
+{
+  BinomialCoefficients binomials(this->NbrSite);
+  int NbrHoles = this->NbrSite - this->NbrFermions;
+  long dimension = binomials(this->NbrSite, NbrHoles);
+  BinomialCoefficients binomials1(this->NbrFermions);
+  dimension *= binomials1(this->NbrFermions, this->NbrFermionsUp);
+  return dimension;
+}

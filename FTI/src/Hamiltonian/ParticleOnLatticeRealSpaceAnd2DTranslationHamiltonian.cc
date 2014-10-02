@@ -108,6 +108,7 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpac
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
+      cout << TmpMemory << endl;
       if (TmpMemory < 1024)
 	cout  << "fast = " <<  TmpMemory << "b ";
       else

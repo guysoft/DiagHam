@@ -67,6 +67,18 @@ class FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTra
   // memory = amount of memory granted for precalculations
   FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation (int nbrFermions, int nbrSite, int momentum, int periodicity, bool minusSzParity, 
 										      unsigned long memory = 10000000);
+  
+  // basic constructor when Sz is  conserved
+  // 
+  // nbrFermions = number of fermions
+  // totalSpin = twice the total value of Sz
+  // nbrSite = number of sites
+  // momentum = momentum sector
+  // periodicity = periodicity with respect to site numbering 
+  // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
+  // memory = amount of memory granted for precalculations
+  FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation (int nbrFermions, int totalSpin, int nbrSite, int momentum, int periodicity, bool minusSzParity, 
+										      unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -95,6 +107,14 @@ class FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTra
   // nbrFermions = number of fermions
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
+  
+  // evaluate Hilbert space dimension when Sz is preserved
+  //
+  // nbrFermions = number of fermions
+  // nbrSpinUp = number of fermions with spin up
+  // return value = Hilbert space dimension
+
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp);
 
   // generate all states corresponding to the constraints
   // 

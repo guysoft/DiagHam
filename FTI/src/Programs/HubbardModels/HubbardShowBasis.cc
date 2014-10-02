@@ -172,7 +172,10 @@ int main(int argc, char** argv)
 		    }
 		  else
 		    {
-		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+		      if (Manager.GetBoolean("conserve-sz") == false)
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, NbrSites);
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace(NbrParticles, TotalSz, NbrSites);
 		    }
 		}
 	    }
@@ -187,14 +190,25 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("gutzwiller") == false)
 		    {
-		      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+		      unsigned long memory = 10000000;
+		      if (Manager.GetBoolean("conserve-sz") == false)
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
 										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"));
+		      else
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("max-xmomentum"),
+										    Manager.GetInteger("y-momentum"), Manager.GetInteger("max-ymomentum"), memory);
 		    }
 		  else
 		    {
-		      Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
+		      if (Manager.GetBoolean("conserve-sz") == false)
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, NbrSites, 
 													   Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"),
 													   Manager.GetInteger("y-momentum"),  Manager.GetInteger("max-ymomentum"));
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation(NbrParticles, TotalSz, NbrSites,
+													   Manager.GetInteger("x-momentum"),  Manager.GetInteger("max-xmomentum"),
+													   Manager.GetInteger("y-momentum"),  Manager.GetInteger("max-ymomentum"), 10000000);
+			  
 		    }
 		}
 	    }
@@ -205,11 +219,17 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("gutzwiller") == false)
 		{
-		  Space = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+		  if (Manager.GetBoolean("conserve-sz") == false)
+		    Space = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+		  else
+		    Space = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"), 10000000);
 		}
 	      else
 		{
-		  Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+		  if (Manager.GetBoolean("conserve-sz") == false)
+		    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation(NbrParticles, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"));
+		  else
+		    Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation(NbrParticles, TotalSz, NbrSites, Manager.GetInteger("x-momentum"), Manager.GetInteger("x-periodicity"), 10000000);
 		}
 	    }
 	  else

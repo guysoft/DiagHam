@@ -1926,7 +1926,14 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates(bool fullSzFla
     }
   else
     {
-      this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, 0l);
+      if (fullSzFlag == false)
+      {
+	this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, this->NbrFermionsUp, 0l);
+      }
+      else
+      {
+	this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, 0l);
+      }
       int TmpMaxHighestBit = 2*(this->MaxMomentum + 1);
       for (int i = 0; i < this->HilbertSpaceDimension; ++i)
 	{
@@ -2274,6 +2281,59 @@ long FermionOnTorusWithSpinAndMagneticTranslations::RawGenerateStates(int nbrFer
     return this->RawGenerateStates(nbrFermions, ReducedCurrentMaxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum);
   else
     return this->RawGenerateStates(nbrFermions, maxMomentum, ReducedCurrentMaxMomentum, TmpPos, currentMomentum);
+}
+
+
+// generate all states corresponding to the constraints
+// 
+// nbrFermions = number of fermions
+// currentSite = current site index
+// nbrSpinUp = number of fermions with spin up
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnTorusWithSpinAndMagneticTranslations::RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
+{
+  if ((nbrFermions == 0) && (nbrSpinUp == 0))
+    {
+      this->StateDescription[pos] = 0x0ul;	  
+      return (pos + 1l);
+    }
+  if ((currentSite < 0) || (nbrFermions < 0) || (nbrSpinUp > nbrFermions) || (nbrSpinUp < 0))
+    return pos;
+  if (nbrFermions == 1)
+    {
+      if (nbrSpinUp == 1)
+	{
+	  for (int j = currentSite; j >= 0; --j)
+	    {
+	      this->StateDescription[pos] = 0x2ul << (j << 1);
+	      ++pos;
+	    }
+	}
+      else
+	{
+	  for (int j = currentSite; j >= 0; --j)
+	    {
+	      this->StateDescription[pos] = 0x1ul << (j << 1);
+	      ++pos;
+	    }
+	}
+      return pos;
+    }
+  long TmpPos = this->RawGenerateStates(nbrFermions - 2, currentSite - 1, nbrSpinUp - 1, pos);
+  unsigned long Mask = 0x3ul << (currentSite << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->RawGenerateStates(nbrFermions - 1, currentSite - 1, nbrSpinUp - 1, pos);
+  Mask = 0x2ul << ((currentSite) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->RawGenerateStates(nbrFermions - 1, currentSite - 1, nbrSpinUp, pos);
+  Mask = 0x1ul << (currentSite << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  return this->RawGenerateStates(nbrFermions, currentSite - 1, nbrSpinUp, pos);   
 }
 
 // generate look-up table associated to current Hilbert space

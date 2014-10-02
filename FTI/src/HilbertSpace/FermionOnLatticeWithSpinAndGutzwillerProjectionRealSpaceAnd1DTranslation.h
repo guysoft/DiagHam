@@ -64,6 +64,15 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation :
   // periodicity = periodicity with respect to site numbering 
   // memory = amount of memory granted for precalculations
   FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (int nbrFermions, int nbrSite, int momentum, int periodicity, unsigned long memory = 10000000);
+  
+  // basic constructor when Sz is conserved
+  // 
+  // nbrFermions = number of fermions
+  // nbrSite = number of sites
+  // momentum = momentum sector
+  // periodicity = periodicity with respect to site numbering 
+  // memory = amount of memory granted for precalculations
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (int nbrFermions, int totalSpin, int nbrSite, int momentum, int periodicity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -92,6 +101,13 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation :
   // nbrFermions = number of fermions
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
+  
+  // evaluate Hilbert space dimension
+  //
+  // nbrFermions = number of fermions
+  // nbrSpinUp = number of spin up
+  // return value = Hilbert space dimension
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp);
 
   // generate all states corresponding to the constraints
   // 
@@ -109,6 +125,26 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation :
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long RawGenerateStatesWithHoleCounting(int nbrFermions, int currentSite, int nbrHoles, long pos);
+  
+  
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // currentSite = current site index
+  // pos = position in StateDescription array where to store states	
+  // return value = position from which new states have to be stored
+  virtual long RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos);
+  
+  // generate all states corresponding to the constraints with Sz conserved
+  // 
+  // nbrFermions = number of fermions
+  // currentSite = current site index
+  // nbrHoles = number of unoccupied sites
+  // nbrSpinUp = number of fermions with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+
+  virtual long RawGenerateStatesWithHoleCounting(int nbrFermions, int currentSite, int nbrHoles, int nbrSpinUp, long pos);
 
 };
 

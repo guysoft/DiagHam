@@ -163,14 +163,72 @@ FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::FermionOnLatticeWithSpinRealS
 // basic constructor when Sz is preserved
 // 
 // nbrFermions = number of fermions
+// totalSpin = twice the total spin value
 //nbrSite = number of sites
-// nbrSpinUp = number of particles with spin up
 // memory = amount of memory granted for precalculations
 
-// FermionOnSquareLatticeWithSpinMomentumSpace::FermionOnSquareLatticeWithSpinMomentumSpace (int nbrFermions, int nbrSpinUp, int nbrSite, unsigned long memory)
-// {
-//   
-// }
+FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (int nbrFermions, int totalSpin, int nbrSite, int momentum, int periodicity, unsigned long memory)
+{
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->SzFlag = true;
+  this->TotalSpin = totalSpin;
+  this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
+  this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
+  this->NbrSite = nbrSite;
+  this->MaxMomentum =  this->NbrSite;
+  this->NbrMomentum = this->MaxMomentum + 1;
+  this->NbrFermionStates = 2 * this->NbrMomentum;
+  this->MomentumModulo = this->NbrSite / periodicity;
+  cout << "MomentumModulo=" << MomentumModulo<<endl;
+  this->XMomentum = momentum % this->MomentumModulo;
+  this->YMomentum = 0;
+  this->StateShift = 2 * periodicity;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
+  this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
+
+  this->MaximumSignLookUp = 16;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFermionsUp);
+  cout << "intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+    this->HilbertSpaceDimension = 0;
+  else
+    this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->Flag.Initialize();
+      this->GenerateSignLookUpTable();
+      this->LargeHilbertSpaceDimension  = this->GenerateStates(!this->SzFlag, true);
+      this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+      cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+      if (this->HilbertSpaceDimension > 0)
+	this->GenerateLookUpTable(memory);
+      
+#ifdef __DEBUG__
+      long UsedMemory = 0;
+      UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+      cout << "memory requested for Hilbert space = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+      UsedMemory = this->NbrMomentum * sizeof(int);
+      UsedMemory += this->NbrMomentum * this->LookUpTableMemorySize * sizeof(int);
+      cout << "memory requested for lookup table = ";
+      if (UsedMemory >= 1024)
+	if (UsedMemory >= 1048576)
+	  cout << (UsedMemory >> 20) << "Mo" << endl;
+	else
+	  cout << (UsedMemory >> 10) << "ko" <<  endl;
+      else
+	cout << UsedMemory << endl;
+#endif
+    }  
+}
 
 // copy constructor (without duplicating datas)
 //
@@ -417,6 +475,20 @@ long FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::EvaluateHilbertSpaceDime
   return dimension;
 }
 
+
+// evaluate Hilbert space dimension
+//
+// nbrFermions = number of fermions
+// nbrSpinUp = number of fermions with spin up
+// return value = Hilbert space dimension
+
+long FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp)
+{
+  BinomialCoefficients binomials(this->NbrSite);
+  long Dimension = binomials(this->NbrSite, this->NbrFermionsUp);
+  Dimension *= binomials(this->NbrSite, this->NbrFermionsDown);
+  return Dimension;
+}
 
 // find state index from a string
 //

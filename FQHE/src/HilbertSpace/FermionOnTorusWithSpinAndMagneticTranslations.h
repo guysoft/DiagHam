@@ -479,6 +479,15 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = position from which new states have to be stored
   virtual long RawGenerateStates(int nbrFermions, int maxMomentum, int currentMaxMomentum, long pos, int currentMomentum);
   
+  // generate all states corresponding to the constraints without the translation symmmetry along x
+  // 
+  // nbrFermions = number of fermions
+  // currentSite = current site index in real state
+  // nbrSpinUp = number of fermions with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos);
+  
   // compute the parity of the number of spin singlets 
   //
   // state = reference on the state whose parity has to be evaluated

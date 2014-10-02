@@ -102,6 +102,19 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // memory = amount of memory granted for precalculations
   FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (int nbrFermions, int nbrSite, int xMomentum, int maxXMomentum,
 						     int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
+  
+  // basic constructor when Sz is preserved
+  // 
+  // nbrFermions = number of fermions
+  // totalSpin = twice the value of Sz
+  // nbrSite = number of sites
+  // xMomentum = momentum sector in the x direction
+  // maxXMomentum = maximum momentum in the x direction
+  // yMomentum = momentum sector in the y direction
+  // maxYMomentum = maximum momentum in the y direction 
+  // memory = amount of memory granted for precalculations
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (int nbrFermions, int totalSpin, int nbrSite, int xMomentum, int maxXMomentum,
+						     int yMomentum, int maxYMomentum, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -248,6 +261,13 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // nbrFermions = number of fermions
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
+  
+  // evaluate Hilbert space dimension
+  //
+  // nbrFermions = number of fermions
+  // nbrSpinUp = number of fermions with spin up
+  // return value = Hilbert space dimension
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp);
 
   // generate all states corresponding to the constraints
   //
@@ -261,6 +281,15 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long RawGenerateStates(int nbrFermions, int currentSite, long pos);
+  
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // currentSite = current site index in real state
+  // nbrSpinUp = number of fermions with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long RawGenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos);
 
   // generate look-up table associated to current Hilbert space
   // 
