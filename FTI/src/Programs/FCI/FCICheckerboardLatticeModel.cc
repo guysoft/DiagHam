@@ -413,7 +413,6 @@ int main(int argc, char** argv)
 											       i, NbrSitesX, j, NbrSitesY,
 											       TightBindingMatrix, DensityDensityInteraction,
 											       Architecture.GetArchitecture(), Memory);
-		      cout << "Hamiltonian evaluated" << endl;
 		    }
 		}
 	      char* ContentPrefix = new char[256];
