@@ -118,7 +118,7 @@ HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals
  // numXTranslations = number of translation in the x direction to get back to the unit cell 
  // numXTranslations = number of translation in the y direction to get back to the unit cell
  //
- int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations);
+ int  EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase);
   
 
  int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int orbitalIndex, int & numXTranslations, int &numYTranslations);
@@ -130,10 +130,10 @@ HermitianMatrix  BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals
 // posx = position along x-direction
 // posy = position along y-direction
  // numXTranslations = number of translation in the x direction to get back to the unit cell 
- // numXTranslations = number of translation in the y direction to get back to the unit cell
+// numXTranslations = number of translation in the y direction to get back to the unit cell
  //
 
-inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations) 
+inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, int posy,int & numXTranslations,int &numYTranslations, Complex &translationPhase) 
 {
   numXTranslations=0;
   numYTranslations=0;  
@@ -158,6 +158,22 @@ inline int TightBindingModelHofstadterSquare::EncodeSublatticeIndex(int posx, in
       posy-=this->UnitCellY;
       --numYTranslations;
     }
+  Complex tmpPhase(1.0,0.0);
+  Complex tmpPhase2;
+  translationPhase=tmpPhase;
+  if (numXTranslations>0)
+    tmpPhase2=LxTranslationPhase;
+  else
+    tmpPhase2=Conj(LxTranslationPhase);
+  for (int i=0; i<abs(numXTranslations); ++i)
+    tmpPhase*=tmpPhase2;
+  tmpPhase=1.0;
+  if (numYTranslations>0)
+    tmpPhase2=LyTranslationPhase;
+  else
+    tmpPhase2=Conj(LyTranslationPhase);
+  for (int i=0; i<abs(numYTranslations); ++i)
+    tmpPhase*=tmpPhase2;
   return posx + this->UnitCellX*posy;
 }
   
@@ -177,7 +193,8 @@ inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearize
   orbitalIndex %= this->NbrBands;
   if (orbitalIndex < 0)
     orbitalIndex +=  this->NbrBands;
-  if(x > this->NbrSiteX)
+
+  if(x >= this->NbrSiteX)
   {
     x -=  this->NbrSiteX;
     numXTranslations--;
@@ -187,7 +204,7 @@ inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearize
     x +=  this->NbrSiteX;
     numXTranslations++;
   }
-    if(y > this->NbrSiteY)
+    if(y >= this->NbrSiteY)
   {
     y -=  this->NbrSiteY;
     numYTranslations--;
@@ -199,6 +216,9 @@ inline int  TightBindingModelHofstadterSquare::GetRealSpaceTightBindingLinearize
   }
   return this->GetRealSpaceTightBindingLinearizedIndex(x, y, orbitalIndex); 
 }
+
+
+
 
 
 #endif

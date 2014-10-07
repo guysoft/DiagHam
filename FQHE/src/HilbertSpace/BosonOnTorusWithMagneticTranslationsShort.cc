@@ -702,9 +702,6 @@ void BosonOnTorusWithMagneticTranslationsShort::GenerateLookUpTable(int memory)
 	  this->RescalingFactors[i][j] = sqrt (((double) i) / ((double) j));
 	}
     }
-    cout <<"i this->LookUpTableShift [i]"<<endl;
-for (int i =0; i < TmpNbrKyValue; i++)
-        cout <<i<<" "<<  this->LookUpTableShift [i] <<endl;
 }
 
 // evaluate Hilbert space dimension

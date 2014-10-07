@@ -182,7 +182,7 @@ class BosonOnLatticeRealSpaceAnd2DTranslation : public BosonOnTorusWithMagneticT
 
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
-  // stateDescription = unsigned integer describing the state
+  // stateDescription = unsigned integer describing the state 
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = canonical form of a state description and -1 in nbrTranslationX if the state does not fit the momentum constraint

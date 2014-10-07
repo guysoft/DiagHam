@@ -1393,8 +1393,9 @@ void ParticleOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrice
 // initialIndex = initial index to compute
 // nbrComponents = number of components to compute
 
-void ParticleOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholeBMatrices,
+void  ParticleOnSphere::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholeBMatrices,
 						      ComplexVector& state, int mPSRowIndex, int mPSColumnIndex, 
 						      long memory, long initialIndex, long nbrComponents)
 {
 }
+

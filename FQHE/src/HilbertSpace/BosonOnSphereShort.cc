@@ -67,6 +67,8 @@ using std::pair;
 
 BosonOnSphereShort::BosonOnSphereShort ()
 {
+  this->Minors = 0;
+  this->KeptCoordinates = 0;
 }
 
 // basic constructor

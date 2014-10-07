@@ -925,6 +925,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   //state = ID in the symmetrized basis of the space whose symmetry has to be determined
   //return value = dimension of the corresponding subspace  
   virtual int GetSymmetryDimension(int state);
+
 };
 
 // convert the Lz value from the sphere geometry to the disk geometry

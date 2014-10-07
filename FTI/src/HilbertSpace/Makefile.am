@@ -17,4 +17,5 @@ FermionOnLatticeRealSpaceAnd2DTranslation.cc \
 BosonOnLatticeRealSpace.cc \
 BosonOnLatticeGutzwillerProjectionRealSpace.cc \
 BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.cc \
-BosonOnLatticeRealSpaceAnd2DTranslation.cc
+BosonOnLatticeRealSpaceAnd2DTranslation.cc \
+BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation.cc
