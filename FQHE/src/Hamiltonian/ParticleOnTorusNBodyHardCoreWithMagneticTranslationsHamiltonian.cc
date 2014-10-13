@@ -96,22 +96,22 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
     }
   char* InteractionCoefficientFileName = new char [512];
   sprintf (InteractionCoefficientFileName, "%dbodydelta_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NBodyValue, this->NbrLzValue, this->Ratio);
-  if (IsFile(InteractionCoefficientFileName))
-    {
-      ifstream File;
-      File.open(InteractionCoefficientFileName, ios::binary | ios::in);
-      if (!File.is_open())
-	{
-	  cout << "cannot open " << InteractionCoefficientFileName << endl;
-	}
-      else
-	{
-	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
-	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
-	  File.close();
-	}
-    }
-  else
+//   if (IsFile(InteractionCoefficientFileName))
+//     {
+//       ifstream File;
+//       File.open(InteractionCoefficientFileName, ios::binary | ios::in);
+//       if (!File.is_open())
+// 	{
+// 	  cout << "cannot open " << InteractionCoefficientFileName << endl;
+// 	}
+//       else
+// 	{
+// 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
+// 	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
+// 	  File.close();
+// 	}
+//     }
+//   else
     {
       ofstream File;
       File.open(InteractionCoefficientFileName, ios::binary | ios::out);
@@ -134,21 +134,22 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
 		}
 	    }
 	  	  
-	  double* Coefficient;
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
 	    {
+	      int TmpIndex = 0;
 	      for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
 	      {
 		int momentumTransfer = j - this->NBodyValue + 1;
-		Coefficient = this->EvaluateInteractionCoefficientCreation(TmpIndices[m1], momentumTransfer);
+		double* Coefficient = this->EvaluateInteractionCoefficientCreation(TmpIndices[m1], momentumTransfer);
 		for (int g = 0; g < this->NBodyValue; ++g)
 		{
-		  this->PrecalculatedInteractionCoefficients[m1][this->NBodyValue*j + g] = Coefficient[g];
+		  this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = Coefficient[g];
+		  ++TmpIndex;
 		}
+		delete[] Coefficient;
 	      }
 	      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
 	    }
-	   delete[] Coefficient;   
 
 	  
 	  delete[] InteractionCoefficientFileName;
