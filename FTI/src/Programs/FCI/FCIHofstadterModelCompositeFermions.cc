@@ -2,10 +2,11 @@
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
-#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeLong.h"
 
-#include "Hamiltonian/ParticleOnLatticeDeltaHamiltonian.h"
+#include "Tools/FTITightBinding/TightBindingModelHofstadterSquare.h"
+#include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian.h"
 
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/ComplexLapackDeterminant.h"
@@ -39,89 +40,8 @@ using std::endl;
 using std::ofstream;
 
 
-#ifdef HAVE_GSL
-#include "gsl/gsl_multimin.h"
-#endif
 
-/*
 
-// Manager = OptionManager indicating all contents
-// Space = total space to work in
-// solenoidCF_X = solenoid flux for CF in x-direction
-// solenoidCF_y = solenoid flux for CF in y-direction
-// writeState = flag indicating whether final state shall be written to predefined output name
-ComplexVector* GetTrialState(OptionManager &Manager, ParticleOnLattice* Space, double solenoidCF_x, double solenoidCF_y, bool verbose=false, bool writeState=false);
-
-double GetTrialStateSqrOverlap(ComplexVector &reference, OptionManager &Manager, ParticleOnLattice* Space, double solenoidCF_x, double solenoidCF_y, bool verbose=false, bool writeState=false)
-{
-  ComplexVector *TmpV = GetTrialState(Manager, Space, solenoidCF_x, solenoidCF_y, verbose, writeState);
-  double Overlap = SqrNorm(reference* (*TmpV));
-  delete TmpV;
-  return Overlap;
-}
-
-struct OptParams
-{
-  ComplexVector *ReferenceVector;
-  OptionManager *Manager;
-  ParticleOnLattice* Space;
-  double Offset;
-  int EvaluationsF;
-  int EvaluationsdF;
-};
-
-#ifdef HAVE_GSL
-
-double TargetFunction_F (const gsl_vector * X, void * PARAMS)
-{
-  OptParams *p=(OptParams*)PARAMS;
-  double rst = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1));
-  ++(p->EvaluationsF);
-  return rst;
-}
-
-void TargetFunction_dF (const gsl_vector * X, void * PARAMS, gsl_vector * G)
-{
-  OptParams *p=(OptParams*)PARAMS;
-  double h = p->Offset;
-  double Oplusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)+h, gsl_vector_get(X,1));
-  double Ominusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)-h, gsl_vector_get(X,1));
-  double Oplusy =  -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)+h);
-  double Ominusy = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)-h);
-  gsl_vector_set (G, 0, (Oplusx-Ominusx)/(2.0*h));
-  gsl_vector_set (G, 1, (Oplusy-Ominusy)/(2.0*h));
-  ++(p->EvaluationsdF);
-}
-
-  
-void TargetFunction_FdF (const gsl_vector * X, void * PARAMS, double * f, gsl_vector * G)
-{
-  OptParams *p=(OptParams*)PARAMS;
-  double h = p->Offset;
-  *f = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1));
-  double Oplusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)+h, gsl_vector_get(X,1));
-  double Ominusx = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0)-h, gsl_vector_get(X,1));
-  double Oplusy =  -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)+h);
-  double Ominusy = -GetTrialStateSqrOverlap(*(p->ReferenceVector),*(p->Manager), p->Space, gsl_vector_get(X,0), gsl_vector_get(X,1)-h);
-  ++(p->EvaluationsF);
-  ++(p->EvaluationsdF);
-  gsl_vector_set (G, 0, (Oplusx-Ominusx)/(2.0*h));
-  gsl_vector_set (G, 1, (Oplusy-Ominusy)/(2.0*h));
-}
-
-#endif // HAVE_GSL
-
-// values = eigenvalues
-// vectors = complex matrix with many vectors to be analyzed and overwritten with basis diagonal in k
-// NbrFlux = number of flux quanta to be considered
-// start, end = indices of range of eigenvalues to be considered
-ComplexMatrix& DiagonalizeMomentaInSubspace(RealDiagonalMatrix &values, ComplexMatrix &vectors, ParticleOnLatticeTranslationOperator *translationOperator, int NbrFlux, int start, int end);
-
-void GetTranslationMatrix(ParticleOnLatticeTranslationOperator *Operator, int NbrVectors,
-			  ComplexVector *Vectors, ComplexMatrix &MatrixRepresentation,
-			  ComplexVector &TmpState, ArchitectureManager &Architecture);
-
-*/
 
 int main(int argc, char** argv)
 {
@@ -171,7 +91,12 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = Manager.GetInteger("flux");  
   bool HardCore = Manager.GetBoolean("hard-core");
   int CFFlux = Manager.GetInteger("flux-per-CF");
+  char Axis ='y';
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
+
+
+
+
 
 
   double SolenoidCF_X=0.0, SolenoidCF_Y=0.0;
@@ -182,20 +107,6 @@ int main(int argc, char** argv)
     if (tmpI>1) SolenoidCF_Y=Fluxes[1];
     if (tmpI>0) delete [] Fluxes;	
   }
-
-double SolenoidX=0.0, SolenoidY=0.0;
-  {
-    int tmpI;
-    double *Fluxes=Manager.GetDoubles("solenoid-flux", tmpI);
-    if (tmpI>0) SolenoidX=Fluxes[0];
-    if (tmpI>1) SolenoidY=Fluxes[1];
-    
-    if (tmpI>0)
-      {
-	delete [] Fluxes;
-      }
-  }
-  
 
   int FluxModulo = FindGCD(NbrFluxQuanta,  NbrSites);
   int p = NbrFluxQuanta /  FluxModulo;
@@ -239,6 +150,11 @@ double SolenoidX=0.0, SolenoidY=0.0;
              }
 	   }
 	  }
+
+
+
+
+
   MaxMomentumX =  Lx/ NxZero;
   MaxMomentumY =  Ly/ NyZero;
   cout << NxZero<<" " <<NyZero <<" " << (((double) NbrFluxQuanta )* ((double) NxZero*(double) NyZero)/((double )NbrSites )) <<endl;
@@ -247,29 +163,69 @@ double SolenoidX=0.0, SolenoidY=0.0;
   int XMomentum=0;
   int YMomentum=0;
 
+  char boundaryCdStr[30]="";
+  double SolenoidX=0.0, SolenoidY=0.0;
+  {
+    int tmpI;
+    double *Fluxes=Manager.GetDoubles("solenoid-flux", tmpI);
+    if (tmpI>0) SolenoidX=Fluxes[0];
+    if (tmpI>1) SolenoidY=Fluxes[1];
+    
+    if (tmpI>0)
+      {
+	delete [] Fluxes;
+	sprintf(boundaryCdStr,"_s_%g_%g",SolenoidX,SolenoidY);
+      }
+  }
 
+  char* OutputName;
+  if ( (OutputName = Manager.GetString("output-file")) == NULL)
+    {
+      OutputName = new char [300];
+
+      sprintf (OutputName, "bosons_lattice_CF_n_%d_X_%d_Y_%d_x_%d_y_%d_q_%d_p_%d_kx_%d_ky_%d%s.vec", NbrBosons, NxZero, NyZero, MaxMomentumX ,MaxMomentumY , NbrFluxQuanta, CFFlux, XMomentum , YMomentum ,boundaryCdStr);
+    }
 
   int AttachedFlux = CFFlux * NbrBosons;  
-  
+  int FluxPerCellCF =  (NbrFluxQuanta-AttachedFlux)/( NxZero* NyZero );  
+  int FluxPerCellJastrow =  (AttachedFlux* NbrBosons)/( NxZero* NyZero );  
   // constructing 1P states:
   bool verbose = Manager.GetBoolean("debug");
   if (verbose) cout << "* CF states contribute "<<NbrFluxQuanta-AttachedFlux<<" flux"<<endl;
+
   // space in which CF's live (statistics doesn't matter as we consider single particle physics!)
   //BosonOnLattice *CFSpace = new BosonOnLattice(/*NbrParticles 1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace);
-  FermionOnLattice *CFSpace = new FermionOnLattice(1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace, SolenoidCF_X, SolenoidCF_Y,verbose);
+  //FermionOnLattice *CFSpace = new FermionOnLattice(1, Lx, Ly, NbrFluxQuanta-AttachedFlux, MemorySpace, SolenoidCF_X, SolenoidCF_Y,verbose);
+
+
+
     
   // corresponding Hamiltonians
-  AbstractQHEOnLatticeHamiltonian * CFHamiltonian = new ParticleOnLatticeDeltaHamiltonian(CFSpace,1, Lx, Ly, NbrFluxQuanta-AttachedFlux,0.0 ,false, 0.0, 0.0, Architecture.GetArchitecture(), 0, NULL);    
-  
-  HermitianMatrix HCF(CFHamiltonian->GetHilbertSpaceDimension(), true);
-  ComplexMatrix CFEigenVecs(CFHamiltonian->GetHilbertSpaceDimension(), CFHamiltonian->GetHilbertSpaceDimension());
-  CFHamiltonian->GetHamiltonian(HCF);
-  RealDiagonalMatrix CFEigenVals(CFHamiltonian->GetHilbertSpaceDimension());
+  TightBindingModelHofstadterSquare TightBindingModelCF (MaxMomentumX, MaxMomentumY, NxZero, NyZero, FluxPerCellCF, Axis, SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture());
+
+  cout <<" FluxPerCellCF = "<< FluxPerCellCF <<endl;
+  BosonOnLatticeGutzwillerProjectionRealSpace CFSpace (1, TightBindingModelCF.GetNbrBands() * TightBindingModelCF.GetNbrStatePerBand());
+  Architecture.GetArchitecture()->SetDimension(CFSpace.GetHilbertSpaceDimension());
+
+  RealSymmetricMatrix DensityDensityInteraction(TightBindingModelCF.GetNbrBands() * TightBindingModelCF.GetNbrStatePerBand(), true);
+  HermitianMatrix TightBindingMatrix = TightBindingModelCF.GetRealSpaceTightBindingHamiltonian();
+
+//  AbstractQHEOnLatticeHamiltonian * CFHamiltonian = new ParticleOnLatticeDeltaHamiltonian(CFSpace,1, Lx, Ly, NbrFluxQuanta-AttachedFlux,0.0 ,false, 0.0, 0.0, Architecture.GetArchitecture(), 0, NULL);    
+
+
+  ParticleOnLatticeRealSpaceHamiltonian CFHamiltonian (&CFSpace, 1 /*NbrParticles*/, TightBindingModelCF.GetNbrBands() * TightBindingModelCF.GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction,   Architecture.GetArchitecture(), MemorySpace);
+
+  HermitianMatrix HCF(CFHamiltonian.GetHilbertSpaceDimension(), true);
+  ComplexMatrix CFEigenVecs(CFHamiltonian.GetHilbertSpaceDimension(), CFHamiltonian.GetHilbertSpaceDimension());
+  CFHamiltonian.GetHamiltonian(HCF);
+  RealDiagonalMatrix CFEigenVals(CFHamiltonian.GetHilbertSpaceDimension());
   HCF.Diagonalize(CFEigenVals, CFEigenVecs, /* error */ 1e-10 , /* maxIter*/  250);
 
   for (int i=0; i<NbrBosons; ++i)
     if (verbose) cout << "E_CF["<<i<<"]="<<CFEigenVals[i]<<" norm of EVec: "<<CFEigenVecs[i].Norm()<<endl;
   if (verbose) cout << "E_other["<<NbrBosons<<"]="<<CFEigenVals[NbrBosons]<<endl;
+
+
 
 /*
   if (Manager.GetBoolean("write-basis"))
@@ -288,29 +244,36 @@ double SolenoidX=0.0, SolenoidY=0.0;
   
   // calculate states required to build Jastrow factor:
   // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles 1, Lx, Ly, AttachedFlux, MemorySpace);
-  FermionOnLattice * JastrowSpace = new FermionOnLattice(/*NbrParticles*/ 1, Lx, Ly, AttachedFlux, MemorySpace, SolenoidX-SolenoidCF_X, SolenoidY-SolenoidCF_Y, /*silent */ verbose);
+  cout <<"  FluxPerCellJastrow = "<<  FluxPerCellJastrow <<endl;
+  TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumX, MaxMomentumY, NxZero, NyZero, FluxPerCellJastrow, Axis,  SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture());
 
-  AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U*/  0.0 , /*ReverseHopping */ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
-   
-  HermitianMatrix HJastrow(JastrowHamiltonian->GetHilbertSpaceDimension(), true);
-  ComplexMatrix JastrowEigenVecs(JastrowHamiltonian->GetHilbertSpaceDimension(),
-				 JastrowHamiltonian->GetHilbertSpaceDimension());
-  JastrowHamiltonian->GetHamiltonian(HJastrow);
-  RealDiagonalMatrix JastrowEigenVals(JastrowHamiltonian->GetHilbertSpaceDimension());
+   BosonOnLatticeGutzwillerProjectionRealSpace JastrowSpace( 1, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand());
+  Architecture.GetArchitecture()->SetDimension(JastrowSpace.GetHilbertSpaceDimension());
+
+// AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U*/  0.0 , /*ReverseHopping */ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
+  TightBindingMatrix = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian(); 
+  ParticleOnLatticeRealSpaceHamiltonian JastrowHamiltonian (&CFSpace, 1 /*NbrParticles*/, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand(),  TightBindingMatrix, DensityDensityInteraction,
+ 									   Architecture.GetArchitecture(), MemorySpace);
+
+
+
+  HermitianMatrix HJastrow(JastrowHamiltonian.GetHilbertSpaceDimension(), true);
+
+  ComplexMatrix JastrowEigenVecs(JastrowHamiltonian.GetHilbertSpaceDimension(),
+				 JastrowHamiltonian.GetHilbertSpaceDimension());
+  JastrowHamiltonian.GetHamiltonian(HJastrow);
+  RealDiagonalMatrix JastrowEigenVals(JastrowHamiltonian.GetHilbertSpaceDimension());
   HJastrow.Diagonalize(JastrowEigenVals, JastrowEigenVecs, /* error*/  1e-10 , /* maxIter */ 250);
 
- delete CFHamiltonian;
- delete JastrowHamiltonian;
-  
-  BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation Space (NbrBosons,NbrSites , XMomentum, MaxMomentumX , YMomentum, MaxMomentumY );
+  BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation Space (NbrBosons,Lx,Ly , XMomentum, MaxMomentumX , YMomentum, MaxMomentumY );
   ComplexVector TrialState(Space.GetHilbertSpaceDimension(),true);
+  double PhaseTranslationX = 2.0*M_PI*NbrFluxQuanta/(Lx*Ly) * NxZero;
+  Space.GetCompositeFermionWavefunction(TrialState, JastrowEigenVecs, CFEigenVecs,PhaseTranslationX );
+  cout <<"State Norm " << TrialState.Norm()<<endl;
+  TrialState/= TrialState.Norm();
+  TrialState.WriteVector(OutputName);
 
-  Space.GetCompositeFermionWavefunction(TrialState, JastrowEigenVecs, CFEigenVecs);
-  
-for (int i = 0;  i < Space.GetHilbertSpaceDimension();i++)
-    cout << Space.PrintState(cout,i)<<" "<<TrialState[i]<<endl;
- delete CFSpace;
- delete JastrowSpace;
+
  return 0;
 }
 

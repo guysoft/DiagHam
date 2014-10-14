@@ -13,9 +13,9 @@
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
-#include "HilbertSpace/BosonOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
-
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpace.h"
+#include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
 
 #include "Hamiltonian/ParticleOnLatticeHofstadterSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeTwoBandHofstadterHamiltonian.h"
@@ -32,8 +32,9 @@
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+#include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption  ('\n', "real-space", "use the real space representation when considering the system with all bands");
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
-
+  (*SystemGroup) += new BooleanOption  ('\n', "hardcore", "consider hardcore bosons (oly valid in real space mode)");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
@@ -120,6 +121,8 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*ToolsGroup) += new SingleDoubleOption  ('\n',"testhermitian-error", "precision of the hermeticity test",0);
+
+  (*MiscGroup) += new SingleStringOption('\n', "energy-expectation", "name of the file containing the state vector, whose energy expectation value shall be calculated");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   Manager.StandardProceedings(argv, argc, cout);
@@ -459,37 +462,49 @@ else
           RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
  	   if (Manager.GetBoolean("boson") == true)
 		    {
-			if(Manager.GetBoolean("no-translation") == true)
-		 		Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-			else
- 		     		Space = new BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
-
-		      double UPotential = Manager.GetDouble("u-potential");
-		      for (int x = 0; x <  NbrCellX; ++x)
+			if(Manager.GetBoolean("hardcore") == false)
 			{
-			  for (int y = 0; y <  NbrCellY; ++y)
-			    {
-			      for (int k = 0; k < TightBindingModel->GetNbrBands(); ++k)
+				if(Manager.GetBoolean("no-translation") == true)
+		 			Space = new BosonOnLatticeRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+				else
+ 			     		Space = new BosonOnLatticeRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
+
+			      double UPotential = Manager.GetDouble("u-potential");
+			      for (int x = 0; x <  NbrCellX; ++x)
 				{
-				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
-									     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), UPotential);
+				  for (int y = 0; y <  NbrCellY; ++y)
+				    {
+				      for (int k = 0; k < TightBindingModel->GetNbrBands(); ++k)
+					{
+					  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), 
+										     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y, k), UPotential);
+					}
+			    	    }
 				}
-			    }
 			}
-		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
-		  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
-		if(Manager.GetBoolean("no-translation") == false)
-	{
-    double FluxDensity =  (((double) FluxPerCell)/( (double) (UnitCellX*UnitCellY)));
+			else
+			{
+				if(Manager.GetBoolean("no-translation") == true)
+		 			Space = new BosonOnLatticeGutzwillerProjectionRealSpace(NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+				else
+ 			     		Space = new BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation(NbrParticles, UnitCellX*NbrCellX, UnitCellY*NbrCellY, i, NbrCellX, j,  NbrCellY);
+			
+			}
 
-    double PhaseTranslationX = 2.0* M_PI * FluxDensity * UnitCellX;
-    double PhaseTranslationY = 0.0;
+			  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+			  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+			  HermitianMatrix TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();
+			if(Manager.GetBoolean("no-translation") == false)
+		{
+	    double FluxDensity =  (((double) FluxPerCell)/( (double) (UnitCellX*UnitCellY)));
 
-    Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
- 											   i,  NbrCellX, j,  NbrCellY, PhaseTranslationX, PhaseTranslationY,
- 											   TightBindingMatrix, DensityDensityInteraction,
- 											   Architecture.GetArchitecture(), Memory);
+	    double PhaseTranslationX = 2.0* M_PI * FluxDensity * UnitCellX;
+	    double PhaseTranslationY = 0.0;
+
+	    Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DMagneticTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
+ 												   i,  NbrCellX, j,  NbrCellY, PhaseTranslationX, PhaseTranslationY,
+ 												   TightBindingMatrix, DensityDensityInteraction,
+ 												   Architecture.GetArchitecture(), Memory);
 }
 		else
  		  Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), 
@@ -506,6 +521,37 @@ else
 }
 }
 
+
+      double Shift = 0.0;
+      Hamiltonian->ShiftHamiltonian(Shift);
+
+
+ if (Manager.GetString("energy-expectation") != 0 )
+	{
+	  char* StateFileName = Manager.GetString("energy-expectation");
+	  if (IsFile(StateFileName) == false)
+	    {
+	      cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+	      return -1;           
+	    }
+	  ComplexVector State;
+	  if (State.ReadVector(StateFileName) == false)
+	    {
+	      cout << "error while reading " << StateFileName << endl;
+	      return -1;
+	    }
+	  if (State.GetVectorDimension() != Space->GetHilbertSpaceDimension())
+	    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+	  ComplexVector TmpState(Space->GetHilbertSpaceDimension());
+	  VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+	  Operation.ApplyOperation(Architecture.GetArchitecture());
+	  Complex EnergyValue = State * TmpState;
+	  cout << "< Energy > = " << (EnergyValue.Re - Shift) << " " << EnergyValue.Im << endl;
+	  return 0; 
+	}
 
 	  
 	  char* ContentPrefix = new char[256];
