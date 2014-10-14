@@ -5,6 +5,8 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
@@ -71,7 +73,9 @@ int main(int argc, char** argv)
   int NbrParticles = 0;
   int NbrSites = 0;
   int XMomentum = 0;
+  int YMomentum = 0;
   int XPeriodicity = 0;
+  int YPeriodicity = 0;
   bool Statistics = true;
   bool GutzwillerFlag = false;
   int NbrInputStates = 0;
@@ -90,7 +94,7 @@ int main(int argc, char** argv)
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
 	}
-      if (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum, XPeriodicity, Statistics, GutzwillerFlag) == false)
+      if ((FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum, XPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum, YMomentum, XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false))
 	{
 	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
 	  return -1;
@@ -105,14 +109,22 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       NbrInputStates = DegenerateFile.GetNbrLines();
-      if (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, XMomentum, XPeriodicity, Statistics, GutzwillerFlag) == false)
+      if ((FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, XMomentum, XPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, XMomentum, YMomentum,  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false))
 	{
 	  cout << "error while retrieving system parameters from file name " << DegenerateFile(0, 0) << endl;
 	  return -1;
 	}
     }
-
-  cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum << " Tx=" << XPeriodicity << endl;
+  if (YPeriodicity == 0)
+    {
+      cout << "Convert from kx basis to real space basis" << endl;
+      cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum << " Tx=" << XPeriodicity << endl;
+    }
+  else
+    {
+      cout << "Convert from kx,ky basis to real space basis" << endl;
+      cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum << " Tx=" << XPeriodicity << " Ky=" << YMomentum << " Ty=" << YPeriodicity << endl;
+    }
   ComplexVector* InputStates = new ComplexVector[NbrInputStates];
   char** InputStateNames = new char*[NbrInputStates];
   if (Manager.GetString("input-state") != 0)
@@ -162,9 +174,15 @@ int main(int argc, char** argv)
   if (Statistics == true)
     {
       if (GutzwillerFlag == false)
-	InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity);
+	if (YPeriodicity == 0)
+	  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity);
+	else
+	  InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
       else
-	InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity);
+	if (YPeriodicity == 0)
+	  InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity);
+	else
+	  InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
     }
   else
     {
@@ -194,8 +212,17 @@ int main(int argc, char** argv)
 
   char* XPeriodicityString = new char[256];
   char* XMomentumString = new char[256];
-  sprintf (XPeriodicityString, "_xmomentum_%d", XPeriodicity);
-  sprintf (XMomentumString, "_kx_%d", XMomentum);
+  if (YPeriodicity == 0)
+  {
+    sprintf (XPeriodicityString, "_xmomentum_%d", XPeriodicity);
+    sprintf (XMomentumString, "_kx_%d", XMomentum);
+  }
+  else
+  {
+    sprintf (XPeriodicityString, "_xymomentum_%d_%d", XPeriodicity, YPeriodicity);
+    sprintf (XMomentumString, "_kx_%d_ky_%d", XMomentum, YMomentum);
+  }
+  
   for (int i = 0; i < NbrInputStates; ++i)
     {
       char* TmpVectorOutputName = ReplaceString(InputStateNames[i], XPeriodicityString, "");

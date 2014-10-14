@@ -44,6 +44,7 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
 {
 
   friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
+  friend class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation;
 
  protected:
 

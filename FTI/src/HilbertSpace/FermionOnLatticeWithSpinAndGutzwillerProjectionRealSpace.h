@@ -45,6 +45,7 @@ class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace : public FermionO
 {
 
   friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
+  friend class FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation;
 
  protected:
 
