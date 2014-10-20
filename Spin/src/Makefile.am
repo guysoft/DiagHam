@@ -1,1 +1,1 @@
-SUBDIRS=Architecture HilbertSpace Hamiltonian Operator Tools Programs 
+SUBDIRS=Architecture HilbertSpace Hamiltonian Operator MPSObjects Tools Programs 
