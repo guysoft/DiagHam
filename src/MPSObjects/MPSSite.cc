@@ -184,7 +184,7 @@ bool MPSSite::CheckRightNormalization()
 //can be used only if all matrices on the right sites are right-normalized
 void MPSSite::BringMInRightCanonicalForm()
 {
-  RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight, true);
+  RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight * this->PhysicalDimension, true);
   
   for(int i = 0 ; i < this->BondDimensionLeft ; i++)
     {
@@ -213,7 +213,7 @@ void MPSSite::BringMInRightCanonicalForm()
 	      this->M[i](j,k) = V(this->PhysicalDimension * k + i,j);
 	    }
 	}
-      std::cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
+      cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
       this->SiteOnLeft->M[i] = this->SiteOnLeft->M[i]*U;
        }
   delete this->R;
@@ -244,7 +244,7 @@ if(this->CheckRightNormalization())
 
 void MPSSite::BringMInLeftCanonicalForm()
 {
-  RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight, true);
+  RealMatrix TmpMatrix (this->PhysicalDimension*this->BondDimensionLeft,this->BondDimensionRight, true);
   
   for(int i = 0; i < this->BondDimensionLeft; i++)
     {
@@ -317,8 +317,8 @@ RealVector & MPSSite::GetMatrixInVectorForm()
 
 void MPSSite::InitializeWithRandomMatrices()
 {
-   cout <<" start initialization i = "<<this->SitePosition <<endl;;
-   cout <<this->BondDimensionLeft<< " " << this->BondDimensionRight<<endl;
+//   cout <<" start initialization i = "<<this->SitePosition <<endl;;
+//   cout <<this->BondDimensionLeft<< " " << this->BondDimensionRight<<endl;
    for (int i = 0; i < this->PhysicalDimension; i++)
    {
     this->M[i] = RealMatrix(this->BondDimensionLeft,this->BondDimensionRight, true);
