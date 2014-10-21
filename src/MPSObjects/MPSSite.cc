@@ -136,7 +136,7 @@ void MPSSite::InitializeRight(RealMatrix * newB)
 
 bool MPSSite::CheckLeftNormalization()
 {
-  RealMatrix Result(this->BondDimensionLeft,this->BondDimensionLeft,true);
+  RealMatrix Result(this->BondDimensionRight,this->BondDimensionRight,true);
   for (int i = 0 ; i< this->PhysicalDimension ; i++)
     {
       RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
@@ -163,13 +163,13 @@ bool MPSSite::CheckLeftNormalization()
 
 bool MPSSite::CheckRightNormalization()
 {
-  RealMatrix Result(this->BondDimensionRight,this->BondDimensionRight,true);
+  RealMatrix Result(this->BondDimensionLeft,this->BondDimensionLeft,true);
   for (int i = 0 ; i < this->PhysicalDimension ; i++)
     {
-      RealMatrix Tmp = this->M[i].DuplicateAndTranspose ();
+      RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
       Result += (this->M[i])* Tmp;
     }
-  
+  cout <<Result<<endl;
   for(int i = 0 ; i < this->BondDimensionRight; i++)
     {
       if (Result(i,i) != 1 )
@@ -226,13 +226,16 @@ void MPSSite::BringMInRightCanonicalForm()
 	      this->M[i](j,k) = V(this->PhysicalDimension * k + i,j);
 	    }
 	}
+      cout << this->M[i]<<endl;
       cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
       this->SiteOnLeft->M[i] = this->SiteOnLeft->M[i]*U;
        }
   delete this->R;
-  this->R = new Tensor3<double> (this->BondDimensionLeft,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionLeft) ;
+  this->R = new Tensor3<double> (this->BondDimensionLeft,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionLeft,true) ;
   this->OperatorToBeMinimized->SetSite(this);
   this->OperatorToBeMinimized->ComputeR(*this->R);
+  cout <<"this->R"<<endl;
+  this->R->PrintTensor();
 }
 
 

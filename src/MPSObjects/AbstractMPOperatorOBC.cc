@@ -77,6 +77,7 @@ void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)
   RealMatrix * M = this->Site->GetM();
    for (int i = 0; i < this->PhysicalDimension; i++)
     {
+      cout <<"M[i] = "<< M[i]<<endl;
       B[i] = Tensor3<double>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft);
     }
   
@@ -155,7 +156,8 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
   RealMatrix * M = this->Site->GetM();
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
-      B[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight);
+      cout <<"M[i] = "<< M[i]<<endl;
+      B[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
     }
   
   for (int i = 0; i < this->NbrNonZeroElements; i++)
@@ -168,17 +170,25 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 	    {
 	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 		{
+		  //cout <<"M[i](LeftA,RightA)"<<M[i](LeftA,RightA)<<endl;
+                  cout <<" RightR(RightA,MPOIndiceRight,RightC) "<<RightR(RightA,MPOIndiceRight,RightC)<<endl;
 		  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) +=  RightR(RightA,MPOIndiceRight,RightC)* M[i](LeftA,RightA);
+		  //cout <<"B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) "<<B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC)<<endl;
 		}
 	    }
 	}
     }
-  
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    { 
+      B[i].PrintTensor();
+    }
+
   Tensor3<double> * A = new Tensor3<double> [this->PhysicalDimension];
   
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
-      A[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight);
+      A[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
     }
   
   
