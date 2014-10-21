@@ -20,7 +20,7 @@ class DMRGFiniteSizeRealOBCMainTask
  public:
   
   DMRGFiniteSizeRealOBCMainTask(MPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture);
-  
+  virtual ~DMRGFiniteSizeRealOBCMainTask();
   void RunAlgorithm();
   
  protected:

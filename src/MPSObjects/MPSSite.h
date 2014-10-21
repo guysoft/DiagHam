@@ -5,12 +5,17 @@
 #include "AbstractMPOperatorOBC.h"
 #include "Tensor/Tensor3.h"
 #include "Matrix/RealMatrix.h"
+#include "GeneralTools/GarbageFlag.h"
 
 class AbstractMPOperatorOBC;
 
 class MPSSite 
 {
  protected:
+
+   // garbage flag to avoid data duplication
+   GarbageFlag Flag;
+
    unsigned int PhysicalDimension;
    unsigned int BondDimensionLeft;
    unsigned int BondDimensionRight;
@@ -26,7 +31,7 @@ class MPSSite
 
 
    MPSSite * TableAllSite;
-
+   
    AbstractMPOperatorOBC * OperatorToBeMinimized;
    
  public:

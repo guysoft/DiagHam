@@ -1,6 +1,7 @@
 #include "MPSSite.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "AbstractMPOperatorOBC.h"
+#include "GeneralTools/GarbageFlag.h"
 
 using std::endl;
 using std::cout;
@@ -23,6 +24,7 @@ MPSSite::MPSSite(unsigned int sitePosition, unsigned int physicalDimension, MPSS
   this->SiteOnRight = siteOnRight;
   this->SitePosition = sitePosition;
   this->OperatorToBeMinimized = mPOperator;
+  this->Flag.Initialize();
   this->M = new RealMatrix[this->PhysicalDimension];
   this->L = 0;
   this->R = 0;
@@ -32,6 +34,7 @@ MPSSite::~MPSSite()
 {
   //for (int i = 0 ; i < this->PhysicalDimension ; i++)
     //delete this->M[i];
+
   delete [] this->M;
   delete this->L;
   delete this->R;
@@ -53,7 +56,11 @@ MPSSite & MPSSite::operator = (const MPSSite & site)
   this->OperatorToBeMinimized = site.OperatorToBeMinimized;
   this->BondDimensionLeft = site.BondDimensionLeft;
   this->BondDimensionRight = site.BondDimensionRight;
-  this->M = site.M;
+  delete this->M;
+  this->M = new RealMatrix[this->PhysicalDimension];
+  for(int i= 0; i <this->PhysicalDimension; i++)
+    this->M[i] = site.M[i];
+
   this->L = site.L;
   this->R = site.R;
   return *this;
@@ -80,7 +87,7 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
 {
   this->BondDimensionLeft = bondDimensionLeft;
   this->BondDimensionRight = bondDimensionRight;
-  cout << "Setting site Dimension = " <<this->SitePosition << " " <<this->BondDimensionLeft <<" " <<this->BondDimensionRight;
+  cout << "Setting site Dimension = " <<this->SitePosition << " " <<this->BondDimensionLeft <<" " <<this->BondDimensionRight<<endl;;
 }
 
 void MPSSite::UpdateFromVector(RealVector & psi)
@@ -184,6 +191,7 @@ bool MPSSite::CheckRightNormalization()
 //can be used only if all matrices on the right sites are right-normalized
 void MPSSite::BringMInRightCanonicalForm()
 {
+ cout << "BringMInRightCanonicalForm() for site" << this->SitePosition<<endl;
   RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight * this->PhysicalDimension, true);
   
   for(int i = 0 ; i < this->BondDimensionLeft ; i++)
@@ -196,14 +204,19 @@ void MPSSite::BringMInRightCanonicalForm()
 	    }
 	}
     }
-  
+  cout << TmpMatrix<<endl;
   RealMatrix U,V;
   RealDiagonalMatrix SingularValues;
-  
-  TmpMatrix.SingularValueDecomposition(U,SingularValues,V);
-    
-  U = U*SingularValues;
-  
+  TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
+  cout <<"SingularValues  = "<< SingularValues<<endl;
+  cout <<U <<endl;
+  cout <<V <<endl;
+  U = U * SingularValues;
+  cout <<  SingularValues<< endl;
+  cout <<"After Multiplication"<<endl;
+  cout <<U<<endl;;
+ // U.Multiply(SingularValues);
+  cout <<"After Multiplication"<<endl;
   for(int i =0 ; i <  this->PhysicalDimension; i++)
     {
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
@@ -236,8 +249,6 @@ if(this->CheckRightNormalization())
   else 
     cout <<"Right Normalization issue in BringMinRightCanonicalFormCareful()"<<endl;
 }
-
-
 
 
 // can be used only if all matrices on the left sites are left-normalized
@@ -324,6 +335,6 @@ void MPSSite::InitializeWithRandomMatrices()
     this->M[i] = RealMatrix(this->BondDimensionLeft,this->BondDimensionRight, true);
     for (int j = 0; j < this->BondDimensionLeft ; j++)
      for (int k = 0; k < this->BondDimensionRight ; k++)
-      this->M[i](j,k) = (rand() - 32767) * 0.5;
+      this->M[i](j,k) = ((double) rand() / (RAND_MAX) - 0.5);
    }
 }

@@ -39,6 +39,7 @@
 #endif
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/ComplexDiagonalMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 #include "MathTools/Complex.h"
 
 #include <iostream>
@@ -59,6 +60,7 @@ class RealMatrix : public Matrix
   friend class RealTriDiagonalSymmetricMatrix;
   friend class RealVector;
   friend class ComplexVector;
+  friend class RealDiagonalMatrix;
 
  protected:
 
@@ -255,6 +257,20 @@ class RealMatrix : public Matrix
   // M2 = matrix to multiply to M1
   // return value = product of the two matrices
   friend RealMatrix operator * (const RealMatrix& M1, const RealMatrix& M2);
+
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend RealMatrix operator * (const RealMatrix  & M1, const RealDiagonalMatrix & M2);
+
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend RealMatrix operator * (const  RealDiagonalMatrix & M1, const RealMatrix & M2);
 
   // multiply a matrix by a real number (right multiplication)
   //

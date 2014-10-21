@@ -760,12 +760,62 @@ RealMatrix operator * (const RealMatrix& M1, const RealMatrix& M2)
       for (int j = 0; j < M1.NbrRow; j++)
 	{
 	  TmpColumns[i].Components[j] = 0.0;
-	  for (int k = 0; k < M2.NbrRow; k++)	
+	  for (int k = 0; k < M2.NbrRow; k++)
+          {	
 	    TmpColumns[i].Components[j] += M1.Columns[k].Components[j] * M2.Columns[i].Components[k];
+          }
 	}
     }
   return RealMatrix(TmpColumns, M2.NbrColumn);
 }
+
+
+// multiply two matrices
+//
+// M1 = first matrix
+// M2 = matrix to multiply to M1
+// return value = product of the two matrices
+
+RealMatrix operator * (const RealMatrix & M1, const RealDiagonalMatrix & M2)
+{
+  if (M1.NbrColumn != M2.NbrRow)
+    return RealMatrix();
+  RealVector* TmpColumns = new RealVector [M2.NbrColumn];
+  for (int i = 0; i < M2.NbrColumn; i++)
+    {
+      TmpColumns[i] = RealVector(M1.NbrRow);
+      for (int j = 0; j < M1.NbrRow; j++)
+	{
+	  TmpColumns[i].Components[j] = M1.Columns[i].Components[j] * M2.DiagonalElements[i];	
+	}
+    }
+  return RealMatrix(TmpColumns, M2.NbrColumn);
+} 
+
+
+
+// multiply two matrices
+//
+// M1 = first matrix
+// M2 = matrix to multiply to M1
+// return value = product of the two matrices
+
+RealMatrix operator * (const  RealDiagonalMatrix & M1, const RealMatrix & M2)
+{
+  if (M1.NbrColumn != M2.NbrRow)
+    return RealMatrix();
+  RealVector* TmpColumns = new RealVector [M2.NbrColumn];
+  for (int i = 0; i < M2.NbrColumn; i++)
+    {
+      TmpColumns[i] = RealVector(M1.NbrRow);
+      for (int j = 0; j < M1.NbrRow; j++)
+	{
+	  TmpColumns[i].Components[j] = M1.DiagonalElements[j] * M2.Columns[i].Components[j]; 
+	}
+    }
+  return RealMatrix(TmpColumns, M2.NbrColumn);
+}
+
 
 // multiply a matrix by a real number (right multiplication)
 //

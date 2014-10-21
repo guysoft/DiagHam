@@ -84,6 +84,8 @@ class RealVector : public Vector
   friend RealMatrix operator - (const RealTriDiagonalSymmetricMatrix& M1, const RealMatrix& M2);
   friend RealMatrix operator - (const RealMatrix& M1, const RealTriDiagonalSymmetricMatrix& M2);
   friend RealMatrix operator * (const RealMatrix& M1, const RealMatrix& M2);
+  friend RealMatrix operator * (const RealDiagonalMatrix& M1, const RealMatrix& M2);
+  friend RealMatrix operator * (const RealMatrix& M1, const RealDiagonalMatrix& M2);
   friend RealMatrix operator * (const RealMatrix& M, double x);
   friend RealMatrix operator * (double x, const RealMatrix& M);
   friend RealMatrix operator / (const RealMatrix& M, double x);

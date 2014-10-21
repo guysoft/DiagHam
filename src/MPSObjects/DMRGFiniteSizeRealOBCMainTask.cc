@@ -19,11 +19,13 @@ DMRGFiniteSizeRealOBCMainTask::DMRGFiniteSizeRealOBCMainTask(MPSSite * latticeSi
 }
 
 
+DMRGFiniteSizeRealOBCMainTask::~DMRGFiniteSizeRealOBCMainTask(){ }
+
 void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
 {
   this->InitializeLattice();
 
- /* for(int CurrentSweep = 0; CurrentSweep <  this->NbrSweep; CurrentSweep++)
+/*  for(int CurrentSweep = 0; CurrentSweep <  this->NbrSweep; CurrentSweep++)
     {
       cout <<"Sweep : "<<CurrentSweep<<endl;
       
@@ -54,10 +56,10 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLattice()
       LatticeSite[i].InitializeWithRandomMatrices();
     }
 
-  /*for (int i = NbrSites - 1 ; i>0 ; i--) 
+  for (int i = NbrSites - 1 ; i>0 ; i--) 
     {
       LatticeSite[i].BringMInRightCanonicalFormCareful(); 
-    }*/
+    }
 }
 
 

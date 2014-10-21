@@ -57,6 +57,7 @@ class RealDiagonalMatrix : public Matrix
   friend class ComplexVector;
   friend class RealSymmetricMatrix;
   friend class RealBandDiagonalSymmetricMatrix;
+  friend class RealMatrix;
   friend class HermitianMatrix;
   friend class ComplexDiagonalMatrix;
   friend class BandDiagonalHermitianMatrix;
@@ -200,6 +201,21 @@ class RealDiagonalMatrix : public Matrix
   // x = real number to use
   // return value = product result
   friend RealDiagonalMatrix operator * (double x, const RealDiagonalMatrix& M);
+
+
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend RealMatrix operator * (const RealMatrix  & M1, const RealDiagonalMatrix & M2);
+
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend RealMatrix operator * (const  RealDiagonalMatrix & M1, const RealMatrix & M2);
 
   // divide a matrix by a real number (right multiplication)
   //
