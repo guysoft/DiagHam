@@ -2845,7 +2845,7 @@ void FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, Abstrac
             for (int i = 0; i <= this->PLevel; ++i)
             {
                 sprintf(TmpFileName, "cft_%s_final_%s_identity_%s_level_%d_%d.dat", this->BMatrixOutputName, sectorNames[s], sectorNames[s], i, i);
-                RealMatrix m = (i < o) ? RealMatrix() : ((OrthogonalBasesLeft[s][i - o] * ScalarProducts[s][i - o]) * OrthogonalBasesRight[s][i - o]);
+                RealMatrix m = (i < o) ? RealMatrix() : (( OrthogonalBasesLeft[s][i - o] *  ((RealMatrix) ScalarProducts[s][i - o])) *  OrthogonalBasesRight[s][i - o]);
                 m.WriteMatrix(TmpFileName);
             }
         }
