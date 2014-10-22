@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "HilbertSpace/Spin1_2Chain.h"
-#include "Hamiltonian/SpinChainZ2InteractingHamiltonian.h"
+#include "Hamiltonian/AbstractHamiltonian.h"
 
 
 #include <iostream>
@@ -44,15 +44,35 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class SpinChainXYZHamiltonian : public SpinChainZ2InteractingHamiltonian
+class SpinChainXYZHamiltonian : public AbstractHamiltonian
 {
 
  protected:
   
+  // pointer to the Hilbert space of the system
+  Spin1_2Chain* Chain;
+
   // coupling along the x direction
   double JxFactor;
   // coupling along the y direction
   double JyFactor;
+  // coupling along the y direction
+  double JzFactor;
+
+  // Zeeman term on each site
+  double* FFactors;
+  // coupling along the x direction
+
+  // boundary conditions (0 for open chain, 1 for periodic, -1 for antiperiodic)
+  double BoundaryCondition;
+
+  // number of spins
+  int NbrSpin;
+
+  // precalculation array where the diagonal elements are stored
+  double* SzSzContributions;
+  // precalculation array where the parity of each state is stored
+  double* Parities;
 
  public:
 
@@ -77,6 +97,27 @@ class SpinChainXYZHamiltonian : public SpinChainZ2InteractingHamiltonian
   //
   // return value = pointer to cloned hamiltonian
   AbstractHamiltonian* Clone ();
+
+
+  // set Hilbert space
+  //
+  // hilbertSpace = pointer to Hilbert space to use
+  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+
+  // get Hilbert space on which Hamiltonian acts
+  //
+  // return value = pointer to used Hilbert space
+  AbstractHilbertSpace* GetHilbertSpace ();
+
+  // return dimension of Hilbert space where Hamiltonian acts
+  //
+  // return value = corresponding matrix elementdimension
+  int GetHilbertSpaceDimension ();
+  
+  // shift Hamiltonian from a given energy
+  //
+  // shift = shift value
+  void ShiftHamiltonian (double shift);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

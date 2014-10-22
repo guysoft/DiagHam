@@ -49,7 +49,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = Spin/src/MPSObjects
+subdir = src/MPSObjects
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
@@ -62,11 +62,11 @@ CONFIG_CLEAN_VPATH_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
-libSpinMPSObjects_a_AR = $(AR) $(ARFLAGS)
-libSpinMPSObjects_a_LIBADD =
-am_libSpinMPSObjects_a_OBJECTS =  \
-	MPOPeratorSixVertexModelTransferMatrixSquare.$(OBJEXT)
-libSpinMPSObjects_a_OBJECTS = $(am_libSpinMPSObjects_a_OBJECTS)
+libMPSObjects_a_AR = $(AR) $(ARFLAGS)
+libMPSObjects_a_LIBADD =
+am_libMPSObjects_a_OBJECTS = AbstractMPOperatorOBC.$(OBJEXT) \
+	MPSSite.$(OBJEXT) DMRGFiniteSizeRealOBCMainTask.$(OBJEXT)
+libMPSObjects_a_OBJECTS = $(am_libMPSObjects_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -76,8 +76,8 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(libSpinMPSObjects_a_SOURCES)
-DIST_SOURCES = $(libSpinMPSObjects_a_SOURCES)
+SOURCES = $(libMPSObjects_a_SOURCES)
+DIST_SOURCES = $(libMPSObjects_a_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -241,8 +241,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = 
-noinst_LIBRARIES = libSpinMPSObjects.a
-libSpinMPSObjects_a_SOURCES = MPOPeratorSixVertexModelTransferMatrixSquare.cc
+noinst_LIBRARIES = libMPSObjects.a
+libMPSObjects_a_SOURCES = AbstractMPOperatorOBC.cc \
+MPSSite.cc \
+DMRGFiniteSizeRealOBCMainTask.cc 
+
 all: all-recursive
 
 .SUFFIXES:
@@ -256,9 +259,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu Spin/src/MPSObjects/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/MPSObjects/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu Spin/src/MPSObjects/Makefile
+	  $(AUTOMAKE) --gnu src/MPSObjects/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -280,10 +283,10 @@ $(am__aclocal_m4_deps):
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libSpinMPSObjects.a: $(libSpinMPSObjects_a_OBJECTS) $(libSpinMPSObjects_a_DEPENDENCIES) $(EXTRA_libSpinMPSObjects_a_DEPENDENCIES) 
-	-rm -f libSpinMPSObjects.a
-	$(libSpinMPSObjects_a_AR) libSpinMPSObjects.a $(libSpinMPSObjects_a_OBJECTS) $(libSpinMPSObjects_a_LIBADD)
-	$(RANLIB) libSpinMPSObjects.a
+libMPSObjects.a: $(libMPSObjects_a_OBJECTS) $(libMPSObjects_a_DEPENDENCIES) $(EXTRA_libMPSObjects_a_DEPENDENCIES) 
+	-rm -f libMPSObjects.a
+	$(libMPSObjects_a_AR) libMPSObjects.a $(libMPSObjects_a_OBJECTS) $(libMPSObjects_a_LIBADD)
+	$(RANLIB) libMPSObjects.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -291,7 +294,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MPOPeratorSixVertexModelTransferMatrixSquare.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AbstractMPOperatorOBC.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DMRGFiniteSizeRealOBCMainTask.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MPSSite.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

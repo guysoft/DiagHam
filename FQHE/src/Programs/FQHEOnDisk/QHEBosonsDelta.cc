@@ -22,6 +22,8 @@
 #include "Options/SingleIntegerOption.h"
 #include "Options/SingleDoubleOption.h"
 #include "Options/SingleStringOption.h"
+#include "MathTools/ClebschGordanDiskCoefficients.h"
+#include "MathTools/BinomialCoefficients.h"
 
 #include <iostream>
 #include <fstream>
@@ -111,6 +113,34 @@ int main(int argc, char** argv)
     MMax = MMin;
   int FullDiagonalizationLimit = ((SingleIntegerOption*) Manager["full-diag"])->GetInteger();
   bool FirstRun = true;
+
+//   int MValue = 1;
+//   ClebschGordanDiskCoefficients Clebsch(2 * MMax);
+//   BinomialCoefficients Binomial (2 * MMax);
+//   for (int sum = 0; sum <= (2 * MMax); ++sum)
+//     for (int i = 0; i <= sum; ++i)
+//       {
+// 	int j = sum - i;
+// 	if ((i + j) >= MValue)
+// 	  {
+// 	    double Tmp = sqrt (Binomial(i + j, MValue) / (pow(2.0, sum) * Binomial(i + j, i)));
+// 	    double Tmp2 = 0.0;
+// 	    for (int k = 0; k <= (i + j - MValue); ++k)
+// 	      {
+// 		if (k <= j)
+// 		  {
+// 		    Tmp2 += pow (-1.0, MValue + k - j) * Binomial(i + j - MValue, k) * Binomial(MValue, MValue + k - j);
+// 		  }
+// 	      }
+// 	    Tmp *= Tmp2;	    
+// 	    cout << sum << " : " << i << " " << j << " : " << Clebsch.GetCoefficient(i, j, MValue) << " " << Tmp;
+// 	    if (fabs(Tmp) > 1e-10)
+// 	      cout << " " << (Clebsch.GetCoefficient(i, j, MValue) / Tmp);
+// 	    cout << endl;
+
+// 	  }
+//       }
+//   return 0;
 
   char* OutputNameLz = new char [1024];
   sprintf (OutputNameLz, "bosons_disk_delta_n_%d_lz_%d.dat", NbrBosons, MMax);

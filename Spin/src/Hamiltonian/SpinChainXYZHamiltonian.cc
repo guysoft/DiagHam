@@ -65,7 +65,7 @@ SpinChainXYZHamiltonian::SpinChainXYZHamiltonian(Spin1_2Chain* chain, int nbrSpi
   this->Parities = new double [this->Chain->GetHilbertSpaceDimension()];
   this->JxFactor = -jxFactor;
   this->JyFactor = -jyFactor;
-  this->InteractionStrength = -jzFactor;
+  this->JzFactor = -jzFactor;
   this->FFactors = new double[this->NbrSpin];
   for (int i = 0; i < this->NbrSpin; ++i)
     this->FFactors[i] = hFactor;
@@ -80,6 +80,47 @@ SpinChainXYZHamiltonian::~SpinChainXYZHamiltonian()
 {
 }
 
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void SpinChainXYZHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+  delete[] this->SzSzContributions;
+  this->Chain = (Spin1_2Chain*) hilbertSpace;
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->Parities = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateDiagonalMatrixElements();
+}
+
+// get Hilbert space on which Hamiltonian acts
+//
+// return value = pointer to used Hilbert space
+
+AbstractHilbertSpace* SpinChainXYZHamiltonian::GetHilbertSpace ()
+{
+  return this->Chain;
+}
+
+// return dimension of Hilbert space where Hamiltonian acts
+//
+// return value = corresponding matrix elementdimension
+
+int SpinChainXYZHamiltonian::GetHilbertSpaceDimension ()
+{
+  return this->Chain->GetHilbertSpaceDimension();
+}
+
+// shift Hamiltonian from a given energy
+//
+// shift = shift value
+
+void SpinChainXYZHamiltonian::ShiftHamiltonian (double shift)
+{
+  for (int i = 0; i < this->Chain->GetHilbertSpaceDimension(); i ++)
+    this->SzSzContributions[i] += shift;
+}
+  
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -133,22 +174,22 @@ RealVector& SpinChainXYZHamiltonian::LowLevelAddMultiply(RealVector& vSource, Re
 	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue2;
+	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue2;
 	    }
 	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue2;
+	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue2;
 	    }
 	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue1;
+	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue1;
 	    }
 	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
 	  if (pos != dim)
 	    {
-	      vDestination[pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValue1;
+	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue1;
 	    }
 	}
     }
@@ -227,25 +268,25 @@ RealVector* SpinChainXYZHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSo
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues2[k];
+		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues2[k];
 	    }
 	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues2[k];
+		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues2[k];
 	    }
 	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
 	    }
 	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
 	  if (pos != dim)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] -= coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
 	    }
 	}
     }
@@ -275,14 +316,14 @@ void SpinChainXYZHamiltonian::EvaluateDiagonalMatrixElements()
 	  this->Chain->Szi(j, i, Tmp3);
 	  Tmp2 += this->FFactors[j] * Tmp3;
 	}
-      this->SzSzContributions[i] = -this->InteractionStrength * 4.0 * Tmp + Tmp2;
+      this->SzSzContributions[i] = this->JzFactor * 4.0 * Tmp + Tmp2;
       this->Parities[i] = 1.0 - 2.0 * ((double) this->Chain->Parity(i));  
     }
   if (this->BoundaryCondition != 0.0)
     {
       for (int i = 0; i < dim; i++)
 	{
-	  this->SzSzContributions[i] += 4.0 * this->InteractionStrength * this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
+	  this->SzSzContributions[i] += 4.0 * this->JzFactor * this->Chain->SziSzj(this->NbrSpin - 1, 0, i);
 	}
     }
 }

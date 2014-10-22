@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   Manager += PrecalculationGroup;
   Manager += MiscGroup;
 
-  (*SystemGroup) += new SingleStringOption  ('\n', "input-states", "ASCII column formatted file that describes the low energy states of the system withot impurities");
+  (*SystemGroup) += new SingleStringOption  ('\n', "input-states", "ASCII column formatted file that describes the low energy states of the system without impurities");
   (*SystemGroup) += new SingleStringOption  ('\n', "impurities", "ASCII column formatted file that gives the location and strength of each impurity");
   (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption('\n', "recompute-hilbert", "do not store the Hilbert spaces (decreasing the memory consumption)");

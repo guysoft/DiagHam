@@ -86,12 +86,12 @@ int main(int argc, char** argv)
   if (HValue == 0.0)
     {
       sprintf (OutputFileName, "spin_1_2_x_%.6f_y_%.6f_z_%.6f_b_%d_n_%d", JxValue, JyValue, JzValue, BValue, NbrSpins);
-      sprintf (CommentLine, " XYZ chain with %d sites, Jz=%.6f, Jy= %.6f, Jz=%.6f and boundary conditions B=%d\n# ", NbrSpins, JxValue, JyValue, JzValue, BValue);
+      sprintf (CommentLine, " XYZ chain with %d sites, Jx=%.6f, Jy= %.6f, Jz=%.6f and boundary conditions B=%d\n# ", NbrSpins, JxValue, JyValue, JzValue, BValue);
     }
   else
     {
       sprintf (OutputFileName, "spin_1_2_x_%.6f_y_%.6f_z_%.6f_h_%.6f_b_%d_n_%d", JxValue, JyValue, JzValue, HValue, BValue, NbrSpins);
-      sprintf (CommentLine, " XYZ chain with %d sites, Jz=%.6f, Jy= %.6f, Jz=%.6f, H=%.6f and boundary conditions B=%d\n# ", NbrSpins, JxValue, JyValue, JzValue, HValue, BValue);
+      sprintf (CommentLine, " XYZ chain with %d sites, Jx=%.6f, Jy= %.6f, Jz=%.6f, H=%.6f and boundary conditions B=%d\n# ", NbrSpins, JxValue, JyValue, JzValue, HValue, BValue);
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
