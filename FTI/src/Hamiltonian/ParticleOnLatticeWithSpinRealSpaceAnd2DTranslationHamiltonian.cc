@@ -4,8 +4,9 @@
 //                            DiagHam  version 0.01                           //
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
+//                        Class author: Cecile Repellin                       //
 //                                                                            //
-//        class of generic hamiltonian for interacting spinless particles     //
+//        class of generic hamiltonian for interacting spinful particles      //
 //         on lattice written in real space and handling 2d translations      //
 //                                                                            //
 //                        last modification : 11/09/2014                      //
@@ -29,7 +30,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -52,7 +53,7 @@ using std::ostream;
 // default constructor
 //
 
-ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian()
+ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian()
 {
   this->XMomentum = 0;
   this->MaxXMomentum = 1;
@@ -75,9 +76,9 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpac
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSites, 
+ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
 													     int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, 
-													     HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
+													     HermitianMatrix& tightBindingupup, HermitianMatrix& tightBindingdowndown, RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, RealSymmetricMatrix& densityDensityupdown, 
 													     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -93,7 +94,14 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpac
   this->DiagonalElements = 0;
   this->Architecture = architecture;
   this->Memory = memory;
-  this->OneBodyInteractionFactors = 0;
+  this->OneBodyInteractionFactorsupup = 0;
+  this->OneBodyInteractionFactorsdowndown = 0;
+  this->OneBodyInteractionFactorsupdown = 0;
+  
+  this->InteractionFactorsupup = 0;
+  this->InteractionFactorsdowndown = 0;
+  this->InteractionFactorsupdown = 0;
+  
   this->FastMultiplicationFlag = false;
   long MinIndex;
   long MaxIndex;
@@ -102,8 +110,10 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpac
   this->HermitianSymmetryFlag = true;//true;
   
   this->EvaluateExponentialFactors();
-  this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
-  this->EvaluateInteractionFactorsFromDensityDensity(densityDensity);
+  this->EvaluateOneBodyFactorsFromTightBingding(tightBindingupup, tightBindingdowndown);
+  this->EvaluateInteractionFactorsFromDensityDensity(densityDensityupup, densityDensitydowndown, densityDensityupdown);
+  
+//   cout << this->InteractionFactorsupup[0][0] << endl;
     
   if (memory > 0)
     {
@@ -135,7 +145,7 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::ParticleOnLatticeRealSpac
 // destructor
 //
 
-ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::~ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian()
+ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::~ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian()
 {
   if (this->DiagonalElements != 0)
     delete[] this->DiagonalElements;
@@ -150,7 +160,7 @@ ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::~ParticleOnLatticeRealSpa
 // evaluate all exponential factors
 //   
 
-void ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian::EvaluateExponentialFactors()
+void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::EvaluateExponentialFactors()
 {
   this->ExponentialFactors = new Complex*[this->MaxXMomentum];
   for (int i = 0; i < this->MaxXMomentum; ++i)

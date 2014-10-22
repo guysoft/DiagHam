@@ -176,6 +176,60 @@ int main(int argc, char** argv)
       return -1;
     }
   
+  if (StripeFlag == true)
+  {
+   if (Manager.GetBoolean("xperiodic-boundary") == true) 
+     NbrSitesX = Manager.GetInteger("max-xmomentum");
+   if (NbrSitesX == 0)
+   {
+     cout << "Error. The number of sites in direction x must be specified in stripe geometry" << endl;
+     return -1; 
+   }
+   
+   int TmpIndex = 0;
+   NbrBonds = NbrSitesX * 5;
+   SitesA = new int [NbrBonds];
+   SitesB = new int [NbrBonds];
+   BondTypes = new int [NbrBonds];
+   
+//    for (int indexX = 0; indexX < NbrSitesX; ++indexX)
+//      {
+// 	  int indexA = 4 * indexX;
+// 	  int indexB = 4 * indexX + 1;
+// 	  
+// 	  SitesA [5*TmpIndex] = indexA;
+// 	  SitesB [5*TmpIndex] = indexB;
+// 	  BondTypes [5*TmpIndex] = 2;
+// 	  
+// 	  int indexA10 = 4 * indexX + 3;
+// 	  SitesA [5*TmpIndex + 1] = indexA10;
+// 	  SitesB [5*TmpIndex + 1] = indexB;
+// 	  BondTypes [5*TmpIndex + 1] = 0;
+// 	  
+// 	  
+// 	  int indexA10 = 2 * ((indexX + 1) % NbrSitesX);
+// 	  int shiftedIndexX = indexX - 1;
+// 	  if (shiftedIndexX < 0)
+// 	    {
+// 	      shiftedIndexX += NbrSitesX;
+// 	    }
+// 	  int indexB1m1 = 2 * (shiftedIndexX) + 1;
+// 	  SitesA [3*TmpIndex] = indexA;
+// 	  SitesB [3*TmpIndex] = indexB;
+// 	  BondTypes [3*TmpIndex] = 0;
+// 	  
+// 	  SitesA [3*TmpIndex + 1] = indexB;
+// 	  SitesB [3*TmpIndex + 1] = indexA10;
+// 	  BondTypes [3*TmpIndex + 1] = 1;
+// 	  
+// 	  SitesA [3*TmpIndex  + 2] = indexA;
+// 	  SitesB [3*TmpIndex + 2] = indexB1m1;
+// 	  BondTypes [3*TmpIndex + 2] = 2;
+// 	  	  
+// 	  TmpIndex += 1;
+//     }
+    
+  }
     
   if (TorusFlag == true)
   {
@@ -661,7 +715,7 @@ int main(int argc, char** argv)
 		      char* TmpExtention = new char [512];
 		      if (SzSymmetryFlag == false)
 			{
-			  sprintf (TmpExtention, "_kx_%d_ky%d", XMomentum, YMomentum);
+			  sprintf (TmpExtention, "_kx_%d_ky_%d", XMomentum, YMomentum);
 			}
 		      else
 			{

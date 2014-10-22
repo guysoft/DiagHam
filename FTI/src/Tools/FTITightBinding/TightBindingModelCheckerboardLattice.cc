@@ -34,6 +34,13 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+using std::ostream;
+
+
 
 // default constructor
 //
@@ -153,6 +160,7 @@ void TightBindingModelCheckerboardLattice::CoreComputeBandStructure(long minStat
     }
   else
     {
+      cout << "Bloch form" << endl;
       this->Abstract2DTightBindingModel::CoreComputeBandStructure(minStateIndex, nbrStates);
     }
 }
