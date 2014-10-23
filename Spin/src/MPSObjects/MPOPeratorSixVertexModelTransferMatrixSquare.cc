@@ -23,8 +23,8 @@ MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMa
 
 MPOPeratorSixVertexModelTransferMatrixSquare::~MPOPeratorSixVertexModelTransferMatrixSquare()
 {
-  delete LeftVector;
-  delete RightVector;
+  delete [] LeftVector;
+  delete [] RightVector;
   delete [] ElementsValues;
   delete [] IndexValues;    
 }
@@ -139,7 +139,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::PrintTensorElements()
 
 void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)
 {
-  cout <<" I am here"<<endl;;
+  cout <<" MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)"<<endl;;
   if (this->Site->GetSitePosition() == 0)
     {
       int BondDimensionRight = this->Site->GetBondDimensionRight();
@@ -195,3 +195,76 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
     AbstractMPOperatorOBC::ComputeR(R);
 }
 
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent)
+{
+
+  if (this->Site->GetSitePosition() == 0)
+  {
+    
+     int BondDimensionRight = this->Site->GetBondDimensionRight(); 
+     int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+     Tensor3<double> & RightR = this->Site->GetNextR();
+    Tensor3<double> * B = new Tensor3<double>[this->PhysicalDimension];
+for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+      B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionRight,1,true);
+    }
+
+
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+  for (int RightB = 0; RightB < this->MPOBondDimension ; RightB++)
+    {
+	  for(int RightC = 0; RightC < BondDimensionRight; RightC++)
+	    {
+	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
+		{
+//		  cout <<" "<<RightA<<" " <<i <<" "<<(long int) this->PhysicalDimension*RightA+ i<<endl;
+		  B[i](RightB,RightC,0) +=  RightR(RightA,RightB,RightC) * vSource[(long int) this->PhysicalDimension*RightA+i];
+		}
+	}
+     }
+   }
+
+
+ for (int i = 0; i < this->NbrNonZeroElements; i++)
+    {
+
+      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
+
+	  for (int NewRight = 0;  NewRight < BondDimensionRight;  NewRight++)
+	    {
+              vDestination[(long int) this->PhysicalDimension*NewRight + MPOIndiceUp] +=  B[MPOIndiceDown](MPOIndiceRight,NewRight,0) *  this->ElementsValues[i] * this->LeftVector[MPOIndiceLeft];
+            }
+   }
+
+ delete [] B;
+ return  vDestination;
+ 
+ }
+
+ if (this->Site->GetSitePosition() == this->NbrSites - 1)
+ {
+    cout <<"   if (this->Site->GetSitePosition() == this->NbrSites - 1)"<<endl;
+   return vDestination;
+ 
+ }
+  return AbstractMPOperatorOBC::LowLevelMultiply(vSource,vDestination,firstComponent,nbrComponent);
+
+}
+ 

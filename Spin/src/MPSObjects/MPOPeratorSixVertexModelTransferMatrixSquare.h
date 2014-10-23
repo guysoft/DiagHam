@@ -19,7 +19,9 @@ class MPOPeratorSixVertexModelTransferMatrixSquare : public AbstractMPOperatorOB
   void ComputeL(Tensor3<double> & L);
   void ComputeR(Tensor3<double> & R);
   void PrintTensorElements();
-
+  
+  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
 
 };
 

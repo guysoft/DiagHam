@@ -1,8 +1,14 @@
+#include "Architecture/ArchitectureManager.h"
+#include "Architecture/AbstractArchitecture.h"
+#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
+
+
 #include "MPSObjects/MPOPeratorSixVertexModelTransferMatrixSquare.h"
 #include "MPSObjects/MPSSite.h"
 #include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
 #include "Options/Options.h"
 #include "Matrix/RealMatrix.h"
+
 
 #include <iostream>
 #include <stdlib.h>
@@ -23,6 +29,8 @@ int main(int argc, char** argv)
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
+  ArchitectureManager Architecture;
+  Architecture.AddOptionGroup(&Manager);
   Manager += SystemGroup;
   Manager += MiscGroup;
 
@@ -70,7 +78,7 @@ int main(int argc, char** argv)
      }	
   }
   int NbrSweep = 1;
-  DMRGFiniteSizeRealOBCMainTask Algorithm(Lattice, &TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, 0);
+  DMRGFiniteSizeRealOBCMainTask Algorithm(Lattice, &TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture());
   Algorithm.RunAlgorithm();
   delete [] Lattice;
   return 0;
