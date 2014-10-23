@@ -146,7 +146,7 @@ int main(int argc, char** argv)
   char* StatisticPrefix = new char [64];
   if (Manager.GetBoolean("boson") == false)
     {
-      sprintf (StatisticPrefix, "fermions_checkerboardlattice");
+      sprintf (StatisticPrefix, "fermions");
     }
   else
     {
@@ -158,20 +158,20 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("real-space") == false)
 	{
-	  sprintf (FilePrefix, "%s_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	}
       else
 	{
          if ( Manager.GetBoolean("no-translation") == false)
 	   if ( Manager.GetBoolean ("gutzwiller") == false)
-	    sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	   else
-	     sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	     sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	else
 	  if ( Manager.GetBoolean ("gutzwiller") == false)
-	    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	  else
-	    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	}
     }
   else
