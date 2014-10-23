@@ -81,6 +81,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new SingleStringOption  ('\n', "model-name", "name of the one-body model", "unknown");
   (*SystemGroup) += new BooleanOption  ('\n', "checkerboard", "use checkerboard tightbiding model for both spins");
+  (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the gutzwiller projected Hilbert space");
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive on-site potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "vupup-potential", "repulsive nearest nearest neighbor potential strength between up spins", 0.0);
@@ -145,10 +146,7 @@ int main(int argc, char** argv)
   char* StatisticPrefix = new char [64];
   if (Manager.GetBoolean("boson") == false)
     {
-      if (CheckerboardFlag == true)
-	sprintf (StatisticPrefix, "fermions_checkerboardlattice");
-      else
-	sprintf (StatisticPrefix, "fermions_%s", Manager.GetString("model-name"));
+      sprintf (StatisticPrefix, "fermions_checkerboardlattice");
     }
   else
     {
@@ -165,9 +163,15 @@ int main(int argc, char** argv)
       else
 	{
          if ( Manager.GetBoolean("no-translation") == false)
-	  sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	   if ( Manager.GetBoolean ("gutzwiller") == false)
+	    sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	   else
+	     sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	else
-	  sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  if ( Manager.GetBoolean ("gutzwiller") == false)
+	    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  else
+	    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
 	}
     }
   else
@@ -405,17 +409,37 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("no-translation") == true)
 		  {
 		    if (Manager.GetBoolean("fixed-sz"))
-		      Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, SzValue, NbrSites, 10000000);
+		    {
+		      if (Manager.GetBoolean("gutzwiller") == false)
+			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, SzValue, NbrSites, 10000000);
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, SzValue, NbrSites, 10000000);
+		    }
 		    else
-		      Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+		    {
+		      if (Manager.GetBoolean("gutzwiller") == false)
+			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+		    }
 		  }
 		  
 		  else
 		  {
 		    if (Manager.GetBoolean("fixed-sz"))
-		      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+		    {
+		      if (Manager.GetBoolean("gutzwiller") == false)
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, i, NbrSitesX, j, NbrSitesY, 10000000);
+		    }
 		    else
-		      Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, i, NbrSites, NbrSitesX, j, NbrSitesY); 
+		    {
+		      if (Manager.GetBoolean("gutzwiller") == false)
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, i, NbrSites, NbrSitesX, j, NbrSitesY); 
+		      else
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, i, NbrSites, NbrSitesX, j, NbrSitesY);
+		    }
 		  }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
