@@ -121,6 +121,17 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // return value = entanglement matrix of the subsytem
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrParticleSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
   
+  // evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles and Sz
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // szSector  = twice the total Sz value of the subsytem 
+  // groundState = reference on the total system ground state
+  // keptOrbitals = array of orbitals that have to be kept, should be sorted from the smallest index to the largest index 
+  // nbrKeptOrbitals = array of orbitals that have to be kept
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = entanglement matrix of the subsytem
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrParticleSector, int szSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+  
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
   // 
   // nbrParticleSector = number of particles that belong to the subsytem 
@@ -128,6 +139,15 @@ class FermionOnLatticeWithSpinRealSpace : public FermionOnSphereWithSpin
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // szSector  = twice the total Sz value of the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
  protected:
 

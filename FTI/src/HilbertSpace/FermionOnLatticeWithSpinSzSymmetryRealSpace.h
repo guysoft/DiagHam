@@ -50,6 +50,8 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // flag to indicate that the Hilbert space should preserve Sz
   bool SzFlag;
 
+  // indices of the orbitals that are kept when performing an orbital cut
+  int* KeptOrbitals;
 
  public:
 
@@ -126,6 +128,7 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // return value = number of generated states
   virtual long GenerateStatesWithSzSymmetry(bool minusParity);
+
 
 };
 

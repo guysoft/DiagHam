@@ -494,6 +494,67 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialDensityMatrixP
     }
 }
 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// szSector  = twice the total Sz value of the subsytem 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      if (szSector == 0)
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrixZero;
+	  return TmpDensityMatrixZero;
+	}
+    }
+  if (nbrParticleSector == this->NbrFermions)
+    {
+      if (this->TotalSpin == szSector)
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+      else
+	{
+	  HermitianMatrix TmpDensityMatrixZero;
+	  return TmpDensityMatrixZero;
+	}
+    }
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementarySzSector =  this->TotalSpin - szSector;
+  if (abs(ComplementarySzSector) > ComplementaryNbrParticles)
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+   }
+  FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, this->NbrSite, szSector);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite, ComplementarySzSector);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+
+  FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
 // evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles
 // 
 // nbrParticleSector = number of particles that belong to the subsytem 
@@ -567,6 +628,86 @@ ComplexMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatr
      }    
 }
   
+// evaluate the orbital cut entanglement matrix. The entanglement matrix is only evaluated for fixed number of particles and Sz
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// szSector  = twice the total Sz value of the subsytem 
+// groundState = reference on the total system ground state
+// keptOrbitals = array of orbitals that have to be kept, should be sorted from the smallest index to the largest index 
+// nbrKeptOrbitals = array of orbitals that have to be kept
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = entanglement matrix of the subsytem
+ 
+ComplexMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialEntanglementMatrix (int nbrParticleSector, int szSector, int nbrKeptOrbitals, int* keptOrbitals, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  if ((nbrParticleSector > (2 * nbrKeptOrbitals)) || 
+      (ComplementaryNbrParticles > (2 * (this->NbrSite - nbrKeptOrbitals))))
+    {
+      ComplexMatrix TmpEntanglementMatrix;
+      return TmpEntanglementMatrix;
+    }
+  if (nbrKeptOrbitals == 0)
+    {
+      if ((nbrParticleSector == 0) && (szSector == 0))
+	{
+	  ComplexMatrix TmpEntanglementMatrix(1, this->HilbertSpaceDimension, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      TmpEntanglementMatrix[i][0] = groundState[i];
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  if (nbrKeptOrbitals == this->NbrSite)
+    {
+      if ((nbrParticleSector == this->NbrFermions) && (this->TotalSpin == szSector))
+	{
+	  ComplexMatrix TmpEntanglementMatrix(this->HilbertSpaceDimension, 1, true);
+	  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+	    {
+	      TmpEntanglementMatrix[0][i] = groundState[i];
+	    }
+	  return TmpEntanglementMatrix;
+	}
+      else
+	{
+	  ComplexMatrix TmpEntanglementMatrix;
+	  return TmpEntanglementMatrix;
+	}
+    }
+  int ComplementarySzSector =  this->TotalSpin - szSector;
+  if (abs(ComplementarySzSector) > ComplementaryNbrParticles)
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+   }
+  this->KeptOrbitals = new int [nbrKeptOrbitals];
+  for (int i = 0 ; i < nbrKeptOrbitals; ++i) 
+    this->KeptOrbitals[i] = keptOrbitals[i];
+  FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, nbrKeptOrbitals, szSector);
+  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite - nbrKeptOrbitals, ComplementarySzSector);
+  ComplexMatrix TmpEntanglementMatrix (SubsytemSpace.GetHilbertSpaceDimension(), ComplementarySpace.HilbertSpaceDimension, true);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+
+  long TmpEntanglementMatrixZero = this->EvaluatePartialEntanglementMatrixCore(0, ComplementarySpace.HilbertSpaceDimension, &ComplementarySpace, &SubsytemSpace, groundState, &TmpEntanglementMatrix);
+//   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpEntanglementMatrix);
+//   Operation.ApplyOperation(architecture);
+//   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+  if (TmpEntanglementMatrixZero > 0)
+     return TmpEntanglementMatrix;
+   else
+     {
+       ComplexMatrix TmpEntanglementMatrixZero;
+       return TmpEntanglementMatrixZero;
+     }    
+}
+
 // core part of the evaluation orbital cut entanglement matrix calculation
 // 
 // minIndex = first index to consider in source Hilbert space

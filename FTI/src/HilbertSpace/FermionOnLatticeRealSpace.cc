@@ -447,7 +447,7 @@ long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIn
 	  for (int i = 0 ; i < TmpDestinationHilbertSpace->LzMax; ++i)
 	    TmpState2 |= ((TmpStateCompact2 >> i) & 0x1ul) << this->KeptOrbitals[i];
 	  unsigned long TmpState3 = TmpState | TmpState2;
-	  int TmpLzMax = (this->LzMax << 1) + 1; 
+	  int TmpLzMax = this->LzMax; 
 	  while ((TmpState3 >> TmpLzMax) == 0x0ul)
 	    --TmpLzMax;
 	  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
@@ -455,7 +455,7 @@ long FermionOnLatticeRealSpace::EvaluatePartialEntanglementMatrixCore (int minIn
 	    {
 	      double Coefficient = 1.0;
 	      unsigned long Sign = 0x0ul;
-	      int Pos2 = (TmpDestinationHilbertSpace->LzMax << 1) + 1;
+	      int Pos2 = TmpDestinationHilbertSpace->LzMax;
 	      while ((Pos2 > 0) && (TmpState2 != 0x0ul))
 		{
 		  while (((TmpState2 >> Pos2) & 0x1ul) == 0x0ul)
