@@ -3,6 +3,7 @@
 #define _TENSOR3_H
 
 #include<iostream>
+#include "GeneralTools/GarbageFlag.h"
 
 using std::cout;
 using std::endl;
@@ -14,6 +15,7 @@ template <class T> class Tensor3
   unsigned int SecondDimension;
   unsigned int ThirdDimension;
   T * TensorElements;
+  GarbageFlag Flag;
   
  public :
   
@@ -23,7 +25,7 @@ template <class T> class Tensor3
   // copy constructor (without duplicating datas)
   //
   Tensor3(const Tensor3 & tensor3); 
-  ~Tensor3(){ delete [] this->TensorElements;}
+  ~Tensor3();
   
   // assignement (without duplicating datas)
   //
@@ -52,15 +54,17 @@ Tensor3<T>::Tensor3(int firstDimension,int secondDimension, int thirdDimension)
   this->SecondDimension = secondDimension;
   this->ThirdDimension = thirdDimension;
   this->TensorElements = new T [this->FirstDimension* this->SecondDimension* this->ThirdDimension];
+  this->Flag.Initialize();
 }
 
 template <class T>
-Tensor3<T>::Tensor3(int firstDimension,int secondDimension, int thirdDimension,bool initiateFlag)
+Tensor3<T>::Tensor3(int firstDimension,int secondDimension, int thirdDimension, bool initiateFlag)
 {
   this->FirstDimension = firstDimension;
   this->SecondDimension = secondDimension;
   this->ThirdDimension = thirdDimension;
   this->TensorElements = new T [this->FirstDimension* this->SecondDimension* this->ThirdDimension];
+  this->Flag.Initialize();
   if (initiateFlag)
     {
       for (int i = 0; i< this->FirstDimension* this->SecondDimension* this->ThirdDimension ; i++)
@@ -70,12 +74,20 @@ Tensor3<T>::Tensor3(int firstDimension,int secondDimension, int thirdDimension,b
 
 
 template <class T>
+Tensor3<T>::~Tensor3()
+{
+ if ((this->Flag.Shared() == false) && (this->Flag.Used() == true))
+     delete [] this->TensorElements;
+}
+
+template <class T>
 Tensor3<T>::Tensor3(const Tensor3<T> & tensor3)
 {
   this->FirstDimension = tensor3.FirstDimension;
   this->SecondDimension = tensor3.SecondDimension;
   this->ThirdDimension = tensor3.ThirdDimension;
   this->TensorElements = tensor3.TensorElements;
+  this->Flag = tensor3.Flag;
 }
 
 
@@ -91,6 +103,7 @@ Tensor3<T> & Tensor3<T>::operator = (const Tensor3<T> & tensor3)
   this->SecondDimension = tensor3.SecondDimension;
   this->ThirdDimension = tensor3.ThirdDimension;
   this->TensorElements = tensor3.TensorElements;
+  this->Flag = tensor3.Flag;
   return *this;
 }
   

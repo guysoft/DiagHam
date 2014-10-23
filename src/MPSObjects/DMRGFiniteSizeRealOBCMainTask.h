@@ -25,7 +25,7 @@ class DMRGFiniteSizeRealOBCMainTask
   
  protected:
   void InitializeLattice();
-  RealVector & OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
+  void OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
 };
 
 #endif

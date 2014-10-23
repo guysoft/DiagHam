@@ -1,9 +1,11 @@
+#include <cmath>
 #include "MPSSite.h"
 #include "Matrix/RealDiagonalMatrix.h"
 #include "AbstractMPOperatorOBC.h"
 #include "GeneralTools/GarbageFlag.h"
 
 using std::endl;
+using std::abs;
 using std::cout;
 
 MPSSite::MPSSite()
@@ -75,7 +77,7 @@ void MPSSite::InitializeLeft(RealMatrix * newA)
   this->BondDimensionRight = this->M[0].GetNbrColumn();
   delete this->L;
   this->L = new Tensor3<double>(this->BondDimensionRight,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionRight,true);
-  cout <<this->BondDimensionLeft<<" "<< this->BondDimensionRight<<" "<<this->PhysicalDimension<<endl;
+//  cout <<this->BondDimensionLeft<<" "<< this->BondDimensionRight<<" "<<this->PhysicalDimension<<endl;
   this->OperatorToBeMinimized->SetSite(this);
   this->OperatorToBeMinimized->ComputeL(*this->L);
   cout <<"I have to print"<<endl;
@@ -92,31 +94,26 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
 
 void MPSSite::UpdateFromVector(RealVector & psi)
 {
-  delete this->M;
+  cout <<"Enter UpdateFromVector(RealVector & psi)"<<endl;
+  cout <<psi<<endl;
+  delete [] this->M;
   this->M = new RealMatrix [this->PhysicalDimension];
   
   for(int i = 0; i < this->PhysicalDimension; i++)
     {
       this->M[i] = RealMatrix(this->BondDimensionLeft,this->BondDimensionRight, true);
     }
-  
-  /*
-  for (int i = 0; i < psi.Dimension; i++)
-    {
-      this->M[i%d](i/(this->PhysicalDimension *this->this->BondDimensionRight),i/(this->PhysicalDimension)%this->this->BondDimensionRight) = psi[i];
-      
-      }
-  */
-  
+//  cout << this->PhysicalDimension<<" "<<this->BondDimensionLeft<<" "<<
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
       for (int j = 0; j < this->BondDimensionLeft; j++)
 	{
-	  for (int k = 0; k < this->BondDimensionRight; j++)
+	  for (int k = 0; k < this->BondDimensionRight; k++)
 	    {
 	      this->M[i](j,k) = psi[(long int)this->PhysicalDimension*(this->BondDimensionRight*j+k) +i]; 
 	    }
 	}
+	cout <<" update M"<<this->M[i]<<endl;
     }
 }
 
@@ -142,16 +139,16 @@ bool MPSSite::CheckLeftNormalization()
       RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
       Result += Tmp * (this->M[i]);
     }
-  
-  for(int i = 0 ; i < this->BondDimensionLeft; i++)
+  cout <<Result<<endl;
+  for(int i = 0 ; i < this->BondDimensionRight; i++)
     {
-      if (Result(i,i) != 1 )
+      if ( abs(Result(i,i)-1) > 1e-13  )
 	  {
 	    return false;
 	  }
-      for(int j = 1 ; j < this->BondDimensionLeft ; j++)
+      for(int j = i+1 ; j < this->BondDimensionRight ; j++)
 	{
-	  if (Result(i,j) != 0 )
+	  if (abs(Result(i,j)) > 1e-13)
 	    {
 	      return false;
 	    }
@@ -170,15 +167,15 @@ bool MPSSite::CheckRightNormalization()
       Result += (this->M[i])* Tmp;
     }
   cout <<Result<<endl;
-  for(int i = 0 ; i < this->BondDimensionRight; i++)
+  for(int i = 0 ; i < this->BondDimensionLeft; i++)
     {
-      if (Result(i,i) != 1 )
+      if ( abs(Result(i,i)-1) > 1e-13  )
 	{
 	  return false;
 	}
-      for(int j= 1;j< this->BondDimensionRight; j++)
+      for(int j = i+1;j< this->BondDimensionLeft; j++)
 	{
-	  if (Result(i,j) != 0 )
+	  if (abs(Result(i,j)) > 1e-13)
 	    {
 	      return false;
 	    }
@@ -204,19 +201,16 @@ void MPSSite::BringMInRightCanonicalForm()
 	    }
 	}
     }
-  cout << TmpMatrix<<endl;
+//  cout << TmpMatrix<<endl;
   RealMatrix U,V;
   RealDiagonalMatrix SingularValues;
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
   cout <<"SingularValues  = "<< SingularValues<<endl;
   cout <<U <<endl;
-  cout <<V <<endl;
+//  cout <<V <<endl;
   U = U * SingularValues;
-  cout <<  SingularValues<< endl;
-  cout <<"After Multiplication"<<endl;
   cout <<U<<endl;;
- // U.Multiply(SingularValues);
-  cout <<"After Multiplication"<<endl;
+
   for(int i =0 ; i <  this->PhysicalDimension; i++)
     {
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
@@ -226,16 +220,14 @@ void MPSSite::BringMInRightCanonicalForm()
 	      this->M[i](j,k) = V(this->PhysicalDimension * k + i,j);
 	    }
 	}
-      cout << this->M[i]<<endl;
-      cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
+
+  //    cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
       this->SiteOnLeft->M[i] = this->SiteOnLeft->M[i]*U;
        }
   delete this->R;
   this->R = new Tensor3<double> (this->BondDimensionLeft,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionLeft,true) ;
   this->OperatorToBeMinimized->SetSite(this);
   this->OperatorToBeMinimized->ComputeR(*this->R);
-  cout <<"this->R"<<endl;
-  this->R->PrintTensor();
 }
 
 
@@ -276,7 +268,7 @@ void MPSSite::BringMInLeftCanonicalForm()
   
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V);
   
-  V = V.Transpose()*SingularValues;
+  V = SingularValues*V.Transpose();
   for(int i = 0 ; i <  this->PhysicalDimension; i++)
     {
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
@@ -312,20 +304,20 @@ void MPSSite::BringMInLeftCanonicalFormCareful()
 }
 
 
-RealVector & MPSSite::GetMatrixInVectorForm()
+void MPSSite::GetMatrixInVectorForm(RealVector * & resultInvector)
 {
-  RealVector MatrixInVectorForm ((long int) this->PhysicalDimension*this->BondDimensionLeft*this->BondDimensionRight,true);
+  delete resultInvector;
+  resultInvector = new RealVector((long int) this->PhysicalDimension*this->BondDimensionLeft*this->BondDimensionRight,true);
   for (int i = 0 ; i < this->PhysicalDimension ; i++)
     {
       for (int j = 0 ; j <  this->BondDimensionLeft ; j++)
 	{
 	  for (int k = 0 ; k <  this->BondDimensionRight ; k++)
 	    {
-	      MatrixInVectorForm[(long int) this->PhysicalDimension*( this->BondDimensionRight*j +k )+i ] = this->M[i](j,k); 
+	      (*resultInvector)[(long int) this->PhysicalDimension*( this->BondDimensionRight*j +k )+i ] = this->M[i](j,k); 
 	    }
 	}
     }
-  return MatrixInVectorForm;
 }
 
 

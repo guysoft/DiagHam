@@ -1262,6 +1262,7 @@ double* RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealMatrix& 
   FORTRAN_NAME(dgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &SizeLDU, TmpVMatrix, &SizeLDVT, WorkingArea, &WorkingAreaSize, IntegerWorkingArea, &Information);
   uMatrix = RealMatrix(TmpUMatrix, this->NbrRow, this->NbrRow, false);
   vMatrix = RealMatrix(TmpVMatrix, this->NbrColumn, this->NbrColumn, false);
+  delete[] TmpMatrix;
   delete[] TmpUMatrix;
   delete[] TmpVMatrix;
   delete[] WorkingArea;

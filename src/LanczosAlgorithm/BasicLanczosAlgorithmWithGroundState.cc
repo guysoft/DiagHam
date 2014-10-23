@@ -172,7 +172,8 @@ void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
 
 void BasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vector& vector) 
 {
-  int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  //int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
+  int Dimension = vector.GetVectorDimension();
   if (this->ResumeDiskFlag == false)
     {
       this->V1 = vector;

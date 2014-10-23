@@ -5,6 +5,7 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "LanczosAlgorithm/BasicLanczosAlgorithmWithGroundState.h"
 #include "Vector/RealVector.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 using std::cout;
 using std::endl;
@@ -25,25 +26,27 @@ void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
 {
   this->InitializeLattice();
 
-/*  for(int CurrentSweep = 0; CurrentSweep <  this->NbrSweep; CurrentSweep++)
+  for(int CurrentSweep = 0; CurrentSweep <  this->NbrSweep; CurrentSweep++)
     {
       cout <<"Sweep : "<<CurrentSweep<<endl;
       
       for (int i = 0; i <  this->NbrSites - 1; i++)
 	{
 	  cout <<"From left to right "<<" site "<<i <<endl;
-	  RealVector NewMatrixInVectorForm = this->OptimizeUsingLanczosLanczosAlgorithm (i);
-	  this->LatticeSite[i].UpdateFromVector(NewMatrixInVectorForm);
+          this->MPOperator->SetSite(&this->LatticeSite[i]);
+	  this->OptimizeUsingLanczosLanczosAlgorithm (i);
+          cout <<"optimisation done for site "<<i<<endl;
 	  this->LatticeSite[i].BringMInLeftCanonicalFormCareful();  
 	}
      for (int i =  this->NbrSites - 1; i >  0; i--)
 	{
 	  cout <<"From right to left,"<<" site "<<i <<endl;
-	  RealVector NewMatrixInVectorForm = this->OptimizeUsingLanczosLanczosAlgorithm (i);
-	  this->LatticeSite[i].UpdateFromVector(NewMatrixInVectorForm);
+	  this->MPOperator->SetSite(&this->LatticeSite[i]);
+	  this->OptimizeUsingLanczosLanczosAlgorithm (i);
+          cout <<"optimisation done for site "<<i<<endl;
 	  this->LatticeSite[i].BringMInRightCanonicalFormCareful();
 	}
-    }*/
+    }
 }
 
 
@@ -64,11 +67,37 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLattice()
 
 
 
-RealVector & DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)
+void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)
 {
-  BasicLanczosAlgorithmWithGroundState LanczosAlgorithm (this->Architecture);
-  LanczosAlgorithm.InitializeLanczosAlgorithm(this->LatticeSite[siteIndex].GetMatrixInVectorForm());
+  if (this->MPOperator->GetHilbertSpaceDimension() < 500 )
+    {
+  RealSymmetricMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
+    this->MPOperator->GetHamiltonian(HRep);
+    cout <<HRep<<endl;
+    if (this->MPOperator->GetHilbertSpaceDimension() > 1)
+     {
+#ifdef __LAPACK__
+		  RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
+                  RealMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
+		  HRep.LapackDiagonalize(TmpDiag, Q);
+		  RealVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension());
+                  this->MPOperator->LowLevelMultiply(Q[0], TmpEigenvector);
+                  cout << " Lowest Energy = " <<(TmpEigenvector * Q[0]) << " " << endl;		  
+                  cout <<Q[0]<<endl;
+         	  this->LatticeSite[siteIndex].UpdateFromVector(Q[0]);
+                  cout <<"end of OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)"<<endl;
 
+#endif
+
+}
+}
+else
+{
+  RealVector * TmpVector = 0;
+  BasicLanczosAlgorithmWithGroundState LanczosAlgorithm (this->Architecture);
+  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
+  cout <<(*TmpVector)<<endl;
+  LanczosAlgorithm.InitializeLanczosAlgorithm(*TmpVector);
   double GroundStateEnergy;
   double Precision = 1.0;
   double PreviousLowest = 1e50;
@@ -86,7 +115,7 @@ RealVector & DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm
   CurrentNbrIterLanczos = 4;
   RealTriDiagonalSymmetricMatrix TmpMatrix;  
   int CurrentTimeSecond = TotalCurrentTime.tv_sec;
-  while ((LanczosAlgorithm.TestConvergence() == false))
+  while ((LanczosAlgorithm.TestConvergence() == false)&&( CurrentNbrIterLanczos < 5 ))
   {
      ++CurrentNbrIterLanczos;
      LanczosAlgorithm.RunLanczosAlgorithm(1);
@@ -110,6 +139,7 @@ RealVector & DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
+     	  this->LatticeSite[siteIndex].UpdateFromVector( (*((RealVector *) LanczosAlgorithm.GetEigenstates(0))));
+}
 
-     return (* ((RealVector *) LanczosAlgorithm.GetEigenstates(0)));
 }

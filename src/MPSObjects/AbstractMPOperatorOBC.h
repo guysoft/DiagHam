@@ -63,6 +63,26 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   void ShiftHamiltonian (double shift);
   
   inline int GetMPODimension() const {return  MPOBondDimension;};
+
+ // multiply a vector by the current hamiltonian and store result in another vector
+  // low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // return value = reference on vectorwhere result has been stored
+  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and store result in another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
+
  protected:
   
   inline unsigned int GetIndiceDownFromTensorIndex(unsigned int tensorIndex);
@@ -74,7 +94,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   inline unsigned int GetIndiceRightFromTensorIndex(unsigned int tensorIndex);
   
   inline unsigned int GetTensorIndexFromAllIndices(unsigned int indexDown, unsigned int indexUp, unsigned int indexLeft, unsigned int indexRight);
-
+ 
 };
 
 inline unsigned int AbstractMPOperatorOBC::GetIndiceDownFromTensorIndex(unsigned int tensorIndex)

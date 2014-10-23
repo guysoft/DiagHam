@@ -43,7 +43,7 @@ AbstractHilbertSpace* AbstractMPOperatorOBC::GetHilbertSpace ()
 
 int AbstractMPOperatorOBC::GetHilbertSpaceDimension ()
 {
-  return this->HilbertSpace->GetHilbertSpaceDimension();
+  return  this->Site->GetBondDimensionRight()* this->Site->GetBondDimensionLeft()*this->PhysicalDimension;
 }
  
 // shift Hamiltonian from a given energy
@@ -67,7 +67,7 @@ void AbstractMPOperatorOBC::SetSite (MPSSite* site)
 
 void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)
 {
-  cout <<"I am in AbstractMPOperatorOBC"<<endl;
+  cout <<"void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)"<<endl;
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
   
@@ -77,23 +77,25 @@ void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)
   RealMatrix * M = this->Site->GetM();
    for (int i = 0; i < this->PhysicalDimension; i++)
     {
-      cout <<"M[i] = "<< M[i]<<endl;
+//      cout <<"M[i] = "<< M[i]<<endl;
       B[i] = Tensor3<double>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft);
     }
   
-  for (int i = 0; i < this->NbrNonZeroElements; i++)
+  for (int i = 0; i < this->PhysicalDimension; i++)
     {
-      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
+
       for (int RightA = 0; RightA < BondDimensionRight; RightA++)
 	{
+	  for(int LeftB = 0; LeftB < this->MPOBondDimension; LeftB++)
+    {
 	  for(int LeftC = 0; LeftC < BondDimensionLeft; LeftC++)
 	    {
 	      for(int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
 		{
-		  B[MPOIndiceDown](RightA,MPOIndiceLeft,LeftC) +=  LeftL(LeftA,MPOIndiceLeft,LeftC)* M[i](LeftA,RightA);
+		  B[i](RightA,LeftB,LeftC) +=  LeftL(LeftA,LeftB,LeftC)* M[i](LeftA,RightA);
 		}
 	    }
+}
 	}
     }
   
@@ -139,7 +141,7 @@ void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)
 		}
 	    }
 	}
-    }
+    } 
 
   delete [] A;
 }
@@ -149,21 +151,21 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 {
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
-  
+//  cout <<"BondDimensionRight = "<< BondDimensionRight<<endl;
+//cout <<"BondDimensionLeft = "<< BondDimensionLeft<<endl;
   Tensor3<double> & RightR = this->Site->GetNextR();
   
   Tensor3<double> * B =  new  Tensor3<double>  [this->PhysicalDimension];
   RealMatrix * M = this->Site->GetM();
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
-      cout <<"M[i] = "<< M[i]<<endl;
       B[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
     }
   
-  for (int i = 0; i < this->NbrNonZeroElements; i++)
+  for (int i = 0; i < this->PhysicalDimension; i++)
     {
-      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
+  for (int RightB = 0; RightB < this->MPOBondDimension ; RightB++)
+    {
       for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
 	{
 	  for(int RightC = 0; RightC < BondDimensionRight; RightC++)
@@ -171,18 +173,25 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 		{
 		  //cout <<"M[i](LeftA,RightA)"<<M[i](LeftA,RightA)<<endl;
-                  cout <<" RightR(RightA,MPOIndiceRight,RightC) "<<RightR(RightA,MPOIndiceRight,RightC)<<endl;
-		  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) +=  RightR(RightA,MPOIndiceRight,RightC)* M[i](LeftA,RightA);
+//                  cout <<" RightR(RightA,MPOIndiceRight,RightC) "<<RightA<<" "<<RightB<<" "<<RightC <<RightR(RightA,RightB,RightC)<<endl;
+//                cout <<"LeftA = "<<LeftA<<" RightB = "<<RightB<<" RightC = "<<RightC<<endl;
+//cout << B[i](LeftA,RightB,RightC)<<endl;
+//     cout <<"R( "<< RightA<<" , "<<RightB<<" , "<< RightC <<") = "<<RightR(RightA,RightB,RightC)<<endl;
+		  B[i](LeftA,RightB,RightC) +=  RightR(RightA,RightB,RightC) * M[i](LeftA,RightA);
 		  //cout <<"B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) "<<B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC)<<endl;
 		}
 	    }
 	}
     }
+   }
 
-  for (int i = 0; i < this->PhysicalDimension; i++)
-    { 
+//  cout <<"B computed"<<endl;  
+
+/*  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+ cout <<"B[ " <<i<< "] "<<endl;
       B[i].PrintTensor();
-    }
+    }*/
 
   Tensor3<double> * A = new Tensor3<double> [this->PhysicalDimension];
   
@@ -191,7 +200,7 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
       A[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
     }
   
-  
+
   for (int i = 0; i < this->NbrNonZeroElements; i++)
     {
       int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
@@ -203,11 +212,13 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 	{
 	  for (int RightC = 0;  RightC < BondDimensionRight;  RightC++)
 	    {
+       //       cout <<MPOIndiceDown<<" " <<LeftA<<" "<<MPOIndiceRight<<" "<<RightC<<" "<< this->ElementsValues[i]<<endl;
+//              cout <<  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC)<<endl;
 	      A[MPOIndiceUp](LeftA, MPOIndiceLeft,RightC) +=  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) * this->ElementsValues[i];
 	    }
 	}
-    }
-  
+    } 
+//    cout <<"A computed"<<endl;  
   delete [] B;
   
   for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
@@ -309,3 +320,193 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 }
 
 */
+
+
+
+// multiply a vector by the current hamiltonian and store result in another vector
+// low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// return value = reference on vectorwhere result has been stored
+RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)
+{
+
+  return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+/*
+  int BondDimensionRight = this->Site->GetBondDimensionRight();
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  Tensor3<double> & RightR = this->Site->GetNextR();
+  Tensor3<double> & LeftL = this->Site->GetPreviousL();
+ 
+
+  Tensor3<double> * B =  new  Tensor3<double>  [this->PhysicalDimension];
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+      B[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
+    }
+
+
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+  for (int RightB = 0; RightB < this->MPOBondDimension ; RightB++)
+    {
+      for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
+	{
+	  for(int RightC = 0; RightC < BondDimensionRight; RightC++)
+	    {
+	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
+		{
+		  B[i](LeftA,RightB,RightC) +=  RightR(RightA,RightB,RightC) * vSource[(long int) this->PhysicalDimension*(BondDimensionRight * LeftA +RightA)+i];
+		}
+	    }
+	}
+    }
+   }
+
+  Tensor3<double> * A =  new  Tensor3<double>  [this->PhysicalDimension];
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+      A[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
+    }
+ 
+ 
+ for (int i = 0; i < this->NbrNonZeroElements; i++)
+    {
+      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
+
+
+      for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
+	{
+	  for (int RightC = 0;  RightC < BondDimensionRight;  RightC++)
+	    {
+	      A[MPOIndiceUp](LeftA, MPOIndiceLeft,RightC) +=  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) * this->ElementsValues[i];
+	    }
+	}
+    } 
+
+//    cout <<"A computed"<<endl;  
+  delete [] B;
+
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+       for (int NewRight = 0; NewRight < BondDimensionRight; NewRight++)
+       {
+ 
+       for (int NewLeft = 0; NewLeft < BondDimensionLeft; NewLeft++)
+       {
+
+      for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
+	{
+      for (int RightB = 0;  RightB < this->MPOBondDimension;  RightB++)
+	{
+            vDestination[(long int) this->PhysicalDimension*(BondDimensionRight * NewLeft + NewRight) + i] +=  LeftL(LeftA,RightB,NewLeft) * A[i](LeftA, RightB,NewRight);
+        }
+        }
+
+}
+}
+}
+
+ delete [] A;
+ return vDestination;
+*/
+}
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent)
+{
+
+
+  int BondDimensionRight = this->Site->GetBondDimensionRight();
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  Tensor3<double> & RightR = this->Site->GetNextR();
+  Tensor3<double> & LeftL = this->Site->GetPreviousL();
+ 
+  cout <<"BondDimensionRight = "<<BondDimensionRight<<endl;
+  cout <<"BondDimensionLeft = "<<BondDimensionLeft<<endl;
+  Tensor3<double> * B =  new  Tensor3<double>  [this->PhysicalDimension];
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+      B[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
+    }
+
+
+
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+  for (int RightB = 0; RightB < this->MPOBondDimension ; RightB++)
+    {
+      for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
+	{
+	  for(int RightC = 0; RightC < BondDimensionRight; RightC++)
+	    {
+	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
+		{
+//		  cout << LeftA<<" "<<RightA<<" " <<i <<" "<<(long int) this->PhysicalDimension*(BondDimensionRight * LeftA +RightA)+ i<<endl;
+		  B[i](LeftA,RightB,RightC) +=  RightR(RightA,RightB,RightC) * vSource[(long int) this->PhysicalDimension*(BondDimensionRight * LeftA +RightA)+i];
+		}
+	    }
+	}
+    }
+   }
+
+  Tensor3<double> * A =  new  Tensor3<double>  [this->PhysicalDimension];
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+      A[i] = Tensor3<double>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
+    }
+ 
+ 
+ for (int i = 0; i < this->NbrNonZeroElements; i++)
+    {
+      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
+      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
+
+
+      for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
+	{
+	  for (int RightC = 0;  RightC < BondDimensionRight;  RightC++)
+	    {
+	      A[MPOIndiceUp](LeftA, MPOIndiceLeft,RightC) +=  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) * this->ElementsValues[i];
+	    }
+	}
+    } 
+
+//    cout <<"A computed"<<endl;  
+  delete [] B;
+  int LastComponent = firstComponent + nbrComponent;
+
+  for(int Index =  firstComponent; Index < LastComponent ;Index++)
+{
+       for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
+	{
+      for (int RightB = 0;  RightB < this->MPOBondDimension;  RightB++)
+	{
+            vDestination[Index] +=  LeftL(LeftA,RightB, Index/(BondDimensionRight* this->PhysicalDimension) ) * A[Index%this->PhysicalDimension](LeftA, RightB, (Index/this->PhysicalDimension) % BondDimensionRight);
+        }
+    }
+ }
+
+ delete [] A;
+ return vDestination;
+
+
+}

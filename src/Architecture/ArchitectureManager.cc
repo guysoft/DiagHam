@@ -41,7 +41,7 @@
 #include "Architecture/SMPArchitecture.h"
 #include "Architecture/SimpleMPIArchitecture.h"
 #include "Architecture/MixedMPISMPArchitecture.h"
-
+#include <iostream>
 
 // default constructor
 //
