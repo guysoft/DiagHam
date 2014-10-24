@@ -80,9 +80,7 @@ void MPSSite::InitializeLeft(RealMatrix * newA)
 //  cout <<this->BondDimensionLeft<<" "<< this->BondDimensionRight<<" "<<this->PhysicalDimension<<endl;
   this->OperatorToBeMinimized->SetSite(this);
   this->OperatorToBeMinimized->ComputeL(*this->L);
-  cout <<"I have to print"<<endl;
   this->L->PrintTensor();
-  cout <<"I have finish printing"<<endl;
 }
 
 void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
@@ -95,7 +93,7 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
 void MPSSite::UpdateFromVector(RealVector & psi)
 {
   cout <<"Enter UpdateFromVector(RealVector & psi)"<<endl;
-  cout <<psi<<endl;
+//  cout <<psi<<endl;
   delete [] this->M;
   this->M = new RealMatrix [this->PhysicalDimension];
   
@@ -139,7 +137,6 @@ bool MPSSite::CheckLeftNormalization()
       RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
       Result += Tmp * (this->M[i]);
     }
-  cout <<Result<<endl;
   for(int i = 0 ; i < this->BondDimensionRight; i++)
     {
       if ( abs(Result(i,i)-1) > 1e-13  )
@@ -166,7 +163,6 @@ bool MPSSite::CheckRightNormalization()
       RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
       Result += (this->M[i])* Tmp;
     }
-  cout <<Result<<endl;
   for(int i = 0 ; i < this->BondDimensionLeft; i++)
     {
       if ( abs(Result(i,i)-1) > 1e-13  )
@@ -205,11 +201,11 @@ void MPSSite::BringMInRightCanonicalForm()
   RealMatrix U,V;
   RealDiagonalMatrix SingularValues;
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
-  cout <<"SingularValues  = "<< SingularValues<<endl;
-  cout <<U <<endl;
+//  cout <<"SingularValues  = "<< SingularValues<<endl;
+//  cout <<U <<endl;
 //  cout <<V <<endl;
   U = U * SingularValues;
-  cout <<U<<endl;;
+//  cout <<U<<endl;;
 
   for(int i =0 ; i <  this->PhysicalDimension; i++)
     {
@@ -265,10 +261,12 @@ void MPSSite::BringMInLeftCanonicalForm()
   
   RealMatrix U,V;
   RealDiagonalMatrix SingularValues;
-  
+//  cout <<  TmpMatrix<<endl;
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V);
-  
+//  cout << SingularValues<<endl;
+//  cout <<V<<endl;
   V = SingularValues*V.Transpose();
+//  cout <<V<<endl;
   for(int i = 0 ; i <  this->PhysicalDimension; i++)
     {
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
@@ -285,7 +283,7 @@ void MPSSite::BringMInLeftCanonicalForm()
     }
 
   delete this->L;
-  this->L = new Tensor3<double> (this->BondDimensionRight,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionRight) ;
+  this->L = new Tensor3<double> (this->BondDimensionRight,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionRight,true);
   this->OperatorToBeMinimized->SetSite(this);
   this->OperatorToBeMinimized->ComputeL(*this->L);
 }

@@ -71,20 +71,25 @@ void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int si
 {
   if (this->MPOperator->GetHilbertSpaceDimension() < 500 )
     {
-  RealSymmetricMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
+    RealSymmetricMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
     this->MPOperator->GetHamiltonian(HRep);
-    cout <<HRep<<endl;
+    
+  //  cout <<"matrix form of the Ham" <<HRep<<endl;
     if (this->MPOperator->GetHilbertSpaceDimension() > 1)
      {
 #ifdef __LAPACK__
 		  RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
                   RealMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
+//cout <<"Before 		  HRep.LapackDiagonalize(TmpDiag, Q); "<<endl;
 		  HRep.LapackDiagonalize(TmpDiag, Q);
-		  RealVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension());
-                  this->MPOperator->LowLevelMultiply(Q[0], TmpEigenvector);
-                  cout << " Lowest Energy = " <<(TmpEigenvector * Q[0]) << " " << endl;		  
-                  cout <<Q[0]<<endl;
-         	  this->LatticeSite[siteIndex].UpdateFromVector(Q[0]);
+		  RealVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension(),true);
+//cout <<"aftere 		  HRep.LapackDiagonalize(TmpDiag, Q); "<<endl;
+                  this->MPOperator->LowLevelMultiply(Q[this->MPOperator->GetHilbertSpaceDimension()-1], TmpEigenvector);
+//                  cout <<"result of     this->MPOperator->LowLevelMultiply(Q[0], TmpEigenvector)"<<endl;
+//                  cout << TmpEigenvector<<endl;
+//                  cout <<Q[this->MPOperator->GetHilbertSpaceDimension()-1]<<endl;
+                  cout << " Highest Energy = " <<(TmpEigenvector * Q[this->MPOperator->GetHilbertSpaceDimension()-1]) << " " << endl;		  
+         	  this->LatticeSite[siteIndex].UpdateFromVector(Q[this->MPOperator->GetHilbertSpaceDimension()-1]);
                   cout <<"end of OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)"<<endl;
 
 #endif
