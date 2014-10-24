@@ -13,8 +13,8 @@ MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMa
   this->NbrSites = nbrSites;
 
   
-  this->LeftVector = new double[4];
-  this->RightVector = new double[4];
+  this->LeftVector = new double[this->MPOBondDimension];
+  this->RightVector = new double[this->MPOBondDimension];
   this->RightVector[0] = 0;  this->RightVector[1] = 1.0;  this->RightVector[2] = -1.0; this->RightVector[3] = 0;
   this->LeftVector[0] = 0;  this->LeftVector[1] = - 1.0;  this->LeftVector[2] = 1.0; this->LeftVector[3] = 0;
 }
@@ -140,6 +140,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::PrintTensorElements()
 void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)
 {
   cout <<" MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)"<<endl;;
+
   if (this->Site->GetSitePosition() == 0)
     {
       int BondDimensionRight = this->Site->GetBondDimensionRight();
@@ -208,10 +209,12 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
 RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
-
+  cout <<"RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)"<<endl;
+  vDestination.ClearVector();
   if (this->Site->GetSitePosition() == 0)
   {
-    
+    cout <<"Position =0" <<endl;
+
     int BondDimensionRight = this->Site->GetBondDimensionRight(); 
     Tensor3<double> & RightR = this->Site->GetNextR();
     Tensor3<double> * B = new Tensor3<double>[this->PhysicalDimension];
@@ -220,7 +223,8 @@ for (int i = 0; i < this->PhysicalDimension; i++)
       B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionRight,1,true);
     }
 
-
+  cout <<vSource<<endl;
+  cout <<vDestination<<endl;
 
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
@@ -231,7 +235,7 @@ for (int i = 0; i < this->PhysicalDimension; i++)
 	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 		{
 //		  cout <<" "<<RightA<<" " <<i <<" "<<(long int) this->PhysicalDimension*RightA+ i<<endl;
-		  B[i](RightB,RightC,0) +=  RightR(RightA,RightB,RightC) * vSource[(long int) this->PhysicalDimension*RightA+i];
+		  B[i](RightB,RightC,0) +=  RightR(RightA,RightB,RightC) * vSource[(long int) this->PhysicalDimension*RightA+i]; 
 		}
 	}
      }
@@ -259,6 +263,7 @@ for (int i = 0; i < this->PhysicalDimension; i++)
 
    if (this->Site->GetSitePosition() == this->NbrSites - 1)
    {
+    cout <<"Position Max" <<endl;
     int BondDimensionLeft = this->Site->GetBondDimensionLeft(); 
     Tensor3<double> & LeftL = this->Site->GetPreviousL();
     Tensor3<double> * B = new Tensor3<double>[this->PhysicalDimension];
