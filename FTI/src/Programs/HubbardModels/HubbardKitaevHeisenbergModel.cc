@@ -64,8 +64,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new BooleanOption  ('\n', "stripe", "model geometry is a stripe");
   (*SystemGroup) += new BooleanOption  ('\n', "torus", "model geometry is a torus");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-x", "number of sites in the x direction for the torus geometry", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-y", "number of sites in the y direction for the torus geometry", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-x", "number of sites in the x direction for the torus geometry  - number of hexagons in the periodic direction for the stripe geometry ", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-y", "number of sites in the y direction for the torus geometry - number of hexagons in the non-periodic direction for the stripe geometry", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
@@ -186,48 +186,64 @@ int main(int argc, char** argv)
      return -1; 
    }
    
+   if (NbrSites != 2 * (NbrSitesY + 1) * NbrSitesX)
+   {
+     cout << "Error. The total number of sites is not compatible with NbrSitesX and NbrSitesY in the stripe geometry" << endl;
+     return -1;
+   }
+   
    int TmpIndex = 0;
-   NbrBonds = NbrSitesX * 5;
+   NbrBonds = NbrSitesX * (3 * NbrSitesY + 2);
    SitesA = new int [NbrBonds];
    SitesB = new int [NbrBonds];
    BondTypes = new int [NbrBonds];
    
-//    for (int indexX = 0; indexX < NbrSitesX; ++indexX)
-//      {
-// 	  int indexA = 4 * indexX;
-// 	  int indexB = 4 * indexX + 1;
-// 	  
-// 	  SitesA [5*TmpIndex] = indexA;
-// 	  SitesB [5*TmpIndex] = indexB;
-// 	  BondTypes [5*TmpIndex] = 2;
-// 	  
-// 	  int indexA10 = 4 * indexX + 3;
-// 	  SitesA [5*TmpIndex + 1] = indexA10;
-// 	  SitesB [5*TmpIndex + 1] = indexB;
-// 	  BondTypes [5*TmpIndex + 1] = 0;
-// 	  
-// 	  
-// 	  int indexA10 = 2 * ((indexX + 1) % NbrSitesX);
-// 	  int shiftedIndexX = indexX - 1;
-// 	  if (shiftedIndexX < 0)
-// 	    {
-// 	      shiftedIndexX += NbrSitesX;
-// 	    }
-// 	  int indexB1m1 = 2 * (shiftedIndexX) + 1;
-// 	  SitesA [3*TmpIndex] = indexA;
-// 	  SitesB [3*TmpIndex] = indexB;
-// 	  BondTypes [3*TmpIndex] = 0;
-// 	  
-// 	  SitesA [3*TmpIndex + 1] = indexB;
-// 	  SitesB [3*TmpIndex + 1] = indexA10;
-// 	  BondTypes [3*TmpIndex + 1] = 1;
-// 	  
-// 	  SitesA [3*TmpIndex  + 2] = indexA;
-// 	  SitesB [3*TmpIndex + 2] = indexB1m1;
-// 	  BondTypes [3*TmpIndex + 2] = 2;
-// 	  	  
-// 	  TmpIndex += 1;
-//     }
+   for (int indexX = 0; indexX < NbrSitesX; ++indexX)
+     {
+      for (int indexY = 0; indexY < NbrSitesY; ++indexY)
+	{
+	  int indexA = 2 * ((indexX * (NbrSitesY + 1)) + indexY);
+	  int indexB = 2 * ((indexX * (NbrSitesY + 1)) + indexY) + 1;
+	  int indexA10 = 2 * ((((indexX + 1) % NbrSitesX) * (NbrSitesY + 1)) + indexY);
+	  int shiftedIndexX = indexX - 1;
+	  if (shiftedIndexX < 0)
+	    {
+	      shiftedIndexX += NbrSitesX;
+	    }
+	  int indexB1m1 = 2 * ((shiftedIndexX * (NbrSitesY + 1)) + (indexY + 1)) + 1;
+	  SitesA [3*TmpIndex] = indexA;
+	  SitesB [3*TmpIndex] = indexB;
+	  BondTypes [3*TmpIndex] = 0;
+	  
+	  SitesA [3*TmpIndex + 1] = indexB;
+	  SitesB [3*TmpIndex + 1] = indexA10;
+	  BondTypes [3*TmpIndex + 1] = 1;
+	  
+	  SitesA [3*TmpIndex  + 2] = indexA;
+	  SitesB [3*TmpIndex + 2] = indexB1m1;
+	  BondTypes [3*TmpIndex + 2] = 2;
+	  	  
+	  TmpIndex += 1;
+	}
+    }
+   int indexY = NbrSitesY;
+   int TmpIndex1 = 3*TmpIndex;
+   for (int indexX = 0; indexX < NbrSitesX; ++indexX)
+     {
+	int indexA = 2 * ((indexX * (NbrSitesY + 1)) + indexY);
+	int indexB = 2 * ((indexX * (NbrSitesY + 1)) + indexY) + 1;
+	int indexA10 = 2 * ((((indexX + 1) % NbrSitesX) * (NbrSitesY + 1)) + indexY);
+	
+	SitesA [TmpIndex1] = indexA;
+	SitesB [TmpIndex1] = indexB;
+	BondTypes [TmpIndex1] = 0;
+  
+	SitesA [TmpIndex1 + 1] = indexB;
+	SitesB [TmpIndex1 + 1] = indexA10;
+	BondTypes [TmpIndex1 + 1] = 1;
+	
+	TmpIndex1 += 2;
+     }
     
   }
     
