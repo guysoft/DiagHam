@@ -266,7 +266,7 @@ Vector* FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage::GetEige
 void FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage::ResumeLanczosAlgorithm()
 {
   this->ReadState();
-  this->ReadLanczosVectors(this->LanczosVectors, this->Index - 2 * this->BlockSize, 0, 3 * this->BlockSize);
+  this->ReadLanczosVectors(this->LanczosVectors, (this->Index - 2) * this->BlockSize, 0, 3 * this->BlockSize);
   if (this->Hamiltonian != NULL)
     {
       for (int i = 0; i < (3 * this->BlockSize); ++i)
@@ -349,11 +349,14 @@ void FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage::RunLanczos
 
       nbrIter -= 2;
       this->Index = 2;
-    }
+   }
   else
     {
-      Dimension = this->ReducedMatrix.GetNbrRow() + (nbrIter * this->BlockSize);
-      this->ReducedMatrix.Resize(Dimension, Dimension);
+      if (this->ResumeDiskFlag == false)
+	{
+	  Dimension = this->ReducedMatrix.GetNbrRow() + (nbrIter * this->BlockSize);
+	  this->ReducedMatrix.Resize(Dimension, Dimension);
+	}
     }
   for (; nbrIter > 0; --nbrIter)
     {
@@ -525,11 +528,9 @@ bool FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage::ReadState(
   for (int i = 0; i < this->NbrEigenvalue; ++i)
     {
       ReadLittleEndian(File, this->PreviousWantedEigenvalues[i]);
-      this->PreviousWantedEigenvalues[i] *= 2.0;
     }
   File.close();  
   this->Diagonalize();
-  this->DiagonalizedMatrix.SortMatrixUpOrder();
   return true;
 }
 

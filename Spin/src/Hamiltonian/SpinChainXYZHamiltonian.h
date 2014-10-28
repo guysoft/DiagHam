@@ -76,6 +76,10 @@ class SpinChainXYZHamiltonian : public AbstractHamiltonian
 
  public:
 
+  // default constructor
+  //
+  SpinChainXYZHamiltonian();
+
   // constructor
   //
   // chain = pointer to the Hilbert space of the system
@@ -93,31 +97,25 @@ class SpinChainXYZHamiltonian : public AbstractHamiltonian
   //
   ~SpinChainXYZHamiltonian();
 
-  // clone hamiltonian without duplicating datas
-  //
-  // return value = pointer to cloned hamiltonian
-  AbstractHamiltonian* Clone ();
-
-
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
 
   // get Hilbert space on which Hamiltonian acts
   //
   // return value = pointer to used Hilbert space
-  AbstractHilbertSpace* GetHilbertSpace ();
+  virtual AbstractHilbertSpace* GetHilbertSpace ();
 
   // return dimension of Hilbert space where Hamiltonian acts
   //
   // return value = corresponding matrix elementdimension
-  int GetHilbertSpaceDimension ();
+  virtual int GetHilbertSpaceDimension ();
   
   // shift Hamiltonian from a given energy
   //
   // shift = shift value
-  void ShiftHamiltonian (double shift);
+  virtual void ShiftHamiltonian (double shift);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)

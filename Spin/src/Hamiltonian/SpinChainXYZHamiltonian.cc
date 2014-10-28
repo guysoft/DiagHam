@@ -45,7 +45,14 @@ using std::endl;
 using std::ostream;
 
 
-// constructor from default datas
+// default constructor
+//
+
+SpinChainXYZHamiltonian::SpinChainXYZHamiltonian()
+{
+}
+
+// constructor from default data
 //
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin

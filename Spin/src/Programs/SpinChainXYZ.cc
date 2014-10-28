@@ -1,4 +1,5 @@
 #include "Hamiltonian/SpinChainXYZHamiltonian.h"
+#include "Hamiltonian/SpinChainXYZNaturalBoundaryTermHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainFull.h"
@@ -58,6 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption('f', "h-value", "Zeeman strength along the z axis", 0.0);
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "boundary conditions (0 for open, 1 for periodic, -1 for antiperiodic)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
+  (*SystemGroup) += new  BooleanOption  ('\n', "natural-boundaryterms", "use a natural boundary term instead of the translation invariant boundary term");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -103,16 +105,21 @@ int main(int argc, char** argv)
       
       if (Chain->GetHilbertSpaceDimension() > 0)
 	{
-	  SpinChainXYZHamiltonian Hamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
+	  SpinChainXYZHamiltonian* Hamiltonian = 0;
+	  if (Manager.GetBoolean("natural-boundaryterms") == false)
+	    Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
+	  else
+	    Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	  sprintf (TmpEigenstateString, "%s", OutputFileName);
 	  char TmpEntry = '\0';
-	  GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, &TmpEntry, CommentLine, 0.0,  FullOutputFileName,
+	  GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, &TmpEntry, CommentLine, 0.0,  FullOutputFileName,
 				   FirstRun, TmpEigenstateString);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	  FirstRun = false;
 	  delete[] TmpEigenstateString;
+	  delete Hamiltonian;
 	}
       delete Chain;
     }
@@ -125,17 +132,22 @@ int main(int argc, char** argv)
 	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitalQValue);
 	  if (Chain->GetHilbertSpaceDimension() > 0)
 	    {	     
-	      SpinChainXYZHamiltonian Hamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
+	      SpinChainXYZHamiltonian* Hamiltonian = 0;
+	      if (Manager.GetBoolean("natural-boundaryterms") == false)
+		Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
+	      else
+		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
 	      char* TmpQString = new char[64];
 	      sprintf (TmpQString, "%d", InitalQValue);
-	      GenericRealMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
+	      GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
 				       FirstRun, TmpEigenstateString);
 	      MainTaskOperation TaskOperation (&Task);
 	      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	      FirstRun = false;
 	      delete[] TmpEigenstateString;
+	      delete Hamiltonian;
 	    }
 	  delete Chain;
 	}

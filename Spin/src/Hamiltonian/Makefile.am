@@ -35,4 +35,5 @@ SpinChainLongRangeHamiltonian.cc \
 SpinChainZ2InteractingHamiltonian.cc \
 SpinChainXYZHamiltonian.cc \
 Potts3ChainHamiltonianWithTranslations.cc \
-SpinChainZ2InteractingHamiltonianWithTranslations.cc
+SpinChainZ2InteractingHamiltonianWithTranslations.cc \
+SpinChainXYZNaturalBoundaryTermHamiltonian.cc
