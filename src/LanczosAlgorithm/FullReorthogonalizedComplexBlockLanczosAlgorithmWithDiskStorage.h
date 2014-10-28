@@ -7,9 +7,10 @@
 //                                                                            //
 //                                                                            //
 //         class of full reorthogonalized complex block Lanczos algorithm     //
+//                             using disk storage                             //
 //                (with full re-orthogonalization at each step)               //
 //                                                                            //
-//                        last modification : 05/01/2012                      //
+//                        last modification : 27/10/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,12 +30,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef FULLREORTHOGONALIZEDCOMPLEXBLOCKLANCZOSALGORITHM_H
-#define FULLREORTHOGONALIZEDCOMPLEXBLOCKLANCZOSALGORITHM_H
+#ifndef FULLREORTHOGONALIZEDCOMPLEXBLOCKLANCZOSALGORITHMWITHDISKSTORAGE_H
+#define FULLREORTHOGONALIZEDCOMPLEXBLOCKLANCZOSALGORITHMWITHDISKSTORAGE_H
 
 
 #include "config.h"
-#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
+#include "LanczosAlgorithm/FullReorthogonalizedComplexBlockLanczosAlgorithm.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/BandDiagonalHermitianMatrix.h"
@@ -43,57 +44,15 @@
 #include "GeneralTools/GarbageFlag.h"
 
 
-class FullReorthogonalizedComplexBlockLanczosAlgorithm : public AbstractLanczosAlgorithm
+class FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage : public FullReorthogonalizedComplexBlockLanczosAlgorithm
 {
 
  protected:
 
-  // array where Lanczos vectors are stored
-  ComplexVector* LanczosVectors;
-
-  // maximum number of block Lanczos iteration
-  int MaximumNumberIteration;
-
-  // internal index corresponding to the number of block Lanczos steps that have been realized
-  int Index;
-
-  // garbage flag to avoid duplicating memory area
-  GarbageFlag Flag;
-
-  // vector to store store ground state
-  ComplexVector GroundState;
-
-  // number of wanted eigenvalues
-  int NbrEigenvalue;
-  // value of the last wanted eigenvalue at previous Lanczos iteration
-  double PreviousLastWantedEigenvalue;
-  // value of the wanted eigenvalue at previous Lanczos iteration
-  double* PreviousWantedEigenvalues;
-  // flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
-  bool StrongConvergenceFlag;
-
-  // size of the block used for the block Lanczos algorithm
-  int BlockSize;
-
-  // matrix where the blocks are stored
-//  BandDiagonalHermitianMatrix ReducedMatrix;
-  HermitianMatrix ReducedMatrix;
-
-  // temporary matrix used to duplicated ReducedMatrix before diagonalize it
-//  BandDiagonalHermitianMatrix TemporaryReducedMatrix;
-  HermitianMatrix TemporaryReducedMatrix;
-
-  // array used to store temporary scalar products
-  Complex* TemporaryCoefficients;
-
-  // rely on LAPACK library to diagonalize the block matrix
-  bool LapackFlag;
+  // flag to indicate that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  bool ResumeDiskFlag;
 
  public:
-
-  // default constructor
-  //
-  FullReorthogonalizedComplexBlockLanczosAlgorithm();
 
   // basic constructor
   //
@@ -103,32 +62,17 @@ class FullReorthogonalizedComplexBlockLanczosAlgorithm : public AbstractLanczosA
   // maxIter = an approximation of maximal number of iteration (rounded to the upper multiple of blockSize)
   // strongConvergence = flag indicating if the convergence test has to be done on the latest wanted eigenvalue (false) or all the wanted eigenvalue (true) 
   // lapackFlag = rely on LAPACK library to diagonalize the block matrix
-  FullReorthogonalizedComplexBlockLanczosAlgorithm(AbstractArchitecture* architecture, int nbrEigenvalue, int blockSize = 2, int maxIter = 1000,
-						   bool strongConvergence = false, bool lapackFlag = false);
+  FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage(AbstractArchitecture* architecture, int nbrEigenvalue, int blockSize = 2, int maxIter = 1000,
+								  bool strongConvergence = false, bool lapackFlag = false);
 
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
-  FullReorthogonalizedComplexBlockLanczosAlgorithm(const FullReorthogonalizedComplexBlockLanczosAlgorithm& algorithm);
+  FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage(const FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage& algorithm);
 
   // destructor
   //
-  ~FullReorthogonalizedComplexBlockLanczosAlgorithm();
-
-  // initialize Lanczos algorithm with a random vector
-  //
-  virtual void InitializeLanczosAlgorithm();
-  
-  // initialize Lanczos algorithm with a given vector
-  //
-  // vector = reference to the vector used as first step vector
-  virtual void InitializeLanczosAlgorithm(const Vector& vector);
-
-  // initialize Lanczos algorithm with a set of given vectors
-  //
-  // vectors = array of vectors used as first step vectors
-  // nbrVectors = number of vectors in the array
-  virtual void InitializeLanczosAlgorithm(Vector* vectors, int nbrVectors);
+  ~FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage();
 
   // get last produced vector
   //
@@ -141,23 +85,16 @@ class FullReorthogonalizedComplexBlockLanczosAlgorithm : public AbstractLanczosA
   // return value = array containing the eigenstates
   virtual Vector* GetEigenstates(int nbrEigenstates);
 
+  // resume Lanczos algorithm from disk datas in current directory
+  //
+  virtual void ResumeLanczosAlgorithm();
+
   // run current Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
   //
   // nbrIter = number of iteration to do 
   virtual void RunLanczosAlgorithm (int nbrIter);
   
-  // test if convergence has been reached
-  //
-  // return value = true if convergence has been reached
-  virtual bool TestConvergence ();
-
-
  protected:
-  
-  // diagonalize tridiagonalized matrix and find ground state energy
-  //
-  virtual void Diagonalize ();
-
 
   // reorthogonalize a set of vectors using Gram-Schmidt algorithm
   //
@@ -166,13 +103,18 @@ class FullReorthogonalizedComplexBlockLanczosAlgorithm : public AbstractLanczosA
   // matrix = matrix where transformation matrix has to be stored
   // rowShift = shift to apply to matrix row index to reach the upper leftmost element
   // columnShift = shift to apply to matrix column index to reach the upper leftmost element
-  //  void ReorthogonalizeVectors (ComplexVector* vectors, int nbrVectors, BandDiagonalHermitianMatrix& matrix,
-  //                               int rowShift, int columnShift);
   virtual void ReorthogonalizeVectors (ComplexVector* vectors, int nbrVectors, HermitianMatrix& matrix,
-			       int rowShift, int columnShift);
+				       int rowShift, int columnShift);
 
+  // write current Lanczos state on disk
+  //
+  // return value = true if no error occurs
+  virtual bool WriteState();
 
-  virtual void TestOrthogonality (ComplexVector* vectors, int nbrVectors, ComplexVector* otherVectors = 0, int nbrOtherVectors = 0);
+  // read current Lanczos state from disk
+  //
+  // return value = true if no error occurs
+  virtual bool ReadState();
 
   // read a group of Lanczos vectors from disk
   // 

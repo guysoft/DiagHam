@@ -40,7 +40,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
-  OptionManager Manager ("FQHETopInsulatorEntanglementEntropyParticlePartition" , "0.01");
+  OptionManager Manager ("FTIEntanglementEntropyParticlePartition" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHETopInsulatorEntanglementEntropyParticlePartition -h" << endl;
+      cout << "see man page for option syntax or type FTIEntanglementEntropyParticlePartition -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
   if ((Manager.GetString("ground-file") == 0) && (Manager.GetString("degenerated-groundstate") == 0))
     {
-      cout << "error, a ground state file should be provided. See man page for option syntax or type FQHETopInsulatorEntanglementEntropyParticlePartition -h" << endl;
+      cout << "error, a ground state file should be provided. See man page for option syntax or type FTIEntanglementEntropyParticlePartition -h" << endl;
       return -1;
     }
   if ((Manager.GetString("ground-file") != 0) && 

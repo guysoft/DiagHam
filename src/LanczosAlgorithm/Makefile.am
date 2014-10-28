@@ -31,6 +31,6 @@ BasicBlockArnoldiAlgorithm.cc \
 BasicComplexArnoldiAlgorithm.cc \
 BasicArnoldiAlgorithmWithDiskStorage.cc \
 PowerMethodAlgorithm.cc \
-ImplicitlyRestartedArnoldiAlgorithm.cc
-
+ImplicitlyRestartedArnoldiAlgorithm.cc \
+FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage.cc
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 
