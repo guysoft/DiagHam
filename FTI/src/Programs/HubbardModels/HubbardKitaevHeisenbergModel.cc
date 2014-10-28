@@ -186,11 +186,12 @@ int main(int argc, char** argv)
      return -1; 
    }
    
-   if (NbrSites != 2 * (NbrSitesY + NbrSitesX + NbrSitesX * NbrSitesY))
-   {
-     cout << "Error. The total number of sites is not compatible with NbrSitesX and NbrSitesY in the stripe geometry" << endl;
-     return -1;
-   }
+//    if (NbrSites != 2 * (NbrSitesY + NbrSitesX + NbrSitesX * NbrSitesY))
+//    {
+//      cout << "Error. The total number of sites is not compatible with NbrSitesX and NbrSitesY in the stripe geometry" << endl;
+//      return -1;
+//    }
+   NbrSites = 2 * (NbrSitesY + NbrSitesX + NbrSitesX * NbrSitesY);
    
    int TmpIndex = 0;
    NbrBonds = 3 * NbrSitesX * NbrSitesY + 2 * (NbrSitesX + NbrSitesY)  - 1;
@@ -263,11 +264,12 @@ int main(int argc, char** argv)
      return -1; 
    }
    
-   if (NbrSites != 2 * (NbrSitesY + 1) * NbrSitesX)
-   {
-     cout << "Error. The total number of sites is not compatible with NbrSitesX and NbrSitesY in the stripe geometry" << endl;
-     return -1;
-   }
+//    if (NbrSites != 2 * (NbrSitesY + 1) * NbrSitesX)
+//    {
+//      cout << "Error. The total number of sites is not compatible with NbrSitesX and NbrSitesY in the stripe geometry" << endl;
+//      return -1;
+//    }
+   NbrSites = 2 * (NbrSitesY + 1) * NbrSitesX;
    
    int TmpIndex = 0;
    NbrBonds = NbrSitesX * (3 * NbrSitesY + 2);
@@ -338,11 +340,13 @@ int main(int argc, char** argv)
       return -1; 
     }
     
-    if (2*NbrSitesX * NbrSitesY != NbrSites)
-    {
-     cout << "Error. The number of sites is not compatible with the periodicity of the torus" << endl;
-     return -1;
-    }
+//     if (2*NbrSitesX * NbrSitesY != NbrSites)
+//     {
+//      cout << "Error. The number of sites is not compatible with the periodicity of the torus" << endl;
+//      return -1;
+//     }
+    
+    NbrSites = 2*NbrSitesX * NbrSitesY;
     
     int TmpIndex = 0;
     NbrBonds = 3*NbrSitesX*NbrSitesY;
