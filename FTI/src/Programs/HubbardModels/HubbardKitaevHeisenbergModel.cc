@@ -64,8 +64,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "gutzwiller", "use the Gutzwiller projection");
   (*SystemGroup) += new BooleanOption  ('\n', "stripe", "model geometry is a stripe");
   (*SystemGroup) += new BooleanOption  ('\n', "torus", "model geometry is a torus");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-x", "number of sites in the x direction for the torus geometry  - number of hexagons in the periodic direction for the stripe geometry ", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-y", "number of sites in the y direction for the torus geometry - number of hexagons in the non-periodic direction for the stripe geometry", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "open", "model geometry is an open parallelogram");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-x", "number of hexagons in the x direction (periodic direction for the stripe geometry) ", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbrsites-y", "number of hexagons in the y direction (aperiodic direction for the stripe geometry)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
@@ -119,6 +120,7 @@ int main(int argc, char** argv)
   bool SzSymmetryFlag = Manager.GetBoolean("szsymmetrized-basis");
   bool StripeFlag = Manager.GetBoolean("stripe"); 
   bool TorusFlag = Manager.GetBoolean("torus");
+  bool OpenFlag = Manager.GetBoolean("open");
   int NbrSitesX = Manager.GetInteger("nbrsites-x"); 
   int NbrSitesY = Manager.GetInteger("nbrsites-y"); 
   int* SitesA = 0;
@@ -128,7 +130,7 @@ int main(int argc, char** argv)
   
   
  
-  if ((StripeFlag == false) && (TorusFlag == false) && (Manager.GetString("geometry-file") == 0))
+  if ((StripeFlag == false) && (TorusFlag == false) && (OpenFlag == false) && (Manager.GetString("geometry-file") == 0))
     {
       cout << "Error. A lattice geometry has to be specified" << endl; 
       return -1;
@@ -176,6 +178,81 @@ int main(int argc, char** argv)
       return -1;
     }
   
+  if (OpenFlag == true)
+  {
+   if ((NbrSitesX == 0) || (NbrSitesY == 0))
+   {
+     cout << "Error. The number of sites in directions x and y must be specified in the open geometry" << endl;
+     return -1; 
+   }
+   
+   if (NbrSites != 2 * (NbrSitesY + NbrSitesX + NbrSitesX * NbrSitesY))
+   {
+     cout << "Error. The total number of sites is not compatible with NbrSitesX and NbrSitesY in the stripe geometry" << endl;
+     return -1;
+   }
+   
+   int TmpIndex = 0;
+   NbrBonds = 3 * NbrSitesX * NbrSitesY + 2 * (NbrSitesX + NbrSitesY)  - 1;
+   SitesA = new int [NbrBonds];
+   SitesB = new int [NbrBonds];
+   BondTypes = new int [NbrBonds];
+   
+   for (int indexX = 0; indexX < NbrSitesX + 1; ++indexX)
+     {
+      for (int indexY = 0; indexY < NbrSitesY + 1; ++indexY)
+	{
+	  int indexA = 2 * ((indexX * (NbrSitesY + 1)) + indexY);
+	  int indexB = 2 * ((indexX * (NbrSitesY + 1)) + indexY) + 1;
+	  int indexA10 = 2 * ((((indexX + 1)) * (NbrSitesY + 1)) + indexY);
+	  int shiftedIndexX = indexX - 1;
+	  int flag = 0;
+	  
+	  
+	  int indexB1m1 = 2 * ((shiftedIndexX * (NbrSitesY + 1)) + ((indexY + 1))) + 1;
+	  if (indexB1m1 < 0)
+	  {
+	    indexB1m1 = indexB1m1 + NbrSites;
+	    flag = 1;
+	  }
+	  
+	  if ((indexA < NbrSites) && (indexB < NbrSites) && (indexX < NbrSitesX))
+	  {
+	    SitesA [TmpIndex] = indexA;
+	    SitesB [TmpIndex] = indexB;
+	    BondTypes [TmpIndex] = 0;
+	    ++TmpIndex;
+	  }
+	  
+	  if ((indexB < NbrSites) && (indexA10 < NbrSites) && (indexX < NbrSitesX) )
+	  {
+	    SitesA [TmpIndex] = indexA10;
+	    SitesB [TmpIndex] = indexB;
+	    BondTypes [TmpIndex] = 1;
+	    ++TmpIndex;
+	  }
+	  
+	  if ((indexA < NbrSites) && (indexB1m1 < NbrSites) && (indexY < NbrSitesY))
+	  {
+	    SitesA [TmpIndex] = indexA;
+	    SitesB [TmpIndex] = indexB1m1;
+	    BondTypes [TmpIndex] = 2;
+	    ++TmpIndex;
+	  }
+	  if (flag == 1)
+	  {
+	   SitesA [TmpIndex] = indexB1m1 - NbrSites + 2*NbrSitesY  + 1;
+	   SitesB [TmpIndex] = indexB1m1;
+	   BondTypes [TmpIndex] = 1;
+	   ++ TmpIndex;
+	  }
+	  	  
+	}
+    }
+   
+   
+  }
+      
   if (StripeFlag == true)
   {
    if (Manager.GetBoolean("xperiodic-boundary") == true) 
@@ -303,6 +380,9 @@ int main(int argc, char** argv)
     }
   }
     
+//     for (int i = 0; i < NbrBonds; ++i)
+//       cout << SitesA[i] << " " << SitesB[i] << " " << BondTypes[i] << " " << i << endl;
+
 //   if ((StripeFlag) && ((NbrSites % 4) != 2))
 //   {
 //    cout << "Error: number of sites should be of the form 4n + 2 for stripe geometry " << endl; 
