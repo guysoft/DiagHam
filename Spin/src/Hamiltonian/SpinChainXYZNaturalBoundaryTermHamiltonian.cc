@@ -54,14 +54,16 @@ using std::ostream;
 // jzFactor = coupling along the z direction
 // hFactor = Zeeman term 
 // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
+// perturbationOrder = perturbation order for the edge mode development
 
 SpinChainXYZNaturalBoundaryTermHamiltonian::SpinChainXYZNaturalBoundaryTermHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
 										       double jxFactor, double jyFactor, double jzFactor, double hFactor, 
-										       double boundaryCondition)
+										       double boundaryCondition, int perturbationOrder)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->FixedParityFlag = false;
   this->Parities = new double [this->Chain->GetHilbertSpaceDimension()];
   this->JxFactor = -jxFactor;
   this->JyFactor = -jyFactor;
@@ -71,6 +73,7 @@ SpinChainXYZNaturalBoundaryTermHamiltonian::SpinChainXYZNaturalBoundaryTermHamil
     this->FFactors[i] = hFactor;
   this->BoundaryCondition = boundaryCondition;
   this->EvaluateDiagonalMatrixElements();
+  this->PerturbationOrder = perturbationOrder;
 }
 
 // destructor
@@ -130,27 +133,275 @@ RealVector& SpinChainXYZNaturalBoundaryTermHamiltonian::LowLevelAddMultiply(Real
 	}
       if (this->BoundaryCondition != 0.0)
 	{
-	  double TmpValue1 = this->JxFactor * vSource[i];
-	  double TmpValue2 = this->JxFactor * vSource[i];
-	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
-	  if (pos != dim)
+	  if (this->FixedParityFlag == false)
 	    {
-	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue2;
+	      TmpValue1 = this->BoundaryCondition * this->JxFactor * vSource[i];
+	      pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		}
+	      pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		}
+	      pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		}
+	      pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
+	      if (pos != dim)
+		{
+		  vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		}
+	      if (this->PerturbationOrder > 0)
+		{
+		  // Jy contribution
+		  TmpValue1 = -4.0 * this->BoundaryCondition * this->JyFactor * this->Chain->SziSzj(0, 1, i) * vSource[i];
+		  pos = this->Chain->SpiSpj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  pos = this->Chain->SpiSmj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  pos = this->Chain->SmiSpj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  pos = this->Chain->SmiSmj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  TmpValue1 = -4.0 * this->BoundaryCondition * this->JyFactor * this->Chain->SziSzj(MaxPos, MaxPos - 1, i) * vSource[i];
+		  pos = this->Chain->SpiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  pos = this->Chain->SpiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  pos = this->Chain->SmiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  pos = this->Chain->SmiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      vDestination[pos] += coef * this->Parities[pos] * TmpValue1;
+		    }
+		  // Jz contribution
+		  TmpValue1 =  this->BoundaryCondition * this->JzFactor * vSource[i];
+		  double coef2;
+		  int pos2;
+		  pos = this->Chain->SpiSpj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  pos = this->Chain->SmiSmj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  pos = this->Chain->SpiSmj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  pos = this->Chain->SmiSpj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  
+		  pos = this->Chain->SpiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  pos = this->Chain->SmiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  pos = this->Chain->SpiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		  pos = this->Chain->SmiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] += coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  vDestination[pos2] -= coef * coef2 * this->Parities[pos2] * TmpValue1;
+			}
+		    }
+		}
 	    }
-	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
-	  if (pos != dim)
+	  else
 	    {
-	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue2;
-	    }
-	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue1;
-	    }
-	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValue1;
 	    }
 	}
     }
@@ -168,7 +419,7 @@ RealVector& SpinChainXYZNaturalBoundaryTermHamiltonian::LowLevelAddMultiply(Real
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* SpinChainXYZNaturalBoundaryTermHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-									   int firstComponent, int nbrComponent)
+										    int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   int dim = this->Chain->GetHilbertSpaceDimension();
@@ -225,29 +476,328 @@ RealVector* SpinChainXYZNaturalBoundaryTermHamiltonian::LowLevelMultipleAddMulti
 	}
       if (this->BoundaryCondition != 0.0)
 	{
-	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
-	  if (pos != dim)
+	  if (this->FixedParityFlag == false)
 	    {
 	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues2[k];
-	    }
-	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues2[k];
-	    }
-	  pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
-	    }
-	  pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
-	  if (pos != dim)
-	    {
-	      for (int k = 0; k < nbrVectors; ++k)
-		vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		{
+		  TmpValues1[k] = this->JxFactor * vSources[k][i];
+		}
+	      pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		}
+	      pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		}
+	      pos = this->Chain->SpiSpj(MaxPos, 0, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		}
+	      pos = this->Chain->SmiSmj(MaxPos, 0, i, coef);
+	      if (pos != dim)
+		{
+		  for (int k = 0; k < nbrVectors; ++k)
+		    vDestinations[k][pos] += coef * this->Parities[pos] * this->BoundaryCondition * TmpValues1[k];
+		}
+	      if (this->PerturbationOrder > 0)
+		{
+		  // Jy contribution
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      TmpValues1[k] = -4.0 *this->BoundaryCondition * this->JyFactor * this->Chain->SziSzj(0, 1, i) * vSources[k][i];
+		    }
+		  pos = this->Chain->SpiSpj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  pos = this->Chain->SpiSmj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  pos = this->Chain->SmiSpj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  pos = this->Chain->SmiSmj(MaxPos, 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      TmpValues1[k] = -4.0 * this->BoundaryCondition * this->JyFactor * this->Chain->SziSzj(MaxPos, MaxPos - 1, i) * vSources[k][i];
+		    }
+		  pos = this->Chain->SpiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  pos = this->Chain->SpiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  pos = this->Chain->SmiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  pos = this->Chain->SmiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      for (int k = 0; k < nbrVectors; ++k)
+			vDestinations[k][pos] += coef * this->Parities[pos] * TmpValues1[k];
+		    }
+		  // Jz contribution
+		  for (int k = 0; k < nbrVectors; ++k)
+		    {
+		      TmpValues1[k] = this->BoundaryCondition * this->JzFactor * vSources[k][i];
+		    }
+		  double coef2;
+		  int pos2;
+		  pos = this->Chain->SpiSpj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  pos = this->Chain->SmiSmj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  pos = this->Chain->SpiSmj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  pos = this->Chain->SmiSpj(0, 1, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(2, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  
+		  pos = this->Chain->SpiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  pos = this->Chain->SmiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  pos = this->Chain->SpiSmj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		  pos = this->Chain->SmiSpj(0, MaxPos - 2, i, coef);
+		  if (pos != dim)
+		    {
+		      pos2 = this->Chain->SpiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] += coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SpiSmj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		      pos2 = this->Chain->SmiSpj(MaxPos - 1, MaxPos, pos, coef2);
+		      if (pos2 != dim)
+			{
+			  for (int k = 0; k < nbrVectors; ++k)
+			    vDestinations[k][pos2] -= coef * coef2 * this->Parities[pos2] * TmpValues1[k];
+			}
+		    }
+		}
 	    }
 	}
     }

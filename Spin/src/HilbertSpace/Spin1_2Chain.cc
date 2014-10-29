@@ -663,6 +663,46 @@ int Spin1_2Chain::SmiSpj (int i, int j, int state, double& coefficient)
   return this->HilbertSpaceDimension;
 }
 
+// return index of resulting state from application of S+_i S-_j operator on a given state
+//
+// i = position of S+ operator
+// j = position of S- operator
+// state = index of the state to be applied on S+_i S-_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int Spin1_2Chain::SpiSmj (int i, int j, int state, double& coefficient)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  tmpState >>= j;
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= i; 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  coefficient = 1.0;
+	  return this->FindStateIndex((State | (0x1ul << i)) & ~(0x1ul << j));
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x1ul)
+    {
+      coefficient = -0.25;
+      return state;
+    }
+  return this->HilbertSpaceDimension;
+}
+
 // return index of resulting state from application of S+_i S+_j operator on a given state
 //
 // i = position of first S+ operator

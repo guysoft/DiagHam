@@ -48,6 +48,9 @@ class SpinChainXYZNaturalBoundaryTermHamiltonian : public SpinChainXYZHamiltonia
 {
 
  protected:
+
+  // perturbation order for the edge mode development
+  int PerturbationOrder;
   
  public:
 
@@ -60,9 +63,10 @@ class SpinChainXYZNaturalBoundaryTermHamiltonian : public SpinChainXYZHamiltonia
   // jzFactor = coupling along the z direction
   // hFactor = Zeeman term 
   // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
+  // perturbationOrder = perturbation order for the edge mode development
   SpinChainXYZNaturalBoundaryTermHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
 					     double jxFactor, double jyFactor, double jzFactor, double hFactor,
-					     double boundaryCondition = 0.0);
+					     double boundaryCondition = 0.0, int perturbationOrder = 0);
   
   // destructor
   //

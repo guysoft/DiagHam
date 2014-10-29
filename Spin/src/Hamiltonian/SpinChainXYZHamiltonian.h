@@ -71,6 +71,11 @@ class SpinChainXYZHamiltonian : public AbstractHamiltonian
 
   // precalculation array where the diagonal elements are stored
   double* SzSzContributions;
+
+  // indicates if the parity if fixed for the Hilbert space
+  bool FixedParityFlag;
+  // value of the parity if fixed for the Hilbert space
+  double FixedParity;
   // precalculation array where the parity of each state is stored
   double* Parities;
 

@@ -157,6 +157,15 @@ class AbstractSpinChain : public AbstractHilbertSpace
   // return value = index of resulting state
   virtual int SmiSpj (int i, int j, int state, double& coefficient) = 0;
 
+  // return index of resulting state from application of S+_i S-_j operator on a given state
+  //
+  // i = position of S+ operator
+  // j = position of S- operator
+  // state = index of the state to be applied on S+_i S-_j operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SpiSmj (int i, int j, int state, double& coefficient);
+
   // find state index
   //
   // state = state description
@@ -200,6 +209,19 @@ class AbstractSpinChain : public AbstractHilbertSpace
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 	
 };
+
+// return index of resulting state from application of S+_i S-_j operator on a given state
+//
+// i = position of S+ operator
+// j = position of S- operator
+// state = index of the state to be applied on S+_i S-_j operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+inline int AbstractSpinChain::SpiSmj (int i, int j, int state, double& coefficient)
+{
+  return this->SmiSpj(j, i, state, coefficient);
+}
 
 #endif
 

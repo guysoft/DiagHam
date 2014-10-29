@@ -69,6 +69,7 @@ SpinChainXYZHamiltonian::SpinChainXYZHamiltonian(Spin1_2Chain* chain, int nbrSpi
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->FixedParityFlag = false;
   this->Parities = new double [this->Chain->GetHilbertSpaceDimension()];
   this->JxFactor = -jxFactor;
   this->JyFactor = -jyFactor;
@@ -85,6 +86,8 @@ SpinChainXYZHamiltonian::SpinChainXYZHamiltonian(Spin1_2Chain* chain, int nbrSpi
 
 SpinChainXYZHamiltonian::~SpinChainXYZHamiltonian() 
 {
+  if (this->FixedParityFlag == false)
+    delete[] this->Parities;
 }
 
 // set Hilbert space

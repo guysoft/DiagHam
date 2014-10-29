@@ -116,7 +116,7 @@ void LanczosManager::AddOptionGroup(OptionManager* manager)
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "limit-time", "use limit in time instead of a number of lanczos iteration (0 if none, time in seconds)", 0);
       (*LanczosGroup) += new BooleanOption  ('d', "disk", "enable disk resume capabilities", false);
       (*LanczosGroup) += new BooleanOption  ('r', "resume", "resume from disk datas", false);
-      (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-iter", "number of lanczos iteration (for the current run)", 10);
+      (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-iter", "number of lanczos iteration (for the current run)", 3000);
       (*LanczosGroup) += new SingleIntegerOption  ('\n', "nbr-vector", "maximum number of vector in RAM during Lanczos iteration", 10);
       (*LanczosGroup) += new BooleanOption  ('\n', "force-reorthogonalize", 
 					     "force to use Lanczos algorithm with reorthogonalizion even if the number of eigenvalues to evaluate is 1", false);

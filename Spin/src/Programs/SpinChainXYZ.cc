@@ -60,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "boundary conditions (0 for open, 1 for periodic, -1 for antiperiodic)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
   (*SystemGroup) += new  BooleanOption  ('\n', "natural-boundaryterms", "use a natural boundary term instead of the translation invariant boundary term");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "boundaryterm-order", "perturbation order for the edge mode development involved in the natural boundary term", 0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -85,14 +86,23 @@ int main(int argc, char** argv)
   int BValue = Manager.GetInteger("boundary-conditions");
   char* OutputFileName = new char [512];
   char* CommentLine = new char [512];
+  char* FileNamePrefix = new char [256];
+  if ((Manager.GetBoolean("natural-boundaryterms") == false) || (BValue == 0))
+    {
+      sprintf (FileNamePrefix, "spin_1_2");
+    }
+  else
+    {
+      sprintf (FileNamePrefix, "spin_1_2_naturalboundaryterms_%d", (int) Manager.GetInteger("boundaryterm-order"));
+    }
   if (HValue == 0.0)
     {
-      sprintf (OutputFileName, "spin_1_2_x_%.6f_y_%.6f_z_%.6f_b_%d_n_%d", JxValue, JyValue, JzValue, BValue, NbrSpins);
+      sprintf (OutputFileName, "%s_x_%.6f_y_%.6f_z_%.6f_b_%d_n_%d", FileNamePrefix, JxValue, JyValue, JzValue, BValue, NbrSpins);
       sprintf (CommentLine, " XYZ chain with %d sites, Jx=%.6f, Jy= %.6f, Jz=%.6f and boundary conditions B=%d\n# ", NbrSpins, JxValue, JyValue, JzValue, BValue);
     }
   else
     {
-      sprintf (OutputFileName, "spin_1_2_x_%.6f_y_%.6f_z_%.6f_h_%.6f_b_%d_n_%d", JxValue, JyValue, JzValue, HValue, BValue, NbrSpins);
+      sprintf (OutputFileName, "%s_x_%.6f_y_%.6f_z_%.6f_h_%.6f_b_%d_n_%d", FileNamePrefix, JxValue, JyValue, JzValue, HValue, BValue, NbrSpins);
       sprintf (CommentLine, " XYZ chain with %d sites, Jx=%.6f, Jy= %.6f, Jz=%.6f, H=%.6f and boundary conditions B=%d\n# ", NbrSpins, JxValue, JyValue, JzValue, HValue, BValue);
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
@@ -109,7 +119,7 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("natural-boundaryterms") == false)
 	    Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	  else
-	    Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
+	    Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, (int) Manager.GetInteger("boundaryterm-order"));
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	  sprintf (TmpEigenstateString, "%s", OutputFileName);
 	  char TmpEntry = '\0';
@@ -136,7 +146,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("natural-boundaryterms") == false)
 		Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	      else
-		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
+		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, (int) Manager.GetInteger("boundaryterm-order"));
 	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
 	      char* TmpQString = new char[64];
