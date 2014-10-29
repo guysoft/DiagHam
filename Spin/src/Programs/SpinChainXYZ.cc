@@ -135,22 +135,22 @@ int main(int argc, char** argv)
     }
   else
     {
-      int InitalQValue = 0;
+      int InitialQValue = 0;
       int MaxQValue = 1;
-      for (; InitalQValue <= MaxQValue; ++InitalQValue)
+      for (; InitialQValue <= MaxQValue; ++InitialQValue)
 	{
-	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitalQValue);
+	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitialQValue);
 	  if (Chain->GetHilbertSpaceDimension() > 0)
 	    {	     
 	      SpinChainXYZHamiltonian* Hamiltonian = 0;
 	      if (Manager.GetBoolean("natural-boundaryterms") == false)
 		Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	      else
-		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, (int) Manager.GetInteger("boundaryterm-order"));
+		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, (int) Manager.GetInteger("boundaryterm-order"), true, InitialQValue);
 	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
+	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitialQValue);
 	      char* TmpQString = new char[64];
-	      sprintf (TmpQString, "%d", InitalQValue);
+	      sprintf (TmpQString, "%d", InitialQValue);
 	      GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
 				       FirstRun, TmpEigenstateString);
 	      MainTaskOperation TaskOperation (&Task);

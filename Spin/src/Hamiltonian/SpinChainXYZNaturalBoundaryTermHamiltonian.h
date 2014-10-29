@@ -64,9 +64,12 @@ class SpinChainXYZNaturalBoundaryTermHamiltonian : public SpinChainXYZHamiltonia
   // hFactor = Zeeman term 
   // boundaryCondition = boundary condition to apply (0 for open chain, 1 for periodic, -1 for antiperiodic)
   // perturbationOrder = perturbation order for the edge mode development
+  // fixedParityFlag = true if the parity if fixed for the Hilbert space
+  // fixedParity = value of the parity if fixed for the Hilbert space
   SpinChainXYZNaturalBoundaryTermHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
 					     double jxFactor, double jyFactor, double jzFactor, double hFactor,
-					     double boundaryCondition = 0.0, int perturbationOrder = 0);
+					     double boundaryCondition = 0.0, int perturbationOrder = 0, 
+					     bool fixedParityFlag = false, int fixedParity = 0);
   
   // destructor
   //
