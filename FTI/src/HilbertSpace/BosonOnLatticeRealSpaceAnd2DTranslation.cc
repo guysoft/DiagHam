@@ -69,7 +69,7 @@ BosonOnLatticeRealSpaceAnd2DTranslation::BosonOnLatticeRealSpaceAnd2DTranslation
   this->IncNbrBosons = this->NbrBosons + 1;
   this->MaxMomentum = 0;
   this->NbrSite = 0;
-  this->MomentumModulo = 0;
+  this->MomentumModulo = 1;
   this->KxMomentum = 0; 
   this->KyMomentum = 0;
   this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);

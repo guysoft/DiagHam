@@ -84,7 +84,7 @@ class AbstractQuantumNumber
   // get quantum number type
   //
   // return value = Hilbert space dimension
-  int GetQuantumNumberType();
+  virtual int GetQuantumNumberType();
 
   // add a quantum nunber to the current one
   //

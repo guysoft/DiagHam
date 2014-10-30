@@ -165,6 +165,7 @@ TensorProductRealVector& TensorProductRealVector::operator - ()
 
 TensorProductRealVector operator - (const TensorProductRealVector& V1) 
 {
+  return TensorProductRealVector();
 }
 
 // scalar product between two vectors
@@ -212,6 +213,7 @@ TensorProductRealVector& TensorProductRealVector::operator -= (TensorProductReal
 
 TensorProductRealVector operator + (TensorProductRealVector& V1, TensorProductRealVector& V2) 
 {
+  return TensorProductRealVector();
 }
 
 // substract two vectors
@@ -222,6 +224,7 @@ TensorProductRealVector operator + (TensorProductRealVector& V1, TensorProductRe
 
 TensorProductRealVector operator - (TensorProductRealVector& V1, TensorProductRealVector& V2) 
 {
+  return TensorProductRealVector();
 }
 
 // add a linear combination to a given vector

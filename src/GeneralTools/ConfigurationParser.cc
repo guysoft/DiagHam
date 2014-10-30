@@ -804,10 +804,10 @@ bool ConfigurationParser::GetAsStringMultipleArray (const char* parameterName, c
       char* TmpString = TmpArray[i];
       while (((*TmpString) != '\0') && (((*TmpString) == ' ') || ((*TmpString) == '\t')))
 	++TmpString;
-      unsigned int Tmp = strlen(TmpString) - 1;
+      int Tmp = ((int) strlen(TmpString)) - 1;
       while ((Tmp >= 0) && ((TmpString[Tmp] == ' ') || (TmpString[Tmp] == '\t')))
 	--Tmp;
-      if ((Tmp >= 0) && (Tmp < (strlen(TmpString) - 1)))
+      if ((Tmp >= 0) && (Tmp < (((int) strlen(TmpString)) - 1)))
 	TmpString[Tmp + 1] = '\0';
       nbrValues[i] = SplitLine(TmpString, array[i], minorSeparator);
       if (nbrValues[i] <= 0)

@@ -159,16 +159,20 @@ void SU3ClebschGordanCoefficients::EvaluateClebschGordanCoefficients()
 int SU3ClebschGordanCoefficients::GetAllPQRepresentations()
 {
   if ((this->P1 == this->P2) && (this->Q1 == 0) && (this->Q2 == 0))
-  {
-    this->PQ = new int*[this->P1 + 1];
-    for (int i = 0; i <= this->P1; ++i)
     {
-      this->PQ[i] = new int[2];
-      this->PQ[i][0] = 2*(this->P1 - i);
-      this->PQ[i][1] = i;
+      this->PQ = new int*[this->P1 + 1];
+      for (int i = 0; i <= this->P1; ++i)
+	{
+	  this->PQ[i] = new int[2];
+	  this->PQ[i][0] = 2*(this->P1 - i);
+	  this->PQ[i][1] = i;
+	}
+      return (this->P1 + 1);
     }
-    return (this->P1 + 1);
-  }
+  else
+    {
+      return 0;
+    }
 }
 
 int SU3ClebschGordanCoefficients::GetClebschGordanDegeneracy(int p, int q, int index)

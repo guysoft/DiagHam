@@ -74,7 +74,7 @@ FermionOnLatticeWithSpinRealSpaceAnd1DTranslation::FermionOnLatticeWithSpinRealS
   this->NbrFermionsDown = 0;
   this->NbrSite = 0;
   this->NbrFermionStates = 2 * this->NbrMomentum;
-  this->MomentumModulo = 0;
+  this->MomentumModulo = 1;
   this->XMomentum = 0; 
   this->YMomentum = 0;
   this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
