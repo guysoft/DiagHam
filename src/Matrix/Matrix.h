@@ -203,7 +203,7 @@ class Matrix
   //
   // UnitaryM = unitary matrix to use
   // return value = pointer to conjugated matrix
-  Matrix* Conjugate (RealMatrix& UnitaryM);
+  virtual Matrix* Conjugate (RealMatrix& UnitaryM);
 
   // conjugate matrix with an unitary block diagonal matrix (Ut M U)
   //

@@ -155,7 +155,7 @@ class AbstractLanczosAlgorithm
   
   // diagonalize tridiagonalized matrix and find ground state energy
   //
-  void Diagonalize ();
+  virtual void Diagonalize ();
 
 };
 

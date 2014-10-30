@@ -122,6 +122,16 @@ void BasicLanczosAlgorithm::InitializeLanczosAlgorithm(const Vector& vector)
   this->TridiagonalizedMatrix.Resize(0, 0);
 }
 
+// initialize Lanczos algorithm with a set of given vectors
+//
+// vectors = array of vectors used as first step vectors
+// nbrVectors = number of vectors in the array
+
+void BasicLanczosAlgorithm::InitializeLanczosAlgorithm(Vector* vectors, int nbrVectors)
+{
+  this->InitializeLanczosAlgorithm(vectors[0]);
+}
+
 // get last produced vector
 //
 // return value = reference on last produced vector

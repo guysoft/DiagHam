@@ -143,13 +143,13 @@ class AbstractHamiltonian
   //
   // error = absolute minimum value to be considered as non zero element
   // return value = pointer to the picture associated to the matrix
-  AbstractBitmapPicture* GetHamiltonianPicture (double error);
+  virtual AbstractBitmapPicture* GetHamiltonianPicture (double error);
 
   // store Hamiltonian into a picture (drawing non zero element with a color scale)
   //
   // error = absolute minimum value to be considered as non zero element
   // return value = pointer to the picture associated to the matrix
-  AbstractBitmapPicture* GetHamiltonianColorPicture (double error);
+  virtual AbstractBitmapPicture* GetHamiltonianColorPicture (double error);
     
   // return a list of left interaction operators
   //

@@ -83,6 +83,12 @@ class BasicLanczosAlgorithm : public AbstractLanczosAlgorithm
   // vector = reference to the vector used as first step vector
   void InitializeLanczosAlgorithm(const Vector& vector);
 
+  // initialize Lanczos algorithm with a set of given vectors
+  //
+  // vectors = array of vectors used as first step vectors
+  // nbrVectors = number of vectors in the array
+  void InitializeLanczosAlgorithm(Vector* vectors, int nbrVectors);
+
   // get last produced vector
   //
   // return value = reference on last produced vector
