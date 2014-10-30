@@ -16,7 +16,7 @@ MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMa
   this->LeftVector = new double[this->MPOBondDimension];
   this->RightVector = new double[this->MPOBondDimension];
   this->RightVector[0] = 0;  this->RightVector[1] = 1.0;  this->RightVector[2] = -1.0; this->RightVector[3] = 0;
-  this->LeftVector[0] = 0;  this->LeftVector[1] = - 1.0;  this->LeftVector[2] = 1.0; this->LeftVector[3] = 0;
+  this->LeftVector[0] = 0;  this->LeftVector[1] = -1.0;  this->LeftVector[2] = 1.0; this->LeftVector[3] = 0;
 }
 
 
@@ -102,22 +102,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::InitializeTensorsElements()
 		}
 	    }
 	}
-    }
-   
-   cout <<"Nbr Non zero Elements = "<<  this->NbrNonZeroElements<<endl;
-   
-   /*   for (int j = 0; j < this->PhysicalDimension ; j++)
-     {
-       for (int k=0; k < this->PhysicalDimension; k++)
-	 {
-	   for (int l=0; l <  this->PhysicalDimension; l++)
-	     {
-	       delete T[j][k][l];
-	    }
-	   	       delete T[j][k];
-	}
-       delete T[j];
-       } */
+    }   
 }
 
 
@@ -144,8 +129,8 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)
   if (this->Site->GetSitePosition() == 0)
     {
       int BondDimensionRight = this->Site->GetBondDimensionRight();
-      int BondDimensionLeft = this->Site->GetBondDimensionLeft();
       RealMatrix * M = this->Site->GetM();
+      cout <<"Printing M in void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L) when pos = 0"<<endl;
       cout << M[0] << M[1];
       for (int i = 0; i < this->NbrNonZeroElements; i++)
 	{
@@ -162,6 +147,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)
 		}
 	    }
 	}
+      L.PrintTensor();
       cout <<" I have finished"<<endl;
     }
   else
@@ -174,7 +160,9 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
   if (this->Site->GetSitePosition() == this->NbrSites - 1)
     {
       RealMatrix * M = this->Site->GetM();
-      int BondDimensionRight = this->Site->GetBondDimensionRight();
+
+      cout <<"Printing M in void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R) when pos max"<<endl;
+      cout << M[0] << M[1];     
       int BondDimensionLeft = this->Site->GetBondDimensionLeft();
       for (int i = 0; i < this->NbrNonZeroElements; i++)
 	{
@@ -191,6 +179,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
 		}
 	    }
 	}
+R.PrintTensor();
     }
   else
     AbstractMPOperatorOBC::ComputeR(R);
@@ -209,7 +198,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
 RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
-  cout <<"RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)"<<endl;
+  //  cout <<"RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)"<<endl;
   vDestination.ClearVector();
   if (this->Site->GetSitePosition() == 0)
   {
@@ -222,9 +211,6 @@ for (int i = 0; i < this->PhysicalDimension; i++)
     {
       B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionRight,1,true);
     }
-
-  cout <<vSource<<endl;
-  cout <<vDestination<<endl;
 
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
@@ -259,7 +245,7 @@ for (int i = 0; i < this->PhysicalDimension; i++)
   delete [] B;
   return  vDestination;
  
- }
+  }
 
    if (this->Site->GetSitePosition() == this->NbrSites - 1)
    {
@@ -267,6 +253,7 @@ for (int i = 0; i < this->PhysicalDimension; i++)
     int BondDimensionLeft = this->Site->GetBondDimensionLeft(); 
     Tensor3<double> & LeftL = this->Site->GetPreviousL();
     Tensor3<double> * B = new Tensor3<double>[this->PhysicalDimension];
+    cout <<vSource<<endl;
     for (int i = 0; i < this->PhysicalDimension; i++)
     {
        B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionLeft,1,true);
@@ -287,7 +274,7 @@ for (int i = 0; i < this->PhysicalDimension; i++)
 		}
 	}
      }
-   }
+    }
 
 
  for (int i = 0; i < this->NbrNonZeroElements; i++)
@@ -305,8 +292,9 @@ for (int i = 0; i < this->PhysicalDimension; i++)
    }
 
     delete [] B;
+ cout <<vDestination<<endl;
     return vDestination;
-  }
+   }
 
   return AbstractMPOperatorOBC::LowLevelMultiply(vSource,vDestination,firstComponent,nbrComponent);
 

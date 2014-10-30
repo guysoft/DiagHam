@@ -33,8 +33,10 @@ int main(int argc, char** argv)
   Architecture.AddOptionGroup(&Manager);
   Manager += SystemGroup;
   Manager += MiscGroup;
-
   
+  (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
+  (*SystemGroup) += new  SingleIntegerOption ('s', "sweep", "length of the spin chain", 4);
+
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -50,19 +52,19 @@ int main(int argc, char** argv)
     }
   
   
-  int NbrSites = 4;
+  int NbrSites = Manager.GetInteger("length");
   int PhysicalDimension = 2;
-  int MaxBondDimension = 10;
+  int MaxBondDimension = 20;
   MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites);  
   TransferMatrix.PrintTensorElements();
 
   MPSSite * Lattice = new MPSSite[NbrSites];
-  Lattice[0] = MPSSite(0, PhysicalDimension, 0, Lattice + 1, MaxBondDimension,&TransferMatrix);
+  Lattice[0] = MPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
   for(int i = 1 ; i < NbrSites - 1 ; i++ )
     {
       Lattice[i] = MPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, &TransferMatrix);
     }
-  Lattice[NbrSites-1] = MPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, 10,&TransferMatrix);
+  Lattice[NbrSites-1] = MPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,&TransferMatrix);
   int CurrentDimension = 1;
   int NextCurrentDimension = PhysicalDimension;
   for(int i = 0;  i < (NbrSites>>1) ; i++)
@@ -74,10 +76,10 @@ int main(int argc, char** argv)
    NextCurrentDimension *=  PhysicalDimension;
    if(NextCurrentDimension > MaxBondDimension)
      { 
-        NextCurrentDimension=   MaxBondDimension;
+        NextCurrentDimension =   MaxBondDimension;
      }	
   }
-  int NbrSweep = 1;
+  int NbrSweep = Manager.GetInteger("sweep");
   DMRGFiniteSizeRealOBCMainTask Algorithm(Lattice, &TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture());
   Algorithm.RunAlgorithm();
   delete [] Lattice;
