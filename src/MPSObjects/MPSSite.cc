@@ -90,10 +90,10 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
   cout << "Setting site Dimension = " <<this->SitePosition << " " <<this->BondDimensionLeft <<" " <<this->BondDimensionRight<<endl;;
 }
 
-void MPSSite::UpdateFromVector(RealVector & psi)
+void MPSSite::UpdateFromVector(RealVector * psi)
 {
-  cout <<"Enter UpdateFromVector(RealVector & psi)"<<endl;
-//  cout <<psi<<endl;
+  cout <<"Enter UpdateFromVector(RealVector * psi)"<<endl;
+  cout <<*psi<<endl;
   delete [] this->M;
   this->M = new RealMatrix [this->PhysicalDimension];
   
@@ -108,10 +108,11 @@ void MPSSite::UpdateFromVector(RealVector & psi)
 	{
 	  for (int k = 0; k < this->BondDimensionRight; k++)
 	    {
-	      this->M[i](j,k) = psi[(long int)this->PhysicalDimension*(this->BondDimensionRight*j+k) +i]; 
+	      this->M[i](j,k) = (*psi)[(long int)this->PhysicalDimension*(this->BondDimensionRight*j+k) +i]; 
 	    }
 	}
-	cout <<" update M"<<this->M[i]<<endl;
+         cout <<" update M"<<this->M[i]<<endl;
+	 cout <<"this->M[ " <<i<< "]"<< this->M[i]<<endl;
     }
 }
 
@@ -163,6 +164,7 @@ bool MPSSite::CheckRightNormalization()
       RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
       Result += (this->M[i])* Tmp;
     }
+  cout <<Result<<endl;
   for(int i = 0 ; i < this->BondDimensionLeft; i++)
     {
       if ( abs(Result(i,i)-1) > 1e-13  )
@@ -185,7 +187,7 @@ bool MPSSite::CheckRightNormalization()
 void MPSSite::BringMInRightCanonicalForm()
 {
  cout << "BringMInRightCanonicalForm() for site" << this->SitePosition<<endl;
-  RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight * this->PhysicalDimension, true);
+ RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight * this->PhysicalDimension, true);
   
   for(int i = 0 ; i < this->BondDimensionLeft ; i++)
     {
@@ -197,15 +199,16 @@ void MPSSite::BringMInRightCanonicalForm()
 	    }
 	}
     }
-//  cout << TmpMatrix<<endl;
+  cout << TmpMatrix<<endl;
   RealMatrix U,V;
   RealDiagonalMatrix SingularValues;
+
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
-//  cout <<"SingularValues  = "<< SingularValues<<endl;
-//  cout <<U <<endl;
-//  cout <<V <<endl;
+  cout <<"SingularValues  = "<< SingularValues<<endl;
+  cout <<U <<endl;
+  cout <<V <<endl;
   U = U * SingularValues;
-//  cout <<U<<endl;;
+  cout <<U<<endl;;
 
   for(int i =0 ; i <  this->PhysicalDimension; i++)
     {
@@ -216,7 +219,7 @@ void MPSSite::BringMInRightCanonicalForm()
 	      this->M[i](j,k) = V(this->PhysicalDimension * k + i,j);
 	    }
 	}
-
+      cout <<"this->M[ " <<i<< "]"<<endl<< this->M[i]<<endl;
   //    cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
       this->SiteOnLeft->M[i] = this->SiteOnLeft->M[i]*U;
        }
@@ -261,12 +264,15 @@ void MPSSite::BringMInLeftCanonicalForm()
   
   RealMatrix U,V;
   RealDiagonalMatrix SingularValues;
-//  cout <<  TmpMatrix<<endl;
-  TmpMatrix.SingularValueDecomposition(U,SingularValues,V);
-//  cout << SingularValues<<endl;
-//  cout <<V<<endl;
-  V = SingularValues*V.Transpose();
-//  cout <<V<<endl;
+  cout <<"check singular value decomposition in void MPSSite::BringMInLeftCanonicalForm()"<<endl;
+  cout <<  TmpMatrix<<endl;
+  TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
+  cout << SingularValues<<endl;
+  cout <<U<<endl;
+  cout <<V<<endl;
+  V.Transpose();
+  V = SingularValues*V;
+  cout <<V<<endl;
   for(int i = 0 ; i <  this->PhysicalDimension; i++)
     {
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
@@ -278,8 +284,11 @@ void MPSSite::BringMInLeftCanonicalForm()
 	}
 
       cout <<"check multiplication order in MPSSite::BringMInLeftCanonicalForm()"<<endl;
-      
+      cout<<" this->SiteOnRight->M[i]"<<endl;
+      cout<< this->SiteOnRight->M[i]<<endl; 
       this->SiteOnRight->M[i] =  V * this->SiteOnRight->M[i];
+      cout<<" this->SiteOnRight->M[i]"<<endl;
+      cout<< this->SiteOnRight->M[i]<<endl;
     }
 
   delete this->L;
@@ -302,10 +311,12 @@ void MPSSite::BringMInLeftCanonicalFormCareful()
 }
 
 
-void MPSSite::GetMatrixInVectorForm(RealVector * & resultInvector)
+void MPSSite::GetMatrixInVectorForm(RealVector *& resultInvector)
 {
   delete resultInvector;
   resultInvector = new RealVector((long int) this->PhysicalDimension*this->BondDimensionLeft*this->BondDimensionRight,true);
+  cout <<"print Matrix in GetMatrixInVectorForm"<<endl;
+  cout << this->M[0]<<" " <<this->M[1];
   for (int i = 0 ; i < this->PhysicalDimension ; i++)
     {
       for (int j = 0 ; j <  this->BondDimensionLeft ; j++)

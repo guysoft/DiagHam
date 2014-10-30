@@ -80,16 +80,16 @@ void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int si
 #ifdef __LAPACK__
 		  RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
                   RealMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
-//cout <<"Before 		  HRep.LapackDiagonalize(TmpDiag, Q); "<<endl;
 		  HRep.LapackDiagonalize(TmpDiag, Q);
 		  RealVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension(),true);
-//cout <<"aftere 		  HRep.LapackDiagonalize(TmpDiag, Q); "<<endl;
-                  this->MPOperator->LowLevelMultiply(Q[this->MPOperator->GetHilbertSpaceDimension()-1], TmpEigenvector);
-//                  cout <<"result of     this->MPOperator->LowLevelMultiply(Q[0], TmpEigenvector)"<<endl;
-//                  cout << TmpEigenvector<<endl;
-//                  cout <<Q[this->MPOperator->GetHilbertSpaceDimension()-1]<<endl;
-                  cout << " Highest Energy = " <<(TmpEigenvector * Q[this->MPOperator->GetHilbertSpaceDimension()-1]) << " " << endl;		  
-         	  this->LatticeSite[siteIndex].UpdateFromVector(Q[this->MPOperator->GetHilbertSpaceDimension()-1]);
+
+                  this->MPOperator->LowLevelMultiply(Q[0], TmpEigenvector);
+
+                  cout <<"TmpDiag[0] = " <<TmpDiag[0]<<endl;
+
+                  cout << " Highest Energy = " <<(TmpEigenvector * Q[0]) << " " << endl;
+		  cout <<"Norm = " <<Q[0].Norm()<<endl;
+         	  this->LatticeSite[siteIndex].UpdateFromVector(&Q[0]);
                   cout <<"end of OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)"<<endl;
 
 #endif
@@ -101,7 +101,7 @@ else
   RealVector * TmpVector = 0;
   BasicLanczosAlgorithmWithGroundState LanczosAlgorithm (this->Architecture);
   this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
-  cout <<(*TmpVector)<<endl;
+  //cout <<(*TmpVector)<<endl;
   LanczosAlgorithm.InitializeLanczosAlgorithm(*TmpVector);
   double GroundStateEnergy;
   double Precision = 1.0;
@@ -144,7 +144,9 @@ else
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-     	  this->LatticeSite[siteIndex].UpdateFromVector( (*((RealVector *) LanczosAlgorithm.GetEigenstates(0))));
+      RealVector GroundState = LanczosAlgorithm.GetGroundState();
+      //cout <<"GroundState = " <<GroundState<<endl;
+      this->LatticeSite[siteIndex].UpdateFromVector(&GroundState);
 }
 
 }

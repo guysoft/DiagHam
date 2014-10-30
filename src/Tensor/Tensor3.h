@@ -63,7 +63,7 @@ Tensor3<T>::Tensor3(int firstDimension,int secondDimension, int thirdDimension, 
   this->FirstDimension = firstDimension;
   this->SecondDimension = secondDimension;
   this->ThirdDimension = thirdDimension;
-  this->TensorElements = new T [this->FirstDimension* this->SecondDimension* this->ThirdDimension];
+  this->TensorElements = new T [this->FirstDimension * this->SecondDimension * this->ThirdDimension];
   this->Flag.Initialize();
   if (initiateFlag)
     {

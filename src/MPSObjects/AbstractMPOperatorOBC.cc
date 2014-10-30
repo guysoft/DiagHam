@@ -151,8 +151,6 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 {
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
-//  cout <<"BondDimensionRight = "<< BondDimensionRight<<endl;
-//cout <<"BondDimensionLeft = "<< BondDimensionLeft<<endl;
   Tensor3<double> & RightR = this->Site->GetNextR();
   
   Tensor3<double> * B =  new  Tensor3<double>  [this->PhysicalDimension];
@@ -172,26 +170,12 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 	    {
 	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 		{
-		  //cout <<"M[i](LeftA,RightA)"<<M[i](LeftA,RightA)<<endl;
-//                  cout <<" RightR(RightA,MPOIndiceRight,RightC) "<<RightA<<" "<<RightB<<" "<<RightC <<RightR(RightA,RightB,RightC)<<endl;
-//                cout <<"LeftA = "<<LeftA<<" RightB = "<<RightB<<" RightC = "<<RightC<<endl;
-//cout << B[i](LeftA,RightB,RightC)<<endl;
-//     cout <<"R( "<< RightA<<" , "<<RightB<<" , "<< RightC <<") = "<<RightR(RightA,RightB,RightC)<<endl;
-		  B[i](LeftA,RightB,RightC) +=  RightR(RightA,RightB,RightC) * M[i](LeftA,RightA);
-		  //cout <<"B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) "<<B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC)<<endl;
+		   B[i](LeftA,RightB,RightC) +=  RightR(RightA,RightB,RightC) * M[i](LeftA,RightA);
 		}
 	    }
 	}
     }
    }
-
-//  cout <<"B computed"<<endl;  
-
-/*  for (int i = 0; i < this->PhysicalDimension; i++)
-    {
- cout <<"B[ " <<i<< "] "<<endl;
-      B[i].PrintTensor();
-    }*/
 
   Tensor3<double> * A = new Tensor3<double> [this->PhysicalDimension];
   
@@ -212,13 +196,11 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 	{
 	  for (int RightC = 0;  RightC < BondDimensionRight;  RightC++)
 	    {
-       //       cout <<MPOIndiceDown<<" " <<LeftA<<" "<<MPOIndiceRight<<" "<<RightC<<" "<< this->ElementsValues[i]<<endl;
-//              cout <<  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC)<<endl;
 	      A[MPOIndiceUp](LeftA, MPOIndiceLeft,RightC) +=  B[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) * this->ElementsValues[i];
 	    }
 	}
     } 
-//    cout <<"A computed"<<endl;  
+
   delete [] B;
   
   for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
@@ -245,84 +227,6 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 
 
 
-/*
-  for (int i = 0; i < this->PhysicalDimension; i++)
-    {
-      B[i] = new Tensor3<T>(site->BondDimensionRight,site->BondDimensionLeft,this->MPOBondDimension);
-      for (int c = 0; c < this->BondDimensionLeft; c++)
-	{
-	  for(int previousa = 0; previousa < this->BondDimensionLeft; previousa++)
-	    {
-	      for(int previousb = 0; previousb < this->MPOperatorOBC->GetMPODimension(); previousb++)
-		{
-		  for(int previousc = 0; previousc < this->BondDimensionLeft; previousc++)
-		    B[i](c,previousa,previousb) +=  LeftL(previousa,previousb,previousc)* (this->M[i] (previousc,c));
-		}
-	    }
-	}
-    }
-  
-  Tensor3<double> * A = new Tensor3<double>[this->PhysicalDimension];
-  
-  for (int i = 0; i<this->PhysicalDimension; i++)
-    {
-      A[i] = new Tensor3<double>(this->BondDimensionRight,this->BondDimensionLeft,this->MPOperatorOBC->GetMPODimension(this->SitePosition));
-      
-      for (int a = 0; a < this->BondDimensionLeft; a++)
-	{
-	  for (int previousa = 0; previousa < this->BondDimensionLeft; previousa++)
-	    {
-	      for (int b = 0; b < this->MPOperatorOBC->GetMPODimension(this->SitePosition); b++)
-		{
-		  for (int previousb = 0; previousb < this->MPOperatorOBC->GetMPODimension(this->SitePosition-1); previousb++)
-		    {
-		      for(int sigma2 = 0; sigma2 < this->PhysicalDimension; sigma2++)
-			{
-			  A[i](a,previousa,b) +=  B[sigma2](c , previousa,previousb) * this->MPOperatorOBC->GetTensorElements(this->SitePosition,i,sigma2, previousb, b);
-			}
-		    }
-		}
-		}
-	    }
-    }
-    
-    for (int i = 0; i<this->PhysicalDimension; i++)
-    {
-    delete B[i];
-    }
-  delete B;
-  
-  for (int a = 0; a < this->BondDimensionLeft; a++)
-    {
-      for (int c = 0; c < this->BondDimensionLeft; c++)
-	{
-	  for (int b = 0; b < this->MPOperatorOBC->GetMPODimension(this->SitePosition); b++)
-	    { 
-	      this->L(a,b,c) = 0;
-	      for (int previousa = 0; previousa < this->BondDimensionLeft; previousa++)
-		{ 
-		  for (int i = 0; i<this->PhysicalDimension; i++)
-		    {
-		      this->L(a,b,c)  += Conj(this->M[i](previousa,a))* A[i](a,previousa,b);
-		    }
-		}
-	    }
-	}
-    }
-
-  for (int i = 0; i<this->PhysicalDimension; i++)
-     {
-       delete A[i];
-     }
-  delete [] A;
-  
-  return &NewL;
-}
-
-*/
-
-
-
 // multiply a vector by the current hamiltonian and store result in another vector
 // low level function (no architecture optimization)
 //
@@ -331,8 +235,10 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 // return value = reference on vectorwhere result has been stored
 RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)
 {
-  cout <<"RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)"<<endl;
+  // cout <<"RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)"<<endl;
   return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
+
+
 /*
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
@@ -432,7 +338,7 @@ RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVec
 RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
-  cout <<"RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination,     int firstComponent, int nbrComponent)"<<endl;
+  //  cout <<"RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination,     int firstComponent, int nbrComponent)"<<endl;
 
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
@@ -508,6 +414,4 @@ RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVec
 
  delete [] A;
  return vDestination;
-
-
 }

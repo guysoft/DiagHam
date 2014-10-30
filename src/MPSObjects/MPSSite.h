@@ -58,7 +58,7 @@ class MPSSite
    
    void InitializeLeft(RealMatrix * newA);
    void InitializeRight(RealMatrix * newB);
-   void UpdateFromVector(RealVector & psi);
+   void UpdateFromVector(RealVector * psi);
    void GetMatrixInVectorForm(RealVector *& resultInvector );          
    void BringMInLeftCanonicalForm();
    void BringMInRightCanonicalForm();
