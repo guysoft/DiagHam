@@ -111,6 +111,14 @@ class BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation : public  Ferm
   // return value = index of the destination state 
   virtual int AdAd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
+  // print a given State
+  //
+  // Str = reference on current output stream 
+  // state = ID of the state to print
+  // return value = reference on current output stream 
+  ostream& PrintState (ostream& Str, int state);
+
+
  protected:
 
   // generate all states corresponding to the constraints

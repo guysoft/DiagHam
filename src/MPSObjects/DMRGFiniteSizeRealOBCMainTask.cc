@@ -35,7 +35,6 @@ void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
 	  cout <<"From left to right "<<" site "<<i <<endl;
           this->MPOperator->SetSite(&this->LatticeSite[i]);
 	  this->OptimizeUsingLanczosLanczosAlgorithm (i);
-          cout <<"optimisation done for site "<<i<<endl;
 	  this->LatticeSite[i].BringMInLeftCanonicalFormCareful();  
 	}
      for (int i =  this->NbrSites - 1; i >  0; i--)
@@ -43,7 +42,6 @@ void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
 	  cout <<"From right to left,"<<" site "<<i <<endl;
 	  this->MPOperator->SetSite(&this->LatticeSite[i]);
 	  this->OptimizeUsingLanczosLanczosAlgorithm (i);
-          cout <<"optimisation done for site "<<i<<endl;
 	  this->LatticeSite[i].BringMInRightCanonicalFormCareful();
 	}
     }
@@ -88,9 +86,9 @@ void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int si
                   cout <<"TmpDiag[0] = " <<TmpDiag[0]<<endl;
 
                   cout << " Highest Energy = " <<(TmpEigenvector * Q[0]) << " " << endl;
-		  cout <<"Norm = " <<Q[0].Norm()<<endl;
+
          	  this->LatticeSite[siteIndex].UpdateFromVector(&Q[0]);
-                  cout <<"end of OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)"<<endl;
+
 
 #endif
 

@@ -65,6 +65,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('q', "flux", "number of flux quanta piercing the lattice ", 6);
   (*SystemGroup) += new SingleIntegerOption  ('f', "flux-per-CF", "number of flux attached to each boson (allowed values: +/-1)", 1);
   (*SystemGroup) += new BooleanOption('c',"hard-core","Use Hilbert-space of hard-core bosons");
+  (*SystemGroup) += new BooleanOption('\n',"no-translation","Use Hilbert-space of hard-core bosons");
 
   (*SystemGroup) += new MultipleDoubleOption  ('\n', "solenoid-flux", "twist in periodic boundary conditions for total wavefunction phi_x[,phi_y])",',');
   (*SystemGroup) += new MultipleDoubleOption  ('s', "solenoid-CF", "twist in periodic boundary conditions for CF part phi_x[,phi_y])",',');
@@ -244,13 +245,15 @@ int main(int argc, char** argv)
   
   // calculate states required to build Jastrow factor:
   // BosonOnLattice *JastrowSpace = new BosonOnLattice(/*NbrParticles 1, Lx, Ly, AttachedFlux, MemorySpace);
+
   cout <<"  FluxPerCellJastrow = "<<  FluxPerCellJastrow <<endl;
   TightBindingModelHofstadterSquare  JastrowTightBindingModel (MaxMomentumX, MaxMomentumY, NxZero, NyZero, FluxPerCellJastrow, Axis,  SolenoidCF_X, SolenoidCF_Y, Architecture.GetArchitecture());
 
-   BosonOnLatticeGutzwillerProjectionRealSpace JastrowSpace( 1, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand());
+  BosonOnLatticeGutzwillerProjectionRealSpace JastrowSpace( 1, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand());
   Architecture.GetArchitecture()->SetDimension(JastrowSpace.GetHilbertSpaceDimension());
 
 // AbstractQHEOnLatticeHamiltonian* JastrowHamiltonian = new ParticleOnLatticeDeltaHamiltonian(JastrowSpace, /*NbrParticles*/ 1, Lx, Ly, AttachedFlux, /* U*/  0.0 , /*ReverseHopping */ false, /* Delta */ 0.0, /* Random */ 0.0, Architecture.GetArchitecture(), 0, NULL);
+
   TightBindingMatrix = JastrowTightBindingModel.GetRealSpaceTightBindingHamiltonian(); 
   ParticleOnLatticeRealSpaceHamiltonian JastrowHamiltonian (&CFSpace, 1 /*NbrParticles*/, JastrowTightBindingModel.GetNbrBands() * JastrowTightBindingModel.GetNbrStatePerBand(),  TightBindingMatrix, DensityDensityInteraction,
  									   Architecture.GetArchitecture(), MemorySpace);
@@ -272,8 +275,27 @@ int main(int argc, char** argv)
   cout <<"State Norm " << TrialState.Norm()<<endl;
   TrialState/= TrialState.Norm();
   TrialState.WriteVector(OutputName);
+ 
+ if(Manager.GetBoolean("no-translation"))
+{
+  BosonOnLatticeGutzwillerProjectionRealSpace Space1 (NbrBosons,Lx*Ly);
+  ComplexVector TrialState1(Space1.GetHilbertSpaceDimension(),true);
+  Space1.GetCompositeFermionWavefunction(TrialState1, JastrowEigenVecs, CFEigenVecs);
+cout <<JastrowEigenVecs<<endl;
+cout <<CFEigenVecs<<endl;
+  char* OutputName1;
+  if ( (OutputName1 = Manager.GetString("output-file")) == NULL)
+    {
+      OutputName1 = new char [300];
 
+      sprintf (OutputName1, "bosons_lattice_CF_n_%d_x_%d_y_%d_q_%d_p_%d%s.vec", NbrBosons, Lx , Ly, NbrFluxQuanta, CFFlux, boundaryCdStr);
+    }
 
+  cout <<"State Norm " << TrialState1.Norm()<<endl;
+  TrialState1/= TrialState1.Norm();
+  TrialState1.WriteVector(OutputName1);
+
+}
  return 0;
 }
 

@@ -426,3 +426,23 @@ int BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::AdAd (int m1, i
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
+
+// print a given State
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnLatticeGutzwillerProjectionRealSpaceAnd2DTranslation::PrintState (ostream& Str, int state)
+{
+  unsigned long TmpState = this->StateDescription[state];
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    Str << ((TmpState >> i) & 0x1ul) << " ";
+  cout <<TmpState<<endl;
+   if (this->FindStateIndex(this->StateDescription[state], this->StateMaxMomentum[state]) != state)
+     {
+       Str << "  error";
+     }
+  return Str;
+}
+

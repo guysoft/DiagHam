@@ -33,6 +33,7 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslation.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <math.h>
 #include <cstdlib>
@@ -143,58 +144,182 @@ void BosonOnLatticeGutzwillerProjectionRealSpaceOneOrbitalPerSiteAnd2DTranslatio
 
  int NbrTranslation;
  unsigned long * TemporaryState = new unsigned long [this->NbrBosons];
- 
+
  for(int i = 0; i < this->HilbertSpaceDimension ; i++)
  {
+    cout <<" Start "<< i <<endl;
+    unsigned long * TranslationOfRepresentant = new unsigned long [this->NbrStateInOrbit[i]];
+    long * MomentumTable = new long [this->NbrStateInOrbit[i]];
+    unsigned long NbrRepresentant = 0;
+    unsigned long TmpStateDescription = this->StateDescription[i];
+   
+/*
+    cout <<TmpStateDescription<<endl;
+    NbrRepresentant+=SearchInSortedArrayAndInsert( TmpStateDescription,TranslationOfRepresentant,  NbrRepresentant);
+    int XSize = 0;
+    this->ApplySingleXTranslation(TmpStateDescription);
+    while (this->StateDescription[i] != TmpStateDescription)
+    {
+      cout <<TmpStateDescription<<endl;
+      NbrRepresentant+=SearchInSortedArrayAndInsert(TmpStateDescription,TranslationOfRepresentant,NbrRepresentant);
+      ++XSize; 
+      this->ApplySingleXTranslation(TmpStateDescription);
+    }
+
+    int YSize = this->MaxYMomentum;
+    unsigned long StateReference = this->StateDescription[i];
+    for (int m = 1; m < YSize; ++m)
+    {
+      this->ApplySingleYTranslation(StateReference);
+
+      NbrRepresentant += SearchInSortedArrayAndInsert(StateReference,TranslationOfRepresentant,  NbrRepresentant);
+      TmpStateDescription = this->StateDescription[i];
+      int TmpXSize = 0;
+
+      cout <<StateReference<<endl;
+      while ((TmpXSize < XSize) && (StateReference != TmpStateDescription))
+      {	
+        cout <<TmpStateDescription<<endl;
+        NbrRepresentant += SearchInSortedArrayAndInsert(TmpStateDescription,TranslationOfRepresentant,  NbrRepresentant);
+        ++TmpXSize;
+        this->ApplySingleXTranslation(TmpStateDescription);
+      }
+   }
+
+*/
+
+for(int p = 0 ; p < this->MaxYMomentum ;p++)
+{
+  for(int q = 0 ; q < this->MaxXMomentum ;q++)
+  {
+        NbrRepresentant += SearchInArrayAndDefinedWeight(TmpStateDescription,TranslationOfRepresentant,MomentumTable, NbrRepresentant, q* this->MaxYMomentum+p);
+        this->ApplySingleXTranslation(TmpStateDescription);
+  }
+  this->ApplySingleYTranslation(TmpStateDescription);
+}
+
+
+  if(NbrRepresentant != this->NbrStateInOrbit[i])
+   {
+	cout <<"Wrong Number of Translation for state !"  << i <<endl;
+        cout <<NbrRepresentant<< " " << this->NbrStateInOrbit[i]<<endl;
+   }
+
+for(int k =0 ;k <NbrRepresentant; k++)
+{
+   cout <<TranslationOfRepresentant[k]<<" "<<MomentumTable[k]<<endl;
+   this->ConvertToMonomial(TranslationOfRepresentant[k],TemporaryState);
+   this->GetPositionSum(TemporaryState, PositionX, PositionY);
+ for (int p = 0; p < NbrBosons; ++p)
+    {
+    for (int q = 0; q < NbrBosons; ++q)
+    {
+    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+ 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+    }	      
+    }
+    trialState[i] +=  Conj(ExponentialFactors[MomentumTable[k]/this->MaxYMomentum][MomentumTable[k]%this->MaxYMomentum]) * SlaterCF.Determinant() * SlaterJastrow.Determinant()* Phase(-1.0*PositionY*(MomentumTable[k]/this->MaxYMomentum)*phaseTranslationX);
+}
+ trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
+ delete [] TranslationOfRepresentant;
+  }
+
+
+/*
     cout << this->StateDescription[i]<<" " <<this->NbrStateInOrbit[i]<<endl;
     NbrTranslation = 0;
     unsigned long  TmpStateDescription  = this->StateDescription[i];
     unsigned long  TmpStateDescription2  = this->StateDescription[i];
-    int m=0;
-    do{
-      TmpStateDescription2 = TmpStateDescription;
-        int n=0;
-	do{  
-     
-          this->ConvertToMonomial(TmpStateDescription2,TemporaryState);
-          for (int p = 0; p < NbrBosons; ++p)
-          {
-         	 cout <<TemporaryState[p]<<" ";
-     	  }
-	  cout <<endl;
-          this->GetPositionSum(TemporaryState, PositionX, PositionY);
+    int XSize = 0;
+    this->ConvertToMonomial(TmpStateDescription2,TemporaryState);
+    for (int p = 0; p < NbrBosons; ++p){ cout <<TemporaryState[p]<<" ";} cout <<endl;
+    this->GetPositionSum(TemporaryState, PositionX, PositionY);
 
-  for (int p = 0; p < NbrBosons; ++p)
-  {
 
-   for (int q = 0; q < NbrBosons; ++q)
-	{
-		  // need to consider proper ordering of matrix elements
-		  // in Hilbert-space, largest quantum number q corresponds to position 0!
+    for (int p = 0; p < NbrBosons; ++p)
+    {
+    for (int q = 0; q < NbrBosons; ++q)
+    {
+    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+ 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+    }	      
+    }
+    NbrTranslation++;    
+    trialState[i] +=  Conj(ExponentialFactors[XSize][0]) * SlaterCF.Determinant() * SlaterJastrow.Determinant()* Phase(-1.0*PositionY*XSize*phaseTranslationX);
 
-     		  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][TemporaryState[q]]);
- 		  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][TemporaryState[q]]);
+  ++XSize; 
+  this->ApplySingleXTranslation(TmpStateDescription);
+  while (this->StateDescription[i] != TmpStateDescription)
+    {
+      
+      cout <<TmpStateDescription<<endl;
+      this->ConvertToMonomial(TmpStateDescription,TemporaryState);
+      for (int p = 0; p < NbrBosons; ++p){ cout <<TemporaryState[p]<<" ";} cout <<endl;  
+      this->GetPositionSum(TemporaryState, PositionX, PositionY);
+
+      for (int p = 0; p < NbrBosons; ++p)
+      {
+
+      for (int q = 0; q < NbrBosons; ++q)
+      {
+         SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+ 	 SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
 	}	      
        }
         
-        trialState[i] +=  ExponentialFactors[n][m] * SlaterCF.Determinant() * SlaterJastrow.Determinant()* Phase(1.0*PositionY*n*phaseTranslationX);
-        ++NbrTranslation;
-        this->ApplySingleXTranslation(TmpStateDescription2);
-       ++n;        
-	} while((n < this->MaxXMomentum) && (TmpStateDescription2 != TmpStateDescription));
-      this->ApplySingleYTranslation(TmpStateDescription);      
-       ++m;  
-    }while ((m < this->MaxYMomentum) && (TmpStateDescription !=  this->StateDescription[i]));
+    trialState[i] +=  Conj(ExponentialFactors[XSize][0]) * SlaterCF.Determinant() * SlaterJastrow.Determinant()* Phase(-1.0*PositionY*XSize*phaseTranslationX); 
+    ++XSize; NbrTranslation++;
+    this->ApplySingleXTranslation(TmpStateDescription);
+    }
 
-   
+  int YSize = this->MaxYMomentum;
+  unsigned long StateReference = this->StateDescription[i];
+  for (int m = 1; m < YSize; ++m)
+    {
+      this->ApplySingleYTranslation(StateReference);
+      TmpStateDescription = this->StateDescription[i];
+      int TmpXSize = 0;
+
+     cout <<TmpStateDescription<< " "<<StateReference<<endl;
+    while ((TmpXSize < XSize) && (StateReference != TmpStateDescription))
+    {	
+      cout <<TmpStateDescription<< " "<<StateReference<<endl;
+      this->ConvertToMonomial(TmpStateDescription,TemporaryState);  
+      for (int p = 0; p < NbrBosons; ++p){ cout <<TemporaryState[p]<<" ";} cout <<endl;  
+      this->GetPositionSum(TemporaryState, PositionX, PositionY);
+
+      for (int p = 0; p < NbrBosons; ++p)
+      {
+
+      for (int q = 0; q < NbrBosons; ++q)
+      {
+    		  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+ 		  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->Lx*this->Ly - 1 - TemporaryState[q]]);
+	}	      
+       }
+      NbrTranslation++;  
+      trialState[i] +=  Conj(ExponentialFactors[TmpXSize][m]) * SlaterCF.Determinant() * SlaterJastrow.Determinant()* Phase(-1.0*PositionY*TmpXSize*phaseTranslationX); 
+  
+      ++TmpXSize;
+      this->ApplySingleXTranslation(TmpStateDescription);
+     }
+      if (TmpXSize < XSize)
+	{
+	  YSize = m;
+	}
+}
+
   trialState[i] /= sqrt(this->NbrStateInOrbit[i]);
   if(NbrTranslation != this->NbrStateInOrbit[i])
    {
 	cout <<"Wrong Number of Translation for state !"  << i <<endl;
         cout <<NbrTranslation<< " " << this->NbrStateInOrbit[i]<<endl;
   }
-   
+
 }
+*/
+
+
    for (int i = 0; i < this->MaxXMomentum; ++i)
     { 
       delete [] ExponentialFactors[i];

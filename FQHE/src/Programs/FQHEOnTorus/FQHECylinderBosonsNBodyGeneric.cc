@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 	  Operation.ApplyOperation(Architecture.GetArchitecture());
 	  Complex EnergyValue = State * TmpState;
 	  cout << "< Energy > = " << (EnergyValue.Re - Shift) << " " << EnergyValue.Im << endl;
-	  return 0;
+	  return 0; 
 	}
 
       char* EigenvectorName = 0;

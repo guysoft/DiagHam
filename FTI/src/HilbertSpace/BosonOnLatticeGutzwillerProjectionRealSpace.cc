@@ -390,3 +390,60 @@ long BosonOnLatticeGutzwillerProjectionRealSpace::EvaluatePartialEntanglementMat
 }
 
 
+
+// print a given State
+//
+// Str = reference on current output stream 
+// state = ID of the state to print
+// return value = reference on current output stream 
+
+ostream& BosonOnLatticeGutzwillerProjectionRealSpace::PrintState (ostream& Str, int state)
+{
+  unsigned long * TemporaryState = new unsigned long[this->NbrBosons];
+  unsigned long TmpState = this->StateDescription[state];
+ this->ConvertToMonomial(TmpState,TemporaryState);  
+  for (int i = 0; i < this->NbrBosons; ++i)
+    cout <<TemporaryState[i]<<" ";
+  cout <<endl;
+
+  for (int i = 0; i < this->NbrSite; ++i)
+    Str << ((TmpState >> i) & 0x1ul) << " ";
+  cout <<TmpState<<endl;
+delete TemporaryState;
+  return Str;
+}
+
+
+
+void BosonOnLatticeGutzwillerProjectionRealSpace::GetCompositeFermionWavefunction(ComplexVector & trialState, ComplexMatrix & jastrowEigenVecs,ComplexMatrix & cFEigenVecs)
+{
+#ifdef __LAPACK__
+  ComplexLapackDeterminant SlaterCF(NbrBosons);
+  ComplexLapackDeterminant SlaterJastrow(NbrBosons);
+#else
+  ComplexMatrix SlaterCF(NbrBosons, NbrBosons);
+  ComplexMatrix SlaterJastrow(NbrBosons, NbrBosons);
+#endif
+
+ unsigned long * TemporaryState = new unsigned long [this->NbrBosons];
+
+ for(int i = 0; i < this->HilbertSpaceDimension ; i++)
+ {
+   
+   this->ConvertToMonomial(this->StateDescription[i],TemporaryState);
+
+ for (int p = 0; p < NbrBosons; ++p)
+    {
+   cout <<TemporaryState[p]<<" "<<endl;
+    for (int q = 0; q < NbrBosons; ++q)
+    {
+    	  SlaterCF.SetMatrixElement(p,q,cFEigenVecs[p][this->NbrSite - 1 - TemporaryState[q]]);
+ 	  SlaterJastrow.SetMatrixElement(p,q,jastrowEigenVecs[p][this->NbrSite - 1 - TemporaryState[q]]);
+    }	      
+    }
+cout <<endl;
+    trialState[i] +=  SlaterCF.Determinant() * SlaterJastrow.Determinant();
+ }
+}
+
+

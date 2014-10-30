@@ -67,7 +67,7 @@ void AbstractMPOperatorOBC::SetSite (MPSSite* site)
 
 void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)
 {
-  cout <<"void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)"<<endl;
+//  cout <<"void AbstractMPOperatorOBC::ComputeL(Tensor3<double> & L)"<<endl;
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
   

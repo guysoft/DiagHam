@@ -753,7 +753,6 @@ RealMatrix operator * (const RealMatrix& M1, const RealMatrix& M2)
 {
   if (M1.NbrColumn != M2.NbrRow)
     {
-      cout <<"RealMatrix operator * (const RealMatrix& M1, const RealMatrix& M2)"<<endl;cout <<"  if (M1.NbrColumn != M2.NbrRow)"<<endl; cout <<M1.NbrColumn<<" "<< M2.NbrRow<<endl;
     return RealMatrix();
     }
   RealVector* TmpColumns = new RealVector [M2.NbrColumn];
@@ -781,10 +780,8 @@ RealMatrix operator * (const RealMatrix& M1, const RealMatrix& M2)
 
 RealMatrix operator * (const RealMatrix & M1, const RealDiagonalMatrix & M2)
 {
-  cout <<"RealMatrix operator * (const RealMatrix & M1, const RealDiagonalMatrix & M2)"<<endl;
   if (M1.NbrColumn != M2.NbrRow)
     {
-     cout <<"RealMatrix operator * (const RealMatrix& M1, const RealDiagonalMatrix& M2)"<<endl;cout <<"  if (M1.NbrColumn != M2.NbrRow)"<<endl; cout <<M1.NbrColumn<<" "<< M2.NbrRow<<endl;
      return RealMatrix();
     }
   RealVector* TmpColumns = new RealVector [M2.NbrColumn];
@@ -809,13 +806,9 @@ RealMatrix operator * (const RealMatrix & M1, const RealDiagonalMatrix & M2)
 
 RealMatrix operator * (const  RealDiagonalMatrix & M1, const RealMatrix & M2) 
 {
-  cout <<" RealMatrix operator * (const  RealDiagonalMatrix & M1, const RealMatrix & M2)"<<endl;
-  cout <<M1<<endl;
-  cout <<M2<<endl;
  if (M1.NbrColumn != M2.NbrRow)
    {
     return RealMatrix();
-    cout <<"error at this point  if (M1.NbrColumn != M2.NbrRow) "<<endl;
    }
   RealVector* TmpColumns = new RealVector [M2.NbrColumn];
   for (int i = 0; i < M2.NbrColumn; i++)
@@ -1297,6 +1290,7 @@ void RealMatrix::SingularValueDecomposition(RealMatrix& uMatrix, RealDiagonalMat
 {
   double* TmpDiag = this->SingularValueDecomposition(uMatrix, vMatrix, truncatedUVFlag);
   diagonal = RealDiagonalMatrix(TmpDiag, (uMatrix.NbrColumn>vMatrix.NbrRow)? vMatrix.NbrRow :uMatrix.NbrColumn );
+
 }
 
 // compute the diagonal part of the singular value decomposition U D V^t

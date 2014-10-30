@@ -155,8 +155,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringInternalOption('\n',"all-CF","externally supply single particle states (list of full file-names)",NULL, true);
   (*SystemGroup) +=
     new SingleStringInternalOption('\n',"J","externally supply single particle states for Jastrow basis (base)",NULL, true);
-#ifdef HAVE_GSL
+
   (*OptimizationGroup) += new SingleStringOption  ('\n', "optimize", "vector file to optimize CF solenoid flux against",NULL);
+
+#ifdef HAVE_GSL
   (*OptimizationGroup) += new SingleDoubleOption  ('\n', "offset", "offset h to be used for numerical derivatives",0.005);
   (*OptimizationGroup) += new BooleanOption  ('\n', "opt-gradient", "use gradient-method instead of simplex algorithm");
   

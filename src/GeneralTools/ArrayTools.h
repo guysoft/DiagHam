@@ -1818,6 +1818,76 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, long*& weigt
   return 1;
 }
 
+
+// find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
+//
+// element = element to find
+// array = array where to search 
+// weight = weight array
+// nbrValue = number of values in array
+// c = weight to add
+// return value = number of inserted value
+
+template <class ClassName>
+int SearchInArrayAndDefinedWeight(ClassName element, ClassName*& array, long*& weigth, unsigned long nbrValue, long c)
+{
+  if (nbrValue == 0)
+    {
+      array[0] = element;
+      weigth[0] = c;
+      return 1;
+    }
+
+  int StartIndex = 0;
+  int EndIndex = nbrValue;
+  int MidIndex;
+   
+  while((EndIndex - StartIndex) > 1)
+    {
+       
+      MidIndex = (StartIndex + EndIndex) >> 1;
+       
+      if(array[MidIndex] == element)
+        {
+	  return 0;
+        }
+       
+      if(array[MidIndex] > element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+   
+  if(array[StartIndex] == element)
+    {
+      return 0;
+    }
+   
+  ++nbrValue;
+  ClassName TmpElement;
+  ClassName TmpElement1;
+  long TmpWeigth;
+  long TmpWeigth1;
+   
+  if(array[StartIndex]<element)
+    StartIndex++;
+   
+  TmpElement = array[StartIndex];
+  TmpWeigth = weigth[StartIndex];
+  array[StartIndex] = element;
+  weigth[StartIndex] = c;
+  for (unsigned int i = StartIndex + 1; i < nbrValue; ++i)
+    {
+      TmpElement1 = array[i];
+      TmpWeigth1 = weigth[i];
+      array[i] = TmpElement;
+      weigth[i] = TmpWeigth;
+      TmpElement = TmpElement1;
+      TmpWeigth = TmpWeigth1;
+    }
+  return 1;
+}
+
 // find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
 //
 // element = element to find
@@ -1958,6 +2028,70 @@ int SearchInArrayAndSetWeight(ClassName element, ClassName*& array, LongRational
     }
   return 1;
 }
+
+
+// find an element in an array, if found add c to the corresponding weight in weight array, if not found insert the element and set the weight to c
+//
+// element = element to find
+// array = array where to search 
+// weight = weight array
+// nbrValue = number of values in array
+// c = weight to add
+// return value = number of inserted value
+
+template <class ClassName>
+int SearchInSortedArrayAndInsert(ClassName element, ClassName*& array, unsigned long nbrValue)
+{
+  if (nbrValue == 0)
+    {
+      array[0] = element;
+      return 1;
+    }
+  
+  int StartIndex = 0;
+  int EndIndex = nbrValue;
+  int MidIndex;
+  
+  while((EndIndex - StartIndex) > 1)
+    {
+      MidIndex = (StartIndex + EndIndex) >> 1;
+      
+      if(array[MidIndex] == element)
+	{
+	  return 0;
+	}
+      
+      if(array[MidIndex] > element)
+	EndIndex = MidIndex;
+      else
+	StartIndex = MidIndex;
+    }
+  
+  if(array[StartIndex] == element)
+    {
+      return 0;
+    }
+  
+  ++nbrValue;
+  ClassName TmpElement;
+  ClassName TmpElement1;
+  
+  if(array[StartIndex]<element)
+    StartIndex++;
+  
+  TmpElement = array[StartIndex];
+  array[StartIndex] = element;
+
+  for (unsigned int i = StartIndex + 1; i < nbrValue; ++i)
+    {
+      TmpElement1 = array[i];
+      array[i] = TmpElement;
+      TmpElement = TmpElement1;
+    }
+  return 1;
+}
+
+
 
 // compute the product of occupation number factorial of an array
 //
