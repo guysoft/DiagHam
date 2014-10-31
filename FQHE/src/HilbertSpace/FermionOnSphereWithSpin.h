@@ -494,7 +494,14 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // basis = reference on the basis associated to state
   // return value = converted vector
   virtual RealVector ConvertFromNbodyBasis(RealVector& state, FermionOnSphereWithSpin& basis);
-
+  
+  // convert a given state from a generic basis to the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // basis = reference on the basis associated to state
+  // return value = converted vector
+  virtual ComplexVector ConvertFromNbodyBasis(ComplexVector& state, FermionOnSphereWithSpin& basis);
+  
   // convert a state such that its components are now expressed in the unnormalized basis
   //
   // state = reference to the state to convert
@@ -602,6 +609,7 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   RealVector& FuseStates (RealVector& outputVector, RealVector& leftVector, RealVector& rightVector, int padding, 
 			  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
 			  bool symmetrizedFlag = false, double coefficient = 1.0);
+  
 
  protected:
 
