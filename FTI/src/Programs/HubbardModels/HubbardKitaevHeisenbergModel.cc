@@ -421,10 +421,10 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      if (GutzwillerFlag == false)
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_xymomentum_%d_%d", (int) Manager.GetInteger("max-xmomentum"), 
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"), 
 			 (int) Manager.GetInteger("max-ymomentum"));
 	      else
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_xymomentum_%d_%d", (int) Manager.GetInteger("max-xmomentum"),
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"),
 			 (int) Manager.GetInteger("max-ymomentum"));
 	    }
 	}
@@ -433,16 +433,16 @@ int main(int argc, char** argv)
 	  if (SzSymmetryFlag == false)
 	    {
 	      if (GutzwillerFlag == false)
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	      else
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	    }
 	  else
 	    {
 	      if (GutzwillerFlag == false)
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_szsym_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_szsym_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	      else
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_szsym_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_szsym_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	    }
 	}
     }
@@ -460,16 +460,16 @@ int main(int argc, char** argv)
 	  if (SzSymmetryFlag == false)
 	    {
 	      if (GutzwillerFlag == false)
-		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	      else
-		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_gutzwiller_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_gutzwiller_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	    }
 	  else
 	    {
 	      if (GutzwillerFlag == false)
-		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_szsym_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_szsym_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	      else
-		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_gutzwiller_szsym_xmomentum_%d", (int) Manager.GetInteger("max-xmomentum"));
+		sprintf (StatisticPrefix, "bosons_kitaev_heisenberg_gutzwiller_szsym_x_%d", (int) Manager.GetInteger("max-xmomentum"));
 	    }
 	}
     }
@@ -479,17 +479,24 @@ int main(int argc, char** argv)
   char* FilePrefix = new char [256];
   if (StripeFlag == true)
     {
-      sprintf (FilePrefix, "%s_stripe_n_%d_x_%d", StatisticPrefix, NbrParticles, NbrSites);
+      sprintf (FilePrefix, "%s_stripe_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
     }
   else
     {
       if (TorusFlag == true)
 	{
-	  sprintf (FilePrefix, "%s_torus_nx_%d_ny_%d_n_%d_x_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+	  sprintf (FilePrefix, "%s_torus_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
 	}
       else
 	{
-	  sprintf (FilePrefix, "%s_%s_n_%d_x_%d", StatisticPrefix, Manager.GetString("geometry-name"), NbrParticles, NbrSites);
+	  if (OpenFlag == true)
+	  {
+	    sprintf (FilePrefix, "%s_open_x_%d_y_%d_n_%d_ns_%d", StatisticPrefix, NbrSitesX, NbrSitesY, NbrParticles, NbrSites);
+	  }
+	  else
+	  {
+	    sprintf (FilePrefix, "%s_%s_n_%d_ns_%d", StatisticPrefix, Manager.GetString("geometry-name"), NbrParticles, NbrSites);
+	  }
 	}
     }
   

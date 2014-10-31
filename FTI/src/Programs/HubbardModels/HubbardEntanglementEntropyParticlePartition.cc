@@ -177,7 +177,8 @@ int main(int argc, char** argv)
       DensityMatrixFile << endl;
       DensityMatrixFile.close();
     }
-
+  cout << "NbrParticles = " << NbrParticles << " NbrSites = "  << NbrSites << endl;
+//   NbrSites = 12;
   ParticleOnSphere* Space = 0;
   if (Statistics == true)
     {
@@ -191,6 +192,12 @@ int main(int argc, char** argv)
       cout << "not available for bosons" << endl;
       return -1;
     }
+    
+  if (Space->GetHilbertSpaceDimension() != GroundStates[0].GetVectorDimension())
+      {
+	cout << "error, vector has a wrong dimension (" << GroundStates[0].GetVectorDimension() << ", should be " << Space->GetHilbertSpaceDimension() << ")" << endl;
+	return -1;
+      }
   ofstream File;
   if (Manager.GetString("output-file") != 0)
     File.open(Manager.GetString("output-file"), ios::binary | ios::out);

@@ -76,10 +76,10 @@ bool FTIHubbardModelFindSystemInfoFromFileName(char* filename, int& nbrParticles
       cout << "can't guess number of particles from file name " << filename << endl;
       return false;            
     }
-  StrNbrParticles = strstr(filename, "_x_");
+  StrNbrParticles = strstr(filename, "_ns_");
   if (StrNbrParticles != 0)
     {
-      StrNbrParticles += 3;
+      StrNbrParticles += 4;
       int SizeString = 0;
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
@@ -182,10 +182,10 @@ bool FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(char* file
       cout << "can't guess momentum sector from file name " << filename << endl;
       return false;            
     }
-  StrNbrParticles = strstr(filename, "_xmomentum_");
+  StrNbrParticles = strstr(filename, "_x_");
   if (StrNbrParticles != 0)
     {
-      StrNbrParticles += 11;
+      StrNbrParticles += 3;
       int SizeString = 0;
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
@@ -280,10 +280,10 @@ bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* file
       cout << "can't guess y momentum sector from file name " << filename << endl;
       return false;            
     }
-  StrNbrParticles = strstr(filename, "_xymomentum_");
+  StrNbrParticles = strstr(filename, "_y_");
   if (StrNbrParticles != 0)
     {
-      StrNbrParticles += 12;
+      StrNbrParticles += 3;
       SizeString = 0;
       while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
 	     && (StrNbrParticles[SizeString] <= '9'))
@@ -322,3 +322,50 @@ bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* file
   return true;
 }
 
+
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSites = reference on the number sites
+// szValue = reference on the value of the total spin
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSites, int& szValue, bool& statistics, bool& gutzwiller)
+{    
+  if (FTIHubbardModelFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrSites, statistics, gutzwiller) == false)
+    {
+      return false;
+    }
+    
+  char* StrNbrParticles;
+  int SizeString;
+  StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szValue = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+    
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess sz value sector from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
