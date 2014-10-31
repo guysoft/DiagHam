@@ -325,6 +325,50 @@ bool FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName(char* filename,
   return true;
 }
 
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSiteX = reference to the number sites along the x direction
+// nbrSiteY = reference to the number sites along the y direction
+// momentumX = reference to the momentum along the x direction
+// momentumX = reference to the momentum along the y direction
+// totalSz = reference to the Sz value
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+bool FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSiteX, int& nbrSiteY, int& totalSz, bool& statistics)
+{
+  if (FQHEOnSquareLatticeFindSystemInfoFromFileName(filename, nbrParticles, nbrSiteX, nbrSiteY, statistics) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      char TmpChar = StrNbrParticles[SizeString];
+      if (((StrNbrParticles[SizeString] == '.') || (StrNbrParticles[SizeString] == '_')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  totalSz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+     totalSz  = 0;
+    }
+  return true;
+}
+
 // try to guess system information from file name 
 //
 // filename = vector file name
