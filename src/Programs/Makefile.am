@@ -70,7 +70,7 @@ ResizeLanczos_LDADD=-L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix -L
 
 GenericOverlap_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/Options/libOptions.a  $(top_builddir)/src/MathTools/libMathTools.a 
 
-GenericOverlap_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools  -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/Output -lMatrix -lVector -lOptions -lMathTools -lGeneralTools -lMathTools -lOutput @THREAD_LIBS@ @LAPACK_LIBDIR@ @BLAS_LIBDIR@ @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @SCALAPACK_LIBS@ @BZ2_LIBS@ @GMP_LIBS@ @INTELMKL_LIBS@
+GenericOverlap_LDADD= -L$(top_builddir)/src/Vector  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools  -L$(top_builddir)/src/Matrix -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/Output -lMatrix -lVector -lOptions -lMathTools -lGeneralTools -lMathTools -lOutput @THREAD_LIBS@ @LAPACK_LIBDIR@ @BLAS_LIBDIR@ @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @FORTRAN2C_LIBS@  @SCALAPACK_LIBS@ @BZ2_LIBS@ @GMP_LIBS@ @INTELMKL_LIBS@
 
 DiffBinaryVectors_DEPENDENCIES= $(top_builddir)/src/Vector/libVector.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MathTools/libMathTools.a
 
