@@ -813,8 +813,7 @@ RealMatrix& FermionOnDisk::EvaluateEntanglementMatrixRealSpacePartitionFromParti
   return entanglementMatrix;
   
 #else
-  RealMatrix TmpEntanglementMatrix;
-  return TmpEntanglementMatrix;
+  return entanglementMatrix;
 #endif
 }
 

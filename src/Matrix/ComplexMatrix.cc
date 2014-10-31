@@ -164,6 +164,7 @@ ComplexMatrix::ComplexMatrix(ComplexVector* columns, int nbrColumn)
   this->MatrixType = Matrix::ComplexElements;
 }
 
+#ifdef __LAPACK__
 // constructor for one dimensional array
 //
 // array = one dimensional array where the matrix elements are stored (all components of the first column, then all components of the second column,...)
@@ -222,6 +223,7 @@ ComplexMatrix::ComplexMatrix(doublecomplex* array, int nbrRow, int nbrColumn, bo
      this->MatrixType = Matrix::ComplexElements;
    }
 }
+#endif
 
 #ifdef __MPI__
 

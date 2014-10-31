@@ -87,6 +87,7 @@ class ComplexMatrix : public Matrix
   // nbrColumn = number of columns
   ComplexMatrix(ComplexVector* columns, int nbrColumn);
 
+#ifdef __LAPACK__
   // constructor for one dimensional array
   //
   // array = one dimensional array where the matrix elements are stored
@@ -94,6 +95,7 @@ class ComplexMatrix : public Matrix
   // nbrColumn = number of columns
   // columnOrder = elements in array are ordered column-wise  (all components of the first column, then all components of the second column,...)
   ComplexMatrix(doublecomplex* array, int nbrRow, int nbrColumn, bool columnOrder = true);
+#endif
 
 #ifdef __MPI__
   // constructor from informations sent using MPI
@@ -611,6 +613,7 @@ class ComplexMatrix : public Matrix
   ComplexDiagonalMatrix& LapackSchurForm (ComplexDiagonalMatrix& M, ComplexMatrix& Q, ComplexMatrix &S);
 
  private:
+
   int LapackWorkAreaDimension;
   doublecomplex *LapackMatrix;
   doublecomplex *LapackEVMatrix;

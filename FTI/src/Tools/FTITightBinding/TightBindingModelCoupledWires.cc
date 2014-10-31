@@ -160,7 +160,7 @@ void TightBindingModelCoupledWires::CoreComputeBandStructure(long minStateIndex,
 	      else 
 		{
 		  RealDiagonalMatrix TmpDiag;
-#ifndef __LAPACK__
+#ifdef __LAPACK__
 		  TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag);
 #else
 		  TmpOneBodyHamiltonian.Diagonalize(TmpDiag);

@@ -227,7 +227,11 @@ int main(int argc, char** argv)
   File << "# eigenvalue Norm Arg (2 * Arg/pi) round(C4)" << endl;
 
   RealDiagonalMatrix Eigenvalues(NematicParameterRep.GetNbrColumn(), true);
+#ifdef __LAPACK__
   NematicParameterRep.LapackDiagonalize(Eigenvalues);
+#else
+  cout << "error, lapack is required" << endl;
+#endif
   for (int i = 0; i < NematicParameterRep.GetNbrColumn(); ++i)
     {
       double TmpValue = Eigenvalues[i];

@@ -443,7 +443,11 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("compute-eigenstate") == false)
     {
       ComplexDiagonalMatrix Eigenvalues(NbrInputStates, true);
+#ifdef __LAPACK__
       KxRep.LapackDiagonalize(Eigenvalues);
+#else
+  cout << "error, lapack is required" << endl;
+#endif
       double Factor = ((double) MomentumModulo) / (2.0 * M_PI);
       for (int i = 0; i < NbrInputStates; ++i)
 	{
@@ -464,7 +468,9 @@ int main(int argc, char** argv)
     {
       ComplexDiagonalMatrix Eigenvalues(NbrInputStates, true);
       ComplexMatrix Eigenstates(NbrInputStates, NbrInputStates);
+#ifdef __LAPACK__
       KxRep.LapackDiagonalize(Eigenvalues, Eigenstates);
+#endif
       double Factor = ((double) MomentumModulo) / (2.0 * M_PI);
       int* NbrStatePerKxSector = new int [MomentumModulo];
       int* KxValues = new int [NbrInputStates] ;

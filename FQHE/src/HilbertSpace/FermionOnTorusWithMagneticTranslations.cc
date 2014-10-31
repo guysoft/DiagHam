@@ -56,9 +56,10 @@ using std::hex;
 
 // binding to the LAPACK zgetrf routine for LU decomposition and back-substitution
 //
+#ifdef __LAPACK__
 extern "C" void FORTRAN_NAME(zgetrf)(const int* dimensionM, const int* dimensionN, const doublecomplex* matrixA,
 				     const int* leadingDimensionA, const int *ipiv, const int *info);
-
+#endif
 
 // default constructor
 // 
@@ -1338,8 +1339,10 @@ ComplexVector& FermionOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVe
 	}
       outputState[i] = Tmp * sqrt((double) (this->NbrStateInOrbit[i]));      
     }
+#ifdef __LAPACK__
   delete[] DeterminantMatrix;
   delete[] Permutation;
+#endif
   delete[] TmpInputMonomial;
   delete[] TmpInputMonomial2;
   delete[] TmpOutputMonomial;

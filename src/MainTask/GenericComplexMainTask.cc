@@ -103,10 +103,10 @@ GenericComplexMainTask::GenericComplexMainTask(OptionManager* options, AbstractH
   this->Space = space;
   this->AlgorithmManager = lanczos;
   this->EnergyShift = shift;
-  this->SubspaceStr = new char[strlen(subspaceStr)+1];
-  strcpy(this->SubspaceStr,subspaceStr);
-  this->SubspaceLegend = new char[strlen(subspaceLegend)+1];
-  strcpy(this->SubspaceLegend,subspaceLegend);
+  this->SubspaceStr = new char[strlen(subspaceStr) + 1];
+  strcpy(this->SubspaceStr, subspaceStr);
+  this->SubspaceLegend = new char[strlen(subspaceLegend) + 1];
+  strcpy(this->SubspaceLegend, subspaceLegend);
   this->ResumeFlag = options->GetBoolean("resume");
   this->DiskFlag = options->GetBoolean("disk");
   this->MaxNbrIterLanczos = options->GetInteger("iter-max");

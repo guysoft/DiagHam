@@ -291,7 +291,9 @@ int main(int argc, char** argv)
   File << "# eigenvalue Norm Arg (2 * Arg/pi) round(C4)" << endl;
 
   ComplexDiagonalMatrix Eigenvalues(NbrInputStates, true);
+#ifdef __LAPACK__
   C4Rep.LapackDiagonalize(Eigenvalues);
+#endif
   double Factor = 2.0 /  M_PI;
   for (int i = 0; i < NbrInputStates; ++i)
     {
