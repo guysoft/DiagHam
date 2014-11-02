@@ -1287,10 +1287,10 @@ HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRecipro
      {
        for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
 	 {
-	   double TmpPhase = ((this->KxFactor * (((double) kx) + this->GammaX) * ((double) spatialIndices[k][l << 1])) 
-			      + (this->KyFactor * (((double) ky) + this->GammaY) * ((double) spatialIndices[k][(l << 1) + 1])));
+	   double TmpPhase = ((this->KxFactor * (((double) kx) ) * ((double) spatialIndices[k][l << 1])) 
+			      + (this->KyFactor * (((double) ky)) * ((double) spatialIndices[k][(l << 1) + 1])));
 	   if (k >= orbitalIndices[k][l])
-	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], hoppingAmplitudes[k][l] * Phase(TmpPhase));
+	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
 	 }
      }
   return TmpHamiltonian;

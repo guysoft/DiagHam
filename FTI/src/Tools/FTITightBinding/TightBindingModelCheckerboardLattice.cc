@@ -160,7 +160,6 @@ void TightBindingModelCheckerboardLattice::CoreComputeBandStructure(long minStat
     }
   else
     {
-      cout << "Bloch form" << endl;
       this->Abstract2DTightBindingModel::CoreComputeBandStructure(minStateIndex, nbrStates);
     }
 }
@@ -170,6 +169,12 @@ void TightBindingModelCheckerboardLattice::CoreComputeBandStructure(long minStat
   
 void TightBindingModelCheckerboardLattice::FindConnectedOrbitals()
 {
+  double* EmbeddingX = new double [2];
+  double* EmbeddingY = new double [2];
+  EmbeddingX [0] = 0.0;
+  EmbeddingX [1] = 0.5;
+  EmbeddingY [0] = 0.0;
+  EmbeddingY [1] = 0.5;
   if (this->NbrConnectedOrbitals == 0)
     {
       this->NbrConnectedOrbitals = new int [this->NbrBands];
@@ -207,75 +212,76 @@ void TightBindingModelCheckerboardLattice::FindConnectedOrbitals()
       this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25) * Phase(-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2]) + EmbeddingX[1] - EmbeddingX[0]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]) + EmbeddingY[1] - EmbeddingY[0]));
       this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25) * Phase(-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2]) + EmbeddingX[0] - EmbeddingX[1]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]) + EmbeddingY[0] - EmbeddingY[1]));
       ++TmpIndex;
       this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = -1;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = -1;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25) * Phase (-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2]) + EmbeddingX[1] - EmbeddingX[0]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]) + EmbeddingY[1] - EmbeddingY[0]));
       this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 1;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25) * Phase (-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2]) + EmbeddingX[0] - EmbeddingX[1]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]) + EmbeddingY[0] - EmbeddingY[1]));
       ++TmpIndex;
       this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = -1;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25) * Phase (-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2]) + EmbeddingX[1] - EmbeddingX[0]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]) + EmbeddingY[1] - EmbeddingY[0]));
       this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 1;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25) * Phase (-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2]) + EmbeddingX[0] - EmbeddingX[1]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]) + EmbeddingY[0] - EmbeddingY[1]));
+            
       ++TmpIndex;
       this->ConnectedOrbitalIndices[0][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = -1;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NNHoping * Phase (-M_PI * 0.25) * Phase (-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2]) + EmbeddingX[1] - EmbeddingX[0]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]) + EmbeddingY[1] - EmbeddingY[0]));
       this->ConnectedOrbitalIndices[1][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25);
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NNHoping * Phase (M_PI * 0.25) * Phase (-this->KxFactor * this->GammaX * ((double) (this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2]) + EmbeddingX[0] - EmbeddingX[1]) - this->KyFactor * this->GammaY * ((double) (this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]) + EmbeddingY[0] - EmbeddingY[1]));
       ++TmpIndex;
       
       this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 1;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
       this->ConnectedOrbitalIndices[1][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 1;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = -this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = -this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]);
       ++TmpIndex;
       this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = -1;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
       this->ConnectedOrbitalIndices[1][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = -1;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 0;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = -this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = -this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]);
       ++TmpIndex;
       this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = 1;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = -this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = -this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
       this->ConnectedOrbitalIndices[1][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = 1;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]);
       ++TmpIndex;
       this->ConnectedOrbitalIndices[0][TmpIndex] = 0;
       this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1] = -1;
-      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = -this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[0][TmpIndex] = -this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
       this->ConnectedOrbitalIndices[1][TmpIndex] = 1;
       this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] = 0;
       this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1] = -1;
-      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NextNNHoping;
+      this->ConnectedOrbitalHoppingAmplitudes[1][TmpIndex] = this->NextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[1][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[1][(TmpIndex * 2) +1]);
       ++TmpIndex;
       
       if (this->SecondNextNNHoping != 0.0)
@@ -285,7 +291,7 @@ void TightBindingModelCheckerboardLattice::FindConnectedOrbitals()
 	      this->ConnectedOrbitalIndices[i][TmpIndex] = i;
 	      this->ConnectedOrbitalSpatialIndices[i][TmpIndex * 2] = 1;
 	      this->ConnectedOrbitalSpatialIndices[i][(TmpIndex * 2) + 1] = 1;
-	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping;
+	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
 	    }
 	  ++TmpIndex;
 	  for (int i = 0; i < this->NbrBands; ++i)
@@ -293,7 +299,7 @@ void TightBindingModelCheckerboardLattice::FindConnectedOrbitals()
 	      this->ConnectedOrbitalIndices[i][TmpIndex] = i;
 	      this->ConnectedOrbitalSpatialIndices[i][TmpIndex * 2] = -1;
 	      this->ConnectedOrbitalSpatialIndices[i][(TmpIndex * 2) +1] = 1;
-	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping;
+	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
 	    }
 	  ++TmpIndex;
 	  for (int i = 0; i < this->NbrBands; ++i)
@@ -301,7 +307,7 @@ void TightBindingModelCheckerboardLattice::FindConnectedOrbitals()
 	      this->ConnectedOrbitalIndices[i][TmpIndex] = i;
 	      this->ConnectedOrbitalSpatialIndices[i][TmpIndex * 2] = 1;
 	      this->ConnectedOrbitalSpatialIndices[i][(TmpIndex * 2) +1] = -1;
-	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping;
+	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
 	    }
 	  ++TmpIndex;
 	  for (int i = 0; i < this->NbrBands; ++i)
@@ -309,10 +315,12 @@ void TightBindingModelCheckerboardLattice::FindConnectedOrbitals()
 	      this->ConnectedOrbitalIndices[i][TmpIndex] = i;
 	      this->ConnectedOrbitalSpatialIndices[i][TmpIndex * 2] = -1;
 	      this->ConnectedOrbitalSpatialIndices[i][(TmpIndex * 2) +1] = -1;
-	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping;
+	      this->ConnectedOrbitalHoppingAmplitudes[i][TmpIndex] = this->SecondNextNNHoping * Phase (-this->KxFactor * this->GammaX * this->ConnectedOrbitalSpatialIndices[0][TmpIndex * 2] - this->KyFactor * this->GammaY * this->ConnectedOrbitalSpatialIndices[0][(TmpIndex * 2) +1]);
 	    }
 	  ++TmpIndex;
 	}
     }
+   delete[] EmbeddingX;
+   delete[] EmbeddingY;
 }
 
