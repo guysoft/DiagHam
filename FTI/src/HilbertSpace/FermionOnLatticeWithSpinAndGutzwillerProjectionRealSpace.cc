@@ -459,6 +459,66 @@ HermitianMatrix FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::Evalua
     }
 }
 
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
+//
+// nbrParticleSector = number of particles that belong to the subsytem
+// szSector  = twice the total Sz value of the subsytem
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      if (szSector == 0)
+        {
+          HermitianMatrix TmpDensityMatrix(1, true);
+          TmpDensityMatrix(0, 0) = 1.0;
+          return TmpDensityMatrix;
+        }
+      else
+        {
+          HermitianMatrix TmpDensityMatrixZero;
+          return TmpDensityMatrixZero;
+        }
+    }
+  if (nbrParticleSector == this->NbrFermions)
+    {
+      if (this->TotalSpin == szSector)
+        {
+          HermitianMatrix TmpDensityMatrix(1, true);
+          TmpDensityMatrix(0, 0) = 1.0;
+          return TmpDensityMatrix;
+        }
+      else
+        {
+          HermitianMatrix TmpDensityMatrixZero;
+          return TmpDensityMatrixZero;
+        }
+    }
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementarySzSector =  this->TotalSpin - szSector;
+  if (abs(ComplementarySzSector) > ComplementaryNbrParticles)
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+   }
+  FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace SubsytemSpace (nbrParticleSector, this->NbrSite, szSector);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite, ComplementarySzSector);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+
+  FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)     
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
 // core part of the evaluation density matrix particle partition calculation
 // 
 // minIndex = first index to consider in source Hilbert space

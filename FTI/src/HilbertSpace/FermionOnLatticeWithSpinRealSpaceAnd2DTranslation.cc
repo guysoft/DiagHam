@@ -1064,6 +1064,8 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertFromKxKy
       int nbrTranslationY;
       unsigned long TmpState = TmpSpace->StateDescription[i];
       TmpState = this->FindCanonicalForm(TmpState, nbrTranslationX, nbrTranslationY);
+//       TmpSpace->PrintState(cout, i);
+//       cout << " " << nbrTranslationX << " " << nbrTranslationY << endl;
       int TmpMaxMomentum = 2 * this->NbrSite + 1;
       while ((TmpState >> TmpMaxMomentum) == 0x0ul)
 	--TmpMaxMomentum;

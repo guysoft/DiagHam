@@ -158,20 +158,20 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("real-space") == false)
 	{
-	  sprintf (FilePrefix, "%s_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	}
       else
 	{
          if ( Manager.GetBoolean("no-translation") == false)
 	   if ( Manager.GetBoolean ("gutzwiller") == false)
-	    sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	   else
-	     sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	     sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	else
 	  if ( Manager.GetBoolean ("gutzwiller") == false)
-	    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	  else
-	    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	}
     }
   else
@@ -182,7 +182,10 @@ int main(int argc, char** argv)
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
   char* FileParameterString = new char [256];
-  sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+//   if ((Manager.GetDouble("gamma-x") == 0.0) && (Manager.GetDouble("gamma-y") == 0.0))
+//     sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
+//   else
+    sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetString("eigenvalue-file")!=0)
@@ -436,9 +439,9 @@ int main(int argc, char** argv)
 		    else
 		    {
 		      if (Manager.GetBoolean("gutzwiller") == false)
-			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, i, NbrSites, NbrSitesX, j, NbrSitesY); 
+			Space = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, i, NbrSitesX, j, NbrSitesY); 
 		      else
-			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, i, NbrSites, NbrSitesX, j, NbrSitesY);
+			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, i, NbrSitesX, j, NbrSitesY);
 		    }
 		  }
 		  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;

@@ -207,9 +207,9 @@ int main(int argc, char** argv)
       if (Manager.GetBoolean("single-band") == false)
 	{
 	  if (Manager.GetDouble("mu-s") == 0.0)
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
+	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("mu-s"));
+	    sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 	}
       else
 	{
