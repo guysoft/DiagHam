@@ -16,7 +16,7 @@ class DMRGFiniteSizeRealOBCMainTask
   
   int NbrSweep;
   int MaximumBondDimension;
-  
+  double PreviousEnergy;
  public:
   
   DMRGFiniteSizeRealOBCMainTask(MPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture);

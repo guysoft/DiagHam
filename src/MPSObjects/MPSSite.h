@@ -65,6 +65,8 @@ class MPSSite
    void BringMInLeftCanonicalFormCareful();
    void BringMInRightCanonicalFormCareful();
    void SetBondDimension(int bondDimensionLeft, int bondDimensionRight);
+   void ComputeDensityMatrixRight();
+   void ComputeDensityMatrixLeft();
 
    inline unsigned int GetBondDimensionRight() const
      {return this-> BondDimensionRight;}

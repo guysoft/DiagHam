@@ -35,7 +35,8 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
   
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
-  (*SystemGroup) += new  SingleIntegerOption ('s', "sweep", "length of the spin chain", 4);
+  (*SystemGroup) += new  SingleIntegerOption ('D', "bond-dimension", "bond dimension", 20);
+  (*SystemGroup) += new  SingleIntegerOption ('s', "sweep", "number of sweep to be performed", 4);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
   
   int NbrSites = Manager.GetInteger("length");
   int PhysicalDimension = 2;
-  int MaxBondDimension = 20;
+  int MaxBondDimension = Manager.GetInteger("bond-dimension");;
   MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites);  
   TransferMatrix.PrintTensorElements();
 

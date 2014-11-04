@@ -1,6 +1,7 @@
 #include <cmath>
 #include "MPSSite.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "Matrix/RealSymmetricMatrix.h"
 #include "AbstractMPOperatorOBC.h"
 #include "GeneralTools/GarbageFlag.h"
 
@@ -93,7 +94,6 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
 void MPSSite::UpdateFromVector(RealVector * psi)
 {
 //  cout <<"Enter UpdateFromVector(RealVector * psi)"<<endl;
-//  cout <<*psi<<endl;
   delete [] this->M;
   this->M = new RealMatrix [this->PhysicalDimension];
   
@@ -101,7 +101,7 @@ void MPSSite::UpdateFromVector(RealVector * psi)
     {
       this->M[i] = RealMatrix(this->BondDimensionLeft,this->BondDimensionRight, true);
     }
-//  cout << this->PhysicalDimension<<" "<<this->BondDimensionLeft<<" "<<
+
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
       for (int j = 0; j < this->BondDimensionLeft; j++)
@@ -111,8 +111,6 @@ void MPSSite::UpdateFromVector(RealVector * psi)
 	      this->M[i](j,k) = (*psi)[(long int)this->PhysicalDimension*(this->BondDimensionRight*j+k) +i]; 
 	    }
 	}
-//         cout <<" update M"<<this->M[i]<<endl;
-//	 cout <<"this->M[ " <<i<< "]"<< this->M[i]<<endl;
     }
 }
 
@@ -208,11 +206,17 @@ void MPSSite::BringMInRightCanonicalForm()
 //  cout <<U <<endl;
 // cout <<V <<endl;
   U = U * SingularValues;
-//  cout <<U<<endl;;
+  double Entropy = 0.0;
+  for(int i = 0; i < SingularValues.GetNbrRow(); i++)
+{
+   SingularValues[i]*=SingularValues[i];
+   Entropy -= SingularValues[i]*log(SingularValues[i]);
+}
 
+//  cout <<U<<endl;;
+ cout <<"Entropy = "<< Entropy<<" " << SingularValues[SingularValues.GetNbrRow()-1]<< endl;
   for(int i =0 ; i <  this->PhysicalDimension; i++)
     {
-      this->M[i].ClearMatrix();
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
 	{
 	  for(int k = 0 ; k <  this->BondDimensionRight; k++)
@@ -271,12 +275,20 @@ void MPSSite::BringMInLeftCanonicalForm()
 //  cout << SingularValues<<endl;
 //  cout <<U<<endl;
 //  cout <<V<<endl;
-  V.Transpose();
+//  V.Transpose();
   V = SingularValues*V;
 //  cout <<V<<endl;
+double Entropy=0.0;
+  for(int i = 0; i < SingularValues.GetNbrRow(); i++)
+{
+   SingularValues[i]*=SingularValues[i];
+   Entropy -= SingularValues[i]*log(SingularValues[i]);
+}
+//  cout <<U<<endl;;
+ cout <<"Entropy = "<< Entropy<<" " << SingularValues[SingularValues.GetNbrRow()-1]<< endl;
+
   for(int i = 0 ; i <  this->PhysicalDimension; i++)
     {
-      this->M[i].ClearMatrix();
       for(int j = 0 ; j <  this->BondDimensionLeft; j++)
 	{
 	  for(int k = 0 ; k <  this->BondDimensionRight; k++)
@@ -284,13 +296,7 @@ void MPSSite::BringMInLeftCanonicalForm()
 	      this->M[i](j,k) = U(this->PhysicalDimension*j + i,k);
 	    }
 	}
-
-//      cout <<"check multiplication order in MPSSite::BringMInLeftCanonicalForm()"<<endl;
-//      cout<<" this->SiteOnRight->M[i]"<<endl;
-//      cout<< this->SiteOnRight->M[i]<<endl; 
       this->SiteOnRight->M[i] =  V * this->SiteOnRight->M[i];
-//      cout<<" this->SiteOnRight->M[i]"<<endl;
-//      cout<< this->SiteOnRight->M[i]<<endl;
     }
 
   delete this->L;
@@ -344,3 +350,63 @@ void MPSSite::InitializeWithRandomMatrices()
       this->M[i](j,k) = ((double) rand() / (RAND_MAX) - 0.5);
    }
 }
+
+
+void MPSSite::ComputeDensityMatrixLeft()
+{
+   RealSymmetricMatrix TmpMatrix (this->PhysicalDimension*this->BondDimensionLeft, true);
+
+   for (int i = 0; i < this->PhysicalDimension; i++)
+   {
+    for (int j = 0; j < this->BondDimensionLeft ; j++)
+    {
+   	for (int k = 0; k < this->PhysicalDimension; k++)
+       {
+           for (int l = 0; l < this->BondDimensionLeft ; l++)
+	   {
+  
+           for (int t = 0; t < this->BondDimensionRight ; t++)
+	   {
+              TmpMatrix.AddToMatrixElement(j*this->PhysicalDimension+i,l*this->PhysicalDimension+k,this->M[i](j,t)*this->M[k](l,t));
+           }
+    }
+   }
+  }
+  }
+     RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
+     TmpMatrix.LapackDiagonalize(TmpDiag);
+     TmpDiag.SortMatrixDownOrder();
+
+
+}
+
+
+void MPSSite::ComputeDensityMatrixRight()
+{
+   RealSymmetricMatrix TmpMatrix (this->PhysicalDimension*this->BondDimensionRight, true);
+
+   for (int i = 0; i < this->PhysicalDimension; i++)
+   {
+    for (int j = 0; j < this->BondDimensionRight ; j++)
+    {
+   	for (int k = 0; k < this->PhysicalDimension; k++)
+       {
+           for (int l = 0; l < this->BondDimensionRight ; l++)
+	   {
+  
+           for (int t = 0; t < this->BondDimensionLeft ; t++)
+	   {
+              TmpMatrix.AddToMatrixElement(j*this->PhysicalDimension+i,l*this->PhysicalDimension+k,this->M[i](t,j)*this->M[k](t,l));
+           }
+   }
+   }
+  }
+ }
+     RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
+     TmpMatrix.LapackDiagonalize(TmpDiag);
+     TmpDiag.SortMatrixDownOrder();
+
+
+}
+
+
