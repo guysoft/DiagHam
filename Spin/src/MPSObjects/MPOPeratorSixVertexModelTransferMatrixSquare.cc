@@ -5,10 +5,20 @@ using std::endl;
 
 
 
+MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMatrixSquare()
+{
+  this->LeftVector = 0;
+  this->RightVector = 0; 
+  this->ElementsValues = 0;
+  this->IndexValues = 0;
+}
+
+
+
 MPOPeratorSixVertexModelTransferMatrixSquare::MPOPeratorSixVertexModelTransferMatrixSquare(int nbrSites)
 {
   this->PhysicalDimension = 2;
-  this->MPOBondDimension = 4;
+  this->MPOBondDimension = 4; 
   this->InitializeTensorsElements();
   this->NbrSites = nbrSites;
 
@@ -109,13 +119,10 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::InitializeTensorsElements()
 void MPOPeratorSixVertexModelTransferMatrixSquare::PrintTensorElements()
 {
   cout <<"#Tensor index indexDown indexUp indexLeft indexRight Check Index Values" <<endl;
+  unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
   for (int i = 0; i < this->NbrNonZeroElements; i++)
     {
-      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
-      
+      this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);      
       int Tmp = GetTensorIndexFromAllIndices( MPOIndiceDown,  MPOIndiceUp,  MPOIndiceLeft,  MPOIndiceRight);
       cout << this->IndexValues[i] <<" "<<MPOIndiceDown<< " "<< MPOIndiceUp<< " "<< MPOIndiceLeft<< " "<<MPOIndiceRight<<" " <<Tmp<<" "<< this->ElementsValues[i]<<endl;
     }
@@ -124,31 +131,24 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::PrintTensorElements()
 
 void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)
 {
-//  cout <<" MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L)"<<endl;;
-
   if (this->Site->GetSitePosition() == 0)
     {
       int BondDimensionRight = this->Site->GetBondDimensionRight();
       RealMatrix * M = this->Site->GetM();
-//      cout <<"Printing M in void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeL(Tensor3<double> & L) when pos = 0"<<endl;
-//      cout << M[0] << M[1];
+      unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
       for (int i = 0; i < this->NbrNonZeroElements; i++)
 	{
-	  int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-	  int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
-	  int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
-	  int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
-	  
-	  for (int RightA = 0;RightA < this->Site->GetBondDimensionRight() ; RightA++ )
-	    {
+          this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);      
+		  
 	      for (int RightC = 0;RightC < this->Site->GetBondDimensionRight() ; RightC++ )
 		{
+	  for (int RightA = 0;RightA < this->Site->GetBondDimensionRight() ; RightA++ )
+	    {
+
 		  L(RightA, MPOIndiceRight,RightC) +=  M[MPOIndiceUp](0,RightC) * this->ElementsValues[i] * this->LeftVector[MPOIndiceLeft] * M[MPOIndiceDown](0,RightA);
 		}
 	    }
 	}
-//      L.PrintTensor();
-//      cout <<" I have finished"<<endl;
     }
   else
     AbstractMPOperatorOBC::ComputeL(L);
@@ -161,25 +161,20 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
     {
       RealMatrix * M = this->Site->GetM();
 
-//      cout <<"Printing M in void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R) when pos max"<<endl;
-//      cout << M[0] << M[1];     
       int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+      unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
       for (int i = 0; i < this->NbrNonZeroElements; i++)
 	{
-	  int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-	  int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
-	  int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
-	  int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
-	  
-	  for (int LeftA = 0; LeftA < this->Site->GetBondDimensionLeft() ; LeftA++ )
-	    {
+           this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);      
+		  
 	      for (int LeftC = 0;LeftC < this->Site->GetBondDimensionLeft() ; LeftC++ )
 		{
+	  for (int LeftA = 0; LeftA < this->Site->GetBondDimensionLeft() ; LeftA++ )
+	    {
 		  R(LeftA, MPOIndiceLeft,LeftC) +=  M[MPOIndiceUp](LeftC,0) * this->ElementsValues[i]*this->RightVector[MPOIndiceRight] * M[MPOIndiceDown](LeftA,0);
 		}
 	    }
 	}
-//R.PrintTensor();
     }
   else
     AbstractMPOperatorOBC::ComputeR(R);
@@ -198,48 +193,36 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
 RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
-  //  cout <<"RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent)"<<endl;
   vDestination.ClearVector();
   if (this->Site->GetSitePosition() == 0)
   {
-//    cout <<"Position =0" <<endl;
-
     int BondDimensionRight = this->Site->GetBondDimensionRight(); 
     Tensor3<double> & RightR = this->Site->GetNextR();
     Tensor3<double> * B = new Tensor3<double>[this->PhysicalDimension];
-for (int i = 0; i < this->PhysicalDimension; i++)
-    {
-      B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionRight,1,true);
-    }
 
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
+        B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionRight,1,true);
   for (int RightB = 0; RightB < this->MPOBondDimension ; RightB++)
     {
 	  for(int RightC = 0; RightC < BondDimensionRight; RightC++)
 	    {
 	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 		{
-//		  cout <<" "<<RightA<<" " <<i <<" "<<(long int) this->PhysicalDimension*RightA+ i<<endl;
-		  B[i](RightB,RightC,0) +=  RightR(RightA,RightB,RightC) * vSource[(long int) this->PhysicalDimension*RightA+i]; 
+		  B[i](RightB,RightC,0) +=  RightR(RightA,RightB,RightC) * vSource[(long int)BondDimensionRight*i + RightA]; 
 		}
 	}
      }
    }
 
-
+      unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
  for (int i = 0; i < this->NbrNonZeroElements; i++)
     {
-
-      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
-
-	  for (int NewRight = 0;  NewRight < BondDimensionRight;  NewRight++)
-	    {
-              vDestination[(long int) this->PhysicalDimension*NewRight + MPOIndiceUp] +=  B[MPOIndiceDown](MPOIndiceRight,NewRight,0) *  this->ElementsValues[i] * this->LeftVector[MPOIndiceLeft];
-            }
+      this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);      
+      for (int NewRight = 0;  NewRight < BondDimensionRight;  NewRight++)
+	{
+            vDestination[(long int)BondDimensionRight*MPOIndiceUp + NewRight] +=  B[MPOIndiceDown](MPOIndiceRight,NewRight,0) *  this->ElementsValues[i] * this->LeftVector[MPOIndiceLeft];
+        }
    }
 
   delete [] B;
@@ -249,47 +232,37 @@ for (int i = 0; i < this->PhysicalDimension; i++)
 
    if (this->Site->GetSitePosition() == this->NbrSites - 1)
    {
-//    cout <<"Position Max" <<endl;
     int BondDimensionLeft = this->Site->GetBondDimensionLeft(); 
     Tensor3<double> & LeftL = this->Site->GetPreviousL();
     Tensor3<double> * B = new Tensor3<double>[this->PhysicalDimension];
-//    cout <<vSource<<endl;
-    for (int i = 0; i < this->PhysicalDimension; i++)
-    {
-       B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionLeft,1,true);
-    }
-
-
 
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
-  for (int LeftB = 0; LeftB < this->MPOBondDimension ; LeftB++)
-    {
-	  for(int LeftC = 0; LeftC < BondDimensionLeft; LeftC++)
+      B[i] = Tensor3<double>(this->MPOBondDimension,BondDimensionLeft,1,true);
+
+for(int LeftC = 0; LeftC < BondDimensionLeft; LeftC++)
 	    {
+   for (int LeftB = 0; LeftB < this->MPOBondDimension ; LeftB++)
+    {
+	  
 	      for(int LeftA  = 0;  LeftA < BondDimensionLeft;  LeftA++)
 		{
-//		  cout <<" "<<LeftA<<" " <<i <<" "<<(long int) this->PhysicalDimension*LeftA+ i<<endl;
-		  B[i](LeftB,LeftC,0) +=  LeftL(LeftA,LeftB,LeftC) * vSource[(long int) this->PhysicalDimension*LeftA+i];
+		  B[i](LeftB,LeftC,0) +=  LeftL(LeftA,LeftB,LeftC) * vSource[(long int)BondDimensionLeft*i + LeftA];
 		}
 	}
      }
     }
 
-
+ unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
  for (int i = 0; i < this->NbrNonZeroElements; i++)
     {
-
-      int MPOIndiceDown = this->GetIndiceDownFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceLeft = this->GetIndiceLeftFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceUp = this->GetIndiceUpFromTensorIndex(this->IndexValues[i]);
-      int MPOIndiceRight = this->GetIndiceRightFromTensorIndex(this->IndexValues[i]);
+      this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);      
 
 	  for (int NewLeft = 0;  NewLeft < BondDimensionLeft;  NewLeft++)
 	    {
-              vDestination[(long int) this->PhysicalDimension*NewLeft + MPOIndiceUp] +=  B[MPOIndiceDown](MPOIndiceLeft,NewLeft,0) *  this->ElementsValues[i] * this->RightVector[MPOIndiceRight];
+              vDestination[(long int)BondDimensionLeft*MPOIndiceUp + NewLeft] +=  B[MPOIndiceDown](MPOIndiceLeft,NewLeft,0) *  this->ElementsValues[i] * this->RightVector[MPOIndiceRight];
             }
-   }
+    }
 
     delete [] B;
     return vDestination;
@@ -299,3 +272,60 @@ for (int i = 0; i < this->PhysicalDimension; i++)
 
 }
  
+
+
+
+
+
+// multiply a vector by the current hamiltonian for a given range of indices 
+// and store result in another vector, low level function (no architecture optimization)
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent)
+{
+
+ vDestination.ClearVector();
+  if ((this->SiteLeft->GetSitePosition() == 0)&&(this->SiteRight->GetSitePosition() ==  this->NbrSites - 1))
+  {
+
+  int SquarePhysicalDimension = this->PhysicalDimension * this->PhysicalDimension;
+
+  Tensor3<double> * B =  new  Tensor3<double>  [SquarePhysicalDimension];
+  for (int i = 0; i < SquarePhysicalDimension; i++)
+    {
+      B[i] = Tensor3<double>(this->MPOBondDimension,1,1,true);
+    }
+
+//  int LinearizedPhysicalIndice = PhysicalIndiceLeft +  this->PhysicalDimension *  PhysicalIndiceRight;
+
+    unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
+    for(int  PhysicalIndiceRight = 0;  PhysicalIndiceRight <this->PhysicalDimension ; PhysicalIndiceRight++)
+{
+    for (int i = 0; i < this->NbrNonZeroElements; i++)
+    {
+      this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight); 
+      B[MPOIndiceUp +  this->PhysicalDimension *  PhysicalIndiceRight](MPOIndiceRight,0,0) +=  this->ElementsValues[i] * this->LeftVector[MPOIndiceLeft] * vSource[ (long int) MPOIndiceDown +  this->PhysicalDimension *  PhysicalIndiceRight];
+   }
+
+}
+ for(int PhysicalIndiceLeft= 0;   PhysicalIndiceLeft <this->PhysicalDimension ; PhysicalIndiceLeft++)
+{
+    for (int i = 0; i < this->NbrNonZeroElements; i++)
+    {
+      this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);
+      vDestination[(long) PhysicalIndiceLeft + this->PhysicalDimension *MPOIndiceUp] += this->ElementsValues[i] * this->RightVector[MPOIndiceRight] *  B[PhysicalIndiceLeft +  this->PhysicalDimension *  MPOIndiceDown](MPOIndiceLeft,0,0);
+    }
+}
+
+ delete [] B;
+ return vDestination;
+
+ }
+
+ return AbstractMPOperatorOBC::LowLevelMultiplyTwoSites(vSource,vDestination,firstComponent,nbrComponent);
+}

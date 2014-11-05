@@ -5,6 +5,7 @@
 #include "MPSSite.h"
 #include "Tensor/Tensor3.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
+#include "Matrix/RealSymmetricMatrix.h"
 
 class MPSSite;
 
@@ -19,6 +20,8 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   unsigned int NbrSites;
   AbstractHilbertSpace* HilbertSpace;
   MPSSite * Site;
+  MPSSite * SiteLeft;
+  MPSSite * SiteRight;
   
   AbstractMPOperatorOBC ();
   ~AbstractMPOperatorOBC ();
@@ -46,6 +49,11 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // site = pointer to the siteto use 
   void SetSite (MPSSite* site);
 
+  // set site to be acted on
+  //
+  // site = pointer to the siteto use 
+  void SetSiteLeftAndRight (MPSSite* siteLeft,MPSSite* siteRight);
+
   
   // get Hilbert space on which Hamiltonian acts
   //
@@ -56,7 +64,8 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   //
   // return value = corresponding matrix elementdimension
   int GetHilbertSpaceDimension ();
-  
+  int GetTwoSitesHilbertSpaceDimension ();  
+
   // shift Hamiltonian from a given energy
   //
   // shift = shift value
@@ -64,13 +73,23 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   
   inline int GetMPODimension() const {return  MPOBondDimension;};
 
- // multiply a vector by the current hamiltonian and store result in another vector
+  // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
   //
   // vSource = vector to be multiplied
   // vDestination = vector where result has to be stored
   // return value = reference on vectorwhere result has been stored
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
+
+  // multiply a vector by the current hamiltonian and store result in another vector
+  // low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // return value = reference on vectorwhere result has been stored
+  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination);
+
+
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and store result in another vector, low level function (no architecture optimization)
@@ -83,6 +102,11 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent);
 
+  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
+
+ virtual RealSymmetricMatrix& GetTwoSitesHamiltonian (RealSymmetricMatrix & M);
+
  protected:
   
   inline unsigned int GetIndiceDownFromTensorIndex(unsigned int tensorIndex);
@@ -94,6 +118,8 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   inline unsigned int GetIndiceRightFromTensorIndex(unsigned int tensorIndex);
   
   inline unsigned int GetTensorIndexFromAllIndices(unsigned int indexDown, unsigned int indexUp, unsigned int indexLeft, unsigned int indexRight);
+
+  inline void GetAllIndicesFromTensorIndex(unsigned int tensorIndex, unsigned int & indexDown, unsigned int & indexUp, unsigned int & indexLeft, unsigned int & indexRight);
  
 };
 
@@ -127,5 +153,17 @@ inline unsigned int AbstractMPOperatorOBC::GetTensorIndexFromAllIndices(unsigned
 {
   return  ((indexLeft * this-> MPOBondDimension  + indexRight)*this->PhysicalDimension +indexUp)*this->PhysicalDimension + indexDown;
 }
+
+
+inline void AbstractMPOperatorOBC::GetAllIndicesFromTensorIndex(unsigned int tensorIndex, unsigned int & indexDown, unsigned int & indexUp, unsigned int & indexLeft, unsigned int & indexRight)
+{
+   indexDown = tensorIndex%this->PhysicalDimension;     
+   tensorIndex/=this->PhysicalDimension;
+   indexUp =  tensorIndex%this->PhysicalDimension;
+   tensorIndex/=this->PhysicalDimension;
+   indexRight = tensorIndex% this-> MPOBondDimension;
+   indexLeft = tensorIndex/this->MPOBondDimension;
+}
+
 
 #endif

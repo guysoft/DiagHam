@@ -19,6 +19,7 @@ class MPSSite
    unsigned int PhysicalDimension;
    unsigned int BondDimensionLeft;
    unsigned int BondDimensionRight;
+   unsigned int MaxBondDimension;
    unsigned int SitePosition;
    
    RealMatrix * M;  
@@ -65,8 +66,11 @@ class MPSSite
    void BringMInLeftCanonicalFormCareful();
    void BringMInRightCanonicalFormCareful();
    void SetBondDimension(int bondDimensionLeft, int bondDimensionRight);
+   inline void SetRightDimension(int bondDimensionRight);
+   inline void SetLeftDimension(int bondDimensionLeft);
    void ComputeDensityMatrixRight();
    void ComputeDensityMatrixLeft();
+   void SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite, RealVector * psi );
 
    inline unsigned int GetBondDimensionRight() const
      {return this-> BondDimensionRight;}
@@ -84,5 +88,23 @@ class MPSSite
    inline unsigned int GetSitePosition() const
       {return this->SitePosition;}
 };
+
+
+
+
+inline void MPSSite::SetRightDimension(int bondDimensionRight)
+{
+  this->BondDimensionRight = bondDimensionRight;
+  this->SiteOnRight->BondDimensionLeft = bondDimensionRight;
+
+}
+
+
+inline void MPSSite::SetLeftDimension(int bondDimensionLeft)
+{
+  this->BondDimensionLeft = bondDimensionLeft;
+  this->SiteOnLeft->BondDimensionRight = bondDimensionLeft;
+}
+
 
 #endif

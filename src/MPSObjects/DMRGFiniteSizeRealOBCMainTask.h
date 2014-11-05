@@ -3,6 +3,7 @@
 
 #include "AbstractMPOperatorOBC.h"
 #include "Architecture/AbstractArchitecture.h"
+#include "LanczosAlgorithm/LanczosManager.h"
 
 class DMRGFiniteSizeRealOBCMainTask 
 {
@@ -11,7 +12,7 @@ class DMRGFiniteSizeRealOBCMainTask
   
   MPSSite * LatticeSite;
   AbstractArchitecture * Architecture;
-  
+  LanczosManager *  AlgorithmManager;
   AbstractMPOperatorOBC * MPOperator;
   
   int NbrSweep;
@@ -19,13 +20,15 @@ class DMRGFiniteSizeRealOBCMainTask
   double PreviousEnergy;
  public:
   
-  DMRGFiniteSizeRealOBCMainTask(MPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture);
+  DMRGFiniteSizeRealOBCMainTask(MPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos);
   virtual ~DMRGFiniteSizeRealOBCMainTask();
   void RunAlgorithm();
   
  protected:
   void InitializeLattice();
+  void InitializeLatticeUsingIDMRG();
   void OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
+  void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (MPSSite * leftSite , MPSSite * rightSite);
 };
 
 #endif

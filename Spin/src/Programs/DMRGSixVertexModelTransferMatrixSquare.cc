@@ -6,9 +6,11 @@
 #include "MPSObjects/MPOPeratorSixVertexModelTransferMatrixSquare.h"
 #include "MPSObjects/MPSSite.h"
 #include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
+
 #include "Options/Options.h"
 #include "Matrix/RealMatrix.h"
 
+#include "LanczosAlgorithm/LanczosManager.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -30,13 +32,17 @@ int main(int argc, char** argv)
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
   ArchitectureManager Architecture;
+  LanczosManager Lanczos(false);
+
   Architecture.AddOptionGroup(&Manager);
   Manager += SystemGroup;
   Manager += MiscGroup;
-  
+  Lanczos.AddOptionGroup(&Manager);
+
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
   (*SystemGroup) += new  SingleIntegerOption ('D', "bond-dimension", "bond dimension", 20);
   (*SystemGroup) += new  SingleIntegerOption ('s', "sweep", "number of sweep to be performed", 4);
+  (*SystemGroup) += new  BooleanOption ('\n', "test-idmrg", "number of sweep to be performed", false);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -52,13 +58,17 @@ int main(int argc, char** argv)
       return 0;
     }
   
-  
+ 
+  if(Manager.GetBoolean("test-idmrg") == true)
+  {
+   return 0;
+  }
+ 
   int NbrSites = Manager.GetInteger("length");
   int PhysicalDimension = 2;
   int MaxBondDimension = Manager.GetInteger("bond-dimension");;
-  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites);  
-  TransferMatrix.PrintTensorElements();
-
+  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites);
+ 
   MPSSite * Lattice = new MPSSite[NbrSites];
   Lattice[0] = MPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
   for(int i = 1 ; i < NbrSites - 1 ; i++ )
@@ -81,7 +91,7 @@ int main(int argc, char** argv)
      }	
   }
   int NbrSweep = Manager.GetInteger("sweep");
-  DMRGFiniteSizeRealOBCMainTask Algorithm(Lattice, &TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture());
+  DMRGFiniteSizeRealOBCMainTask Algorithm (Lattice, &TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
   Algorithm.RunAlgorithm();
   delete [] Lattice;
   return 0;

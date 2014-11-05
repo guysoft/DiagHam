@@ -11,8 +11,9 @@ class MPOPeratorSixVertexModelTransferMatrixSquare : public AbstractMPOperatorOB
   double * RightVector;
   
  public:
-  
-  MPOPeratorSixVertexModelTransferMatrixSquare(int nbrSites =0 );
+
+  MPOPeratorSixVertexModelTransferMatrixSquare();
+  MPOPeratorSixVertexModelTransferMatrixSquare(int nbrSites);
   ~MPOPeratorSixVertexModelTransferMatrixSquare();
   
   virtual void InitializeTensorsElements();
@@ -23,6 +24,7 @@ class MPOPeratorSixVertexModelTransferMatrixSquare : public AbstractMPOperatorOB
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent);
 
+  virtual RealVector & LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent);
 };
 
 #endif

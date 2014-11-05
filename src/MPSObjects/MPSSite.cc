@@ -29,6 +29,7 @@ MPSSite::MPSSite(unsigned int sitePosition, unsigned int physicalDimension, MPSS
   this->OperatorToBeMinimized = mPOperator;
   this->Flag.Initialize();
   this->M = new RealMatrix[this->PhysicalDimension];
+  this->MaxBondDimension = bondDimension;
   this->L = 0;
   this->R = 0;
 }
@@ -59,6 +60,7 @@ MPSSite & MPSSite::operator = (const MPSSite & site)
   this->OperatorToBeMinimized = site.OperatorToBeMinimized;
   this->BondDimensionLeft = site.BondDimensionLeft;
   this->BondDimensionRight = site.BondDimensionRight;
+  this->MaxBondDimension = site.MaxBondDimension;
   delete this->M;
   this->M = new RealMatrix[this->PhysicalDimension];
   for(int i= 0; i <this->PhysicalDimension; i++)
@@ -93,7 +95,6 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
 
 void MPSSite::UpdateFromVector(RealVector * psi)
 {
-//  cout <<"Enter UpdateFromVector(RealVector * psi)"<<endl;
   delete [] this->M;
   this->M = new RealMatrix [this->PhysicalDimension];
   
@@ -108,7 +109,7 @@ void MPSSite::UpdateFromVector(RealVector * psi)
 	{
 	  for (int k = 0; k < this->BondDimensionRight; k++)
 	    {
-	      this->M[i](j,k) = (*psi)[(long int)this->PhysicalDimension*(this->BondDimensionRight*j+k) +i]; 
+	      this->M[i](j,k) = (*psi)[(long int)this->BondDimensionRight*(this->BondDimensionLeft*i+j) + k]; 
 	    }
 	}
     }
@@ -331,7 +332,7 @@ void MPSSite::GetMatrixInVectorForm(RealVector *& resultInvector)
 	{
 	  for (int k = 0 ; k <  this->BondDimensionRight ; k++)
 	    {
-	      (*resultInvector)[(long int) this->PhysicalDimension*( this->BondDimensionRight*j +k )+i ] = this->M[i](j,k); 
+	      (*resultInvector)[(long int)this->BondDimensionRight*(this->BondDimensionLeft*i+j) + k] = this->M[i](j,k); 
 	    }
 	}
     }
@@ -350,6 +351,7 @@ void MPSSite::InitializeWithRandomMatrices()
       this->M[i](j,k) = ((double) rand() / (RAND_MAX) - 0.5);
    }
 }
+
 
 
 void MPSSite::ComputeDensityMatrixLeft()
@@ -410,3 +412,87 @@ void MPSSite::ComputeDensityMatrixRight()
 }
 
 
+void MPSSite::SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite, RealVector * psi )
+{
+  RealMatrix TmpMatrix (leftSite->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
+  // Index = LinearizedPhysicalIndice + SquarePhysicalDimension*(LeftA + RightA*BondDimensionLeft))
+
+  for(int i = 0; i < leftSite->BondDimensionLeft; i++)
+    {
+      for(int LeftPhysicalDimension = 0; LeftPhysicalDimension <   this->PhysicalDimension ; LeftPhysicalDimension++)
+	{
+	  for(int j = 0; j < rightSite->BondDimensionRight; j++)
+	  { 
+      for(int RightPhysicalDimension = 0; RightPhysicalDimension <   this->PhysicalDimension ; RightPhysicalDimension++)
+	{
+	      TmpMatrix(this->PhysicalDimension*i + LeftPhysicalDimension , this->PhysicalDimension*j + RightPhysicalDimension) = (*psi)[(long) LeftPhysicalDimension+ this->PhysicalDimension*RightPhysicalDimension + this->PhysicalDimension *this->PhysicalDimension * (i + j * leftSite->BondDimensionLeft)];
+	    }
+	}
+    }
+  }
+
+  RealMatrix U,V;
+  RealDiagonalMatrix SingularValues;
+  TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
+  double Entropy=0.0;
+  unsigned int KeptStates = 0;
+  for(int i = 0; i < SingularValues.GetNbrRow(); i++)
+  {
+   SingularValues[i]*=SingularValues[i];
+   Entropy -= SingularValues[i]*log(SingularValues[i]);
+   if (SingularValues[i] > 1e-20)
+       KeptStates++;
+  }
+
+  if ( KeptStates >  this->MaxBondDimension)
+       KeptStates += this->MaxBondDimension;
+
+ cout <<"Entropy = "<< Entropy<<" " << SingularValues[KeptStates-1]<< endl;
+
+ delete [] leftSite->M;
+ delete [] rightSite->M;
+ delete leftSite->L;
+ delete rightSite->R;
+
+ leftSite->M = new RealMatrix [this->PhysicalDimension];
+ rightSite->M = new RealMatrix [this->PhysicalDimension];  
+
+
+  leftSite->SetRightDimension(KeptStates);
+  rightSite->SetLeftDimension(KeptStates);
+  for(int i = 0; i < this->PhysicalDimension; i++)
+    {
+      leftSite->M[i] = RealMatrix(leftSite->BondDimensionLeft,KeptStates, true);
+      rightSite->M[i] = RealMatrix(KeptStates, rightSite->BondDimensionRight, true);
+    } 
+
+  for(int  LeftPhysicalDimension = 0 ;  LeftPhysicalDimension <  this->PhysicalDimension;  LeftPhysicalDimension++)
+    {
+      for(int j = 0 ; j < leftSite->BondDimensionLeft; j++)
+	{
+	  for(int k = 0 ; k <  KeptStates ; k++)
+	    {
+	      leftSite->M[LeftPhysicalDimension](j,k) = U(this->PhysicalDimension*j +  LeftPhysicalDimension,k);
+	    }
+	}
+    }
+
+  for(int  RightPhysicalDimension = 0 ;  RightPhysicalDimension <  this->PhysicalDimension;  RightPhysicalDimension++)
+    {
+      for(int j = 0 ; j < rightSite->BondDimensionRight; j++)
+	{
+	  for(int k = 0 ; k <  KeptStates ; k++)
+	    {
+	      rightSite->M[RightPhysicalDimension](k,j) = V(k,this->PhysicalDimension*j +  RightPhysicalDimension);
+	    }
+	}
+    }
+
+  leftSite->L = new Tensor3<double> (leftSite->BondDimensionRight,leftSite->OperatorToBeMinimized->GetMPODimension(),leftSite->BondDimensionRight,true);
+  leftSite->OperatorToBeMinimized->SetSite(leftSite);
+  leftSite->OperatorToBeMinimized->ComputeL(*leftSite->L);
+
+  rightSite->R = new Tensor3<double> (rightSite->BondDimensionLeft,rightSite->OperatorToBeMinimized->GetMPODimension(),rightSite->BondDimensionLeft,true);
+  rightSite->OperatorToBeMinimized->SetSite(rightSite);
+  rightSite->OperatorToBeMinimized->ComputeR(*rightSite->R);
+}
