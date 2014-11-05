@@ -326,7 +326,7 @@ bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& 
     
   if (StrNbrParticles == 0)
     {
-      cout << "can't guess sz value sector from file name " << filename << endl;
+//       cout << "can't guess sz value sector from file name " << filename << endl;
       return false;            
     }
   return true;

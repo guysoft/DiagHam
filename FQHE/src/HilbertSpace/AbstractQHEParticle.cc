@@ -270,3 +270,11 @@ bool AbstractQHEParticle::LoadEigenstateDescrition(char* filename, int nbrElemen
   return true;
 }
 
+  // filter a Hilbert space according to some exclusion rules
+  //
+  //return value = dimension of the filtered Hilbert space
+  
+  long AbstractQHEParticle::FilterHilbertSpace()
+  {
+    return this->HilbertSpaceDimension; 
+  }

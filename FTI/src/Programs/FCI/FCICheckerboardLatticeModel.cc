@@ -142,6 +142,7 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
+  int NbrSites = 2*NbrSitesX * NbrSitesY;
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* StatisticPrefix = new char [16];
@@ -159,37 +160,37 @@ int main(int argc, char** argv)
     {
       if (Manager.GetBoolean("real-space") == false)
 	{
-	  sprintf (FilePrefix, "%s_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	}
       else
 	{
          if ( Manager.GetBoolean("no-translation") == false)
-	  sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_realspace_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	else
-	  sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	}
     }
   else
     {
       if ((Manager.GetBoolean("three-body") == false) && (Manager.GetBoolean("four-body") == false) && (Manager.GetBoolean("five-body") == false))
 	{ 
-	  sprintf (FilePrefix, "%s_singleband_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	  sprintf (FilePrefix, "%s_singleband_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	}
       else
 	{
 	  if (Manager.GetBoolean("three-body") == true)
 	    {
-	      sprintf (FilePrefix, "%s_singleband_threebody_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+	      sprintf (FilePrefix, "%s_singleband_threebody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles,  NbrSites, NbrSitesX, NbrSitesY);
 	    }
 	  else
 	    {
 	      if (Manager.GetBoolean("four-body") == true)
 		{
-		  sprintf (FilePrefix, "%s_singleband_fourbody_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fourbody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		}
 	      else
 		{
-		  sprintf (FilePrefix, "%s_singleband_fivebody_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+		  sprintf (FilePrefix, "%s_singleband_fivebody_checkerboardlattice_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 		}
 	    }
 	}

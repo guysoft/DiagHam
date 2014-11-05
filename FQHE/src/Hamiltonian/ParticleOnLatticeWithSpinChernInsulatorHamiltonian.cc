@@ -130,7 +130,6 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
 	  delete[] this->InteractionFactorsupup[i];
-	  delete[] this->InteractionFactorsdowndown[i];
 	}
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	{
@@ -138,6 +137,13 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
 	}
       delete[] this->InteractionFactorsupup;
       delete[] this->InteractionFactorsupdown;
+    }
+  if (this->InteractionFactorsdowndown != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsdowndown[i];
+	}
       delete[] this->InteractionFactorsdowndown;
     }
   if (this->OneBodyInteractionFactorsupup != 0)

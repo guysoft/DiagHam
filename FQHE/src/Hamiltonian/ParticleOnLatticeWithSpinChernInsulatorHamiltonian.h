@@ -947,19 +947,27 @@ inline void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::EvaluateMNTwoBod
 		}
 	    }
 	}
+//       cout << this->NbrInterSectorSums << endl;
       for (int j = 0; j < this->NbrInterSectorSums; ++j)
 	{
 	  int Lim = 2 * this->NbrInterSectorIndicesPerSum[j];
 	  TmpIndices = this->InterSectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
+// 	      cout << "i = " ;
+// 	      particles->PrintState(cout, AbsoluteIndex);
+// 	      cout << endl;
 	      Coefficient2 = particles->AuAd(AbsoluteIndex, TmpIndices[i1], TmpIndices[i1 + 1]);
+// 	      cout << TmpIndices[i1] << " " << TmpIndices[i1 + 1] << " " << Coefficient2 << endl;
 	      if (Coefficient2 != 0.0)
 		{
 		  TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient);
+// 		      cout << "f = " ;
+// 		      particles->PrintState(cout, Index);
+// 		      cout << " " <<  TmpIndices[i2] << " " << TmpIndices[i2 + 1] << " " <<  Coefficient << endl;
 		      if (Index <= AbsoluteIndex)
 			{
 			  if (Index == AbsoluteIndex)

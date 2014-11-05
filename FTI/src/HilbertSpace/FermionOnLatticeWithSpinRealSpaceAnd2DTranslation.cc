@@ -1052,11 +1052,13 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertFromKxKy
   FermionOnLatticeWithSpinRealSpace* TmpSpace = (FermionOnLatticeWithSpinRealSpace*) space;
   ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
   Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
-  for (int i = 0; i < this->MomentumModulo; ++i)
+  for (int i = 0; i < this->MaxXMomentum; ++i)
   {
-    FourrierCoefficients[i] = new Complex [this->MomentumModulo];
-    for (int j = 0; j < this->MomentumModulo; ++j)
-      FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum + j * this->YMomentum)) / ((double) this->MomentumModulo));
+    FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
+    for (int j = 0; j < this->MaxYMomentum; ++j)
+    {
+      FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+    }
   }
   for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
     {
@@ -1064,8 +1066,8 @@ ComplexVector FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::ConvertFromKxKy
       int nbrTranslationY;
       unsigned long TmpState = TmpSpace->StateDescription[i];
       TmpState = this->FindCanonicalForm(TmpState, nbrTranslationX, nbrTranslationY);
-//       TmpSpace->PrintState(cout, i);
-//       cout << " " << nbrTranslationX << " " << nbrTranslationY << endl;
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
       int TmpMaxMomentum = 2 * this->NbrSite + 1;
       while ((TmpState >> TmpMaxMomentum) == 0x0ul)
 	--TmpMaxMomentum;

@@ -40,7 +40,7 @@
 
 class FermionOnLatticeRealSpace : public FermionOnSphere
 {
-
+ friend class FermionOnLatticeRealSpaceAnd2DTranslation;
  protected:
 
   // total number of sites

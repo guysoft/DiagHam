@@ -33,6 +33,7 @@
 
 #include "config.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
 #include "Matrix/ComplexMatrix.h"
@@ -706,4 +707,72 @@ int FermionOnLatticeRealSpaceAnd2DTranslation::AdAd (int m1, int m2, double& coe
 #endif
   TmpState |= (0x1ul << m1);
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// convert a state defined in the real space basis into a state in the (Kx,Ky) basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector FermionOnLatticeRealSpaceAnd2DTranslation::ConvertToKxKyBasis(ComplexVector& state, ParticleOnSphere* space)  
+{
+  FermionOnLatticeRealSpace* TmpSpace = (FermionOnLatticeRealSpace*) space;
+  ComplexVector TmpVector (this->HilbertSpaceDimension, true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = this->StateDescription[i];
+      int TmpMaxMomentum = this->NbrSite + 1;
+      while ((TmpState >> TmpMaxMomentum) == 0x0ul)
+	--TmpMaxMomentum;
+      int Pos = TmpSpace->FindStateIndex(TmpState, TmpMaxMomentum);
+      if (Pos < TmpSpace->HilbertSpaceDimension)
+	{
+	  TmpVector[i] =  state[Pos] * sqrt((double) this->NbrStateInOrbit[i]);
+	}
+    }
+  return TmpVector;
+}
+
+
+// convert a state defined in the (Kx,Ky) basis into a state in the real space basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector FermionOnLatticeRealSpaceAnd2DTranslation::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space)
+{
+  FermionOnLatticeRealSpace* TmpSpace = (FermionOnLatticeRealSpace*) space;
+  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+  {
+    FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
+    for (int j = 0; j < this->MaxYMomentum; ++j)
+    {
+      FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+    }
+  }
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      int nbrTranslationX;
+      int nbrTranslationY;
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+      TmpState = this->FindCanonicalForm(TmpState, nbrTranslationX, nbrTranslationY);
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
+      int TmpMaxMomentum = this->NbrSite;
+      while ((TmpState >> TmpMaxMomentum) == 0x0ul)
+	--TmpMaxMomentum;
+      
+      int Pos = this->FindStateIndex(TmpState, TmpMaxMomentum);
+      if (Pos < this->HilbertSpaceDimension)
+	{
+	  TmpVector[i] =  (state[Pos] * (1.0 - (2.0 * ((double) ((this->ReorderingSign[Pos] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul)))) * 
+			       FourrierCoefficients[nbrTranslationX][nbrTranslationY] / sqrt((double) this->NbrStateInOrbit[Pos]));
+	}
+      }
+  delete[] FourrierCoefficients;
+  return TmpVector;
 }

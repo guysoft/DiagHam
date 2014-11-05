@@ -2,10 +2,12 @@
 
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -57,6 +59,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state whose Kx momentum has to be computed");
   (*SystemGroup) += new SingleStringOption('\n', "degenerate-states", "name of the file containing a list of states (override input-state)");
+  (*SystemGroup) += new BooleanOption('\n', "su2-spin", "system has a SU(2) spin degree of freedom");
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -72,15 +75,16 @@ int main(int argc, char** argv)
 
   int NbrParticles = 0;
   int NbrSites = 0;
-  int XMomentum = 0;
-  int YMomentum = 0;
-  int SzValue = 0;
+  int* XMomentum = 0;
+  int* YMomentum = 0;
+  int* SzValue = 0;
   bool TotalSpinConservedFlag;
   int XPeriodicity = 0;
   int YPeriodicity = 0;
   bool Statistics = true;
   bool GutzwillerFlag = false;
   int NbrInputStates = 0;
+  bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
 
   if ((Manager.GetString("input-state") == 0) && (Manager.GetString("degenerate-states") == 0))
     {
@@ -91,17 +95,20 @@ int main(int argc, char** argv)
   if (Manager.GetString("input-state") != 0)
     {
       NbrInputStates = 1;
+      XMomentum = new int[1];
+      YMomentum = new int[1];
+      SzValue = new int [1];
       if (IsFile(Manager.GetString("input-state")) == false)
 	{
 	  cout << "can't open file " << Manager.GetString("input-state") << endl;
 	  return -1;
 	}
-      if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum, YMomentum, XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum, XPeriodicity, Statistics, GutzwillerFlag) == false))
+      if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum[0], YMomentum[0], XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(Manager.GetString("input-state"), NbrParticles, NbrSites, XMomentum[0], XPeriodicity, Statistics, GutzwillerFlag) == false))
 	{
 	  cout << "error while retrieving system parameters from file name " <<Manager.GetString("input-state")  << endl;
 	  return -1;
 	}
-      TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName (Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue, Statistics, GutzwillerFlag);
+      TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName (Manager.GetString("input-state"), NbrParticles, NbrSites, SzValue[0], Statistics, GutzwillerFlag);
     }
   else
     {
@@ -112,22 +119,31 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       NbrInputStates = DegenerateFile.GetNbrLines();
-      if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, XMomentum, YMomentum,  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0, 0), NbrParticles, NbrSites, XMomentum, XPeriodicity, Statistics, GutzwillerFlag) == false))
-	{
-	  cout << "error while retrieving system parameters from file name " << DegenerateFile(0, 0) << endl;
-	  return -1;
-	}
-      TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName (DegenerateFile(0, 0), NbrParticles, NbrSites, SzValue, Statistics, GutzwillerFlag);
+      XMomentum = new int [NbrInputStates];
+      YMomentum = new int [NbrInputStates];
+      SzValue = new int [NbrInputStates];
+      for (int i = 0; i < NbrInputStates; ++i)
+      {
+	if ((FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], YMomentum[i],  XPeriodicity, YPeriodicity, Statistics, GutzwillerFlag) == false) && (FTIHubbardModelWith1DTranslationFindSystemInfoFromVectorFileName(DegenerateFile(0,i), NbrParticles, NbrSites, XMomentum[i], XPeriodicity, Statistics, GutzwillerFlag) == false))
+	  {
+	    cout << "error while retrieving system parameters from file name " << DegenerateFile(0, i) << endl;
+	    return -1;
+	  }
+	  TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName (DegenerateFile(0, i), NbrParticles, NbrSites, SzValue[i], Statistics, GutzwillerFlag);
+      }
+      
     }
   if (YPeriodicity == 0)
     {
       cout << "Convert from kx basis to real space basis" << endl;
-      cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum << " Tx=" << XPeriodicity << endl;
+      for (int i = 0; i < NbrInputStates; ++i)
+	cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum[i] << " Tx=" << XPeriodicity << endl;
     }
   else
     {
       cout << "Convert from kx,ky basis to real space basis" << endl;
-      cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum << " Tx=" << XPeriodicity << " Ky=" << YMomentum << " Ty=" << YPeriodicity << endl;
+      for (int i = 0; i < NbrInputStates; ++i)
+	cout << "Nbr particles=" << NbrParticles << " Nbr sites=" << NbrSites << " Kx=" << XMomentum[i] << " Tx=" << XPeriodicity << " Ky=" << YMomentum[i] << " Ty=" << YPeriodicity << endl;
     }
   ComplexVector* InputStates = new ComplexVector[NbrInputStates];
   char** InputStateNames = new char*[NbrInputStates];
@@ -174,7 +190,9 @@ int main(int argc, char** argv)
     }
 
 
-  ParticleOnTorusWithSpinAndMagneticTranslations* InputSpace = 0;
+  ParticleOnSphere** InputSpace = new ParticleOnSphere* [NbrInputStates];
+  for (int i = 0; i < NbrInputStates; ++i)
+  {
   if (Statistics == true)
     {
       if (GutzwillerFlag == false)
@@ -182,39 +200,45 @@ int main(int argc, char** argv)
 	if (YPeriodicity == 0)
 	{
 	  if (TotalSpinConservedFlag == false)
-	    InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity);
+	    InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity);
 	  else
-	    InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, XPeriodicity, 10000000);
+	    InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd1DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, 10000000);
 	}
 	else
 	{
 	  if (TotalSpinConservedFlag == false)
-	    InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	    if (SU2SpinFlag == true)
+	      InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
+	    else
+	      InputSpace[i] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
 	  else
-	    InputSpace = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity, 10000000);
+	    InputSpace[i] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity, 10000000);
 	}
       }
       else
+      {
 	if (YPeriodicity == 0)
 	{
 	  if (TotalSpinConservedFlag == false)
-	    InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity);
+	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity);
 	  else
-	    InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, XPeriodicity);
+	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity);
 	}
 	else
 	{
 	  if (TotalSpinConservedFlag == false)
-	    InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity);
+	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity);
 	  else
-	    InputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue, NbrSites, XMomentum, XPeriodicity, YMomentum, YPeriodicity, 10000000);
+	    InputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, SzValue[i], NbrSites, XMomentum[i], XPeriodicity, YMomentum[i], YPeriodicity, 10000000);
 	}
+      }
     }
   else
     {
       cout << "not available for bosons" << endl;
       return -1;
     }
+  }
 //   if (InputSpace->GetHilbertSpaceDimension() != InputStates[0].GetVectorDimension())
 //     {
 //       cout << "error, " << DegenerateFile(0, 0)  << " has a wrong dimension (" << InputStates[0].GetVectorDimension() << ", should be " << InputSpace->GetHilbertSpaceDimension() << ")" << endl;
@@ -222,22 +246,29 @@ int main(int argc, char** argv)
 //     }
   
 
-  ParticleOnSphereWithSpin* OutputSpace = 0;
+  ParticleOnSphere** OutputSpace = new ParticleOnSphere* [NbrInputStates];
+  for (int i = 0; i < NbrInputStates; ++i)
+  {
   if (Statistics == true)
     {
       if (GutzwillerFlag == false)
       {
 	if (TotalSpinConservedFlag == false)
-	  OutputSpace = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+	{
+	  if (SU2SpinFlag == true)
+	    OutputSpace[i] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+	  else
+	    OutputSpace[i] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+	}
 	else
-	  OutputSpace = new FermionOnLatticeWithSpinRealSpace (NbrParticles, SzValue, NbrSites, 10000000);
+	  OutputSpace[i] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, SzValue[i], NbrSites, 10000000);
       }
       else
       {
 	if (TotalSpinConservedFlag == false)
-	  OutputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+	  OutputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
 	else
-	  OutputSpace = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, SzValue, NbrSites, 10000000);
+	  OutputSpace[i] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, SzValue[i], NbrSites, 10000000);
       }
     }
   else
@@ -245,30 +276,36 @@ int main(int argc, char** argv)
       cout << "not available for bosons" << endl;
       return -1;
     }
+  }
 
   char* XPeriodicityString = new char[256];
   char* XMomentumString = new char[256];
-  if (YPeriodicity == 0)
-  {
-    sprintf (XPeriodicityString, "_x_%d", XPeriodicity);
-    sprintf (XMomentumString, "_kx_%d", XMomentum);
-  }
-  else
-  {
-    sprintf (XPeriodicityString, "_x_%d_y_%d", XPeriodicity, YPeriodicity);
-    sprintf (XMomentumString, "_kx_%d_ky_%d", XMomentum, YMomentum);
-  }
+  
   
   for (int i = 0; i < NbrInputStates; ++i)
     {
-//       char* TmpVectorOutputName = ReplaceString(InputStateNames[i], XPeriodicityString, "");
+      if (YPeriodicity == 0)
+      {
+	sprintf (XPeriodicityString, "_x_%d", XPeriodicity);
+	sprintf (XMomentumString, "_kx_%d", XMomentum[i]);
+      }
+      else
+      {
+	sprintf (XPeriodicityString, "_x_%d_y_%d", XPeriodicity, YPeriodicity);
+	sprintf (XMomentumString, "_kx_%d_ky_%d", XMomentum[i], YMomentum[i]);
+      }
+      
       char* VectorOutputName = ReplaceString(InputStateNames[i], XMomentumString, "");
-      ComplexVector TmpVector = InputSpace->ConvertFromKxKyBasis(InputStates[i], OutputSpace);
+      ComplexVector TmpVector = InputSpace[i]->ConvertFromKxKyBasis(InputStates[i], OutputSpace[i]);
+      char* Extension = new char[256];
+      sprintf (Extension, "%d.vec", i);
+      VectorOutputName = ReplaceExtensionToFileName(VectorOutputName, "vec", Extension);
       if (TmpVector.WriteVector(VectorOutputName) == false)
 	{
 	  cout << "error, can't write vector " << VectorOutputName << endl;
 	}
 //       delete[] TmpVectorOutputName;
+      delete[] Extension;
       delete[] VectorOutputName;
     }
 }

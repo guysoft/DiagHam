@@ -167,6 +167,12 @@ class AbstractQHEParticle :  public AbstractHilbertSpace
   // componentDescription = reference on the array where components description (memory allocation is done by the method itself)
   // return value = true if no error occured
   virtual bool LoadEigenstateDescrition(char* filename, int nbrElements, bool realFlag, int& nbrComponents, Complex*& coefficients, int**& componentDescription);
+  
+  
+  // filter a Hilbert space according to some exclusion rules
+  //
+  //return value = dimension of the filtered Hilbert space
+  virtual long FilterHilbertSpace();
 
   
 };
