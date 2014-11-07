@@ -50,7 +50,10 @@ class SpinChainXYZNaturalBoundaryTermHamiltonian : public SpinChainXYZHamiltonia
  protected:
 
   // perturbation order for the edge mode development
-  int PerturbationOrder;
+  int PerturbationOrder;  
+  // true if the boundary term is Jy dominated instead of Jx dominated
+  bool JyDominatedBoundaryTerm;
+
   
  public:
 
@@ -66,10 +69,11 @@ class SpinChainXYZNaturalBoundaryTermHamiltonian : public SpinChainXYZHamiltonia
   // perturbationOrder = perturbation order for the edge mode development
   // fixedParityFlag = true if the parity if fixed for the Hilbert space
   // fixedParity = value of the parity if fixed for the Hilbert space
+  // jyDominatedBoundaryTerm = true if the boundary term is Jy dominated instead of Jx dominated
   SpinChainXYZNaturalBoundaryTermHamiltonian(Spin1_2Chain* chain, int nbrSpin, 
 					     double jxFactor, double jyFactor, double jzFactor, double hFactor,
 					     double boundaryCondition = 0.0, int perturbationOrder = 0, 
-					     bool fixedParityFlag = false, int fixedParity = 0);
+					     bool fixedParityFlag = false, int fixedParity = 0, bool jyDominatedBoundaryTerm = false);
   
   // destructor
   //

@@ -367,7 +367,7 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // find the size of the orbit for a given state
   //
   // return value = orbit size
-  inline int FindOrbitSize(unsigned long stateDescription);
+  virtual int FindOrbitSize(unsigned long stateDescription);
 
   // apply a single translation in the x direction for a state description
   //
@@ -383,7 +383,7 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   //
   // stateDescription = reference on state description
   // return value = 0 if the sign is +1, 1 if the sign is -1
-  unsigned long GetSignAndApplySingleXTranslation(unsigned long& stateDescription);
+  virtual unsigned long GetSignAndApplySingleXTranslation(unsigned long& stateDescription);
 
   // get the fermonic sign when performing a single translation in the y direction on a state description, and apply the single translation
   //

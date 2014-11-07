@@ -11,6 +11,8 @@
 #include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian.h"
@@ -420,12 +422,24 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      if (GutzwillerFlag == false)
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"), 
-			 (int) Manager.GetInteger("max-ymomentum"));
+	      if (SzSymmetryFlag == false)
+		{
+		  if (GutzwillerFlag == false)
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"), 
+			     (int) Manager.GetInteger("max-ymomentum"));
+		  else
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"),
+			     (int) Manager.GetInteger("max-ymomentum"));
+		}
 	      else
-		sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"),
-			 (int) Manager.GetInteger("max-ymomentum"));
+		{
+		  if (GutzwillerFlag == false)
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_szsym_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"), 
+			     (int) Manager.GetInteger("max-ymomentum"));
+		  else
+		    sprintf (StatisticPrefix, "fermions_kitaev_heisenberg_gutzwiller_szsym_x_%d_y_%d", (int) Manager.GetInteger("max-xmomentum"),
+			     (int) Manager.GetInteger("max-ymomentum"));
+		}
 	    }
 	}
       else
@@ -513,7 +527,14 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  sprintf (CommentLine, "kx ky");
+	  if (SzSymmetryFlag == false)
+	    {
+	      sprintf (CommentLine, "kx ky");
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, "kx ky szp");
+	    }
 	}
     }
   else
@@ -581,7 +602,8 @@ int main(int argc, char** argv)
 	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	  
-	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 											SitesB, BondTypes, Manager.GetDouble("isotropic-t"), 
+	  Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 
+										 SitesB, BondTypes, Manager.GetDouble("isotropic-t"), 
 										 Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), Manager.GetDouble("j1"), 
 										 Manager.GetDouble("j2"), Architecture.GetArchitecture(), Memory);
 	  
@@ -682,7 +704,8 @@ int main(int argc, char** argv)
 		Memory = Architecture.GetArchitecture()->GetLocalMemory();
 	      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 	      
-	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 											SitesB, BondTypes, XMomentum, XPeriodicity, 
+	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd1DTranslationHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 
+												     SitesB, BondTypes, XMomentum, XPeriodicity, 
 												     Manager.GetDouble("isotropic-t"), 
 												     Manager.GetDouble("anisotropic-t"), Manager.GetDouble("u-potential"), 
 												     Manager.GetDouble("j1"), Manager.GetDouble("j2"), 
@@ -783,13 +806,19 @@ int main(int argc, char** argv)
 		      bool MinusParitySector = true;
 		      if (SzParitySector == 1)
 			MinusParitySector = false;
-// 		      if (GutzwillerFlag == false)
-// 			Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, Manager.GetInteger("max-xmomentum"), MinusParitySector);
-// 		      else
-// 			Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd1DTranslation (NbrParticles, NbrSites, XMomentum, 
-// 															Manager.GetInteger("max-xmomentum"),MinusParitySector);
-		      cout << "error, 2d translations and Sz<->-Sz is not an implemented symmetry" << endl;
-		      return -1;
+		      cout << "Kx = " << XMomentum << "  Ky = " << YMomentum << "  SzParity = " << SzParitySector<< endl;
+		      if (GutzwillerFlag == false)
+			Space = new FermionOnLatticeWithSpinSzSymmetryRealSpaceAnd2DTranslation (NbrParticles, NbrSites, MinusParitySector, 
+												 XMomentum, Manager.GetInteger("max-xmomentum"),
+												 YMomentum, Manager.GetInteger("max-ymomentum"));
+		      else
+			Space = new FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, MinusParitySector, 
+															XMomentum, Manager.GetInteger("max-xmomentum"),
+															YMomentum, Manager.GetInteger("max-ymomentum"));
+		    }
+		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
+		    {
+		      Space->PrintState(cout, i) << endl;
 		    }
 		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();

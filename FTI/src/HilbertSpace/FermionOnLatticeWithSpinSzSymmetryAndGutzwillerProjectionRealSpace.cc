@@ -128,8 +128,6 @@ FermionOnLatticeWithSpinSzSymmetryAndGutzwillerProjectionRealSpace::FermionOnLat
 	      else
 		cout << UsedMemory << endl;
 #endif
-	      for (int i = 0; i < this->HilbertSpaceDimension; ++i)
-		this->PrintState(cout, i) << " index=" << this->FindStateIndex(this->StateDescription[i], this->StateHighestBit[i]) << endl;
 	    }
 	}
     }

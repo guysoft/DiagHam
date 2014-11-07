@@ -487,7 +487,7 @@ ostream& FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::PrintState (ostream&
 //      {
 //        Str << "  error";
 //      }
-//    Str << " orb=" << this->NbrStateInOrbit[state];
+    Str << " orb=" << this->NbrStateInOrbit[state];
   return Str;
 }
 

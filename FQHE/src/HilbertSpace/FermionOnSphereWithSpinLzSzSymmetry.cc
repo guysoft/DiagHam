@@ -947,6 +947,7 @@ int FermionOnSphereWithSpinLzSzSymmetry::AduAu (int index, int m, int n, double&
 #endif
     }
   State |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(State, coefficient);
 }
 
 // apply a^+_m_d a_n_d operator to a given state 

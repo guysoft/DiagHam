@@ -61,6 +61,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
   (*SystemGroup) += new  BooleanOption  ('\n', "natural-boundaryterms", "use a natural boundary term instead of the translation invariant boundary term");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "boundaryterm-order", "perturbation order for the edge mode development involved in the natural boundary term", 0);
+  (*SystemGroup) += new  BooleanOption ('\n', "jy-dominated", "the 0-th order of the natural boundary term is Jy dominated instead of being Jx dominated");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -93,7 +94,14 @@ int main(int argc, char** argv)
     }
   else
     {
-      sprintf (FileNamePrefix, "spin_1_2_naturalboundaryterms_%d", (int) Manager.GetInteger("boundaryterm-order"));
+      if (Manager.GetBoolean("jy-dominated") == false)
+	{
+	  sprintf (FileNamePrefix, "spin_1_2_naturalboundaryterms_%d", (int) Manager.GetInteger("boundaryterm-order"));
+	}
+      else
+	{
+	  sprintf (FileNamePrefix, "spin_1_2_naturalboundaryterms_jydominated_%d", (int) Manager.GetInteger("boundaryterm-order"));
+	}
     }
   if (HValue == 0.0)
     {
@@ -119,7 +127,8 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("natural-boundaryterms") == false)
 	    Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	  else
-	    Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, (int) Manager.GetInteger("boundaryterm-order"));
+	    Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, 
+									  (int) Manager.GetInteger("boundaryterm-order"), false, 0, Manager.GetBoolean("jy-dominated"));
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	  sprintf (TmpEigenstateString, "%s", OutputFileName);
 	  char TmpEntry = '\0';
@@ -146,7 +155,9 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("natural-boundaryterms") == false)
 		Hamiltonian = new SpinChainXYZHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue);
 	      else
-		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, (int) Manager.GetInteger("boundaryterm-order"), true, InitialQValue);
+		Hamiltonian = new SpinChainXYZNaturalBoundaryTermHamiltonian (Chain, NbrSpins, JxValue, JyValue, JzValue, HValue, (double) BValue, 
+									      (int) Manager.GetInteger("boundaryterm-order"), true, InitialQValue, 
+									      Manager.GetBoolean("jy-dominated"));
 	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	      sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitialQValue);
 	      char* TmpQString = new char[64];
