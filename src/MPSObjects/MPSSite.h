@@ -52,8 +52,6 @@ class MPSSite
    bool CheckLeftNormalization();
    
    bool CheckRightNormalization();
-   //   bool ComputeL();
-   //bool ComputeR();
    
    void InitializeWithRandomMatrices();
    
@@ -70,7 +68,7 @@ class MPSSite
    inline void SetLeftDimension(int bondDimensionLeft);
    void ComputeDensityMatrixRight();
    void ComputeDensityMatrixLeft();
-   void SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite, RealVector * psi );
+   void SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & singularValues );
 
    inline unsigned int GetBondDimensionRight() const
      {return this-> BondDimensionRight;}

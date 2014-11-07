@@ -1,3 +1,4 @@
+
 #include <cmath>
 #include "MPSSite.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -90,7 +91,6 @@ void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
 {
   this->BondDimensionLeft = bondDimensionLeft;
   this->BondDimensionRight = bondDimensionRight;
-  cout << "Setting site Dimension = " <<this->SitePosition << " " <<this->BondDimensionLeft <<" " <<this->BondDimensionRight<<endl;;
 }
 
 void MPSSite::UpdateFromVector(RealVector * psi)
@@ -225,8 +225,7 @@ void MPSSite::BringMInRightCanonicalForm()
 	      this->M[i](j,k) = V(j,this->PhysicalDimension * k + i);
 	    }
 	}
-//      cout <<"this->M[ " <<i<< "]"<<endl<< this->M[i]<<endl;
-  //    cout <<"check multiplication order in MPSSite::BringMInRightCanonicalForm()"<<endl;
+
        this->SiteOnLeft->M[i] = this->SiteOnLeft->M[i]*U;
        }
   delete this->R;
@@ -324,8 +323,7 @@ void MPSSite::GetMatrixInVectorForm(RealVector *& resultInvector)
 {
   delete resultInvector;
   resultInvector = new RealVector((long int) this->PhysicalDimension*this->BondDimensionLeft*this->BondDimensionRight,true);
-//  cout <<"print Matrix in GetMatrixInVectorForm"<<endl;
-//  cout << this->M[0]<<" " <<this->M[1];
+
   for (int i = 0 ; i < this->PhysicalDimension ; i++)
     {
       for (int j = 0 ; j <  this->BondDimensionLeft ; j++)
@@ -412,7 +410,7 @@ void MPSSite::ComputeDensityMatrixRight()
 }
 
 
-void MPSSite::SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite, RealVector * psi )
+void MPSSite::SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & SingularValues)
 {
   RealMatrix TmpMatrix (leftSite->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
   // Index = LinearizedPhysicalIndice + SquarePhysicalDimension*(LeftA + RightA*BondDimensionLeft))
@@ -432,22 +430,34 @@ void MPSSite::SymmetricUpdateOfTwoSites(MPSSite * leftSite , MPSSite * rightSite
   }
 
   RealMatrix U,V;
-  RealDiagonalMatrix SingularValues;
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
   double Entropy=0.0;
   unsigned int KeptStates = 0;
   for(int i = 0; i < SingularValues.GetNbrRow(); i++)
   {
-   SingularValues[i]*=SingularValues[i];
-   Entropy -= SingularValues[i]*log(SingularValues[i]);
    if (SingularValues[i] > 1e-20)
        KeptStates++;
   }
 
-  if ( KeptStates >  this->MaxBondDimension)
-       KeptStates += this->MaxBondDimension;
 
- cout <<"Entropy = "<< Entropy<<" " << SingularValues[KeptStates-1]<< endl;
+  if ( KeptStates >  this->MaxBondDimension)
+       KeptStates = this->MaxBondDimension;
+ double * KeptSingularValues = new double[KeptStates];
+
+for(int i = 0; i < KeptStates; i++)
+  {
+   KeptSingularValues[i] = SingularValues[i];
+   SingularValues[i]*=SingularValues[i];
+   Entropy -= SingularValues[i]*log(SingularValues[i]);
+  }
+ double RejectedWeight = 0.0;
+ for(int i = KeptStates; i < SingularValues.GetNbrRow(); i++)
+  {
+   RejectedWeight +=SingularValues[i];
+  }
+
+ SingularValues = RealDiagonalMatrix(KeptSingularValues,KeptStates);
+ cout <<"Entropy = "<< Entropy<<" " <<  RejectedWeight<< endl;
 
  delete [] leftSite->M;
  delete [] rightSite->M;

@@ -180,6 +180,15 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
     AbstractMPOperatorOBC::ComputeR(R);
 }
 
+RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent)
+{
+ if(this->IDMRGFlag)
+  return this->LowLevelMultiplyTwoSites(vSource,vDestination, firstComponent, nbrComponent); 
+else 
+ return this->LowLevelMultiplyOneSite(vSource,vDestination, firstComponent, nbrComponent);
+
+}
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and store result in another vector, low level function (no architecture optimization)
@@ -190,7 +199,7 @@ void MPOPeratorSixVertexModelTransferMatrixSquare::ComputeR(Tensor3<double> & R)
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
+RealVector& MPOPeratorSixVertexModelTransferMatrixSquare::LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
   vDestination.ClearVector();

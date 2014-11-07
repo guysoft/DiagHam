@@ -25,6 +25,7 @@ class MPOPeratorSixVertexModelTransferMatrixSquare : public AbstractMPOperatorOB
 				       int firstComponent, int nbrComponent);
 
   virtual RealVector & LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent);
+  virtual RealVector & LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent);
 };
 
 #endif

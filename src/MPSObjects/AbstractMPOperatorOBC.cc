@@ -45,6 +45,8 @@ AbstractHilbertSpace* AbstractMPOperatorOBC::GetHilbertSpace ()
 
 int AbstractMPOperatorOBC::GetHilbertSpaceDimension ()
 {
+  if(IDMRGFlag)
+      return  this->SiteRight->GetBondDimensionRight()* this->SiteLeft->GetBondDimensionLeft()*this->PhysicalDimension *this->PhysicalDimension;
   return  this->Site->GetBondDimensionRight()* this->Site->GetBondDimensionLeft()*this->PhysicalDimension;
 }
 
@@ -243,7 +245,7 @@ void AbstractMPOperatorOBC::ComputeR(Tensor3<double> & R)
 // vDestination = vector where result has to be stored
 // return value = reference on vectorwhere result has been stored
 RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVector& vDestination)
-{
+{ 
   return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -374,10 +376,11 @@ Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
 
 RealVector& AbstractMPOperatorOBC::LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent)
 {
-  timeval TotalStartingTime;
+/*  timeval TotalStartingTime;
   timeval TotalEndingTime;
   gettimeofday (&TotalStartingTime, 0)
 ;
+*/
   int BondDimensionRight = this->SiteRight->GetBondDimensionRight();
   int BondDimensionLeft = this->SiteLeft->GetBondDimensionLeft();
 
@@ -467,11 +470,11 @@ unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceMiddle,MPOIndiceRi
 
   int LastComponent = firstComponent + nbrComponent;
 
-  gettimeofday (&TotalEndingTime, 0);
+/*  gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
  		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
   cout <<"First Part " << Dt << "s" << endl;
-  gettimeofday (&TotalStartingTime, 0);
+  gettimeofday (&TotalStartingTime, 0);*/
   for(int Index =  firstComponent; Index < LastComponent ;Index++)
   {
        for (int RightA = 0;  RightA < BondDimensionRight;  RightA++)
@@ -482,11 +485,11 @@ unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceMiddle,MPOIndiceRi
         }
     }
  }
-
+/*
 gettimeofday (&TotalEndingTime, 0);
 Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
  		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
- cout <<"Second Part " << Dt << "s" << endl;
+ cout <<"Second Part " << Dt << "s" << endl;*/
  delete [] C;
  return vDestination;
 }

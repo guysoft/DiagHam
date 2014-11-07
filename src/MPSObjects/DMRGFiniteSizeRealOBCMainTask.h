@@ -28,7 +28,7 @@ class DMRGFiniteSizeRealOBCMainTask
   void InitializeLattice();
   void InitializeLatticeUsingIDMRG();
   void OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
-  void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (MPSSite * leftSite , MPSSite * rightSite);
+  void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (MPSSite * leftSite , MPSSite * rightSite, RealDiagonalMatrix & singularValues);
 };
 
 #endif

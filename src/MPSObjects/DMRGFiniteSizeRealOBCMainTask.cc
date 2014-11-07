@@ -28,9 +28,9 @@ DMRGFiniteSizeRealOBCMainTask::~DMRGFiniteSizeRealOBCMainTask(){ }
 void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
 {
 //  this->InitializeLattice();
-this->InitializeLatticeUsingIDMRG();
+  this->InitializeLatticeUsingIDMRG();
 
-
+  this->MPOperator->SetDMRGFlag(false);
   for(int CurrentSweep = 0; CurrentSweep <  this->NbrSweep; CurrentSweep++)
     {
       cout <<"Sweep : "<<CurrentSweep<<endl;
@@ -57,6 +57,7 @@ this->InitializeLatticeUsingIDMRG();
 
 void DMRGFiniteSizeRealOBCMainTask::InitializeLattice()
 {
+  this->MPOperator->SetDMRGFlag(false);
   for (int i = 0 ; i < NbrSites ; i++) 
     {
       LatticeSite[i].InitializeWithRandomMatrices();
@@ -67,6 +68,31 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLattice()
       LatticeSite[i].BringMInRightCanonicalFormCareful(); 
     }
 }
+
+
+
+void DMRGFiniteSizeRealOBCMainTask::InitializeLatticeUsingIDMRG()
+{
+  this->MPOperator->SetDMRGFlag(true);
+  RealDiagonalMatrix SingularValues;
+  for (int i = 0 ; i < NbrSites/2 ; i++) 
+    {
+       this->MPOperator->SetSiteLeftAndRight(&(this->LatticeSite[i]),&this->LatticeSite[NbrSites-1-i]);
+       this->TwoSiteOptimizationUsingLanczosLanczosAlgorithm (&LatticeSite[i] ,&this->LatticeSite[NbrSites-1-i],SingularValues);
+    }
+  RealMatrix * TmpM = LatticeSite[NbrSites/2 - 1].GetM();
+
+  for(int i = 0; i <  this->MPOperator->GetPhysicalDimension() ; i++)
+  {
+    TmpM[i] = TmpM[i]*SingularValues;
+  }
+
+  for (int i = NbrSites/2 - 1 ; i>0 ; i--) 
+    {
+      LatticeSite[i].BringMInRightCanonicalFormCareful(); 
+    }
+}
+
 
 
 
@@ -152,23 +178,7 @@ else
 }
 
 
-void DMRGFiniteSizeRealOBCMainTask::InitializeLatticeUsingIDMRG()
-{
-  for (int i = 0 ; i < NbrSites/2 ; i++) 
-    {
-       this->MPOperator->SetSiteLeftAndRight(&(this->LatticeSite[i]),&this->LatticeSite[NbrSites-1-i]);
-       this->TwoSiteOptimizationUsingLanczosLanczosAlgorithm (&LatticeSite[i] ,&this->LatticeSite[NbrSites-1-i]);
-    }
-
-  for (int i = NbrSites/2 - 1 ; i>0 ; i--) 
-    {
-      LatticeSite[i].BringMInRightCanonicalFormCareful(); 
-    }
-}
-
-
-
-void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgorithm (MPSSite * leftSite , MPSSite * rightSite)
+void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgorithm (MPSSite * leftSite , MPSSite * rightSite, RealDiagonalMatrix & singularValues)
 {
   if (this->MPOperator->GetTwoSitesHilbertSpaceDimension() < 500 )
     {
@@ -185,7 +195,7 @@ void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgori
       RealVector TmpEigenvector(Dimension,true);
       cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
 
-      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0]);
+     this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues);
 
 #endif
 
@@ -196,6 +206,7 @@ else
   RealVector * TmpVector = 0;
   AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
 //  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
+  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
   LanczosAlgorithm->InitializeLanczosAlgorithm();
   double GroundStateEnergy;
   double Precision = 1.0;
@@ -247,6 +258,6 @@ else
       RealVector GroundState = LanczosAlgorithm->GetGroundState();
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
-      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &GroundState);
+      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &GroundState,singularValues);
 }
 }

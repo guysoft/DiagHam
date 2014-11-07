@@ -19,6 +19,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   unsigned int MPOBondDimension;
   unsigned int NbrSites;
   AbstractHilbertSpace* HilbertSpace;
+  bool IDMRGFlag;
   MPSSite * Site;
   MPSSite * SiteLeft;
   MPSSite * SiteRight;
@@ -54,6 +55,10 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // site = pointer to the siteto use 
   void SetSiteLeftAndRight (MPSSite* siteLeft,MPSSite* siteRight);
 
+  // set site to be acted on
+  //
+  // site = pointer to the siteto use 
+  void SetDMRGFlag (bool newFlag){this->IDMRGFlag=newFlag;};
   
   // get Hilbert space on which Hamiltonian acts
   //
@@ -72,6 +77,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   void ShiftHamiltonian (double shift);
   
   inline int GetMPODimension() const {return  MPOBondDimension;};
+  inline int GetPhysicalDimension() const {return  PhysicalDimension;};
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
