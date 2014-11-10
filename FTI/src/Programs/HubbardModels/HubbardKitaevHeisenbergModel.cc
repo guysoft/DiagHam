@@ -260,9 +260,9 @@ int main(int argc, char** argv)
   {
    if (Manager.GetBoolean("xperiodic-boundary") == true) 
      NbrSitesX = Manager.GetInteger("max-xmomentum");
-   if (NbrSitesX == 0)
+   if (NbrSitesX == 0 || NbrSitesY == 0)
    {
-     cout << "Error. The number of sites in direction x must be specified in stripe geometry" << endl;
+     cout << "Error. The number of sites in direction x and y must be specified in stripe geometry" << endl;
      return -1; 
    }
    
