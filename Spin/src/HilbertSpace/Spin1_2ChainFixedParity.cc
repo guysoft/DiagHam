@@ -297,11 +297,12 @@ int Spin1_2ChainFixedParity::SmiSmj (int i, int j, int state, double& coefficien
 // 
 // nbrSites = number of sites that are part of the A subsytem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
+// shift = position of the A part leftmost site within the full system
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
 
-RealSymmetricMatrix Spin1_2ChainFixedParity::EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+RealSymmetricMatrix Spin1_2ChainFixedParity::EvaluatePartialDensityMatrix (int nbrSites, int szSector, int shift, RealVector& groundState, AbstractArchitecture* architecture)
 { 
   if (nbrSites == 0)
     {
@@ -346,7 +347,9 @@ RealSymmetricMatrix Spin1_2ChainFixedParity::EvaluatePartialDensityMatrix (int n
   int MinIndex = 0;
   int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
   long TmpNbrNonZeroElements = 0l;
-
+  unsigned long Mask = ((0x1ul << shift) - 0x1ul);
+  unsigned long ComplementaryMask = ((0x1ul << this->ChainLength) - 0x1ul) ^ Mask;
+  int ComplementaryShift = this->ChainLength - shift;
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
       int Pos = 0;
@@ -354,6 +357,7 @@ RealSymmetricMatrix Spin1_2ChainFixedParity::EvaluatePartialDensityMatrix (int n
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
 	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
+	  TmpState2 = ((TmpState2 << shift) & ComplementaryMask) | ((TmpState2 >> ComplementaryShift) & Mask);
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {
@@ -388,11 +392,12 @@ RealSymmetricMatrix Spin1_2ChainFixedParity::EvaluatePartialDensityMatrix (int n
 // 
 // nbrSites = number of sites that are part of the A subsytem 
 // szSector = Sz sector in which the density matrix has to be evaluated 
+// shift = position of the A part leftmost site within the full system
 // groundState = reference on the total system ground state
 // architecture = pointer to the architecture to use parallelized algorithm 
 // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
 
-RealMatrix Spin1_2ChainFixedParity::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture)
+RealMatrix Spin1_2ChainFixedParity::EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, int shift, RealVector& groundState, AbstractArchitecture* architecture)
 {
   if (nbrSites == 0)
     {
@@ -435,6 +440,9 @@ RealMatrix Spin1_2ChainFixedParity::EvaluatePartialEntanglementMatrix (int nbrSi
   int MinIndex = 0;
   int MaxIndex = TmpHilbertSpace.HilbertSpaceDimension;
   long TmpNbrNonZeroElements = 0l;
+  unsigned long Mask = ((0x1ul << shift) - 0x1ul);
+  unsigned long ComplementaryMask = ((0x1ul << this->ChainLength) - 0x1ul) ^ Mask;
+  int ComplementaryShift = this->ChainLength - shift;
 
   for (; MinIndex < MaxIndex; ++MinIndex)    
     {
@@ -443,6 +451,7 @@ RealMatrix Spin1_2ChainFixedParity::EvaluatePartialEntanglementMatrix (int nbrSi
       for (int j = 0; j < TmpDestinationHilbertSpace.HilbertSpaceDimension; ++j)
 	{
 	  unsigned long TmpState2 = TmpState | TmpDestinationHilbertSpace.StateDescription[j];
+	  TmpState2 = ((TmpState2 << shift) & ComplementaryMask) | ((TmpState2 >> ComplementaryShift) & Mask);
 	  int TmpPos = this->FindStateIndex(TmpState2);
 	  if (TmpPos != this->HilbertSpaceDimension)
 	    {

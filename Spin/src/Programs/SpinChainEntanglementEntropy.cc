@@ -256,7 +256,7 @@ int main(int argc, char** argv)
 		      cout << "processing subsytem size " << SubsystemSize << " SzA=" << MinSzA << endl;
 		      if (SVDFlag == false)
 			{
-			  RealSymmetricMatrix TmpPartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, MinSzA, GroundStates[0]);;
+			  RealSymmetricMatrix TmpPartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, MinSzA, GroundStates[0]);
 			  if (WeightFlag == true)
 			    TmpPartialDensityMatrix *= Weights[i];
 			  if (PartialDensityMatrix.GetNbrRow() == 0)

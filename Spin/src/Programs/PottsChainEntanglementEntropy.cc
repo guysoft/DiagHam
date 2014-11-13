@@ -58,6 +58,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "degenerated-groundstate", "single column file describing a degenerated ground state");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "min-la", "minimum size of the subsystem whose entropy has to be evaluated", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "max-la", "maximum size of the subsystem whose entropy has to be evaluated (0 if equal to half the total system size)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "shift-sites", "location of the leftmost site that belongs to A", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "real-vectors", "indicates  that the ground state vector is real");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with ent extension)");
   (*OutputGroup) += new SingleStringOption ('\n', "density-matrix", "use this file name instead of the one that can be deduced from the input file name (replacing the vec extension with full.ent extension) to store the reduced density matrix spectrum");
@@ -203,20 +204,36 @@ int main(int argc, char** argv)
     }
   
   ofstream File;
+  char* EntropyFileName;
   if (Manager.GetString("output-file") != 0)
-    File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+    {
+      EntropyFileName = new char[strlen(Manager.GetString("output-file")) + 1];
+      strcpy (EntropyFileName, Manager.GetString("output-file"));
+    }
   else
     {
-      char* TmpFileName;
-      TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
-      if (TmpFileName == 0)
+      if (Manager.GetInteger("shift-sites") == 0)
 	{
-	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	  return 0;
+	  EntropyFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "ent");
+	  if (EntropyFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
 	}
-      File.open(TmpFileName, ios::binary | ios::out);
-      delete[] TmpFileName;
+      else
+	{
+	  char* TmpExtenstion = new char[64];
+	  sprintf (TmpExtenstion, "shift_%d.ent", (int) Manager.GetInteger("shift-sites"));
+	  EntropyFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", TmpExtenstion);
+	  if (EntropyFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
+	}
     }
+  File.open(EntropyFileName, ios::binary | ios::out);
   char* DensityMatrixFileName = 0;
   if (Manager.GetString("density-matrix") != 0)
     {
@@ -224,10 +241,10 @@ int main(int argc, char** argv)
     }
   else
     {
-      DensityMatrixFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "full.ent");
+      DensityMatrixFileName = ReplaceExtensionToFileName(EntropyFileName, "ent", "full.ent");
       if (DensityMatrixFileName == 0)
 	{
-	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	  cout << "no ent extension was find in " << EntropyFileName << " file name" << endl;
 	  return 0;
 	}
    }
@@ -265,6 +282,10 @@ int main(int argc, char** argv)
 	  RealDiagonalMatrix TmpDiag;
 	  if (RealVectorFlag == false)
 	    {
+	      if (Manager.GetInteger("shift-sites") != 0)
+		{
+		  cout << "error, shift-sites not implemented for  complex vectors" << endl;
+		}
 	      HermitianMatrix PartialDensityMatrix;
 	      ComplexMatrix PartialEntanglementMatrix;
 	      for (int i = 0; i < NbrSpaces; ++i)
@@ -381,7 +402,7 @@ int main(int argc, char** argv)
 		  cout << "processing subsytem size " << SubsystemSize << " SzA=" << MinSzA << endl;
 		  if (SVDFlag == false)
 		    {
-		      RealSymmetricMatrix TmpPartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, MinSzA, RealGroundStates[0]);;
+		      RealSymmetricMatrix TmpPartialDensityMatrix = Spaces[0]->EvaluatePartialDensityMatrix(SubsystemSize, MinSzA, Manager.GetInteger("shift-sites"), RealGroundStates[0]);;
 		      if (WeightFlag == true)
 			TmpPartialDensityMatrix *= Weights[i];
 		      if (PartialDensityMatrix.GetNbrRow() == 0)
@@ -391,7 +412,7 @@ int main(int argc, char** argv)
 		    }
 		  else 
 		    {
-		      RealMatrix TmpPartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrix(SubsystemSize, MinSzA, RealGroundStates[0]);
+		      RealMatrix TmpPartialEntanglementMatrix = Spaces[0]->EvaluatePartialEntanglementMatrix(SubsystemSize, MinSzA, Manager.GetInteger("shift-sites"), RealGroundStates[0]);
 		      if (WeightFlag == true)
 			TmpPartialEntanglementMatrix *= sqrt(Weights[i]);
 		      if (PartialEntanglementMatrix.GetNbrRow() == 0)
@@ -495,5 +516,6 @@ int main(int argc, char** argv)
       File << SubsystemSize << " " << (-EntanglementEntropy) << " " << DensitySum << endl;
     }
   File.close();
+  delete[] EntropyFileName;
   return 0;
 }
