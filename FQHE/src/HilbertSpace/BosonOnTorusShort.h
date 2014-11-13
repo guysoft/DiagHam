@@ -463,7 +463,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // nbrBosons = number of bosons
   // maxMomentum = momentum maximum value for a boson
   // return value = Hilbert space dimension
-  int EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum);
+  long EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum);
 
   // evaluate Hilbert space dimension
   //

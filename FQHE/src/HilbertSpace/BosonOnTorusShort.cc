@@ -79,12 +79,18 @@ BosonOnTorusShort::BosonOnTorusShort (int nbrBosons, int maxMomentum)
   this->StateShift = this->KyMax / this->MomentumModulo;
   this->LastMomentumMask = 0x1ul << (this->KyMax + this->NbrBosons - 1);
 
-  this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax);
-  this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0);
+  this->HilbertSpaceDimension = (int) this->HilbertSpaceDimension;
+  cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension;
   this->Flag.Initialize();
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
   this->StateKyMax = new int [this->HilbertSpaceDimension];
-  cout << this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0) << endl;
+  long TmpLargeHilbertSpaceDimension = this->GenerateStates(this->NbrBosons, this->KyMax - 1, this->KyMax - 1, 0);  
+  if (TmpLargeHilbertSpaceDimension != this->LargeHilbertSpaceDimension)
+    {
+      cout << "error while generating the Hilbert space " << TmpLargeHilbertSpaceDimension << ", should be " 
+	   <<  this->LargeHilbertSpaceDimension << endl;
+    }
   
 #ifdef TEST_BOSONONTORUS_SHORT
   for (int i = 0; i<this->HilbertSpaceDimension; ++i)
@@ -842,12 +848,9 @@ void BosonOnTorusShort::GenerateLookUpTable(int memory)
 // maxMomentum = momentum maximum value for a boson
 // return value = Hilbert space dimension
 
-int BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum)
+long BosonOnTorusShort::EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum)
 {
-  FactorialCoefficient Dimension; 
-  Dimension.PartialFactorialMultiply(maxMomentum, maxMomentum + nbrBosons - 1); 
-  Dimension.FactorialDivide(nbrBosons);
-  return Dimension.GetIntegerValue();
+  return this->EvaluateHilbertSpaceDimension(nbrBosons, maxMomentum - 1, maxMomentum - 1, 0);
 }
 
 // evaluate Hilbert space dimension
