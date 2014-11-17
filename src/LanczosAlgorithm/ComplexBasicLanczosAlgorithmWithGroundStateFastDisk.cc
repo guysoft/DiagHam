@@ -162,7 +162,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgor
       this->V2 = ComplexVector (Dimension);
       this->V3 = ComplexVector (Dimension);
       if (this->DiskFlag == false)
-	this->InitialState = ComplexVector (vector, true);
+	this->InitialState = ComplexVector (vector);
       else
 	this->V1.WriteVector("vector.0");
       this->Index = 0;

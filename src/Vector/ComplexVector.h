@@ -136,8 +136,7 @@ class ComplexVector : public Vector
   // copy constructor from a real vector
   //
   // vector = vector to copy
-  // duplicateFlag = true if datas have to be duplicated
-  ComplexVector(const RealVector& vector, bool duplicateFlag = false);
+  ComplexVector(const RealVector& vector);
 
 #ifdef __MPI__
   // constructor from informations sent using MPI

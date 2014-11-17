@@ -119,7 +119,7 @@ void ComplexBasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(con
   this->V1 = vector;
   this->V2 = ComplexVector (Dimension);
   this->V3 = ComplexVector (Dimension);
-  this->InitialState = ComplexVector (vector, true);
+  this->InitialState = ComplexVector (vector);
   this->Index = 0;
   this->GroundStateFlag = false;
   this->TridiagonalizedMatrix.Resize(0, 0);

@@ -264,9 +264,8 @@ ComplexVector::ComplexVector(const ComplexVector& vector, bool duplicateFlag)
 // copy constructor from a real vector
 //
 // vector = vector to copy
-// duplicateFlag = true if datas have to be duplicated
 
-ComplexVector::ComplexVector(const RealVector& vector, bool duplicateFlag) 
+ComplexVector::ComplexVector(const RealVector& vector) 
 {
   this->Dimension = vector.Dimension;
   this->TrueDimension = vector.TrueDimension;
@@ -279,14 +278,8 @@ ComplexVector::ComplexVector(const RealVector& vector, bool duplicateFlag)
       this->Components = 0;
     }
   else
-    if (duplicateFlag == false)
-      {
-	this->Flag.Initialize();
-	this->Components = new Complex [this->TrueDimension + 1];
-      }
-    else
-      {
-	if (this->Dimension > 0)
+    {
+      if (this->Dimension > 0)
 	{
 	  this->Flag.Initialize();
 	  this->Components = new Complex [this->TrueDimension + 1]; 
@@ -306,7 +299,7 @@ ComplexVector::ComplexVector(const RealVector& vector, bool duplicateFlag)
 	  else
 	    this->Components = 0;
 	}
-      }
+    }
 }
 
 
