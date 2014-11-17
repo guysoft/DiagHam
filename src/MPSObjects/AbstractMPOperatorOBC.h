@@ -12,6 +12,9 @@ class MPSSite;
 class AbstractMPOperatorOBC : public AbstractHamiltonian
 {
  protected:
+
+  double *  LeftVector;
+  double * RightVector;
   unsigned int NbrNonZeroElements;
   double * ElementsValues;
   unsigned int * IndexValues;
@@ -27,7 +30,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   AbstractMPOperatorOBC ();
   ~AbstractMPOperatorOBC ();
   
-  virtual void InitializeTensorsElements() = 0;
+  virtual void InitializeTensorsElements(){ cout <<"using  not defined AbstractMPOperatorOBC::InitializeTensorsElements()"<<endl;}
 
   // global shift to apply to the diagonal matrix elements
   double HamiltonianShift;
@@ -36,8 +39,10 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
  public:
   
   virtual void ComputeL(Tensor3<double> & L);
-  
+  virtual void ComputeLCore(Tensor3<double> & L);
+
   virtual void ComputeR(Tensor3<double> & R);
+  virtual void ComputeRCore(Tensor3<double> & R);
   
 
   // set Hilbert space
@@ -60,6 +65,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // site = pointer to the siteto use 
   void SetDMRGFlag (bool newFlag){this->IDMRGFlag=newFlag;};
   
+
   // get Hilbert space on which Hamiltonian acts
   //
   // return value = pointer to used Hilbert space
@@ -107,11 +113,26 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelMultiplyCore(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
 
   virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelMultiplyTwoSitesCore(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
 
  virtual RealSymmetricMatrix& GetTwoSitesHamiltonian (RealSymmetricMatrix & M);
+
+  // multiply a vector by the current hamiltonian for a given range of indices 
+  // and store result in another vector, low level function (no architecture optimization)
+  //
+  // vSource = vector to be multiplied
+  // vDestination = vector where result has to be stored
+  // firstComponent = index of the first component to evaluate
+  // nbrComponent = number of components to evaluate
+  // return value = reference on vector where result has been stored
+  virtual RealVector& LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination, 
+				       int firstComponent, int nbrComponent);
 
  protected:
   

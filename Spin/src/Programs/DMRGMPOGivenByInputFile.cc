@@ -3,11 +3,15 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 
-#include "MPSObjects/MPOPeratorSixVertexModelTransferMatrixSquare.h"
+#include "MPSObjects/MPOPeratorDefinedByFiles.h"
 #include "MPSObjects/MPSSite.h"
 #include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
 
+
 #include "Options/Options.h"
+
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 #include "Matrix/RealMatrix.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -42,8 +46,10 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('L', "length", "length of the spin chain", 4);
   (*SystemGroup) += new  SingleIntegerOption ('D', "bond-dimension", "bond dimension", 20);
   (*SystemGroup) += new  SingleIntegerOption ('s', "sweep", "number of sweep to be performed", 4);
-  (*MiscGroup) += new  BooleanOption ('\n', "test-idmrg", "number of sweep to be performed", false);
-  (*MiscGroup) += new  BooleanOption ('\n', "print-tensor", "number of sweep to be performed", false);
+  (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
+  (*SystemGroup) += new SingleStringOption  ('\n', "vector-file", "name of the file containing the eigenstate to be displayed");
+
+  (*MiscGroup) += new  BooleanOption ('\n', "print-tensor", "print the tensor elements", false);
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -59,17 +65,44 @@ int main(int argc, char** argv)
       return 0;
     }
   
- 
+
+  MultiColumnASCIIFile TensorsElementsDefinition;
+  if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
+	{
+	  TensorsElementsDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	} 
+
+  if (TensorsElementsDefinition.GetNbrColumns() != 5)
+{
+  cout <<" The tensor file should have 5 columnns"<<endl;
+}
+
+  MultiColumnASCIIFile BoundaryVectorsDefinition;
+  if (BoundaryVectorsDefinition.Parse(Manager.GetString("vector-file")) == false)
+	{
+	  BoundaryVectorsDefinition.DumpErrors(cout) << endl;
+	  return -1;
+	} 
+
+  if ((BoundaryVectorsDefinition.GetNbrColumns() > 2) || ( BoundaryVectorsDefinition.GetNbrColumns() < 1 ) )
+  {
+      cout <<" The vector should be defined and cannot be more than 2"<<endl;
+  }
+
+
   if(Manager.GetBoolean("test-idmrg") == true)
   {
   
    return 0;
   }
+
  
   int NbrSites = Manager.GetInteger("length");
-  int PhysicalDimension = 2;
+  MPOPeratorDefinedByFiles TransferMatrix(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition);
+  int PhysicalDimension = TransferMatrix.GetPhysicalDimension();
   int MaxBondDimension = Manager.GetInteger("bond-dimension");;
-  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites);
+
  
 if(Manager.GetBoolean("print-tensor") == true)
   {

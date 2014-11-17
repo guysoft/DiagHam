@@ -2,4 +2,5 @@ SUBDIRS=
 
 noinst_LIBRARIES=libSpinMPSObjects.a
 
-libSpinMPSObjects_a_SOURCES=MPOPeratorSixVertexModelTransferMatrixSquare.cc
+libSpinMPSObjects_a_SOURCES=MPOPeratorSixVertexModelTransferMatrixSquare.cc \
+MPOPeratorDefinedByFiles.cc
