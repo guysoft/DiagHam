@@ -2413,6 +2413,7 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (RealVector& outputState, RealVe
     }
   ComplexVector TmpOutputState (outputState.GetLargeVectorDimension(), true); 
   this->SymmetrizeU1U1StateCore(TmpOutputState, TmpVectors, inputSpaces, nbrStates, firstComponent, nbrComponents);
+//   cout << TmpOutputState.Norm() << endl;
   for (long i = 0l; i < outputState.GetLargeVectorDimension(); ++i)
     outputState[i] = TmpOutputState[i].Re;
   delete[] TmpVectors;
@@ -2522,7 +2523,7 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (ComplexVector& outputState, Com
 		      Factorials[2] = Factorials[1];
 		      for (int k = 0; k <= TmpSpace3->TemporaryStateKyMax; ++k)
 			if (TmpSpace3->TemporaryState[k] > 1)
-			  Factorials[1].FactorialDivide(TmpSpace3->TemporaryState[k]);
+			  Factorials[2].FactorialDivide(TmpSpace3->TemporaryState[k]);
 		      Complex TmpCoefficient3 = TmpCoefficient2 * inputStates[2][j3];
 		      BosonOnTorusShort* TmpSpace4 = inputSpaces[3];            
 		      for (long j4 = 0l; j4 < TmpSpace4->LargeHilbertSpaceDimension; ++j4)
@@ -2557,7 +2558,7 @@ void BosonOnTorusShort::SymmetrizeU1U1StateCore (ComplexVector& outputState, Com
 				      Factorials[3].FactorialDivide(TmpSpace4->TemporaryState[k]);
 				  for (int k = 0; k <= this->TemporaryStateKyMax; ++k)
 				    if (this->TemporaryState[k] > 1)
-				      Factorials[3].FactorialMultiply(this->TemporaryState[k]);				  
+				      Factorials[3].FactorialMultiply(this->TemporaryState[k]);	
 				  outputState[TmpPos] += sqrt(Factorials[3].GetNumericalValue()) * TmpCoefficient3 * inputStates[3][j4];
 				}
 			    }
