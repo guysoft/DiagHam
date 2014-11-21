@@ -132,7 +132,7 @@ int main(int argc, char** argv)
   int* YMomenta;
   int* Multiplicities = NULL;
   int CenterX = 0;
-    int CenterY = 0;
+  int CenterY = 0;
     
   if (GenerateMomenta == false)
     {
@@ -178,24 +178,8 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      if (NbrParticles&1)
-		{
-		  CenterX=0;
-		  CenterY=0;
-		}
-	      else
-		{
-		  if ((NbrParticles/MomentumModulo*MaxMomentum/MomentumModulo)&1) // p*q odd?
-		    {
-		      CenterX = MomentumModulo/2;
-		      CenterY = MomentumModulo/2;
-		    }
-		  else
-		    {
-		      CenterX = 0;
-		      CenterY = 0;
-		    }
-		}
+	      CenterX=0;
+	      CenterY=0;
 	      if (XRatio == 1.0)
 		{
 		  NbrMomenta=0;
