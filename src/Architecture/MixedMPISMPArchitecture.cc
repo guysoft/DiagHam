@@ -59,11 +59,13 @@ using std::endl;
 //
 // clusterFileName = name of the file that describes the cluster, if none assume one cpu per MPI node. The file should be at least accessible by the master mode
 // logFile = name of the optional log file to allow code profiling on MPI architecture
+// automaticLoadBalancing = flag that indicates if automatic load balancing have to be done, overriding any manual load balancing
 
-MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* logFile)
+MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* logFile, bool automaticLoadBalancing)
 {
   this->PerformanceIndex = 1.0;
   this->ArchitectureID = AbstractArchitecture::MixedMPISMP;
+  this->AutomaticLoadBalancing = automaticLoadBalancing;
 #ifdef __MPI__
   MPI::Init();
   this->NbrMPINodes = MPI::COMM_WORLD.Get_size();

@@ -83,6 +83,7 @@ void ArchitectureManager::AddOptionGroup(OptionManager* manager)
   (*ParallelizationGroup) += new SingleStringOption ('\n', "mpi-smp", "enable both MPI and SMP mode, the name file describing the cluster has to be passed as argument");
 #endif
   (*ParallelizationGroup) += new SingleStringOption  ('\n', "cluster-profil", "enable cluster profiling, the name of the log file  has to be passed as argument");  
+  (*ParallelizationGroup) += new BooleanOption ('\n', "mpi-autoloadbalancing", "use automatic load balancing, overriding any manual load balancing");
 #endif
   
 }
@@ -103,6 +104,7 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 #ifdef __MPI__
       bool MPIFlag = this->Options->GetBoolean("mpi");
       char* MPILogFile = this->Options->GetString("cluster-profil");
+      bool AutomaticLoadBalancing = this->Options->GetBoolean("mpi-autoloadbalancing");
 #ifdef __SMP__
       if (this->Options->GetString("mpi-smp") != 0)
 	{
@@ -116,18 +118,19 @@ AbstractArchitecture* ArchitectureManager::GetArchitecture()
 #else      
       bool MPIFlag = false;
       char* MPILogFile = 0;
+      bool AutomaticLoadBalancing = false;
 #endif
       int NbrProcessor = (this->Options->GetInteger("processors"));
       if (SMPFlag == false)
 	if (MPIFlag == false)
 	  this->Architecture = new MonoProcessorArchitecture;
 	else
-	  this->Architecture = new SimpleMPIArchitecture(MPILogFile);
+	  this->Architecture = new SimpleMPIArchitecture(MPILogFile, AutomaticLoadBalancing);
       else
 	if (MPIFlag == false)
 	  this->Architecture = new SMPArchitecture(NbrProcessor, this->Options->GetString("smp-profil"));
 	else
-	  this->Architecture = new MixedMPISMPArchitecture(this->Options->GetString("mpi-smp"), MPILogFile);
+	  this->Architecture = new MixedMPISMPArchitecture(this->Options->GetString("mpi-smp"), MPILogFile, AutomaticLoadBalancing);
     }
   return this->Architecture;
 }

@@ -62,7 +62,8 @@ class MixedMPISMPArchitecture : public SimpleMPIArchitecture
   //
   // clusterFileName = name of the file that describes the cluster, if none assume one cpu per MPI node. The file should be at least accessible by the master mode
   // logFile = name of the optional log file to allow code profiling on MPI architecture
-  MixedMPISMPArchitecture(char* clusterFileName = 0, char* logFile = 0);
+  // automaticLoadBalancing = flag that indicates if automatic load balancing have to be done, overriding any manual load balancing
+  MixedMPISMPArchitecture(char* clusterFileName = 0, char* logFile = 0, bool automaticLoadBalancing = false);
   
   // destructor
   //

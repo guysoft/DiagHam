@@ -158,7 +158,7 @@ void AbstractQHEOnSphereFullHamiltonian::ShiftHamiltonian (double shift)
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnSphereFullHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-											       int firstComponent, int nbrComponent)
+								    int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -249,7 +249,7 @@ RealVector& AbstractQHEOnSphereFullHamiltonian::LowLevelAddMultiply(RealVector& 
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnSphereFullHamiltonian::LowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-												       int firstComponent, int nbrComponent)
+									    int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -317,7 +317,7 @@ RealVector* AbstractQHEOnSphereFullHamiltonian::LowLevelMultipleAddMultiply(Real
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnSphereFullHamiltonian::LowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-															  int firstComponent, int nbrComponent)
+											       int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();
@@ -382,7 +382,7 @@ RealVector* AbstractQHEOnSphereFullHamiltonian::LowLevelMultipleAddMultiplyParti
 // return value = reference on vector where result has been stored
 
 RealVector& AbstractQHEOnSphereFullHamiltonian::HermitianLowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-													int firstComponent, int nbrComponent)
+									     int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -482,7 +482,7 @@ RealVector& AbstractQHEOnSphereFullHamiltonian::HermitianLowLevelAddMultiply(Rea
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnSphereFullHamiltonian::HermitianLowLevelMultipleAddMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-														int firstComponent, int nbrComponent)
+										     int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   if (this->FastMultiplicationFlag == false)
@@ -560,7 +560,7 @@ RealVector* AbstractQHEOnSphereFullHamiltonian::HermitianLowLevelMultipleAddMult
 // return value = pointer to the array of vectors where result has been stored
 
 RealVector* AbstractQHEOnSphereFullHamiltonian::HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(RealVector* vSources, RealVector* vDestinations, int nbrVectors, 
-																   int firstComponent, int nbrComponent)
+													int firstComponent, int nbrComponent)
 {
   int LastComponent = firstComponent + nbrComponent;
   ParticleOnSphere* TmpParticles = (ParticleOnSphere*) this->Particles->Clone();

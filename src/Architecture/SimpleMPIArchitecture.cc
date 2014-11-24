@@ -62,16 +62,19 @@ SimpleMPIArchitecture::SimpleMPIArchitecture()
 {
   this->MinimumIndices = 0;
   this->MaximumIndices = 0;
+  this->AutomaticLoadBalancing = false;
 }
 
 // constructor
 //
 // logFile = name of the optional log file to allow code profiling on MPI architecture
+// automaticLoadBalancing = flag that indicates if automatic load balancing have to be done, overriding any manual load balancing
 
-SimpleMPIArchitecture::SimpleMPIArchitecture(char* logFile)
+SimpleMPIArchitecture::SimpleMPIArchitecture(char* logFile, bool automaticLoadBalancing)
 {
   this->PerformanceIndex = 1.0;
   this->ArchitectureID = AbstractArchitecture::SimpleMPI;
+  this->AutomaticLoadBalancing = automaticLoadBalancing;
 #ifdef __MPI__
   MPI::Init();
   this->NbrMPINodes = MPI::COMM_WORLD.Get_size();
@@ -172,6 +175,130 @@ void SimpleMPIArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
   maxIndex = this->MaximumIndex;
 }
   
+// get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+//
+// mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// return value = true if the range has been optimized
+
+bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex)
+{
+  if (this->AutomaticLoadBalancing == false)
+    {
+      this->GetTypicalRange(minIndex, maxIndex);
+      return false;
+    }
+  if (this->MasterNodeFlag == true)
+    { 
+      int* TmpNbrOperationPerIndex = new int [this->MaximumIndices[this->NbrMPINodes - 1] - this->MinimumIndices[0] + 1l];
+      long TmpIndex = 0;
+      long EffectiveDimension = this->MaximumIndices[0] - this->MinimumIndices[0] + 1l;
+      long TotalEffectiveDimension = EffectiveDimension;
+      for (long i = 0l; i < EffectiveDimension; ++i)
+	{
+	  TmpNbrOperationPerIndex[this->MinimumIndices[0] + i] = nbrOperationPerIndex[i];
+	}  
+      TmpIndex += EffectiveDimension;      
+      for (int i = 1; i < NbrMPINodes; ++i)
+	{
+	  long TmpNbrElements = this->MaximumIndices[i] - this->MinimumIndices[i] + 1l;
+	  this->ReceiveFromSlave(i - 1, TmpNbrOperationPerIndex + this->MinimumIndices[i], TmpNbrElements);
+	  TotalEffectiveDimension += TmpNbrElements;
+	}
+      long TotalNbrOperations = 0l;
+      for (long i = 0l; i < TotalEffectiveDimension; ++i)
+	{
+	  TotalNbrOperations += (long) TmpNbrOperationPerIndex[i];
+	}
+      char* TmpString = new char [512];
+      sprintf (TmpString, "total number of operations = %ld", TotalNbrOperations);
+      this->AddToLog(TmpString, this->MasterNodeFlag);    
+      long* TmpMinimumIndices = new long[this->NbrMPINodes];
+      long* TmpMaximumIndices = new long[this->NbrMPINodes];
+      TmpMinimumIndices[0] = this->MinimumIndices[0];
+      TmpMaximumIndices[this->NbrMPINodes - 1] = this->MaximumIndices[this->NbrMPINodes - 1];
+      long TmpMininumIndex = TmpMinimumIndices[0];
+      long TmpMaximumIndex = TmpMaximumIndices[this->NbrMPINodes - 1];
+      for (int i = 0; i < (this->NbrMPINodes - 1); ++i)
+	{      
+	  long LocalNbrOperations = (long) ((((double) TotalNbrOperations) * this->ClusterPerformanceArray[i]));
+	  if (LocalNbrOperations == 0l)
+	    LocalNbrOperations = 1l;
+	  long TrueLocalNbrOperations = 0l;
+	  while ((TmpMininumIndex <= TmpMaximumIndex) && (TrueLocalNbrOperations < LocalNbrOperations))
+	    {
+	      TrueLocalNbrOperations += (long) TmpNbrOperationPerIndex[TmpMininumIndex];
+	      ++TmpMininumIndex;
+	    }
+	  TmpMaximumIndices[i] = TmpMininumIndex - 1l;
+	  TmpMinimumIndices[i + 1] = TmpMininumIndex;
+	  sprintf (TmpString, "number of operations on node %d = %ld", i, TrueLocalNbrOperations);	  
+	  this->AddToLog(TmpString, this->MasterNodeFlag);     	  
+	}
+      long TrueLocalNbrOperations = 0;
+      while (TmpMininumIndex <= TmpMaximumIndex)
+	{
+	  TrueLocalNbrOperations += TmpNbrOperationPerIndex[TmpMininumIndex];
+	  ++TmpMininumIndex;
+	}
+      sprintf (TmpString, "number of operations on node %d = %ld", (this->NbrMPINodes - 1), TrueLocalNbrOperations);	  
+      this->AddToLog(TmpString, this->MasterNodeFlag);     	  
+      delete[] this->MinimumIndices;
+      delete[] this->MaximumIndices;
+      this->MinimumIndices = TmpMinimumIndices;
+      this->MaximumIndices = TmpMaximumIndices;
+#ifdef __MPI__      
+      MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+      MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+#endif
+      for (int i = 1; i < this->NbrMPINodes; ++i)
+	{
+	  this->SendToSlaves(i - 1, TmpNbrOperationPerIndex + this->MinimumIndices[i], 
+			     this->MaximumIndices[i] - this->MinimumIndices[i] + 1l);      
+	}
+      delete[] nbrOperationPerIndex;
+      nbrOperationPerIndex = new int [this->MaximumIndices[0] - this->MinimumIndices[0] + 1l];      
+      for (long i = this->MinimumIndices[0]; i <= this->MaximumIndices[0]; ++i)
+	nbrOperationPerIndex[i - this->MinimumIndices[0]] = TmpNbrOperationPerIndex[i];
+      delete[] TmpNbrOperationPerIndex;
+      delete[] TmpString;
+    }
+  else
+    {
+      this->SendToMaster(nbrOperationPerIndex, this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l);
+      int TmpNbrValues = 0;
+      delete[] nbrOperationPerIndex;
+#ifdef __MPI__      
+      MPI::COMM_WORLD.Bcast(this->MinimumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+      MPI::COMM_WORLD.Bcast(this->MaximumIndices, 2 * this->NbrMPINodes, MPI::INT, 0);
+#endif
+      nbrOperationPerIndex = new int [this->MaximumIndex - this->MinimumIndex + 1l];
+      long TmpNbrElements = this->MaximumIndices[this->MPIRank] - this->MinimumIndices[this->MPIRank] + 1l;
+      this->ReceiveFromMaster(nbrOperationPerIndex, TmpNbrElements);      
+    }
+  this->MinimumIndex = this->MinimumIndices[this->MPIRank];
+  this->MaximumIndex = this->MaximumIndices[this->MPIRank];
+  minIndex = this->MinimumIndex;
+  maxIndex = this->MaximumIndex;
+}
+  
+// get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+//
+// mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// memoryPerOperation = memory required per operation (in bytes)
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// return value = true if the range has been optimized
+
+bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, int memoryPerOperation, long& minIndex, long& maxIndex)
+{
+  cout << "Warning, SimpleMPIArchitecture::GetOpimizedTypicalRange with memory claculation is not fully supported" << endl;
+  return this->GetOptimizedTypicalRange (nbrOperationPerIndex, minIndex, maxIndex);
+}
+
 // get the ID of the node that handles a given index
 //
 // index = index to check
@@ -406,6 +533,22 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, int& nbrValues)
 #endif  
 }
 
+// receive an integer array from master node to the given slave node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+
+bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, long& nbrValues)
+{
+#ifdef __MPI__
+  MPI::COMM_WORLD.Recv(values, nbrValues, MPI::INT, 0, 1);
+  return true;
+#else
+  return false;
+#endif  
+}
+
 // send an integer array from the current slave node to master node
 // 
 // values = array of integesr to broadcast
@@ -413,6 +556,25 @@ bool SimpleMPIArchitecture::ReceiveFromMaster(int* values, int& nbrValues)
 // return value = true if no error occured
   
 bool SimpleMPIArchitecture::SendToMaster(int* values, int nbrValues)
+{
+#ifdef __MPI__
+  if (!this->MasterNodeFlag)
+    {
+      int Acknowledge = 1;
+      MPI::COMM_WORLD.Send(values, nbrValues, MPI::INT, 0, 1); 
+      return true;
+    }
+#endif
+  return false;
+}
+
+// send an integer array from the current slave node to master node
+// 
+// values = array of integesr to broadcast
+// nbrValues = number of element in the array
+// return value = true if no error occured
+  
+bool SimpleMPIArchitecture::SendToMaster(int* values, long nbrValues)
 {
 #ifdef __MPI__
   if (!this->MasterNodeFlag)
@@ -440,25 +602,6 @@ bool SimpleMPIArchitecture::ReceiveFromSlave(int slaveID, int* values, int& nbrV
 #else
   return false;
 #endif  
-}
-
-// send an integer array from the current slave node to master node
-// 
-// values = array of integesr to broadcast
-// nbrValues = number of element in the array
-// return value = true if no error occured
-  
-bool SimpleMPIArchitecture::SendToMaster(int* values, long nbrValues)
-{
-#ifdef __MPI__
-  if (!this->MasterNodeFlag)
-    {
-      int Acknowledge = 1;
-      MPI::COMM_WORLD.Send(values, nbrValues, MPI::INT, 0, 1); 
-      return true;
-    }
-#endif
-  return false;
 }
 
 // receive an integer array from master node to the current slave node
@@ -1010,6 +1153,8 @@ char* SimpleMPIArchitecture::GetTemporaryFileName()
 
 bool SimpleMPIArchitecture::AddToLog(const char * message, bool masterFlag)
 {
+  if (this->LogFile == 0)
+    return true;
 #ifdef __MPI__
   if (this->MasterNodeFlag == false)
     {

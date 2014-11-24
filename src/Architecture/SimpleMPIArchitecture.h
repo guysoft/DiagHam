@@ -87,6 +87,9 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // flag to indicate if the log file option is activated
   bool VerboseModeFlag;
 
+  // flag that indicates if automatic load balancing have to be done, overriding any manual load balancing
+  bool AutomaticLoadBalancing;
+
  public:
   
   enum SimpleMPISignals{
@@ -101,7 +104,8 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // constructor
   //
   // logFile = name of the optional log file to allow code profiling on MPI architecture
-  SimpleMPIArchitecture(char* logFile);
+  // automaticLoadBalancing = flag that indicates if automatic load balancing have to be done, overriding any manual load balancing
+  SimpleMPIArchitecture(char* logFile, bool automaticLoadBalancing);
   
   // destructor
   //
@@ -114,6 +118,25 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   //            architecture doesn't support this feature)
   virtual void GetTypicalRange (long& minIndex, long& maxIndex);
   
+  // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+  //
+  // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  // return value = true if the range has been optimized
+  virtual bool GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex);
+  
+  // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+  //
+  // mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+  // memoryPerOperation = memory required per operation (in bytes)
+  // minIndex = reference on the minimum index on which the local architecture can act
+  // maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+  //            architecture doesn't support this feature)
+  // return value = true if the range has been optimized
+  virtual bool GetOptimizedTypicalRange (int*& nbrOperationPerIndex, int memoryPerOperation, long& minIndex, long& maxIndex);
+
   // get the ID of the node that handles a given index
   //
   // index = index to check
@@ -206,12 +229,26 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // return value = true if no error occured
   virtual bool ReceiveFromMaster(int* values, int& nbrValues);
 
+  // receive an integer array from master node to the current slave node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool ReceiveFromMaster(int* values, long& nbrValues);
+
   // send an integer array from the current slave node to master node
   // 
   // values = array of integesr to broadcast
   // nbrValues = number of element in the array
   // return value = true if no error occured
   virtual bool SendToMaster(int* values, int nbrValues);
+
+  // send an integer array from the current slave node to master node
+  // 
+  // values = array of integesr to broadcast
+  // nbrValues = number of element in the array
+  // return value = true if no error occured
+  virtual bool SendToMaster(int* values, long nbrValues);
 
   // receive an integer array from master node to the current slave node
   // 
@@ -220,13 +257,6 @@ class SimpleMPIArchitecture : public AbstractArchitecture
   // nbrValues = number of element in the array
   // return value = true if no error occured
   virtual bool ReceiveFromSlave(int slaveID, int* values, int& nbrValues);
-
-  // send an integer array from the current slave node to master node
-  // 
-  // values = array of integesr to broadcast
-  // nbrValues = number of element in the array
-  // return value = true if no error occured
-  virtual bool SendToMaster(int* values, long nbrValues);
 
   // receive an integer array from master node to the current slave node
   // 

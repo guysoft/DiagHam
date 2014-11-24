@@ -491,7 +491,7 @@ inline void AbstractQHEOnSphereFullHamiltonian::HermitianEvaluateMNTwoBodyAddMul
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
 inline void AbstractQHEOnSphereFullHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphere* particles, int index, RealVector* vSources, 
-														       RealVector* vDestinations, int nbrVectors, double* tmpCoefficients)
+											       RealVector* vDestinations, int nbrVectors, double* tmpCoefficients)
 {
   double Coefficient;
   double Coefficient3;
@@ -552,7 +552,7 @@ inline void AbstractQHEOnSphereFullHamiltonian::HermitianEvaluateMNTwoBodyAddMul
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-														     int* indexArray, double* coefficientArray, long& position)
+											     int* indexArray, double* coefficientArray, long& position)
 {
   int Index;
   double Coefficient = 0.0;
@@ -674,7 +674,7 @@ inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyAddMultiplyComp
 // nbrVectors = number of vectors that have to be evaluated together
 
 inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyAddMultiplyComponent(ParticleOnSphere* particles, int firstComponent, int lastComponent,
-													      int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors)
+										      int step, RealVector* vSources, RealVector* vDestinations, int nbrVectors)
 {
   if (this->OneBodyInteractionFactors != 0) 
     {
@@ -717,7 +717,7 @@ inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyAddMultiplyComp
 // position = reference on the current position in arrays indexArray and coefficientArray
 
 inline void AbstractQHEOnSphereFullHamiltonian::EvaluateMNOneBodyFastMultiplicationComponent(ParticleOnSphere* particles, int index, 
-														     int* indexArray, double* coefficientArray, long& position)
+											     int* indexArray, double* coefficientArray, long& position)
 {
   if (this->OneBodyTermFlag == true)
     {

@@ -66,6 +66,35 @@ void AbstractArchitecture::GetTypicalRange (long& minIndex, long& maxIndex)
   maxIndex = this->HilbertSpaceDimension - 1;
 }
   
+// get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+//
+// mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// return value = true if the range has been optimized
+
+bool AbstractArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, long& minIndex, long& maxIndex)
+{
+  this->GetTypicalRange (minIndex, maxIndex);
+  return false;
+}
+  
+// get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
+//
+// mbrOperationPerIndex = reference on the number of calculations per index. If the return value is true, a new array will be allocated
+// memoryPerOperation = memory required per operation (in bytes)
+// minIndex = reference on the minimum index on which the local architecture can act
+// maxIndex = reference on the maximum index on which the local architecture can act (= minIndex is the 
+//            architecture doesn't support this feature)
+// return value = true if the range has been optimized
+
+bool AbstractArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex, int memoryPerOperation, long& minIndex, long& maxIndex)
+{
+  this->GetTypicalRange (minIndex, maxIndex);
+  return false;
+}
+  
 // get a new real vector with memory alloaction depending on the architecture
 //
 // return value = pointer to the requested vector (zero if an error occurs)
