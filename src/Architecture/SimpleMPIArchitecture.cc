@@ -214,7 +214,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 	}
       char* TmpString = new char [512];
       sprintf (TmpString, "total number of operations = %ld", TotalNbrOperations);
-      this->AddToLog(TmpString, this->MasterNodeFlag);    
+      if (this->LogFile != 0)
+	this->AddToLog(TmpString, true);    
       long* TmpMinimumIndices = new long[this->NbrMPINodes];
       long* TmpMaximumIndices = new long[this->NbrMPINodes];
       TmpMinimumIndices[0] = this->MinimumIndices[0];
@@ -235,7 +236,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 	  TmpMaximumIndices[i] = TmpMininumIndex - 1l;
 	  TmpMinimumIndices[i + 1] = TmpMininumIndex;
 	  sprintf (TmpString, "number of operations on node %d = %ld", i, TrueLocalNbrOperations);	  
-	  this->AddToLog(TmpString, this->MasterNodeFlag);     	  
+	  if (this->LogFile != 0)
+	    this->AddToLog(TmpString, true);     	  
 	}
       long TrueLocalNbrOperations = 0;
       while (TmpMininumIndex <= TmpMaximumIndex)
@@ -244,7 +246,8 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
 	  ++TmpMininumIndex;
 	}
       sprintf (TmpString, "number of operations on node %d = %ld", (this->NbrMPINodes - 1), TrueLocalNbrOperations);	  
-      this->AddToLog(TmpString, this->MasterNodeFlag);     	  
+      if (this->LogFile != 0)
+	this->AddToLog(TmpString, true);     	  
       delete[] this->MinimumIndices;
       delete[] this->MaximumIndices;
       this->MinimumIndices = TmpMinimumIndices;
@@ -1153,8 +1156,6 @@ char* SimpleMPIArchitecture::GetTemporaryFileName()
 
 bool SimpleMPIArchitecture::AddToLog(const char * message, bool masterFlag)
 {
-  if (this->LogFile == 0)
-    return true;
 #ifdef __MPI__
   if (this->MasterNodeFlag == false)
     {
