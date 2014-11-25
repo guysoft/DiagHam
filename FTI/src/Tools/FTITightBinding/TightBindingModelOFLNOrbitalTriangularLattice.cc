@@ -115,8 +115,10 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 	  int Index = this->GetLinearizedMomentumIndex(kx, ky);
 	  if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 	    {
-	      K1 = this->KxFactor*(((double) kx) + this->GammaX);
-	      K2 = this->KyFactor*(((double) ky) + this->GammaY);
+	      // K1 = this->KxFactor*(((double) kx) + this->GammaX);
+	        K1 = this->KxFactor*((double) kx);
+                K2 = this->KyFactor*((double) ky);
+	      //K2 = this->KyFactor*(((double) ky) + this->GammaY);
 	      
 	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
 	      cout<<"this->NbrBands"<<this->NbrBands<<endl;
@@ -129,8 +131,14 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			{
 			  double MomentaY = K2-M_PI*(this->NbrStep-1) + 2*M_PI*t;
 			  double MomentaX = this->NbrInternalDegree*(-M_PI*(this->NbrStep -1) + 2*M_PI*p + K1) + 2*M_PI*Spin;
+
+			  double FluxYterm = (this->KyFactor*this->GammaY) * (this->KyFactor*this->GammaY) + 2*MomentaY*this->KyFactor*this->GammaY;
+
+double FluxXterm = (this->KxFactor*this->GammaX) * (this->KxFactor*this->GammaX) + 2*MomentaY*this->KxFactor*this->GammaX*this->NbrInternalDegree;
+
+
 			  int IntermediateIndex = this->GetIntermediateLinearizedIndices(p, t, Spin);
-			  TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY-MomentaX*MomentaY ));
+			  TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY-MomentaX*MomentaY + FluxXterm + FluxYterm ));
 			  
 			  int IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
