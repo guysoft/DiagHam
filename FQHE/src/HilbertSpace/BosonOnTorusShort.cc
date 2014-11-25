@@ -41,6 +41,7 @@
 #include <math.h>
 #include <algorithm>
 #include <set>
+#include <limits>
 
 
 using std::cout;
@@ -2005,9 +2006,9 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVe
       if (TmpVectors[i].GetVectorDimension() != 0)	
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm != 0.0)
+	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
 	    {
-	      TmpVectors[i] /= TmpNorm;
+// 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
 	      kySectors[NbrGeneratedSectors] = i;
 	      ++NbrGeneratedSectors;	  
@@ -2050,7 +2051,7 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (Comple
       if (TmpVectors[i].GetVectorDimension() != 0)	
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm != 0.0)
+	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
 	    {
 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
@@ -2166,7 +2167,7 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector&
       if (TmpVectors[i].GetVectorDimension() != 0)
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm != 0.0)
+	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
 	    {
 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
@@ -2211,7 +2212,7 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVect
       if (TmpVectors[i].GetVectorDimension() != 0)
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm != 0.0)
+	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
 	    {
 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
