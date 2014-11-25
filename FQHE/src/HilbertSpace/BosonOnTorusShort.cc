@@ -1859,7 +1859,7 @@ RealVector BosonOnTorusShort::SymmetrizeU1U1SingleState (RealVector& leftVector,
   
   if ( unnormalizedBasisFlag == false )
   {
-    if (SymmetrizedVector.Norm() != 0)
+    if (SymmetrizedVector.Norm() > std::numeric_limits<double>::epsilon())
       SymmetrizedVector /= SymmetrizedVector.Norm();
   }
   cout << this->TotalKy << " " << SymmetrizedVector.Norm() << endl;
@@ -1982,7 +1982,7 @@ void BosonOnTorusShort::SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVe
 // architecture = pointer to the architecture
 // return value = symmetrized state
 
-int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
 {
   int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
   ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
@@ -2006,9 +2006,10 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVe
       if (TmpVectors[i].GetVectorDimension() != 0)	
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
 	    {
-// 	      TmpVectors[i] /= TmpNorm;
+	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
 	      kySectors[NbrGeneratedSectors] = i;
 	      ++NbrGeneratedSectors;	  
@@ -2028,7 +2029,7 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVe
 // architecture = pointer to the architecture
 // return value = symmetrized state
 
-int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
 {
   int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
   ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
@@ -2051,7 +2052,8 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitals (Comple
       if (TmpVectors[i].GetVectorDimension() != 0)	
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
 	    {
 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
@@ -2143,7 +2145,7 @@ void BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (C
 // architecture = pointer to the architecture
 // return value = symmetrized state
 
-int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
 {
   int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
   ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
@@ -2167,7 +2169,8 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector&
       if (TmpVectors[i].GetVectorDimension() != 0)
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
 	    {
 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
@@ -2189,7 +2192,7 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector&
 // architecture = pointer to the architecture
 // return value = symmetrized state
 
-int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture)
+int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
 {
   int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
   ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
@@ -2212,7 +2215,8 @@ int BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVect
       if (TmpVectors[i].GetVectorDimension() != 0)
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
-	  if (TmpNorm > (std::numeric_limits<double>::epsilon()))
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
 	    {
 	      TmpVectors[i] /= TmpNorm;
 	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
@@ -2368,13 +2372,16 @@ ComplexVector& BosonOnTorusShort::CoreC4Rotation (ComplexVector& inputState, Par
 // architecture = pointer to the architecture 
 // return value = symmetrized state
 
-RealVector BosonOnTorusShort::SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture)
+RealVector BosonOnTorusShort::SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, double precision, AbstractArchitecture* architecture)
 {
   RealVector SymmetrizedVector (this->LargeHilbertSpaceDimension, true);
   unsigned long firstComponent = 0;
   unsigned long nbrComponent = inputSpaces[0]->GetHilbertSpaceDimension();
   this->SymmetrizeU1U1StateCore (SymmetrizedVector, inputStates, inputSpaces, nbrStates, firstComponent, nbrComponent);
-  SymmetrizedVector /= SymmetrizedVector.Norm();
+  double TmpNorm = SymmetrizedVector.Norm();
+  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+  if (TmpNorm > precision)
+    SymmetrizedVector /= TmpNorm;
   return SymmetrizedVector;
 }
 
@@ -2386,13 +2393,16 @@ RealVector BosonOnTorusShort::SymmetrizeU1U1State (RealVector* inputStates, Boso
 // architecture = pointer to the architecture 
 // return value = symmetrized state
 
-ComplexVector BosonOnTorusShort::SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture)
+ComplexVector BosonOnTorusShort::SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, double precision, AbstractArchitecture* architecture)
 {
   ComplexVector SymmetrizedVector (this->LargeHilbertSpaceDimension, true);
   unsigned long firstComponent = 0;
   unsigned long nbrComponent = inputSpaces[0]->GetHilbertSpaceDimension();
   this->SymmetrizeU1U1StateCore (SymmetrizedVector, inputStates, inputSpaces, nbrStates, firstComponent, nbrComponent);
-  SymmetrizedVector /= SymmetrizedVector.Norm();
+  double TmpNorm = SymmetrizedVector.Norm();
+  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+  if (TmpNorm > precision)
+    SymmetrizedVector /= TmpNorm;
   return SymmetrizedVector;
 }  
 

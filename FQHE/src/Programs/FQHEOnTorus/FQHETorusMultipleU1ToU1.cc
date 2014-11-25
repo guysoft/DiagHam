@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <limits>
 
 using std::cout;
 using std::endl;
@@ -54,6 +55,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('a', "sym-y", "apply antiperiodic conditions with respect to Ly before symmetrizing");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ky-momentum", "compute the vector with given ky in mode sym-y", 0);
+  
+  (*SystemGroup) += new SingleDoubleOption ('\n', "precision", "if the norm of the symmetrized vector is below this threshold, it is considered to be zero", std::numeric_limits<double>::epsilon());
 //   (*SystemGroup) += new SingleBooleanOption  ('x', "magnetic-translation", "vector file that corresponds to the second component");
   
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file names");
@@ -91,6 +94,7 @@ int main(int argc, char** argv)
   bool UnnormalizedBasisFlag = false;
   bool SingleStateFlag = Manager.GetBoolean("single-state");
   int NbrStates = 1;
+  double Precision = Manager.GetDouble("precision");
 
   if (Manager.GetString("state-1") != 0)
     {  
@@ -251,7 +255,7 @@ int main(int argc, char** argv)
 	      sprintf (OutputFileName, "bosons_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
 	    }
 	  
-      	  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Architecture.GetArchitecture());
+      	  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision, Architecture.GetArchitecture());
 	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
 	      cout << "error while writing output state " << OutputFileName << endl;
@@ -276,11 +280,11 @@ int main(int argc, char** argv)
 	  int NbrKySectors = 0;
 	  if (Manager.GetBoolean("sym-y") == false)
 	    {
-	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture()); 
+	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
 	    }
 	  else
 	    {
-	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture()); 	      
+	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(),  Precision); 	      
 	    }
 	  int NbrGeneratedStates = 0;
 	  if (Manager.GetString("output-file") != 0)
@@ -364,7 +368,7 @@ int main(int argc, char** argv)
 	    }
 	  
 	  	  
-	  ComplexVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Architecture.GetArchitecture());
+	  ComplexVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision,  Architecture.GetArchitecture());
 
 	  if (OutputState.WriteVector(OutputFileName) == false)
 	    {
@@ -390,11 +394,11 @@ int main(int argc, char** argv)
 	  int NbrKySectors = 0;
 	  if (Manager.GetBoolean("sym-y") == false)
 	    {
-	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture()); 
+	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
 	    }
 	  else
 	    {
-	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture()); 	      
+	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 	      
 	    }
 	  int NbrGeneratedStates = 0;
 	  if (Manager.GetString("output-file") != 0)

@@ -38,6 +38,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 
 #include <iostream>
+#include <limits>
 
 
 class BosonOnTorusShort :  public ParticleOnTorus
@@ -325,7 +326,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // nbrStates = number of states to symmetrize
   // architecture = pointer to the architecture 
   // return value = symmetrized state
-  virtual RealVector SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture = 0);
+  virtual RealVector SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, double precision = std::numeric_limits<double>::epsilon(),  AbstractArchitecture* architecture = 0);
   
   // symmetrize a product of several uncoupled states 
   //
@@ -334,7 +335,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // nbrStates = number of states to symmetrize
   // architecture = pointer to the architecture 
   // return value = symmetrized state
-  virtual ComplexVector SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, AbstractArchitecture* architecture = 0);
+  virtual ComplexVector SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, double precision = std::numeric_limits<double>::epsilon(),  AbstractArchitecture* architecture = 0);
   
   // symmetrize a product of several uncoupled states 
   //
@@ -372,7 +373,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // leftSpace = pointer to the Hilbert space
   // groupNeighbouringOrbitals = group neighbouring orbitals instead of grouping orbitals separated by Nphi
   // return value = symmetrized state
-  virtual ComplexVector SymmetrizeU1U1SingleState (ComplexVector& leftVector, BosonOnTorusShort* leftSpace, bool groupNeighbouringOrbitals, AbstractArchitecture* architecture = 0);
+  virtual ComplexVector SymmetrizeU1U1SingleState (ComplexVector& leftVector, BosonOnTorusShort* leftSpace, bool groupNeighbouringOrbitals,  AbstractArchitecture* architecture = 0);
   
   
   // symmetrize a vector with even number of orbitals
@@ -401,7 +402,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
   // architecture = pointer to the architecture
   // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture);
+  int SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
 
   // symmetrize a vector by grouping neighbouring orbitals
   //
@@ -412,7 +413,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // architecture = pointer to the architecture
   // return value = symmetrized state  
   virtual int SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, 
-								 int*& kySectors, AbstractArchitecture* architecture);
+								 int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
 
   // symmetrize a vector by grouping distant and equally separated orbitals
   //
@@ -422,7 +423,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
   // architecture = pointer to the architecture
   // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture);
+  int SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
 
   // symmetrize a vector by grouping distant and equally separated orbitals
   //
@@ -432,7 +433,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
   // architecture = pointer to the architecture
   // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture);
+  int SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
 
  protected:
 
