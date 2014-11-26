@@ -108,6 +108,7 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
   long MaxStateIndex = minStateIndex + nbrStates;
   double K1;
   double K2;
+  double TwoPi = 2*M_PI;
   for (int kx = 0; kx < this->NbrSiteX ; ++kx)
     {
       for (int ky = 0; ky <  this->NbrSiteY; ++ky)
@@ -129,12 +130,17 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 		    {
 		      for (int Spin = 0; Spin < this->NbrInternalDegree; Spin++)
 			{
-			  double MomentaY = K2-M_PI*(this->NbrStep-1) + 2*M_PI*t;
-			  double MomentaX = this->NbrInternalDegree*(-M_PI*(this->NbrStep -1) + 2*M_PI*p + K1) + 2*M_PI*Spin;
+			  double MomentaY = K2-M_PI*(this->NbrStep-1) + 2.0*M_PI*t;
+			  double MomentaX = this->NbrInternalDegree*(-M_PI*(this->NbrStep -1) + 2.0*M_PI*p + K1) + 2.0*M_PI*Spin;
+                          double FluxYterm = (this->KxFactor* this->GammaY*this->NbrInternalDegree);
+			  FluxYterm*= FluxYterm;
+	                  FluxYterm += (this->KxFactor* this->GammaY*this->NbrInternalDegree*(2.0*MomentaX-MomentaY));
 
-			  double FluxYterm = (this->KyFactor*this->GammaY) * (this->KyFactor*this->GammaY) + 2*MomentaY*this->KyFactor*this->GammaY;
 
-double FluxXterm = (this->KxFactor*this->GammaX) * (this->KxFactor*this->GammaX) + 2*MomentaY*this->KxFactor*this->GammaX*this->NbrInternalDegree;
+	//		  double FluxYterm = 0.75*((this->KyFactor*this->GammaY) * (this->KyFactor*this->GammaY) + 2.0*MomentaY*this->KyFactor*this->GammaY);
+
+                         double FluxXterm = 0.75*((this->KyFactor*this->GammaX) * (this->KyFactor*this->GammaX) + 2.0*this->KyFactor*this->GammaX*MomentaY);
+
 
 
 			  int IntermediateIndex = this->GetIntermediateLinearizedIndices(p, t, Spin);
