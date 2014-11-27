@@ -169,7 +169,7 @@ MixedMPISMPArchitecture::MixedMPISMPArchitecture(char* clusterFileName, char* lo
 			      if ((strcmp(this->NodeHostnames[i], ClusterFile(0,j)) == 0) || 
 				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j))) == 0) && 
 				   (this->NodeHostnames[i][strlen(ClusterFile(0,j))] == '.')) ||
-				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j) - 1)) == 0) && 
+				  ((strncmp(this->NodeHostnames[i], ClusterFile(0,j), strlen(ClusterFile(0,j)) - 1) == 0) && 
 				   (ClusterFile(0,j)[strlen(ClusterFile(0,j)) - 1] == '*')))
 				{
 				  this->NbrCPUPerNode[i] = TmpNbrCPUNode[j];
