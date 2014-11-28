@@ -285,6 +285,7 @@ bool SimpleMPIArchitecture::GetOptimizedTypicalRange (int*& nbrOperationPerIndex
   this->MaximumIndex = this->MaximumIndices[this->MPIRank];
   minIndex = this->MinimumIndex;
   maxIndex = this->MaximumIndex;
+  return true;
 }
   
 // get typical range of indices on which the local architecture acts, providing the number of calculations that have to be performed per index
