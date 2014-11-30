@@ -211,7 +211,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // fermions = reference on the hilbert space to copy to copy
   FermionOnSphere(const FermionOnSphere& fermions);
 
-  // copy constructor, preversing only some specific states 
+  // copy constructor, preserving only some specific states 
   //
   // fermions = reference on the hilbert space to copy to copy
   // nbrPreservedStates = number of preserved states

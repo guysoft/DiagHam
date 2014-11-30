@@ -114,7 +114,7 @@ class AbstractQHEOnSphereHamiltonian : public AbstractQHEHamiltonian
   // number of tasks for load balancing
   int NbrBalancedTasks;
   // load balancing array for parallelisation, indicating starting indices
-  long *LoadBalancingArray;
+  long* LoadBalancingArray;
   // cumulative count of non-zero matrix elements
   
   

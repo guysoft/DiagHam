@@ -55,6 +55,10 @@ using std::ostream;
 ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian()
 {
   this->HermitianSymmetryFlag = true;
+  this->NbrBalancedTasks = 0;
+  this->LoadBalancingArray = 0;
+  this->NbrInteractionPerComponent = 0;
+  this->FastMultiplicationStep = 0;
 }
 
 // destructor
@@ -810,5 +814,64 @@ void ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::PartialEnableFa
       ++Pos;
     }
   delete TmpParticles;
+}
+
+// get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+//
+// nbrThreads = number of threads requested
+// segmentIndices = array returning the reference to an array of the first index of each of the segments
+// return value = true if no error occured
+
+bool ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::GetLoadBalancing(int nbrTasks, long* &segmentIndices)
+{
+  long MinIndex;
+  long MaxIndex;
+  this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  int EffectiveHilbertSpaceDimension = ((int) (MaxIndex - MinIndex)) + 1;
+  if ((this->NbrInteractionPerComponent != 0) && (this->FastMultiplicationStep != 0))
+    {
+      int ReducedSpaceDimension  = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
+
+      if ((this->LoadBalancingArray == 0) || (this->NbrBalancedTasks != nbrTasks))
+	{
+	  if (this->LoadBalancingArray != 0)
+	    delete [] this->LoadBalancingArray;
+	  long* SegmentSize = new long[nbrTasks];
+	  this->LoadBalancingArray = new long[nbrTasks+1];
+	  this->NbrBalancedTasks = nbrTasks;
+	  long TmpNbrElement = 0l;
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
+	    TmpNbrElement += this->NbrInteractionPerComponent[i];
+	  long TmpNbrPerSegment = TmpNbrElement / ((long) nbrTasks);
+	  TmpNbrElement = 0l;
+	  int Pos = 0;
+	  this->LoadBalancingArray[0]=MinIndex;
+	  for (int i = 0; i < ReducedSpaceDimension; ++i)
+	    {
+	      TmpNbrElement += NbrInteractionPerComponent[i];
+	      if (TmpNbrElement > TmpNbrPerSegment)
+		{
+		  SegmentSize[Pos] = TmpNbrElement;
+		  this->LoadBalancingArray[Pos + 1] = MinIndex + (i * this->FastMultiplicationStep);
+		  TmpNbrElement = 0l;
+		  ++Pos;
+		}
+	    }
+	  this->LoadBalancingArray[nbrTasks] = MaxIndex + 1;
+	  SegmentSize[nbrTasks - 1] = TmpNbrElement;
+	  
+	  cout << "LoadBalancingArray=[ (" << (this->LoadBalancingArray[1] - this->LoadBalancingArray[0]) << ", " << SegmentSize[0] <<")";
+	  for (int i = 1; i < nbrTasks; ++i)
+	    cout << " (" << (this->LoadBalancingArray[i+1] - this->LoadBalancingArray[i]) << ", " << SegmentSize[i] << ")";
+	  cout << "]"<< endl;
+	  delete [] SegmentSize;
+	}
+    }
+  else
+    {
+      return false;
+    }
+  segmentIndices = this->LoadBalancingArray;
+  return true;
 }
 

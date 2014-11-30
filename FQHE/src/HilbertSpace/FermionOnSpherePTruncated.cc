@@ -178,6 +178,67 @@ FermionOnSpherePTruncated::FermionOnSpherePTruncated(const FermionOnSpherePTrunc
   this->InvertUnshift = fermions.InvertUnshift;
 }
 
+// copy constructor, preserving only some specific states 
+//
+// fermions = reference on the hilbert space to copy to copy
+// nbrPreservedStates = number of preserved states
+// preservedStates = array of flags that indicates if the corresponding state has to be preserved 
+//                   (dimension of the array should the one of the original Hilbert space)
+
+FermionOnSpherePTruncated::FermionOnSpherePTruncated(const FermionOnSpherePTruncated& fermions, long nbrPreservedStates, bool* preservedStates)
+{
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
+  this->NbrFermions = fermions.NbrFermions;
+  this->IncNbrFermions = fermions.IncNbrFermions;
+  this->TotalLz = fermions.TotalLz;
+  this->ShiftedTotalLz = fermions.ShiftedTotalLz;
+  this->ReferenceState = fermions.ReferenceState;
+  this->PLevel = fermions.PLevel;
+  this->ReferenceStateMonomialBasis = new int [this->NbrFermions];
+  for (int i = 0; i < this->NbrFermions; ++i)
+    this->ReferenceStateMonomialBasis[i] = fermions.ReferenceStateMonomialBasis[i];
+  this->LzMax = fermions.LzMax;
+  this->NbrLzValue = fermions.NbrLzValue;
+
+  this->LargeHilbertSpaceDimension = nbrPreservedStates;
+  this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+  this->StateLzMax = new int [this->LargeHilbertSpaceDimension];
+  this->LargeHilbertSpaceDimension = 0l;
+  for (long i = 0; i < fermions.LargeHilbertSpaceDimension; ++i)
+    {
+      if (preservedStates[i] == true)
+	{
+	  this->StateDescription[this->LargeHilbertSpaceDimension] =  fermions.StateDescription[i];
+	  this->StateLzMax[this->LargeHilbertSpaceDimension] = fermions.StateLzMax[i];
+	  ++this->LargeHilbertSpaceDimension;
+	}
+    }
+  this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->Flag.Initialize();
+  this->MaximumSignLookUp = 16;
+  this->GenerateLookUpTable();
+#ifdef __DEBUG__
+  unsigned long UsedMemory = 0;
+  UsedMemory += ((unsigned long) this->LargeHilbertSpaceDimension) * (sizeof(unsigned long) + sizeof(int));
+  UsedMemory += this->NbrLzValue * sizeof(int);
+  UsedMemory += this->NbrLzValue * ((unsigned long) this->LookUpTableMemorySize) * sizeof(int);
+  UsedMemory +=  (1 << this->MaximumSignLookUp) * sizeof(double);
+  cout << "memory requested for Hilbert space = ";
+  if (UsedMemory >= 1024)
+    if (UsedMemory >= 1048576)
+      cout << (UsedMemory >> 20) << "Mo" << endl;
+    else
+      cout << (UsedMemory >> 10) << "ko" <<  endl;
+  else
+    cout << UsedMemory << endl;
+#endif
+  this->InvertShift = fermions.InvertShift;
+  this->InvertUnshift = fermions.InvertUnshift;
+}
+
 // destructor
 //
 

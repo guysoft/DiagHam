@@ -202,6 +202,18 @@ int main(int argc, char** argv)
     }
   else
     {
+      char* StatisticPrefix = new char[16];
+      char* TruncationName = new char[32];
+            if (Manager.GetBoolean("boson") == true)
+	{
+	  sprintf(StatisticPrefix, "bosons");
+	  sprintf(TruncationName, "plevel_%ld_maxocc_%ld", Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
+	}
+      else
+	{
+	  sprintf(StatisticPrefix, "fermions");
+	  sprintf(TruncationName, "plevel_%ld", Manager.GetInteger("p-truncation"));
+	}
       char* TmpFileName = new char [512];
       char* TmpFileName2 = new char [512];
       EigenstateOutputNamePrefix = new char [512];
@@ -211,42 +223,42 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("infinite-cylinder"))
 	    {
-	      sprintf(TmpFileName, "fermions_infinite_cylinder_%s_perimeter_%f_plevel_%ld_n_0_2s_0_lz_0.0.full.%s", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), Extension);
-	      sprintf(TmpFileName2, "fermions_infinite_cylinder_%s_perimeter_%f_plevel_%ld_n_0_2s_0_lz_0.0.%s", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), Extension);
-	      sprintf(EigenstateOutputNamePrefix, "fermions_infinite_cylinder_%s_perimeter_%f_plevel_%ld_%s", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), Extension);
+	      sprintf(TmpFileName, "%s_infinite_cylinder_%s_perimeter_%f_%s_n_0_2s_0_lz_0.0.full.%s", StatisticPrefix, StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName, Extension);
+	      sprintf(TmpFileName2, "%s_infinite_cylinder_%s_perimeter_%f_%s_n_0_2s_0_lz_0.0.%s", StatisticPrefix, StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName, Extension);
+	      sprintf(EigenstateOutputNamePrefix, "%s_infinite_cylinder_%s_perimeter_%f_%s_%s", StatisticPrefix, StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName, Extension);
 	    }
 	  else
 	    {
-	      sprintf(TmpFileName, "fermions_cylinder_%s_perimeter_%f_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.%s", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
-	      sprintf(TmpFileName2, "fermions_cylinder_%s_perimeter_%f_plevel_%ld_n_%d_2s_%d_lz_%d.0.%s", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
-	      sprintf(EigenstateOutputNamePrefix, "fermions_cylinder_%s_perimeter_%f_plevel_%ld_n_%d_2s_%d_lz_%d.0.%s", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(TmpFileName, "%s_cylinder_%s_perimeter_%f_%s_n_%d_2s_%d_lz_%d.0.full.%s", StatisticPrefix, StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName, NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(TmpFileName2, "%s_cylinder_%s_perimeter_%f_%s_n_%d_2s_%d_lz_%d.0.%s", StatisticPrefix, StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName, NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(EigenstateOutputNamePrefix, "%s_cylinder_%s_perimeter_%f_%s_n_%d_2s_%d_lz_%d.0.%s", StatisticPrefix, StateName,
+		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), TruncationName, NbrParticles, NbrFluxQuanta, TotalLz, Extension);
 	    }
 	}
       else
 	{
 	  if (Manager.GetBoolean("infinite-cylinder"))
 	    {
-	      sprintf(TmpFileName, "fermions_infinite_%s_plevel_%ld_n_0_2s_0_lz_0.0.full.%s", StateName,
-		      Manager.GetInteger("p-truncation"), Extension);
-	      sprintf(TmpFileName2, "fermions_infinite_%s_plevel_%ld_n_0_2s_0_lz_0.0.%s", StateName,
-		      Manager.GetInteger("p-truncation"), Extension);
-	      sprintf(EigenstateOutputNamePrefix, "fermions_infinite_%s_plevel_%ld_%s", StateName,
-		      Manager.GetInteger("p-truncation"), Extension);
+	      sprintf(TmpFileName, "%s_infinite_%s_%s_n_0_2s_0_lz_0.0.full.%s", StatisticPrefix, StateName,
+		      TruncationName, Extension);
+	      sprintf(TmpFileName2, "%s_infinite_%s_%s_n_0_2s_0_lz_0.0.%s", StatisticPrefix, StateName,
+		      TruncationName, Extension);
+	      sprintf(EigenstateOutputNamePrefix, "%s_infinite_%s_%s_%s", StatisticPrefix, StateName,
+		      TruncationName, Extension);
 	    }
 	  else
 	    {
-	      sprintf(TmpFileName, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.full.%s", StateName,
-		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
-	      sprintf(TmpFileName2, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.%s", StateName,
-		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
-	      sprintf(EigenstateOutputNamePrefix, "fermions_%s_plevel_%ld_n_%d_2s_%d_lz_%d.0.%s", StateName,
-		      Manager.GetInteger("p-truncation"), NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(TmpFileName, "%s_%s_%s_n_%d_2s_%d_lz_%d.0.full.%s", StatisticPrefix, StateName,
+		      TruncationName, NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(TmpFileName2, "%s_%s_%s_n_%d_2s_%d_lz_%d.0.%s", StatisticPrefix, StateName,
+		      TruncationName, NbrParticles, NbrFluxQuanta, TotalLz, Extension);
+	      sprintf(EigenstateOutputNamePrefix, "%s_%s_%s_n_%d_2s_%d_lz_%d.0.%s", StatisticPrefix, StateName,
+		      TruncationName, NbrParticles, NbrFluxQuanta, TotalLz, Extension);
 	    }
 	}
       File.open(TmpFileName, ios::binary | ios::out);     

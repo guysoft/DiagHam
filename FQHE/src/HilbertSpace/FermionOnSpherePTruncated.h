@@ -73,6 +73,14 @@ class FermionOnSpherePTruncated :  public FermionOnSphere
   // fermions = reference on the hilbert space to copy to copy
   FermionOnSpherePTruncated(const FermionOnSpherePTruncated& fermions);
 
+  // copy constructor, preserving only some specific states 
+  //
+  // fermions = reference on the hilbert space to copy to copy
+  // nbrPreservedStates = number of preserved states
+  // preservedStates = array of flags that indicates if the corresponding state has to be preserved 
+  //                   (dimension of the array should the one of the original Hilbert space)
+  FermionOnSpherePTruncated(const FermionOnSpherePTruncated& fermions, long nbrPreservedStates, bool* preservedStates);
+
   // destructor
   //
   virtual ~FermionOnSpherePTruncated ();

@@ -191,15 +191,31 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
       else
 	{
 	  char* ExportFileName = new char [1024];
-	  if (CylinderFlag == false)
+	  if (this->Options->GetBoolean("boson") == false)
 	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_%s_p_%ld_n_%d.dat", MPSMatrix->GetName(), 
-		      this->Options->GetInteger("p-truncation"), NbrBMatrices);
-		    }
+	      if (CylinderFlag == false)
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_%s_p_%ld_n_%d.dat", MPSMatrix->GetName(), 
+			  this->Options->GetInteger("p-truncation"), NbrBMatrices);
+		}
+	      else
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_%s_p_%ld_n_%d_perimeter_%.6f.dat", MPSMatrix->GetName(), 
+			  this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
+		}
+	    }
 	  else
 	    {
-	      sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_%s_p_%ld_n_%d_perimeter_%.6f.dat", MPSMatrix->GetName(), 
-		      this->Options->GetInteger("p-truncation"), NbrBMatrices, Perimeter);
+	      if (CylinderFlag == false)
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_%s_p_%ld_maxocc_%ld_n_%d.dat", MPSMatrix->GetName(), 
+			  this->Options->GetInteger("p-truncation"), this->Options->GetInteger("boson-truncation"), NbrBMatrices);
+		}
+	      else
+		{
+		  sprintf(ExportFileName, "fqhemps_bmatrices_cylinder_%s__p_%ld_maxocc_%ld_n_%d_perimeter_%.6f.dat", MPSMatrix->GetName(), 
+			  this->Options->GetInteger("p-truncation"), this->Options->GetInteger("boson-truncation"), NbrBMatrices, Perimeter);
+		}
 	    }
 	  MPSMatrix->SaveMatrices(ExportFileName);
 	  delete[] ExportFileName;
@@ -254,6 +270,10 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 
   AbstractFQHEMPSMatrix* MPSMatrix = 0; 
   int NbrBMatrices = 2;
+  if (this->Options->GetBoolean("boson") == true)
+    {
+      NbrBMatrices = 1 + this->Options->GetInteger("boson-truncation");
+    }
   if (this->Options->GetString("with-quasiholes") == 0)
     {
       if ((this->Options->GetBoolean("k-2") == true) || (this->Options->GetBoolean("optimized-k2") == true))

@@ -95,8 +95,13 @@ class AbstractFQHEMPSMatrix
 
   // get the number of orbitals that associated to a set of B matrices
   //
-  // return value = number oforbitals
+  // return value = number of orbitals
   virtual int GetNbrOrbitals();
+
+  // get the maximum occupation per orbital
+  //
+  // return value = aximum occupation per orbital
+  virtual int GetMaximumOccupation();
 
   // get the array where the matrices are stored
   //
@@ -291,6 +296,15 @@ inline SparseRealMatrix* AbstractFQHEMPSMatrix::GetMatrices()
 // return value = number oforbitals
 
 inline int AbstractFQHEMPSMatrix::GetNbrOrbitals()
+{
+  return 1;
+}
+
+// get the maximum occupation per orbital
+//
+// return value = aximum occupation per orbital
+
+inline int AbstractFQHEMPSMatrix::GetMaximumOccupation()
 {
   return 1;
 }

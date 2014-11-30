@@ -54,9 +54,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('s', "single-state", "vector file that corresponds to the second component");
   (*SystemGroup) += new BooleanOption  ('a', "sym-y", "apply antiperiodic conditions with respect to Ly before symmetrizing");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
+  (*SystemGroup) += new BooleanOption  ('\n', "subset-symmetrization", "symmetrize by picking equally space orbitals");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "subset-shift", "index of the first orbital to keep when using --subset-symmetrization", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ky-momentum", "compute the vector with given ky in mode sym-y", 0);
   
-  (*SystemGroup) += new SingleDoubleOption ('\n', "precision", "if the norm of the symmetrized vector is below this threshold, it is considered to be zero", std::numeric_limits<double>::epsilon());
+  (*SystemGroup) += new SingleDoubleOption ('\n', "precision", "if the norm of the symmetrized vector is below this threshold, it is considered to be zero", MACHINE_PRECISION);
 //   (*SystemGroup) += new SingleBooleanOption  ('x', "magnetic-translation", "vector file that corresponds to the second component");
   
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file names");
@@ -277,14 +280,32 @@ int main(int argc, char** argv)
 	  char* FullOutputFileName = 0;
 	  RealVector* OutputStates = 0;
 	  int* KySectors = 0;
+	  int* NbrParticleSectors = 0;
 	  int NbrKySectors = 0;
 	  if (Manager.GetBoolean("sym-y") == false)
 	    {
-	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
+	      if (Manager.GetBoolean("subset-symmetrization") == true)
+		{
+		  NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
+										     Manager.GetInteger("subset-periodicity"),
+										     OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		}
+	      else
+		{
+		  NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
+		}
 	    }
 	  else
 	    {
 	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(),  Precision); 	      
+	    }
+	  if ((NbrKySectors > 0) && (NbrParticleSectors == 0))
+	    {
+	      NbrParticleSectors = new int[NbrKySectors];
+	      for (int i = 0; i < NbrKySectors; ++i)
+		{
+		  NbrParticleSectors[i] = NbrParticles1;
+		}
 	    }
 	  int NbrGeneratedStates = 0;
 	  if (Manager.GetString("output-file") != 0)
@@ -297,18 +318,26 @@ int main(int argc, char** argv)
 	      OutputFileName = new char [512];
 	      if (Manager.GetBoolean("sym-y") == false)
 		{
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized_n_%d_2s_%d", TotalKy1, NbrParticles1, NbrFluxQuanta);
+		  if (Manager.GetBoolean("subset-symmetrization") == true)
+		    {
+		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("subset-periodicity"));
+		    }
+		  else
+		    {
+		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
+		    }
 		}
 	      else
 		{
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_n_%d_2s_%d", TotalKy1, NbrParticles1, NbrFluxQuanta);
+		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
 		}
 	    }
 	  for (int i = 0; i < NbrKySectors; ++i)
 	    {
-	      cout << "state generated in the Ky=" << KySectors[i] << " sector" << endl;
+	      cout << "state generated in the N=" << NbrParticleSectors[i] << " Ky=" << KySectors[i] << " sector" << endl;
 	      char* FullOutputFileName = new char [256 + strlen(OutputFileName)];
-	      sprintf (FullOutputFileName , "%s_ky_%d.0.vec", OutputFileName, KySectors[i]);	      
+	      sprintf (FullOutputFileName , "%s_n_%d_2s_%d_ky_%d.0.vec", OutputFileName, NbrParticleSectors[i], NbrFluxQuanta, KySectors[i]);	      
 	      if (OutputStates[i].WriteVector(FullOutputFileName) == false)
 		{
 		  cout << "error while writing output state " << FullOutputFileName << endl;
@@ -391,38 +420,64 @@ int main(int argc, char** argv)
 	  char* FullOutputFileName = 0;
 	  ComplexVector* OutputStates = 0;
 	  int* KySectors = 0;
+	  int* NbrParticleSectors = 0;
 	  int NbrKySectors = 0;
 	  if (Manager.GetBoolean("sym-y") == false)
 	    {
-	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
+	      if (Manager.GetBoolean("subset-symmetrization") == true)
+		{
+		  NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
+										     Manager.GetInteger("subset-periodicity"),
+										     OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		}
+	      else
+		{
+		  NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
+		}
 	    }
 	  else
 	    {
 	      NbrKySectors = Space1->SymmetrizeSingleStateGroupingNeighbouringOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 	      
+	    }
+	  if ((NbrKySectors > 0) && (NbrParticleSectors == 0))
+	    {
+	      NbrParticleSectors = new int[NbrKySectors];
+	      for (int i = 0; i < NbrKySectors; ++i)
+		{
+		  NbrParticleSectors[i] = NbrParticles1;
+		}
 	    }
 	  int NbrGeneratedStates = 0;
 	  if (Manager.GetString("output-file") != 0)
 	    {
 	      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
 	      strcpy (OutputFileName, Manager.GetString("output-file"));
-	    }
+		}
 	  else
 	    {
 	      OutputFileName = new char [512];
 	      if (Manager.GetBoolean("sym-y") == false)
 		{
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized_n_%d_2s_%d", TotalKy1, NbrParticles1, NbrFluxQuanta);
+		  if (Manager.GetBoolean("subset-symmetrization") == true)
+		    {
+		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("subset-periodicity"));
+		    }
+		  else
+		    {
+		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
+		    }
 		}
 	      else
 		{
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_n_%d_2s_%d", TotalKy1, NbrParticles1, NbrFluxQuanta);
+		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
 		}
 	    }
 	  for (int i = 0; i < NbrKySectors; ++i)
 	    {
-	      cout << "state generated in the Ky=" << KySectors[i] << " sector" << endl;
+	      cout << "state generated in the N=" << NbrParticleSectors[i] << " Ky=" << KySectors[i] << " sector" << endl;
 	      char* FullOutputFileName = new char [256 + strlen(OutputFileName)];
-	      sprintf (FullOutputFileName , "%s_ky_%d.0.vec", OutputFileName, KySectors[i]);	      
+	      sprintf (FullOutputFileName , "%s_n_%d_2s_%d_ky_%d.0.vec", OutputFileName, NbrParticleSectors[i], NbrFluxQuanta, KySectors[i]);	      
 	      if (OutputStates[i].WriteVector(FullOutputFileName) == false)
 		{
 		  cout << "error while writing output state " << FullOutputFileName << endl;

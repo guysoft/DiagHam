@@ -844,6 +844,19 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = number of states that have been generated through the symmetrization procedure
   virtual int SymmetrizeSingleStatePeriodicOrbitals (LongRationalVector& inputVector, int periodicity, LongRationalVector*& symmetrizedVectors, int*& lzSectors);
 
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // periodicity = momentum periodicity 
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+  //                      number of particles and the smallest Lz to the largest Lz
+  // nbrParticlesSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (LongRationalVector& inputVector, int firstOrbitalIndex, int periodicity, 
+							   LongRationalVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors);
+  
   // symmetrize a vector by grouping several orbitals into a single one
   //
   // inputVector = reference on the vector to symmetrize
@@ -869,6 +882,13 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // finalState = reference on the array where the bosonic state has to be stored
   // finalStateLzMax = reference on the integer where the bosonic state maximum Lz value has to be stored
   void FermionToBoson(unsigned long initialState, int initialStateLzMax, unsigned long*& finalState, int& finalStateLzMax);
+
+  // check if a state satisfies a maximum occupation contraint
+  //
+  // initialState =  initial fermionic state
+  // maximumOccupation = orbital maximum occupation
+  // return value = true if the maximum occupation contraint is satisfied
+  bool CheckMaximumOccupation(unsigned long initialState, unsigned int maximumOccupation);
 
   // convert a bosonic state to its monomial representation
   //
@@ -960,6 +980,18 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = symmetrized state
   virtual void SymmetrizeSingleStatePeriodicOrbitalCore (LongRationalVector& inputVector, LongRationalVector* symmetrizedVectors, int periodicity, unsigned long firstComponent, unsigned long nbrComponents);
   
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // symmetrizedVectors = array on the symmetrize states ranging from the smallest Lz to the largest Lz
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = symmetrized state
+  virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (LongRationalVector& inputVector, LongRationalVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+							       unsigned long firstComponent, unsigned long nbrComponents);
+
   // symmetrize a vector by grouping several orbitals into a single one
   //
   // inputVector = reference on the vector to symmetrize
@@ -1036,6 +1068,40 @@ inline void BosonOnSphereShort::FermionToBoson(unsigned long initialState, int i
       initialStateLzMax -= TmpPower;
     }
   --finalStateLzMax;
+}
+
+// check if a state satisfies a maximum occupation contraint
+//
+// initialState =  initial fermionic state
+// maximumOccupation = orbital maximum occupation
+// return value = true if the maximum occupation contraint is satisfied
+
+inline bool BosonOnSphereShort::CheckMaximumOccupation(unsigned long initialState, unsigned int maximumOccupation)
+{
+  while (initialState != 0x0ul)
+    {
+      unsigned long TmpState = (~initialState - 1ul) ^ (~initialState);
+      TmpState &= ~(TmpState >> 1);
+#ifdef  __64_BITS__
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0f0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ffff0000ul) != 0) << 4;      
+      TmpPower |= ((TmpState & 0xffffffff00000000ul) != 0) << 5;      
+#else
+      unsigned int TmpPower = ((TmpState & 0xaaaaaaaaul) != 0);
+      TmpPower |= ((TmpState & 0xccccccccul) != 0) << 1;
+      TmpPower |= ((TmpState & 0xf0f0f0f0ul) != 0) << 2;
+      TmpPower |= ((TmpState & 0xff00ff00ul) != 0) << 3;      
+      TmpPower |= ((TmpState & 0xffff0000ul) != 0) << 4;      
+#endif
+      if (TmpPower > maximumOccupation)
+	return false;
+      ++TmpPower;
+      initialState >>= TmpPower;
+    }
+  return true;
 }
 
 // convert a fermionic state to its monomial representation

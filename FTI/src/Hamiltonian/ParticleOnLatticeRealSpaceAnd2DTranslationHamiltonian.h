@@ -97,7 +97,6 @@ class ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian : public ParticleOnL
   //
   virtual ~ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian();
 
-  
  protected:
  
   // core part of the AddMultiply method involving the two-body interaction

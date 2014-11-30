@@ -54,6 +54,9 @@ class BosonOnSpherePTruncated :  public BosonOnSphereShort
   // truncation level
   int PLevel;
 
+  // maximum occupation for a single orbital
+  int MaximumOccupation;
+
  public:
 
   // basic constructor
@@ -62,9 +65,10 @@ class BosonOnSpherePTruncated :  public BosonOnSphereShort
   // totalLz = momentum total value
   // lzMax = maximum Lz value reached by a boson
   // pLevel = truncation level
+  // maximumOccupation = maximum occupation for a single orbital
   // referenceState = array that describes the root configuration
   BosonOnSpherePTruncated (int nbrBosons, int& totalLz, int lzMax, int pLevel,
-			   int* referenceState);
+			   int maximumOccupation, int* referenceState);
 
   // copy constructor (without duplicating datas)
   //

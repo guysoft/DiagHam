@@ -194,26 +194,60 @@ int main(int argc, char** argv)
 	{
 	  if (Manager.GetBoolean("diagonal-block"))
 	    {
-	      sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_perimeter_%f_plevel_%ld", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+	      if (Manager.GetBoolean("boson") == true)
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_perimeter_%f_plevel_%ld_maxocc_%ld", StateName,
+			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), 
+			  Manager.GetInteger("boson-truncation"));
+		}
+	      else
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_cylinder_%s_perimeter_%f_plevel_%ld", StateName,
+			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+		}
 	    }
 	  else
 	    {
-	      sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld", StateName,
-		      MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+	      if (Manager.GetBoolean("boson") == true)
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld_maxocc_%ld", StateName,
+			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"), 
+			  Manager.GetInteger("boson-truncation"));
+		}
+	      else
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_cylinder_%s_perimeter_%f_plevel_%ld", StateName,
+			  MPSMatrixManager.GetCylinderPerimeter(NbrFluxQuanta), Manager.GetInteger("p-truncation"));
+		}
 	    }
 	}
       else
 	{
 	  if (Manager.GetBoolean("diagonal-block"))
 	    {
-	      sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_plevel_%ld", StateName,
-		      Manager.GetInteger("p-truncation"));
+	      if (Manager.GetBoolean("boson") == true)
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_plevel_%ld_maxocc_%ld", StateName,
+			  Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
+		}
+	      else
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_diagblock_%s_plevel_%ld", StateName,
+			  Manager.GetInteger("p-truncation"));
+		}
 	    }
 	  else
 	    {
-	      sprintf(PrefixOutputFileName, "ematrix_%s_plevel_%ld", StateName,
-		      Manager.GetInteger("p-truncation"));
+	      if (Manager.GetBoolean("boson") == true)
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_%s_plevel_%ld_maxocc_%ld", StateName,
+			  Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
+		}
+	      else
+		{
+		  sprintf(PrefixOutputFileName, "ematrix_%s_plevel_%ld", StateName,
+			  Manager.GetInteger("p-truncation"));
+		}
 	    }
 	}
       OutputFileName = new char[strlen(PrefixOutputFileName) + 64];

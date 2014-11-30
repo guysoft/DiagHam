@@ -52,10 +52,11 @@ using std::pair;
 // totalLz = momentum total value
 // lzMax = maximum Lz value reached by a boson
 // pLevel = truncation level
+// maximumOccupation = maximum occupation for a single orbital
 // referenceState = array that describes the root configuration
 
 BosonOnSpherePTruncated::BosonOnSpherePTruncated (int nbrBosons, int& totalLz, int lzMax, int pLevel,
-						  int* referenceState)
+						  int maximumOccupation, int* referenceState)
 {
   this->NbrBosons = nbrBosons;
   this->IncNbrBosons = this->NbrBosons + 1;
@@ -65,10 +66,11 @@ BosonOnSpherePTruncated::BosonOnSpherePTruncated (int nbrBosons, int& totalLz, i
   this->NbrLzValue = this->LzMax + 1;
   this->TotalLz = 0;
   this->PLevel = pLevel;
+  this->MaximumOccupation = maximumOccupation;
   this->ReferenceStateMonomialBasis = new int [this->NbrBosons];
   this->ReferenceState = 0x0ul;
-  int ShiftedLzMax = this->LzMax + nbrBosons - 1;
-  int* FermionicReferenceState =  new int [ShiftedLzMax - 1];
+  int ShiftedLzMax = this->LzMax + this->NbrBosons - 1;
+  int* FermionicReferenceState =  new int [ShiftedLzMax + 1];
   for (int i = 0; i <= ShiftedLzMax; ++i)
     FermionicReferenceState[i] = 0;   
   int TmpIndex = 0; 
@@ -93,6 +95,30 @@ BosonOnSpherePTruncated::BosonOnSpherePTruncated (int nbrBosons, int& totalLz, i
     this->FermionBasis = new FermionOnSpherePTruncated(nbrBosons, totalLz, lzMax, this->PLevel, FermionicReferenceState);
   this->HilbertSpaceDimension = this->FermionBasis->HilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = this->FermionBasis->LargeHilbertSpaceDimension;
+  if (this->MaximumOccupation < this->NbrBosons)
+    {
+      long NbrPreservedStates = 0l;
+      bool* PreservedStates =  new bool[this->LargeHilbertSpaceDimension];
+      unsigned int TmpMaximumOccupation = (unsigned int) this->MaximumOccupation;
+      for (long i = 0l; i < this->LargeHilbertSpaceDimension; ++i)
+	{
+	  if (this->CheckMaximumOccupation(this->FermionBasis->StateDescription[i], TmpMaximumOccupation))
+	    {
+	      PreservedStates[i] = true;
+	      ++NbrPreservedStates;
+	    }
+	  else
+	    {
+	      PreservedStates[i] = false;	      
+	    }
+	}
+      FermionOnSpherePTruncated* TmpBasis = new FermionOnSpherePTruncated(*((FermionOnSpherePTruncated*) this->FermionBasis), NbrPreservedStates, PreservedStates);
+      delete this->FermionBasis;
+      delete[] PreservedStates;
+      this->FermionBasis = TmpBasis;
+      this->HilbertSpaceDimension = this->FermionBasis->HilbertSpaceDimension;
+      this->LargeHilbertSpaceDimension = this->FermionBasis->LargeHilbertSpaceDimension;
+    }
 
   this->TemporaryState = new unsigned long [this->NbrLzValue];
   this->ProdATemporaryState = new unsigned long [this->NbrLzValue];
@@ -127,6 +153,7 @@ BosonOnSpherePTruncated::BosonOnSpherePTruncated(const BosonOnSpherePTruncated& 
   this->LzMax = bosons.LzMax;
   this->NbrLzValue = this->LzMax + 1;
   this->PLevel = bosons.PLevel;
+  this->MaximumOccupation = bosons.MaximumOccupation;
   this->ReferenceStateMonomialBasis = new int [this->NbrBosons];
   for (int i = 0; i < this->NbrBosons; ++i)
     this->ReferenceStateMonomialBasis[i] = bosons.ReferenceStateMonomialBasis[i];
@@ -177,6 +204,7 @@ BosonOnSpherePTruncated& BosonOnSpherePTruncated::operator = (const BosonOnSpher
   this->ShiftedTotalLz = bosons. ShiftedTotalLz;
   this->LzMax = bosons.LzMax;
   this->PLevel = bosons.PLevel;
+  this->MaximumOccupation = bosons.MaximumOccupation;
   this->ReferenceStateMonomialBasis = new int [this->NbrBosons];
   for (int i = 0; i < this->NbrBosons; ++i)
     this->ReferenceStateMonomialBasis[i] = bosons.ReferenceStateMonomialBasis[i];
@@ -235,7 +263,7 @@ void BosonOnSpherePTruncated::CreateStateFromMPSDescription (SparseRealMatrix* b
 	  TmpMatrix.Copy(bMatrices[this->ProdATemporaryState[0]]);
 	  for (int j = 1; j <= this->ProdATemporaryStateLzMax; ++j)
 	    {
-	      TmpMatrix.Multiply(bMatrices[this->ProdATemporaryState[i]], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpMatrix.Multiply(bMatrices[this->ProdATemporaryState[j]], TmpMatrixElements, TmpColumnIndices, TmpElements);
 	    } 
 	  for (int j = this->ProdATemporaryStateLzMax + 1; j <= this->LzMax; ++j)
 	    TmpMatrix.Multiply(bMatrices[0], TmpMatrixElements, TmpColumnIndices, TmpElements);

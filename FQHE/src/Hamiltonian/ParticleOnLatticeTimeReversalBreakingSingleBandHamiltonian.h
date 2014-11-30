@@ -97,6 +97,11 @@ class ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian : public Abstra
   // stored interactions per component
   int *NbrInteractionPerComponent;
 
+  // number of tasks for load balancing
+  int NbrBalancedTasks;
+  // load balancing array for parallelisation, indicating starting indices
+  long* LoadBalancingArray;
+
   // indices of matrix elements per component
   int **InteractionPerComponentIndex;
   // coefficients of matrix elements per component
@@ -187,7 +192,13 @@ class ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian : public Abstra
   virtual ComplexVector* HermitianLowLevelMultipleAddMultiply(ComplexVector* vSources, ComplexVector* vDestinations, int nbrVectors, 
 							      int firstComponent, int nbrComponent);
 
-
+  // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+  //
+  // nbrThreads = number of threads requested
+  // segmentIndices = array returning the reference to an array of the first index of each of the segments
+  // return value = true if no error occured
+  virtual bool GetLoadBalancing(int nbrTasks, long* &segmentIndices);
+    
  protected:
  
   // core part of the AddMultiply method involving the two-body interaction

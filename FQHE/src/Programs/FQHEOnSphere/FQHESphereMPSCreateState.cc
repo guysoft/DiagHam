@@ -131,8 +131,8 @@ int main(int argc, char** argv)
   ParticleOnSphere* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
-      Space = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
-      return 0;
+      Space = new BosonOnSpherePTruncated(NbrParticles, TotalLz, NbrFluxQuanta, 
+					  Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), ReferenceState);
     }
   else
     {

@@ -2298,6 +2298,209 @@ void BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitalsCore (Comple
     }
 }
 
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// periodicity = momentum periodicity 
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+//                      number of particles and the smallest Ky to the largest Ky
+// nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = number of states that have been generated through the symmetrization procedure
+
+int BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, 
+								    RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+								    AbstractArchitecture* architecture)
+{
+  double NormError = MACHINE_PRECISION;
+  int TargetSpaceNbrOrbitals = this->KyMax / periodicity;
+  ComplexVector TmpInputVector(inputVector, true);
+  ComplexVector** TmpVectors = new ComplexVector*[this->NbrBosons + 1];
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      TmpVectors[i] = new ComplexVector[TargetSpaceNbrOrbitals];
+    }
+  this->SymmetrizeSingleStatePeriodicSubsetOrbitalCore(TmpInputVector, TmpVectors, firstOrbitalIndex, periodicity, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      ++NbrGeneratedSectors;
+	    }     
+	}
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  nbrParticlesSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      double TmpNorm = TmpVectors[i][j].Norm();
+	      if (TmpNorm > NormError)
+		{
+		  TmpVectors[i][j] /= TmpNorm; 
+		  symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i][j];
+		  kySectors[NbrGeneratedSectors] = j;
+		  nbrParticlesSectors[NbrGeneratedSectors] = i;
+		  ++NbrGeneratedSectors;	  
+		}
+	    }     
+	}
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// periodicity = momentum periodicity 
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+//                      number of particles and the smallest Ky to the largest Ky
+// nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = number of states that have been generated through the symmetrization procedure
+
+int BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector& inputVector, int firstOrbitalIndex, int periodicity, 
+								    ComplexVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+								    AbstractArchitecture* architecture)
+{
+  double NormError = MACHINE_PRECISION;
+  int TargetSpaceNbrOrbitals = this->KyMax / periodicity;
+  ComplexVector** TmpVectors = new ComplexVector*[this->NbrBosons + 1];
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      TmpVectors[i] = new ComplexVector[TargetSpaceNbrOrbitals];
+    }
+  this->SymmetrizeSingleStatePeriodicSubsetOrbitalCore(inputVector, TmpVectors, firstOrbitalIndex, periodicity, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      ++NbrGeneratedSectors;
+	    }     
+	}
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  nbrParticlesSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      double TmpNorm = TmpVectors[i][j].Norm();
+	      if (TmpNorm > NormError)
+		{
+		  TmpVectors[i][j] /= TmpNorm; 
+		  symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i][j];
+		  kySectors[NbrGeneratedSectors] = j;
+		  nbrParticlesSectors[NbrGeneratedSectors] = i;
+		  ++NbrGeneratedSectors;	  
+		}     
+	    }
+	}
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+// periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+									unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = this->KyMax / periodicity;
+  BosonOnTorusShort*** TargetSpaces = new BosonOnTorusShort** [this->NbrBosons + 1];
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      TargetSpaces[i] = new BosonOnTorusShort* [TargetSpaceNbrOrbitals];
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  TargetSpaces[i][j] = 0;
+	}
+    }
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      Complex TmpCoefficient = inputVector[i];
+      this->FermionToBoson(this->StateDescription[i], this->StateKyMax[i] + this->NbrBosons - 1, 
+			   this->TemporaryState, this->TemporaryStateKyMax);
+      for (int k = this->TemporaryStateKyMax + 1; k < this->KyMax; ++k)
+	this->TemporaryState[k] = 0x0ul;
+      int TmpTotalKy = 0;
+      int TmpNbrParticles = 0;
+      int Index = 0;
+      for (int k = firstOrbitalIndex; k < this->KyMax; k += periodicity)
+	{
+	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
+	  TmpState[Index] = TmpNbrParticles2;
+	  TmpNbrParticles += ((int) TmpNbrParticles2);
+	  TmpTotalKy += Index * ((int) TmpNbrParticles2);
+	  ++Index;
+	}
+       
+      if (TmpNbrParticles > 0)
+	{
+	  TmpTotalKy %= TargetSpaceNbrOrbitals;
+	  if (TargetSpaces[TmpNbrParticles][TmpTotalKy] == 0)
+	    {
+	      TargetSpaces[TmpNbrParticles][TmpTotalKy] = new BosonOnTorusShort (TmpNbrParticles, TargetSpaceNbrOrbitals, TmpTotalKy);
+	      symmetrizedVectors[TmpNbrParticles][TmpTotalKy] = ComplexVector(TargetSpaces[TmpNbrParticles][TmpTotalKy]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpKyMax = TargetSpaces[TmpNbrParticles][TmpTotalKy]->KyMax - 1;
+	  while (TmpState[TmpKyMax] == 0x0ul)
+	    --TmpKyMax;
+	  int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalKy]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalKy]->BosonToFermion(TmpState, TmpKyMax), 
+										 TmpKyMax + TmpNbrParticles - 1);
+	  if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalKy]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[TmpNbrParticles][TmpTotalKy][TmpPos] += TmpCoefficient;
+	    }
+	}
+    }
+  delete[] TmpState;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TargetSpaces[i][j] != 0)
+	    {
+	      delete TargetSpaces[i][j];
+	    }
+	}
+      delete[] TargetSpaces[i];
+    }
+  delete[] TargetSpaces;
+}
+
 // core part of the C4 rotation
 //
 // inputState = reference on the state that has to be rotated

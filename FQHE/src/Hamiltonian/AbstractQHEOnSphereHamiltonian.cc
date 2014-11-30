@@ -3116,9 +3116,11 @@ List<Matrix*> AbstractQHEOnSphereHamiltonian::RightInteractionOperators()
 }
 
 // get the preferred distribution over parallel execution in N tasks for parallel Hamiltonian-Vector multiplication
+//
 // nbrThreads = number of threads requested
 // segmentIndices = array returning the reference to an array of the first index of each of the segments
-//
+// return value = true if no error occured
+
 bool AbstractQHEOnSphereHamiltonian::GetLoadBalancing(int nbrTasks, long* &segmentIndices)
 {
   long MinIndex;

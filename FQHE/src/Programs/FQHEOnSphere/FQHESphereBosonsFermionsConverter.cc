@@ -70,6 +70,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane", "use Haldane basis instead of the usual n-body basis");
   (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full n-body basis");
   (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "boson-truncation", "maximum occupation for a given orbital for the p-truncated basis", 1);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state (should be the one of the bosonic state)");
   (*SystemGroup) += new SingleStringOption  ('\n', "vector-file", "single column file describing a list of state belonging to the same hilbert space to be converted");
   (*OutputGroup) += new MultipleStringOption ('o', "output-states", "output file name (if none, guess it from the input file name)");
@@ -292,7 +293,9 @@ int main(int argc, char** argv)
 	if (LzMax[0]  < 31)	
 #endif
       if (Manager.GetBoolean("p-truncated") == true)
-	Space = new BosonOnSpherePTruncated(NbrParticles[0], TotalLz[0], LzMax[0], Manager.GetBoolean("p-truncation"), ReferenceState);
+	{
+	  Space = new BosonOnSpherePTruncated(NbrParticles[0], TotalLz[0], LzMax[0], Manager.GetBoolean("p-truncation"), (int) Manager.GetInteger("boson-truncation"), ReferenceState);	  
+	}
       else
 	Space = new BosonOnSphereHaldaneBasisShort(NbrParticles[0], TotalLz[0], LzMax[0], ReferenceState);
     }
