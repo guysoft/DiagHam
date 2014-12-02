@@ -57,11 +57,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-2", "use squeezed basis instead of the usual n-body basis for the second component");
   (*SystemGroup) += new BooleanOption  ('\n', "haldane-output", "use squeezed basis instead of the usual n-body basis for the symmetrized state");
   (*SystemGroup) += new BooleanOption  ('\n', "single-state", "symmetrize a unique state, groupings consecutive orbitals");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option -- distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "periodicity-symmetrization", "group orbitals that have the same momentum modulo a given periodicity, instead of neighboring orbitals");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "subset-symmetrization", "symmetrize by picking equally space orbitals");
-  (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
+//   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-shift", "index of the first orbital to keep when using --subset-symmetrization", 0);
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file1", "use a file as the definition of the reference state for the first component squeezed basis");
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file2", "use a file as the definition of the reference state for the second component squeezed basis");
@@ -461,9 +461,9 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("subset-symmetrization") == true)
 		    {
 		      NbrLzSectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(RationalState1, Manager.GetInteger("subset-shift"),
-											 Manager.GetInteger("subset-periodicity"),
+											 Manager.GetInteger("nbr-orbitals"),
 											 RationalOutputStates, NbrParticleSectors, LzSectors);
-		      TargetNbrFluxQuanta = ((NbrFluxQuanta1 + 1) / Manager.GetInteger("subset-periodicity")) - 1;
+		      TargetNbrFluxQuanta = ((NbrFluxQuanta1 + 1) / Manager.GetInteger("nbr-orbitals")) - 1;
 		    }
 		  else
 		    {
@@ -508,32 +508,65 @@ int main(int argc, char** argv)
 		    {
 		      LongRational RootCoef = RationalOutputState[RootPosition];
 		      RationalOutputState /= RootCoef; 
+		     
 		      if (Statistics == false)
 			{
-			  if (Manager.GetBoolean("unnormalized-basis") == false)
-			    {
-			      sprintf(FullOutputFileName, "bosons_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+			  if ("subset-symmetrization" == false)
+			  {
+			     if (Manager.GetString("output-file") == 0)
+			      {
+				if (Manager.GetBoolean("unnormalized-basis") == false)
+				{
+				  sprintf(FullOutputFileName, "bosons_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
 				      TargetNbrFluxQuanta, LzSectors[i]);
-			    }
+				}
+			      else
+				{
+				  sprintf(FullOutputFileName, "bosons_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+				      TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			      }
+			      else
+			      {
+				sprintf(FullOutputFileName, "%s_lz_%d.0.vec", Manager.GetString("output-file"), LzSectors[i]);
+			      }
+			   }
 			  else
-			    {
-			      sprintf(FullOutputFileName, "bosons_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+			   {
+			     if (Manager.GetString("output-file") == 0)
+			      {
+			      if (Manager.GetBoolean("unnormalized-basis") == false)
+				{
+				  sprintf(FullOutputFileName, "bosons_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
 				      TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			      else
+				{
+				  sprintf(FullOutputFileName, "bosons_unnormalized_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+				      TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			      }
+			      else
+			      {
+				sprintf(FullOutputFileName, "%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("output-file"), NbrParticleSectors[i], 
+				      TargetNbrFluxQuanta, LzSectors[i]);
+			      }
 			    }
 			}
-		      else
-			{
-			  if (Manager.GetBoolean("unnormalized-basis") == false)
-			    {
-			      sprintf(FullOutputFileName, "fermions_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+			else
+			  {
+			    if (Manager.GetBoolean("unnormalized-basis") == false)
+			      {
+				sprintf(FullOutputFileName, "fermions_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
 				      TargetNbrFluxQuanta, LzSectors[i]);
-			    }
-			  else
-			    {
-			      sprintf(FullOutputFileName, "fermions_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+			      }
+			    else
+			      {
+				sprintf(FullOutputFileName, "fermions_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
 				      TargetNbrFluxQuanta, LzSectors[i]);
-			    }
-			}
+			      }
+			  }
+		      
 		      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
 			{
 			  cout << "error while writing output state " << FullOutputFileName << endl;
