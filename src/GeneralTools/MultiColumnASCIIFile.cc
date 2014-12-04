@@ -226,11 +226,14 @@ bool MultiColumnASCIIFile::Parse(char* filename)
 	{
 	  char** TmpColumn = new char* [this->NbrLines];
 	  for (int j = 0; j < this->NbrLines; ++j)
-	    TmpColumn[j] = this->Data[i][j];
+	    TmpColumn[j] = this->Data[i][j]; 
+
 	  delete[] this->Data[i];
 	  this->Data[i] = TmpColumn;
 	}
     }
+
+
   return true;
 }
 

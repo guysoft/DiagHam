@@ -3,16 +3,21 @@
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
 
-#include "MPSObjects/MPOPeratorDefinedByFiles.h"
-#include "MPSObjects/MPSSite.h"
+#include "MPSObjects/AbstractMPSSite.h"
+#include "MPSObjects/AbstractMPOperatorOBC.h"
+
+#include "MPSObjects/RealMPOPeratorDefinedByFiles.h"
+#include "MPSObjects/RealMPSSite.h"
 #include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
+
+#include "MPSObjects/ComplexMPOPeratorDefinedByFiles.h"
+#include "MPSObjects/ComplexMPSSite.h"
+#include "MPSObjects/DMRGFiniteSizeComplexOBCMainTask.h" 
 
 
 #include "Options/Options.h"
 
 #include "GeneralTools/MultiColumnASCIIFile.h"
-
-#include "Matrix/RealMatrix.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -48,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('s', "sweep", "number of sweep to be performed", 4);
   (*SystemGroup) += new SingleStringOption  ('\n', "tensor-file", "name of the file containing the eigenstate to be displayed");
   (*SystemGroup) += new SingleStringOption  ('\n', "vector-file", "name of the file containing the eigenstate to be displayed");
+  (*SystemGroup) += new BooleanOption ('c', "complex", "use complex version of the code");
 
   (*MiscGroup) += new  BooleanOption ('\n', "print-tensor", "print the tensor elements", false);
 
@@ -65,7 +71,7 @@ int main(int argc, char** argv)
       return 0;
     }
   
-
+  bool ComplexFlag = Manager.GetBoolean("complex");
   MultiColumnASCIIFile TensorsElementsDefinition;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
 	{
@@ -73,10 +79,10 @@ int main(int argc, char** argv)
 	  return -1;
 	} 
 
-  if (TensorsElementsDefinition.GetNbrColumns() != 5)
-{
+   if (TensorsElementsDefinition.GetNbrColumns() != 5)
+   {
   cout <<" The tensor file should have 5 columnns"<<endl;
-}
+   }
 
   MultiColumnASCIIFile BoundaryVectorsDefinition;
   if (BoundaryVectorsDefinition.Parse(Manager.GetString("vector-file")) == false)
@@ -91,39 +97,60 @@ int main(int argc, char** argv)
   }
 
 
-  if(Manager.GetBoolean("test-idmrg") == true)
-  {
-  
-   return 0;
-  }
-
- 
+  AbstractMPOperatorOBC * TransferMatrix;
   int NbrSites = Manager.GetInteger("length");
-  MPOPeratorDefinedByFiles TransferMatrix(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition);
-  int PhysicalDimension = TransferMatrix.GetPhysicalDimension();
+  if(ComplexFlag == false)
+     TransferMatrix = new RealMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition);
+  else
+     TransferMatrix = new ComplexMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition);
+
+  int PhysicalDimension = TransferMatrix->GetPhysicalDimension();
   int MaxBondDimension = Manager.GetInteger("bond-dimension");;
 
  
-if(Manager.GetBoolean("print-tensor") == true)
-  {
-  TransferMatrix.PrintTensorElements();
-   return 0;
-  }
+   if(Manager.GetBoolean("print-tensor") == true)
+   {
+     TransferMatrix->PrintTensorElements();
+     return 0;
+   }
 
-  MPSSite * Lattice = new MPSSite[NbrSites];
-  Lattice[0] = MPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
+  RealMPSSite * Lattice = 0;
+  ComplexMPSSite * ComplexLattice = 0;
+  if(ComplexFlag == false)
+  {
+     Lattice = new RealMPSSite[NbrSites];
+     Lattice[0] = RealMPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,TransferMatrix);
   for(int i = 1 ; i < NbrSites - 1 ; i++ )
     {
-      Lattice[i] = MPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, &TransferMatrix);
+      Lattice[i] = RealMPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, TransferMatrix);
     }
-  Lattice[NbrSites-1] = MPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,&TransferMatrix);
+  Lattice[NbrSites-1] = RealMPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,TransferMatrix);
+  }
+  else
+  {
+     ComplexLattice = new ComplexMPSSite[NbrSites];
+     ComplexLattice[0] = ComplexMPSSite(0, PhysicalDimension, 0, &ComplexLattice[1], MaxBondDimension,TransferMatrix);
+  for(int i = 1 ; i < NbrSites - 1 ; i++ )
+    {
+      ComplexLattice[i] = ComplexMPSSite(i, PhysicalDimension, &ComplexLattice[i-1], &ComplexLattice[i+1], MaxBondDimension, TransferMatrix);
+    }
+  ComplexLattice[NbrSites-1] = ComplexMPSSite(NbrSites-1, PhysicalDimension, &ComplexLattice[NbrSites-2], 0, MaxBondDimension,TransferMatrix);
+  }
+
   int CurrentDimension = 1;
   int NextCurrentDimension = PhysicalDimension;
   for(int i = 0;  i < (NbrSites>>1) ; i++)
   {
+  if(ComplexFlag == false)
+  {
     Lattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
     Lattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
-
+}
+else
+{
+    ComplexLattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
+    ComplexLattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
+}
    CurrentDimension = NextCurrentDimension;
    NextCurrentDimension *=  PhysicalDimension;
    if(NextCurrentDimension > MaxBondDimension)
@@ -131,9 +158,20 @@ if(Manager.GetBoolean("print-tensor") == true)
         NextCurrentDimension =   MaxBondDimension;
      }	
   }
+
   int NbrSweep = Manager.GetInteger("sweep");
-  DMRGFiniteSizeRealOBCMainTask Algorithm (Lattice, &TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
-  Algorithm.RunAlgorithm();
+
+  if(ComplexFlag == false)
+  {
+   DMRGFiniteSizeRealOBCMainTask Algorithm (Lattice, TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
+   Algorithm.RunAlgorithm();
+}
+else
+{
+   DMRGFiniteSizeComplexOBCMainTask Algorithm (ComplexLattice, TransferMatrix, NbrSites, NbrSweep, MaxBondDimension, Architecture.GetArchitecture(), &Lanczos);
+   Algorithm.RunAlgorithm();
+}
+
   delete [] Lattice;
   return 0;
 }

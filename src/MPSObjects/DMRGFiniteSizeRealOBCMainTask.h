@@ -1,7 +1,7 @@
 #ifndef _DMRGFINITESIZEREALOBCMAINTASK_H 
 #define _DMRGFINITESIZEREALOBCMAINTASK_H
 
-#include "AbstractMPOperatorOBC.h"
+#include "RealMPOperatorOBC.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -10,7 +10,7 @@ class DMRGFiniteSizeRealOBCMainTask
  protected:
   const int NbrSites;
   
-  MPSSite * LatticeSite;
+  RealMPSSite * LatticeSite;
   AbstractArchitecture * Architecture;
   LanczosManager *  AlgorithmManager;
   AbstractMPOperatorOBC * MPOperator;
@@ -20,7 +20,7 @@ class DMRGFiniteSizeRealOBCMainTask
   double PreviousEnergy;
  public:
   
-  DMRGFiniteSizeRealOBCMainTask(MPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos);
+  DMRGFiniteSizeRealOBCMainTask(RealMPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int NbrSweep,int MaximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos);
   virtual ~DMRGFiniteSizeRealOBCMainTask();
   void RunAlgorithm();
   
@@ -28,7 +28,7 @@ class DMRGFiniteSizeRealOBCMainTask
   void InitializeLattice();
   void InitializeLatticeUsingIDMRG();
   void OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
-  void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (MPSSite * leftSite , MPSSite * rightSite, RealDiagonalMatrix & singularValues);
+  void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (RealMPSSite * leftSite , RealMPSSite * rightSite, RealDiagonalMatrix & singularValues);
 };
 
 #endif

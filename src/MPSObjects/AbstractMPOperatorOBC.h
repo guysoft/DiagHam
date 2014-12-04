@@ -2,30 +2,26 @@
 #define _ABSTRACTMPOPERATOROBC_H
 
 #include "Hamiltonian/AbstractHamiltonian.h"
-#include "MPSSite.h"
+#include "AbstractMPSSite.h"
 #include "Tensor/Tensor3.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
-#include "Matrix/RealSymmetricMatrix.h"
 
-class MPSSite;
+class AbstractMPSSite;
 
 class AbstractMPOperatorOBC : public AbstractHamiltonian
 {
  protected:
 
-  double *  LeftVector;
-  double * RightVector;
   unsigned int NbrNonZeroElements;
-  double * ElementsValues;
   unsigned int * IndexValues;
   unsigned int PhysicalDimension;
   unsigned int MPOBondDimension;
   unsigned int NbrSites;
   AbstractHilbertSpace* HilbertSpace;
   bool IDMRGFlag;
-  MPSSite * Site;
-  MPSSite * SiteLeft;
-  MPSSite * SiteRight;
+  AbstractMPSSite * Site;
+  AbstractMPSSite * SiteLeft;
+  AbstractMPSSite * SiteRight;
   
   AbstractMPOperatorOBC ();
   ~AbstractMPOperatorOBC ();
@@ -39,11 +35,10 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
  public:
   
   virtual void ComputeL(Tensor3<double> & L);
-  virtual void ComputeLCore(Tensor3<double> & L);
-
+  virtual void ComputeL(Tensor3<Complex> & L);
   virtual void ComputeR(Tensor3<double> & R);
-  virtual void ComputeRCore(Tensor3<double> & R);
-  
+  virtual void ComputeR(Tensor3<Complex> & R);
+  virtual void PrintTensorElements() = 0;
 
   // set Hilbert space
   //
@@ -53,12 +48,12 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // set site to be acted on
   //
   // site = pointer to the siteto use 
-  void SetSite (MPSSite* site);
+  void SetSite (AbstractMPSSite* site);
 
   // set site to be acted on
   //
   // site = pointer to the siteto use 
-  void SetSiteLeftAndRight (MPSSite* siteLeft,MPSSite* siteRight);
+  void SetSiteLeftAndRight (AbstractMPSSite* siteLeft,AbstractMPSSite* siteRight);
 
   // set site to be acted on
   //
@@ -92,6 +87,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // vDestination = vector where result has to be stored
   // return value = reference on vectorwhere result has been stored
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
+ virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
@@ -100,7 +96,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // vDestination = vector where result has to be stored
   // return value = reference on vectorwhere result has been stored
   virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination);
-
+  virtual ComplexVector& LowLevelMultiplyTwoSites(ComplexVector& vSource, ComplexVector& vDestination);
 
 
   // multiply a vector by the current hamiltonian for a given range of indices 
@@ -111,17 +107,15 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
-  virtual RealVector& LowLevelMultiplyCore(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
 
-  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
-  virtual RealVector& LowLevelMultiplyTwoSitesCore(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
 
- virtual RealSymmetricMatrix& GetTwoSitesHamiltonian (RealSymmetricMatrix & M);
+  virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelMultiplyTwoSites(ComplexVector& vSource, ComplexVector& vDestination, int firstComponent, int nbrComponent);
+
+  virtual RealSymmetricMatrix& GetTwoSitesHamiltonian (RealSymmetricMatrix & M);
+  virtual HermitianMatrix & GetTwoSitesHamiltonian (HermitianMatrix & M);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and store result in another vector, low level function (no architecture optimization)
@@ -131,8 +125,9 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination, 
-				       int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent);
+ virtual ComplexVector& LowLevelMultiplyOneSite(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent);
+
 
  protected:
   

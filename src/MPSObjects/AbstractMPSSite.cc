@@ -1,8 +1,7 @@
 
 #include <cmath>
-#include "MPSSite.h"
-#include "Matrix/RealDiagonalMatrix.h"
-#include "Matrix/RealSymmetricMatrix.h"
+#include "AbstractMPSSite.h"
+
 #include "AbstractMPOperatorOBC.h"
 #include "GeneralTools/GarbageFlag.h"
 
@@ -10,39 +9,23 @@ using std::endl;
 using std::abs;
 using std::cout;
 
-MPSSite::MPSSite()
+AbstractMPSSite::AbstractMPSSite()
 {
   this->PhysicalDimension = 0;
-  this->SiteOnLeft = 0;
-  this->SiteOnRight = 0;
   this->SitePosition = 0;
-  this->M = 0;
-  this->L = 0;
-  this->R = 0;
 }
 
-MPSSite::MPSSite(unsigned int sitePosition, unsigned int physicalDimension, MPSSite * siteOnLeft, MPSSite * siteOnRight , unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator)
+AbstractMPSSite::AbstractMPSSite(unsigned int sitePosition, unsigned int physicalDimension, unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator)
 {
   this->PhysicalDimension = physicalDimension;
-  this->SiteOnLeft = siteOnLeft;
-  this->SiteOnRight = siteOnRight;
   this->SitePosition = sitePosition;
   this->OperatorToBeMinimized = mPOperator;
   this->Flag.Initialize();
-  this->M = new RealMatrix[this->PhysicalDimension];
   this->MaxBondDimension = bondDimension;
-  this->L = 0;
-  this->R = 0;
 }
 
-MPSSite::~MPSSite()
+AbstractMPSSite::~AbstractMPSSite()
 {
-  //for (int i = 0 ; i < this->PhysicalDimension ; i++)
-    //delete this->M[i];
-
-  delete [] this->M;
-  delete this->L;
-  delete this->R;
 }
 
 
@@ -52,26 +35,19 @@ MPSSite::~MPSSite()
 // M = matrix to copy
 // return value = reference on modified matrix
 
-MPSSite & MPSSite::operator = (const MPSSite & site) 
+AbstractMPSSite & AbstractMPSSite::operator = (const AbstractMPSSite & site) 
 {
   this->PhysicalDimension = site.PhysicalDimension;
-  this->SiteOnLeft = site.SiteOnLeft;
-  this->SiteOnRight = site.SiteOnRight;
   this->SitePosition = site.SitePosition;
   this->OperatorToBeMinimized = site.OperatorToBeMinimized;
   this->BondDimensionLeft = site.BondDimensionLeft;
   this->BondDimensionRight = site.BondDimensionRight;
   this->MaxBondDimension = site.MaxBondDimension;
-  delete this->M;
-  this->M = new RealMatrix[this->PhysicalDimension];
-  for(int i= 0; i <this->PhysicalDimension; i++)
-    this->M[i] = site.M[i];
 
-  this->L = site.L;
-  this->R = site.R;
   return *this;
 }
 
+/*
 
 void MPSSite::InitializeLeft(RealMatrix * newA)
 {
@@ -86,12 +62,9 @@ void MPSSite::InitializeLeft(RealMatrix * newA)
   this->OperatorToBeMinimized->ComputeL(*this->L);
   this->L->PrintTensor();
 }
+*/
 
-void MPSSite::SetBondDimension(int bondDimensionLeft, int bondDimensionRight)
-{
-  this->BondDimensionLeft = bondDimensionLeft;
-  this->BondDimensionRight = bondDimensionRight;
-}
+/*
 
 void MPSSite::UpdateFromVector(RealVector * psi)
 {
@@ -114,8 +87,9 @@ void MPSSite::UpdateFromVector(RealVector * psi)
 	}
     }
 }
+*/
 
-
+/*
 void MPSSite::InitializeRight(RealMatrix * newB)
 {
   delete this->M;
@@ -128,110 +102,26 @@ void MPSSite::InitializeRight(RealMatrix * newB)
   this->OperatorToBeMinimized->ComputeR(*this->R);
   this->R->PrintTensor();
 }
+*/
 
-bool MPSSite::CheckLeftNormalization()
+
+bool AbstractMPSSite::CheckLeftNormalization()
 {
-  RealMatrix Result(this->BondDimensionRight,this->BondDimensionRight,true);
-  for (int i = 0 ; i< this->PhysicalDimension ; i++)
-    {
-      RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
-      Result += Tmp * (this->M[i]);
-    }
-  for(int i = 0 ; i < this->BondDimensionRight; i++)
-    {
-      if ( abs(Result(i,i)-1) > 1e-13  )
-	  {
-	    return false;
-	  }
-      for(int j = i+1 ; j < this->BondDimensionRight ; j++)
-	{
-	  if (abs(Result(i,j)) > 1e-13)
-	    {
-	      return false;
-	    }
-	}
-    }
+  cout <<"error using low-level AbstractMPSSite::CheckLeftNormalization()" <<endl;
   return true;
 }
 
 
-bool MPSSite::CheckRightNormalization()
+bool AbstractMPSSite::CheckRightNormalization()
 {
-  RealMatrix Result(this->BondDimensionLeft,this->BondDimensionLeft,true);
-  for (int i = 0 ; i < this->PhysicalDimension ; i++)
-    {
-      RealMatrix Tmp = this->M[i].DuplicateAndTranspose();
-      Result += (this->M[i])* Tmp;
-    }
-//  cout <<Result<<endl;
-  for(int i = 0 ; i < this->BondDimensionLeft; i++)
-    {
-      if ( abs(Result(i,i)-1) > 1e-13  )
-	{
-	  return false;
-	}
-      for(int j = i+1;j< this->BondDimensionLeft; j++)
-	{
-	  if (abs(Result(i,j)) > 1e-13)
-	    {
-	      return false;
-	    }
-	}
-      
-    }
-  return true;
+  cout <<"error using low-level AbstractMPSSite::CheckRightNormalization()" <<endl;
+  return false;
 }
 
 //can be used only if all matrices on the right sites are right-normalized
-void MPSSite::BringMInRightCanonicalForm()
+void AbstractMPSSite::BringMInRightCanonicalForm()
 {
-// cout << "BringMInRightCanonicalForm() for site" << this->SitePosition<<endl;
- RealMatrix TmpMatrix (this->BondDimensionLeft,this->BondDimensionRight * this->PhysicalDimension, true);
-  
-  for(int i = 0 ; i < this->BondDimensionLeft ; i++)
-    {
-      for(int p = 0 ; p < this->PhysicalDimension ; p++)
-	{
-	  for(int j = 0; j < this->BondDimensionRight; j++)
-	    { 
-	      TmpMatrix(i, this->PhysicalDimension * j + p) = this->M[p](i,j);
-	    }
-	}
-    }
-//  cout << TmpMatrix<<endl;
-  RealMatrix U,V;
-  RealDiagonalMatrix SingularValues;
-
-  TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
-//  cout <<"SingularValues  = "<< SingularValues<<endl;
-//  cout <<U <<endl;
-// cout <<V <<endl;
-  U = U * SingularValues;
-  double Entropy = 0.0;
-  for(int i = 0; i < SingularValues.GetNbrRow(); i++)
-{
-   SingularValues[i]*=SingularValues[i];
-   Entropy -= SingularValues[i]*log(SingularValues[i]);
-}
-
-//  cout <<U<<endl;;
- cout <<"Entropy = "<< Entropy<<" " << SingularValues[SingularValues.GetNbrRow()-1]<< endl;
-  for(int i =0 ; i <  this->PhysicalDimension; i++)
-    {
-      for(int j = 0 ; j <  this->BondDimensionLeft; j++)
-	{
-	  for(int k = 0 ; k <  this->BondDimensionRight; k++)
-	    {
-	      this->M[i](j,k) = V(j,this->PhysicalDimension * k + i);
-	    }
-	}
-
-       this->SiteOnLeft->M[i] = this->SiteOnLeft->M[i]*U;
-       }
-  delete this->R;
-  this->R = new Tensor3<double> (this->BondDimensionLeft,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionLeft,true) ;
-  this->OperatorToBeMinimized->SetSite(this);
-  this->OperatorToBeMinimized->ComputeR(*this->R);
+  cout <<"error using low-level AbstractMPSSite::BringMInRightCanonicalForm()" <<endl;
 }
 
 
@@ -239,10 +129,9 @@ void MPSSite::BringMInRightCanonicalForm()
 // can be used only if all matrices on the right sites are right-normalized
 // check the result
 
-void MPSSite::BringMInRightCanonicalFormCareful()
+void AbstractMPSSite::BringMInRightCanonicalFormCareful()
 {
   this->BringMInRightCanonicalForm();
-  
 if(this->CheckRightNormalization())
   ;
   else 
@@ -252,64 +141,16 @@ if(this->CheckRightNormalization())
 
 // can be used only if all matrices on the left sites are left-normalized
 
-void MPSSite::BringMInLeftCanonicalForm()
+void AbstractMPSSite::BringMInLeftCanonicalForm()
 {
-  RealMatrix TmpMatrix (this->PhysicalDimension*this->BondDimensionLeft,this->BondDimensionRight, true);
-  
-  for(int i = 0; i < this->BondDimensionLeft; i++)
-    {
-      for(int p = 0; p <   this->PhysicalDimension ; p++)
-	{
-	  for(int j = 0; j < this->BondDimensionRight; j++)
-	    { 
-	      TmpMatrix(this->PhysicalDimension*i + p,j) = this->M[p](i,j);
-	    }
-	}
-    }
-  
-  RealMatrix U,V;
-  RealDiagonalMatrix SingularValues;
-//  cout <<"check singular value decomposition in void MPSSite::BringMInLeftCanonicalForm()"<<endl;
-//  cout <<  TmpMatrix<<endl;
-  TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
-//  cout << SingularValues<<endl;
-//  cout <<U<<endl;
-//  cout <<V<<endl;
-//  V.Transpose();
-  V = SingularValues*V;
-//  cout <<V<<endl;
-double Entropy=0.0;
-  for(int i = 0; i < SingularValues.GetNbrRow(); i++)
-{
-   SingularValues[i]*=SingularValues[i];
-   Entropy -= SingularValues[i]*log(SingularValues[i]);
-}
-//  cout <<U<<endl;;
- cout <<"Entropy = "<< Entropy<<" " << SingularValues[SingularValues.GetNbrRow()-1]<< endl;
-
-  for(int i = 0 ; i <  this->PhysicalDimension; i++)
-    {
-      for(int j = 0 ; j <  this->BondDimensionLeft; j++)
-	{
-	  for(int k = 0 ; k <  this->BondDimensionRight; k++)
-	    {
-	      this->M[i](j,k) = U(this->PhysicalDimension*j + i,k);
-	    }
-	}
-      this->SiteOnRight->M[i] =  V * this->SiteOnRight->M[i];
-    }
-
-  delete this->L;
-  this->L = new Tensor3<double> (this->BondDimensionRight,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionRight,true);
-  this->OperatorToBeMinimized->SetSite(this);
-  this->OperatorToBeMinimized->ComputeL(*this->L);
+ cout <<"error using low-level AbstractMPSSite::BringMInLeftCanonicalForm()" <<endl;
 }
 
 
 // can be used only if all matrices on the left sites are left-normalized
 // check the result
 
-void MPSSite::BringMInLeftCanonicalFormCareful()
+void AbstractMPSSite::BringMInLeftCanonicalFormCareful()
 {
   this->BringMInLeftCanonicalForm();
   if(this->CheckLeftNormalization())
@@ -319,6 +160,7 @@ void MPSSite::BringMInLeftCanonicalFormCareful()
 }
 
 
+/*
 void MPSSite::GetMatrixInVectorForm(RealVector *& resultInvector)
 {
   delete resultInvector;
@@ -335,8 +177,9 @@ void MPSSite::GetMatrixInVectorForm(RealVector *& resultInvector)
 	}
     }
 }
+*/
 
-
+/*
 void MPSSite::InitializeWithRandomMatrices()
 {
 //   cout <<" start initialization i = "<<this->SitePosition <<endl;;
@@ -349,9 +192,10 @@ void MPSSite::InitializeWithRandomMatrices()
       this->M[i](j,k) = ((double) rand() / (RAND_MAX) - 0.5);
    }
 }
+*/
 
 
-
+/*
 void MPSSite::ComputeDensityMatrixLeft()
 {
    RealSymmetricMatrix TmpMatrix (this->PhysicalDimension*this->BondDimensionLeft, true);
@@ -376,8 +220,6 @@ void MPSSite::ComputeDensityMatrixLeft()
      RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
      TmpMatrix.LapackDiagonalize(TmpDiag);
      TmpDiag.SortMatrixDownOrder();
-
-
 }
 
 
@@ -405,7 +247,6 @@ void MPSSite::ComputeDensityMatrixRight()
      RealDiagonalMatrix TmpDiag (TmpMatrix.GetNbrRow());
      TmpMatrix.LapackDiagonalize(TmpDiag);
      TmpDiag.SortMatrixDownOrder();
-
 
 }
 
@@ -497,12 +338,13 @@ for(int i = 0; i < KeptStates; i++)
 	    }
 	}
     }
-
   leftSite->L = new Tensor3<double> (leftSite->BondDimensionRight,leftSite->OperatorToBeMinimized->GetMPODimension(),leftSite->BondDimensionRight,true);
   leftSite->OperatorToBeMinimized->SetSite(leftSite);
   leftSite->OperatorToBeMinimized->ComputeL(*leftSite->L);
+
 
   rightSite->R = new Tensor3<double> (rightSite->BondDimensionLeft,rightSite->OperatorToBeMinimized->GetMPODimension(),rightSite->BondDimensionLeft,true);
   rightSite->OperatorToBeMinimized->SetSite(rightSite);
   rightSite->OperatorToBeMinimized->ComputeR(*rightSite->R);
 }
+*/

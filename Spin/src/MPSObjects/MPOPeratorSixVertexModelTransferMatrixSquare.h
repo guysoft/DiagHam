@@ -1,10 +1,10 @@
 #ifndef _MPOperatorSixVertexModelTransferMatrixSquare_H
 #define _MPOperatorSixVertexModelTransferMatrixSquare_H
 
-#include "MPSObjects/AbstractMPOperatorOBC.h"
+#include "MPSObjects/RealMPOperatorOBC.h"
 
 
-class MPOPeratorSixVertexModelTransferMatrixSquare : public AbstractMPOperatorOBC
+class MPOPeratorSixVertexModelTransferMatrixSquare : public RealMPOperatorOBC
 {
  protected:
 

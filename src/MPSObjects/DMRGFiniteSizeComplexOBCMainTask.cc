@@ -1,17 +1,18 @@
-#include "DMRGFiniteSizeRealOBCMainTask.h"
-#include "RealMPSSite.h"
+#include "DMRGFiniteSizeComplexOBCMainTask.h"
+#include "ComplexMPSSite.h"
 #include <iostream>
 #include <sys/time.h>
 #include "Architecture/AbstractArchitecture.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 #include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
 #include "Vector/RealVector.h"
-#include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/HermitianMatrix.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 using std::cout;
 using std::endl;
 
-DMRGFiniteSizeRealOBCMainTask::DMRGFiniteSizeRealOBCMainTask(RealMPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int nbrSweep, int maximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos) :  NbrSites(nbrSites)
+DMRGFiniteSizeComplexOBCMainTask::DMRGFiniteSizeComplexOBCMainTask(ComplexMPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int nbrSweep, int maximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos) :  NbrSites(nbrSites)
 {
   this->LatticeSite = latticeSite;
   this->MPOperator = mPOperator;
@@ -23,9 +24,9 @@ DMRGFiniteSizeRealOBCMainTask::DMRGFiniteSizeRealOBCMainTask(RealMPSSite * latti
 }
 
 
-DMRGFiniteSizeRealOBCMainTask::~DMRGFiniteSizeRealOBCMainTask(){ }
+DMRGFiniteSizeComplexOBCMainTask::~DMRGFiniteSizeComplexOBCMainTask(){ }
 
-void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
+void DMRGFiniteSizeComplexOBCMainTask::RunAlgorithm()
 {
 //  this->InitializeLattice();
   this->InitializeLatticeUsingIDMRG();
@@ -55,7 +56,7 @@ void DMRGFiniteSizeRealOBCMainTask::RunAlgorithm()
 
 
 
-void DMRGFiniteSizeRealOBCMainTask::InitializeLattice()
+void DMRGFiniteSizeComplexOBCMainTask::InitializeLattice()
 {
   this->MPOperator->SetDMRGFlag(false);
   for (int i = 0 ; i < NbrSites ; i++) 
@@ -71,7 +72,7 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLattice()
 
 
 
-void DMRGFiniteSizeRealOBCMainTask::InitializeLatticeUsingIDMRG()
+void DMRGFiniteSizeComplexOBCMainTask::InitializeLatticeUsingIDMRG()
 {
   this->MPOperator->SetDMRGFlag(true);
   RealDiagonalMatrix SingularValues;
@@ -86,7 +87,7 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLatticeUsingIDMRG()
 
 
 
-  RealMatrix * TmpM = LatticeSite[NbrSites/2 - 1].GetM();
+  ComplexMatrix * TmpM = LatticeSite[NbrSites/2 - 1].GetM();
   for(int i = 0; i <  this->MPOperator->GetPhysicalDimension() ; i++)
   {
     TmpM[i] = TmpM[i]*SingularValues;
@@ -130,20 +131,20 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLatticeUsingIDMRGAndStatePredictio
 */
 
 
-void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)
+void DMRGFiniteSizeComplexOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int siteIndex)
 {
   if (this->MPOperator->GetHilbertSpaceDimension() < 500 )
     {
-    RealSymmetricMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
+    HermitianMatrix HRep (this->MPOperator->GetHilbertSpaceDimension(), true);
     this->MPOperator->GetHamiltonian(HRep);
 
     if (this->MPOperator->GetHilbertSpaceDimension() > 1)
      {
 #ifdef __LAPACK__
       RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
-      RealMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
+      ComplexMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
       HRep.LapackDiagonalize(TmpDiag, Q);
-      RealVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension(),true);
+      ComplexVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension(),true);
       cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->LatticeSite[siteIndex].UpdateFromVector(&Q[0]);
 
@@ -154,7 +155,7 @@ void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int si
 }
 else
 {
-  RealVector * TmpVector = 0;
+  ComplexVector * TmpVector = 0;
   AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
   this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
   LanczosAlgorithm->InitializeLanczosAlgorithm(*TmpVector);
@@ -203,7 +204,7 @@ else
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-      RealVector GroundState = LanczosAlgorithm->GetGroundState();
+      ComplexVector GroundState =  ((ComplexVector) LanczosAlgorithm->GetGroundState());
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
       this->LatticeSite[siteIndex].UpdateFromVector(&GroundState);
@@ -212,22 +213,22 @@ else
 }
 
 
-void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgorithm ( RealMPSSite * leftSite , RealMPSSite * rightSite, RealDiagonalMatrix & singularValues)
+void DMRGFiniteSizeComplexOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgorithm ( ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, RealDiagonalMatrix & singularValues)
 {
   if (this->MPOperator->GetTwoSitesHilbertSpaceDimension() < 500 )
     {
     int Dimension = this->MPOperator->GetTwoSitesHilbertSpaceDimension();
     cout <<"Dimension = " <<Dimension<<endl;
-    RealSymmetricMatrix HRep (Dimension, true);
+    HermitianMatrix HRep (Dimension, true);
     this->MPOperator->GetTwoSitesHamiltonian(HRep);
 
     if (Dimension > 1)
      {
 #ifdef __LAPACK__
       RealDiagonalMatrix TmpDiag (Dimension);
-      RealMatrix Q(Dimension,Dimension);
+      ComplexMatrix Q(Dimension,Dimension);
       HRep.LapackDiagonalize(TmpDiag, Q);
-      RealVector TmpEigenvector(Dimension,true);
+      ComplexVector TmpEigenvector(Dimension,true);
       cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
      cout <<" Before      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues);
@@ -238,7 +239,7 @@ void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgori
 }
 else
 {
-  RealVector * TmpVector = 0;
+  ComplexVector * TmpVector = 0;
   AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
 //  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
   LanczosAlgorithm->SetHamiltonian(this->MPOperator);
@@ -290,7 +291,7 @@ else
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-      RealVector GroundState = LanczosAlgorithm->GetGroundState();
+      ComplexVector GroundState =  ((ComplexVector) LanczosAlgorithm->GetGroundState());
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
       this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &GroundState,singularValues);

@@ -4,7 +4,7 @@
 
 
 #include "MPSObjects/MPOPeratorSixVertexModelTransferMatrixSquare.h"
-#include "MPSObjects/MPSSite.h"
+#include "MPSObjects/RealMPSSite.h"
 #include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
 
 #include "Options/Options.h"
@@ -77,15 +77,16 @@ if(Manager.GetBoolean("print-tensor") == true)
    return 0;
   }
 
-  MPSSite * Lattice = new MPSSite[NbrSites];
-  Lattice[0] = MPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
+  RealMPSSite * Lattice = new RealMPSSite[NbrSites];
+  Lattice[0] = RealMPSSite(0, PhysicalDimension, 0, &Lattice[1], MaxBondDimension,&TransferMatrix);
   for(int i = 1 ; i < NbrSites - 1 ; i++ )
     {
-      Lattice[i] = MPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, &TransferMatrix);
+      Lattice[i] = RealMPSSite(i, PhysicalDimension, &Lattice[i-1], &Lattice[i+1], MaxBondDimension, &TransferMatrix);
     }
-  Lattice[NbrSites-1] = MPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,&TransferMatrix);
+  Lattice[NbrSites-1] = RealMPSSite(NbrSites-1, PhysicalDimension, &Lattice[NbrSites-2], 0, MaxBondDimension,&TransferMatrix);
   int CurrentDimension = 1;
   int NextCurrentDimension = PhysicalDimension;
+
   for(int i = 0;  i < (NbrSites>>1) ; i++)
   {
     Lattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
