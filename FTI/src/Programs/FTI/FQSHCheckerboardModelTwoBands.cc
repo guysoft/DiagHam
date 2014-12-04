@@ -6,9 +6,11 @@
 #include "HilbertSpace/FermionOnSquareLatticeWithSU4SpinMomentumSpaceLong.h"
 
 #include "Tools/FTITightBinding/TightBindingModelTimeReversalCheckerboardLattice.h"
+#include "Tools/FTITightBinding/TightBindingModelCheckerboardLattice.h"
 
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandCheckerboardHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted.h"
 #include "Hamiltonian/ParticleOnLatticeQuantumSpinHallFourBandCheckerboardHamiltonian.h"
 #include "Hamiltonian/ExplicitHamiltonian.h"
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -82,6 +84,12 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "offset", "second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)", 0);
+  (*SystemGroup) += new BooleanOption ('\n', "break-timereversal", "use model with two identical copies of the kagome model without time reversal invariance");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive on-site potential strength between opposite spins", 1.0);
@@ -116,6 +124,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-scalapack", "use SCALAPACK libraries instead of DiagHam or LAPACK libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -133,6 +142,35 @@ int main(int argc, char** argv)
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey"); 
   int TotalNbrSites = NbrSitesX * NbrSitesY;
+  
+  int nx1 = Manager.GetInteger("nx1");
+  int ny1 = Manager.GetInteger("ny1");
+  int nx2 = Manager.GetInteger("nx2");
+  int ny2 = Manager.GetInteger("ny2");
+  int offset = Manager.GetInteger("offset");
+  bool TiltedFlag = true;
+  bool TimeReversalFlag = !(Manager.GetBoolean("break-timereversal"));
+  
+  if (((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)))
+    {
+      TiltedFlag = false;
+    }
+  else
+    {
+      if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
+	{
+	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	  return 0;
+	}
+      if (((offset*ny2 - ny1) % NbrSitesX) != 0 || ((nx1 - offset*nx2) % NbrSitesX != 0))
+	{
+	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSitesX) = 0 and ((nx1 - offset*nx2) % NbrSitesX = 0) to verify momentum conservation" << endl;
+	  return 0;
+	}
+      else
+	cout << "Using tilted boundary conditions" << endl;
+    }
+  
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
   char* StatisticPrefix = new char [16];
@@ -148,7 +186,15 @@ int main(int argc, char** argv)
   char* FilePrefix = new char [512];
   if (Manager.GetBoolean("four-bands") == false)
     {
-      sprintf (FilePrefix, "%s_twoband_quantumspinhall_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+      if (TiltedFlag == false)
+	sprintf (FilePrefix, "%s_twoband_quantumspinhall_checkerboardlattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
+      else
+      {
+	if (TimeReversalFlag == true)
+	  sprintf (FilePrefix, "%s_twoband_quantumspinhall_checkerboardlatticetilted_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	else
+	  sprintf (FilePrefix, "%s_twoband_bilayer_checkerboardlatticetilted_n_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+      }
     }
   else
     {
@@ -286,6 +332,10 @@ int main(int argc, char** argv)
       return 0;
     }
 
+    
+  Abstract2DTightBindingModel* TightBindingModel;
+  if (TiltedFlag == true)
+    TightBindingModel = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, offset, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   int MinKx = 0;
   int MaxKx = NbrSitesX - 1;
   if (Manager.GetInteger("only-kx") >= 0)
@@ -409,10 +459,17 @@ int main(int argc, char** argv)
 		  cout << "dim = " << Space.GetHilbertSpaceDimension()  << endl;
 		  Architecture.GetArchitecture()->SetDimension(Space.GetHilbertSpaceDimension());	
 		  AbstractQHEHamiltonian* Hamiltonian = 0;
-		  Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
+		  if (TiltedFlag == false)
+		  {
+		    Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(&Space, NbrParticles, NbrSitesX, NbrSitesY,
 													    Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"),
 													    Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), 		     
 													    Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  }
+		  else
+		  {
+		    Hamiltonian = new ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted (&Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("w-potential"), TightBindingModel, Manager.GetBoolean("flat-band"), TimeReversalFlag,  Architecture.GetArchitecture(), Memory);
+		  }
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d %d", i, j, Sz);
 		  char* EigenstateOutputFile = new char [512 + strlen(FilePrefix) + strlen(FileBandParameters)];

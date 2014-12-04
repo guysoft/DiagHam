@@ -2549,3 +2549,20 @@ long FermionOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimensio
 }
 
 
+
+// convert a given state from a generic basis to the current Sz subspace basis
+//
+// state = reference on the vector to convert
+// basis = reference on the basis associated to state
+// return value = converted vector
+
+ComplexVector FermionOnTorusWithSpinAndMagneticTranslations::ConvertFromNbodyBasis(ComplexVector& state, FermionOnTorusWithSpinAndMagneticTranslations& basis)
+{
+  ComplexVector TmpVector (basis.GetHilbertSpaceDimension(), true);
+  for (int i = 0; i < this->HilbertSpaceDimension; ++i)
+  {
+    TmpVector[basis.FindStateIndex(this->StateDescription[i], this->StateHighestBit[i])] = state[i];
+  }
+  cout << "vector dim = " << TmpVector.GetVectorDimension() << endl;
+  return TmpVector;
+}

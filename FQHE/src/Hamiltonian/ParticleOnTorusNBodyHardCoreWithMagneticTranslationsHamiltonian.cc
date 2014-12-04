@@ -96,22 +96,22 @@ ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ParticleOnTorus
     }
   char* InteractionCoefficientFileName = new char [512];
   sprintf (InteractionCoefficientFileName, "%dbodydelta_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NBodyValue, this->NbrLzValue, this->Ratio);
-  if (IsFile(InteractionCoefficientFileName))
-    {
-      ifstream File;
-      File.open(InteractionCoefficientFileName, ios::binary | ios::in);
-      if (!File.is_open())
-	{
-	  cout << "cannot open " << InteractionCoefficientFileName << endl;
-	}
-      else
-	{
-	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
-	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
-	  File.close();
-	}
-    }
-  else
+//   if (IsFile(InteractionCoefficientFileName))
+//     {
+//       ifstream File;
+//       File.open(InteractionCoefficientFileName, ios::binary | ios::in);
+//       if (!File.is_open())
+// 	{
+// 	  cout << "cannot open " << InteractionCoefficientFileName << endl;
+// 	}
+//       else
+// 	{
+// 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
+// 	    ReadBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
+// 	  File.close();
+// 	}
+//     }
+//   else
     {
       ofstream File;
       File.open(InteractionCoefficientFileName, ios::binary | ios::out);
@@ -307,6 +307,8 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
     return 0.0;
   
   double DoubleNbrLzValue = (double) this->NbrLzValue;
+  double normalizationCoefficient = pow(DoubleNbrLzValue,((double) (this->NBodyValue + 1)) / 4.0);
+  normalizationCoefficient = 1.0;
   double PIOnM = M_PI / DoubleNbrLzValue ;
   double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
   int MinIter = 3;
@@ -323,7 +325,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   for (int j = 0; j < this->NBodyValue - 1; ++j)
     for (int k = j; k < this->NBodyValue - 1; ++k)
       ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  double Coefficient = exp(-Factor*ExpFactor);
+  double Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
   
   while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
   {
@@ -338,7 +340,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
     for (int j = 0; j < this->NBodyValue - 1; ++j)
       for (int k = j; k < this->NBodyValue - 1; ++k)
 	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = exp(-Factor*ExpFactor);
+    Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
     
   }
   
@@ -354,7 +356,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   for (int j = 0; j < this->NBodyValue - 1; ++j)
     for (int k = j; k < this->NBodyValue - 1; ++k)
       ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  Coefficient = exp(-Factor*ExpFactor);
+  Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
   
   
   while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
@@ -370,7 +372,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
     for (int j = 0; j < this->NBodyValue - 1; ++j)
       for (int k = j; k < this->NBodyValue - 1; ++k)
 	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = exp(-Factor*ExpFactor);    
+    Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);    
   }
   
   return Sum;
@@ -392,6 +394,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   int countIter1 = 0;
   int countIter2 = 0;
   
+  
   int TmpIndex1 = TmpIndices[0];
   int TmpIndex2 = TmpIndices[1];
   double DoubleNbrLzValue = (double) this->NbrLzValue;
@@ -404,6 +407,7 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   ExpFactor2 = ((double) (momFactor[1])) + ((double) (TmpIndices[1])) * DoubleNbrLzValue;
       
   double Coefficient = exp(-Factor*(ExpFactor1*ExpFactor2 + ExpFactor1*ExpFactor1 + ExpFactor2*ExpFactor2));
+  
   
   while ((Sum + Precision*Coefficient != Sum) || (countIter1 < MinIter))
   {

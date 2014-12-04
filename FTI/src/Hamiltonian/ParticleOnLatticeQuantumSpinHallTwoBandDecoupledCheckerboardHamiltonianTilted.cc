@@ -5,12 +5,13 @@
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
-//                        class author: Nicolas Regnault                      //
+//                        class author: Cecile Repellin                       //
 //                                                                            //
 //                class of quatum spin Hall restricted to two bands           //
 //                      using two decoupled checkerboard models               //
+//                     using periodic boundary conditions                     //
 //                                                                            //
-//                        last modification : 04/04/2011                      //
+//                        last modification : 02/12/2014                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -31,7 +32,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -67,25 +68,29 @@ using std::ostream;
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, 
-																		 int nbrSiteY, double uPotential, double vPotential, double wPotential, double t1, double t2, double t2p, double mus, double gammaX, double gammaY, bool flatBandFlag, AbstractArchitecture* architecture, long memory)
+ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted (ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSiteX, int nbrSiteY, 
+									  double uPotential, double vPotential, double wPotential,
+									  Abstract2DTightBindingModel* tightBindingModel, bool flatBandFlag, bool timeReversalFlag, 
+									  AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
   this->LzMax = nbrSiteX * nbrSiteY - 1;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->TightBindingModelUp = tightBindingModel;
+  this->TightBindingModelDown = tightBindingModel;
   this->HamiltonianShift = 0.0;
-  this->NNHoping = t1;
-  this->NextNNHoping = t2;
-  this->SecondNextNNHoping = t2p;
-  this->MuS = mus;
-  this->GammaX = gammaX;
-  this->GammaY = gammaY;
+  
   this->FlatBand = flatBandFlag;
+  this->TimeReversal = timeReversalFlag;
+
   this->UPotential = uPotential;
   this->VPotential = vPotential;
   this->WPotential = wPotential;
+
   this->Architecture = architecture;
   this->Memory = memory;
   this->OneBodyInteractionFactorsupup = 0;
@@ -126,14 +131,14 @@ ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::Particl
 // destructor
 //
 
-ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::~ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian()
+ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::~ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted()
 {
 }
   
 // evaluate all interaction factors
 //   
 
-void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::EvaluateInteractionFactors()
+void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
   ComplexMatrix* OneBodyBasis = new ComplexMatrix [this->NbrSiteX * this->NbrSiteY];
@@ -146,70 +151,9 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::Ev
       this->OneBodyInteractionFactorsdowndown = new double [this->NbrSiteX * this->NbrSiteY];
     }
 
-  for (int kx = 0; kx < this->NbrSiteX; ++kx)
-    for (int ky = 0; ky < this->NbrSiteY; ++ky)
-      {
-	HermitianMatrix TmpOneBodyHamiltonian(2, true);
-	int Index = (kx * this->NbrSiteY) + ky;
-	Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-						     sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
-	double d3 = this->MuS + (2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
-							     - cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY))));
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, B1);
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	ComplexMatrix TmpMatrix(2, 2, true);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	RealDiagonalMatrix TmpDiag;
-#ifdef __LAPACK__
-	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
- 	ComplexMatrix TmpMatrix2(4, 4, true);
-	TmpMatrix2[0][0] = TmpMatrix[0][0];
-	TmpMatrix2[0][1] = TmpMatrix[0][1];
-	TmpMatrix2[2][0] = TmpMatrix[1][0];
-	TmpMatrix2[2][1] = TmpMatrix[1][1];
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactorsupup[Index] = TmpDiag(0, 0);
-	  }
-// 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << " ";
-	
-	B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-					     sin (1.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-	d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY));
-	d3 = this->MuS + (2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) -kx) + this->GammaX) / ((double) this->NbrSiteX))
-						      - cos (2.0 * M_PI * (((double) -ky) + this->GammaY) / ((double) this->NbrSiteY))));
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);
-	TmpOneBodyHamiltonian.SetMatrixElement(0, 1, Conj(B1));
-	TmpOneBodyHamiltonian.SetMatrixElement(1, 1, d1 - d3);
-	TmpMatrix[0][0] = 1.0;
-	TmpMatrix[1][1] = 1.0;
-	TmpMatrix[0][1] = 0.0;
-	TmpMatrix[1][0] = 0.0;
-#ifdef __LAPACK__
-	TmpOneBodyHamiltonian.LapackDiagonalize(TmpDiag, TmpMatrix);
-#else
-	TmpOneBodyHamiltonian.Diagonalize(TmpDiag, TmpMatrix);
-#endif   
-	TmpMatrix2[1][2] = TmpMatrix[0][0];
-	TmpMatrix2[1][3] = TmpMatrix[0][1];
-	TmpMatrix2[3][2] = TmpMatrix[1][0];
-	TmpMatrix2[3][3] = TmpMatrix[1][1];
-	OneBodyBasis[Index] = TmpMatrix2;	
-// 	cout << OneBodyBasis[Index] << endl;
-	if (this->FlatBand == false)
-	  {
-	    this->OneBodyInteractionFactorsdowndown[Index] = TmpDiag(0, 0);
-	  }
-// 	cout << TmpDiag(0, 0) << " " << TmpDiag(1, 1) << endl;
-      }
 
- 
+  this->ComputeOneBodyMatrices(OneBodyBasis);
+
   this->NbrInterSectorSums = this->NbrSiteX * this->NbrSiteY;
   this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
   for (int i = 0; i < this->NbrInterSectorSums; ++i)
@@ -432,6 +376,49 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::Ev
   cout << "====================================" << endl;
 }
 
+
+// compute the one body transformation matrices and the optional one body band stucture contribution
+//
+// oneBodyBasis = array of one body transformation matrices (the leftmost upper block for the spin up, the rightmsdt lower block for the spin down)
+
+void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::ComputeOneBodyMatrices(ComplexMatrix* oneBodyBasis)
+{
+  for (int kx = 0; kx < this->NbrSiteX; ++kx)
+    for (int ky = 0; ky < this->NbrSiteY; ++ky)
+      {
+	int Index = this->TightBindingModelUp->GetLinearizedMomentumIndex(kx, ky);
+	
+	oneBodyBasis[Index] = ComplexMatrix(2*this->TightBindingModelUp->GetNbrBands(), 2*this->TightBindingModelUp->GetNbrBands(), true);
+	for (int i = 0; i < this->TightBindingModelUp->GetNbrBands(); ++i)
+	  for (int j = 0; j < this->TightBindingModelUp->GetNbrBands(); ++j)
+	    oneBodyBasis[Index][2 * i][j] = this->TightBindingModelUp->GetOneBodyMatrix(Index)[i][j];
+	if (this->FlatBand == false)
+	  {
+	    this->OneBodyInteractionFactorsupup[Index] = this->TightBindingModelUp->GetEnergy(0, Index);
+	  }
+
+	
+	for (int i = 0; i < this->TightBindingModelUp->GetNbrBands(); ++i)
+	  for (int j = 0; j < this->TightBindingModelUp->GetNbrBands(); ++j)
+	    {
+	      if (this->TimeReversal == true)
+	      {
+// 		For this specific Hamiltonian (and gauge choice), h(k) = h(-k)
+		oneBodyBasis[Index][2 * i + 1][this->TightBindingModelUp->GetNbrBands() + j] = Conj (this->TightBindingModelDown->GetOneBodyMatrix(Index)[i][j]);
+	      }
+	      else
+	      {
+		oneBodyBasis[Index][2 * i + 1][this->TightBindingModelUp->GetNbrBands() + j] = this->TightBindingModelDown->GetOneBodyMatrix(Index)[i][j];
+	      }
+	    }
+	if (this->FlatBand == false)
+	  {
+	    this->OneBodyInteractionFactorsdowndown[Index] =  this->TightBindingModelDown->GetEnergy(0, Index);
+	  }
+
+      }
+}
+
 // compute the matrix element for the two body interaction between two sites A and B belonging to the same layer
 //
 // kx1 = momentum along x for the A site
@@ -440,10 +427,16 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::Ev
 // ky2 = momentum along y for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2)
+Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::ComputeTwoBodyMatrixElementAUpBUp(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  double Tmpkx1 = this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 0);
+  double Tmpky1 = this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 1);
+  double Tmpkx2 = this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 0);
+  double Tmpky2 = this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 1);
+  Complex Tmp = 2.0 * (cos (0.5*(Tmpkx2 - Tmpky2 + Tmpky1 - Tmpkx1))   +   cos (0.5*(Tmpkx2 + Tmpky2 - Tmpky1 - Tmpkx1)));
+  
+//   Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
+// 		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
   return Tmp;
 }
 
@@ -455,9 +448,15 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian:
 // ky2 = momentum along y for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2)
+Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::ComputeTwoBodyMatrixElementBUpBDown(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = Phase (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
+  double Tmpkx1 = this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 0);
+  double Tmpky1 = this->TightBindingModelUp->GetProjectedMomentum(kx1, ky1, 1);
+  double Tmpkx2 = this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 0);
+  double Tmpky2 = this->TightBindingModelUp->GetProjectedMomentum(kx2, ky2, 1);
+  Complex Tmp = Phase (0.5 * (Tmpkx2 + Tmpky2 - Tmpky1 - Tmpkx1));
+  
+//   Complex Tmp = Phase (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY)))));
   return Tmp;
 }
 
@@ -469,10 +468,10 @@ Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian:
 // ky2 = momentum along y for the B site
 // return value = corresponding matrix element
 
-Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonian::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2)
+Complex ParticleOnLatticeQuantumSpinHallTwoBandDecoupledCheckerboardHamiltonianTilted::ComputeTwoBodyMatrixElementAUpBDown(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
-  return Tmp;
+//   Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
+// 		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  return this->ComputeTwoBodyMatrixElementAUpBUp (kx1, ky1, kx2, ky2) ;
 }
 

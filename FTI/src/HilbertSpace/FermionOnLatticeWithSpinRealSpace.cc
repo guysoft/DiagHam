@@ -541,9 +541,10 @@ HermitianMatrix FermionOnLatticeWithSpinRealSpace::EvaluatePartialDensityMatrixP
       HermitianMatrix TmpDensityMatrixZero;
       return TmpDensityMatrixZero;
    }
-  FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, this->NbrSite, szSector);
+   
+  FermionOnLatticeWithSpinRealSpace SubsytemSpace (nbrParticleSector, szSector, this->NbrSite, 10000000);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite, ComplementarySzSector);
+  FermionOnLatticeWithSpinRealSpace ComplementarySpace (ComplementaryNbrParticles, ComplementarySzSector, this->NbrSite, 10000000);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
 
   FQHESphereParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);

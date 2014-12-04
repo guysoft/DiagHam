@@ -72,6 +72,10 @@ class ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted : 
   Abstract2DTightBindingModel* TightBindingModelDown;
 
  public:
+   
+  // default constructor
+  //
+  ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted();
 
   // constructor
   //

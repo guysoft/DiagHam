@@ -379,6 +379,13 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
+  // convert a given state from a generic basis to the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // basis = reference on the basis associated to state
+  // return value = converted vector
+  virtual ComplexVector ConvertFromNbodyBasis(ComplexVector& state, FermionOnTorusWithSpinAndMagneticTranslations& basis);
+
  protected:
 
   // find canonical form of a state description

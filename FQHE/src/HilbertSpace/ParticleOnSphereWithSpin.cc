@@ -30,6 +30,8 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
+#include "Vector/ComplexVector.h"
+
 
 #include <iostream>
 using std::cout;
@@ -974,4 +976,16 @@ RealMatrix& ParticleOnSphereWithSpin::EvaluateEntanglementMatrixRealSpacePartiti
 int ParticleOnSphereWithSpin::SzToMinusSz (int index, double& coefficient)
 {
   return this->HilbertSpaceDimension;
+}
+
+// convert a given state from a generic basis to the current Sz subspace basis
+//
+// state = reference on the vector to convert
+// basis = reference on the basis associated to state
+// return value = converted vector
+
+ComplexVector ParticleOnSphereWithSpin::ConvertFromNbodyBasis(ComplexVector& state, ParticleOnSphereWithSpin& basis)
+{
+  ComplexVector TmpVector;
+  return TmpVector;
 }

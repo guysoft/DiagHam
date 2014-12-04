@@ -61,6 +61,10 @@ TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice(int n
 {
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY = nbrSiteY;
+  this->Nx1 = this->NbrSiteX;
+  this->Ny1 = 0;
+  this->Nx2 = 0;
+  this->Ny2 = this->NbrSiteY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
   this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
   this->NNHoping = t1;
@@ -73,6 +77,72 @@ TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice(int n
   this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
   this->Architecture = architecture;
   this->BlochFormFlag = blochFormFlag;
+  
+  this->ComputeAllProjectedMomenta();
+  
+  if (storeOneBodyMatrices == true)
+    {
+      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
+    }
+  else
+    {
+      this->OneBodyBasis = 0;
+    }
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+    }
+  this->ComputeBandStructure();
+}
+
+
+
+// constructor for a tilted lattice
+//
+// nbrSiteX = number of sites in the x direction
+// nbrSiteY = number of sites in the y direction
+// nx1 = first coordinate of the first spanning vector of the tilted lattice
+// nx2 = second coordinate of the first spanning vector of the tilted lattice
+// ny1 = first coordinate of the second spanning vector of the tilted lattice
+// ny2 = second coordinate of the second spanning vector of the tilted lattice
+// offset = second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)
+// t1 = hoping amplitude between neareast neighbor sites
+// t2 = hoping amplitude between next neareast neighbor sites
+// t2p = hoping amplitude between second next neareast neighbor sites
+// mus = sublattice chemical potential on A sites
+// gammaX = boundary condition twisting angle along x
+// gammaY = boundary condition twisting angle along y
+// architecture = pointer to the architecture
+// storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+// blochFormFlag = use the Bloch form instead of the the traditional form
+
+TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double t2p, double mus, 
+									   double gammaX, double gammaY, AbstractArchitecture* architecture, bool storeOneBodyMatrices, bool blochFormFlag)
+{
+  
+  //Attention: the tilted periodic boundary conditions are only implemented in non-Bloch form
+  this->NbrSiteX = nbrSiteX;
+  this->NbrSiteY = nbrSiteY;
+  this->Nx1 = nx1;
+  this->Ny1 = ny1;
+  this->Nx2 = nx2;
+  this->Ny2 = ny2;
+  this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);
+  this->KyFactor = 2.0 * M_PI / ((double) this->NbrSiteY);
+  this->NNHoping = t1;
+  this->NextNNHoping = t2;
+  this->SecondNextNNHoping = t2p;
+  this->MuS = mus;
+  this->GammaX = gammaX;
+  this->GammaY = gammaY;
+  this->NbrBands = 2;
+  this->NbrStatePerBand = this->NbrSiteX * this->NbrSiteY;
+  this->Architecture = architecture;
+  this->BlochFormFlag = blochFormFlag;
+  
+  this->ComputeAllProjectedMomenta();
+  
 
   if (storeOneBodyMatrices == true)
     {
@@ -118,11 +188,11 @@ void TightBindingModelCheckerboardLattice::CoreComputeBandStructure(long minStat
 	      int Index = this->GetLinearizedMomentumIndex(kx, ky);
 	      if ((Index >= minStateIndex) && (Index < MaxStateIndex))
 		{
-		  Complex B1 = 4.0 * this->NNHoping * Complex (cos (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * cos(M_PI * 0.25), 
-							       sin (1.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * sin (1.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY)) * sin(M_PI * 0.25));
-		  double d1 = 4.0 * this->SecondNextNNHoping * cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX)) * cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY));
-		  double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos (2.0 * M_PI * (((double) kx) + this->GammaX) / ((double) this->NbrSiteX))
-									- cos (2.0 * M_PI * (((double) ky) + this->GammaY) / ((double) this->NbrSiteY))));
+		  Complex B1 = 4.0 * this->NNHoping * Complex (cos (0.5 * this->ProjectedMomenta[Index][0]) * cos (0.5 * this->ProjectedMomenta[Index][1]) * cos(M_PI * 0.25), 
+							       sin (0.5 * this->ProjectedMomenta[Index][0]) * sin (0.5 * this->ProjectedMomenta[Index][1]) * sin(M_PI * 0.25));
+		  double d1 = 4.0 * this->SecondNextNNHoping * cos (this->ProjectedMomenta[Index][0]) * cos (this->ProjectedMomenta[Index][1]);
+		  double d3 =  this->MuS + (2.0 * this->NextNNHoping * (cos (this->ProjectedMomenta[Index][0])
+									- cos (this->ProjectedMomenta[Index][1])));
 		  
 		  HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
 		  TmpOneBodyHamiltonian.SetMatrixElement(0, 0, d1 + d3);

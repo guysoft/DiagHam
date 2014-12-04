@@ -672,6 +672,13 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // entanglementMatrix = reference on the entanglement matrix (will be overwritten)
   // return value = reference on the entanglement matrix
   virtual RealMatrix& EvaluateEntanglementMatrixRealSpacePartitionFromParticleEntanglementMatrix (int nbrFermionSector, int lzSector, int szSector, double thetaTop, double thetaBottom, double phiRange, RealMatrix& entanglementMatrix);
+  
+  // convert a given state from a generic basis to the current Sz subspace basis
+  //
+  // state = reference on the vector to convert
+  // basis = reference on the basis associated to state
+  // return value = converted vector
+  virtual ComplexVector ConvertFromNbodyBasis(ComplexVector& state, ParticleOnSphereWithSpin& basis);
 
 };
 

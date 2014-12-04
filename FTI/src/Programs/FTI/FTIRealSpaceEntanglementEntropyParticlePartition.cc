@@ -170,10 +170,7 @@ int main(int argc, char** argv)
       }
     TwoDTranslationFlag = FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0],
 									  NbrParticles, NbrSites, TotalKx[0], TotalKy[0], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag);
-    
-    
-
-      for (int i = 0; i < NbrSpaces; ++i)
+    for (int i = 0; i < NbrSpaces; ++i)
 	{
 	  if ((TotalSpinConservedFlag == false) && (TwoDTranslationFlag == true))
 	    {     
@@ -216,6 +213,8 @@ int main(int argc, char** argv)
 // 		cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << NbrSiteZ << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalKz[i] << " " << TotalSpin << " " << Statistics << endl;
 	    }
 	}
+  
+
   GroundStates = new ComplexVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
     {
@@ -260,7 +259,8 @@ int main(int argc, char** argv)
    
   
   int TotalNbrSites = NbrSiteX * NbrSiteY;
-  cout << "totalnbrSites = " << TotalNbrSites << endl;
+  if (TwoDTranslationFlag == false)
+    TotalNbrSites = 1;
   int* NbrGroundStatePerMomentumSector = new int[TotalNbrSites];
   ComplexVector** GroundStatePerMomentumSector = new ComplexVector*[TotalNbrSites];
   double** CoefficientPerMomentumSector = new double*[TotalNbrSites];
@@ -271,7 +271,20 @@ int main(int argc, char** argv)
       CoefficientPerMomentumSector[i] = 0;
     }
 
-
+  for (int i = 0; i < NbrSpaces; ++i)
+    {
+      if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	{
+	  cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	  return -1;      
+	}
+      int TmpIndex;
+      if(TwoDTranslationFlag == true)
+	TmpIndex = (TotalKx[i] * NbrSiteY) + TotalKy[i];
+      else
+	TmpIndex = 0;
+      NbrGroundStatePerMomentumSector[TmpIndex]++; 
+    }
   for (int i = 0; i < TotalNbrSites; ++i)
     {
       if (NbrGroundStatePerMomentumSector[i] > 0)
@@ -288,7 +301,6 @@ int main(int argc, char** argv)
 	TmpIndex = (TotalKx[i] * NbrSiteY) + TotalKy[i];
       else
 	TmpIndex = 0;
-      cout << TmpIndex << " " << NbrGroundStatePerMomentumSector[TmpIndex] << endl;
       GroundStatePerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[TmpIndex]] = GroundStates[i];
       CoefficientPerMomentumSector[TmpIndex][NbrGroundStatePerMomentumSector[TmpIndex]] = Coefficients[i];
       NbrGroundStatePerMomentumSector[TmpIndex]++;
@@ -319,7 +331,7 @@ int main(int argc, char** argv)
 	    {
 	      if (SU2SpinFlag == false)
 	      {
-		if (TwoDTranslationFlag = false)
+		if (TwoDTranslationFlag == false)
 		  Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
 		else
 		  Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
@@ -330,14 +342,16 @@ int main(int argc, char** argv)
 		{
 		  if (TotalSpinConservedFlag == false)
 		  {
-		    if (TwoDTranslationFlag = false)
+		    if (TwoDTranslationFlag == false)
+		    { 
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+		    }
 		    else
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
 		  }
 		  else
 		  {
-		    if (TwoDTranslationFlag = false)
+		    if (TwoDTranslationFlag == false)
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
 		    else
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
@@ -347,14 +361,14 @@ int main(int argc, char** argv)
 		{
 		  if (TotalSpinConservedFlag == false)
 		  {
-		    if (TwoDTranslationFlag = false)
+		    if (TwoDTranslationFlag == false)
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
 		    else
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
 		  }
 		  else
 		  {
-		    if (TwoDTranslationFlag = false)
+		    if (TwoDTranslationFlag == false)
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, TotalSpin, NbrSites, 10000000);
 		    else
 		      Spaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, TotalSpin, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
@@ -371,8 +385,9 @@ int main(int argc, char** argv)
 	  
       if (Spaces[TmpIndex]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
 	{
-	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
-	      return 0;
+	  cout << Spaces[TmpIndex]->GetLargeHilbertSpaceDimension() << " " << GroundStates[i].GetLargeVectorDimension() << endl;
+	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	  return 0;
 	}
     }
   
@@ -411,14 +426,14 @@ int main(int argc, char** argv)
 	}
       int SubsystemTotalKxMin = 0;
       int SubsystemTotalKyMin = 0;
-      int SubsystemTotalKxMax = 0;
-      int SubsystemTotalKyMax = 0;
+      int SubsystemTotalKxMax = 1;
+      int SubsystemTotalKyMax = 1;
       if(TwoDTranslationFlag == true)
       {
 	SubsystemTotalKxMax = NbrSiteX;
 	SubsystemTotalKyMax = NbrSiteY;
       }
-	
+      
       for (int SubsystemTotalSz = MinSz; SubsystemTotalSz <= MaxSz; SubsystemTotalSz += 2)
 	{
 	  for (int SubsystemTotalKx = SubsystemTotalKxMin; SubsystemTotalKx < SubsystemTotalKxMax; ++SubsystemTotalKx)
@@ -426,7 +441,7 @@ int main(int argc, char** argv)
 	      for (int SubsystemTotalKy = SubsystemTotalKyMin; SubsystemTotalKy < SubsystemTotalKyMax; ++SubsystemTotalKy)
 		{
 		  if(TwoDTranslationFlag == false)
-		    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << endl;
+		    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " Sz = " << SubsystemTotalSz << endl;
 		  else
 		    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
 			  
@@ -605,7 +620,7 @@ int main(int argc, char** argv)
 	      else
 	      {
 		for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-		DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << TmpDiag[i] << endl;
+		  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << TmpDiag[i] << endl;
 	      }
 	    }
 	  else

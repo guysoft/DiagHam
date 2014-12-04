@@ -72,6 +72,28 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, double t1, double t2, double t2p, double mus, 
 				       double gammaX, double gammaY, 
 				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
+  
+  // constructor for a tilted lattice
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // nx1 = first coordinate of the first spanning vector of the tilted lattice
+  // nx2 = second coordinate of the first spanning vector of the tilted lattice
+  // ny1 = first coordinate of the second spanning vector of the tilted lattice
+  // ny2 = second coordinate of the second spanning vector of the tilted lattice
+  // offset = second coordinate in momentum space of the second spanning vector of the reciprocal lattice (0 if lattice is untilted or if Ny = 1)
+  // t1 = hoping amplitude between neareast neighbor sites
+  // t2 = hoping amplitude between next neareast neighbor sites
+  // t2p = hoping amplitude between second next neareast neighbor sites
+  // mus = sublattice chemical potential on A sites
+  // gammaX = boundary condition twisting angle along x
+  // gammaY = boundary condition twisting angle along y
+  // architecture = pointer to the architecture
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  // blochFormFlag = use the Bloch form instead of the the traditional form
+  TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double t2p, double mus, 
+				       double gammaX, double gammaY, 
+				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
 
   // destructor
   //

@@ -49,6 +49,12 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted()
+{
+}
+
 // constructor
 //
 // particles = Hilbert space associated to the system
@@ -971,30 +977,34 @@ void ParticleOnLatticeQuantumSpinHallTwoBandDecoupledKagomeHamiltonianTilted::Co
     for (int ky = 0; ky < this->NbrSiteY; ++ky)
       {
 	int Index = this->TightBindingModelUp->GetLinearizedMomentumIndex(kx, ky);
-	oneBodyBasis[Index] = ComplexMatrix(6, 6, true);
-	for (int i = 0; i < 3; ++i)
-	  for (int j = 0; j < 3; ++j)
+	
+	oneBodyBasis[Index] = ComplexMatrix(2*this->TightBindingModelUp->GetNbrBands(), 2*this->TightBindingModelUp->GetNbrBands(), true);
+	for (int i = 0; i < this->TightBindingModelUp->GetNbrBands(); ++i)
+	  for (int j = 0; j < this->TightBindingModelUp->GetNbrBands(); ++j)
 	    oneBodyBasis[Index][2 * i][j] = this->TightBindingModelUp->GetOneBodyMatrix(Index)[i][j];
 	if (this->FlatBand == false)
 	  {
 	    this->OneBodyInteractionFactorsupup[Index] = 0.5 * this->TightBindingModelUp->GetEnergy(0, Index);
 	  }
-	cout << this->TightBindingModelUp->GetEnergy(0, Index) << " " << this->TightBindingModelUp->GetEnergy(1, Index) << " " << this->TightBindingModelUp->GetEnergy(2, Index) << endl;
-	
+
 	int IndexInv = this->TightBindingModelDown->GetLinearizedMomentumIndex(((this->NbrSiteX - kx) % this->NbrSiteX), ((this->NbrSiteY - ky) % this->NbrSiteY));
-	for (int i = 0; i < 3; ++i)
-	  for (int j = 0; j < 3; ++j)
+	for (int i = 0; i < this->TightBindingModelUp->GetNbrBands(); ++i)
+	  for (int j = 0; j < this->TightBindingModelUp->GetNbrBands(); ++j)
 	    {
 	      if (this->TimeReversal == true)
-		oneBodyBasis[Index][2 * i + 1][3 + j] = Conj (this->TightBindingModelDown->GetOneBodyMatrix(IndexInv)[i][j]);
+	      {
+		oneBodyBasis[Index][2 * i + 1][this->TightBindingModelUp->GetNbrBands() + j] = Conj (this->TightBindingModelDown->GetOneBodyMatrix(IndexInv)[i][j]);
+	      }
 	      else
-		oneBodyBasis[Index][2 * i + 1][3 + j] = this->TightBindingModelDown->GetOneBodyMatrix(Index)[i][j];
+	      {
+		oneBodyBasis[Index][2 * i + 1][this->TightBindingModelUp->GetNbrBands() + j] = this->TightBindingModelDown->GetOneBodyMatrix(Index)[i][j];
+	      }
 	    }
 	if (this->FlatBand == false)
 	  {
 	    this->OneBodyInteractionFactorsdowndown[Index] = 0.5 * this->TightBindingModelDown->GetEnergy(0, IndexInv);
 	  }
-	cout << this->TightBindingModelDown->GetEnergy(0, IndexInv) << " " << this->TightBindingModelDown->GetEnergy(1, IndexInv) << " " << this->TightBindingModelDown->GetEnergy(2, IndexInv) << endl;
+
       }
 }
 
