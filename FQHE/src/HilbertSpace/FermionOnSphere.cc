@@ -1053,6 +1053,73 @@ unsigned long FermionOnSphere::Ad (unsigned long state, int m, double& coefficie
   return state;
 }
 
+// apply a_n1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = first index for annihilation operator
+// return value =  multiplicative factor 
+
+double FermionOnSphere::A (int index, int n)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  int StateLzMax = this->StateLzMax[index];
+
+  if ((n > StateLzMax) || ((this->ProdATemporaryState & (((unsigned long) (0x1)) << n)) == 0))
+    return 0.0;
+
+  this->ProdALzMax = this->StateLzMax[index];
+
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  
+  this->ProdATemporaryState &= ~(((unsigned long) (0x1)) << n);
+
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdALzMax = 0;
+      return Coefficient;      
+    }
+  while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+    --this->ProdALzMax;
+  return Coefficient;
+}
+
+
+// apply a^+_m1 operator to the state produced using A method (without destroying it)
+//
+// m1 = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphere::Ad (int m1, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+    
+  if ((TmpState & (((unsigned long) (0x1)) << m1))!= 0)
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  int NewLzMax = this->ProdALzMax;
+  if (m1 > NewLzMax)
+    NewLzMax = m1;
+  else
+    {      
+      coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+#endif
+    }
+  TmpState |= (((unsigned long) (0x1)) << m1);
+  return this->FindStateIndex(TmpState, NewLzMax);
+}
+
 
 // check whether HilbertSpace implements ordering of operators
 //
@@ -5362,6 +5429,9 @@ void FermionOnSphere::SymmetrizeSingleStateOneIntoManyOrbitalCore (LongRationalV
 	  int TmpPos = TargetSpaces[TmpTotalLz]->FindStateIndex(TmpState2, TmpLzMax);
 	  if (TmpPos < TargetSpaces[TmpTotalLz]->HilbertSpaceDimension)
 	    {
+	      cout << inputVector[i] << " : " ;
+	      TargetSpaces[TmpTotalLz]->PrintState(cout, TmpPos);
+	      cout << endl;
 	      symmetrizedVectors[TmpTotalLz][TmpPos] += inputVector[i];
 	    }
 	}

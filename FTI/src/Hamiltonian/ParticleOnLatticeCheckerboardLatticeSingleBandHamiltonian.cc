@@ -358,8 +358,14 @@ void ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::EvaluateInteract
 
 Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAB(int kx1, int ky1, int kx2, int ky2)
 {
-  Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
-		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
+  double Kx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+  double Ky1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+  double Kx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+  double Ky2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
+  Complex Tmp = 2.0 * (cos (0.5 * (Kx2 - Ky2  + Ky1 - Kx1)) + cos (0.5 * (Kx2 + Ky2  - Ky1 - Kx1)));
+    
+//   Complex Tmp = 2.0 * (cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) - ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))) 
+// 		       + cos (M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX)) + ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))));
   return Tmp;
 }
 
@@ -373,10 +379,14 @@ Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBod
 
 Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementAA(int kx1, int ky1, int kx2, int ky2)
 {
-//   Complex Tmp = (cos (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
-// 		 + cos (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
-  Complex Tmp = (Phase (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
-		 + Phase (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
+  double Kx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+  double Ky1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+  double Kx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+  double Ky2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
+  
+  Complex Tmp = Phase (Kx2 - Kx1) + Phase (Ky2 - Ky1);
+//   Complex Tmp = (Phase (2.0 * M_PI * ((((double) (kx2 - kx1)) / ((double) this->NbrSiteX))))
+// 		 + Phase (2.0 * M_PI * ((((double) (ky2 - ky1)) / ((double) this->NbrSiteY))))); 
   return Tmp;
 }
 
@@ -403,8 +413,9 @@ Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBod
 
 Complex ParticleOnLatticeCheckerboardLatticeSingleBandHamiltonian::ComputeTwoBodyMatrixElementOnSiteBB(int kx1, int ky1, int kx2, int ky2, int kx3, int ky3, int kx4, int ky4)
 {
-  Complex Tmp = Phase (0.5 * ((((double) (kx4 + kx3 - kx2 - kx1)) * this->KxFactor)
-			      + ((((double) (ky4 + ky3 - ky2 - ky1)) * this->KyFactor))));
+  Complex Tmp = Phase (0.5 * (this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0) + this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0) + this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1) - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0) - this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0) - this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1)));
+//   Complex Tmp = Phase (0.5 * ((((double) (kx4 + kx3 - kx2 - kx1)) * this->KxFactor)
+// 			      + ((((double) (ky4 + ky3 - ky2 - ky1)) * this->KyFactor))));
   return Tmp;
 }
 

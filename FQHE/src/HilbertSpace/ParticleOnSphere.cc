@@ -448,7 +448,29 @@ int ParticleOnSphere::AdA (int index, int m, int n, double& coefficient, int& nb
   nbrTranslationY = 0;
   return this->AdA(index, m, n, coefficient, nbrTranslationX);
 }
-    
+ 
+ // apply a_n1 operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad call
+//
+// index = index of the state on which the operator has to be applied
+// n1 = index for annihilation operator
+// return value =  multiplicative factor 
+
+double ParticleOnSphere::A (int index, int n1)
+{
+  return 0.0;
+}
+
+// apply a^+_m1 operator to the state produced using AA method (without destroying it)
+//
+// m1 = index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int ParticleOnSphere::Ad (int m1, double& coefficient)
+{
+  return this->HilbertSpaceDimension;
+}
+ 
 // check whether HilbertSpace implements ordering of operators
 //
 

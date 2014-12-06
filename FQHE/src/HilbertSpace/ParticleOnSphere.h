@@ -313,6 +313,20 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AdA (int index, int m, int n, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a_n1  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next Ad call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A (int index, int n1);
+
+  // apply a^+_m1 operator to the state produced using AAA method (without destroying it)
+  //
+  // m1 = first index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Ad (int m1, double& coefficient);
     
   // check whether HilbertSpace implements ordering of operators
   //
