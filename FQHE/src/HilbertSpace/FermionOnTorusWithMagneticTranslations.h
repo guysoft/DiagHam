@@ -234,7 +234,14 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // m = index for creation operator
   // return value =  resulting multiplicative factor 
   virtual double AdA (int index, int m);
-
+  
+  // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator
+  // return value =  multiplicative factor 
+  virtual double A (int index, int n);
+ 
   // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
   //
   // state = reference on the state to convert

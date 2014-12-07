@@ -600,6 +600,41 @@ int FermionOnTorusWithMagneticTranslations::ProdAd (int* m, int nbrIndices, doub
   return this->HilbertSpaceDimension;
 }
 
+// apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator
+// return value =  multiplicative factor 
+
+double FermionOnTorusWithMagneticTranslations::A (int index, int n)
+{
+  this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  if ((n >  this->ProdATemporaryStateMaxMomentum) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
+    {
+      return 0.0;
+    }
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdATemporaryStateMaxMomentum = 0;
+    }
+  else
+    {
+      if (this->ProdATemporaryStateMaxMomentum == n)
+	while ((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0x0ul)
+	  --this->ProdATemporaryStateMaxMomentum;
+    }
+  return Coefficient;
+}
+
 // safe version to find canonical form of a state description (with additional checks)
 //
 // stateDescription = unsigned integer describing the state

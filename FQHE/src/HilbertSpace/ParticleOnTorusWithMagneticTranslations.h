@@ -111,7 +111,7 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
   // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation);
-
+  
   // return matrix representation of the annihilation operator a_i
   //
   // i = operator index
