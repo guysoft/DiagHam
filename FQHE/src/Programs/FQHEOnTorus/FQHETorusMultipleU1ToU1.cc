@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('a', "sym-y", "apply antiperiodic conditions with respect to Ly before symmetrizing");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
   (*SystemGroup) += new BooleanOption  ('\n', "subset-symmetrization", "symmetrize by picking equally space orbitals");
-  (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
+//   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-shift", "index of the first orbital to keep when using --subset-symmetrization", 0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ky-momentum", "compute the vector with given ky in mode sym-y", 0);
   
@@ -287,7 +287,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("subset-symmetrization") == true)
 		{
 		  NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
-										     Manager.GetInteger("subset-periodicity"),
+										     Manager.GetInteger("nbr-orbitals"),
 										     OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
 		}
 	      else
@@ -321,7 +321,7 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("subset-symmetrization") == true)
 		    {
 		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
-			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("subset-periodicity"));
+			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
 		    }
 		  else
 		    {
@@ -427,7 +427,7 @@ int main(int argc, char** argv)
 	      if (Manager.GetBoolean("subset-symmetrization") == true)
 		{
 		  NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
-										     Manager.GetInteger("subset-periodicity"),
+										     Manager.GetInteger("nbr-orbitals"),
 										     OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
 		}
 	      else
@@ -461,7 +461,7 @@ int main(int argc, char** argv)
 		  if (Manager.GetBoolean("subset-symmetrization") == true)
 		    {
 		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
-			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("subset-periodicity"));
+			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
 		    }
 		  else
 		    {
