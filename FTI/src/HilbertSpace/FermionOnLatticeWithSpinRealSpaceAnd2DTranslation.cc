@@ -1015,7 +1015,64 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AdsigmaAdsigma (int m1, i
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
+// apply a^+_m operator to the state produced using Au method (without destroying it)
+//
+// m = first index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
 
+int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::Adu (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+  m <<= 1;
+  ++m;
+  
+  if ((TmpState & (0x1ul << m)) != 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  
+  coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+  TmpState |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// apply a^+_m operator to the state produced using Au method (without destroying it)
+//
+// m = first index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::Add (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+  m <<= 1;
+    
+  if ((TmpState & (0x1ul << m)) != 0)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  
+  coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m + 16))  & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+  TmpState |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
+}
 
 // convert a state defined in the real space basis into a state in the (Kx,Ky) basis
 //

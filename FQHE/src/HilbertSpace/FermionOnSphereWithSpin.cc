@@ -1241,6 +1241,133 @@ int FermionOnSphereWithSpin::AduAdd (int index, int m1, int m2, double& coeffici
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
+
+// apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator (spin up)
+// return value =  multiplicative factor 
+
+double FermionOnSphereWithSpin::Au (int index, int n)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  n <<= 1;
+  ++n;
+  
+  if ((this->ProdATemporaryState & (0x1ul << n)) == 0)
+    return 0.0;
+  this->ProdALzMax = this->StateHighestBit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
+  return Coefficient;
+}
+
+// apply a_n_d  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator (spin down)
+// return value =  multiplicative factor 
+
+double FermionOnSphereWithSpin::Ad (int index, int n)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  n <<= 1;
+  
+  if ((this->ProdATemporaryState & (0x1ul << n)) == 0)
+    return 0.0;
+  this->ProdALzMax = this->StateHighestBit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+  if (this->ProdATemporaryState != 0x0ul)
+    {
+      while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+	--this->ProdALzMax;
+    }
+  else
+    this->ProdALzMax = 0;
+  return Coefficient;
+}
+
+
+// apply a^+_m_u operator to the state produced using Au method (without destroying it)
+//
+// m = first index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpin::Adu (int m, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+  m <<= 1;
+  ++m;
+  
+  if ((TmpState & (0x1ul << m)) != 0)
+    return this->TargetSpace->HilbertSpaceDimension;
+  int NewLzMax = this->ProdALzMax;
+  
+  if (m > NewLzMax)
+    NewLzMax = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+// apply a^+_m_d operator to the state produced using Au or Ad method (without destroying it)
+//
+// m = first index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpin::Add (int m, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+  m <<= 1;
+  
+  if ((TmpState & (0x1ul << m)) != 0)
+    return this->TargetSpace->HilbertSpaceDimension;
+  int NewLzMax = this->ProdALzMax;
+  
+  if (m > NewLzMax)
+    NewLzMax = m;
+  else
+    {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+    }
+  TmpState |= (0x1ul << m);
+  return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
+}
+
+
 // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
 //
 // index = index of the state on which the operator has to be applied

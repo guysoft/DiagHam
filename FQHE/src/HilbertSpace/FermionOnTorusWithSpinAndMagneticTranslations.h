@@ -357,7 +357,21 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);  
-
+  
+  // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  virtual double Au (int index, int n);
+  
+  // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double Ad (int index, int n);
+ 
   // print a given State
   //
   // Str = reference on current output stream 

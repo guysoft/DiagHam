@@ -1605,6 +1605,84 @@ int FermionOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, doubl
   return TmpIndex;
 }
 
+
+// apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator (spin up)
+// return value =  multiplicative factor 
+
+double FermionOnTorusWithSpinAndMagneticTranslations::Au (int index, int n)
+{
+  this->ProdAHighestBit = this->StateHighestBit[index];
+//   this->ProdAHighestBit = this->StateHighestBit[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  n <<= 1;
+  ++n;
+  
+  if ((n >  this->ProdAHighestBit) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
+    {
+      return 0.0;
+    }
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdAHighestBit = 0;
+    }
+  else
+    {
+      if (this->ProdAHighestBit == n)
+	while ((this->ProdATemporaryState >> this->ProdAHighestBit) == 0x0ul)
+	  --this->ProdAHighestBit;
+    }
+  return Coefficient;
+}
+
+// apply a_n_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next Ad call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator (spin down)
+// return value =  multiplicative factor 
+
+double FermionOnTorusWithSpinAndMagneticTranslations::Ad (int index, int n)
+{
+  this->ProdAHighestBit = this->StateHighestBit[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  n <<= 1;
+  
+  if ((n >  this->ProdAHighestBit) || ((this->ProdATemporaryState & (0x1ul << n)) == 0x0ul))
+    {
+      return 0.0;
+    }
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16))  & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdAHighestBit = 0;
+    }
+  else
+    {
+      if (this->ProdAHighestBit == n)
+	while ((this->ProdATemporaryState >> this->ProdAHighestBit) == 0x0ul)
+	  --this->ProdAHighestBit;
+    }
+  return Coefficient;
+}
+
+
 // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
 //
 // state = reference on the state to convert

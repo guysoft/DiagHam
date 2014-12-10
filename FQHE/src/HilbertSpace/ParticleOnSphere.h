@@ -328,7 +328,7 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = index of the destination state 
   virtual int Ad (int m1, double& coefficient);
   
-  // apply a^+_m operator to the state produced using AuAu method (without destroying it)
+  // apply a^+_m operator to the state produced using A method (without destroying it)
   //
   // m = first index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored

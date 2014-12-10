@@ -980,25 +980,37 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	      Coefficient = 0.0;
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < particles->GetHilbertSpaceDimension())
-			vDestination[Index] += Coefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
-		    }
-		    
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < particles->GetHilbertSpaceDimension())
-			vDestination[Index] += Coefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
-		    }
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			Coefficient = TmpCoefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += TmpCoefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		      }
+		  }
+		  
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += TmpCoefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		      }
+		  }
 		}
 	    }
 	}
@@ -1009,31 +1021,42 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	      Coefficient = 0.0;
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  vDestination[Index] += Coefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
-			  if (Index < i)
-			    vDestination[i] += Coefficient * Conj(TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      { TmpCoefficient = Coefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    vDestination[Index] += TmpCoefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+			    if (Index < i)
+			      vDestination[i] += TmpCoefficient * Conj(TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+			  }
 			}
 		    }
 		    
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  vDestination[Index] += Coefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
-			  if (Index < i)
-			    vDestination[i] += Coefficient * Conj(TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    vDestination[Index] += TmpCoefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+			    if (Index < i)
+			      vDestination[i] += TmpCoefficient * Conj(TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+			  }
 			}
 		    }
 		}
@@ -1049,14 +1072,20 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	      Coefficient = 0.0;
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < particles->GetHilbertSpaceDimension())
-			vDestination[Index] += Coefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += TmpCoefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		      }
 		    }
 		}
 	    }
@@ -1068,17 +1097,22 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	      Coefficient = 0.0;
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  vDestination[Index] += Coefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
-			  if (Index < i)
-			    vDestination[i] += Coefficient * Conj(TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    vDestination[Index] += TmpCoefficient * TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+			    if (Index < i)
+			      vDestination[i] += TmpCoefficient * Conj(TmpInteractionFactorsupup[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+			  }
 			}
 		    }
 		}
@@ -1097,14 +1131,20 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	      Coefficient = 0.0;
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < particles->GetHilbertSpaceDimension())
-			vDestination[Index] += Coefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < particles->GetHilbertSpaceDimension())
+			  vDestination[Index] += TmpCoefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+		      }
 		    }
 		}
 	    }
@@ -1115,18 +1155,24 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    { 
 	      Coefficient = 0.0;
 	      for (int j = 0; j < this->NbrSites; ++j)
-		{		    
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  vDestination[Index] += Coefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
-			  if (Index < i)
-			    vDestination[i] += Coefficient * Conj(TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+		{
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    vDestination[Index] += TmpCoefficient * TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * vSource[i];
+			    if (Index < i)
+			      vDestination[i] += TmpCoefficient * Conj(TmpInteractionFactorsdowndown[k] * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSource[Index];
+			  }
 			}
 		    }
 		}
@@ -1183,24 +1229,36 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 		    TmpDestinationVector[i] += this->DiagonalElements[i] * TmpSourceVector[i];
 		  for (int j = 0; j < this->NbrSites; ++j)
 		    {
-		      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-			{
-			  Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index < Dim)
-			    TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
-			}
+		      Coefficient = particles->Au(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+			int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+			Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+			for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index < Dim)
+			      TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
+			  }
+		      }
 			
-		      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-			{
-			  Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index < Dim)
-			    TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
+		      Coefficient = particles->Ad(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+			int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+			Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+			for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index < Dim)
+			      TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
+			  }
 			}
 		    }
 		}
@@ -1220,31 +1278,43 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 		    TmpDestinationVector[i] += this->DiagonalElements[i] * TmpSourceVector[i];
 		  for (int j = 0; j < this->NbrSites; ++j)
 		    {
-		      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-			{
-			  Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index <= i)
-			    {
-			      TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
-			      if (Index < i)
-				TmpDestinationVector[i] += Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k]) * TmpSourceVector[Index];			      
+		      Coefficient = particles->Au(i, j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+			int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+			Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+			for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index <= i)
+			      {
+				TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
+				if (Index < i)
+				  TmpDestinationVector[i] += TmpCoefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k]) * TmpSourceVector[Index];			      
+			      }
 			    }
 			}
 			
-		      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-			{
-			  Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index <= i)
-			    {
-			      TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
-			      if (Index < i)
-				TmpDestinationVector[i] += Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k]) * TmpSourceVector[Index];			      
+		      Coefficient = particles->Ad(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+			int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+			Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+			for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index <= i)
+			      {
+				TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
+				if (Index < i)
+				  TmpDestinationVector[i] += TmpCoefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k]) * TmpSourceVector[Index];			      
+			      }
 			    }
 			}
 		    }
@@ -1268,15 +1338,21 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 		    TmpDestinationVector[i] += this->DiagonalElements[i] * TmpSourceVector[i];
 		  for (int j = 0; j < this->NbrSites; ++j)
 		    {
-		      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-			{
-			  Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index < Dim)
-			    TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
-			}
+		      Coefficient = particles->Au(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+			int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+			Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+			for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index < Dim)
+			      TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
+			  }
+		      }
 		    }
 		}
 	    }
@@ -1295,17 +1371,23 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 		    TmpDestinationVector[i] += this->DiagonalElements[i] * TmpSourceVector[i];
 		  for (int j = 0; j < this->NbrSites; ++j)
 		    {
-		      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-			{
-			  Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index <= i)
-			    {
-			      TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
-			      if (Index < i)
-				TmpDestinationVector[i] += Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k]) * TmpSourceVector[Index];			      
+		      Coefficient = particles->Au(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+			int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+			Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+			for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index <= i)
+			      {
+				TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k] * TmpSourceVector[i];
+				if (Index < i)
+				  TmpDestinationVector[i] += TmpCoefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k]) * TmpSourceVector[Index];			      
+			      }
 			    }
 			}
 		    }
@@ -1332,14 +1414,20 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 		    TmpDestinationVector[i] += this->DiagonalElements[i] * TmpSourceVector[i];
 		  for (int j = 0; j < this->NbrSites; ++j)
 		    {			
-		      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-			{
-			  Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index < Dim)
-			    TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
+		      Coefficient = particles->Ad(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+			int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+			Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+			for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+			  {
+			    TmpCoefficient = Coefficient;
+			    Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index < Dim)
+			      TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
+			  }
 			}
 		    }
 		}
@@ -1358,18 +1446,23 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 		  else
 		    TmpDestinationVector[i] += this->DiagonalElements[i] * TmpSourceVector[i];
 		  for (int j = 0; j < this->NbrSites; ++j)
-		    {			
-		      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-		      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-			{
-			  Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-			  if (Index <= i)
-			    {
-			      TmpDestinationVector[Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
-			      if (Index < i)
-				TmpDestinationVector[i] += Coefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k]) * TmpSourceVector[Index];			      
+		    {
+		      Coefficient = particles->Ad(i,j);
+		      if (Coefficient != 0.0)
+		      {
+			double TmpCoefficient;
+			int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+			int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+			Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+			for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+			  {
+			    Index = particles->Add( TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			    if (Index <= i)
+			      {
+				TmpDestinationVector[Index] += TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k] * TmpSourceVector[i];
+				if (Index < i)
+				  TmpDestinationVector[i] += TmpCoefficient * Conj(this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k]) * TmpSourceVector[Index];			      
+			      }
 			    }
 			}
 		    }
@@ -1429,30 +1522,42 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
       {
 	for (int j = 0; j < this->NbrSites; ++j)
 	  {
-	    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-	    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-	    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-	      {
-		Index = particles->AduAu(index, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index < Dim)
-		  {
-		    indexArray[position] = Index;
-		    coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
-		    ++position;
+	    Coefficient = particles->Au(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+	      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+	      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      indexArray[position] = Index;
+		      coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
+		      ++position;
+		    }
 		  }
 	      }
-	    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-	    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-	    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-	      {
-		Index = particles->AddAd(index, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index < Dim)
-		  {
-		    indexArray[position] = Index;
-		    coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
-		    ++position;
+	    Coefficient = particles->Ad(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+	      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+	      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      indexArray[position] = Index;
+		      coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
+		      ++position;
+		    }
 		  }
 	      }
 	  }
@@ -1461,47 +1566,59 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
       {
 	for (int j = 0; j < this->NbrSites; ++j)
 	  {
-	    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-	    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-	    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-	      {
-		Index = particles->AduAu(index, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index <= index)
-		  {
-		    if (Index == index)
+	    Coefficient = particles->Au(index,j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+	      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+	      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
 		    {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
-		      ++position;
-		    }
-		    else
-		    {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
-		      ++position; 
+		      if (Index == index)
+		      {
+			indexArray[position] = Index;
+			coefficientArray[position] = 0.5 * TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
+			++position;
+		      }
+		      else
+		      {
+			indexArray[position] = Index;
+			coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
+			++position; 
+		      }
 		    }
 		  }
 	      }
-	    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-	    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-	    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-	      {
-		Index = particles->AddAd(index, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index <= index)
-		  {
-		    if (Index == index)
-		      {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
-		      ++position;
-		      }
-		    else
-		      {
-		      indexArray[position] = Index;
-		      coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
-		      ++position;
+	    Coefficient = particles->Ad(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+	      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+	      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index == index)
+			{
+			indexArray[position] = Index;
+			coefficientArray[position] = 0.5 * TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
+			++position;
+			}
+		      else
+			{
+			indexArray[position] = Index;
+			coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
+			++position;
+			}
 		      }
 		  }
 	      }
@@ -1514,18 +1631,24 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
       {
 	for (int j = 0; j < this->NbrSites; ++j)
 	  {
-	    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-	    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-	    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-	      {
-		Index = particles->AduAu(index, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index < Dim)
-		  {
-		    indexArray[position] = Index;
-		    coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
-		    ++position;
-		  }
+	    Coefficient = particles->Au(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+	      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+	      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      indexArray[position] = Index;
+		      coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
+		      ++position;
+		    }
+		}
 	      }
 	  }
       }
@@ -1533,24 +1656,30 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
       {
 	for (int j = 0; j < this->NbrSites; ++j)
 	  {
-	    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-	    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-	    Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-	      {
-		Index = particles->AduAu(index, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index <= index)
-		  {
-		    indexArray[position] = Index;
-		    if (Index == index)
-		      {
-			coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
-		      }
-		    else
-		      {
-			coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
-		      }
-		    ++position;
+	    Coefficient = particles->Au(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+	      int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+	      Complex* TmpInteractionFactorsupup = this->OneBodyGenericInteractionFactorsupup[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      indexArray[position] = Index;
+		      if (Index == index)
+			{
+			  coefficientArray[position] = 0.5 * TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
+			}
+		      else
+			{
+			  coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsupup[k];
+			}
+		      ++position;
+		    }
 		  }
 	      }
 	  }
@@ -1565,17 +1694,23 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
       {
 	for (int j = 0; j < this->NbrSites; ++j)
 	  {
-	    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-	    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-	    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-	      {
-		Index = particles->AddAd(index, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index < Dim)
-		  {
-		    indexArray[position] = Index;
-		    coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
-		    ++position;
+	    Coefficient = particles->Ad(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+	      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+	      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      indexArray[position] = Index;
+		      coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
+		      ++position;
+		    }
 		  }
 	      }
 	  }
@@ -1584,24 +1719,30 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
       {
 	for (int j = 0; j < this->NbrSites; ++j)
 	  {
-	    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-	    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-	    Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
-	    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-	      {
-		Index = particles->AddAd(index, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		if (Index <= index)
-		  {
-		    indexArray[position] = Index;
-		    if (Index == index)
-		      {
-			coefficientArray[position] = 0.5 * Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
-		      }
-		    else
-		      {
-			coefficientArray[position] = Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
-		      }
-		    ++position;
+	    Coefficient = particles->Ad(index, j);
+	    if (Coefficient != 0.0)
+	    {
+	      double TmpCoefficient;
+	      int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+	      int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+	      Complex* TmpInteractionFactorsdowndown = this->OneBodyGenericInteractionFactorsdowndown[j];
+	      for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		{
+		  TmpCoefficient = Coefficient;
+		  Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      indexArray[position] = Index;
+		      if (Index == index)
+			{
+			  coefficientArray[position] = 0.5 * TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
+			}
+		      else
+			{
+			  coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * TmpInteractionFactorsdowndown[k];
+			}
+		      ++position;
+		    }
 		  }
 	      }
 	  }
@@ -1638,28 +1779,40 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    {
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < Dim)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < Dim)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		    
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < Dim)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < Dim)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		}
 	    }
@@ -1670,28 +1823,40 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    {
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		    
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		}
 	    }
@@ -1705,16 +1870,22 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    {
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < Dim)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < Dim)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		}
 	    }
@@ -1725,16 +1896,22 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    {
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
-		  int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
-		    {
-		      Index = particles->AduAu(i, j, TmpConnectedSitesupup[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Au(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesupup = this->OneBodyGenericNbrConnectedSitesupup[j];
+		    int* TmpConnectedSitesupup = this->OneBodyGenericConnectedSitesupup[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesupup; ++k)
+		      {
+			TmpCoefficient= Coefficient;
+			Index = particles->Adu(TmpConnectedSitesupup[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		}
 	    }
@@ -1751,16 +1928,22 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    {
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index < Dim)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index < Dim)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		}
 	    }
@@ -1771,16 +1954,22 @@ inline void ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian::Evalu
 	    {
 	      for (int j = 0; j < this->NbrSites; ++j)
 		{
-		  int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
-		  int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
-		  for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
-		    {
-		      Index = particles->AddAd(i, j, TmpConnectedSitesdowndown[k], Coefficient, NbrTranslationsX, NbrTranslationsY);
-		      if (Index <= i)
-			{
-			  ++memory;
-			  ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
-			}
+		  Coefficient = particles->Ad(i,j);
+		  if (Coefficient != 0.0)
+		  {
+		    double TmpCoefficient;
+		    int TmpNbrConnectedSitesdowndown = this->OneBodyGenericNbrConnectedSitesdowndown[j];
+		    int* TmpConnectedSitesdowndown = this->OneBodyGenericConnectedSitesdowndown[j];
+		    for (int k = 0; k < TmpNbrConnectedSitesdowndown; ++k)
+		      {
+			TmpCoefficient = Coefficient;
+			Index = particles->Add(TmpConnectedSitesdowndown[k], TmpCoefficient, NbrTranslationsX, NbrTranslationsY);
+			if (Index <= i)
+			  {
+			    ++memory;
+			    ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];	  
+			  }
+		      }
 		    }
 		}
 	    }

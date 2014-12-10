@@ -241,6 +241,24 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
+  // apply a^+_m_u operator to the state produced using Au method (without destroying it)
+  //
+  // m = first index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Adu (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a^+_m_d operator to the state produced using Au method (without destroying it)
+  //
+  // m = first index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int Add (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
   // find state index from a string
   //
   // stateDescription = string describing the state

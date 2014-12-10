@@ -487,6 +487,54 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a_n1_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next Adu call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  virtual double Au (int index, int n1);
+  
+  // apply a_n1_d operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next Adu call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n1 = first index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double Ad (int index, int n1);
+  
+  // apply a^+_m1_u operator to the state produced using Au method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Adu (int m1, double& coefficient);
+  
+  // apply a^+_m1_d operator to the state produced using Au method (without destroying it)
+  //
+  // m1 = first index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Add (int m1, double& coefficient);
+    
+  // apply a^+_m_d  operator to the state produced using AuAu method (without destroying it)
+  //
+  // m = first index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int Adu (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  
+  // apply a^+_m_d  operator to the state produced using AuAu method (without destroying it)
+  //
+  // m = first index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int Add (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
 
   // apply Prod_i a_ni operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be keep in cache until next ProdA call
   //
