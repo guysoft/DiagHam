@@ -566,6 +566,20 @@ double Spin1_2Chain::SziSzj (int i, int j, int state)
     return -0.25;
 }
 
+// return the eigenvalue the product of consecutive Sz_i's 
+//
+// indexMin = index of the leftmost site 
+// indexMax = index of the righttmost site 
+// state = index of the state to consider
+// return value = corresponding eigenvalue (either -1 or +1)
+
+int Spin1_2Chain::ProdSzj (int indexMin, int indexMax, int state)
+{
+  unsigned long TmpState = (this->StateDescription[state] & 
+			    (((0x1ul << indexMax) - 0x1ul) ^ ((0x1ul << indexMin) - 0x1ul)));
+}
+
+
 // return index of resulting state from application of S+_i operator on a given state
 //
 // i = position of S+ operator

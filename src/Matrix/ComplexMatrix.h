@@ -383,6 +383,18 @@ class ComplexMatrix : public Matrix
   // return value = reference on current matrix
   ComplexMatrix& operator /= (double x);
 
+  // multiply a matrix by a real number
+  //
+  // x = real number to use
+  // return value = reference on current matrix
+  ComplexMatrix& operator *= (const Complex& x);
+
+  // divide a matrix by a real number
+  //
+  // x = real number to use
+  // return value = reference on current matrix
+  ComplexMatrix& operator /= (const Complex& x);
+
   // normalize matrix column vectors
   //
   // return value = reference on current matrix

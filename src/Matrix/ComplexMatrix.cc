@@ -1161,6 +1161,31 @@ ComplexMatrix& ComplexMatrix::operator /= (double x)
   return *this;
 }
 
+// multiply a matrix by a real number
+//
+// x = real number to use
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::operator *= (const Complex& x) 
+{
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i] *= x;
+  return *this;
+}
+
+// divide a matrix by a real number
+//
+// x = real number to use
+// return value = reference on current matrix
+
+ComplexMatrix& ComplexMatrix::operator /= (const Complex& x)
+{
+  Complex InvX = 1.0 / x;
+  for (int i = 0; i < this->NbrColumn; i++)
+    this->Columns[i] *= InvX;
+  return *this;
+}
+
 // normalize matrix column vectors
 //
 // return value = reference on current matrix
@@ -2063,16 +2088,18 @@ double* ComplexMatrix::SingularValueDecomposition()
   int TmpIntegerWorkingArea;
   char Jobz = 'N';
 
+  cout << (*this) << endl;
+
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrColumn];
 
-  Complex *TmpColumn;
-  for (int j=0;j<this->NbrColumn;++j)
+  Complex* TmpColumn;
+  for (int j = 0; j < this->NbrColumn; ++j)
     {
-      TmpColumn=this->Columns[j].Components;
-      for (int i=0; i<this->NbrRow;++i)
+      TmpColumn = this->Columns[j].Components;
+      for (int i = 0; i < this->NbrRow; ++i)
 	{
-	  TmpMatrix[i+j*this->NbrRow].r=TmpColumn[i].Re;
-	  TmpMatrix[i+j*this->NbrRow].i=TmpColumn[i].Im;
+	  TmpMatrix[i+j*this->NbrRow].r = TmpColumn[i].Re;
+	  TmpMatrix[i+j*this->NbrRow].i = TmpColumn[i].Im;
 	}
     }
 
@@ -2081,7 +2108,7 @@ double* ComplexMatrix::SingularValueDecomposition()
 
   int RWorkDim, LRWorkDim;
 
-  LRWorkDim = 5*MinDimension;
+  LRWorkDim = 5 * MinDimension;
 
   if (LRWorkDim > 1)
      RWorkDim = LRWorkDim;
@@ -2092,7 +2119,11 @@ double* ComplexMatrix::SingularValueDecomposition()
 
   int DummySize = 1;
   FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, TmpRWork, &TmpIntegerWorkingArea, &Information);
-  WorkingAreaSize = (int) TmpWorkingArea.r;
+  if (Information != 0)
+    {
+      cout << "warning Lapack zgesdd potential error while requesting workspace " << Information << endl;
+    }
+  WorkingAreaSize = ((int) TmpWorkingArea.r);
   doublecomplex* WorkingArea = new doublecomplex [WorkingAreaSize];
   IntegerWorkingAreaSize = 8 * MinDimension;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];

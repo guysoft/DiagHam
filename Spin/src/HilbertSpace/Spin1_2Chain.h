@@ -210,6 +210,14 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = corresponding eigenvalue
   virtual double SziSzj (int i, int j, int state);
   
+  // return the eigenvalue the product of consecutive Sz_i's 
+  //
+  // indexMin = index of the leftmost site 
+  // indexMax = index of the righttmost site 
+  // state = index of the state to consider
+  // return value = corresponding eigenvalue (either -1 or +1)
+  virtual int ProdSzj (int indexMin, int indexMax, int state);
+
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
   // i = position of S- operator

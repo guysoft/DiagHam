@@ -125,6 +125,10 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   //
   virtual void CreateBMatrices ();
 
+  // create the B matrices for the laughlin state
+  //
+  virtual void AlternateCreateBMatrices ();
+
   // extract a block with fixed quantum numbers of a given matrix written the MPS basis
   //
   // matrix = reference on the matrix

@@ -1113,3 +1113,5 @@ RealSymmetricMatrix BosonOnTorus::EvaluatePartialDensityMatrix (int subsytemSize
       return TmpDensityMatrixZero;
     }
 }
+
+
