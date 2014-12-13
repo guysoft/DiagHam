@@ -57,15 +57,19 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption('y', "jy-value", "coupling constant along the y axis", 1.0);
   (*SystemGroup) += new  SingleDoubleOption('z', "jz-value", "coupling constant along the z axis", 1.0);
   (*SystemGroup) += new  SingleDoubleOption('f', "h-value", "Zeeman strength along the z axis", 0.0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "initial-q", "initial parity sector that has to computed (can be either 0, 1)", 0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-q", "number of parity sectors to evaluate (0 for all parity sectors)", 0);
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "boundary conditions (0 for open, 1 for periodic, -1 for antiperiodic)", 0);
   (*SystemGroup) += new  BooleanOption  ('\n', "no-parity", "do not take into account the parity when computing the spectrum");
   (*SystemGroup) += new  BooleanOption  ('\n', "natural-boundaryterms", "use a natural boundary term instead of the translation invariant boundary term");
   (*SystemGroup) += new  SingleIntegerOption ('\n', "boundaryterm-order", "perturbation order for the edge mode development involved in the natural boundary term", 0);
   (*SystemGroup) += new  BooleanOption ('\n', "jy-dominated", "the 0-th order of the natural boundary term is Jy dominated instead of being Jx dominated");
+  (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*OutputGroup) += new  SingleStringOption ('\n', "output-suffix", "apprend and extra suffix to the string describing the system in the output file name");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -102,6 +106,13 @@ int main(int argc, char** argv)
 	{
 	  sprintf (FileNamePrefix, "spin_1_2_naturalboundaryterms_jydominated_%d", (int) Manager.GetInteger("boundaryterm-order"));
 	}
+    }
+  if (Manager.GetString("output-suffix") != 0)
+    {
+      char* TmpString = new char [strlen(FileNamePrefix) + strlen(Manager.GetString("output-suffix")) + 2];
+      sprintf (TmpString, "%s_%s", FileNamePrefix, Manager.GetString("output-suffix"));
+      delete[] FileNamePrefix;
+      FileNamePrefix = TmpString;
     }
   if (HValue == 0.0)
     {
@@ -144,8 +155,18 @@ int main(int argc, char** argv)
     }
   else
     {
-      int InitialQValue = 0;
       int MaxQValue = 1;
+      int InitialQValue = 0;
+      if (Manager.GetInteger("initial-q") >= 0)
+	{
+	  InitialQValue = Manager.GetInteger("initial-q") % 2;
+	}
+      if (Manager.GetInteger("nbr-q") > 0)
+	{
+	  MaxQValue = InitialQValue + Manager.GetInteger("nbr-q") - 1;
+	  if (MaxQValue >= 1)
+	    MaxQValue = 1;
+	}
       for (; InitialQValue <= MaxQValue; ++InitialQValue)
 	{
 	  Spin1_2Chain* Chain = new Spin1_2ChainFixedParity (NbrSpins, InitialQValue);

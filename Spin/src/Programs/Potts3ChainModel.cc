@@ -120,14 +120,14 @@ int main(int argc, char** argv)
   sprintf (FullOutputFileName, "%s.dat", OutputFileName);
 
   int MaxQValue = 2;
-  int InitalQValue = 0;
+  int InitialQValue = 0;
   if (Manager.GetInteger("initial-q") >= 0)
     {
-      InitalQValue = Manager.GetInteger("initial-q") % 3;
+      InitialQValue = Manager.GetInteger("initial-q") % 3;
     }
   if (Manager.GetInteger("nbr-q") > 0)
     {
-      MaxQValue = InitalQValue + Manager.GetInteger("nbr-q") - 1;
+      MaxQValue = InitialQValue + Manager.GetInteger("nbr-q") - 1;
       if (MaxQValue >= 3)
 	MaxQValue = 2;
     }
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
 
   if (UseMomentumFlag == true)
     {
-      for (; InitalQValue <= MaxQValue; ++InitalQValue)
+      for (; InitialQValue <= MaxQValue; ++InitialQValue)
 	{
 	  int NbrMomentumSector = NbrSpins;
 	  int MomentumSector = 0;
@@ -143,12 +143,12 @@ int main(int argc, char** argv)
 	    NbrMomentumSector = Manager.GetInteger("k-sector");
 	  for (; MomentumSector < NbrMomentumSector; ++MomentumSector)
 	    {
-	      Potts3ChainWithTranslations* Chain = new Potts3ChainWithTranslations (NbrSpins, InitalQValue, MomentumSector, 1000000);      
+	      Potts3ChainWithTranslations* Chain = new Potts3ChainWithTranslations (NbrSpins, InitialQValue, MomentumSector, 1000000);      
 	      Potts3ChainHamiltonianWithTranslations Hamiltonian (Chain, NbrSpins, MomentumSector, JValue, PhiJ, FValue, PhiF, BoundaryCondition);
 	      char* TmpQString = new char[64];
-	      sprintf (TmpQString, "%d %d", InitalQValue, MomentumSector);
+	      sprintf (TmpQString, "%d %d", InitialQValue, MomentumSector);
 	      char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	      sprintf (TmpEigenstateString, "%s_q_%d_k_%d", OutputFileName, InitalQValue, MomentumSector);
+	      sprintf (TmpEigenstateString, "%s_q_%d_k_%d", OutputFileName, InitialQValue, MomentumSector);
 	      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
 					  FirstRun, TmpEigenstateString);
 	      MainTaskOperation TaskOperation (&Task);
@@ -161,14 +161,14 @@ int main(int argc, char** argv)
     }
   else
     {
-      for (; InitalQValue <= MaxQValue; ++InitalQValue)
+      for (; InitialQValue <= MaxQValue; ++InitialQValue)
 	{
-	  Potts3Chain* Chain = new Potts3Chain (NbrSpins, InitalQValue, 1000000);      
+	  Potts3Chain* Chain = new Potts3Chain (NbrSpins, InitialQValue, 1000000);      
 	  Potts3ChainHamiltonian Hamiltonian (Chain, NbrSpins, JValue, PhiJ, FValue, PhiF, Manager.GetBoolean("periodic"), BoundaryCondition, ((long) Manager.GetInteger("memory")) << 20);
 	  char* TmpQString = new char[64];
-	  sprintf (TmpQString, "%d", InitalQValue);
+	  sprintf (TmpQString, "%d", InitialQValue);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
-	  sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitalQValue);
+	  sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitialQValue);
 	  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
 				      FirstRun, TmpEigenstateString);
 	  MainTaskOperation TaskOperation (&Task);
