@@ -461,10 +461,10 @@ int main(int argc, char** argv)
 	  if (TmpValue2 >= (2.0 * M_PI))
 	    TmpValue2 -= 2.0 * M_PI;
 	  TmpValue2 *= Factor;
-	  int TmpValue2Round = round(TmpValue2);
-	  if (TmpValue2Round == MomentumModulo)
-	    TmpValue2Round = 0;	    
-	  File << " " << TmpValue2 << " " << TmpValue2Round << endl;
+	  int TmpKx = round(TmpValue2);
+	  if (TmpKx == MomentumModulo)
+	    TmpKx = 0;	    
+	  File << " " << TmpValue2 << " " << TmpKx << endl;
 	}      
     }
   else
@@ -492,6 +492,8 @@ int main(int argc, char** argv)
 	    TmpValue2 -= 2.0 * M_PI;
 	  TmpValue2 *= Factor;
 	  int TmpKx = round(TmpValue2);
+	  if (TmpKx == MomentumModulo)
+	    TmpKx = 0;	    
 	  File << " " << TmpValue2 << " " << TmpKx << endl;
 	  KxValues[i] = TmpKx;
 	  NbrStatePerKxSector[TmpKx]++;
