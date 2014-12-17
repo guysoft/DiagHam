@@ -461,7 +461,10 @@ int main(int argc, char** argv)
 	  if (TmpValue2 >= (2.0 * M_PI))
 	    TmpValue2 -= 2.0 * M_PI;
 	  TmpValue2 *= Factor;
-	  File << " " << TmpValue2 << " " << round(TmpValue2) << endl;
+	  int TmpValue2Round = round(TmpValue2);
+	  if (TmpValue2Round == MomentumModulo)
+	    TmpValue2Round = 0;	    
+	  File << " " << TmpValue2 << " " << TmpValue2Round << endl;
 	}      
     }
   else
