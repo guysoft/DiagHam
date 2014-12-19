@@ -22,4 +22,7 @@ SparseMatrixMatrixMultiplyOperation.cc \
 GenericHamiltonianPrecalculationOperation.cc \
 MultipleOperatorMatrixElementOperation.cc \
 VectorTensorMultiplicationCoreOperation.cc \
-VectorSparseTensorMultiplyOperation.cc
+VectorSparseTensorMultiplyOperation.cc \
+TensorMatrixContractionOperation.cc \
+MPOApplyOnTensorOperation.cc \
+TensorVectorContractionOperation.cc

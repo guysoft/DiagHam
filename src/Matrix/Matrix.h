@@ -162,6 +162,15 @@ class Matrix
   // x = reference on the variable where to store the requested matrix element
   virtual void GetMatrixElement(int i, int j, Complex& x) const;
 
+  // get a matrix element
+  //
+  // i = line position
+  // j = column position
+  // x = reference on the variable where to store the requested matrix element
+/*  template <class T>
+  inline virtual void GetMatrixElement(int i, int j, T & x) const;*/
+
+
   // add a value to a matrix element
   //
   // i = line position
@@ -419,5 +428,19 @@ inline int Matrix::GetNbrColumn () const
 {
   return this->NbrColumn;
 }
+
+/*
+// get a matrix element
+//
+// i = line position
+// j = column position
+// x = reference on the variable where to store the requested matrix element
+template <class T>
+inline virtual void Matrix::GetMatrixElement(int i, int j, T & x) const
+{
+  if( 
+
+}
+*/
 
 #endif

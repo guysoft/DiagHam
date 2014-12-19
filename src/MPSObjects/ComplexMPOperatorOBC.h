@@ -43,7 +43,7 @@ class ComplexMPOperatorOBC : public AbstractMPOperatorOBC
 
   virtual ComplexVector & LowLevelMultiplyTwoSitesCore(ComplexVector & vSource, ComplexVector & vDestination, int firstComponent, int nbrComponent);
 
- virtual HermitianMatrix& GetTwoSitesHamiltonian (HermitianMatrix & M);
+  virtual HermitianMatrix& GetTwoSitesHamiltonian (HermitianMatrix & M);
 
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and store result in another vector, low level function (no architecture optimization)

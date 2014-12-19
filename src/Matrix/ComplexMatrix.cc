@@ -864,6 +864,53 @@ ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexMatrix& M2)
   return ComplexMatrix(TmpColumns, M2.NbrColumn);
 }
 
+
+// multiply two matrices
+//
+// M1 = first matrix
+// M2 = matrix to multiply to M1
+// return value = product of the two matrices
+
+ComplexMatrix operator * (const RealDiagonalMatrix & M1, const ComplexMatrix& M2)
+{
+  if (M1.NbrColumn != M2.NbrRow)
+    return ComplexMatrix();
+  ComplexVector* TmpColumns = new ComplexVector [M2.NbrColumn];
+  for (int i = 0; i < M2.NbrColumn; ++i)
+    {
+      TmpColumns[i] = ComplexVector (M1.NbrRow);
+      for (int j = 0; j < M1.NbrRow; ++j)
+	{
+      TmpColumns[i].Components[j].Re = M1.DiagonalElements[j] *  M2.Columns[i].Components[j].Re;
+      TmpColumns[i].Components[j].Im = M1.DiagonalElements[j] *  M2.Columns[i].Components[j].Im;
+	   }
+     }
+  return ComplexMatrix(TmpColumns, M2.NbrColumn);
+}
+
+// multiply two matrices
+//
+// M1 = first matrix
+// M2 = matrix to multiply to M1
+// return value = product of the two matrices
+
+ComplexMatrix operator * (const ComplexMatrix& M1, const RealDiagonalMatrix& M2)
+{
+  if (M1.NbrColumn != M2.NbrRow)
+    return ComplexMatrix();
+  ComplexVector* TmpColumns = new ComplexVector [M2.NbrColumn];
+  for (int i = 0; i < M2.NbrColumn; ++i)
+    {
+      TmpColumns[i] = ComplexVector (M1.NbrRow);
+      for (int j = 0; j < M1.NbrRow; ++j)
+	{
+      TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re * M2.DiagonalElements[i];
+      TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im * M2.DiagonalElements[i];
+	 }
+	}
+  return ComplexMatrix(TmpColumns, M2.NbrColumn);
+}
+
 // multiply a matrix by a real number (right multiplication)
 //
 // M = source matrix
@@ -2037,7 +2084,7 @@ double* ComplexMatrix::SingularValueDecomposition(ComplexMatrix& uMatrix, Comple
 void ComplexMatrix::SingularValueDecomposition(ComplexMatrix& uMatrix, RealDiagonalMatrix& diagonal, ComplexMatrix& vMatrix, bool truncatedUVFlag)
 {
   double* TmpDiag = this->SingularValueDecomposition(uMatrix, vMatrix, truncatedUVFlag);
-  diagonal = RealDiagonalMatrix(TmpDiag, uMatrix.NbrColumn);
+  diagonal = RealDiagonalMatrix(TmpDiag, (uMatrix.NbrColumn>vMatrix.NbrRow)? vMatrix.NbrRow :uMatrix.NbrColumn);
 }
 
 // compute the diagonal part of the singular value decomposition U D V^t

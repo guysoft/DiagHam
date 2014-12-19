@@ -89,6 +89,7 @@ class RealVector : public Vector
   friend RealMatrix operator * (const RealMatrix& M, double x);
   friend RealMatrix operator * (double x, const RealMatrix& M);
   friend RealMatrix operator / (const RealMatrix& M, double x);
+  friend RealMatrix operator / (const RealMatrix& M1, const RealDiagonalMatrix& M2);
   friend ostream& operator << (ostream& Str, const RealMatrix& P);
 #ifdef USE_OUTPUT
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const RealMatrix& P);

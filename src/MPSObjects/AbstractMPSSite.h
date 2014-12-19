@@ -17,6 +17,7 @@ class AbstractMPSSite
    AbstractMPSSite * SiteOnRight;
 
    unsigned int PhysicalDimension;
+   unsigned int SquarePhysicalDimension;
    unsigned int BondDimensionLeft;
    unsigned int BondDimensionRight;
    unsigned int MaxBondDimension;
@@ -69,6 +70,12 @@ class AbstractMPSSite
    
    inline unsigned int GetSitePosition() const
       {return this->SitePosition;}
+  inline long int GetVectorOneSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const;
+  inline long int GetVectorTwoSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const;
+  inline void DecodeVectorOneSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const;
+
+  inline void DecodeVectorTwoSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const;
+
 };
 
 
@@ -91,6 +98,34 @@ inline void AbstractMPSSite::SetBondDimension(int bondDimensionLeft, int bondDim
 {
   this->BondDimensionLeft = bondDimensionLeft;
   this->BondDimensionRight = bondDimensionRight;
+}
+
+
+inline long int AbstractMPSSite::GetVectorOneSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const
+{
+  return this->BondDimensionRight * (this->BondDimensionLeft * physicalIndice + leftIndice) + rightIndice;
+}
+
+inline long int AbstractMPSSite::GetVectorTwoSiteIndice(int leftIndice, int rightIndice, int physicalIndice) const
+{
+ return physicalIndice + this->SquarePhysicalDimension * (leftIndice + rightIndice * this->BondDimensionLeft);
+}
+
+
+inline void AbstractMPSSite::DecodeVectorOneSiteIndice(long int vectorIndice, int & leftIndice, int & rightIndice, int& physicalIndice) const
+{
+   rightIndice = vectorIndice%this->BondDimensionRight;
+   vectorIndice/=this->BondDimensionRight;
+   leftIndice =  vectorIndice % this->BondDimensionLeft;
+   physicalIndice = vectorIndice / this->BondDimensionLeft;
+}
+
+inline void AbstractMPSSite::DecodeVectorTwoSiteIndice(long int vectorIndice, int& leftIndice, int & rightIndice, int& physicalIndice) const
+{
+   physicalIndice = vectorIndice%this->SquarePhysicalDimension;
+   vectorIndice /= this->SquarePhysicalDimension;
+   leftIndice =  vectorIndice % this->BondDimensionLeft;
+   rightIndice = vectorIndice / this->BondDimensionLeft;
 }
 
 

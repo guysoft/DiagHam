@@ -5,6 +5,8 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 
+class   RealDiagonalMatrix;
+
 class DMRGFiniteSizeRealOBCMainTask 
 {
  protected:
@@ -14,7 +16,7 @@ class DMRGFiniteSizeRealOBCMainTask
   AbstractArchitecture * Architecture;
   LanczosManager *  AlgorithmManager;
   AbstractMPOperatorOBC * MPOperator;
-  
+  RealDiagonalMatrix PreviousSingularValues;
   int NbrSweep;
   int MaximumBondDimension;
   double PreviousEnergy;
@@ -27,8 +29,10 @@ class DMRGFiniteSizeRealOBCMainTask
  protected:
   void InitializeLattice();
   void InitializeLatticeUsingIDMRG();
+  void InitializeLatticeUsingIDMRGAndStatePrediction();
   void OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
   void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (RealMPSSite * leftSite , RealMPSSite * rightSite, RealDiagonalMatrix & singularValues);
+  void TwoSiteOptimizationUsingLanczosLanczosAlgorithmAndStatePrediction ( RealMPSSite * leftSite , RealMPSSite * rightSite, RealDiagonalMatrix & singularValues, RealVector * statePredict);
 };
 
 #endif

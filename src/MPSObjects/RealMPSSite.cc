@@ -81,13 +81,13 @@ void RealMPSSite::UpdateFromVector(RealVector * psi)
       this->M[i] = RealMatrix(this->BondDimensionLeft,this->BondDimensionRight, true);
     }
 
-  for (int i = 0; i < this->PhysicalDimension; i++)
+  for (int physicalIndice = 0; physicalIndice < this->PhysicalDimension; physicalIndice++)
     {
-      for (int j = 0; j < this->BondDimensionLeft; j++)
+      for (int LeftIndice = 0; LeftIndice < this->BondDimensionLeft; LeftIndice++)
 	{
-	  for (int k = 0; k < this->BondDimensionRight; k++)
+	  for (int RightIndice = 0; RightIndice < this->BondDimensionRight; RightIndice++)
 	    {
-	      this->M[i](j,k) = (*psi)[(long int)this->BondDimensionRight*(this->BondDimensionLeft*i+j) + k]; 
+	      this->M[physicalIndice](LeftIndice,RightIndice) = (*psi)[this->GetVectorOneSiteIndice(LeftIndice,RightIndice,physicalIndice)]; 
 	    }
 	}
     }
@@ -274,13 +274,13 @@ void RealMPSSite::GetMatrixInVectorForm(RealVector *& resultInvector)
   delete resultInvector;
   resultInvector = new RealVector((long int) this->PhysicalDimension*this->BondDimensionLeft*this->BondDimensionRight,true);
 
-  for (int i = 0 ; i < this->PhysicalDimension ; i++)
+  for (int PhysicalIndice = 0 ; PhysicalIndice < this->PhysicalDimension ; PhysicalIndice++)
     {
-      for (int j = 0 ; j <  this->BondDimensionLeft ; j++)
+      for (int LeftIndice = 0 ; LeftIndice <  this->BondDimensionLeft ; LeftIndice++)
 	{
-	  for (int k = 0 ; k <  this->BondDimensionRight ; k++)
+	  for (int RightIndice = 0 ; RightIndice <  this->BondDimensionRight ; RightIndice++)
 	    {
-	      (*resultInvector)[(long int)this->BondDimensionRight*(this->BondDimensionLeft*i+j) + k] = this->M[i](j,k); 
+	      (*resultInvector)[this->GetVectorOneSiteIndice(LeftIndice,RightIndice,PhysicalIndice)] = this->M[PhysicalIndice](LeftIndice,RightIndice); 
 	    }
 	}
     }
@@ -354,20 +354,21 @@ void RealMPSSite::ComputeDensityMatrixRight()
 }
 
 
-void RealMPSSite::SymmetricUpdateOfTwoSites(RealMPSSite * leftSite , RealMPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & SingularValues)
+void RealMPSSite::SymmetricUpdateOfTwoSites(RealMPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & SingularValues)
 {
-  RealMatrix TmpMatrix (leftSite->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
+  RealMatrix TmpMatrix (this->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
+
   // Index = LinearizedPhysicalIndice + SquarePhysicalDimension*(LeftA + RightA*BondDimensionLeft))
 
-  for(int i = 0; i < leftSite->BondDimensionLeft; i++)
+  for(int LeftIndice = 0; LeftIndice < this->BondDimensionLeft; LeftIndice++)
     {
       for(int LeftPhysicalDimension = 0; LeftPhysicalDimension <   this->PhysicalDimension ; LeftPhysicalDimension++)
 	{
-	  for(int j = 0; j < rightSite->BondDimensionRight; j++)
+	  for(int RightIndice = 0; RightIndice < rightSite->BondDimensionRight; RightIndice++)
 	  { 
       for(int RightPhysicalDimension = 0; RightPhysicalDimension <   this->PhysicalDimension ; RightPhysicalDimension++)
 	{
-	      TmpMatrix(this->PhysicalDimension*i + LeftPhysicalDimension , this->PhysicalDimension*j + RightPhysicalDimension) = (*psi)[(long) LeftPhysicalDimension+ this->PhysicalDimension*RightPhysicalDimension + this->PhysicalDimension *this->PhysicalDimension * (i + j * leftSite->BondDimensionLeft)];
+	      TmpMatrix(this->PhysicalDimension*LeftIndice + LeftPhysicalDimension , this->PhysicalDimension*RightIndice + RightPhysicalDimension) = (*psi)[this->GetVectorTwoSiteIndice(LeftIndice,RightIndice, LeftPhysicalDimension +this->PhysicalDimension*RightPhysicalDimension)];
 	    }
 	}
     }
@@ -375,14 +376,18 @@ void RealMPSSite::SymmetricUpdateOfTwoSites(RealMPSSite * leftSite , RealMPSSite
 
   RealMatrix U,V;
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
+  RealMatrix Tmp = U * SingularValues * V;
+
+
   double Entropy=0.0;
   unsigned int KeptStates = 0;
+
+
   for(int i = 0; i < SingularValues.GetNbrRow(); i++)
   {
    if (SingularValues[i] > 1e-20)
        KeptStates++;
   }
-
 
   if ( KeptStates >  this->MaxBondDimension)
        KeptStates = this->MaxBondDimension;
@@ -403,30 +408,30 @@ for(int i = 0; i < KeptStates; i++)
  SingularValues = RealDiagonalMatrix(KeptSingularValues,KeptStates);
  cout <<"Entropy = "<< Entropy<<" " <<  RejectedWeight<< endl;
 
- delete [] leftSite->M;
+ delete [] this->M;
  delete [] rightSite->M;
- delete leftSite->L;
+ delete this->L;
  delete rightSite->R;
 
- leftSite->M = new RealMatrix [this->PhysicalDimension];
+ this->M = new RealMatrix [this->PhysicalDimension];
  rightSite->M = new RealMatrix [this->PhysicalDimension];  
 
 
-  leftSite->SetRightDimension(KeptStates);
+  this->SetRightDimension(KeptStates);
   rightSite->SetLeftDimension(KeptStates);
   for(int i = 0; i < this->PhysicalDimension; i++)
     {
-      leftSite->M[i] = RealMatrix(leftSite->BondDimensionLeft,KeptStates, true);
+      this->M[i] = RealMatrix(this->BondDimensionLeft,KeptStates, true);
       rightSite->M[i] = RealMatrix(KeptStates, rightSite->BondDimensionRight, true);
     } 
 
   for(int  LeftPhysicalDimension = 0 ;  LeftPhysicalDimension <  this->PhysicalDimension;  LeftPhysicalDimension++)
     {
-      for(int j = 0 ; j < leftSite->BondDimensionLeft; j++)
+      for(int j = 0 ; j < this->BondDimensionLeft; j++)
 	{
 	  for(int k = 0 ; k <  KeptStates ; k++)
 	    {
-	      leftSite->M[LeftPhysicalDimension](j,k) = U(this->PhysicalDimension*j +  LeftPhysicalDimension,k);
+	      this->M[LeftPhysicalDimension](j,k) = U(this->PhysicalDimension*j +  LeftPhysicalDimension,k);
 	    }
 	}
     }
@@ -441,12 +446,50 @@ for(int i = 0; i < KeptStates; i++)
 	    }
 	}
     }
-  leftSite->L = new Tensor3<double> (leftSite->BondDimensionRight,leftSite->OperatorToBeMinimized->GetMPODimension(),leftSite->BondDimensionRight,true);
-  leftSite->OperatorToBeMinimized->SetSite(leftSite);
-  leftSite->OperatorToBeMinimized->ComputeL(*leftSite->L);
 
+  this->L = new Tensor3<double> (this->BondDimensionRight,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionRight,true);
+  this->OperatorToBeMinimized->SetSite(this);
+  this->OperatorToBeMinimized->ComputeL(*this->L);
 
   rightSite->R = new Tensor3<double> (rightSite->BondDimensionLeft,rightSite->OperatorToBeMinimized->GetMPODimension(),rightSite->BondDimensionLeft,true);
   rightSite->OperatorToBeMinimized->SetSite(rightSite);
   rightSite->OperatorToBeMinimized->ComputeR(*rightSite->R);
+}
+
+
+
+RealVector *  RealMPSSite::StatePrediction(RealMPSSite * rightSite, RealDiagonalMatrix & SingularValues, RealDiagonalMatrix & OldSingularValues)
+{
+ RealMatrix * TmpA = new RealMatrix [this->PhysicalDimension];
+ RealMatrix * TmpB = new RealMatrix [this->PhysicalDimension];  
+
+ for(int i = 0; i < this->PhysicalDimension; i++)
+ {
+     TmpA[i] = this->M[i] * SingularValues;
+     TmpB[i] = SingularValues * rightSite->M[i] / OldSingularValues;
+}
+
+ RealVector * PredictedPsi = new RealVector((long) this->BondDimensionRight*rightSite->BondDimensionLeft*this->PhysicalDimension*this->PhysicalDimension ,true);
+
+  for(int LeftIndice = 0; LeftIndice < this->BondDimensionRight; LeftIndice++)
+    {
+      for(int LeftPhysicalDimension = 0; LeftPhysicalDimension <   this->PhysicalDimension ; LeftPhysicalDimension++)
+	{
+	  for(int RightIndice = 0; RightIndice < rightSite->BondDimensionLeft; RightIndice++)
+	  { 
+      for(int RightPhysicalDimension = 0; RightPhysicalDimension <   this->PhysicalDimension ; RightPhysicalDimension++)
+	{
+
+      for(int k = 0; k <   OldSingularValues.GetNbrColumn() ; k++)
+	{
+
+//             (*PredictedPsi)[(long) LeftPhysicalDimension+ this->PhysicalDimension*RightPhysicalDimension + this->PhysicalDimension *this->PhysicalDimension * (LeftIndice + j * this->BondDimensionRight)] =   TmpB[LeftPhysicalDimension](LeftIndice,k) *  TmpA[RightPhysicalDimension](k ,RightIndice);
+             (*PredictedPsi)[this->SiteOnRight->GetVectorTwoSiteIndice(LeftIndice,RightIndice, LeftPhysicalDimension +this->PhysicalDimension*RightPhysicalDimension)] =   TmpB[LeftPhysicalDimension](LeftIndice,k) *  TmpA[RightPhysicalDimension](k ,RightIndice);
+	 }
+	}
+    }
+  }
+}
+
+  return PredictedPsi;
 }

@@ -81,13 +81,6 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   // nbrStates = number of states to compute
   int GetIntermediateLinearizedIndices(int xMomentum, int yMomentum,int spin); 
 
-  // get linearized indices
-  //
-  // minStateIndex = minimum index of the state to compute
-  // nbrStates = number of states to compute
-  int GetIntermediateLinearizedIndicesBis(int xMomentum, int yMomentum,int spin); 
-  
-  
  protected :
 
   // core part that compute the band structure
@@ -129,35 +122,6 @@ inline int TightBindingModelOFLNOrbitalTriangularLattice::GetIntermediateLineari
  
  return this->NbrInternalDegree*((TmpXMomentum%this->NbrStep)*this->NbrStep+(TmpYMomentum%this->NbrStep))+TmpSpin;
 }
-
-
-
-
-inline int TightBindingModelOFLNOrbitalTriangularLattice::GetIntermediateLinearizedIndicesBis(int xMomentum, int yMomentum,int spin)
-{
-  int TmpXMomentum = xMomentum;
-  int TmpYMomentum = yMomentum;
-  int TmpSpin = spin;
- 
- if(spin <0)
-    {
-      TmpSpin+=this->NbrInternalDegree;
-      TmpXMomentum -= this->ChernNumber;
-    }
- if(spin >= this->NbrInternalDegree)
-   {
-     TmpSpin-=this->NbrInternalDegree;
-     TmpXMomentum += this->ChernNumber;
-   }
- 
- if (TmpXMomentum < 0)
-   TmpXMomentum += this->NbrStep;
- if (TmpYMomentum < 0)
-   TmpYMomentum += this->NbrStep;
- 
- return this->NbrInternalDegree*((TmpXMomentum%this->NbrStep)*this->NbrStep+(TmpYMomentum%this->NbrStep))+TmpSpin;
-}
-
 
 
 #endif

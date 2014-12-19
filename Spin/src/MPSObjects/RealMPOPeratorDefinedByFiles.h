@@ -3,6 +3,7 @@
 
 #include "MPSObjects/RealMPOperatorOBC.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
+#include "Architecture/AbstractArchitecture.h"
 
 class RealMPOPeratorDefinedByFiles : public RealMPOperatorOBC
 {
@@ -12,7 +13,7 @@ class RealMPOPeratorDefinedByFiles : public RealMPOperatorOBC
  public:
 
   RealMPOPeratorDefinedByFiles();
-  RealMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile); 
+  RealMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile,AbstractArchitecture * architecture = 0); 
   ~RealMPOPeratorDefinedByFiles();
   
   virtual void InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile);

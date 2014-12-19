@@ -117,13 +117,13 @@ bool ComplexMPSSite::CheckLeftNormalization()
     }
   for(int i = 0 ; i < this->BondDimensionRight; i++)
     {
-      if ( abs(Result(i,i)-1) > 1e-13  )
+      if ( abs(Norm(Result.GetMatrixElement(i,i)) - 1.0) > 1e-13  )
 	  {
 	    return false;
 	  }
       for(int j = i+1 ; j < this->BondDimensionRight ; j++)
 	{
-	  if (abs(Result(i,j)) > 1e-13)
+	  if ( abs(Norm(Result.GetMatrixElement(i,j))) > 1e-13)
 	    {
 	      return false;
 	    }
@@ -143,13 +143,13 @@ bool ComplexMPSSite::CheckRightNormalization()
     }
   for(int i = 0 ; i < this->BondDimensionLeft; i++)
     {
-      if ( abs(Result(i,i)-1) > 1e-13  )
+      if ( abs(Norm(Result.GetMatrixElement(i,i)) - 1.0) > 1e-13  )
 	{
 	  return false;
 	}
       for(int j = i+1;j< this->BondDimensionLeft; j++)
 	{
-	  if (abs(Result(i,j)) > 1e-13)
+  	  if ( abs(Norm(Result.GetMatrixElement(i,j))) > 1e-13)
 	    {
 	      return false;
 	    }
@@ -171,19 +171,21 @@ void ComplexMPSSite::BringMInRightCanonicalForm()
 	{
 	  for(int j = 0; j < this->BondDimensionRight; j++)
 	    { 
-	      TmpMatrix(i, this->PhysicalDimension * j + p) = this->M[p](i,j);
+	      TmpMatrix.SetMatrixElement(i, this->PhysicalDimension * j + p,this->M[p].GetMatrixElement(i,j));
 	    }
 	}
     }
+
 //  cout << TmpMatrix<<endl;
   ComplexMatrix U,V;
   RealDiagonalMatrix SingularValues;
 
   TmpMatrix.SingularValueDecomposition(U,SingularValues,V,false);
 //  cout <<"SingularValues  = "<< SingularValues<<endl;
-//  cout <<U <<endl;
-// cout <<V <<endl;
+//  cout <<"U = "<<U <<endl;
+//  cout <<"V = "<<V <<endl;
   U = U * SingularValues;
+//  cout <<" U * SingularValues = "<<U <<endl;
   double Entropy = 0.0;
   for(int i = 0; i < SingularValues.GetNbrRow(); i++)
 {
@@ -191,7 +193,7 @@ void ComplexMPSSite::BringMInRightCanonicalForm()
    Entropy -= SingularValues[i]*log(SingularValues[i]);
 }
 
-//  cout <<U<<endl;;
+
  cout <<"Entropy = "<< Entropy<<" " << SingularValues[SingularValues.GetNbrRow()-1]<< endl;
   for(int i =0 ; i <  this->PhysicalDimension; i++)
     {
@@ -199,11 +201,11 @@ void ComplexMPSSite::BringMInRightCanonicalForm()
 	{
 	  for(int k = 0 ; k <  this->BondDimensionRight; k++)
 	    {
-	      this->M[i](j,k) = V(j,this->PhysicalDimension * k + i);
+	      this->M[i].SetMatrixElement(j,k, V.GetMatrixElement(j,this->PhysicalDimension * k + i));
 	    }
 	}
 
-       ((ComplexMPSSite * )this->SiteOnLeft)->M[i] = ((ComplexMPSSite * )this->SiteOnLeft)->M[i]*U;
+       (((ComplexMPSSite * )this->SiteOnLeft)->M[i]) = (((ComplexMPSSite * )this->SiteOnLeft)->M[i]) *U;
        }
   delete this->R;
   this->R = new Tensor3<Complex> (this->BondDimensionLeft,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionLeft,true) ;
@@ -225,7 +227,7 @@ void ComplexMPSSite::BringMInLeftCanonicalForm()
 	{
 	  for(int j = 0; j < this->BondDimensionRight; j++)
 	    { 
-	      TmpMatrix(this->PhysicalDimension*i + p,j) = this->M[p](i,j);
+	      TmpMatrix.SetMatrixElement(this->PhysicalDimension*i + p,j,this->M[p].GetMatrixElement(i,j));
 	    }
 	}
     }
@@ -256,7 +258,7 @@ double Entropy=0.0;
 	{
 	  for(int k = 0 ; k <  this->BondDimensionRight; k++)
 	    {
-	      this->M[i](j,k) = U(this->PhysicalDimension*j + i,k);
+	      this->M[i].SetMatrixElement(j,k,U.GetMatrixElement(this->PhysicalDimension*j + i,k));
 	    }
 	}
       ((ComplexMPSSite * )this->SiteOnRight)->M[i] =  V * ((ComplexMPSSite * )this->SiteOnRight)->M[i];
@@ -271,7 +273,9 @@ double Entropy=0.0;
 
 void ComplexMPSSite::GetMatrixInVectorForm(ComplexVector *& resultInvector)
 {
+//  cout <<"in GetMatrixInVectorForm(ComplexVector *& resultInvector)"<<endl;
   delete resultInvector;
+
   resultInvector = new ComplexVector((long int) this->PhysicalDimension*this->BondDimensionLeft*this->BondDimensionRight,true);
 
   for (int i = 0 ; i < this->PhysicalDimension ; i++)
@@ -280,7 +284,7 @@ void ComplexMPSSite::GetMatrixInVectorForm(ComplexVector *& resultInvector)
 	{
 	  for (int k = 0 ; k <  this->BondDimensionRight ; k++)
 	    {
-	      (*resultInvector)[(long int)this->BondDimensionRight*(this->BondDimensionLeft*i+j) + k] = this->M[i](j,k); 
+	      (*resultInvector)[(long int)this->BondDimensionRight*(this->BondDimensionLeft*i+j) + k] = this->M[i].GetMatrixElement(j,k); 
 	    }
 	}
     }
@@ -358,6 +362,7 @@ void ComplexMPSSite::ComputeDensityMatrixRight()
 
 void ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)
 {
+//  cout << (*psi)<<endl;
   ComplexMatrix TmpMatrix (leftSite->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
 
   for(int i = 0; i < leftSite->BondDimensionLeft; i++)
@@ -384,11 +389,16 @@ void ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , Compl
        KeptStates++;
   }
 
+//  cout <<SingularValues<<endl;
+//  cout <<U<<endl;
+//  cout <<V<<endl;
+//  ComplexMatrix Tmp = U * SingularValues * V;
+//  cout <<"TmpMatrix "<<TmpMatrix<<endl;  cout <<"Tmp  "<<Tmp<<endl;
 
   if ( KeptStates >  this->MaxBondDimension)
        KeptStates = this->MaxBondDimension;
  double * KeptSingularValues = new double[KeptStates];
-
+ 
 for(int i = 0; i < KeptStates; i++)
   {
    KeptSingularValues[i] = SingularValues[i];
@@ -420,16 +430,19 @@ for(int i = 0; i < KeptStates; i++)
       leftSite->M[i] = ComplexMatrix(leftSite->BondDimensionLeft,KeptStates, true);
       rightSite->M[i] = ComplexMatrix(KeptStates, rightSite->BondDimensionRight, true);
     } 
-
   for(int  LeftPhysicalDimension = 0 ;  LeftPhysicalDimension <  this->PhysicalDimension;  LeftPhysicalDimension++)
     {
       for(int j = 0 ; j < leftSite->BondDimensionLeft; j++)
 	{
 	  for(int k = 0 ; k <  KeptStates ; k++)
 	    {
-	      leftSite->M[LeftPhysicalDimension](j,k) = U(this->PhysicalDimension*j +  LeftPhysicalDimension,k);
+              Complex Tmp = U.GetMatrixElement(this->PhysicalDimension*j +  LeftPhysicalDimension,k);
+//	      leftSite->M[LeftPhysicalDimension].SetMatrixElement(j,k, U.GetMatrixElement(this->PhysicalDimension*j +  LeftPhysicalDimension,k)); 
+	      leftSite->M[LeftPhysicalDimension].SetMatrixElement(j,k,Tmp); 
+
 	    }
 	}
+//cout <<leftSite->M[LeftPhysicalDimension]<<endl;
     }
 
   for(int  RightPhysicalDimension = 0 ;  RightPhysicalDimension <  this->PhysicalDimension;  RightPhysicalDimension++)
@@ -438,14 +451,24 @@ for(int i = 0; i < KeptStates; i++)
 	{
 	  for(int k = 0 ; k <  KeptStates ; k++)
 	    {
-	      rightSite->M[RightPhysicalDimension](k,j) = V(k,this->PhysicalDimension*j +  RightPhysicalDimension);
+              Complex Tmp = V.GetMatrixElement(k,this->PhysicalDimension*j +  RightPhysicalDimension);	
+	      rightSite->M[RightPhysicalDimension].SetMatrixElement(k,j, Tmp);
+//	      rightSite->M[RightPhysicalDimension].SetMatrixElement(k,j, V.GetMatrixElement(k,this->PhysicalDimension*j +  RightPhysicalDimension));
 	    }
 	}
     }
+
+
+ if( leftSite->CheckLeftNormalization() == false)
+   cout <<"left noralisation issue invoid ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)" <<endl;
+
+
+ if( rightSite->CheckRightNormalization() == false)
+   cout <<"right normalisation issue invoid ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)" <<endl;
+
   leftSite->L = new Tensor3<Complex> (leftSite->BondDimensionRight,leftSite->OperatorToBeMinimized->GetMPODimension(),leftSite->BondDimensionRight,true);
   leftSite->OperatorToBeMinimized->SetSite(leftSite);
   leftSite->OperatorToBeMinimized->ComputeL(*leftSite->L);
-
 
   rightSite->R = new Tensor3<Complex> (rightSite->BondDimensionLeft,rightSite->OperatorToBeMinimized->GetMPODimension(),rightSite->BondDimensionLeft,true);
   rightSite->OperatorToBeMinimized->SetSite(rightSite);

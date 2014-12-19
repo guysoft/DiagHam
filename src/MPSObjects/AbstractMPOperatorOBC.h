@@ -5,6 +5,7 @@
 #include "AbstractMPSSite.h"
 #include "Tensor/Tensor3.h"
 #include "HilbertSpace/AbstractHilbertSpace.h"
+#include "Architecture/AbstractArchitecture.h"
 
 class AbstractMPSSite;
 
@@ -22,7 +23,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   AbstractMPSSite * Site;
   AbstractMPSSite * SiteLeft;
   AbstractMPSSite * SiteRight;
-  
+  AbstractArchitecture * Architecture;
   AbstractMPOperatorOBC ();
   ~AbstractMPOperatorOBC ();
   
@@ -35,6 +36,8 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
  public:
   
   virtual void ComputeL(Tensor3<double> & L);
+  virtual void ComputeLBis(Tensor3<double> & L){};
+  virtual void ComputeLBis(Tensor3<Complex> & L){};
   virtual void ComputeL(Tensor3<Complex> & L);
   virtual void ComputeR(Tensor3<double> & R);
   virtual void ComputeR(Tensor3<Complex> & R);
@@ -126,8 +129,18 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination,  int firstComponent, int nbrComponent);
- virtual ComplexVector& LowLevelMultiplyOneSite(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent);
+  virtual ComplexVector& LowLevelMultiplyOneSite(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent);
 
+  virtual void MPOApplyOnTensorOnTheLeftCore(Tensor3<double> * result, Tensor3<double> * source, int firstComponent, int nbrComponent){cout <<"using undefined function"<<endl; };
+  virtual void MPOApplyOnTensorOnTheRightCore(Tensor3<double> * result, Tensor3<double> * source, int firstComponent, int nbrComponent){cout <<"using undefined function"<<endl; };
+  virtual void MPOApplyOnTensorOnTheLeftCore(Tensor3<Complex> * result, Tensor3<Complex> * source, int firstComponent, int nbrComponent){cout <<"using undefined function"<<endl; };
+  virtual void MPOApplyOnTensorOnTheRightCore(Tensor3<Complex> * result, Tensor3<Complex> * source, int firstComponent, int nbrComponent){cout <<"using undefined function"<<endl; };
+
+
+  virtual void LowLevelMultiplyCoreFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+  virtual void LowLevelMultiplyCoreFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
 
  protected:
   

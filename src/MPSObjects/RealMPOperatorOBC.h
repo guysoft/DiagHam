@@ -28,18 +28,22 @@ class RealMPOperatorOBC : public AbstractMPOperatorOBC
   
   virtual void ComputeL(Tensor3<double> & L);
   virtual void ComputeLCore(Tensor3<double> & L);
+  virtual void ComputeLCoreBis(Tensor3<double> & L);
 
   virtual void ComputeR(Tensor3<double> & R);
   virtual void ComputeRCore(Tensor3<double> & R);
+  virtual void ComputeRCoreBis(Tensor3<double> & R);
   virtual  void PrintTensorElements();
 
 
   virtual RealVector& LowLevelMultiplyCore(RealVector& vSource, RealVector& vDestination, 
 				       int firstComponent, int nbrComponent);
+ 
 
   virtual RealVector& LowLevelMultiplyTwoSites(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
 
   virtual RealVector& LowLevelMultiplyTwoSitesCore(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
+  virtual RealVector& LowLevelMultiplyTwoSitesCoreBis(RealVector& vSource, RealVector& vDestination, int firstComponent, int nbrComponent);
 
  virtual RealSymmetricMatrix& GetTwoSitesHamiltonian (RealSymmetricMatrix & M);
 
@@ -52,6 +56,11 @@ class RealMPOperatorOBC : public AbstractMPOperatorOBC
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual RealVector& LowLevelMultiplyOneSite(RealVector& vSource, RealVector& vDestination,   int firstComponent, int nbrComponent);
+  
+
+  virtual void MPOApplyOnTensorOnTheLeftCore(Tensor3<double> * result, Tensor3<double> * source, int firstComponent, int nbrComponent);
+  virtual void MPOApplyOnTensorOnTheRightCore(Tensor3<double> * result, Tensor3 <double> * source, int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent);
 
 };
 

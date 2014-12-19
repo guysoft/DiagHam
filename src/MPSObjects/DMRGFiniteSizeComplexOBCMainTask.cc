@@ -5,7 +5,6 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 #include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
-#include "Vector/RealVector.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
@@ -85,8 +84,6 @@ void DMRGFiniteSizeComplexOBCMainTask::InitializeLatticeUsingIDMRG()
        cout <<"End Initializazion Site " << i <<endl;
     }
 
-
-
   ComplexMatrix * TmpM = LatticeSite[NbrSites/2 - 1].GetM();
   for(int i = 0; i <  this->MPOperator->GetPhysicalDimension() ; i++)
   {
@@ -110,8 +107,6 @@ void DMRGFiniteSizeRealOBCMainTask::InitializeLatticeUsingIDMRGAndStatePredictio
        cout <<" Initializazion Site " << i <<endl;
        this->MPOperator->SetSiteLeftAndRight(&(this->LatticeSite[i]),&this->LatticeSite[NbrSites-1-i]);
        this->TwoSiteOptimizationUsingLanczosLanczosAlgorithm (&LatticeSite[i] ,&this->LatticeSite[NbrSites-1-i],SingularValues);
-
-
        this->PreviousSingularValues = SingularValues;
        cout <<"End Initializazion Site " << i <<endl;
     }
@@ -144,10 +139,10 @@ void DMRGFiniteSizeComplexOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int
       RealDiagonalMatrix TmpDiag (this->MPOperator->GetHilbertSpaceDimension());
       ComplexMatrix Q(this->MPOperator->GetHilbertSpaceDimension(), this->MPOperator->GetHilbertSpaceDimension());
       HRep.LapackDiagonalize(TmpDiag, Q);
-      ComplexVector TmpEigenvector(this->MPOperator->GetHilbertSpaceDimension(),true);
       cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->LatticeSite[siteIndex].UpdateFromVector(&Q[0]);
-
+      this->PreviousEnergy = TmpDiag[0];
+      cout << "Norm =" <<Q[0].Norm()<<endl;
 
 #endif
 
@@ -157,14 +152,15 @@ else
 {
   ComplexVector * TmpVector = 0;
   AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
+
   this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
+  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
   LanczosAlgorithm->InitializeLanczosAlgorithm(*TmpVector);
   double GroundStateEnergy;
   double Precision = 1.0;
   double PreviousLowest = 1e50;
   double Lowest = PreviousLowest;
   int CurrentNbrIterLanczos = 0;
-  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
   cout << "Run Lanczos Algorithm" << endl;
   timeval TotalStartingTime;
   timeval TotalEndingTime;
@@ -204,10 +200,11 @@ else
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-      ComplexVector GroundState =  ((ComplexVector) LanczosAlgorithm->GetGroundState());
+      ComplexVector GroundState =  *((ComplexVector *) (&LanczosAlgorithm->GetGroundState()));
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
       this->LatticeSite[siteIndex].UpdateFromVector(&GroundState);
+      this->AlgorithmManager->FreeLanczosAlgorithm();
 }
 
 }
@@ -215,26 +212,24 @@ else
 
 void DMRGFiniteSizeComplexOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgorithm ( ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, RealDiagonalMatrix & singularValues)
 {
-  if (this->MPOperator->GetTwoSitesHilbertSpaceDimension() < 500 )
-    {
     int Dimension = this->MPOperator->GetTwoSitesHilbertSpaceDimension();
     cout <<"Dimension = " <<Dimension<<endl;
+  if (this->MPOperator->GetTwoSitesHilbertSpaceDimension() < 200 )
+    {
     HermitianMatrix HRep (Dimension, true);
     this->MPOperator->GetTwoSitesHamiltonian(HRep);
-
+//    cout <<HRep<<endl;
     if (Dimension > 1)
      {
 #ifdef __LAPACK__
-      RealDiagonalMatrix TmpDiag (Dimension);
-      ComplexMatrix Q(Dimension,Dimension);
-      HRep.LapackDiagonalize(TmpDiag, Q);
-      ComplexVector TmpEigenvector(Dimension,true);
-      cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
-     cout <<" Before      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
+     RealDiagonalMatrix TmpDiag (Dimension);
+     ComplexMatrix Q(Dimension,Dimension);
+     HRep.LapackDiagonalize(TmpDiag, Q);
+     cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  ((TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues);
      cout <<" After      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
+     this->PreviousEnergy = TmpDiag[0];
 #endif
-
 }
 }
 else
@@ -249,7 +244,6 @@ else
   double PreviousLowest = 1e50;
   double Lowest = PreviousLowest;
   int CurrentNbrIterLanczos = 0;
-  LanczosAlgorithm->SetHamiltonian(this->MPOperator);
   cout << "Run Lanczos Algorithm" << endl;
   timeval TotalStartingTime;
   timeval TotalEndingTime;
@@ -268,7 +262,6 @@ else
       TmpMatrix.SortMatrixUpOrder();
       Lowest = TmpMatrix.DiagonalElement(0);
   }
-
   while ((LanczosAlgorithm->TestConvergence() == false)&&( CurrentNbrIterLanczos < 2000 ))
   {
      ++CurrentNbrIterLanczos;
@@ -291,9 +284,13 @@ else
       cout << endl;
       cout << (TmpMatrix.DiagonalElement(0)) << " " << Lowest << " " << Precision << "  Nbr of iterations = " 
 	   << CurrentNbrIterLanczos << endl;
-      ComplexVector GroundState =  ((ComplexVector) LanczosAlgorithm->GetGroundState());
+//      cout <<LanczosAlgorithm->GetGroundState()<<endl;
+      ComplexVector GroundState =  *((ComplexVector *) (&LanczosAlgorithm->GetGroundState()));
+      
+//      cout <<GroundState<<endl;
       cout <<"Highest energy = " << GroundStateEnergy<<" change = " <<  ((GroundStateEnergy - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
       this->PreviousEnergy = GroundStateEnergy;
       this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &GroundState,singularValues);
+     this->AlgorithmManager-> FreeLanczosAlgorithm();
 }
 }

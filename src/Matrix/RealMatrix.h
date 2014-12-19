@@ -308,6 +308,15 @@ class RealMatrix : public Matrix
   // return value = division result
   friend RealMatrix operator / (const RealMatrix& M, double x);
 
+  // divide a matrix by a real diagonal matrix (all entries must be non zero)
+  //
+  // M = source matrix
+  // x = real number to use
+  // return value = division result
+  friend RealMatrix operator / (const RealMatrix& M1, const RealDiagonalMatrix& M2);
+
+
+
   // add two matrices
   //
   // M = matrix to add to current matrix

@@ -53,7 +53,7 @@ int AbstractMPOperatorOBC::GetHilbertSpaceDimension ()
 //
 // return value = corresponding matrix elementdimension
 
-int AbstractMPOperatorOBC::GetTwoSitesHilbertSpaceDimension ()
+int AbstractMPOperatorOBC::GetTwoSitesHilbertSpaceDimension()
 {
   return  this->SiteRight->GetBondDimensionRight()* this->SiteLeft->GetBondDimensionLeft()*this->PhysicalDimension *this->PhysicalDimension;
 }
@@ -109,6 +109,7 @@ RealVector& AbstractMPOperatorOBC::LowLevelMultiply(RealVector& vSource, RealVec
 // return value = reference on vectorwhere result has been stored
 ComplexVector& AbstractMPOperatorOBC::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)
 { 
+//cout <<"ComplexVector& AbstractMPOperatorOBC::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination)"<<endl;
   return this->LowLevelMultiply(vSource, vDestination, 0, this->GetHilbertSpaceDimension());
 }
 
@@ -189,6 +190,7 @@ else
 ComplexVector& AbstractMPOperatorOBC::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
+//cout <<"ComplexVector& AbstractMPOperatorOBC::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination,     int firstComponent, int nbrComponent)"<<endl;
  if(this->IDMRGFlag)
   return this->LowLevelMultiplyTwoSites(vSource,vDestination, firstComponent, nbrComponent); 
 else 

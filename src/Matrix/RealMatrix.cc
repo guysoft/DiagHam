@@ -928,6 +928,25 @@ RealMatrix operator / (const RealMatrix& M, double x)
   return RealMatrix(TmpColumns, M.NbrRow);
 }
 
+// divide a matrix by a real number (right multiplication)
+//
+// M = source matrix
+// x = real number to use
+// return value = division result
+
+RealMatrix operator / (const RealMatrix& M1, const RealDiagonalMatrix& M2) 
+{
+  RealVector* TmpColumns = new RealVector [M1.NbrColumn];
+  for (int i = 0; i < M1.NbrColumn; i++)
+    {
+      TmpColumns[i] = RealVector(M1.NbrRow);
+      for (int j = 0; j < M1.NbrRow; j++)
+	TmpColumns[i].Components[j] = M1.Columns[i].Components[j] / M2.DiagonalElements[i];
+    }
+  return RealMatrix(TmpColumns, M1.NbrRow);
+}
+
+
 // add two matrices
 //
 // M = matrix to add to current matrix

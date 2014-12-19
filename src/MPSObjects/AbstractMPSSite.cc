@@ -18,6 +18,7 @@ AbstractMPSSite::AbstractMPSSite()
 AbstractMPSSite::AbstractMPSSite(unsigned int sitePosition, unsigned int physicalDimension, unsigned int bondDimension, AbstractMPOperatorOBC * mPOperator)
 {
   this->PhysicalDimension = physicalDimension;
+  this->SquarePhysicalDimension =  this->PhysicalDimension *  this->PhysicalDimension;
   this->SitePosition = sitePosition;
   this->OperatorToBeMinimized = mPOperator;
   this->Flag.Initialize();
@@ -38,6 +39,7 @@ AbstractMPSSite::~AbstractMPSSite()
 AbstractMPSSite & AbstractMPSSite::operator = (const AbstractMPSSite & site) 
 {
   this->PhysicalDimension = site.PhysicalDimension;
+  this->SquarePhysicalDimension = site.SquarePhysicalDimension;
   this->SitePosition = site.SitePosition;
   this->OperatorToBeMinimized = site.OperatorToBeMinimized;
   this->BondDimensionLeft = site.BondDimensionLeft;

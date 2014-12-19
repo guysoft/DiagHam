@@ -2438,6 +2438,8 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
   if (P.Dimension == -1)
     for (long i = 0; i < P.LargeDimension; ++i)
       {
+	Str << P.Components[i]<<endl;
+/*
 	Str << P.Components[i].Re;
 	if (P.Components[i].Im < 0.0)
 	  Str << P.Components[i].Im << "i    ";
@@ -2446,11 +2448,13 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
 	    Str << "+" << P.Components[i].Im << "i    ";
 	  else
 	    Str << "    ";
-	Str << endl;
+	Str << endl;*/
       }
   else
     for (int i = 0; i < P.Dimension; ++i)
       {
+	Str << P.Components[i]<<endl;
+/*
 	Str << P.Components[i].Re;
 	if (P.Components[i].Im < 0.0)
 	  Str << P.Components[i].Im << "i    ";
@@ -2459,7 +2463,7 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
 	    Str << "+" << P.Components[i].Im << "i    ";
 	  else
 	    Str << "    ";
-	Str << endl;
+	Str << endl;*/
       }
   return Str;
 }

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   int NbrSites = Manager.GetInteger("length");
   int PhysicalDimension = 2;
   int MaxBondDimension = Manager.GetInteger("bond-dimension");;
-  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites);
+  MPOPeratorSixVertexModelTransferMatrixSquare TransferMatrix(NbrSites,Architecture.GetArchitecture());
  
 if(Manager.GetBoolean("print-tensor") == true)
   {

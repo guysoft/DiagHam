@@ -72,6 +72,8 @@ int main(int argc, char** argv)
     }
   
   bool ComplexFlag = Manager.GetBoolean("complex");
+  if (ComplexFlag)
+    Lanczos.SetComplexAlgorithms();
   MultiColumnASCIIFile TensorsElementsDefinition;
   if (TensorsElementsDefinition.Parse(Manager.GetString("tensor-file")) == false)
 	{
@@ -145,12 +147,13 @@ int main(int argc, char** argv)
   {
     Lattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
     Lattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
-}
-else
-{
+  }
+  else
+  {
     ComplexLattice[i].SetBondDimension(CurrentDimension,NextCurrentDimension);
+    cout <<"site " <<i<<" Dimensions " <<CurrentDimension<<" " <<NextCurrentDimension<<endl;
     ComplexLattice[NbrSites - i - 1].SetBondDimension(NextCurrentDimension,CurrentDimension);
-}
+  }
    CurrentDimension = NextCurrentDimension;
    NextCurrentDimension *=  PhysicalDimension;
    if(NextCurrentDimension > MaxBondDimension)

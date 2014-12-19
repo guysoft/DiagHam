@@ -158,7 +158,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgor
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   if (this->ResumeDiskFlag == false)
     {
-      this->V1 = vector;
+      this->V1 = ((ComplexVector &) vector);
       this->V2 = ComplexVector (Dimension);
       this->V3 = ComplexVector (Dimension);
       if (this->DiskFlag == false)
@@ -293,8 +293,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::RunLanczosAlgorithm (i
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2).Re;
-      this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
-				    this->V1);
+      this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), this->V1);
       this->V2 /= this->V2.Norm(); 
       if (this->DiskFlag == true)
 	this->V2.WriteVector("vector.1");

@@ -45,16 +45,15 @@ class RealMPSSite : public AbstractMPSSite
    void BringMInRightCanonicalForm();
    void ComputeDensityMatrixRight();
    void ComputeDensityMatrixLeft();
-   void SymmetricUpdateOfTwoSites(RealMPSSite * leftSite , RealMPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & singularValues );
-
-    inline Tensor3<double> & GetPreviousL ()const
-{ return (* ((RealMPSSite*)this->SiteOnLeft)->L);}
+   void SymmetricUpdateOfTwoSites(RealMPSSite * rightSite, RealVector * psi, RealDiagonalMatrix & singularValues );
+   RealVector *  StatePrediction(RealMPSSite * rightSite, RealDiagonalMatrix & SingularValues, RealDiagonalMatrix & OldSingularValues);
+  inline Tensor3<double> & GetPreviousL ()const
+  { return (* ((RealMPSSite*)this->SiteOnLeft)->L);}
 
    inline Tensor3<double> & GetNextR ()const
      { return (* ((RealMPSSite*)this->SiteOnRight)->R);}
    inline RealMatrix * GetM() const
      { return this->M;}
-
 };
 
 #endif

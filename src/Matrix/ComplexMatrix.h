@@ -61,6 +61,7 @@ class ComplexMatrix : public Matrix
   friend class RealVector;
   friend class ComplexVector;
   friend class RealTriDiagonalSymmetricMatrix;
+  friend class RealDiagonalMatrix;
   friend class SingleParticle;
 
  protected:
@@ -216,6 +217,8 @@ class ComplexMatrix : public Matrix
   // i = column position
   // return value = column reference 
   ComplexVector& operator [] (int i);
+  Complex & GetMatrixElement(int i, int j);
+
 
   // Resize matrix
   //
@@ -297,6 +300,20 @@ class ComplexMatrix : public Matrix
   // M2 = matrix to multiply to M1
   // return value = product of the two matrices
   friend ComplexMatrix operator * (const ComplexMatrix& M1, const ComplexMatrix& M2);
+
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend ComplexMatrix operator * (const ComplexMatrix  & M1, const RealDiagonalMatrix & M2);
+
+  // multiply two matrices
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend ComplexMatrix operator * (const  RealDiagonalMatrix & M1, const ComplexMatrix & M2);
 
   // multiply a complex matrix with a complex upper triangular matrix
   //
@@ -645,6 +662,20 @@ inline ComplexVector& ComplexMatrix::operator [] (int i)
 {
   return this->Columns[i];
 }
+
+
+// return refernce on real part of a given matrix element
+//
+// i = line position
+// j = column position
+// return value = reference on real part
+
+inline Complex & ComplexMatrix::GetMatrixElement(int i, int j)
+{
+  return this->Columns[j][i];
+}
+
+
 
 // get a matrix element (real part if complex)
 //

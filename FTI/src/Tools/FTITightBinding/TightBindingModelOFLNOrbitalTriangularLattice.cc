@@ -297,15 +297,15 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  int IntermediateIndex = this->GetIntermediateLinearizedIndices(p, t, Spin);
 
 			  TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY-MomentaX*MomentaY + FluxXterm + FluxYterm ));
-
+			  cout <<"Phase = " << Phase(this->KxFactor * this->GammaX)<<endl;
 
 			  int IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree ) )* Phase(-this->KyFactor * this->GammaY) ); 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree ) ) ); 
 			  
 			  IntermediateIndex1=this->GetIntermediateLinearizedIndices(p, t-1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree))* Phase(this->KyFactor * this->GammaY)); 		 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-2*M_PI*Spin*this->ChernNumber/((double) this->NbrInternalDegree))); 		 
 			  
 			  //
 			  
@@ -315,16 +315,17 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  
 			  IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t-1, Spin-1);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-M_PI*this->ChernNumber*(2*Spin-1)/((double) this->NbrInternalDegree ))*Phase(this->KxFactor * this->GammaX +this->KyFactor * this->GammaY)); 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-M_PI*this->ChernNumber*(2*Spin-1)/((double) this->NbrInternalDegree ))*Phase(this->KxFactor * this->GammaX)); 
 
 
 			  IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t, Spin+1);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-this->KxFactor * this->GammaX));
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(-1.0*this->KxFactor * this->GammaX));
 			  
 			  IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin+1);
 			  if (IntermediateIndex1 < IntermediateIndex)
-			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(M_PI*this->ChernNumber*(2*Spin+1)/((double) this->NbrInternalDegree ))*Phase(-(this->KxFactor * this->GammaX +this->KyFactor * this->GammaY))); 
+			    TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex1, IntermediateIndex,-LaserStrength*Phase(M_PI*this->ChernNumber*(2*Spin+1)/((double) this->NbrInternalDegree))*Phase(-1.0*this->KxFactor * this->GammaX)); 
+
 
 
 			}
