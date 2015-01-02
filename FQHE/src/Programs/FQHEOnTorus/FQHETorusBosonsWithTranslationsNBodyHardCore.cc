@@ -144,6 +144,33 @@ int main(int argc, char** argv)
     }
   else
     {
+      if ((YMomentum != 0) || (XMomentum != 0))
+      {
+	if (YMomentum != 0)
+	{
+	  NbrMomenta = MomentumModulo;
+	  YMomenta = new int[NbrMomenta];
+	  XMomenta = new int[NbrMomenta];	  
+	  for (int Kx = 0; Kx < NbrMomenta; ++Kx)
+	  {
+	    YMomenta[Kx] = YMomentum;
+	    XMomenta[Kx] = Kx;
+	  }
+	}
+	if (XMomentum != 0)
+	{
+	  NbrMomenta = MomentumModulo;
+	  YMomenta = new int[NbrMomenta];
+	  XMomenta = new int[NbrMomenta];
+	  for (int Ky = 0; Ky < NbrMomenta; ++Ky)
+	  {
+	    XMomenta [Ky] = XMomentum;
+	    YMomenta[Ky] = Ky;
+	  }
+	}
+      }
+      else
+      {
       if (Manager.GetBoolean("all-points"))
 	{
 	  int Pos=0;
@@ -268,6 +295,7 @@ int main(int argc, char** argv)
 			  }
 		      }
 		  }
+	    }
 	    }
 	}
     }
