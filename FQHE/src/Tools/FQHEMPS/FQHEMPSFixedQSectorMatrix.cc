@@ -73,21 +73,31 @@ FQHEMPSFixedQSectorMatrix::FQHEMPSFixedQSectorMatrix(AbstractFQHEMPSMatrix* matr
       this->MPSMatrix->GetFillingFactor(TmpNumerator, this->QPeriodicity);
       this->BMatrixGroupSize = this->QPeriodicity;
     }
-  int NbrGroupBMatrices = 1 << this->BMatrixGroupSize;
+  int NbrBMatricesPerOrbital = matrix->GetNbrMatrices();
+  int NbrGroupBMatrices = 1;
+  for (int i = 0; i < this->BMatrixGroupSize; ++i)
+    NbrGroupBMatrices *= NbrBMatricesPerOrbital;
   SparseRealMatrix* TmpSparseGroupBMatrices = new SparseRealMatrix[NbrGroupBMatrices];
   cout << "grouping " << this->BMatrixGroupSize << " B matrices (" << NbrGroupBMatrices << " matrices)" << endl;
-  TmpSparseGroupBMatrices[0].Copy(this->MPSMatrix->GetMatrices()[0]);
-  TmpSparseGroupBMatrices[1].Copy(this->MPSMatrix->GetMatrices()[1]);
-  for (int j = 1; j < this->BMatrixGroupSize; ++j)
+  
+  int Step = NbrGroupBMatrices / NbrBMatricesPerOrbital;
+  for (int i = 0; i < NbrGroupBMatrices; i += Step)
+    TmpSparseGroupBMatrices[i].Copy(this->MPSMatrix->GetMatrices()[i / Step]);
+  while (Step > 1)
     {
-      int Half = 1 << j;
-      for (int i = 0; i < Half; ++i)	
-	TmpSparseGroupBMatrices[Half + i].Copy(TmpSparseGroupBMatrices[i]);
-      for (int i = 0; i < Half; ++i)
+      int TmpStep = Step / NbrBMatricesPerOrbital;
+      for (int i = 0; i < NbrGroupBMatrices; i += Step)
 	{
-	  TmpSparseGroupBMatrices[i].Multiply(this->MPSMatrix->GetMatrices()[0]);
-	  TmpSparseGroupBMatrices[Half + i].Multiply(this->MPSMatrix->GetMatrices()[1]);
+	  for (int j = 1; j < NbrBMatricesPerOrbital; ++j)
+	    {
+	      TmpSparseGroupBMatrices[i + j * TmpStep].Copy(TmpSparseGroupBMatrices[i]);
+	    }
+	  for (int j = 0; j < NbrBMatricesPerOrbital; ++j)
+	    {
+	      TmpSparseGroupBMatrices[i + j * TmpStep].Multiply(this->MPSMatrix->GetMatrices()[j]);
+	    }	  
 	}
+      Step = TmpStep;
     }
   int GroupBMatrixDimension = 0l;
   int MinQ;

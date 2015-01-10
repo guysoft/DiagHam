@@ -55,6 +55,7 @@ using std::ios;
 FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
 {
   this->UseRationalFlag = true;
+  this->BosonicVersion = false;
 }
 
 // constructor
@@ -63,6 +64,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
 // centralCharge = value of the central charge
 // outputName = name of the theory
 // useRational = use arbitrary precision numbers for all the CFT calculations
+
 FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational centralCharge, char* outputName, bool useRational)
 {
     this->PLevel = pLevel;
@@ -87,18 +89,25 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational cent
 // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+// bosonicVersion = use a version of the code that is compatible with bosonic wave functions
 // useRational = use arbitrary precision numbers for all the CFT calculations
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool useRational,
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool bosonicVersion, bool useRational,
 						   bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->RIndex = rIndex;
+  this->BosonicVersion = bosonicVersion;
+  this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
+  for (int i = 0; i < this->NbrBMatrices; ++i)
+    {
+      this->PhysicalIndices[i] = (unsigned long) i;
+    }
   this->LaughlinIndex = laughlinIndex;
   this->UseRationalFlag = useRational;
   this->UniformChargeIndexRange = !trimChargeIndices;
@@ -125,19 +134,26 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
 // cftDirectory = path to the directory where all the pure CFT matrices are stored
+// bosonicVersion = use a version of the code that is compatible with bosonic wave functions
 // useRational = use arbitrary precision numbers for all the CFT calculations
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
   
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational, 
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion, bool useRational, 
 						   bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->RIndex = rIndex;
+  this->BosonicVersion = bosonicVersion;
   this->LaughlinIndex = laughlinIndex;
+  this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
+  for (int i = 0; i < this->NbrBMatrices; ++i)
+    {
+      this->PhysicalIndices[i] = (unsigned long) i;
+    }
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->UseRationalFlag = useRational;
@@ -162,15 +178,22 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
 // fileName = name of the file that contains the state description
+// bosonicVersion = use a version of the code that is compatible with bosonic wave functions
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 // architecture = architecture to use for precalculation
 
-FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, 
+FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion, 
 						   bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
+  this->BosonicVersion = bosonicVersion;
+  this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
+  for (int i = 0; i < this->NbrBMatrices; ++i)
+    {
+      this->PhysicalIndices[i] = (unsigned long) i;
+    }
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->CylinderFlag = cylinderFlag;
@@ -392,22 +415,42 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
   int QValue;
   int QValueDenominator;
   double ExtraCylinderFactor = 1.0;
-  if ((this->RIndex & 1) == 0)
+  if (this->BosonicVersion == false)
     {
-      QValue = 1 + (this->RIndex / 2);
-      this->NbrNValue = ((2 * this->PLevel) + QValue) + this->RIndex / 2 + 1;
-      NValueShift = 2 * this->PLevel - 1;
-      QValueDenominator = 1;
+      if ((this->RIndex & 1) == 0)
+	{
+	  QValue = 1 + (this->RIndex / 2);
+	  this->NbrNValue = ((2 * this->PLevel) + QValue) + this->RIndex / 2 + 1;
+	  NValueShift = 2 * this->PLevel - 1;
+	  QValueDenominator = 1;
+	}
+      else
+	{
+	  QValue = 2 + this->RIndex;
+	  this->NbrNValue = ((4 * this->PLevel) + QValue) + this->RIndex + 1;
+	  NValueShift = 4 * this->PLevel - 2;
+	  QValueDenominator = 2;
+	  ExtraCylinderFactor = 4.0;
+	}
     }
   else
     {
-      QValue = 2 + this->RIndex;
-      this->NbrNValue = ((4 * this->PLevel) + QValue) + this->RIndex + 1;
-      NValueShift = 4 * this->PLevel - 2;
-      QValueDenominator = 2;
-      ExtraCylinderFactor = 4.0;
+      if ((this->RIndex & 1) == 0)
+	{
+	  QValue = this->LaughlinIndex - 1 + (this->RIndex / 2);
+	  this->NbrNValue = ((2 * this->PLevel) + QValue) + this->RIndex / 2 + 2;
+	  NValueShift = 2 * this->PLevel - 1;
+	  QValueDenominator = 1;
+	}
+      else
+	{
+	  QValue = ((2 * this->LaughlinIndex) - 2) + this->RIndex;
+	  this->NbrNValue = ((4 * this->PLevel) + QValue) + this->RIndex + 2;
+	  NValueShift = 4 * this->PLevel - 2;
+	  QValueDenominator = 2;
+	  ExtraCylinderFactor = 4.0;
+	}
     }
-
   int MatrixSize = this->ComputeLinearizedIndexArrays();
   cout << "B matrix size = " << MatrixSize << endl;
 
@@ -645,196 +688,393 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
     }
   
   // B^[1]  matrix evaluation
-  for (int i = 0; i < MatrixSize; ++i)
-    TmpNbrElementPerRow[i] = 0;
-  FactorialCoefficient Coef;
-  unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
-  unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
-
-  for (int i = 0; i <= this->PLevel; ++i)
+  if (this->BosonicVersion == false)
     {
-      for (int p = 0; p <= i; ++p)
+      for (int i = 0; i < MatrixSize; ++i)
+	TmpNbrElementPerRow[i] = 0;
+      FactorialCoefficient Coef;
+      unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
+      unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
+      
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
-	  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
-	  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
-	  RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
-	  RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
-	  for (int j = 0; j <= this->PLevel; ++j)
+	  for (int p = 0; p <= i; ++p)
 	    {
-	      for (int q = 0; q <= j; ++q)
+	      BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	      BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	      RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
+	      RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
+	      for (int j = 0; j <= this->PLevel; ++j)
 		{
-		  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
-		  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
-		  RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
-		  RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
-		  RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
-		  RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
-	  
-		  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
-		    {	      
-		      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
-		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+		  for (int q = 0; q <= j; ++q)
+		    {
+		      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		      RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
+		      RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
+		      RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
+		      RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
+		      
+		      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
 			{	      
-			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
-			  int N2;
-			  int N1;
-			  if ((this->RIndex & 1) == 0)
-			    {
-			      N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
-			      N1 = N2 + QValue - 1;
-			    }
-			  else
-			    {
-			      N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
-			      N1 = N2 + QValue - 2;
-			    }			  
-			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
-			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
-			    { 
-			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+			  TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+			  for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			    {	      
+			      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			      int N2;
+			      int N1;
+			      if ((this->RIndex & 1) == 0)
 				{
-				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
-				    {
-				      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1)];
-				    }
+				  N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue - 1;
 				}
-
-			    }
-			  if ((this->RIndex & 1) == 0)
-			    {
-			      N2 = (2 * (j - i) + 1 + NValueShift) / 2;
-			      N1 = N2 + QValue - 1;
-			    }
-			  else
-			    {
-			      N2 = (4 * (j - i) + 2 + NValueShift) / 2;
-			      N1 = N2 + QValue - 2;
-			    }
-			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
-			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
-			    { 
-			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+			      else
 				{
-				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+				  N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue - 2;
+				}			  
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
 				    {
-				      ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1)];
-				    }
-				}
-			    }
-			}
-		    }
-		}	      
-	    }
-	}
-    }
-
-  BMatrices[1] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
-  for (int i = 0; i <= this->PLevel; ++i)
-    {
-      for (int p = 0; p <= i; ++p)
-	{
-	  BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
-	  BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
-	  RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
-	  RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
-	  for (int j = 0; j <= this->PLevel; ++j)
-	    {
-	      for (int q = 0; q <= j; ++q)
-		{
-		  BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
-		  BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
-		  RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
-		  RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
-		  RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
-		  RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
-	  
-		  for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
-		    {	      
-		      TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
-		      for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
-			{	      
-			  TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
-			  int N2;
-			  int N1;
-			  if ((this->RIndex & 1) == 0)
-			    {
-			      N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
-			      N1 = N2 + QValue - 1;
-			    }
-			  else
-			    {
-			      N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
-			      N1 = N2 + QValue - 2;
-			    }			  
-			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
-			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
-			    { 
-			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
-				{
-				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
-				    {
-				      double Tmp = 0.0;
-				      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
 					{
-					  double Tmp1 = 0.0;			      
-					  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
-					    {
-					  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
-					    }
-					  Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+					  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1)];
 					}
-				      Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
-				      if (this->CylinderFlag)
-					Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
-										       + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
-										       + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				      BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1),
-								    this->Get2RMatrixIndexV2(j, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 				    }
 				  
 				}
-			    }
-			  if ((this->RIndex & 1) == 0)
-			    {
-			      N2 = (2 * (j - i) + 1 + NValueShift) / 2;
-			      N1 = N2 + QValue - 1;
-			    }
-			  else
-			    {
-			      N2 = (4 * (j - i) + 2 + NValueShift) / 2;
-			      N1 = N2 + QValue - 2;
-			    }
-			  if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
-			      && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
-			    { 
-			      for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+			      if ((this->RIndex & 1) == 0)
 				{
-				  for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+				  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue - 1;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue - 2;
+				}
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
 				    {
-				      double Tmp = 0.0;
-				      for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
 					{
-					  double Tmp1 = 0.0;			      
-					  for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
-					    {
-					      Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
-					    }
-					  Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+					  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1)];
 					}
-				      Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
-				      if (this->CylinderFlag)
-					Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
-										       + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
-										       + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
-				      BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1),
-								    this->Get2RMatrixIndexV2(j, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
 				    }
 				}
 			    }
 			}
-		    }
-		}	      
+		    }	      
+		}
 	    }
+	}
+      
+      BMatrices[1] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  for (int p = 0; p <= i; ++p)
+	    {
+	      BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	      BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	      RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
+	      RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
+	      for (int j = 0; j <= this->PLevel; ++j)
+		{
+		  for (int q = 0; q <= j; ++q)
+		    {
+		      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		      RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
+		      RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
+		      RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
+		      RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
+		      
+		      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+			{	      
+			  TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+			  for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			    {	      
+			      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			      int N2;
+			      int N1;
+			      if ((this->RIndex & 1) == 0)
+				{
+				  N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue - 1;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue - 2;
+				}			  
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+				    {
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+					{
+					  double Tmp = 0.0;
+					  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+					    {
+					      double Tmp1 = 0.0;			      
+					      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+						{
+						  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+						}
+					      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+					    }
+					  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+					  if (this->CylinderFlag)
+					    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+											   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
+											   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
+					  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1),
+									this->Get2RMatrixIndexV2(j, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+					}
+				      
+				    }
+				}
+			      if ((this->RIndex & 1) == 0)
+				{
+				  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue - 1;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue - 2;
+				}
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+				    {
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+					{
+					  double Tmp = 0.0;
+					  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+					    {
+					      double Tmp1 = 0.0;			      
+					      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+						{
+						  Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+						}
+					      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+					    }
+					  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+					  if (this->CylinderFlag)
+					    Tmp *= exp(-0.5 * this->Kappa * this->Kappa * (WeightIdentityNumerical + WeightPsiNumerical + ((double) (i + j))
+											   + ((N1 - 0.5 * NValueShift) * (N1 - 0.5 * NValueShift) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))
+											   + (((N2 - 0.5 * NValueShift) * (N2 - 0.5 * NValueShift)) * QValueDenominator / (2.0 * ExtraCylinderFactor * QValue))));
+					  BMatrices[1].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1),
+									this->Get2RMatrixIndexV2(j, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+					}
+				    }
+				}
+			    }
+			}
+		    }	      
+		}
+	    }
+	}
+    }
+  else
+    {
+      // creation of the B matrices compatible with bosons
+      for (int i = 0; i < MatrixSize; ++i)
+	TmpNbrElementPerRow[i] = 0;
+      FactorialCoefficient Coef;
+      unsigned long* Partition1 = new unsigned long [this->PLevel + 2];
+      unsigned long* Partition2 = new unsigned long [this->PLevel + 2];
+      
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  for (int p = 0; p <= i; ++p)
+	    {
+	      BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	      BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	      RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
+	      RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
+	      for (int j = 0; j <= this->PLevel; ++j)
+		{
+		  for (int q = 0; q <= j; ++q)
+		    {
+		      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		      RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
+		      RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
+		      RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
+		      RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
+		      
+		      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+			{	      
+			  TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+			  for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			    {	      
+			      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			      int N2;
+			      int N1;
+			      if ((this->RIndex & 1) == 0)
+				{
+				  N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}			  
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+				    {
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+					{
+					  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1)];
+					}
+				    }
+				  
+				}
+			      if ((this->RIndex & 1) == 0)
+				{
+				  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+				    {
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+					{
+					  ++TmpNbrElementPerRow[this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1)];
+					}
+				    }
+				}
+			    }
+			}
+		    }	      
+		}
+	    }
+	}
+      
+      SparseRealMatrix V0Matrix (MatrixSize, MatrixSize, TmpNbrElementPerRow);
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  for (int p = 0; p <= i; ++p)
+	    {
+	      BosonOnDiskShort* TmpSpaceCharged1 = U1BosonBasis[p];
+	      BosonOnDiskShort* TmpSpaceNeutral1 = U1BosonBasis[i - p];
+	      RealMatrix& TmpOrthogonalBasisIdentity1 = OrthogonalBasisIdentityLeft[i - p];
+	      RealMatrix& TmpOrthogonalBasisPsi1 = OrthogonalBasisPsiLeft[i - p];
+	      for (int j = 0; j <= this->PLevel; ++j)
+		{
+		  for (int q = 0; q <= j; ++q)
+		    {
+		      BosonOnDiskShort* TmpSpaceCharged2 = U1BosonBasis[q];
+		      BosonOnDiskShort* TmpSpaceNeutral2 = U1BosonBasis[j - q];
+		      RealMatrix& TmpOrthogonalBasisIdentity2 = OrthogonalBasisIdentityRight[j - q];
+		      RealMatrix& TmpOrthogonalBasisPsi2 = OrthogonalBasisPsiRight[j - q];
+		      RealMatrix& TmpMatrixPsi01 = MatrixPsi01[i - p][j - q];
+		      RealMatrix& TmpMatrixPsi10 = MatrixPsi10[i - p][j - q];	
+		      
+		      for (int ChargedIndex1 = 0; ChargedIndex1 < TmpSpaceCharged1->GetHilbertSpaceDimension(); ++ChargedIndex1)
+			{	      
+			  TmpSpaceCharged1->GetOccupationNumber(ChargedIndex1, Partition1);
+			  for (int ChargedIndex2 = 0; ChargedIndex2 < TmpSpaceCharged2->GetHilbertSpaceDimension(); ++ChargedIndex2)
+			    {	      
+			      TmpSpaceCharged2->GetOccupationNumber(ChargedIndex2, Partition2);
+			      int N2;
+			      int N1;
+			      if ((this->RIndex & 1) == 0)
+				{
+				  N2 = (2 * (j - i) + this->RIndex + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 * this->RIndex + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}			  
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][0]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][0]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][1]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][1])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisIdentity1.GetNbrColumn(); ++NeutralIndex1)
+				    {
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisPsi2.GetNbrColumn(); ++NeutralIndex2)
+					{
+					  double Tmp = 0.0;
+					  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+					    {
+					      double Tmp1 = 0.0;			      
+					      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+						{
+						  Tmp1 += TmpMatrixPsi01(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisPsi2(NeutralIndex4, NeutralIndex2);				  
+						}
+					      Tmp += TmpOrthogonalBasisIdentity1(NeutralIndex3, NeutralIndex1) * Tmp1;
+					    }
+					  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+					  V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, N1, p, ChargedIndex1, NeutralIndex1),
+									this->Get2RMatrixIndexV2(j, 1, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+					}
+				      
+				    }
+				}
+			      if ((this->RIndex & 1) == 0)
+				{
+				  N2 = (2 * (j - i) + 1 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}
+			      else
+				{
+				  N2 = (4 * (j - i) + 2 + NValueShift) / 2;
+				  N1 = N2 + QValue;
+				}
+			      if (((N1 >= this->NInitialValuePerPLevelCFTSector[i][1]) && (N1 <= this->NLastValuePerPLevelCFTSector[i][1]))
+				  && ((N2 >= this->NInitialValuePerPLevelCFTSector[j][0]) && (N2 <= this->NLastValuePerPLevelCFTSector[j][0])))
+				{ 
+				  for (int NeutralIndex1 = 0; NeutralIndex1 < TmpOrthogonalBasisPsi1.GetNbrColumn(); ++NeutralIndex1)
+				    {
+				      for (int NeutralIndex2 = 0; NeutralIndex2 < TmpOrthogonalBasisIdentity2.GetNbrColumn(); ++NeutralIndex2)
+					{
+					  double Tmp = 0.0;
+					  for (int NeutralIndex3 = 0; NeutralIndex3 < TmpSpaceNeutral1->GetHilbertSpaceDimension(); ++NeutralIndex3)
+					    {
+					      double Tmp1 = 0.0;			      
+					      for (int NeutralIndex4 = 0; NeutralIndex4 < TmpSpaceNeutral2->GetHilbertSpaceDimension(); ++NeutralIndex4)
+						{
+						  Tmp1 += TmpMatrixPsi10(NeutralIndex3, NeutralIndex4) * TmpOrthogonalBasisIdentity2(NeutralIndex4, NeutralIndex2);				  
+						}
+					      Tmp += TmpOrthogonalBasisPsi1(NeutralIndex3, NeutralIndex1) * Tmp1;
+					    }
+					  Tmp *= CreateLaughlinAMatrixElement(QValue, QValueDenominator, Partition1, Partition2, i, j, Coef);
+					  V0Matrix.SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, N1, p, ChargedIndex1, NeutralIndex1),
+									this->Get2RMatrixIndexV2(j, 0, N2, q, ChargedIndex2, NeutralIndex2), Tmp);
+					}
+				    }
+				}
+			    }
+			}
+		    }	      
+		}
+	    }
+	}
+      for (int m = 1; m < this->NbrBMatrices; ++m)
+	{
+	  BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
+	  if (this->CylinderFlag)
+	    BMatrices[m] /= sqrt((double) m);
 	}
     }
   
@@ -2035,23 +2275,50 @@ void FQHEMPSClustered2RMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& colu
   this->GetChargeIndexRange(0, MinQ, MaxQ);
   if (padding == true)
     {
-      if ((this->RIndex & 1) == 0)
-	rowIndex = this->PLevel + (this->RIndex / 2) - MinQ;
-      else
-	rowIndex = 2 * this->PLevel + this->RIndex - 1 - MinQ;      
-      columnIndex = rowIndex;
-    }
-  else
-    {
-      if ((this->RIndex & 1) == 0)
+      if (this->BosonicVersion == false)
 	{
-	  rowIndex = this->PLevel + this->RIndex - MinQ;
-	  columnIndex = this->PLevel - MinQ;
+	  if ((this->RIndex & 1) == 0)
+	    rowIndex = this->PLevel + (this->RIndex / 2) - MinQ;
+	  else
+	    rowIndex = 2 * this->PLevel + this->RIndex - 1 - MinQ;      
+	  columnIndex = rowIndex;
 	}
       else
 	{
-	  rowIndex = 2 * (this->PLevel + this->RIndex) - MinQ;
-	  columnIndex = 2 * this->PLevel - MinQ;
+	  if ((this->RIndex & 1) == 0)
+	    rowIndex = this->PLevel - MinQ;
+	  else
+	    rowIndex = 2 * this->PLevel - MinQ;      
+	  columnIndex = rowIndex;
+	}
+    }
+  else
+    {
+      if (this->BosonicVersion == false)
+	{
+	  if ((this->RIndex & 1) == 0)
+	    {
+	      rowIndex = this->PLevel + this->RIndex - MinQ;
+	      columnIndex = this->PLevel - MinQ;
+	    }
+	  else
+	    {
+	      rowIndex = 2 * (this->PLevel + this->RIndex) - MinQ;
+	      columnIndex = 2 * this->PLevel - MinQ;
+	    }
+	}
+      else
+	{
+	  if ((this->RIndex & 1) == 0)
+	    {
+	      rowIndex = this->PLevel + this->LaughlinIndex - MinQ;
+	      columnIndex = this->PLevel - MinQ;
+	    }
+	  else
+	    {
+	      rowIndex = 2 * (this->PLevel + this->LaughlinIndex) - MinQ;
+	      columnIndex = 2 * this->PLevel - MinQ;
+	    }
 	}
     }
 }

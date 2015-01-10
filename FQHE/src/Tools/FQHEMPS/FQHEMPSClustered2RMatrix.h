@@ -122,12 +122,13 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // useRational = use arbitrary precision numbers for all the CFT calculations
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool useRational = true, 
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool bosonicVersion = false, bool useRational = true, 
 			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor 
@@ -137,12 +138,13 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // useRational = use arbitrary precision numbers for all the CFT calculations
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational = true,
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion = false, bool useRational = true,
 			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from a file describing the state
@@ -150,11 +152,12 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // fileName = name of the file that contains the state description
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, 
+  FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion = false, bool trimChargeIndices = false, bool cylinderFlag = false, 
 			   double kappa = 1.0, AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices

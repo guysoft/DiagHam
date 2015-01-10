@@ -42,6 +42,9 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 
  protected:
 
+  // use a version of the code that is compatible with bosonic wave functions
+  bool BosonicVersion;
+
   // index of the Laughlin (i.e. 1/nu) 
   int LaughlinIndex;
 
@@ -81,10 +84,12 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
+  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool bosonicVersion = false, 
+			bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
 
   // constructor from stored B matrices
   //

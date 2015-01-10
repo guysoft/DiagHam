@@ -739,8 +739,7 @@ class FermionOnSphere :  public ParticleOnSphere
   // state = reference to the Jack state to normalize
   // aspect = aspect ratio of cylinder
   // return value = normalized state
-
-   virtual RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
+  virtual RealVector& NormalizeJackToCylinder(RealVector& state, double aspect);
 
   // fuse two states which belong to different Hilbert spaces 
   //

@@ -286,7 +286,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		    {
 		      if (importBMatrices != 0)
 			{
-			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
+			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), NbrBMatrices, 
+								   this->Options->GetBoolean("boson"), this->Options->GetInteger("p-truncation"), 
 								   importBMatrices, this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa);
 			}
 		      else
@@ -294,12 +295,15 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			  if (this->Options->GetString("cft") != 0)
 			    {
 			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
+								       this->Options->GetBoolean("boson"),
 								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 			    }
 			  else
 			    {
-			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-								       this->Options->GetString("matrices-cft"),!(this->Options->GetBoolean("use-nonrational")), 
+			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 
+								       this->Options->GetInteger("laughlin-index") - 1, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								       this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson"),
+								       !(this->Options->GetBoolean("use-nonrational")), 
 								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 			    }
 			}
@@ -335,7 +339,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			}
 		      else
 			{
-			  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+			  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 
+										  2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
 										  this->Options->GetString("matrices-cft"), !(this->Options->GetBoolean("use-nonrational")), 
 										  this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
 			}
@@ -457,7 +462,9 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		    }
 		  else
 		    {
-		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), this->Options->GetInteger("p-truncation"), NbrBMatrices,
+		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
+							    this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							    this->Options->GetBoolean("boson"), 
 							    this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
 		    }
 		}

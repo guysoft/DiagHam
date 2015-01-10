@@ -53,6 +53,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "reference-file", "use a file as the definition of the reference state of the output state");
   (*SystemGroup) += new BooleanOption  ('\n', "p-truncated", "use a p-truncated basis instead of the full n-body basis");
   (*SystemGroup) += new SingleIntegerOption ('\n', "p-truncation", "p-truncation for the p-truncated basis (if --p-truncated is used)", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "boson-truncation", "maximum occupation for a given orbital when using the p-truncated basis", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrized-basis", "use Lz <-> -Lz symmetrized version of the basis (only valid if total-lz=0)");
   (*SystemGroup) += new BooleanOption  ('\n', "huge-basis", "use huge Hilbert space support");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
@@ -239,16 +240,16 @@ int main(int argc, char** argv)
     }
   else
     {
-      cout<<"Bosons not implemented."<<endl;
-      /*
       if (Manager.GetBoolean("huge-basis") == true)
 	{
-	  if (Manager.GetString("load-hilbert") == 0)
-	    {
-	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
-	      return -1;
-	    }
-	  OutputBasis = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+// 	  if (Manager.GetString("load-hilbert") == 0)
+// 	    {
+// 	      cout << "error : huge basis mode requires to save and load the Hilbert space" << endl;
+// 	      return -1;
+// 	    }
+// 	  OutputBasis = new BosonOnSphereHaldaneHugeBasisShort (Manager.GetString("load-hilbert"), Manager.GetInteger("memory"));
+	  cout << "error, huge-basis mode not implemented for bosons" << endl;
+	  return 0;
 	}
       else
 	{
@@ -263,7 +264,8 @@ int main(int argc, char** argv)
 		  int* ReferenceState = 0;
 		  if (FQHEGetRootPartition(Manager.GetString("reference-file"), NbrParticles, LzMax, ReferenceState) == false)
 		    return -1;
-		  OutputBasis = new BosonOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), ReferenceState);
+		  OutputBasis = new BosonOnSpherePTruncated(NbrParticles, TotalLz, LzMax, Manager.GetInteger("p-truncation"), 
+							    Manager.GetInteger("boson-truncation"), ReferenceState);
 		}
 	    }
 	  else
@@ -277,7 +279,6 @@ int main(int argc, char** argv)
 		OutputBasis = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, LzMax, ReferenceState);	  
 	    }
 	}
-      */
     }
 
    if (Manager.GetBoolean("normalize"))

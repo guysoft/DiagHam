@@ -51,6 +51,7 @@ using std::ios;
 FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix()
 {
   this->UniformChargeIndexRange = true;
+  this->BosonicVersion = false;
 }
 
 // constructor 
@@ -58,23 +59,33 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix()
 // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
 // pLevel = |P| level truncation
 // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+// bosonicVersion = use a version of the code that is compatible with bosonic wave functions
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
 
-FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool trimChargeIndices, bool cylinderFlag, double kappa)
+FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool bosonicVersion, bool trimChargeIndices, bool cylinderFlag, double kappa)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
-  this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
+  this->BosonicVersion = bosonicVersion;
+  if (this->BosonicVersion == true)
+    this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex) + 1;
   this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
-  //  this->AlternateCreateBMatrices();
-  this->CreateBMatrices();
+  this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
+  for (int i = 0; i < this->NbrBMatrices; ++i)
+    {
+      this->PhysicalIndices[i] = (unsigned long) i;
+    }
+  if (this->BosonicVersion == true)
+    this->AlternateCreateBMatrices();
+  else
+    this->CreateBMatrices();
 }
 
 // constructor from stored B matrices
@@ -263,11 +274,6 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
   delete[] Partition1;
   delete[] Partition2;
 
-  cout << "B[0]" << endl;
-  BMatrices[0].PrintNonZero(cout) << endl;
-  cout << "B[1]" << endl;
-  BMatrices[1].PrintNonZero(cout) << endl;
-
   for (int i = 0; i < this->NbrBMatrices; ++i)
     {
       this->RealBMatrices[i] = BMatrices[i];
@@ -330,10 +336,6 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
 	    {
 	      double Tmp = 1.0;
 	      if (this->CylinderFlag)
-// symmetric normalization
-// 		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-// 							 + ((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift) / (4.0 * (double) this->LaughlinIndex))
-// 							 + (((j - this->NValueGlobalShift) * (j - this->NValueGlobalShift)) / (4.0 * (double) this->LaughlinIndex))));
 		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
 							 + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
 	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(i, k, j - 1), this->GetMatrixIndex(i, k, j), Tmp);
@@ -389,13 +391,6 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
 		    {
 		      TmpSpace2->GetOccupationNumber(k2, Partition2);
 		      double Tmp = this->CreateLaughlinAMatrixElement(this->LaughlinIndex, 1, Partition1, Partition2, i, j, Coef);
-		      if (this->CylinderFlag)
-			// symmetric normalization
-			// 			    Tmp *= exp(-this->Kappa * this->Kappa * (( 0.5 *  ((double) (i + j)))
-			// 								     + ((N1 - this->NValueGlobalShift) * (N1 - this->NValueGlobalShift)  / (4.0 * (double) this->LaughlinIndex))
-			// 								     + (((N2 - this->NValueGlobalShift) * (N2 - this->NValueGlobalShift))  / (4.0 * (double) this->LaughlinIndex))));
-			Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-								 + (((N1 - this->NValueGlobalShift) * (N1 - this->NValueGlobalShift))  / (2.0 * (double) this->LaughlinIndex))));
 		      V0Matrix.SetMatrixElement(this->GetMatrixIndex(i, k1, N1), this->GetMatrixIndex(j, k2, N2), Tmp);
 		    }
 		}
@@ -406,19 +401,12 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
   delete[] Partition1;
   delete[] Partition2;
 
-  for (int m = 1; m < (this->NbrBMatrices - 1); ++m)
+  for (int m = 1; m < this->NbrBMatrices; ++m)
     {
-      BMatrices[m] = Multiply(BMatrices[0], V0Matrix);
-      V0Matrix.Multiply(V0Matrix);
+      BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
+      if (this->CylinderFlag)
+	BMatrices[m] /= sqrt((double) m);
     }
-  BMatrices[this->NbrBMatrices - 1] = Multiply(BMatrices[0], V0Matrix);
-
-  cout << "B[0]" << endl;
-  BMatrices[0].PrintNonZero(cout) << endl;
-  cout << "V0" << endl;
-  V0Matrix.PrintNonZero(cout) << endl;
-  cout << "B[1]" << endl;
-  BMatrices[1].PrintNonZero(cout) << endl;
 
   for (int i = 0; i < this->NbrBMatrices; ++i)
     {
@@ -651,53 +639,102 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
       return;
     }
   
-  for (minQ = 0; minQ < this->NbrNValue; ++minQ)
-    if (2 * pLevel + twop(minQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
-      break;
-  for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
-    if (2 * pLevel + twop(maxQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
-      break;
-  cout << "N range at " << pLevel << ": [" << minQ - this->NValueGlobalShift << "," << maxQ - this->NValueGlobalShift << "] (+" << this->NValueGlobalShift << ")" << endl;
-  
-  cout << "other method" << endl;
-  int TmpMinQ = this->NbrNValue - 1;
-  int TmpMaxQ = 0;    
-  int NValueShift = this->PLevel;
-  for (int Q = 0; Q < this->NbrNValue; ++Q)
+  if (this->BosonicVersion == false)
     {
-      int QPrime = Q;
-      int TmpP = 0;
-      int TmpMaxP = -1;
-      QPrime -= (this->LaughlinIndex - 1);
-      TmpP += QPrime - NValueShift;
-      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+      for (minQ = 0; minQ < this->NbrNValue; ++minQ)
+	if (2 * pLevel + twop(minQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
+	  break;
+      for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
+	if (2 * pLevel + twop(maxQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
+	  break;
+      cout << "N range at " << pLevel << ": [" << minQ - this->NValueGlobalShift << "," << maxQ - this->NValueGlobalShift << "] (+" << this->NValueGlobalShift << ")" << endl;
+      
+      cout << "other method" << endl;
+      int TmpMinQ = this->NbrNValue - 1;
+      int TmpMaxQ = 0;    
+      int NValueShift = this->PLevel;
+      for (int Q = 0; Q < this->NbrNValue; ++Q)
 	{
-	  if (TmpP > TmpMaxP)
-	    TmpMaxP = TmpP;	    
+	  int QPrime = Q;
+	  int TmpP = 0;
+	  int TmpMaxP = -1;
 	  QPrime -= (this->LaughlinIndex - 1);
 	  TmpP += QPrime - NValueShift;
-	}
-      QPrime = Q;
-      TmpP = 0;
-      int TmpMaxP2 = -1;
-      TmpP -= QPrime - NValueShift;
-      QPrime += (this->LaughlinIndex - 1);
-      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	{
-	  if (TmpP > TmpMaxP2)
-	    TmpMaxP2 = TmpP;	    
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	    {
+	      if (TmpP > TmpMaxP)
+		TmpMaxP = TmpP;	    
+	      QPrime -= (this->LaughlinIndex - 1);
+	      TmpP += QPrime - NValueShift;
+	    }
+	  QPrime = Q;
+	  TmpP = 0;
+	  int TmpMaxP2 = -1;
 	  TmpP -= QPrime - NValueShift;
 	  QPrime += (this->LaughlinIndex - 1);
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	    {
+	      if (TmpP > TmpMaxP2)
+		TmpMaxP2 = TmpP;	    
+	      TmpP -= QPrime - NValueShift;
+	      QPrime += (this->LaughlinIndex - 1);
+	    }
+	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+	    {
+	      if (Q < TmpMinQ)
+		TmpMinQ = Q;
+	      if (Q > TmpMaxQ)
+		TmpMaxQ = Q;	    
+	    }
 	}
-      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
-	{
-	  if (Q < TmpMinQ)
-	    TmpMinQ = Q;
-	  if (Q > TmpMaxQ)
-	    TmpMaxQ = Q;	    
-	}
+      cout << "range at " << pLevel << " : " << (TmpMinQ - this->NValueGlobalShift) << " " << (TmpMaxQ - this->NValueGlobalShift) << " (" << this->NbrNValue << ")" << endl;   
     }
-  cout << "range at " << pLevel << " : " << (TmpMinQ - this->NValueGlobalShift) << " " << (TmpMaxQ - this->NValueGlobalShift) << " (" << this->NbrNValue << ")" << endl;   
+  else
+    {
+      int TmpMinQ = this->NbrNValue - 1;
+      int TmpMaxQ = 0;    
+      int NValueShift = this->PLevel;
+      for (int Q = 0; Q < this->NbrNValue; ++Q)
+	{
+	  int QPrime = Q;
+	  int TmpP = 0;
+	  int TmpMaxP = -1;
+	  QPrime -= ((this->LaughlinIndex * this->NbrBMatrices) - 1);
+	  TmpP += QPrime - NValueShift;
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	    {
+	      if (TmpP > TmpMaxP)
+		TmpMaxP = TmpP;	    
+	      QPrime -= ((this->LaughlinIndex * this->NbrBMatrices) - 1);
+	      TmpP += QPrime - NValueShift;
+	    }
+	  QPrime = Q;
+	  TmpP = 0;
+	  int TmpMaxP2 = -1;
+	  TmpP -= QPrime - NValueShift;
+	  QPrime += ((this->LaughlinIndex * this->NbrBMatrices) - 1);
+	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	    {
+	      if (TmpP > TmpMaxP2)
+		TmpMaxP2 = TmpP;	    
+	      TmpP -= QPrime - NValueShift;
+	      QPrime += ((this->LaughlinIndex * this->NbrBMatrices) - 1);
+	    }
+	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+	    {
+	      if (Q < TmpMinQ)
+		TmpMinQ = Q;
+	      if (Q > TmpMaxQ)
+		TmpMaxQ = Q;	    
+	    }
+	}
+      TmpMaxQ  += 1;
+      if (TmpMaxQ >= this->NbrNValue)
+	TmpMaxQ = this->NbrNValue - 1;
+      minQ = TmpMinQ;
+      maxQ = TmpMaxQ;
+      cout << "range at " << pLevel << " : " << (TmpMinQ - this->NValueGlobalShift) << " " << (TmpMaxQ - this->NValueGlobalShift) << " (" << this->NbrNValue << ")" << endl;   
+    }
 }
 
 // compute the global charge index range at a given truncation level

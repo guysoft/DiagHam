@@ -3468,6 +3468,51 @@ RealVector& BosonOnSphereShort::ConvertFromConformalLimit(RealVector& state, lon
   return state;
 }
 
+// normalize Jack with respect to cylinder basis
+//
+// state = reference to the Jack state to normalize
+// aspect = aspect ratio of cylinder
+// return value = normalized state
+
+RealVector& BosonOnSphereShort::NormalizeJackToCylinder(RealVector& state, double aspect)
+{
+  long double Pi_L = 3.14159265358979323846264338328L;
+  long double Length = sqrtl((long double)2.0 * Pi_L * (long double)(this->LzMax + 1) * (long double) aspect);
+  cout<<"L= "<< Length << " r= "<<aspect<<endl;
+  long double kappa = ((long double) 2.0) * Pi_L / Length;
+  long double Norm = (long double)0.0;
+  long double* LogFactorials = new long double [this->NbrBosons + 1];
+  LogFactorials[0] = (long double) 0.0;
+  LogFactorials[1] = (long double) 0.0;
+  for (int i = 2; i <= this->NbrBosons; ++i)
+    {
+      LogFactorials[i] = LogFactorials[i - 1] + logl((long double) i);
+    }
+  for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+    {
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      long double Sum2MSquare = (long double) 0.0;
+      long double TmpFactorial = (long double) 0.0;
+      int j= 0;
+      for (int j = 0; j <= this->TemporaryStateLzMax; ++j)
+	{
+	  if (this->TemporaryState[j] > 0)
+	    {
+	      Sum2MSquare += (((j - 0.5 * LzMax) * (j - 0.5 * LzMax)) *  this->TemporaryState[j]);
+	      TmpFactorial -= LogFactorials[this->TemporaryState[j]]; 
+	    }
+	}
+      state[i] *= expl((((long double)0.5) * kappa * kappa *Sum2MSquare) + (((long double)0.5) * TmpFactorial));      
+      Norm += state[i] * state[i];
+   }
+  delete[] LogFactorials;
+  cout<<"Norm= "<< Norm << endl;
+  state /= sqrtl(Norm);
+ 
+  return state;
+}
+
 // fuse two states which belong to different Hilbert spaces 
 //
 // outputVector = reference on the vector which will contain the fused states (without zeroing components which do not occur in the fusion)
