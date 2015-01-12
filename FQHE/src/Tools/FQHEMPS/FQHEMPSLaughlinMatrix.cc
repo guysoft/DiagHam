@@ -73,6 +73,8 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->BosonicVersion = bosonicVersion;
   if (this->BosonicVersion == true)
     this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex) + 1;
+  else
+    this->NbrNValue = (2 * this->PLevel) + this->LaughlinIndex;
   this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
@@ -401,17 +403,25 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
   delete[] Partition1;
   delete[] Partition2;
 
+  int TmpNbrBMatrices = 0;
   for (int m = 1; m < this->NbrBMatrices; ++m)
     {
       BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
-      if (this->CylinderFlag)
-	BMatrices[m] /= sqrt((double) m);
+      if (BMatrices[m].GetNbrRow() > 0)
+	{
+	  ++TmpNbrBMatrices;
+	  if (this->CylinderFlag)
+	    BMatrices[m] /= sqrt((double) m);
+	}
     }
 
+  TmpNbrBMatrices = 0;
   for (int i = 0; i < this->NbrBMatrices; ++i)
     {
-      this->RealBMatrices[i] = BMatrices[i];
+      if (BMatrices[i].GetNbrRow() > 0)
+	this->RealBMatrices[TmpNbrBMatrices++] = BMatrices[i];
     }
+  this->NbrBMatrices = TmpNbrBMatrices;
   delete[] BMatrices;
   for (int i = 0; i <= this->PLevel; ++i)
     delete U1BosonBasis[i];
