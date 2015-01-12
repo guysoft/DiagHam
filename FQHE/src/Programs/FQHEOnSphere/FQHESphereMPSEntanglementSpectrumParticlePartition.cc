@@ -163,6 +163,7 @@ int main(int argc, char** argv)
     }
 
   int NbrBMatrices = MPSMatrix->GetNbrMatrices();
+  cout << "handling " << NbrBMatrices << " B matrices" << endl;
   SparseRealMatrix* BMatrices = MPSMatrix->GetMatrices();
   SparseRealMatrix* ConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
   for (int i = 0; i < NbrBMatrices; ++i)
@@ -198,13 +199,16 @@ int main(int argc, char** argv)
   char* EigenstateOutputNamePrefix = 0;
   if (Manager.GetString("output-file") != 0)
     {      
-      File.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      File2.open(Manager.GetString("output-file"), ios::binary | ios::out);
+      char* TmpFileName2 = new char [strlen(Manager.GetString("output-file")) + 16];
+      sprintf (TmpFileName2, "%s.full.parent", Manager.GetString("output-file"));
+      File.open(TmpFileName2, ios::binary | ios::out);     
     }
   else
     {
       char* StatisticPrefix = new char[16];
       char* TruncationName = new char[32];
-            if (Manager.GetBoolean("boson") == true)
+      if (Manager.GetBoolean("boson") == true)
 	{
 	  sprintf(StatisticPrefix, "bosons");
 	  sprintf(TruncationName, "plevel_%ld_maxocc_%ld", Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"));
@@ -264,7 +268,6 @@ int main(int argc, char** argv)
       File.open(TmpFileName, ios::binary | ios::out);     
       File2.open(TmpFileName2, ios::binary | ios::out);     
    }
-  cout << "toto " << EigenstateOutputNamePrefix << endl;
   if ((Manager.GetBoolean("orbital-es")) || (Manager.GetBoolean("realspace-cut")))
     {
       File << "# x    Q    P    lambda    -ln(lambda)" << endl;
@@ -753,36 +756,48 @@ int main(int argc, char** argv)
   FullLeftOverlapMatrix.SetMatrixElement(MPSRowIndex, MPSRowIndex, 1.0);  
   for (int i = 0; i <= MaxNbrFluxQuantaA; ++i)
     {
-      SparseRealMatrix TmpMatrix2;
-      SparseRealMatrix TmpMatrix3;
-      TmpMatrix2 = Conjugate(&(ConjugateBMatrices[0]), &FullLeftOverlapMatrix, &(BMatrices[0]), 
-			     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
-      TmpMatrix3 = Conjugate(&(ConjugateBMatrices[1]), &FullLeftOverlapMatrix, &(BMatrices[1]), 
-			     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
-      if (WeightAOrbitals != 0)
- 	{
-	  cout << "WeightAOrbitals[" << i << "]=" << WeightAOrbitals[i] << endl;
- 	  TmpMatrix3 *= WeightAOrbitals[i] * WeightAOrbitals[i];
- 	}
-      FullLeftOverlapMatrix = TmpMatrix2 + TmpMatrix3;
+      SparseRealMatrix* TmpMatrices = new SparseRealMatrix[NbrBMatrices];
+      for (int j = 0; j < NbrBMatrices; ++j)
+	{
+	  TmpMatrices[j] = Conjugate(&(ConjugateBMatrices[j]), &FullLeftOverlapMatrix, &(BMatrices[j]), 
+				     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
+	  if ((WeightAOrbitals != 0) && (j > 0))
+	    {
+	      cout << "WeightAOrbitals[" << i << "]=" << WeightAOrbitals[i] << endl;
+	      for (int k = 1; k <= j; ++k)
+		TmpMatrices[j] *= WeightAOrbitals[i] * WeightAOrbitals[i];
+	    }
+	}
+      FullLeftOverlapMatrix = TmpMatrices[0];
+      for (int j = 1; j < NbrBMatrices; ++j)
+	{
+	  FullLeftOverlapMatrix = FullLeftOverlapMatrix + TmpMatrices[j];
+	}
+      delete[] TmpMatrices;
     }
 
   FullRightOverlapMatrix.SetMatrixElement(MPSColumnIndex, MPSColumnIndex, 1.0);  
   cout << "keeping " << (MaxNbrFluxQuantaB + 1) << " orbitals in B" << endl; 
   for (int i = 0; i <= MaxNbrFluxQuantaB; ++i)
     {
-      SparseRealMatrix TmpMatrix2;
-      SparseRealMatrix TmpMatrix3;
-      TmpMatrix2 = Conjugate(&(BMatrices[0]), &FullRightOverlapMatrix, &(ConjugateBMatrices[0]), 
- 			     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
-      TmpMatrix3 = Conjugate(&(BMatrices[1]), &FullRightOverlapMatrix, &(ConjugateBMatrices[1]), 
- 			     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
-      if (WeightBOrbitals != 0)
- 	{
-	  cout << "WeightBOrbitals[" << i << "]=" << WeightBOrbitals[i] << endl;
- 	  TmpMatrix3 *= WeightBOrbitals[MaxNbrFluxQuantaB - i] * WeightBOrbitals[MaxNbrFluxQuantaB - i];
- 	}
-      FullRightOverlapMatrix = TmpMatrix2 + TmpMatrix3;
+      SparseRealMatrix* TmpMatrices = new SparseRealMatrix[NbrBMatrices];
+      for (int j = 0; j < NbrBMatrices; ++j)
+	{
+	  TmpMatrices[j] = Conjugate(&(BMatrices[j]), &FullRightOverlapMatrix, &(ConjugateBMatrices[j]), 
+				     TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
+	  if ((WeightBOrbitals != 0) && (j > 0))
+	    {
+	      cout << "WeightBOrbitals[" << i << "]=" << WeightBOrbitals[i] << endl;
+	      for (int k = 1; k <= j; ++k)
+		TmpMatrices[j] *= WeightBOrbitals[i] * WeightBOrbitals[i];
+	    }	    
+	}
+      FullRightOverlapMatrix = TmpMatrices[0];
+      for (int j = 1; j < NbrBMatrices; ++j)
+	{
+	  FullRightOverlapMatrix = FullRightOverlapMatrix + TmpMatrices[j];
+	}
+      delete[] TmpMatrices;
     }
 
   

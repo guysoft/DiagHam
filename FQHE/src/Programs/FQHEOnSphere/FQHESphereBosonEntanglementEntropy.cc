@@ -210,7 +210,7 @@ int main(int argc, char** argv)
 	  cout << GroundStateFiles[i] << " is not a bosonic state" << endl;
 	  return -1;
 	}
-      if (((NbrParticlesArray[i] * LzMax) & 1) != (TotalLz[i] & 1))
+      if ((((NbrParticlesArray[i] * LzMax) & 1) != (TotalLz[i] & 1)) && (Manager.GetBoolean("haldane") == false))
 	{
 	  cout << "incompatible values for nbr-particles, nbr-flux and total-lz for ground state file " << GroundStateFiles[i] << endl;
 	  return -1;
