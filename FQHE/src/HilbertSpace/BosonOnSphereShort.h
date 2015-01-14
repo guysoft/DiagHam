@@ -618,7 +618,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
   
   // symmetrized a product of two uncoupled states 
   //
-  // outputVector = reference on the vector which will contain the symmetrozed state
+  // outputVector = reference on the vector which will contain the symmetrized state
   // leftVector = reference on the vector associated to the first color
   // rightVector = reference on the vector associated to the second color
   // leftSpace = pointer to the Hilbert space of the first color
@@ -630,7 +630,7 @@ class BosonOnSphereShort :  public ParticleOnSphere
 
   // symmetrized a product of two uncoupled states 
   //
-  // outputVector = reference on the vector which will contain the symmetrozed state
+  // outputVector = reference on the vector which will contain the symmetrized state
   // leftVector = reference on the vector associated to the first color
   // rightVector = reference on the vector associated to the second color
   // leftSpace = pointer to the Hilbert space of the first color
@@ -638,6 +638,31 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
   // return value = symmetrized state
   virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+
+  // symmetrized a product of two uncoupled states, using rational input vectors
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // return value = symmetrized state
+  virtual LongRationalVector SymmetrizeU1U1State (LongRationalVector& leftVector, LongRationalVector& rightVector, 
+						  BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, 
+						  AbstractArchitecture* architecture = 0);
+  
+
+  // symmetrized a product of two uncoupled states, using rational input vectors
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, LongRationalVector& rightVector, 
+					BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, 
+					unsigned long firstComponent, unsigned long nbrComponents);
 
   // find state index from a string
   //

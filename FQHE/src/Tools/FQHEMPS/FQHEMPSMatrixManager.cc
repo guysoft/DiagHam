@@ -44,6 +44,7 @@
 #include "Tools/FQHEMPS/FQHEMPSBlockMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSN1SuperconformalMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSFixedQSectorMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSSymmetrizedStateMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 
@@ -123,6 +124,8 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new BooleanOption  ('\n', "quasiholesector-left", "consider the quasihole sector for the left B matrix");
   (*SystemGroup) += new BooleanOption  ('\n', "quasiholesector-right", "consider the quasihole sector for the right B matrix");
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
+  (*SystemGroup) += new BooleanOption  ('\n', "symmetrize", "symmetrize two copies of the same state");
+  (*SystemGroup) += new BooleanOption  ('\n', "anti-symmetrize", "anti-symmetrize two copies of the same state");
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "use a group of B matrices to fix the charge sector");
   (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-b", "use the unnormalized B matrix");
@@ -468,6 +471,21 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 							    this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
 		    }
 		}
+	    }
+	}
+      if (this->Options->GetBoolean("symmetrize") == true)
+	{
+	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, false);
+	  MPSMatrix = MPSMatrix2;	  
+	  NbrBMatrices = MPSMatrix->GetNbrMatrices();
+	}
+      else
+	{
+	  if (this->Options->GetBoolean("anti-symmetrize") == true)
+	    {
+	      AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, true);
+	      MPSMatrix = MPSMatrix2;	  
+	      NbrBMatrices = MPSMatrix->GetNbrMatrices();
 	    }
 	}
       if (this->Options->GetBoolean("fixed-qsector") == true)

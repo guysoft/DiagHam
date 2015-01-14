@@ -59,6 +59,7 @@ ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::ParticleOnLatticeTim
   this->LoadBalancingArray = 0;
   this->NbrInteractionPerComponent = 0;
   this->FastMultiplicationStep = 0;
+  this->InteractionPerComponentIntegerCoefficient = 0;
 }
 
 // destructor
@@ -91,16 +92,33 @@ ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian::~ParticleOnLatticeTi
       int ReducedDim = EffectiveHilbertSpaceDimension / this->FastMultiplicationStep;
       if ((ReducedDim * this->FastMultiplicationStep) != EffectiveHilbertSpaceDimension)
 	++ReducedDim;
-      for (int i = 0; i < ReducedDim; ++i)
+      if (this->InteractionPerComponentIntegerCoefficient == 0)
 	{
-	  if (this->NbrInteractionPerComponent[i] > 0)
+	  for (int i = 0; i < ReducedDim; ++i)
 	    {
-	      delete[] this->InteractionPerComponentIndex[i];
-	      delete[] this->InteractionPerComponentCoefficient[i];
+	      if (this->NbrInteractionPerComponent[i] > 0)
+		{
+		  delete[] this->InteractionPerComponentIndex[i];
+		  delete[] this->InteractionPerComponentCoefficient[i];
+		}
 	    }
+	  delete[] this->InteractionPerComponentCoefficient;
+	}
+      else
+	{
+	  for (int i = 0; i < ReducedDim; ++i)
+	    {
+	      if (this->NbrInteractionPerComponent[i] > 0)
+		{
+		  delete[] this->InteractionPerComponentIndex[i];
+		  delete[] this->InteractionPerComponentIntegerCoefficient[i];
+		}
+	    }
+	  delete[] this->InteractionPerComponentIntegerCoefficient;
+	  delete[] this->InteractionIntegerCreationCoefficientTable;
+	  delete[] this->InteractionIntegerAnnihiliationCoefficientTable;
 	}
       delete[] this->InteractionPerComponentIndex;
-      delete[] this->InteractionPerComponentCoefficient;
       delete[] this->NbrInteractionPerComponent;
     }
 }

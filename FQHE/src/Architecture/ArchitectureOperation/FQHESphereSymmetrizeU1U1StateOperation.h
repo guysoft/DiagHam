@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Antoine Sterdyniak                //
 //                                                                            //
 //                                                                            //
-//                   class of U1U1 states symmetrization Operation	          //
+//                   class of U1U1 states symmetrization Operation	      //
 //                                                                            //
 //                        last modification : 03/03/2010                      //
 //                                                                            //
@@ -63,6 +63,15 @@ class FQHESphereSymmetrizeU1U1StateOperation: public AbstractArchitectureOperati
   // vector where the result has to be stored
   RealVector* DestinationVector;
   
+  // vector where the component are stored (rational version)
+  LongRationalVector* RationalLeftVector;
+  
+  // vector where the component are stored (rational version)
+  LongRationalVector* RationalRightVector;
+  
+  // vector where the result has to be stored (rational version)
+  LongRationalVector* RationalDestinationVector;
+  
   // index of the first component
   long FirstComponent;
   
@@ -74,10 +83,27 @@ class FQHESphereSymmetrizeU1U1StateOperation: public AbstractArchitectureOperati
   
   // constructor 
   //
-  // Space = pointer to the HilbertSpace to use
-  // sourceVector = vector where the component are stored
+  // finalSpace = pointer to the Hilbert space of the target space
+  // leftSpace = pointer to the Hilbert space of the first state
+  // rightSpace = pointer to the Hilbert space of the second state
   // destinationVector = vector where the result has to be stored
-  FQHESphereSymmetrizeU1U1StateOperation( BosonOnSphereShort * finalSpace, BosonOnSphereShort * leftSpace , BosonOnSphereShort * rightSpace , RealVector* destinationVector, RealVector* leftVector, RealVector* rightVector,  bool unnormalizedBasisFlag);
+  // leftVector = vector that contains the first state
+  // rightVector = vector that contains the second state
+  // unnormalizedBasisFlag = true if the states are expressed in the unnormalized basis
+  FQHESphereSymmetrizeU1U1StateOperation( BosonOnSphereShort* finalSpace, BosonOnSphereShort* leftSpace , BosonOnSphereShort* rightSpace , 
+					  RealVector* destinationVector, RealVector* leftVector, RealVector* rightVector,  bool unnormalizedBasisFlag);
+  
+  
+  // constructor for long rational vector input
+  //
+  // finalSpace = pointer to the Hilbert space of the target space
+  // leftSpace = pointer to the Hilbert space of the first state
+  // rightSpace = pointer to the Hilbert space of the second state
+  // destinationVector = vector where the result has to be stored
+  // leftVector = vector that contains the first state
+  // rightVector = vector that contains the second state
+  FQHESphereSymmetrizeU1U1StateOperation(BosonOnSphereShort* finalSpace, BosonOnSphereShort* leftSpace , BosonOnSphereShort* rightSpace, 
+					 LongRationalVector* destinationVector, LongRationalVector* leftVector, LongRationalVector* rightVector);
   
   
   // copy constructor 

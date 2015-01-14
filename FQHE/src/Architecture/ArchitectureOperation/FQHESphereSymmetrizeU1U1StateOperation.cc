@@ -6,7 +6,7 @@
 //                  Copyright (C) 2001-2002 Antoine Sterdyniak                //
 //                                                                            //
 //                                                                            //
-//                   class of U1U1 states symmetrization Operation	          //
+//                   class of U1U1 states symmetrization Operation	      //
 //                                                                            //
 //                        last modification : 03/03/2010                      //
 //                                                                            //
@@ -46,12 +46,17 @@ using std::endl;
 
 // constructor 
 //
-// space = pointer to the HilbertSpace to use
-// sourceVector = array of vectors describing the fermionic states
-// destinationVector = array of vectors where the resulting bosonic states have to be stored
-// nbrStates = number of states to handle
+// finalSpace = pointer to the Hilbert space of the target space
+// leftSpace = pointer to the Hilbert space of the first state
+// rightSpace = pointer to the Hilbert space of the second state
+// destinationVector = vector where the result has to be stored
+// leftVector = vector that contains the first state
+// rightVector = vector that contains the second state
+// unnormalizedBasisFlag = true if the states are expressed in the unnormalized basis
 
-FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation( BosonOnSphereShort * finalSpace,  BosonOnSphereShort * leftSpace, BosonOnSphereShort * rightSpace, RealVector * destinationVector , RealVector * leftVector, RealVector * rightVector ,bool unnormalizedBasisFlag)
+FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(BosonOnSphereShort* finalSpace,  BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, 
+									       RealVector* destinationVector , RealVector* leftVector, RealVector* rightVector, 
+									       bool unnormalizedBasisFlag)
 {
   this->FirstComponent = 0;
   this->NbrComponent = leftSpace->GetHilbertSpaceDimension();
@@ -61,10 +66,39 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation( 
   this->LeftVector = leftVector;
   this->RightVector = rightVector;
   this->DestinationVector = destinationVector;
+  this->RationalLeftVector = 0;
+  this->RationalRightVector = 0;
+  this->RationalDestinationVector = 0;
   this->UnnormalizedBasisFlag = unnormalizedBasisFlag;
   this->OperationType = AbstractArchitectureOperation::FQHESphereSymmetrizeU1U1StateOperation;
 }
 
+// constructor for long rational vector input
+//
+// finalSpace = pointer to the Hilbert space of the target space
+// leftSpace = pointer to the Hilbert space of the first state
+// rightSpace = pointer to the Hilbert space of the second state
+// destinationVector = vector where the result has to be stored
+// leftVector = vector that contains the first state
+// rightVector = vector that contains the second state
+
+FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(BosonOnSphereShort* finalSpace, BosonOnSphereShort* leftSpace , BosonOnSphereShort* rightSpace, 
+									       LongRationalVector* destinationVector, LongRationalVector* leftVector, LongRationalVector* rightVector)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = leftSpace->GetHilbertSpaceDimension();
+  this->FinalSpace = finalSpace;
+  this->LeftSpace = leftSpace;
+  this->RightSpace = rightSpace;
+  this->LeftVector = 0;
+  this->RightVector = 0;
+  this->DestinationVector = 0;
+  this->RationalLeftVector = leftVector;
+  this->RationalRightVector = rightVector;
+  this->RationalDestinationVector = destinationVector;
+  this->UnnormalizedBasisFlag = true;
+  this->OperationType = AbstractArchitectureOperation::FQHESphereSymmetrizeU1U1StateOperation;
+}
 
 // copy constructor 
 //
@@ -81,6 +115,9 @@ FQHESphereSymmetrizeU1U1StateOperation::FQHESphereSymmetrizeU1U1StateOperation(c
   this->LeftVector = operation.LeftVector;
   this->RightVector = operation.RightVector;
   this->DestinationVector = operation.DestinationVector;
+  this->RationalLeftVector = operation.RationalLeftVector;
+  this->RationalRightVector = operation.RationalRightVector;
+  this->RationalDestinationVector = operation.RationalDestinationVector;
   this->UnnormalizedBasisFlag = operation.UnnormalizedBasisFlag;
   this->OperationType = AbstractArchitectureOperation::FQHESphereSymmetrizeU1U1StateOperation;	
 }
@@ -134,8 +171,16 @@ bool FQHESphereSymmetrizeU1U1StateOperation::RawApplyOperation()
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
   
-  this->FinalSpace->SymmetrizeU1U1StateCore ( *this->DestinationVector ,(*this->LeftVector) , (*this->RightVector) ,  LeftSpace,  RightSpace , this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
-  
+  if (this->DestinationVector != 0)
+    {
+      this->FinalSpace->SymmetrizeU1U1StateCore (*this->DestinationVector, (*this->LeftVector), (*this->RightVector), 
+						 LeftSpace,  RightSpace, this->UnnormalizedBasisFlag, this->FirstComponent, this->NbrComponent);
+    }
+  else
+    {
+       this->FinalSpace->SymmetrizeU1U1StateCore (*this->RationalDestinationVector ,(*this->RationalLeftVector) , (*this->RationalRightVector),  
+						  LeftSpace,  RightSpace, this->FirstComponent, this->NbrComponent);
+   }
   
   
   
@@ -159,7 +204,7 @@ bool FQHESphereSymmetrizeU1U1StateOperation::ArchitectureDependentApplyOperation
   int Step = this->NbrComponent/architecture->GetNbrThreads();
   int TmpFirstComponent = this->FirstComponent;
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
-  FQHESphereSymmetrizeU1U1StateOperation** TmpOperations = new FQHESphereSymmetrizeU1U1StateOperation * [architecture->GetNbrThreads()];
+  FQHESphereSymmetrizeU1U1StateOperation** TmpOperations = new FQHESphereSymmetrizeU1U1StateOperation* [architecture->GetNbrThreads()];
   
    
   for( int i = 0; i <  architecture->GetNbrThreads() ; i++)

@@ -12,4 +12,5 @@ FQHEMPSReadRezayi3QuasiholeSectorMatrix.cc \
 FQHEMPSBlockMatrix.cc \
 FQHEMPSN1SuperconformalMatrix.cc \
 FQHEMPSFixedQSectorMatrix.cc \
-FQHEMPSClustered2ROptimizedMatrix.cc
+FQHEMPSClustered2ROptimizedMatrix.cc \
+FQHEMPSSymmetrizedStateMatrix.cc

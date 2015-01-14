@@ -4491,7 +4491,7 @@ int BosonOnSphereShort::GeneratePairs(unsigned long* Monomial, long* weigthVecto
 
 // symmetrized a product of two uncoupled states 
 //
-// outputVector = reference on the vector which will contain the symmetrozed state
+// outputVector = reference on the vector which will contain the symmetrized state
 // leftVector = reference on the vector associated to the first color
 // rightVector = reference on the vector associated to the second color
 // leftSpace = pointer to the Hilbert space of the first color
@@ -4515,7 +4515,7 @@ RealVector BosonOnSphereShort::SymmetrizeU1U1State (RealVector& leftVector, Real
 
 // symmetrized a product of two uncoupled states 
 //
-// outputVector = reference on the vector which will contain the symmetrozed state
+// outputVector = reference on the vector which will contain the symmetrized state
 // leftVector = reference on the vector associated to the first color
 // rightVector = reference on the vector associated to the second color
 // leftSpace = pointer to the Hilbert space of the first color
@@ -4616,6 +4616,87 @@ void BosonOnSphereShort::SymmetrizeU1U1StateCore (RealVector& symmetrizedVector,
 		}
 	    }
 	}     
+    }
+}
+
+// symmetrized a product of two uncoupled states, using rational input vectors
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// return value = symmetrized state
+
+LongRationalVector BosonOnSphereShort::SymmetrizeU1U1State (LongRationalVector& leftVector, LongRationalVector& rightVector, 
+							    BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace, AbstractArchitecture* architecture)
+{
+  LongRationalVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+
+  FQHESphereSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector);
+  Operation.ApplyOperation(architecture);
+
+  return SymmetrizedVector;
+}
+
+
+// symmetrized a product of two uncoupled states, using rational input vectors
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// return value = symmetrized state
+
+void BosonOnSphereShort::SymmetrizeU1U1StateCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, LongRationalVector& rightVector, 
+						  BosonOnSphereShort* leftSpace, BosonOnSphereShort* rightSpace,
+						  unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = long(firstComponent + nbrComponents);
+  
+  FactorialCoefficient Factorial1;
+  FactorialCoefficient Factorial2;
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      this->FermionToBoson(leftSpace->FermionBasis->StateDescription[i], leftSpace->FermionBasis->StateLzMax[i], 
+			   leftSpace->TemporaryState, leftSpace->TemporaryStateLzMax);
+      for (int k = leftSpace->TemporaryStateLzMax + 1;  k <= leftSpace->LzMax; ++k)
+	leftSpace->TemporaryState[k] = 0;
+      LongRational TmpCoefficient = leftVector[i];
+      Factorial1.SetToOne();
+      Factorial1.Power2Divide(leftSpace->NbrBosons);
+      for (int k = 0; k <= leftSpace->TemporaryStateLzMax; ++k)
+ 	if (leftSpace->TemporaryState[k] > 1)
+ 	  Factorial1.FactorialDivide(leftSpace->TemporaryState[k]);
+      
+      for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	{
+	  this->FermionToBoson(rightSpace->FermionBasis->StateDescription[j], rightSpace->FermionBasis->StateLzMax[j], 
+			       rightSpace->TemporaryState, rightSpace->TemporaryStateLzMax);
+	  int k = 0;
+	  for (; k <= rightSpace->TemporaryStateLzMax; ++k)
+	    this->TemporaryState[k] = leftSpace->TemporaryState[k] + rightSpace->TemporaryState[k];
+	  this->TemporaryStateLzMax = rightSpace->TemporaryStateLzMax;
+	  if (leftSpace->TemporaryStateLzMax > rightSpace->TemporaryStateLzMax)
+	    {
+	      for (; k <= leftSpace->TemporaryStateLzMax; ++k)
+		this->TemporaryState[k] = leftSpace->TemporaryState[k];
+	      this->TemporaryStateLzMax = leftSpace->TemporaryStateLzMax;
+	    }
+	  int TmpPos = this->FermionBasis->FindStateIndex(this->BosonToFermion(this->TemporaryState, this->TemporaryStateLzMax), this->TemporaryStateLzMax + this->NbrBosons - 1);
+	  if (TmpPos < this->HilbertSpaceDimension)
+	    {
+ 	      Factorial2 = Factorial1;
+ 	      for (k = 0; k <= rightSpace->TemporaryStateLzMax; ++k)
+ 		if (rightSpace->TemporaryState[k] > 1)
+ 		  Factorial2.FactorialDivide(rightSpace->TemporaryState[k]);
+ 	      for (k = 0; k <= this->TemporaryStateLzMax; ++k)
+ 		if (this->TemporaryState[k] > 1)
+ 		  Factorial2.FactorialMultiply(this->TemporaryState[k]);	      
+	      symmetrizedVector[TmpPos] += Factorial2.GetLongRationalValue() * TmpCoefficient * rightVector[j];
+	    }
+	}
     }
 }
 

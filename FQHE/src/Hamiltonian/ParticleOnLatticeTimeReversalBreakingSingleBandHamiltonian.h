@@ -106,8 +106,15 @@ class ParticleOnLatticeTimeReversalBreakingSingleBandHamiltonian : public Abstra
   int **InteractionPerComponentIndex;
   // coefficients of matrix elements per component
   Complex** InteractionPerComponentCoefficient;
+  // coefficients of matrix elements per component, stored as an unsigned integer array
+  unsigned int** InteractionPerComponentIntegerCoefficient;
+  // array where the coefficients are stored when using InteractionPerComponentIntegerCoefficient
+  Complex* InteractionIntegerMatrixElementCoefficientTable;
+  double* InteractionIntegerCreationCoefficientTable;
+  double* InteractionIntegerAnnihiliationCoefficientTable;
+
   // translations of matrix elements per component
-  int **InteractionPerComponentNbrTranslation;
+  int** InteractionPerComponentNbrTranslation;
   
   // flag for implementation of hermitian symmetry
   bool HermitianSymmetryFlag;

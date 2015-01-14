@@ -5331,6 +5331,65 @@ RealVector& FermionOnSphere::NormalizeJackToCylinder(RealVector& state, double a
   return state;
 }
 
+// anti-symmetrize a product of two uncoupled states, using rational input vectors
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// return value = symmetrized state
+
+LongRationalVector FermionOnSphere::AntiSymmetrizeU1U1State (LongRationalVector& leftVector, LongRationalVector& rightVector, 
+							     FermionOnSphere* leftSpace, FermionOnSphere* rightSpace, 
+							     AbstractArchitecture* architecture)
+{
+  LongRationalVector SymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+
+//   FQHESphereSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector);
+//   Operation.ApplyOperation(architecture);
+
+  this->AntiSymmetrizeU1U1StateCore(SymmetrizedVector, leftVector, rightVector, leftSpace, rightSpace, 0, leftSpace->LargeHilbertSpaceDimension);
+  return SymmetrizedVector;
+}
+
+// anti-symmetrize a product of two uncoupled states, using rational input vectors
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// return value = symmetrized state
+
+void FermionOnSphere::AntiSymmetrizeU1U1StateCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, LongRationalVector& rightVector, 
+						   FermionOnSphere* leftSpace, FermionOnSphere* rightSpace, 
+						   unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = long(firstComponent + nbrComponents);
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      unsigned long TmpLeftState = leftSpace->StateDescription[i];
+      LongRational TmpCoefficient = leftVector[i];
+      for (long j = 0l; j < rightSpace->LargeHilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpRightState = rightSpace->StateDescription[j];
+	  if ((TmpLeftState & TmpRightState) == 0x0ul)
+	    {
+	      int TmpLzMax = this->LzMax;
+	      unsigned long TmpState = TmpLeftState | TmpRightState;
+	      while ((TmpState >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState, TmpLzMax);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  symmetrizedVector[TmpPos] += TmpCoefficient * rightVector[j];
+		}
+	    }
+	}
+    }  
+}
+
 // symmetrize a vector by grouping several orbitals into a single one
 //
 // inputVector = reference on the vector to symmetrize

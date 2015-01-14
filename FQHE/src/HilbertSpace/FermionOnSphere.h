@@ -825,7 +825,32 @@ class FermionOnSphere :  public ParticleOnSphere
   // return value = vector resulting of the operation
   virtual LongRationalVector GetLzSymmetricVector(ParticleOnSphere* finalSpace, LongRationalVector& initialVector);
 
-  // symmetrize a vector by grouping several orbitals into a single one
+  // anti-symmetrize a product of two uncoupled states, using rational input vectors
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // return value = symmetrized state
+  virtual LongRationalVector AntiSymmetrizeU1U1State (LongRationalVector& leftVector, LongRationalVector& rightVector, 
+						      FermionOnSphere* leftSpace, FermionOnSphere* rightSpace, 
+						      AbstractArchitecture* architecture = 0);
+  
+
+  // anti-symmetrize a product of two uncoupled states, using rational input vectors
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // return value = symmetrized state
+  virtual void AntiSymmetrizeU1U1StateCore (LongRationalVector& symmetrizedVector, LongRationalVector& leftVector, LongRationalVector& rightVector, 
+					    FermionOnSphere* leftSpace, FermionOnSphere* rightSpace, 
+					    unsigned long firstComponent, unsigned long nbrComponents);
+
+  // anti-symmetrize a vector by grouping several orbitals into a single one
   //
   // inputVector = reference on the vector to symmetrize
   // nbrOrbitals = number of orbitals to group together

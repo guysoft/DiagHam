@@ -130,27 +130,29 @@ int main(int argc, char** argv)
   RealVector State1;
   LongRationalVector RationalState1;
   RealVector State2;
+  LongRationalVector RationalState2;
   if (Manager.GetBoolean("rational") == false)
-  {
-    if (State1.ReadVector (Manager.GetString("state-1")) == false)
-      {
-	cout << "can't open vector file " << Manager.GetString("state-1") << endl;
-	return -1;      
-      }
-  }
+    {
+      if (State1.ReadVector (Manager.GetString("state-1")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("state-1") << endl;
+	  return -1;      
+	}
+    }
   else
-  {
-    if (RationalState1.ReadVector (Manager.GetString("state-1")) == false)
-      {
-	cout << "can't open vector file " << Manager.GetString("state-1") << endl;
-	return -1;      
-      }
-  }
+    {
+      if (RationalState1.ReadVector (Manager.GetString("state-1")) == false)
+	{
+	  cout << "can't open vector file " << Manager.GetString("state-1") << endl;
+	  return -1;      
+	}
+    }
   
 
   BosonOnSphereShort* Space1 = 0;
   BosonOnSphereShort* Space2 = 0;
-  FermionOnSphere* FermionicSpace = 0;
+  FermionOnSphere* FermionicSpace1 = 0;
+  FermionOnSphere* FermionicSpace2 = 0;
   if (Statistics == false)
     {
       if (Manager.GetBoolean("haldane-1") == true)
@@ -172,11 +174,11 @@ int main(int argc, char** argv)
 	  int* ReferenceState = 0;
 	  if (FQHEGetRootPartition(Manager.GetString("reference-file1"), NbrParticles1, NbrFluxQuanta1, ReferenceState) == false)
 	    return -1;
-	  FermionicSpace = new FermionOnSphereHaldaneBasis(NbrParticles1, TotalLz1, NbrFluxQuanta1, ReferenceState);	       
+	  FermionicSpace1 = new FermionOnSphereHaldaneBasis(NbrParticles1, TotalLz1, NbrFluxQuanta1, ReferenceState);	       
 	}
       else
 	{
-	  FermionicSpace = new FermionOnSphere(NbrParticles1, TotalLz1, NbrFluxQuanta1);	       
+	  FermionicSpace1 = new FermionOnSphere(NbrParticles1, TotalLz1, NbrFluxQuanta1);	       
 	}
     }
   
@@ -201,24 +203,48 @@ int main(int argc, char** argv)
 	}
       
       
-      if (State2.ReadVector (Manager.GetString("state-2")) == false)
+      if (Manager.GetBoolean("rational") == false)
 	{
-	  cout << "can't open vector file " << Manager.GetString("state-2") << endl;
-	  return -1;      
+	  if (State2.ReadVector (Manager.GetString("state-2")) == false)
+	    {
+	      cout << "can't open vector file " << Manager.GetString("state-2") << endl;
+	      return -1;      
+	    }
+	}
+      else
+	{
+	  if (RationalState2.ReadVector (Manager.GetString("state-2")) == false)
+	    {
+	      cout << "can't open vector file " << Manager.GetString("state-2") << endl;
+	      return -1;      
+	    }
 	}
       
       if (Manager.GetBoolean("haldane-2") == true)
 	{
 	  int* ReferenceState = 0;
 	  if (FQHEGetRootPartition(Manager.GetString("reference-file2"), NbrParticles2, NbrFluxQuanta2, ReferenceState) == false)
-	return -1;
-	  Space2 = new BosonOnSphereHaldaneBasisShort(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);	       
+	    return -1;
+	  if (Statistics == false)
+	    {
+	      Space2 = new BosonOnSphereHaldaneBasisShort(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);	       
+	    }
+	  else
+	    {
+	      FermionicSpace2 = new FermionOnSphereHaldaneBasis(NbrParticles2, TotalLz2, NbrFluxQuanta2, ReferenceState);	       
+	    }
 	}
       else
 	{
-	  Space2 = new BosonOnSphereShort(NbrParticles2, TotalLz2, NbrFluxQuanta2);	       
-	}
-      
+	  if (Statistics == false)
+	    {
+	      Space2 = new BosonOnSphereShort(NbrParticles2, TotalLz2, NbrFluxQuanta2);	       
+	    }
+	  else
+	    {
+	      FermionicSpace2 = new FermionOnSphere(NbrParticles2, TotalLz2, NbrFluxQuanta2);
+	    }
+	}      
     }
   else
     {
@@ -290,6 +316,7 @@ int main(int argc, char** argv)
   
   
   BosonOnSphereShort* TargetSpace = 0;
+  FermionOnSphere* FermionicTargetSpace = 0;
   if (Manager.GetBoolean("single-state") == false)
     {
       if (Manager.GetBoolean("haldane-output") == true)
@@ -310,7 +337,14 @@ int main(int argc, char** argv)
 	      return -1;
 	    }
 	  int TotalLz = 0;
-	  TargetSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta2, ReferenceState);	       
+	  if (Statistics == false)
+	    {
+	      TargetSpace = new BosonOnSphereHaldaneBasisShort(NbrParticles, TotalLz, NbrFluxQuanta2, ReferenceState);	       
+	    }
+	  else
+	    {
+	      FermionicTargetSpace = new FermionOnSphereHaldaneBasis(NbrParticles, TotalLz, NbrFluxQuanta2, ReferenceState);	       
+	    }
 	  if (TotalLz != (TotalLz1 + TotalLz2))
 	    {
 	      cout << "error : total Lz for the output state ( " << TotalLz << " ) is different from the one computed from the input states (" << (TotalLz1 + TotalLz2) << ")" << endl;
@@ -319,13 +353,40 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  TargetSpace = new BosonOnSphereShort(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	       
+	  if (Statistics == false)
+	    {
+	      TargetSpace = new BosonOnSphereShort(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	       
+	    }
+	  else
+	    {
+	      FermionicTargetSpace = new FermionOnSphere(NbrParticles1 + NbrParticles2, TotalLz1 + TotalLz2, NbrFluxQuanta2);	  
+	    }
 	}
-      RealVector OutputState = TargetSpace->SymmetrizeU1U1State (State1 , State2, Space1 , Space2 , Manager.GetBoolean("unnormalized-basis") , Architecture.GetArchitecture());
-      if (OutputState.WriteVector(OutputFileName) == false)
+      if (Manager.GetBoolean("rational") == false)
 	{
-	  cout << "error while writing output state " << OutputFileName << endl;
-	  return -1;
+	  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (State1 , State2, Space1 , Space2 , Manager.GetBoolean("unnormalized-basis") , Architecture.GetArchitecture());
+	  if (OutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }
+	}
+      else
+	{
+	  LongRationalVector RationalOutputState;
+	  if (Statistics == false)
+	    {
+	      RationalOutputState = TargetSpace->SymmetrizeU1U1State (RationalState1, RationalState2, Space1, Space2, Architecture.GetArchitecture());
+	    }
+	  else
+	    {
+	      RationalOutputState = FermionicTargetSpace->AntiSymmetrizeU1U1State (RationalState1, RationalState2, FermionicSpace1, FermionicSpace2, Architecture.GetArchitecture());
+	    }
+	  if (RationalOutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }
 	}
     }
   else
@@ -590,7 +651,7 @@ int main(int argc, char** argv)
 	    {
 	      LongRationalVector* RationalOutputStates;
 	      int* LzSectors;
-	      int NbrLzSectors = FermionicSpace->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+	      int NbrLzSectors = FermionicSpace1->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
 	      int NbrGeneratedStates = 0;
 	      for (int i = 0; i < NbrLzSectors; ++i)
 		{
