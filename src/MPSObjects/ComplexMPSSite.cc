@@ -360,12 +360,11 @@ void ComplexMPSSite::ComputeDensityMatrixRight()
 }
 
 
-void ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)
+void ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)
 {
-//  cout << (*psi)<<endl;
-  ComplexMatrix TmpMatrix (leftSite->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
+  ComplexMatrix TmpMatrix (this->BondDimensionLeft *this->PhysicalDimension , rightSite->BondDimensionRight * this->PhysicalDimension, true);
 
-  for(int i = 0; i < leftSite->BondDimensionLeft; i++)
+  for(int i = 0; i < this->BondDimensionLeft; i++)
     {
       for(int LeftPhysicalDimension = 0; LeftPhysicalDimension <   this->PhysicalDimension ; LeftPhysicalDimension++)
 	{
@@ -373,7 +372,7 @@ void ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , Compl
 	  { 
       for(int RightPhysicalDimension = 0; RightPhysicalDimension <   this->PhysicalDimension ; RightPhysicalDimension++)
 	{
-	      TmpMatrix.SetMatrixElement(this->PhysicalDimension*i + LeftPhysicalDimension , this->PhysicalDimension*j + RightPhysicalDimension , (*psi)[(long) LeftPhysicalDimension+ this->PhysicalDimension*RightPhysicalDimension + this->PhysicalDimension *this->PhysicalDimension * (i + j * leftSite->BondDimensionLeft)]);
+	      TmpMatrix.SetMatrixElement(this->PhysicalDimension*i + LeftPhysicalDimension , this->PhysicalDimension*j + RightPhysicalDimension , (*psi)[(long) LeftPhysicalDimension+ this->PhysicalDimension*RightPhysicalDimension + this->PhysicalDimension *this->PhysicalDimension * (i + j * this->BondDimensionLeft)]);
 	    }
 	}
     }
@@ -388,12 +387,6 @@ void ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , Compl
    if (SingularValues[i] > 1e-20)
        KeptStates++;
   }
-
-//  cout <<SingularValues<<endl;
-//  cout <<U<<endl;
-//  cout <<V<<endl;
-//  ComplexMatrix Tmp = U * SingularValues * V;
-//  cout <<"TmpMatrix "<<TmpMatrix<<endl;  cout <<"Tmp  "<<Tmp<<endl;
 
   if ( KeptStates >  this->MaxBondDimension)
        KeptStates = this->MaxBondDimension;
@@ -414,35 +407,35 @@ for(int i = 0; i < KeptStates; i++)
  SingularValues = RealDiagonalMatrix(KeptSingularValues,KeptStates);
  cout <<"Entropy = "<< Entropy<<" " <<  RejectedWeight<< endl;
 
- delete [] leftSite->M;
+ delete [] this->M;
  delete [] rightSite->M;
- delete leftSite->L;
+ delete this->L;
  delete rightSite->R;
 
- leftSite->M = new ComplexMatrix [this->PhysicalDimension];
+ this->M = new ComplexMatrix [this->PhysicalDimension];
  rightSite->M = new ComplexMatrix [this->PhysicalDimension];  
 
 
-  leftSite->SetRightDimension(KeptStates);
+  this->SetRightDimension(KeptStates);
   rightSite->SetLeftDimension(KeptStates);
   for(int i = 0; i < this->PhysicalDimension; i++)
     {
-      leftSite->M[i] = ComplexMatrix(leftSite->BondDimensionLeft,KeptStates, true);
+      this->M[i] = ComplexMatrix(this->BondDimensionLeft,KeptStates, true);
       rightSite->M[i] = ComplexMatrix(KeptStates, rightSite->BondDimensionRight, true);
     } 
+
   for(int  LeftPhysicalDimension = 0 ;  LeftPhysicalDimension <  this->PhysicalDimension;  LeftPhysicalDimension++)
     {
-      for(int j = 0 ; j < leftSite->BondDimensionLeft; j++)
+      for(int j = 0 ; j < this->BondDimensionLeft; j++)
 	{
 	  for(int k = 0 ; k <  KeptStates ; k++)
 	    {
               Complex Tmp = U.GetMatrixElement(this->PhysicalDimension*j +  LeftPhysicalDimension,k);
-//	      leftSite->M[LeftPhysicalDimension].SetMatrixElement(j,k, U.GetMatrixElement(this->PhysicalDimension*j +  LeftPhysicalDimension,k)); 
-	      leftSite->M[LeftPhysicalDimension].SetMatrixElement(j,k,Tmp); 
+//	      this->M[LeftPhysicalDimension].SetMatrixElement(j,k, U.GetMatrixElement(this->PhysicalDimension*j +  LeftPhysicalDimension,k)); 
+	      this->M[LeftPhysicalDimension].SetMatrixElement(j,k,Tmp); 
 
 	    }
 	}
-//cout <<leftSite->M[LeftPhysicalDimension]<<endl;
     }
 
   for(int  RightPhysicalDimension = 0 ;  RightPhysicalDimension <  this->PhysicalDimension;  RightPhysicalDimension++)
@@ -459,18 +452,54 @@ for(int i = 0; i < KeptStates; i++)
     }
 
 
- if( leftSite->CheckLeftNormalization() == false)
+ if( this->CheckLeftNormalization() == false)
    cout <<"left noralisation issue invoid ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)" <<endl;
 
 
  if( rightSite->CheckRightNormalization() == false)
    cout <<"right normalisation issue invoid ComplexMPSSite::SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & SingularValues)" <<endl;
 
-  leftSite->L = new Tensor3<Complex> (leftSite->BondDimensionRight,leftSite->OperatorToBeMinimized->GetMPODimension(),leftSite->BondDimensionRight,true);
-  leftSite->OperatorToBeMinimized->SetSite(leftSite);
-  leftSite->OperatorToBeMinimized->ComputeL(*leftSite->L);
+  this->L = new Tensor3<Complex> (this->BondDimensionRight,this->OperatorToBeMinimized->GetMPODimension(),this->BondDimensionRight,true);
+  this->OperatorToBeMinimized->SetSite(this);
+  this->OperatorToBeMinimized->ComputeL(*this->L);
 
   rightSite->R = new Tensor3<Complex> (rightSite->BondDimensionLeft,rightSite->OperatorToBeMinimized->GetMPODimension(),rightSite->BondDimensionLeft,true);
   rightSite->OperatorToBeMinimized->SetSite(rightSite);
   rightSite->OperatorToBeMinimized->ComputeR(*rightSite->R);
+}
+
+
+
+
+ComplexVector *  ComplexMPSSite::StatePrediction(ComplexMPSSite * rightSite, RealDiagonalMatrix & SingularValues, RealDiagonalMatrix & OldSingularValues)
+{
+ ComplexMatrix * TmpA = new ComplexMatrix [this->PhysicalDimension];
+ ComplexMatrix * TmpB = new ComplexMatrix [this->PhysicalDimension];  
+
+ for(int i = 0; i < this->PhysicalDimension; i++)
+ {
+     TmpA[i] = this->M[i] * SingularValues;
+     TmpB[i] =  ((SingularValues * rightSite->M[i]) / OldSingularValues);
+}
+ 
+ ComplexVector * PredictedPsi = new ComplexVector((long) this->BondDimensionRight*rightSite->BondDimensionLeft*this->PhysicalDimension*this->PhysicalDimension ,true);
+
+  for(int LeftIndice = 0; LeftIndice < this->BondDimensionRight; LeftIndice++)
+    {
+      for(int LeftPhysicalDimension = 0; LeftPhysicalDimension <   this->PhysicalDimension ; LeftPhysicalDimension++)
+	{
+	  for(int RightIndice = 0; RightIndice < rightSite->BondDimensionLeft; RightIndice++)
+	  { 
+      for(int RightPhysicalDimension = 0; RightPhysicalDimension <   this->PhysicalDimension ; RightPhysicalDimension++)
+	{
+
+      for(int k = 0; k <   OldSingularValues.GetNbrColumn() ; k++)
+	{
+             (*PredictedPsi)[this->SiteOnRight->GetVectorTwoSiteIndice(LeftIndice,RightIndice, LeftPhysicalDimension +this->PhysicalDimension*RightPhysicalDimension)] =   TmpB[LeftPhysicalDimension].GetMatrixElement(LeftIndice,k) *  TmpA[RightPhysicalDimension].GetMatrixElement(k ,RightIndice);
+	 }
+	}
+    }
+  }
+}
+  return PredictedPsi;
 }

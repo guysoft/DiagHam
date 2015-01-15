@@ -7,8 +7,6 @@
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-class RealMPSSite;
-
 class RealMPOperatorOBC : public AbstractMPOperatorOBC
 {
  protected:
@@ -61,6 +59,9 @@ class RealMPOperatorOBC : public AbstractMPOperatorOBC
   virtual void MPOApplyOnTensorOnTheLeftCore(Tensor3<double> * result, Tensor3<double> * source, int firstComponent, int nbrComponent);
   virtual void MPOApplyOnTensorOnTheRightCore(Tensor3<double> * result, Tensor3 <double> * source, int firstComponent, int nbrComponent);
   virtual void LowLevelMultiplyCoreFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreTwoSitesFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreSecond(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreTwoSitesSecond(Tensor3<double> * rightTensor, Tensor3<double> * source , RealVector & vDestination, int firstComponent, int nbrComponent);
 
 };
 

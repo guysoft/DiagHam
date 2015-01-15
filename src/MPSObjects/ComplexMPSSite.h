@@ -8,8 +8,6 @@
 #include "Matrix/ComplexMatrix.h"
 #include "GeneralTools/GarbageFlag.h"
 
-class AbstractMPOperatorOBC;
-
 class ComplexMPSSite : public AbstractMPSSite
 {
  protected:
@@ -45,7 +43,8 @@ class ComplexMPSSite : public AbstractMPSSite
    void BringMInRightCanonicalForm();
    void ComputeDensityMatrixRight();
    void ComputeDensityMatrixLeft();
-   void SymmetricUpdateOfTwoSites(ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & singularValues );
+   virtual ComplexVector *  StatePrediction(ComplexMPSSite * rightSite, RealDiagonalMatrix & SingularValues, RealDiagonalMatrix & OldSingularValues);
+   void SymmetricUpdateOfTwoSites(ComplexMPSSite * rightSite, ComplexVector * psi, RealDiagonalMatrix & singularValues );
 
     inline Tensor3<Complex> & GetPreviousL ()const
 { return (* ((ComplexMPSSite*)this->SiteOnLeft)->L);}

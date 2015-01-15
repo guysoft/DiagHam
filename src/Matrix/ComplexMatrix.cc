@@ -1026,6 +1026,29 @@ ComplexMatrix operator / (const ComplexMatrix& M, double x)
   return ComplexMatrix(TmpColumns, M.NbrRow);
 }
 
+
+// divide a matrix by a real number (right multiplication)
+//
+// M = source matrix
+// x = real number to use
+// return value = division result
+
+ComplexMatrix operator / (const ComplexMatrix& M1, const RealDiagonalMatrix& M2) 
+{
+  ComplexVector* TmpColumns = new ComplexVector [M1.NbrColumn];
+  for (int i = 0; i < M1.NbrColumn; i++)
+    {
+      double Tmp = 1.0 /  M2.DiagonalElements[i];
+      TmpColumns[i] = ComplexVector(M1.NbrRow);
+      for (int j = 0; j < M1.NbrRow; j++)
+	{
+        TmpColumns[i].Components[j].Re = M1.Columns[i].Components[j].Re * Tmp;
+        TmpColumns[i].Components[j].Im = M1.Columns[i].Components[j].Im * Tmp;
+	}
+    }
+  return ComplexMatrix(TmpColumns, M2.NbrRow);
+ }
+
 // add another complex matrices
 //
 // M = matrix to add to current matrix

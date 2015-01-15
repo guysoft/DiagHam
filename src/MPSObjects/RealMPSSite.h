@@ -8,8 +8,6 @@
 #include "Matrix/RealMatrix.h"
 #include "GeneralTools/GarbageFlag.h"
 
-class AbstractMPOperatorOBC;
-
 class RealMPSSite : public AbstractMPSSite
 {
  protected:

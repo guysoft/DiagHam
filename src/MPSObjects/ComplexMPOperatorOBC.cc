@@ -3,6 +3,9 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include <iostream>
 #include <sys/time.h>
+#include "Architecture/ArchitectureOperation/TensorMatrixContractionOperation.h"
+#include "Architecture/ArchitectureOperation/MPOApplyOnTensorOperation.h"
+#include "Architecture/ArchitectureOperation/TensorVectorContractionOperation.h"
 
 using std::cout;
 using std::endl;
@@ -165,6 +168,100 @@ void ComplexMPOperatorOBC::ComputeRCore(Tensor3<Complex> & R)
 }
 
 
+void ComplexMPOperatorOBC::LowLevelMultiplyCoreFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
+{
+  int BondDimensionRight = this->Site->GetBondDimensionRight();
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  int MaxLinearizedIndex = firstComponent + nbrComponent;
+  int TmpIndice,TmpIndice2 ;
+  
+  for (int i = 0; i < this->PhysicalDimension; i++)
+    {
+  for (int LinearizedIndexMiddleTop = firstComponent ; LinearizedIndexMiddleTop < MaxLinearizedIndex ; LinearizedIndexMiddleTop++)
+  { 
+     TmpIndice = LinearizedIndexMiddleTop *BondDimensionRight;
+     TmpIndice2  = LinearizedIndexMiddleTop * BondDimensionLeft;
+     for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
+	{
+              Complex & Tmp =  result[i][TmpIndice2+LeftA];
+	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
+		{
+		  Tmp +=   (*source)[TmpIndice+RightA] * vSource[this->Site->GetVectorOneSiteIndice(LeftA, RightA, i)];
+		}
+	    }
+        }
+}
+}
+
+
+void ComplexMPOperatorOBC::LowLevelMultiplyCoreSecond(Tensor3<Complex> * leftTensor, Tensor3<Complex> * source, ComplexVector & vDestination, int firstComponent, int nbrComponent)
+{
+  long int LastComponent = firstComponent +  nbrComponent;
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  int LeftC, RightC, PhysicalIndice;
+
+  for(long int Index =  firstComponent; Index < LastComponent ;Index++)
+  {
+    Complex & Tmp = vDestination[Index];
+    this->Site->DecodeVectorOneSiteIndice(Index, LeftC, RightC,PhysicalIndice);
+  for (int RightB = 0;  RightB < this->MPOBondDimension;  RightB++)
+	{
+       for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
+	{
+          Tmp +=  (*leftTensor)(LeftA,RightB, LeftC) *  source[PhysicalIndice](LeftA, RightB, RightC);
+        }
+    }
+  }
+}
+
+
+void ComplexMPOperatorOBC::MPOApplyOnTensorOnTheRightCore(Tensor3<Complex> * result, Tensor3<Complex> * source, 
+				       int firstComponent, int nbrComponent)
+{
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  int BondDimensionRight = this->Site->GetBondDimensionRight();
+  unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
+
+    for (int i =  0; i < this->NbrNonZeroElements; i++)
+     {
+     this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);
+
+  for (int RightC = firstComponent;  RightC < firstComponent+nbrComponent ;  RightC++)
+  {
+    for (int LeftA =  0 ;  LeftA < BondDimensionLeft ;  LeftA++)
+	 {
+	       result[MPOIndiceUp](LeftA, MPOIndiceLeft,RightC) +=   source[MPOIndiceDown](LeftA,MPOIndiceRight,RightC) * this->ElementsValues[i];
+	    }
+	}
+   } 
+}
+
+
+void ComplexMPOperatorOBC::MPOApplyOnTensorOnTheLeftCore(Tensor3<Complex> * result, Tensor3<Complex> * source, 
+				       int firstComponent, int nbrComponent)
+{
+  int BondDimensionLeft = this->Site->GetBondDimensionLeft();
+  int BondDimensionRight = this->Site->GetBondDimensionRight();
+  unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
+
+    for (int i =  0; i < this->NbrNonZeroElements; i++)
+     {
+       this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);
+     
+	  for (int LeftC = firstComponent;  LeftC < firstComponent+nbrComponent;  LeftC++)
+	    {
+	  for (int RightA =  0;  RightA < BondDimensionRight  ;  RightA++)
+	  {
+	       result[MPOIndiceUp](RightA, MPOIndiceRight,LeftC) +=   source[MPOIndiceDown](RightA,MPOIndiceLeft,LeftC) * this->ElementsValues[i];
+	    }
+	}
+   } 
+}
+
+
+
+
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and store result in another vector, low level function (no architecture optimization)
 //
@@ -177,10 +274,6 @@ void ComplexMPOperatorOBC::ComputeRCore(Tensor3<Complex> & R)
 ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyCore(ComplexVector& vSource, ComplexVector& vDestination, 
 				       int firstComponent, int nbrComponent)
 {
-//     cout <<"ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyCore(ComplexVector& vSource, ComplexVector& vDestination,    int firstComponent, int nbrComponent)"<<endl;
-/*  timeval TotalStartingTime;
-  timeval TotalEndingTime;
-  gettimeofday (&TotalStartingTime, 0);*/
 
   int BondDimensionRight = this->Site->GetBondDimensionRight();
   int BondDimensionLeft = this->Site->GetBondDimensionLeft();
@@ -188,45 +281,33 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyCore(ComplexVector& vSource
   Tensor3<Complex> & LeftL = ((ComplexMPSSite *) this->Site)->GetPreviousL();
  
   Tensor3<Complex> * B =  new  Tensor3<Complex>  [this->PhysicalDimension];
+  int MaxLinearizedIndex = BondDimensionRight * this->MPOBondDimension;
 
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
       B[i] = Tensor3<Complex>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
-      for(int RightC = 0; RightC < BondDimensionRight; RightC++)
-	    {
-          for (int RightB = 0; RightB < this->MPOBondDimension ; RightB++)
-            {
-
-      for (int LeftA = 0; LeftA < BondDimensionLeft; LeftA++)
-	{
-              Complex & Tmp =  B[i](LeftA,RightB,RightC);
-	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
-		{
-		  Tmp +=  RightR(RightA,RightB,RightC) * vSource[(long int)BondDimensionRight*(BondDimensionLeft*i+ LeftA) + RightA];
-		}
-	    }
-	}
     }
-   }
 
-/* gettimeofday (&TotalEndingTime, 0);
-  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
- 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-  cout <<"First Part " << Dt << "s" << endl;
- gettimeofday (&TotalStartingTime, 0);
-*/
+  TensorVectorContractionOperation<Complex> Operation(&RightR, B,  &vSource,this,true);
+  Operation.SetIndicesRange(0,MaxLinearizedIndex);
+  Operation.ApplyOperation(this->Architecture);
+
   Tensor3<Complex> * A =  new  Tensor3<Complex>  [this->PhysicalDimension];
   for (int i = 0; i < this->PhysicalDimension; i++)
     {
       A[i] = Tensor3<Complex>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
     }
+
+
+  MPOApplyOnTensorOperation<Complex> Operation2 (B, A,this,true);
+  Operation2.SetIndicesRange(0,BondDimensionRight);
+  Operation2.ApplyOperation(this->Architecture);
  
+/*
   unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceRight;
  for (int i = 0; i < this->NbrNonZeroElements; i++)
     {
       this->GetAllIndicesFromTensorIndex(this->IndexValues[i], MPOIndiceDown, MPOIndiceUp, MPOIndiceLeft,  MPOIndiceRight);
-
-     
       for (int RightC = 0;  RightC < BondDimensionRight;  RightC++)
 	   {
        for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
@@ -235,35 +316,67 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyCore(ComplexVector& vSource
 	    }
 	}
    } 
+*/
 
   delete [] B;
-  int LastComponent = firstComponent + nbrComponent;
 
-/*  gettimeofday (&TotalEndingTime, 0);
-  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
- 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-  cout <<"Second Part " << Dt << "s" << endl;
- gettimeofday (&TotalStartingTime, 0);*/
+  TensorVectorContractionOperation<Complex> Operation1(&LeftL, A,  &vDestination,this,false);
+  Operation1.SetIndicesRange(0,this->GetHilbertSpaceDimension());
+  Operation1.ApplyOperation(this->Architecture);
 
-  for(int Index =  firstComponent; Index < LastComponent ;Index++)
-  {
-     Complex & Tmp = vDestination[Index];
-  for (int RightB = 0;  RightB < this->MPOBondDimension;  RightB++)
-	{
-       for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
-	{
-          Tmp +=  LeftL(LeftA,RightB, (Index/BondDimensionRight)%BondDimensionLeft) * A[Index/(BondDimensionRight*BondDimensionLeft)](LeftA, RightB,Index % BondDimensionRight);
-        }
-    }
-  }
-
-/*gettimeofday (&TotalEndingTime, 0);
-Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
- 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
- cout <<"Third Part " << Dt << "s" << endl;*/
  delete [] A;
  return vDestination;
 }
+
+
+void ComplexMPOperatorOBC::LowLevelMultiplyCoreTwoSitesFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
+{
+  int SquarePhysicalDimension = this->PhysicalDimension * this->PhysicalDimension;
+
+  int BondDimensionRight = this->SiteRight->GetBondDimensionRight();
+  int BondDimensionLeft = this->SiteLeft->GetBondDimensionLeft();
+  int MaxLinearizedIndex = firstComponent + nbrComponent;
+  int TmpIndice,TmpIndice2 ;
+  
+  for (int i = 0; i < SquarePhysicalDimension; i++)
+    {
+  for (int LinearizedIndexMiddleTop = firstComponent ; LinearizedIndexMiddleTop < MaxLinearizedIndex ; LinearizedIndexMiddleTop++)
+  { 
+     TmpIndice = LinearizedIndexMiddleTop *BondDimensionRight;
+     TmpIndice2  = LinearizedIndexMiddleTop * BondDimensionLeft;
+      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
+	{
+           Complex & Tmp =  result[i][RightA+TmpIndice];
+           for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
+	    {
+		  Tmp +=   (*source)[TmpIndice2 + LeftA] * vSource[this->SiteLeft->GetVectorTwoSiteIndice(LeftA,RightA,i)];
+	    }
+         }
+}
+}
+}
+
+
+void ComplexMPOperatorOBC::LowLevelMultiplyCoreTwoSitesSecond(Tensor3<Complex> * rightTensor, Tensor3<Complex> * source , ComplexVector & vDestination, int firstComponent, int nbrComponent)
+{
+  long int LastComponent = firstComponent +  nbrComponent;
+  int BondDimensionRight = this->SiteRight->GetBondDimensionRight();
+  int LeftC, RightC, PhysicalIndice;
+
+  for(long int Index =  firstComponent; Index < LastComponent ;Index++)
+  {
+    Complex & Tmp = vDestination[Index];
+    this->Site->DecodeVectorTwoSiteIndice(Index, LeftC, RightC,PhysicalIndice);
+      for (int RightB = 0;  RightB < this->MPOBondDimension;  RightB++)
+	{
+       for (int RightA = 0;  RightA < BondDimensionRight;  RightA++)
+	{
+          Tmp +=  (*rightTensor)(RightA,RightB,RightC) *  source[PhysicalIndice](RightA,RightB,LeftC);
+        }
+    }
+  }
+}
+
 
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and store result in another vector, low level function (no architecture optimization)
@@ -276,25 +389,12 @@ Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
 
 ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent)
 {
-
-//cout <<"ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector& vSource, ComplexVector& vDestination,  int firstComponent, int nbrComponent)"<<endl;
-//cout <<"Vsource" <<vSource<<endl;
-
-/*  timeval TotalStartingTime;
-  timeval TotalEndingTime;
-  gettimeofday (&TotalStartingTime, 0)
-;
-*/
-
   int BondDimensionRight = this->SiteRight->GetBondDimensionRight();
   int BondDimensionLeft = this->SiteLeft->GetBondDimensionLeft();
+  int MaxLinearizedIndex = BondDimensionRight * this->MPOBondDimension;
 
   Tensor3<Complex> & RightR = ((ComplexMPSSite *) this->SiteRight)->GetNextR();
   Tensor3<Complex> & LeftL = ((ComplexMPSSite *) this->SiteLeft)->GetPreviousL();
-
-
-//  LeftL.PrintTensor();
-//  RightR.PrintTensor();
 
   int SquarePhysicalDimension = this->PhysicalDimension * this->PhysicalDimension;
 
@@ -304,29 +404,15 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector&
       B[i] = Tensor3<Complex>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft,true);
     }
 
-//  int LinearizedPhysicalIndice = PhysicalIndiceLeft +  this->PhysicalDimension *  PhysicalIndiceRight;
-  for (int LinearizedPhysicalIndice= 0 ; LinearizedPhysicalIndice < SquarePhysicalDimension; LinearizedPhysicalIndice++)
-  {
-  for (int LeftB = 0; LeftB < this->MPOBondDimension ; LeftB++)
-    {
-	  for(int LeftC = 0; LeftC < BondDimensionLeft; LeftC++)
-	    {
-	      for(int RightA = 0;  RightA < BondDimensionRight;  RightA++)
-		{
 
-           for (int LeftA = 0;  LeftA < BondDimensionLeft;  LeftA++)
-	    {
-		  B[LinearizedPhysicalIndice](RightA,LeftB,LeftC) +=  LeftL(LeftA,LeftB,LeftC) * vSource[LinearizedPhysicalIndice + SquarePhysicalDimension*(LeftA + RightA*BondDimensionLeft)];
-	}
-	    }
-	}
-    }
-}
+  TensorVectorContractionOperation<Complex> Operation(&LeftL, B,  &vSource,this,true,true);
+  Operation.SetIndicesRange(0,MaxLinearizedIndex);
+  Operation.ApplyOperation(this->Architecture);
 
   Tensor3<Complex> * A =  new  Tensor3<Complex>  [SquarePhysicalDimension];
   for (int i = 0; i < SquarePhysicalDimension ; i++)
     {
-      A[i] = Tensor3<Complex>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
+      A[i] = Tensor3<Complex>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft,true);
     }
  
     unsigned int MPOIndiceDown,MPOIndiceLeft,MPOIndiceUp,MPOIndiceMiddle,MPOIndiceRight;
@@ -341,7 +427,7 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector&
 	{
 	  for (int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 	    {
-              A[MPOIndiceUp +  this->PhysicalDimension *  PhysicalIndiceRight](LeftC, MPOIndiceMiddle,RightA) += B[MPOIndiceDown +  this->PhysicalDimension *  PhysicalIndiceRight](RightA,MPOIndiceLeft,LeftC) * this->ElementsValues[i];
+              A[MPOIndiceUp +  this->PhysicalDimension *  PhysicalIndiceRight](RightA, MPOIndiceMiddle,LeftC) += B[MPOIndiceDown +  this->PhysicalDimension *  PhysicalIndiceRight](RightA,MPOIndiceLeft,LeftC) * this->ElementsValues[i];
 	    }
 	}
     }
@@ -352,7 +438,7 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector&
   Tensor3<Complex> * C =  new  Tensor3<Complex>  [SquarePhysicalDimension];
   for (int i = 0; i < SquarePhysicalDimension ; i++)
     {
-      C[i] = Tensor3<Complex>(BondDimensionLeft,this->MPOBondDimension,BondDimensionRight,true);
+      C[i] = Tensor3<Complex>(BondDimensionRight,this->MPOBondDimension,BondDimensionLeft,true);
     }
 
   for (int i = 0; i < this->NbrNonZeroElements; i++)
@@ -364,7 +450,7 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector&
 	{
 	  for (int RightA = 0;  RightA < BondDimensionRight;  RightA++)
 	    {
-              C[PhysicalIndiceLeft +  this->PhysicalDimension *   MPOIndiceUp](LeftC, MPOIndiceRight,RightA) += A[PhysicalIndiceLeft +  this->PhysicalDimension *  MPOIndiceDown](LeftC,MPOIndiceMiddle,RightA) * this->ElementsValues[i];
+               C[PhysicalIndiceLeft +  this->PhysicalDimension *   MPOIndiceUp](RightA, MPOIndiceRight,LeftC) += A[PhysicalIndiceLeft +  this->PhysicalDimension *  MPOIndiceDown](RightA,MPOIndiceMiddle,LeftC) * this->ElementsValues[i];
 	    }
 	}
     }
@@ -372,33 +458,11 @@ ComplexVector& ComplexMPOperatorOBC::LowLevelMultiplyTwoSitesCore(ComplexVector&
 
  delete [] A;
 
- // Index = LinearizedPhysicalIndice + SquarePhysicalDimension*(LeftA + RightA*BondDimensionLeft))
+  TensorVectorContractionOperation<Complex> Operation1(&RightR, C, &vDestination,this,false,true);
+  Operation1.SetIndicesRange(0,this->GetTwoSitesHilbertSpaceDimension());
+  Operation1.ApplyOperation(this->Architecture);
 
-  int LastComponent = firstComponent + nbrComponent;
-
-/*  gettimeofday (&TotalEndingTime, 0);
-  double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
- 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
-  cout <<"First Part " << Dt << "s" << endl;
-  gettimeofday (&TotalStartingTime, 0);*/
- 
- for(int Index =  firstComponent; Index < LastComponent ;Index++)
-  {
-       for (int RightA = 0;  RightA < BondDimensionRight;  RightA++)
-	{
-      for (int RightB = 0;  RightB < this->MPOBondDimension;  RightB++)
-	{
-            vDestination[Index] +=  RightR(RightA,RightB,Index/(SquarePhysicalDimension*BondDimensionLeft)) *  C[Index%SquarePhysicalDimension](Index/SquarePhysicalDimension%BondDimensionLeft , RightB,RightA);
-        }
-    }
- }
-/*
-gettimeofday (&TotalEndingTime, 0);
-Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
- 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
- cout <<"Second Part " << Dt << "s" << endl;*/
  delete [] C;
- // cout <<" vDestination = "<<  vDestination<<endl;
  return vDestination;
 }
 

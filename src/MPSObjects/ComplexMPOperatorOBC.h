@@ -7,8 +7,6 @@
 #include "HilbertSpace/AbstractHilbertSpace.h"
 #include "Matrix/HermitianMatrix.h"
 
-class ComplexMPSSite;
-
 class ComplexMPOperatorOBC : public AbstractMPOperatorOBC
 {
  protected:
@@ -54,6 +52,14 @@ class ComplexMPOperatorOBC : public AbstractMPOperatorOBC
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
   virtual ComplexVector & LowLevelMultiplyOneSite(ComplexVector & vSource, ComplexVector & vDestination,   int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreSecond(Tensor3<Complex> * leftTensor, Tensor3<Complex> * source , ComplexVector & vDestination, int firstComponent, int nbrComponent); 
+
+  virtual void LowLevelMultiplyCoreTwoSitesFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent);
+  virtual void LowLevelMultiplyCoreTwoSitesSecond(Tensor3<Complex> * rightTensor, Tensor3<Complex> * source , ComplexVector & vDestination, int firstComponent, int nbrComponent);
+
+  virtual void MPOApplyOnTensorOnTheLeftCore(Tensor3<Complex> * result, Tensor3<Complex> * source, int firstComponent, int nbrComponent);
+  virtual void MPOApplyOnTensorOnTheRightCore(Tensor3<Complex> * result, Tensor3 <Complex> * source, int firstComponent, int nbrComponent);
 
 };
 

@@ -358,6 +358,14 @@ class ComplexMatrix : public Matrix
   // return value = division result
   friend ComplexMatrix operator / (const ComplexMatrix& M, double x);
 
+  // divide a matrix by a real diagonal matrix (all entries must be non zero)
+  //
+  // M = source matrix
+  // x = real number to use
+  // return value = division result
+  friend ComplexMatrix operator / (const ComplexMatrix& M1, const RealDiagonalMatrix& M2);
+
+
   // add another complex matrices
   //
   // M = matrix to add to current matrix

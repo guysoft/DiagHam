@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sys/time.h>
 #include "Architecture/AbstractArchitecture.h"
+#include "Architecture/MonoProcessorArchitecture.h"
 #include "LanczosAlgorithm/LanczosManager.h"
 #include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
 #include "Vector/RealVector.h"
@@ -11,6 +12,7 @@
 
 using std::cout;
 using std::endl;
+
 
 DMRGFiniteSizeRealOBCMainTask::DMRGFiniteSizeRealOBCMainTask(RealMPSSite * latticeSite, AbstractMPOperatorOBC * mPOperator, int nbrSites, int nbrSweep, int maximumBondDimension,  AbstractArchitecture * architecture, LanczosManager* lanczos) :  NbrSites(nbrSites)
 {
@@ -163,7 +165,8 @@ void DMRGFiniteSizeRealOBCMainTask::OptimizeUsingLanczosLanczosAlgorithm (int si
 else
 {
   RealVector * TmpVector = 0;
-  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
+  AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
+  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
   this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
   LanczosAlgorithm->InitializeLanczosAlgorithm(*TmpVector);
   double GroundStateEnergy;
@@ -172,7 +175,7 @@ else
   double Lowest = PreviousLowest;
   int CurrentNbrIterLanczos = 0;
   LanczosAlgorithm->SetHamiltonian(this->MPOperator);
-  cout << "Run Lanczos Algorithm" << endl;
+  cout << "Run Lanczos Algorithm" << endl; 
   timeval TotalStartingTime;
   timeval TotalEndingTime;
   timeval TotalCurrentTime;
@@ -235,10 +238,8 @@ void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgori
       RealMatrix Q(Dimension,Dimension);
       HRep.LapackDiagonalize(TmpDiag, Q);
       cout <<"Highest energy = " << TmpDiag[0]<<" change = " <<  (( TmpDiag[0] - this->PreviousEnergy) /this->PreviousEnergy)<< endl;
-     cout <<" Before      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
-     leftSite->SymmetricUpdateOfTwoSites(rightSite, &Q[0],singularValues);
+      leftSite->SymmetricUpdateOfTwoSites(rightSite, &Q[0],singularValues);
      this->PreviousEnergy = TmpDiag[0];
-     cout <<" After      this->LatticeSite[0].SymmetricUpdateOfTwoSites(leftSite,rightSite, &Q[0],singularValues)"<<endl;
 #endif
 
 }
@@ -246,7 +247,8 @@ void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgori
 else
 {
   RealVector * TmpVector = 0;
-  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
+  AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
+  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
 //  this->LatticeSite[siteIndex].GetMatrixInVectorForm(TmpVector);
   LanczosAlgorithm->SetHamiltonian(this->MPOperator);
   LanczosAlgorithm->InitializeLanczosAlgorithm();
@@ -331,7 +333,8 @@ void DMRGFiniteSizeRealOBCMainTask::TwoSiteOptimizationUsingLanczosLanczosAlgori
 }
 else
 {
-  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(this->Architecture, true);
+  AbstractArchitecture * MonoProc = new MonoProcessorArchitecture;
+  AbstractLanczosAlgorithm* LanczosAlgorithm = this->AlgorithmManager->GetLanczosAlgorithm(MonoProc, true);
   LanczosAlgorithm->SetHamiltonian(this->MPOperator);
   LanczosAlgorithm->InitializeLanczosAlgorithm(*statePredict);
   double GroundStateEnergy;

@@ -12,7 +12,7 @@ class ComplexMPOPeratorDefinedByFiles : public ComplexMPOperatorOBC
  public:
 
   ComplexMPOPeratorDefinedByFiles();
-  ComplexMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile); 
+  ComplexMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile, AbstractArchitecture * architecture  = 0); 
   ~ComplexMPOPeratorDefinedByFiles();
   
   virtual void InitializeTensorsElements(MultiColumnASCIIFile & tensorElementsFile);

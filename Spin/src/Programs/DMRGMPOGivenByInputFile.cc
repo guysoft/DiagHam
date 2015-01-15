@@ -1,19 +1,14 @@
 #include "Architecture/ArchitectureManager.h"
 #include "Architecture/AbstractArchitecture.h"
-#include "Architecture/ArchitectureOperation/MainTaskOperation.h"
-
-
-#include "MPSObjects/AbstractMPSSite.h"
-#include "MPSObjects/AbstractMPOperatorOBC.h"
 
 #include "MPSObjects/RealMPOPeratorDefinedByFiles.h"
-#include "MPSObjects/RealMPSSite.h"
-#include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
-
 #include "MPSObjects/ComplexMPOPeratorDefinedByFiles.h"
-#include "MPSObjects/ComplexMPSSite.h"
-#include "MPSObjects/DMRGFiniteSizeComplexOBCMainTask.h" 
 
+#include "MPSObjects/RealMPSSite.h"
+#include "MPSObjects/ComplexMPSSite.h"
+
+#include "MPSObjects/DMRGFiniteSizeRealOBCMainTask.h" 
+#include "MPSObjects/DMRGFiniteSizeComplexOBCMainTask.h" 
 
 #include "Options/Options.h"
 
@@ -102,9 +97,9 @@ int main(int argc, char** argv)
   AbstractMPOperatorOBC * TransferMatrix;
   int NbrSites = Manager.GetInteger("length");
   if(ComplexFlag == false)
-     TransferMatrix = new RealMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition);
+     TransferMatrix = new RealMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition,Architecture.GetArchitecture());
   else
-     TransferMatrix = new ComplexMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition);
+     TransferMatrix = new ComplexMPOPeratorDefinedByFiles(NbrSites,TensorsElementsDefinition,BoundaryVectorsDefinition,Architecture.GetArchitecture());
 
   int PhysicalDimension = TransferMatrix->GetPhysicalDimension();
   int MaxBondDimension = Manager.GetInteger("bond-dimension");;

@@ -12,11 +12,12 @@ ComplexMPOPeratorDefinedByFiles::ComplexMPOPeratorDefinedByFiles()
 
 
 
-ComplexMPOPeratorDefinedByFiles::ComplexMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile)
+ComplexMPOPeratorDefinedByFiles::ComplexMPOPeratorDefinedByFiles(int nbrSites, MultiColumnASCIIFile & tensorElementsFile, MultiColumnASCIIFile & boundaryVectorsFile, AbstractArchitecture * architecture)
 {
   this->InitializeTensorsElements(tensorElementsFile);
   this->NbrSites = nbrSites;
   this->InitializeBoundaryVectors(boundaryVectorsFile);
+  this->Architecture= architecture;
 }
 
 

@@ -75,6 +75,7 @@ class ComplexVector : public Vector
   friend ComplexMatrix operator * (const ComplexMatrix& M, double x);
   friend ComplexMatrix operator * (double x, const ComplexMatrix& M);
   friend ComplexMatrix operator / (const ComplexMatrix& M, double x);
+  friend ComplexMatrix operator / (const ComplexMatrix& M1, const RealDiagonalMatrix& M2);
   friend ostream& operator << (ostream& Str, const ComplexMatrix& P);
 #ifdef USE_OUTPUT
   friend MathematicaOutput& operator << (MathematicaOutput& Str, const ComplexMatrix& P);

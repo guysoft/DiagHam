@@ -37,7 +37,6 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "MathTools/Complex.h"
 
-
 class RealVector;
 class ComplexVector;
 class AbstractArchitecture;

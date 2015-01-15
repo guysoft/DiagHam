@@ -4,6 +4,7 @@
 #include "ComplexMPOperatorOBC.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "LanczosAlgorithm/LanczosManager.h"
+#include "Matrix/RealDiagonalMatrix.h"
 
 class DMRGFiniteSizeComplexOBCMainTask 
 {
@@ -14,7 +15,7 @@ class DMRGFiniteSizeComplexOBCMainTask
   AbstractArchitecture * Architecture;
   LanczosManager *  AlgorithmManager;
   AbstractMPOperatorOBC * MPOperator;
-  
+  RealDiagonalMatrix PreviousSingularValues;
   int NbrSweep;
   int MaximumBondDimension;
   double PreviousEnergy;
@@ -27,8 +28,10 @@ class DMRGFiniteSizeComplexOBCMainTask
  protected:
   void InitializeLattice();
   void InitializeLatticeUsingIDMRG();
+  void InitializeLatticeUsingIDMRGAndStatePrediction();
   void OptimizeUsingLanczosLanczosAlgorithm (int siteIndex);
   void TwoSiteOptimizationUsingLanczosLanczosAlgorithm (ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, RealDiagonalMatrix & singularValues);
+  void TwoSiteOptimizationUsingLanczosLanczosAlgorithmAndStatePrediction ( ComplexMPSSite * leftSite , ComplexMPSSite * rightSite, RealDiagonalMatrix & singularValues, ComplexVector * statePredict);
 };
 
 #endif

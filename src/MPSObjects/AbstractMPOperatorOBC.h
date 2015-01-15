@@ -90,7 +90,7 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   // vDestination = vector where result has to be stored
   // return value = reference on vectorwhere result has been stored
   virtual RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
- virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
+  virtual ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
 
   // multiply a vector by the current hamiltonian and store result in another vector
   // low level function (no architecture optimization)
@@ -140,6 +140,19 @@ class AbstractMPOperatorOBC : public AbstractHamiltonian
   virtual void LowLevelMultiplyCoreFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
 {cout <<"using undefined function"<<endl; };
   virtual void LowLevelMultiplyCoreFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+  virtual void LowLevelMultiplyCoreTwoSitesFirst(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+  virtual void LowLevelMultiplyCoreTwoSitesFirst(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+
+  virtual void LowLevelMultiplyCoreSecond(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+  virtual void LowLevelMultiplyCoreSecond(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+  virtual void LowLevelMultiplyCoreTwoSitesSecond(Tensor3<Complex> * result, Tensor3<Complex> * source , ComplexVector & vSource, int firstComponent, int nbrComponent)
+{cout <<"using undefined function"<<endl; };
+  virtual void LowLevelMultiplyCoreTwoSitesSecond(Tensor3<double> * result, Tensor3<double> * source , RealVector & vSource, int firstComponent, int nbrComponent)
 {cout <<"using undefined function"<<endl; };
 
  protected:

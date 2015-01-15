@@ -40,9 +40,6 @@
 #include "MPSObjects/AbstractMPOperatorOBC.h"
 #include <sys/time.h>
 
-class AbstractSparseTensor;
-class RealVector;
-
 
 template <typename T>
 class TensorVectorContractionOperation : public AbstractArchitectureOperation
@@ -62,6 +59,7 @@ class TensorVectorContractionOperation<double>: public AbstractArchitectureOpera
   // number of component 
   int NbrComponent;
   bool RightFlag;
+  bool TwoSitesFlag;
   // execution time measured in RawApply
   double ExecutionTime;
   
@@ -73,32 +71,32 @@ class TensorVectorContractionOperation<double>: public AbstractArchitectureOpera
   // tensorIndex = index of tensor to consider
   // destinationVector = vector where the result has to be stored
   // fullHilbertSpace = split the workload with respect to the full Hilbert space dimension instead of the auxillary space dimension
-  TensorVectorContractionOperation(Tensor3<double> * sourceTensor, Tensor3<double> * destinationTensor,  RealVector * vector,  AbstractMPOperatorOBC * mPOperator,bool rightFlag);
+  inline TensorVectorContractionOperation(Tensor3<double> * sourceTensor, Tensor3<double> * destinationTensor,  RealVector * vector,  AbstractMPOperatorOBC * mPOperator,bool rightFlag, bool twoSites = false);
 
   // copy constructor 
   //
   // operation = reference on operation to copy
-  TensorVectorContractionOperation(const TensorVectorContractionOperation & operation);
+  inline TensorVectorContractionOperation(const TensorVectorContractionOperation & operation);
 
   // destructor
   //
-  ~TensorVectorContractionOperation();
+  inline ~TensorVectorContractionOperation();
   
   // set range of indices
   // 
   // firstComponent = index of the first component
   // nbrComponent = number of component
-  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
+  inline void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
   // clone operation
   //
   // return value = pointer to cloned operation
-  AbstractArchitectureOperation* Clone();
+  inline AbstractArchitectureOperation* Clone();
   
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool RawApplyOperation();
+  inline bool RawApplyOperation();
 
  protected:
 
@@ -106,7 +104,7 @@ class TensorVectorContractionOperation<double>: public AbstractArchitectureOpera
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  inline bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
 };
 
@@ -119,13 +117,14 @@ class TensorVectorContractionOperation<double>: public AbstractArchitectureOpera
 // fullHilbertSpace = split the workload with respect to the full Hilbert space dimension instead of the auxillary space dimension
 
 
-TensorVectorContractionOperation<double>::TensorVectorContractionOperation( Tensor3<double> * sourceTensor, Tensor3<double> * destinationTensor, RealVector * vector,  AbstractMPOperatorOBC * mPOperator , bool rightFlag)
+TensorVectorContractionOperation<double>::TensorVectorContractionOperation( Tensor3<double> * sourceTensor, Tensor3<double> * destinationTensor, RealVector * vector,  AbstractMPOperatorOBC * mPOperator , bool rightFlag, bool twoSites)
 {
   this->SourceTensor = sourceTensor;
   this->DestinationTensor =  destinationTensor;
   this->InputVector  = vector;
   this->MPOperator = mPOperator;
   this->RightFlag = rightFlag;
+  this->TwoSitesFlag = twoSites;
 //  this->OperationType = AbstractArchitectureOperation::TensorMatrixContractionOperation;
   this->ExecutionTime=0.0;
 }
@@ -143,6 +142,7 @@ TensorVectorContractionOperation<double>::TensorVectorContractionOperation(const
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
   this->RightFlag = operation.RightFlag;
+  this->TwoSitesFlag = operation.TwoSitesFlag;
 //  this->OperationType = AbstractArchitectureOperation::TensorMatrixContractionOperation;
    this->ExecutionTime = operation.ExecutionTime;
 }
@@ -179,12 +179,20 @@ bool TensorVectorContractionOperation<double>::RawApplyOperation()
   timeval TotalStartingTime2;
   timeval TotalEndingTime2;
   gettimeofday (&(TotalStartingTime2), 0);
-
+if (this->TwoSitesFlag == true)
+{
+if(this->RightFlag)
+  this->MPOperator->LowLevelMultiplyCoreTwoSitesFirst(this->DestinationTensor,this->SourceTensor, *this->InputVector, this->FirstComponent, this->NbrComponent);
+else
+  this->MPOperator->LowLevelMultiplyCoreTwoSitesSecond(this->SourceTensor,this->DestinationTensor,*this->InputVector,  this->FirstComponent, this->NbrComponent);
+}
+else
+{
 if(this->RightFlag)
   this->MPOperator->LowLevelMultiplyCoreFirst(this->DestinationTensor,this->SourceTensor, *this->InputVector, this->FirstComponent, this->NbrComponent);
 else
-  this->MPOperator->MPOApplyOnTensorOnTheLeftCore(this->DestinationTensor,this->SourceTensor, this->FirstComponent, this->NbrComponent);
-
+  this->MPOperator->LowLevelMultiplyCoreSecond(this->SourceTensor,this->DestinationTensor,*this->InputVector,  this->FirstComponent, this->NbrComponent);
+}
   gettimeofday (&(TotalEndingTime2), 0);
   this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 
     ((TotalEndingTime2.tv_usec - TotalStartingTime2.tv_usec) / 1000000.0);
@@ -248,6 +256,7 @@ class TensorVectorContractionOperation <Complex>: public AbstractArchitectureOpe
   // number of component 
   int NbrComponent;
   bool RightFlag;
+  bool TwoSitesFlag;
   // execution time measured in RawApply
   double ExecutionTime;
   
@@ -259,32 +268,32 @@ class TensorVectorContractionOperation <Complex>: public AbstractArchitectureOpe
   // tensorIndex = index of tensor to consider
   // destinationVector = vector where the result has to be stored
   // fullHilbertSpace = split the workload with respect to the full Hilbert space dimension instead of the auxillary space dimension
-  TensorVectorContractionOperation(Tensor3<Complex> * sourceTensor, Tensor3<Complex> * destinationTensor, ComplexVector * vector,  AbstractMPOperatorOBC * mPOperator,bool rightFlag);
+  inline  TensorVectorContractionOperation(Tensor3<Complex> * sourceTensor, Tensor3<Complex> * destinationTensor, ComplexVector * vector,  AbstractMPOperatorOBC * mPOperator, bool rightFlag, bool twoSites = false);
 
   // copy constructor 
   //
   // operation = reference on operation to copy
-  TensorVectorContractionOperation(const TensorVectorContractionOperation & operation);
+  inline TensorVectorContractionOperation(const TensorVectorContractionOperation & operation);
 
   // destructor
   //
-  ~TensorVectorContractionOperation();
-  
+  inline ~TensorVectorContractionOperation();
+   
   // set range of indices
   // 
   // firstComponent = index of the first component
   // nbrComponent = number of component
-  void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
+  inline void SetIndicesRange (const int& firstComponent, const int& nbrComponent);
 
   // clone operation
   //
   // return value = pointer to cloned operation
-  AbstractArchitectureOperation* Clone();
+  inline AbstractArchitectureOperation* Clone();
   
   // apply operation (architecture independent)
   //
   // return value = true if no error occurs
-  bool RawApplyOperation();
+  inline bool RawApplyOperation();
 
  protected:
 
@@ -292,7 +301,7 @@ class TensorVectorContractionOperation <Complex>: public AbstractArchitectureOpe
   //
   // architecture = pointer to the architecture
   // return value = true if no error occurs
-  bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
+  inline bool ArchitectureDependentApplyOperation(SMPArchitecture* architecture);
   
 };
 
@@ -304,13 +313,14 @@ class TensorVectorContractionOperation <Complex>: public AbstractArchitectureOpe
 // destinationVector = vector where the result has to be stored
 // fullHilbertSpace = split the workload with respect to the full Hilbert space dimension instead of the auxillary space dimension
 
-TensorVectorContractionOperation<Complex>::TensorVectorContractionOperation( Tensor3<Complex> * sourceTensor, Tensor3<Complex> * destinationTensor, ComplexVector * vector,  AbstractMPOperatorOBC * mPOperator , bool rightFlag)
+TensorVectorContractionOperation<Complex>::TensorVectorContractionOperation( Tensor3<Complex> * sourceTensor, Tensor3<Complex> * destinationTensor, ComplexVector * vector,  AbstractMPOperatorOBC * mPOperator , bool rightFlag, bool twoSites)
 {
   this->SourceTensor = sourceTensor;
   this->DestinationTensor =  destinationTensor;
   this->InputVector  = vector;
   this->MPOperator = mPOperator;
   this->RightFlag = rightFlag;
+  this->TwoSitesFlag = twoSites;
 //  this->OperationType = AbstractArchitectureOperation::TensorMatrixContractionOperation;
   this->ExecutionTime=0.0;
 }
@@ -328,6 +338,7 @@ TensorVectorContractionOperation<Complex>::TensorVectorContractionOperation(cons
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
   this->RightFlag = operation.RightFlag;
+  this->TwoSitesFlag = operation.TwoSitesFlag;
 //  this->OperationType = AbstractArchitectureOperation::TensorMatrixContractionOperation;
    this->ExecutionTime = operation.ExecutionTime;
 }
@@ -368,10 +379,20 @@ bool TensorVectorContractionOperation<Complex>::RawApplyOperation()
   timeval TotalEndingTime2;
   gettimeofday (&(TotalStartingTime2), 0);
 
+if (this->TwoSitesFlag == true)
+{
+if(this->RightFlag)
+  this->MPOperator->LowLevelMultiplyCoreTwoSitesFirst(this->DestinationTensor,this->SourceTensor, *this->InputVector, this->FirstComponent, this->NbrComponent);
+else
+  this->MPOperator->LowLevelMultiplyCoreTwoSitesSecond(this->SourceTensor,this->DestinationTensor,*this->InputVector,  this->FirstComponent, this->NbrComponent);
+}
+else
+{
 if(this->RightFlag)
   this->MPOperator->LowLevelMultiplyCoreFirst(this->DestinationTensor,this->SourceTensor, *this->InputVector, this->FirstComponent, this->NbrComponent);
 else
-  this->MPOperator->MPOApplyOnTensorOnTheLeftCore(this->DestinationTensor,this->SourceTensor, this->FirstComponent, this->NbrComponent);
+  this->MPOperator->LowLevelMultiplyCoreSecond(this->SourceTensor,this->DestinationTensor,*this->InputVector,  this->FirstComponent, this->NbrComponent);
+}
 
   gettimeofday (&(TotalEndingTime2), 0);
   this->ExecutionTime = (double) (TotalEndingTime2.tv_sec - TotalStartingTime2.tv_sec) + 

@@ -239,6 +239,7 @@ class RealDiagonalMatrix : public Matrix
   // return value = division result
   friend RealDiagonalMatrix operator / (const RealDiagonalMatrix& M, double x);
   friend RealMatrix operator / (const RealMatrix& M1 , const RealDiagonalMatrix& M2);
+  friend ComplexMatrix operator / (const ComplexMatrix& M1 , const RealDiagonalMatrix& M2);
 
   // add two matrices
   //
