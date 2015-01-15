@@ -570,72 +570,56 @@ int main(int argc, char** argv)
 		      LongRational RootCoef = RationalOutputState[RootPosition];
 		      RationalOutputState /= RootCoef; 
 		     
-		      if (Statistics == false)
+		      if ("subset-symmetrization" == false)
 			{
-			  if ("subset-symmetrization" == false)
-			  {
-			     if (Manager.GetString("output-file") == 0)
-			      {
-				if (Manager.GetBoolean("unnormalized-basis") == false)
+			  if (Manager.GetString("output-file") == 0)
+			    {
+			      if (Manager.GetBoolean("unnormalized-basis") == false)
 				{
 				  sprintf(FullOutputFileName, "bosons_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-				      TargetNbrFluxQuanta, LzSectors[i]);
+					  TargetNbrFluxQuanta, LzSectors[i]);
 				}
 			      else
 				{
 				  sprintf(FullOutputFileName, "bosons_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-				      TargetNbrFluxQuanta, LzSectors[i]);
+					  TargetNbrFluxQuanta, LzSectors[i]);
 				}
-			      }
-			      else
-			      {
-				sprintf(FullOutputFileName, "%s_lz_%d.0.vec", Manager.GetString("output-file"), LzSectors[i]);
-			      }
-			   }
+			    }
 			  else
-			   {
-			     if (Manager.GetString("output-file") == 0)
-			      {
+			    {
+			      sprintf(FullOutputFileName, "%s_lz_%d.0.vec", Manager.GetString("output-file"), LzSectors[i]);
+			    }
+			}
+		      else
+			{
+			  if (Manager.GetString("output-file") == 0)
+			    {
 			      if (Manager.GetBoolean("unnormalized-basis") == false)
 				{
 				  sprintf(FullOutputFileName, "bosons_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-				      TargetNbrFluxQuanta, LzSectors[i]);
+					  TargetNbrFluxQuanta, LzSectors[i]);
 				}
 			      else
 				{
 				  sprintf(FullOutputFileName, "bosons_unnormalized_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-				      TargetNbrFluxQuanta, LzSectors[i]);
+					  TargetNbrFluxQuanta, LzSectors[i]);
 				}
-			      }
-			      else
-			      {
-				sprintf(FullOutputFileName, "%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("output-file"), NbrParticleSectors[i], 
+			    }
+			  else
+			    {
+			      sprintf(FullOutputFileName, "%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("output-file"), NbrParticleSectors[i], 
 				      TargetNbrFluxQuanta, LzSectors[i]);
-			      }
 			    }
 			}
-			else
-			  {
-			    if (Manager.GetBoolean("unnormalized-basis") == false)
-			      {
-				sprintf(FullOutputFileName, "fermions_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-				      TargetNbrFluxQuanta, LzSectors[i]);
-			      }
-			    else
-			      {
-				sprintf(FullOutputFileName, "fermions_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-				      TargetNbrFluxQuanta, LzSectors[i]);
-			      }
-			  }
-		      
-		      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
-			{
-			  cout << "error while writing output state " << FullOutputFileName << endl;
-			  return -1;
-			}
-		      ++NbrGeneratedStates;
-		    }		  
-		}
+		    }
+		  
+		  if (RationalOutputState.WriteVector(FullOutputFileName) == false)
+		    {
+		      cout << "error while writing output state " << FullOutputFileName << endl;
+		      return -1;
+		    }
+		  ++NbrGeneratedStates;
+		}		  
 	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
 	    }
 	}
@@ -651,11 +635,45 @@ int main(int argc, char** argv)
 	    {
 	      LongRationalVector* RationalOutputStates;
 	      int* LzSectors;
-	      int NbrLzSectors = FermionicSpace1->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+	      int* NbrParticleSectors = 0;
+	      int NbrLzSectors;
+	      int TargetNbrFluxQuanta = 0;
+	      if (Manager.GetBoolean("periodicity-symmetrization") == false)
+		{
+		  if (Manager.GetBoolean("subset-symmetrization") == true)
+		    {
+		      NbrLzSectors = FermionicSpace1->SymmetrizeSingleStatePeriodicSubsetOrbitals(RationalState1, Manager.GetInteger("subset-shift"),
+												  Manager.GetInteger("nbr-orbitals"),
+												  RationalOutputStates, NbrParticleSectors, LzSectors);
+		      TargetNbrFluxQuanta = ((NbrFluxQuanta1 + 1) / Manager.GetInteger("nbr-orbitals")) - 1;
+		    }
+		  else
+		    {
+		      
+		      NbrLzSectors = FermionicSpace1->SymmetrizeSingleStateOneIntoManyOrbital(RationalState1, (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates, LzSectors);
+		      TargetNbrFluxQuanta = (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1);
+		    }
+		}
+	      else
+		{
+// 		  NbrLzSectors = FermionicSpace1->SymmetrizeSingleStatePeriodicOrbitals(RationalState1, (NbrFluxQuanta1 + 1) / (int) Manager.GetInteger("nbr-orbitals"), RationalOutputStates,
+// 											LzSectors);
+		  cout << "--periodicity-symmetrization is not implemented for fermions" << endl;
+		  return 0;
+		  TargetNbrFluxQuanta = (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1);
+		}
 	      int NbrGeneratedStates = 0;
+	      if ((NbrLzSectors > 0) && (NbrParticleSectors == 0))
+		{
+		  NbrParticleSectors = new int[NbrLzSectors];
+		  for (int i = 0; i < NbrLzSectors; ++i)
+		    {
+		      NbrParticleSectors[i] = NbrParticles1;
+		    }
+		}
 	      for (int i = 0; i < NbrLzSectors; ++i)
 		{
-		  cout << "state generated in the 2*Lz=" << LzSectors[i] << " sector" << endl;
+		  cout << "state generated in the N=" << NbrParticleSectors[i] << " 2*Lz=" << LzSectors[i] << " sector" << endl;
 		  LongRationalVector& RationalOutputState = RationalOutputStates[i];
 		  bool zeroFlag = true;
 		  int RootPosition = 0;
@@ -674,14 +692,54 @@ int main(int argc, char** argv)
 		    {
 		      LongRational RootCoef = RationalOutputState[RootPosition];
 		      RationalOutputState /= RootCoef; 
-		      sprintf (FullOutputFileName , "%s_lz_%d.0.vec", OutputFileName, LzSectors[i]);	      
+		      if ("subset-symmetrization" == false)
+			{
+			  if (Manager.GetString("output-file") == 0)
+			    {
+			      if (Manager.GetBoolean("unnormalized-basis") == false)
+				{
+				  sprintf(FullOutputFileName, "fermions_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+					  TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			      else
+				{
+				  sprintf(FullOutputFileName, "fermions_unnormalized_rational_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+					  TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			    }
+			  else
+			    {
+			      sprintf(FullOutputFileName, "%s_lz_%d.0.vec", Manager.GetString("output-file"), LzSectors[i]);
+			    }
+			}
+		      else
+			{
+			  if (Manager.GetString("output-file") == 0)
+			    {
+			      if (Manager.GetBoolean("unnormalized-basis") == false)
+				{
+				  sprintf(FullOutputFileName, "fermions_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+					  TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			      else
+				{
+				  sprintf(FullOutputFileName, "fermions_unnormalized_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
+					  TargetNbrFluxQuanta, LzSectors[i]);
+				}
+			    }
+			  else
+			    {
+			      sprintf(FullOutputFileName, "%s_n_%d_2s_%d_lz_%d.0.vec", Manager.GetString("output-file"), NbrParticleSectors[i], 
+				      TargetNbrFluxQuanta, LzSectors[i]);
+			    }
+			}
 		      if (RationalOutputState.WriteVector(FullOutputFileName) == false)
 			{
 			  cout << "error while writing output state " << FullOutputFileName << endl;
 			  return -1;
 			}
 		      ++NbrGeneratedStates;
-		    }		  
+		    }
 		}
 	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
 	    }
