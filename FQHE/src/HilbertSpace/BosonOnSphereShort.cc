@@ -6355,3 +6355,212 @@ void BosonOnSphereShort::SymmetrizeSingleStateOneIntoManyOrbitalCore (RealVector
 	}
     }
 }
+
+
+
+
+
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// periodicity = momentum periodicity 
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+//                      number of partciles and the smallest Lz to the largest Lz
+// nbrParticlesSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+// lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+// return value = number of states that have been generated through the symmetrization procedure
+
+int BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, bool unnormalizedBasisFlag,
+								     RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors)
+{
+  int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
+      RealVector** TmpVectors = new RealVector*[this->NbrBosons + 1];
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
+      TmpVectors[i] = new RealVector[MaxTotalLz + 1];
+    }
+  this->SymmetrizeSingleStatePeriodicSubsetOrbitalCore(inputVector, TmpVectors, firstOrbitalIndex, periodicity, unnormalizedBasisFlag, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
+      for (int j = 0; j <= MaxTotalLz; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      ++NbrGeneratedSectors;
+	    }     
+	}
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  lzSectors = new int[NbrGeneratedSectors];
+  nbrParticlesSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
+      for (int j = 0; j <= MaxTotalLz; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i][j];
+	      lzSectors[NbrGeneratedSectors] = 2 * j - ((TargetSpaceNbrOrbitals - 1) * i);
+	      nbrParticlesSectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }     
+	}
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping several orbitals that are related by a periodicity condition on their momenta
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Lz to the largest Lz
+// periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVector& inputVector, RealVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, bool unnormalizedBasisFlag,
+									 unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
+  BosonOnSphereShort*** TargetSpaces = new BosonOnSphereShort** [this->NbrBosons + 1];
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
+      TargetSpaces[i] = new BosonOnSphereShort* [MaxTotalLz + 1];
+      for (int j = 0; j <= MaxTotalLz; ++j)
+	{
+	  TargetSpaces[i][j] = 0;
+	}
+    }
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  if (unnormalizedBasisFlag == true)
+  {
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      double TmpCoefficient = inputVector[i];
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+	this->TemporaryState[k] = 0x0ul;
+      int TmpTotalLz = 0;
+      int TmpNbrParticles = 0;
+      int Index = 0;
+      for (int k = firstOrbitalIndex; k <= this->LzMax; k += periodicity)
+	{
+	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
+	  TmpState[Index] = TmpNbrParticles2;
+	  TmpNbrParticles += ((int) TmpNbrParticles2);
+	  TmpTotalLz += Index * ((int) TmpNbrParticles2);
+	  ++Index;
+	}
+       
+      if (TmpNbrParticles > 0)
+	{
+	  if (TargetSpaces[TmpNbrParticles][TmpTotalLz] == 0)
+	    {
+	      TargetSpaces[TmpNbrParticles][TmpTotalLz] = new BosonOnSphereShort (TmpNbrParticles, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * TmpNbrParticles), 
+										  TargetSpaceNbrOrbitals - 1);
+	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz] = RealVector(TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpLzMax = TargetSpaces[TmpNbrParticles][TmpTotalLz]->LzMax;
+	  while (TmpState[TmpLzMax] == 0x0ul)
+	    --TmpLzMax;
+	  int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalLz]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalLz]->BosonToFermion(TmpState, TmpLzMax), 
+										 TmpLzMax + TmpNbrParticles - 1);
+	  if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz][TmpPos] += TmpCoefficient;
+	    }
+	}
+    }
+  }
+  else
+  {
+    for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      FactorialCoefficient Factorial1;
+      Factorial1.SetToOne();
+      double TmpCoefficient = inputVector[i];
+      this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
+			   this->TemporaryState, this->TemporaryStateLzMax);
+      for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
+	this->TemporaryState[k] = 0x0ul;
+      int TmpTotalLz = 0;
+      int TmpNbrParticles = 0;
+      int Index = 0;
+      for (int k = firstOrbitalIndex; k <= this->LzMax; k += periodicity)
+	{
+	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
+	  TmpState[Index] = TmpNbrParticles2;
+	  TmpNbrParticles += ((int) TmpNbrParticles2);
+	  TmpTotalLz += Index * ((int) TmpNbrParticles2);
+	  ++Index;
+	}
+       
+      if (TmpNbrParticles > 0)
+	{
+	  if (TargetSpaces[TmpNbrParticles][TmpTotalLz] == 0)
+	    {
+	      TargetSpaces[TmpNbrParticles][TmpTotalLz] = new BosonOnSphereShort (TmpNbrParticles, 2 * TmpTotalLz - ((TargetSpaceNbrOrbitals - 1) * TmpNbrParticles), 
+										  TargetSpaceNbrOrbitals - 1);
+	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz] = RealVector(TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpLzMax = TargetSpaces[TmpNbrParticles][TmpTotalLz]->LzMax;
+	  while (TmpState[TmpLzMax] == 0x0ul)
+	    --TmpLzMax;
+	  int TmpPos = TargetSpaces[TmpNbrParticles][TmpTotalLz]->FindStateIndex(TargetSpaces[TmpNbrParticles][TmpTotalLz]->BosonToFermion(TmpState, TmpLzMax), 
+										 TmpLzMax + TmpNbrParticles - 1);
+	  for (int k = 0; k < TargetSpaceNbrOrbitals; ++k)
+	  {
+	    for (int j = 0; j < this->TemporaryState[k*periodicity + firstOrbitalIndex]; ++j)
+	    {
+	      Factorial1.FactorialDivide(TargetSpaceNbrOrbitals - 1);
+	      Factorial1.FactorialMultiply(k);
+	      Factorial1.FactorialMultiply(TargetSpaceNbrOrbitals - 1 - k);
+	    }
+	    
+	    for (int l = 0; l < periodicity; ++l)
+	      {
+		for (int j = 0; j < this->TemporaryState[k * periodicity + l]; ++j)
+		{		  
+		  Factorial1.FactorialDivide(periodicity*k + l);
+		  Factorial1.FactorialMultiply(this->LzMax);		  
+		  Factorial1.FactorialDivide(this->LzMax - (periodicity*k + l));
+		  if (l != firstOrbitalIndex)
+		    Factorial1.FactorialDivide(this->TemporaryState[k * periodicity + l]);
+		}
+	      }
+	    }
+	  if (TmpPos < TargetSpaces[TmpNbrParticles][TmpTotalLz]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[TmpNbrParticles][TmpTotalLz][TmpPos] += TmpCoefficient*sqrt(Factorial1.GetNumericalValue());
+	    }
+	}
+    }
+  }
+  delete[] TmpState;
+  for (int i = 0; i <= this->NbrBosons; ++i)
+    {
+      int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
+      for (int j = 0; j <= MaxTotalLz; ++j)
+	{
+	  if (TargetSpaces[i][j] != 0)
+	    {
+	      delete TargetSpaces[i][j];
+	    }
+	}
+      delete[] TargetSpaces[i];
+    }
+  delete[] TargetSpaces;
+}

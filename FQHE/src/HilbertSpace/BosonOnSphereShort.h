@@ -898,6 +898,18 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // return value = number of states that have been generated through the symmetrization procedure
   virtual int SymmetrizeSingleStateOneIntoManyOrbital (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, bool unnormalizedBasisFlag, int*& lzSectors);
   
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // periodicity = momentum periodicity 
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+  //                      number of particles and the smallest Lz to the largest Lz
+  // nbrParticlesSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // lzSectors = reference on the array on twice the Lz sectors that have been generated through the symmetrization procedure
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, bool unnormalizedBasisFlag,
+							   RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors);
  protected:
 
   // convert a bosonic state into its fermionic counterpart
@@ -1032,6 +1044,18 @@ class BosonOnSphereShort :  public ParticleOnSphere
   // firstComponent = first component of the input vector that has to be symmetrized
   // nbrComponents = number of components of the input vector that have to be symmetrized
   virtual void SymmetrizeSingleStateOneIntoManyOrbitalCore (RealVector& inputVector, RealVector* symmetrizedVectors, bool unnormalizedBasisFlag, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // symmetrizedVectors = array on the symmetrize states ranging from the smallest Lz to the largest Lz
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = symmetrized state
+  virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVector& inputVector, RealVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, bool unnormalizedBasisFlag,
+							       unsigned long firstComponent, unsigned long nbrComponents);
 
 };
 
