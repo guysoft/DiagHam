@@ -148,6 +148,16 @@ class FermionOnTorus :  public ParticleOnTorus
   // targetSpace = pointer to the target space
   void SetTargetSpace(ParticleOnTorus* targetSpace);
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -351,6 +361,27 @@ class FermionOnTorus :  public ParticleOnTorus
   // return value = fermionic state in its fermionic representation
   virtual unsigned long ConvertFromMonomial(unsigned long* initialState);
 
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrized a product of several uncoupled states 
+  //
+  // outputState = reference on the output state
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
+  
 };
 
 // get the particle statistic 
@@ -387,8 +418,25 @@ inline unsigned long FermionOnTorus::ConvertFromMonomial(unsigned long* initialS
   for (int j = 0; j < this->NbrFermions; ++j)
     TmpState |= 0x1ul << initialState[j];
   return TmpState;
- }
+}
 
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int FermionOnTorus::GetNbrOrbitals()
+{
+  return this->KyMax;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int FermionOnTorus::GetNbrParticles()
+{
+  return this->NbrFermions;
+}
 
 #endif
 

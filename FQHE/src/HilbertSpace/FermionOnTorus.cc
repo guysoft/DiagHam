@@ -1406,3 +1406,228 @@ ComplexVector& FermionOnTorus::CoreC4Rotation (ComplexVector& inputState, Partic
   delete[] TmpOutputMonomial;
   return outputState;
 }
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+void FermionOnTorus::SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  FermionOnTorus* TmpLeftSpace = (FermionOnTorus*) leftSpace;
+  FermionOnTorus* TmpRightSpace = (FermionOnTorus*) rightSpace;
+  for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    {
+      unsigned long TmpLeftState = TmpLeftSpace->StateDescription[i];
+      Complex TmpCoefficient = leftVector[i];
+      
+      for (long j = 0l; j < TmpRightSpace->LargeHilbertSpaceDimension; ++j)
+	{
+	  unsigned long TmpRightState = TmpRightSpace->StateDescription[j];
+	  if ((TmpLeftState & TmpRightState) == 0x0ul)
+	    {
+	      int TmpKyMax = this->KyMax;
+	      unsigned long TmpState = TmpLeftState | TmpRightState;
+	      while ((TmpState >> TmpKyMax) == 0x0ul)
+		--TmpKyMax;
+	      int TmpPos = this->FindStateIndex(TmpState, TmpKyMax);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{
+		  unsigned long Sign = 0x0ul;
+		  int Pos = TmpRightSpace->StateKyMax[j];
+		  while ((Pos > 0) && (TmpRightState != 0x0ul))
+		    {
+		      while (((TmpRightState >> Pos) & 0x1ul) == 0x0ul)
+			--Pos;
+		      TmpState = TmpLeftState & ((0x1ul << (Pos + 1)) - 1ul);
+#ifdef  __64_BITS__
+		      TmpState ^= TmpState >> 32;
+#endif	
+		      TmpState ^= TmpState >> 16;
+		      TmpState ^= TmpState >> 8;
+		      TmpState ^= TmpState >> 4;
+		      TmpState ^= TmpState >> 2;
+		      TmpState ^= TmpState >> 1;
+		      Sign ^= TmpState;
+		      TmpRightState &= ~(0x1ul << Pos);
+		      --Pos;
+		    }
+ 		  if ((Sign & 0x1ul) == 0x0ul)		  
+		    symmetrizedVector[TmpPos] += TmpCoefficient * rightVector[j];
+ 		  else
+		    symmetrizedVector[TmpPos] -= TmpCoefficient * rightVector[j];
+		}
+	    }
+	}  
+    }
+}
+
+
+// symmetrized a product of several uncoupled states 
+//
+// outputState = reference on the output state
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+// nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+
+void FermionOnTorus::SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents)
+{
+  unsigned long LastComponent = firstComponent + nbrComponents;
+  
+  FermionOnTorus* TmpSpace1 = (FermionOnTorus*) inputSpaces[0];
+  for (long i = (long) firstComponent; i < (long) LastComponent; ++i)
+    {
+      Complex TmpCoefficient = inputStates[0][i];
+      unsigned long TmpState1 = TmpSpace1->StateDescription[i];
+      FermionOnTorus* TmpSpace2 = (FermionOnTorus*) inputSpaces[1];            
+      for (long j2 = 0l; j2 < TmpSpace2->LargeHilbertSpaceDimension; ++j2)
+	{
+	  unsigned long TmpState2 = TmpSpace2->StateDescription[j2];
+	  if ((TmpState2 & TmpState1) == 0x0ul)
+	    {
+	      unsigned long Sign2 = 0x0ul;
+	      int Pos = TmpSpace2->StateKyMax[j2];
+	      unsigned long TmpState;
+	      while ((Pos > 0) && (TmpState2 != 0x0ul))
+		{
+		  while (((TmpState2 >> Pos) & 0x1ul) == 0x0ul)
+		    --Pos;
+		  TmpState = TmpState1 & ((0x1ul << (Pos + 1)) - 1ul);
+#ifdef  __64_BITS__
+		  TmpState ^= TmpState >> 32;
+#endif	
+		  TmpState ^= TmpState >> 16;
+		  TmpState ^= TmpState >> 8;
+		  TmpState ^= TmpState >> 4;
+		  TmpState ^= TmpState >> 2;
+		  TmpState ^= TmpState >> 1;
+		  Sign2 ^= TmpState;
+		  TmpState2 &= ~(0x1ul << Pos);
+		  --Pos;
+		}
+	      TmpState2 = TmpState1 | TmpSpace2->StateDescription[j2];
+	      if (nbrStates == 2)
+		{	  
+		  int TmpKyMax = this->KyMax;
+		  while ((TmpState2 >> TmpKyMax) == 0x0ul)
+		    --TmpKyMax;
+		  int TmpPos = this->FindStateIndex(TmpState2, TmpKyMax);
+		  if (TmpPos < this->HilbertSpaceDimension)
+		    {
+		      if ((Sign2 & 0x1ul) == 0x0ul)		  
+			outputState[TmpPos] += TmpCoefficient * inputStates[1][j2];
+		      else
+			outputState[TmpPos] -= TmpCoefficient * inputStates[1][j2];
+		    }
+		}
+	      else
+		{
+		  Complex TmpCoefficient2 = TmpCoefficient * inputStates[1][j2];
+		  FermionOnTorus* TmpSpace3 = (FermionOnTorus*) inputSpaces[2];            
+		  for (long j3 = 0l; j3 < TmpSpace3->LargeHilbertSpaceDimension; ++j3)
+		    {
+		      unsigned long TmpState3 = TmpSpace3->StateDescription[j3];
+		      if ((TmpState3 & TmpState2) == 0x0ul)
+			{
+			  unsigned long Sign3 = Sign2;
+			  int Pos = TmpSpace3->StateKyMax[j3];
+			  unsigned long TmpState;
+			  while ((Pos > 0) && (TmpState3 != 0x0ul))
+			    {
+			      while (((TmpState3 >> Pos) & 0x1ul) == 0x0ul)
+				--Pos;
+			      TmpState = TmpState2 & ((0x1ul << (Pos + 1)) - 1ul);
+#ifdef  __64_BITS__
+			      TmpState ^= TmpState >> 32;
+#endif	
+			      TmpState ^= TmpState >> 16;
+			      TmpState ^= TmpState >> 8;
+			      TmpState ^= TmpState >> 4;
+			      TmpState ^= TmpState >> 2;
+			      TmpState ^= TmpState >> 1;
+			      Sign3 ^= TmpState;
+			      TmpState3 &= ~(0x1ul << Pos);
+			      --Pos;
+			    }
+			  TmpState3 = TmpState2 | TmpSpace3->StateDescription[j3];
+			  if (nbrStates == 3)
+			    {	  
+			      int TmpKyMax = this->KyMax;
+			      while ((TmpState3 >> TmpKyMax) == 0x0ul)
+				--TmpKyMax;
+			      int TmpPos = this->FindStateIndex(TmpState3, TmpKyMax);
+			      if (TmpPos < this->HilbertSpaceDimension)
+				{
+				  if ((Sign3 & 0x1ul) == 0x0ul)		  
+				    outputState[TmpPos] += TmpCoefficient2 * inputStates[2][j3];
+				  else
+				    outputState[TmpPos] -= TmpCoefficient2 * inputStates[2][j3];
+				}
+			    }
+			  else
+			    {
+			      Complex TmpCoefficient3 = TmpCoefficient2 * inputStates[2][j3];
+			      FermionOnTorus* TmpSpace4 = (FermionOnTorus*) inputSpaces[3];            
+			      for (long j4 = 0l; j4 < TmpSpace4->LargeHilbertSpaceDimension; ++j4)
+				{
+				  unsigned long TmpState4 = TmpSpace4->StateDescription[j4];
+				  if ((TmpState4 & TmpState3) == 0x0ul)
+				    {
+				      unsigned long Sign4 = Sign3;
+				      int Pos = TmpSpace4->StateKyMax[j4];
+				      unsigned long TmpState;
+				      while ((Pos > 0) && (TmpState4 != 0x0ul))
+					{
+					  while (((TmpState4 >> Pos) & 0x1ul) == 0x0ul)
+					    --Pos;
+					  TmpState = TmpState3 & ((0x1ul << (Pos + 1)) - 1ul);
+#ifdef  __64_BITS__
+					  TmpState ^= TmpState >> 32;
+#endif	
+					  TmpState ^= TmpState >> 16;
+					  TmpState ^= TmpState >> 8;
+					  TmpState ^= TmpState >> 4;
+					  TmpState ^= TmpState >> 2;
+					  TmpState ^= TmpState >> 1;
+					  Sign4 ^= TmpState;
+					  TmpState4 &= ~(0x1ul << Pos);
+					  --Pos;
+					}
+				      TmpState4 = TmpState3 | TmpSpace4->StateDescription[j4];
+				      if (nbrStates == 4)
+					{	  
+					  int TmpKyMax = this->KyMax;
+					  while ((TmpState4 >> TmpKyMax) == 0x0ul)
+					    --TmpKyMax;
+					  int TmpPos = this->FindStateIndex(TmpState4, TmpKyMax);
+					  if (TmpPos < this->HilbertSpaceDimension)
+					    {
+					      if ((Sign4 & 0x1ul) == 0x0ul)		  
+						outputState[TmpPos] += TmpCoefficient3 * inputStates[3][j4];
+					  else
+					    outputState[TmpPos] -= TmpCoefficient2 * inputStates[2][j4];
+					    }
+					}
+				      else
+					{
+					  cout << "error, current code cannot symmetrized more than 4 states" << endl;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }  
+}
+  

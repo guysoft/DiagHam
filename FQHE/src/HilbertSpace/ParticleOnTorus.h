@@ -123,6 +123,118 @@ class ParticleOnTorus :  public ParticleOnSphere
   // return value = translated state index
   virtual int ApplyXMagneticTranslation(int index);
 
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual ComplexVector SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  
+
+  // symmetrized a product of several uncoupled states 
+  //
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // architecture = pointer to the architecture 
+  // return value = symmetrized state
+  virtual RealVector SymmetrizeU1U1State (RealVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, double precision = MACHINE_PRECISION,  AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a product of several uncoupled states 
+  //
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // architecture = pointer to the architecture 
+  // return value = symmetrized state
+  virtual ComplexVector SymmetrizeU1U1State (ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, double precision = MACHINE_PRECISION,  AbstractArchitecture* architecture = 0);
+  
+  // symmetrize a vector by grouping neighbouring orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = symmetrized state
+  int SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = MACHINE_PRECISION);
+
+  // symmetrize a vector by grouping neighbouring orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = symmetrized state  
+  virtual int SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, 
+								 int*& kySectors, AbstractArchitecture* architecture, double precision = MACHINE_PRECISION);
+
+  // symmetrize a vector by grouping distant and equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = symmetrized state
+  int SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = MACHINE_PRECISION);
+
+  // symmetrize a vector by grouping distant and equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = symmetrized state
+  int SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = MACHINE_PRECISION);
+
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // periodicity = momentum periodicity 
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+  //                      number of particles and the smallest Ky to the largest Ky
+  // nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, 
+							   RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+							   AbstractArchitecture* architecture);
+
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // periodicity = momentum periodicity 
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+  //                      number of particles and the smallest Ky to the largest Ky
+  // nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+  // architecture = pointer to the architecture
+  // return value = number of states that have been generated through the symmetrization procedure
+  virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector& inputVector, int firstOrbitalIndex, int periodicity, 
+							   ComplexVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+							   AbstractArchitecture* architecture);
+
  protected:
 
   // core part of the C4 rotation
@@ -135,6 +247,68 @@ class ParticleOnTorus :  public ParticleOnSphere
   // clockwise = the rotation is done clockwise
   // return value = reference on the rotated state
   virtual ComplexVector& CoreC4Rotation (ComplexVector& inputState, ParticleOnTorus* inputSpace, ComplexVector& outputState, int minIndex, int nbrIndices, bool clockwise);
+
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrized a product of several uncoupled states 
+  //
+  // outputState = reference on the output state
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+  virtual void SymmetrizeU1U1StateCore (RealVector& outputState, RealVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrized a product of several uncoupled states 
+  //
+  // outputState = reference on the output state
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrize a vector by grouping neighbouring orbitals, core part
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // first component = index of the first vector component 
+  // last component = index of the last component
+  virtual void SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, 
+								unsigned long firstComponent, unsigned long nbrComponents);
+
+  // symmetrize a vector by grouping distant and equally separated orbitals, core part
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // first component = index of the first vector component 
+  // last component = index of the last component
+  virtual void SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = symmetrized state
+  virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+							       unsigned long firstComponent, unsigned long nbrComponents);
 
 
 };

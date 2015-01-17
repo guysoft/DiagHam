@@ -142,6 +142,16 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // targetSpace = pointer to the target space
   void SetTargetSpace(ParticleOnTorus* targetSpace);
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -334,79 +344,6 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = trucated state
   virtual RealVector TruncateStateWithPatternConstraint(RealVector& inputVector, ParticleOnTorus* reducedSpace, int* pattern, int patternSize, int patternShift = 0);
   
-  
-  // symmetrized a product of two uncoupled states 
-  //
-  // outputVector = reference on the vector which will contain the symmetrized state
-  // leftVector = reference on the vector associated to the first color
-  // rightVector = reference on the vector associated to the second color
-  // leftSpace = pointer to the Hilbert space of the first color
-  // rightSpace = pointer to the Hilbert space of the second color
-  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-  // return value = symmetrized state
-  virtual RealVector SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
-  
-  // symmetrized a product of two uncoupled states 
-  //
-  // outputVector = reference on the vector which will contain the symmetrozed state
-  // leftVector = reference on the vector associated to the first color
-  // rightVector = reference on the vector associated to the second color
-  // leftSpace = pointer to the Hilbert space of the first color
-  // rightSpace = pointer to the Hilbert space of the second color
-  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-  // return value = symmetrized state
-  virtual ComplexVector SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
-  
-
-  // symmetrized a product of two uncoupled states 
-  //
-  // outputVector = reference on the vector which will contain the symmetrized state
-  // leftVector = reference on the vector associated to the first color
-  // rightVector = reference on the vector associated to the second color
-  // leftSpace = pointer to the Hilbert space of the first color
-  // rightSpace = pointer to the Hilbert space of the second color
-  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
-  // return value = symmetrized state
-  virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, BosonOnTorusShort* leftSpace, BosonOnTorusShort* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
-  
-  // symmetrized a product of several uncoupled states 
-  //
-  // inputStates = states which will be symmetrized
-  // inputSpaces = Hilbert spaces attached to each states
-  // nbrStates = number of states to symmetrize
-  // architecture = pointer to the architecture 
-  // return value = symmetrized state
-  virtual RealVector SymmetrizeU1U1State (RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, double precision = std::numeric_limits<double>::epsilon(),  AbstractArchitecture* architecture = 0);
-  
-  // symmetrize a product of several uncoupled states 
-  //
-  // inputStates = states which will be symmetrized
-  // inputSpaces = Hilbert spaces attached to each states
-  // nbrStates = number of states to symmetrize
-  // architecture = pointer to the architecture 
-  // return value = symmetrized state
-  virtual ComplexVector SymmetrizeU1U1State (ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, double precision = std::numeric_limits<double>::epsilon(),  AbstractArchitecture* architecture = 0);
-  
-  // symmetrize a product of several uncoupled states 
-  //
-  // outputState = reference on the output state
-  // inputStates = states which will be symmetrized
-  // inputSpaces = Hilbert spaces attached to each states
-  // nbrStates = number of states to symmetrize
-  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
-  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
-  virtual void SymmetrizeU1U1StateCore (RealVector& outputState, RealVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
-  
-  // symmetrized a product of several uncoupled states 
-  //
-  // outputState = reference on the output state
-  // inputStates = states which will be symmetrized
-  // inputSpaces = Hilbert spaces attached to each states
-  // nbrStates = number of states to symmetrize
-  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
-  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
-  virtual void SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, BosonOnTorusShort** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
-  
   // symmetrize a vector with even number of orbitals 
   //
   // outputVector = reference on the vector which will contain the symmetrozed state
@@ -414,7 +351,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // leftSpace = pointer to the Hilbert space
   // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
   // return value = symmetrized state
-  virtual RealVector SymmetrizeU1U1SingleState (RealVector& leftVector, BosonOnTorusShort* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
+  virtual RealVector SymmetrizeU1U1SingleState (RealVector& leftVector, ParticleOnTorus* leftSpace, bool oneInTwoFlag, bool unnormalizedBasisFlag = false, AbstractArchitecture* architecture = 0);
   
   // symmetrize a vector with even number of orbitals 
   //
@@ -423,97 +360,8 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // leftSpace = pointer to the Hilbert space
   // groupNeighbouringOrbitals = group neighbouring orbitals instead of grouping orbitals separated by Nphi
   // return value = symmetrized state
-  virtual ComplexVector SymmetrizeU1U1SingleState (ComplexVector& leftVector, BosonOnTorusShort* leftSpace, bool groupNeighbouringOrbitals,  AbstractArchitecture* architecture = 0);
+  virtual ComplexVector SymmetrizeU1U1SingleState (ComplexVector& leftVector, ParticleOnTorus* leftSpace, bool groupNeighbouringOrbitals,  AbstractArchitecture* architecture = 0);
   
-  
-  // symmetrize a vector with even number of orbitals
-  //
-  // outputVector = reference on the vector which will contain the symmetrozed state
-  // leftVector = reference on the vector associated to the first color
-  // leftSpace = pointer to the Hilbert space of the first color
-  // return value = symmetrized state
-  virtual void SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnTorusShort* leftSpace, unsigned long firstComponent, unsigned long nbrComponents);
-  
-   
-  // symmetrize a vector with even number of orbitals
-  //
-  // outputVector = reference on the vector which will contain the symmetrozed state
-  // leftVector = reference on the vector associated to the first color
-  // leftSpace = pointer to the Hilbert space of the first color
-  // groupNeighbouringOrbitals = group neighbouring orbitals instead of grouping orbitals separated by Nphi
-  // return value = symmetrized state
-  //  virtual void SymmetrizeU1U1SingleStateOneInTwoCore (RealVector& symmetrizedVector, RealVector& leftVector, BosonOnTorusShort* leftSpace, unsigned long firstComponent, unsigned long nbrComponents);
-
-  // symmetrize a vector by grouping neighbouring orbitals
-  //
-  // inputVector = reference on the vector to symmetrize
-  // nbrOrbitals = number of orbitals to group together
-  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
-  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
-  // architecture = pointer to the architecture
-  // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
-
-  // symmetrize a vector by grouping neighbouring orbitals
-  //
-  // inputVector = reference on the vector to symmetrize
-  // nbrOrbitals = number of orbitals to group together
-  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
-  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
-  // architecture = pointer to the architecture
-  // return value = symmetrized state  
-  virtual int SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, 
-								 int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
-
-  // symmetrize a vector by grouping distant and equally separated orbitals
-  //
-  // inputVector = reference on the vector to symmetrize
-  // nbrOrbitals = number of orbitals to group together
-  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
-  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
-  // architecture = pointer to the architecture
-  // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
-
-  // symmetrize a vector by grouping distant and equally separated orbitals
-  //
-  // inputVector = reference on the vector to symmetrize
-  // nbrOrbitals = number of orbitals to group together
-  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
-  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
-  // architecture = pointer to the architecture
-  // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = std::numeric_limits<double>::epsilon());
-
-  // symmetrize a vector by keeping only a subset of equally separated orbitals
-  //
-  // inputVector = reference on the vector to symmetrize
-  // firstOrbitalIndex = index of the first orbital to keep
-  // periodicity = momentum periodicity 
-  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
-  //                      number of particles and the smallest Ky to the largest Ky
-  // nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
-  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
-  // architecture = pointer to the architecture
-  // return value = number of states that have been generated through the symmetrization procedure
-  virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, 
-							   RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
-							   AbstractArchitecture* architecture);
-
-  // symmetrize a vector by keeping only a subset of equally separated orbitals
-  //
-  // inputVector = reference on the vector to symmetrize
-  // firstOrbitalIndex = index of the first orbital to keep
-  // periodicity = momentum periodicity 
-  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
-  //                      number of particles and the smallest Ky to the largest Ky
-  // nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
-  // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
-  // architecture = pointer to the architecture
-  // return value = number of states that have been generated through the symmetrization procedure
-  virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector& inputVector, int firstOrbitalIndex, int periodicity, 
-							   ComplexVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
-							   AbstractArchitecture* architecture);
 
  protected:
 
@@ -614,6 +462,46 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, RealVector& groundState);
   HermitianMatrix  EvaluatePartialDensityMatrixParticlePartition (int nbrBosonSector, int kySector, ComplexVector& groundState);
+  
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrized state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (RealVector& symmetrizedVector, RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrized a product of two uncoupled states 
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // rightVector = reference on the vector associated to the second color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // rightSpace = pointer to the Hilbert space of the second color
+  // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
+
+  // symmetrized a product of several uncoupled states 
+  //
+  // outputState = reference on the output state
+  // inputStates = states which will be symmetrized
+  // inputSpaces = Hilbert spaces attached to each states
+  // nbrStates = number of states to symmetrize
+  // firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+  // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+  virtual void SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
+  
+  // symmetrize a vector with even number of orbitals
+  //
+  // outputVector = reference on the vector which will contain the symmetrozed state
+  // leftVector = reference on the vector associated to the first color
+  // leftSpace = pointer to the Hilbert space of the first color
+  // return value = symmetrized state
+  virtual void SymmetrizeU1U1SingleStateCore (RealVector& symmetrizedVector, RealVector& leftVector, ParticleOnTorus* leftSpace, unsigned long firstComponent, unsigned long nbrComponents);
   
   // symmetrize a vector by grouping neighbouring orbitals, core part
   //
@@ -791,6 +679,24 @@ inline unsigned long BosonOnTorusShort::ConvertFromMonomial(unsigned long* initi
   for (int i = 0; i < this->NbrBosons; ++i)
     Tmp |= 0x1ul << (initialState[i] + ((unsigned long) (this->NbrBosons - i)) - 1ul);
   return Tmp;
+}
+
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int BosonOnTorusShort::GetNbrOrbitals()
+{
+  return this->KyMax;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int BosonOnTorusShort::GetNbrParticles()
+{
+  return this->NbrBosons;
 }
 
 #endif

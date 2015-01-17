@@ -136,3 +136,496 @@ ComplexVector& ParticleOnTorus::CoreC4Rotation (ComplexVector& inputState, Parti
 {
   return outputState;
 }
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+RealVector ParticleOnTorus::SymmetrizeU1U1State (RealVector& leftVector, RealVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  ComplexVector TmpSymmetrizedVector (this->LargeHilbertSpaceDimension,true);
+  ComplexVector TmpLeftVector (leftVector);
+  ComplexVector TmpRightVector (rightVector);
+
+//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+//   Operation.ApplyOperation(architecture);
+  unsigned long firstComponent = 0ul;
+  unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
+//   timeval TotalStartingTime;
+//   gettimeofday (&TotalStartingTime, 0);
+  
+  this->SymmetrizeU1U1StateCore (TmpSymmetrizedVector, TmpLeftVector, TmpRightVector,  leftSpace,  rightSpace , unnormalizedBasisFlag, firstComponent, nbrComponent);
+}
+  
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrozed state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+ComplexVector ParticleOnTorus::SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture)
+{
+  ComplexVector SymmetrizedVector(this->LargeHilbertSpaceDimension, true);
+//   timeval TotalStartingTime;
+//   gettimeofday (&TotalStartingTime, 0);
+//   FQHETorusSymmetrizeU1U1StateOperation Operation (this, leftSpace, rightSpace, &SymmetrizedVector, &leftVector, &rightVector, unnormalizedBasisFlag);
+//   Operation.ApplyOperation(architecture);
+  unsigned long firstComponent = 0ul;
+  unsigned long nbrComponent = leftSpace->GetLargeHilbertSpaceDimension();
+  this->SymmetrizeU1U1StateCore (SymmetrizedVector, leftVector, rightVector,  leftSpace,  rightSpace, unnormalizedBasisFlag, firstComponent, nbrComponent);
+//   timeval TotalEndingTime;
+//   gettimeofday (&TotalEndingTime, 0);
+//   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) + 		(((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+//   cout << this->FirstComponent << " " <<  this->NbrComponent << " : " << Dt << "s" << endl;
+//   cout << SymmetrizedVector.Norm() << endl;
+  if (unnormalizedBasisFlag == false)
+    SymmetrizedVector /= SymmetrizedVector.Norm();
+  return SymmetrizedVector;
+}
+  
+// symmetrized a product of several uncoupled states 
+//
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// architecture = pointer to the architecture 
+// return value = symmetrized state
+
+RealVector ParticleOnTorus::SymmetrizeU1U1State (RealVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, double precision, AbstractArchitecture* architecture)
+{
+  ComplexVector* TmpVectors = new ComplexVector[nbrStates];
+  for (int i = 0 ; i < nbrStates; ++i)
+    {
+      TmpVectors[i] = ComplexVector(inputStates[i]);
+    }
+  ComplexVector TmpOutputState (this->LargeHilbertSpaceDimension, true); 
+  unsigned long FirstComponent = 0;
+  unsigned long NbrComponents = inputSpaces[0]->GetHilbertSpaceDimension();
+  this->SymmetrizeU1U1StateCore(TmpOutputState, TmpVectors, inputSpaces, nbrStates, FirstComponent, NbrComponents);
+  delete[] TmpVectors;
+  return RealVector(TmpOutputState);
+}
+
+// symmetrize a product of several uncoupled states 
+//
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// architecture = pointer to the architecture 
+// return value = symmetrized state
+
+ComplexVector ParticleOnTorus::SymmetrizeU1U1State (ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, double precision,  AbstractArchitecture* architecture)
+{
+  ComplexVector SymmetrizedVector (this->LargeHilbertSpaceDimension, true);
+  unsigned long FirstComponent = 0;
+  unsigned long NbrComponents = inputSpaces[0]->GetHilbertSpaceDimension();
+  this->SymmetrizeU1U1StateCore (SymmetrizedVector, inputStates, inputSpaces, nbrStates, FirstComponent, NbrComponents);
+  double TmpNorm = SymmetrizedVector.Norm();
+  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+  if (TmpNorm > precision)
+    SymmetrizedVector /= TmpNorm;
+  return SymmetrizedVector;
+}
+
+// symmetrize a vector by grouping neighbouring orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int ParticleOnTorus::SymmetrizeSingleStateGroupingNeighbouringOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
+{
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  ComplexVector TmpInputVector(inputVector, true);
+  this->SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore(TmpInputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
+	    {
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }
+	}     
+    }  
+  delete[] TmpVectors;
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping neighbouring orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int ParticleOnTorus::SymmetrizeSingleStateGroupingNeighbouringOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
+{
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  this->SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
+	    {
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }
+	}     
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping distant and equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& inputVector, int nbrOrbitals, RealVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
+{
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  ComplexVector TmpInputVector(inputVector, true);
+  this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(TmpInputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
+	    {
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }
+	}     
+    }  
+  delete[] TmpVectors;
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by grouping distant and equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = symmetrized state
+
+int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
+{
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / nbrOrbitals;
+  ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
+  this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)	
+	{
+	  ++NbrGeneratedSectors;
+	}     
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TmpVectors[i].GetVectorDimension() != 0)
+	{
+	  double TmpNorm = TmpVectors[i].Norm();
+	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
+	  if (TmpNorm > precision)
+	    {
+	      TmpVectors[i] /= TmpNorm;
+	      symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i];
+	      kySectors[NbrGeneratedSectors] = i;
+	      ++NbrGeneratedSectors;	  
+	    }
+	}     
+    }  
+  return NbrGeneratedSectors;
+}
+
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// periodicity = momentum periodicity 
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+//                      number of particles and the smallest Ky to the largest Ky
+// nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = number of states that have been generated through the symmetrization procedure
+
+int ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector& inputVector, int firstOrbitalIndex, int periodicity, 
+								    RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+								    AbstractArchitecture* architecture)
+{
+  double NormError = MACHINE_PRECISION;
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / periodicity;
+  ComplexVector TmpInputVector(inputVector, true);
+  ComplexVector** TmpVectors = new ComplexVector*[this->GetNbrParticles() + 1];
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      TmpVectors[i] = new ComplexVector[TargetSpaceNbrOrbitals];
+    }
+  this->SymmetrizeSingleStatePeriodicSubsetOrbitalCore(TmpInputVector, TmpVectors, firstOrbitalIndex, periodicity, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      ++NbrGeneratedSectors;
+	    }     
+	}
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new RealVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  nbrParticlesSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      double TmpNorm = TmpVectors[i][j].Norm();
+	      if (TmpNorm > NormError)
+		{
+		  TmpVectors[i][j] /= TmpNorm; 
+		  symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i][j];
+		  kySectors[NbrGeneratedSectors] = j;
+		  nbrParticlesSectors[NbrGeneratedSectors] = i;
+		  ++NbrGeneratedSectors;	  
+		}
+	    }     
+	}
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// periodicity = momentum periodicity 
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+//                      number of particles and the smallest Ky to the largest Ky
+// nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = number of states that have been generated through the symmetrization procedure
+
+int ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector& inputVector, int firstOrbitalIndex, int periodicity, 
+								    ComplexVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+								    AbstractArchitecture* architecture)
+{
+  double NormError = MACHINE_PRECISION;
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / periodicity;
+  ComplexVector** TmpVectors = new ComplexVector*[this->GetNbrParticles() + 1];
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      TmpVectors[i] = new ComplexVector[TargetSpaceNbrOrbitals];
+    }
+  this->SymmetrizeSingleStatePeriodicSubsetOrbitalCore(inputVector, TmpVectors, firstOrbitalIndex, periodicity, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      ++NbrGeneratedSectors;
+	    }     
+	}
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  nbrParticlesSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      double TmpNorm = TmpVectors[i][j].Norm();
+	      if (TmpNorm > NormError)
+		{
+		  TmpVectors[i][j] /= TmpNorm; 
+		  symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i][j];
+		  kySectors[NbrGeneratedSectors] = j;
+		  nbrParticlesSectors[NbrGeneratedSectors] = i;
+		  ++NbrGeneratedSectors;	  
+		}     
+	    }
+	}
+    }  
+  return NbrGeneratedSectors;
+}
+
+// symmetrized a product of two uncoupled states 
+//
+// outputVector = reference on the vector which will contain the symmetrized state
+// leftVector = reference on the vector associated to the first color
+// rightVector = reference on the vector associated to the second color
+// leftSpace = pointer to the Hilbert space of the first color
+// rightSpace = pointer to the Hilbert space of the second color
+// unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
+// return value = symmetrized state
+
+void ParticleOnTorus::SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, ParticleOnTorus* leftSpace, ParticleOnTorus* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+
+// symmetrize a product of several uncoupled states 
+//
+// outputState = reference on the output state
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+// nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+
+void ParticleOnTorus::SymmetrizeU1U1StateCore (RealVector& outputState, RealVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+  
+// symmetrized a product of several uncoupled states 
+//
+// outputState = reference on the output state
+// inputStates = states which will be symmetrized
+// inputSpaces = Hilbert spaces attached to each states
+// nbrStates = number of states to symmetrize
+// firstComponent = first component to symmetrize within the first Hilbert space of inputSpaces
+// nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
+
+void ParticleOnTorus::SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+  
+
+// symmetrize a vector by grouping neighbouring orbitals, core part
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// first component = index of the first vector component 
+// last component = index of the last component
+
+void ParticleOnTorus::SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, 
+									     unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+
+// symmetrize a vector by grouping distant and equally separated orbitals, core part
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// first component = index of the first vector component 
+// last component = index of the last component
+
+void ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, 
+									int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+// periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+								      unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+

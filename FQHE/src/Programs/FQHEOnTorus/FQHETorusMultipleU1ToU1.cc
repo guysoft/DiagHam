@@ -5,6 +5,7 @@
 
 #include "HilbertSpace/BosonOnSphereShort.h"
 #include "HilbertSpace/BosonOnTorusShort.h"
+#include "HilbertSpace/FermionOnTorus.h"
 
 #include "Options/Options.h"
 
@@ -93,7 +94,7 @@ int main(int argc, char** argv)
   int NbrFluxQuanta1 = 0; 
   int TotalKy1 = 0;
   bool Statistics = true;
-  BosonOnTorusShort* Space1 = 0;
+  ParticleOnTorus* Space1 = 0;
   bool UnnormalizedBasisFlag = false;
   bool SingleStateFlag = Manager.GetBoolean("single-state");
   int NbrStates = 1;
@@ -107,7 +108,14 @@ int main(int argc, char** argv)
 	  cout << "error while retrieving system parameters from file name " << Manager.GetString("state-1") << endl;
 	  return -1;
 	}
-      Space1 = new BosonOnTorusShort(NbrParticles1, NbrFluxQuanta1, TotalKy1);
+      if (Statistics == true)
+	{
+	  Space1 = new FermionOnTorus(NbrParticles1, NbrFluxQuanta1, TotalKy1);
+	}
+      else
+	{ 
+	  Space1 = new BosonOnTorusShort(NbrParticles1, NbrFluxQuanta1, TotalKy1);
+	}
     }
   else
     {
@@ -124,7 +132,14 @@ int main(int argc, char** argv)
 	  cout << "error while retrieving system parameters from file name " << MultipleStateFile(0, 0) << endl;
 	  return -1;
 	}
-      Space1 = new BosonOnTorusShort(NbrParticles1, NbrFluxQuanta1, TotalKy1);      
+      if (Statistics == true)
+	{
+	  Space1 = new FermionOnTorus(NbrParticles1, NbrFluxQuanta1, TotalKy1);      
+	}
+      else
+	{  
+	  Space1 = new BosonOnTorusShort(NbrParticles1, NbrFluxQuanta1, TotalKy1);      
+	}
     }
 
   if ((SingleStateFlag == true) && ((NbrFluxQuanta1 % Manager.GetInteger("nbr-orbitals")) != 0))
@@ -134,8 +149,8 @@ int main(int argc, char** argv)
     }
 	  
   
-  BosonOnTorusShort** InputSpaces = 0;
-  BosonOnTorusShort* TargetSpace = 0; 
+  ParticleOnTorus** InputSpaces = 0;
+  ParticleOnTorus* TargetSpace = 0; 
   int TotalNbrParticles = NbrParticles1;
   int TotalKy = TotalKy1;
   if (SingleStateFlag == false)    
@@ -152,7 +167,7 @@ int main(int argc, char** argv)
 	    {
 	      cout << "can't open file " << Manager.GetString("state-2") << endl;
 	    }
-	  InputSpaces = new BosonOnTorusShort*[NbrStates];
+	  InputSpaces = new ParticleOnTorus*[NbrStates];
 	  InputSpaces[0] = Space1;
 	  int NbrParticles2 = 0; 
 	  int NbrFluxQuanta2 = 0; 
@@ -171,7 +186,14 @@ int main(int argc, char** argv)
 	    }
 	  TotalNbrParticles += NbrParticles2;
 	  TotalKy += TotalKy2;
-	  InputSpaces[1] = new BosonOnTorusShort(NbrParticles2, NbrFluxQuanta1, TotalKy2);
+	  if (Statistics == true)
+	    {
+	      InputSpaces[1] = new FermionOnTorus(NbrParticles2, NbrFluxQuanta1, TotalKy2);
+	    }
+	  else
+	    {
+	      InputSpaces[1] = new BosonOnTorusShort(NbrParticles2, NbrFluxQuanta1, TotalKy2);
+	    }
 	} 
       else
 	{
@@ -181,7 +203,7 @@ int main(int argc, char** argv)
 	      MultipleStateFile.DumpErrors(cout);
 	      return -1;
 	    }
-	  InputSpaces = new BosonOnTorusShort*[NbrStates];
+	  InputSpaces = new ParticleOnTorus*[NbrStates];
 	  InputSpaces[0] = Space1;
 	  for (int i = 1; i < NbrStates; ++i)
 	    {
@@ -202,12 +224,26 @@ int main(int argc, char** argv)
 		}
 	      TotalNbrParticles += NbrParticles2;
 	      TotalKy += TotalKy2;
-	      InputSpaces[i] = new BosonOnTorusShort(NbrParticles2, NbrFluxQuanta1, TotalKy2);
+	      if (Statistics == true)
+		{
+		  InputSpaces[i] = new FermionOnTorus(NbrParticles2, NbrFluxQuanta1, TotalKy2);
+		}
+	      else
+		{
+		  InputSpaces[i] = new BosonOnTorusShort(NbrParticles2, NbrFluxQuanta1, TotalKy2);
+		}
 	    }
 	}
       TotalKy %= NbrFluxQuanta1;
       cout << "target space N="<< TotalNbrParticles << " Nphi=" << NbrFluxQuanta1 << " Ky=" << TotalKy << endl;
-      TargetSpace = new BosonOnTorusShort(TotalNbrParticles, NbrFluxQuanta1, TotalKy);	       
+      if (Statistics == true)
+	{
+	  TargetSpace = new FermionOnTorus(TotalNbrParticles, NbrFluxQuanta1, TotalKy);	       
+	}
+      else
+	{
+	  TargetSpace = new BosonOnTorusShort(TotalNbrParticles, NbrFluxQuanta1, TotalKy);	       
+	}
     }
 
   if (HaveComplex == false)
@@ -255,7 +291,14 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      OutputFileName = new char [512];
-	      sprintf (OutputFileName, "bosons_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
+	      if (Statistics == true)
+		{
+		  sprintf (OutputFileName, "fermions_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "bosons_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
+		}
 	    }
 	  
       	  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision, Architecture.GetArchitecture());

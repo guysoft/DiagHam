@@ -64,6 +64,16 @@ class ParticleOnSphere :  public AbstractQHEParticle
   //
   virtual ~ParticleOnSphere ();
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -987,6 +997,24 @@ inline int ConvertLzFromSphereToDisk (int lzValue, int nbrParticles, int nbrFlux
 inline int ConvertLzFromDiskToSphere (int lzValue, int nbrParticles, int nbrFluxQuanta)
 {
   return ((2 * lzValue) - (nbrParticles * nbrFluxQuanta));
+}
+
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int ParticleOnSphere::GetNbrOrbitals()
+{
+  return -1;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int ParticleOnSphere::GetNbrParticles()
+{
+  return -1;
 }
 
 #endif

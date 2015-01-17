@@ -5243,10 +5243,11 @@ bool FermionOnSphere::HasPauliExclusions(int index, int pauliK, int pauliR)
 {
   unsigned long TmpState = this->StateDescription[index];
   int TmpLzMax = this->StateLzMax[index];
-  unsigned long Mask = (0x1ul<<pauliR)-1;
+  unsigned long Mask = (0x1ul << pauliR) - 1;
   unsigned long Sequence;
   int Max = TmpLzMax + 2 - pauliR;
-  
+  if (Max < 1)
+    Max = 1;
   for (int m = 0; m < Max; ++m)
     {
       Sequence = TmpState & (Mask << m);

@@ -268,19 +268,39 @@ int main(int argc, char** argv)
       OutputFileName = new char [512];
       if (Manager.GetBoolean("single-state") == false)
 	{
-	  if (Manager.GetBoolean("unnormalized-basis") == false)
+	  if (Statistics == false)
 	    {
-	      if (Manager.GetBoolean("haldane-output") == true)
-		sprintf (OutputFileName, "bosons_haldane_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+	      if (Manager.GetBoolean("unnormalized-basis") == false)
+		{
+		  if (Manager.GetBoolean("haldane-output") == true)
+		    sprintf (OutputFileName, "bosons_haldane_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		  else
+		    sprintf (OutputFileName, "bosons_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		}
 	      else
-		sprintf (OutputFileName, "bosons_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		{
+		  if (Manager.GetBoolean("haldane-output") == true)
+		    sprintf (OutputFileName, "bosons_haldane_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		  else
+		    sprintf (OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		}
 	    }
 	  else
 	    {
-	      if (Manager.GetBoolean("haldane-output") == true)
-		sprintf (OutputFileName, "bosons_haldane_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+	      if (Manager.GetBoolean("unnormalized-basis") == false)
+		{
+		  if (Manager.GetBoolean("haldane-output") == true)
+		    sprintf (OutputFileName, "fermions_haldane_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		  else
+		    sprintf (OutputFileName, "fermions_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		}
 	      else
-		sprintf (OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		{
+		  if (Manager.GetBoolean("haldane-output") == true)
+		    sprintf (OutputFileName, "fermions_haldane_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		  else
+		    sprintf (OutputFileName, "fermions_unnormalized_symmetrized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles1 + NbrParticles2, NbrFluxQuanta2, (TotalLz1 + TotalLz2));
+		}
 	    }
 	}
       else

@@ -98,7 +98,7 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
       cout << "symmetrizing B matrices" << endl;
       this->RealBMatrices[0] = TensorProduct(this->MPSMatrix1->GetMatrices()[0], this->MPSMatrix2->GetMatrices()[0]);
       this->RealBMatrices[1] = (TensorProduct(this->MPSMatrix1->GetMatrices()[1], this->MPSMatrix2->GetMatrices()[0])
-				+ TensorProduct(this->MPSMatrix1->GetMatrices()[0], this->MPSMatrix2->GetMatrices()[1]));
+				- TensorProduct(this->MPSMatrix1->GetMatrices()[0], this->MPSMatrix2->GetMatrices()[1]));
     }
   this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
