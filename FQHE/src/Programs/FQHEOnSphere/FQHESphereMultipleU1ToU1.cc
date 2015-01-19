@@ -756,6 +756,8 @@ int main(int argc, char** argv)
 	      for (int i = 0; i < NbrLzSectors; ++i)
 		{
 		  cout << "state generated in the N=" << NbrParticleSectors[i] << " 2*Lz=" << LzSectors[i] << " sector" << endl;
+		  if ((Manager.GetBoolean("conserve-particles") == false) || (NbrParticleSectors[i] == NbrParticles1))
+		  {
 		  LongRationalVector& RationalOutputState = RationalOutputStates[i];
 		  bool zeroFlag = true;
 		  int RootPosition = 0;
@@ -822,6 +824,7 @@ int main(int argc, char** argv)
 			}
 		      ++NbrGeneratedStates;
 		    }
+		  }
 		}
 	      cout << "Symmetrization has generated " << NbrGeneratedStates << " state(s)" << endl;
 	    }
