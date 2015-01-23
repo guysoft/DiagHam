@@ -249,16 +249,20 @@ int main(int argc, char** argv)
     }
   else
     {
-      if (((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) 
-	{
-	  cout << "Error: number of orbitals should be a multiple of " << Manager.GetInteger("nbr-orbitals") << " for symmetrization of a single state" << endl;
-	  return -1;
-	}
+//       if (((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) 
+// 	{
+// 	  cout << "Error: number of orbitals should be a multiple of " << Manager.GetInteger("nbr-orbitals") << " for symmetrization of a single state" << endl;
+// 	  return -1;
+// 	}
     }
   
   
   
   char* OutputFileName = 0;
+  int NbrFluxQuanta = (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1);
+  if ((Manager.GetBoolean("subset-symmetrization")) && (((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) && (Manager.GetInteger("subset-shift") < ((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals"))))
+    NbrFluxQuanta += 1;
+  
   if (Manager.GetString("output-file") != 0)
     {
       OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
@@ -310,26 +314,22 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("unnormalized-basis") == false)
 		{
-		  sprintf(OutputFileName, "bosons_symmetrized_n_%d_2s_%d", NbrParticles1, 
-			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		  sprintf(OutputFileName, "bosons_symmetrized_n_%d_2s_%d", NbrParticles1, NbrFluxQuanta);
 		}
 	      else
 		{
-		  sprintf(OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d", NbrParticles1, 
-			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		  sprintf(OutputFileName, "bosons_unnormalized_symmetrized_n_%d_2s_%d", NbrParticles1, NbrFluxQuanta);
 		}
 	    }
 	  else
 	    {
 	      if (Manager.GetBoolean("unnormalized-basis") == false)
 		{
-		  sprintf(OutputFileName, "fermions_symmetrized_n_%d_2s_%d", NbrParticles1, 
-			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		  sprintf(OutputFileName, "fermions_symmetrized_n_%d_2s_%d", NbrParticles1,NbrFluxQuanta);
 		}
 	      else
 		{
-		  sprintf(OutputFileName, "fermions_unnormalized_symmetrized_n_%d_2s_%d", NbrParticles1, 
-			  (((NbrFluxQuanta1 + 1) / ((int) Manager.GetInteger("nbr-orbitals"))) - 1));
+		  sprintf(OutputFileName, "fermions_unnormalized_symmetrized_n_%d_2s_%d", NbrParticles1, NbrFluxQuanta);
 		}
 	    }
 	}
@@ -438,6 +438,8 @@ int main(int argc, char** argv)
 											 Manager.GetInteger("nbr-orbitals"),Manager.GetBoolean("unnormalized-basis"),
 											 OutputStates, NbrParticleSectors, LzSectors);
 			TargetNbrFluxQuanta = ((NbrFluxQuanta1 + 1) / Manager.GetInteger("nbr-orbitals")) - 1;
+			if ((((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) && (Manager.GetInteger("subset-shift") < ((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals"))))
+			  TargetNbrFluxQuanta += 1;
 		      }
 		      else
 		      {
@@ -728,6 +730,8 @@ int main(int argc, char** argv)
 												  Manager.GetInteger("nbr-orbitals"),
 												  RationalOutputStates, NbrParticleSectors, LzSectors);
 		      TargetNbrFluxQuanta = ((NbrFluxQuanta1 + 1) / Manager.GetInteger("nbr-orbitals")) - 1;
+		      if ((((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) && (Manager.GetInteger("subset-shift") < ((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals"))))
+			  TargetNbrFluxQuanta += 1;
 		    }
 		  else
 		    {

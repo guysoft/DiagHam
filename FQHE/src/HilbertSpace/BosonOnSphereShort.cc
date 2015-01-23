@@ -6376,7 +6376,9 @@ int BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitals (RealVector&
 								     RealVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors)
 {
   int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
-      RealVector** TmpVectors = new RealVector*[this->NbrBosons + 1];
+  if ((((this->LzMax + 1) % periodicity) != 0) && firstOrbitalIndex < ((this->LzMax + 1) % periodicity))
+    TargetSpaceNbrOrbitals += 1; 
+   RealVector** TmpVectors = new RealVector*[this->NbrBosons + 1];
   for (int i = 0; i <= this->NbrBosons; ++i)
     {
       int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
@@ -6433,6 +6435,8 @@ void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVec
 {
   long LastComponent = (long) (firstComponent + nbrComponents);
   int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
+  if ((((this->LzMax + 1) % periodicity) != 0) && firstOrbitalIndex < ((this->LzMax + 1) % periodicity))
+    TargetSpaceNbrOrbitals += 1; 
   BosonOnSphereShort*** TargetSpaces = new BosonOnSphereShort** [this->NbrBosons + 1];
   for (int i = 0; i <= this->NbrBosons; ++i)
     {
@@ -6494,8 +6498,10 @@ void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVec
       double TmpCoefficient = inputVector[i];
       this->FermionToBoson(this->FermionBasis->StateDescription[i], this->FermionBasis->StateLzMax[i], 
 			   this->TemporaryState, this->TemporaryStateLzMax);
+      
       for (int k = this->TemporaryStateLzMax + 1; k <= this->LzMax; ++k)
 	this->TemporaryState[k] = 0x0ul;
+      
       int TmpTotalLz = 0;
       int TmpNbrParticles = 0;
       int Index = 0;
@@ -6532,13 +6538,16 @@ void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (RealVec
 	    
 	    for (int l = 0; l < periodicity; ++l)
 	      {
-		for (int j = 0; j < this->TemporaryState[k * periodicity + l]; ++j)
-		{		  
-		  Factorial1.FactorialDivide(periodicity*k + l);
-		  Factorial1.FactorialMultiply(this->LzMax);		  
-		  Factorial1.FactorialDivide(this->LzMax - (periodicity*k + l));
-		  if (l != firstOrbitalIndex)
-		    Factorial1.FactorialDivide(this->TemporaryState[k * periodicity + l]);
+		if ((k * periodicity + l) <= this->LzMax)
+		{
+		  for (int j = 0; j < this->TemporaryState[k * periodicity + l]; ++j)
+		  {		  
+		    Factorial1.FactorialDivide(periodicity*k + l);
+		    Factorial1.FactorialMultiply(this->LzMax);		  
+		    Factorial1.FactorialDivide(this->LzMax - (periodicity*k + l));
+		    if (l != firstOrbitalIndex)
+		      Factorial1.FactorialDivide(this->TemporaryState[k * periodicity + l]);
+		  }
 		}
 	      }
 	    }

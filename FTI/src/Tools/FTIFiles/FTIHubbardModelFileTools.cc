@@ -301,7 +301,7 @@ bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& 
     {
       return false;
     }
-    
+//   cout << nbrParticles << " " << nbrSites  << endl;
   char* StrNbrParticles;
   int SizeString;
   StrNbrParticles = strstr(filename, "_sz_");
