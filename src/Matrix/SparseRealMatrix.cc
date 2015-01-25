@@ -1632,6 +1632,8 @@ SparseRealMatrix Conjugate (SparseRealMatrix* matrix1, SparseRealMatrix* matrix2
 
 SparseRealMatrix SparseRealMatrix::Transpose ()
 {
+  if (this->NbrMatrixElements == 0)
+    return SparseRealMatrix(this->NbrColumn, this->NbrRow);
   SparseRealMatrix TmpMatrix (this->NbrColumn, this->NbrRow, this->NbrMatrixElements);
   for (int i = 0; i < TmpMatrix.NbrRow; ++i)
     {

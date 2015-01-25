@@ -1,5 +1,6 @@
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
+#include "Vector/LongRationalVector.h"
 
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
@@ -33,6 +34,14 @@ using std::endl;
 using std::ofstream;
 
 
+// resuffle an array of vectors such that the first vector is the one with the first non-zero component having the smallest index
+//
+// vectors = array of vectors
+// nbrVectors = numerb of vectors
+// return value = index of the first non-zero component for the first vector 
+int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors);
+
+
 int main(int argc, char** argv)
 {
   cout.precision(14);
@@ -48,8 +57,10 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new BooleanOption  ('c', "complex", "Assume vectors consist of complex numbers");
+  (*SystemGroup) += new BooleanOption  ('\n', "rational" , "use rational numbers instead of double precision floating point numbers");
   (*SystemGroup) += new  SingleStringOption ('b', "basis", "name of the file that contains the vector files used to describe the basis");
   (*SystemGroup) += new BooleanOption ('\n', "check-only", "check how many vectors are linearly independent without extracting the basis");
+  (*SystemGroup) += new BooleanOption ('\n', "quiet", "only output the minimal amount of information");
   (*SystemGroup) += new SingleDoubleOption ('\n', "error", "bound above which vectors are consider as linearly independent", 1e-10);
   (*SystemGroup) += new  SingleStringOption ('\n', "vector-prefix", "prefix to use for each vector of the basis", "vector");
   (*SystemGroup) += new  SingleStringOption ('\n', "export-overlap", "optional file name to export the overlap matrix (in text mode)");
@@ -103,7 +114,8 @@ int main(int argc, char** argv)
 	    {
 	      TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
 	    }
-	  cout << "reading vector " << TmpName << endl;
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << "reading vector " << TmpName << endl;
 	  if (Basis[i].ReadVector(TmpName) == false)
 	    {
 	      cout << "error while reading " << TmpName << endl;
@@ -151,7 +163,10 @@ int main(int argc, char** argv)
 		Count++;
 	    }
 	  cout << endl;
-	  cout << Count << " linearly independent vectors" << endl;
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << Count << " linearly independent vectors" << endl;
+	  else
+	    cout << Count << endl;
 	}
       else
 	{
@@ -189,7 +204,10 @@ int main(int argc, char** argv)
 		}
 	    }
 	  cout << endl;
-	  cout << Count << " linearly independent vectors" << endl;
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << Count << " linearly independent vectors" << endl;
+	  else
+	    cout << Count << endl;
 	  if (Manager.GetString("export-transformation") != 0)
 	    {
 	      TmpEigenvector.WriteAsciiMatrix(Manager.GetString("export-transformation"));
@@ -209,6 +227,91 @@ int main(int argc, char** argv)
       return 0;
       
     }
+
+  if (Manager.GetBoolean("rational"))
+    {
+      LongRationalVector* Basis = new LongRationalVector[NbrVectors];
+      char* DirectoryName = ReducedBasis["Directory"];
+      char* TmpName;
+      for (int i = 0; i < NbrVectors; ++i)
+	{
+	  TmpName = VectorFileNames[i];
+	  if (DirectoryName != 0)
+	    {
+	      TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
+	    }
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << "reading vector " << TmpName << endl;
+	  if (Basis[i].ReadVector(TmpName) == false)
+	    {
+	      cout << "error while reading " << TmpName << endl;
+	      if (DirectoryName != 0)
+		delete[] DirectoryName;
+	      for (int j = 0; j < NbrVectors; ++j)
+		delete[] VectorFileNames[j];
+	      delete[] VectorFileNames;
+	      return -1;
+	    }
+	  if (DirectoryName != 0)
+	    delete[] TmpName;
+	}
+      int MinTmpPos = ReshuffleVectors(Basis, NbrVectors);
+      if (Basis[0].IsNullVector() == false)
+	{
+	  LongRational Tmp = Basis[0][MinTmpPos];
+	  Basis[0] /= Tmp;
+	  for (int k = 1; k < NbrVectors; ++k)
+	    {
+	      for (int j = k; j < NbrVectors; ++j)
+		{
+		  Basis[j].AddLinearCombination(-Basis[j][MinTmpPos], Basis[k -1]);
+		}
+	      MinTmpPos = ReshuffleVectors(Basis + k, NbrVectors - k);
+	      if (Basis[k].IsNullVector() == false)
+		{
+		  Tmp = Basis[k][MinTmpPos];
+		  Basis[k] /= Tmp;
+		  for (int j = 0; j < k; ++j)
+		    {
+		      Basis[j].AddLinearCombination(-Basis[j][MinTmpPos], Basis[k]);
+		    }
+		}
+	    }
+	}
+      if (Manager.GetBoolean("check-only") == true)	
+	{
+	  int Count = 0;
+	  for (int i = 0; i < NbrVectors; ++i)
+	    {
+	      if (Basis[i].IsNullVector() == false)
+		Count++;
+	    }
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << Count << " linearly independent vectors" << endl;
+	  else
+	    cout << Count << endl;
+	}
+      else
+	{
+	  char* OutputVectorFileName = new char [strlen(VectorPrefix) + 32];
+	  int TmpDimension = Basis[0].GetVectorDimension();
+	  int Count = 0;
+	  for (int i = 0; i < NbrVectors; ++i)
+	    {
+	      if (Basis[i].IsNullVector() == false)
+		{
+		  sprintf (OutputVectorFileName, "%s%d.vec", VectorPrefix, Count);
+		  Basis[i].WriteVector(OutputVectorFileName);
+		  Count++;
+		}
+	    }
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << Count << " linearly independent vectors" << endl;
+	  else
+	    cout << Count << endl;
+	}
+      return 0;
+    }
   else
     {
       RealVector * Basis = new RealVector[NbrVectors];
@@ -222,7 +325,8 @@ int main(int argc, char** argv)
 	    {
 	      TmpName = ConcatenatePathAndFileName(DirectoryName, TmpName);
 	    }
-	  cout << "reading vector " << TmpName << endl;
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << "reading vector " << TmpName << endl;
 	  if (Basis[i].ReadVector(TmpName) == false)
 	    {
 	      cout << "error while reading " << TmpName << endl;
@@ -270,7 +374,10 @@ int main(int argc, char** argv)
 		Count++;
 	    }
 	  cout << endl;
-	  cout << Count << " linearly independent vectors" << endl;
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << Count << " linearly independent vectors" << endl;
+	  else
+	    cout << Count << endl;
 	}
       else
 	{
@@ -308,7 +415,10 @@ int main(int argc, char** argv)
 		}
 	    }
 	  cout << endl;
-	  cout << Count << " linearly independent vectors" << endl;
+	  if (Manager.GetBoolean("quiet") == false)
+	    cout << Count << " linearly independent vectors" << endl;
+	  else
+	    cout << Count << endl;
 	  if (Manager.GetString("export-transformation") != 0)
 	    {
 	      TmpEigenvector.WriteAsciiMatrix(Manager.GetString("export-transformation"));
@@ -328,4 +438,36 @@ int main(int argc, char** argv)
       return 0;
     }
   return 0;
+}
+
+// resuffle an array of vectors such that the first vector is the one with the first non-zero component having the smallest index
+//
+// vectors = array of vectors
+// nbrVectors = numerb of vectors
+// return value = index of the first non-zero component for the first vector 
+
+int ReshuffleVectors (LongRationalVector* vectors, int nbrVectors)
+{
+  int MinTmpPos = vectors[0].GetVectorDimension();
+  int TmpVectorPos = 0;
+  for (int j = 0; j < nbrVectors; ++j)      
+    {
+      int TmpPos = 0;
+      while ((TmpPos < vectors[j].GetVectorDimension()) && (vectors[j][TmpPos].IsZero() == true))
+	{
+	  TmpPos++;
+	}
+      if (TmpPos < MinTmpPos)
+	{
+	  TmpVectorPos = j;
+	  MinTmpPos = TmpPos;
+	}
+    }
+  if (TmpVectorPos != 0)
+    {
+      LongRationalVector TmpVector = vectors[TmpVectorPos];
+      vectors[TmpVectorPos] = vectors[0];
+      vectors[0] = TmpVector;
+    }
+  return MinTmpPos;
 }
