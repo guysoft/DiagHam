@@ -80,23 +80,17 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
 
   // destructor
   //
-  ~ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian();
-  
-  // clone hamiltonian without duplicating datas
-  //
-  // return value = pointer to cloned hamiltonian
-  AbstractHamiltonian* Clone ();
-
-	
+  virtual ~ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian();
+  	
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
-  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
   
   // shift Hamiltonian from a given energy
   //
   // shift = shift value
-  void ShiftHamiltonian (double shift);
+  virtual void ShiftHamiltonian (double shift);
   
  protected:
   
@@ -111,19 +105,26 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // return value = numerical coefficient  
   virtual double EvaluateInteractionCoefficient(double* creationCoefficients, double* annihilationCoefficients);
   
-  // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term in the case where they have been precalculated
+  // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_n, assuming bosonic operators
   //
-  //mIndices  = array that contains the creation indices
-  //nIndices = array that contains the annihilation indices
-  //return value = numerical coefficient
+  // mIndices = array contaning the creation indices
+  // nIndices = array contaning the annihilation indices
+  // return value = numerical coefficient
   virtual double EvaluateInteractionNIndexSymmetrizedCoefficient(int* mIndices, int* nIndices);
+
+  // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_n, assuming fermionic operators
+  //
+  // mIndices = array contaning the creation indices
+  // nIndices = array contaning the annihilation indices
+  // return value = numerical coefficient
+  virtual double EvaluateInteractionNIndexAntiSymmetrizedCoefficient(int* mIndices, int* nIndices);
 
   // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation operators only) for each integer modulo the NBodyValue
   //
   // mIndices = array that contains the creation indices
   // momentumTransfer = momentum transfer operated by the \prod_i a+_mi \prod_j a_nj operator, in units of the number of flux quanta
   // return value = array of numerical coefficients 
-  double* EvaluateInteractionCoefficientCreation(int* mIndices, int momentumTransfer);
+  virtual double* EvaluateInteractionCoefficientCreation(int* mIndices, int momentumTransfer);
   
   
   // evaluate the two nested Gaussian sum for a three body interaction (for test purposes)
@@ -131,7 +132,7 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // momFactor = array of indices that contains the information of the creation (or annihilation) indices
   // TmpIndices = array of indices that gives the initial indices that will be incremented in the sum
   // return value = value of the sum
-  double EvaluateGaussianSum(int* momFactor, int* TmpIndices);
+  virtual double EvaluateGaussianSum(int* momFactor, int* TmpIndices);
   
   
   // evaluate the N nested infinite sums of EvaluateInteractionCoefficientCreation
@@ -142,7 +143,7 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // countIter = array of integers giving, for each TmpIndices[i], the number of times it has been incremented
   // momFactor = array of indices that contains the information of the creation (or annihilation) indices
   //return value = value of the coefficient
-  double EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor);
+  virtual double EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor);
   
    
   // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
@@ -157,10 +158,14 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
 
 };
 
+// evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_n, assuming bosonic operators
+//
+// mIndices = array contaning the creation indices
+// nIndices = array contaning the annihilation indices
+// return value = numerical coefficient
+
 inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionNIndexSymmetrizedCoefficient(int* mIndices, int* nIndices)
-{
-  
-  
+{  
   double DoubleNbrLzValue = (double) this->NbrLzValue;
   FactorialCoefficient FactorialNBody;
   FactorialNBody.SetToOne();
@@ -168,40 +173,40 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
   double FinalFactor = FactorialNBody.GetNumericalValue();
   for (int i = 0; i < this->NBodyValue; ++i)
     FinalFactor *= (M_PI * DoubleNbrLzValue);
- 
   
- int* mIndices2 = new int[this->NBodyValue];
- int* nIndices2 = new int[this->NBodyValue];
- 
- int momentumTransfer = 0;
- for (int i = 0; i < this->NBodyValue; ++i)
-   momentumTransfer += (nIndices[i] - mIndices[i]);
- momentumTransfer /= this->NbrLzValue;
- int shiftedMomentumTransfer = momentumTransfer + this->NBodyValue - 1;
- int shift =  (this->NBodyValue - 1)*this->NBodyValue;
   
- double TmpInteraction; 
- int m1 = mIndices[0];
- int m2 = nIndices[0];
- 
- int Factor = this->NbrLzValue;
- for (int k = 1; k < this->NBodyValue; ++k)
- {
-  m1 += mIndices[k]*Factor;
-  m2 += nIndices[k]*Factor;
-  Factor *= this->NbrLzValue;
- }
- int m2Initial = m2;
- 
- TmpInteraction = 0.0;
- for (int g = 0; g < this->NBodyValue; ++g)
- {
-    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
- }
- 
- for (int k = 0 ; k < this->NBodyValue; ++k)
-   nIndices2[k] = nIndices[k];
- while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
+  int* mIndices2 = new int[this->NBodyValue];
+  int* nIndices2 = new int[this->NBodyValue];
+  
+  int momentumTransfer = 0;
+  for (int i = 0; i < this->NBodyValue; ++i)
+    momentumTransfer += (nIndices[i] - mIndices[i]);
+  momentumTransfer /= this->NbrLzValue;
+  int shiftedMomentumTransfer = momentumTransfer + this->NBodyValue - 1;
+  int shift =  (this->NBodyValue - 1)*this->NBodyValue;
+  
+  double TmpInteraction; 
+  int m1 = mIndices[0];
+  int m2 = nIndices[0];
+  
+  int Factor = this->NbrLzValue;
+  for (int k = 1; k < this->NBodyValue; ++k)
+    {
+      m1 += mIndices[k]*Factor;
+      m2 += nIndices[k]*Factor;
+      Factor *= this->NbrLzValue;
+    }
+  int m2Initial = m2;
+  
+  TmpInteraction = 0.0;
+  for (int g = 0; g < this->NBodyValue; ++g)
+    {
+      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+    }
+  
+  for (int k = 0 ; k < this->NBodyValue; ++k)
+    nIndices2[k] = nIndices[k];
+  while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
     {
       m2 = nIndices2[0];
       Factor = this->NbrLzValue;
@@ -210,48 +215,151 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 	  m2 += nIndices2[k]*Factor;
 	  Factor *= this->NbrLzValue;
 	}
- 
-      for (int g = 0; g < this->NBodyValue; ++g)
-	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
-    }
- 
- 
- for (int k = 0 ; k < this->NBodyValue; ++k)
-  mIndices2[k] = mIndices[k];
- while (std::prev_permutation(mIndices2, mIndices2 + this->NBodyValue))
-  {
-    m1 = mIndices2[0];
-    Factor = this->NbrLzValue;
-    for (int k = 1 ; k < this->NBodyValue; ++k)
-      {
-	m1 += mIndices2[k]*Factor;
-	Factor *= this->NbrLzValue;
-      }
-    for (int g = 0; g < this->NBodyValue; ++g)
-	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
-    
-    for (int k = 0 ; k < this->NBodyValue; ++k)
-      nIndices2[k] = nIndices[k];
-    while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
-    {
       
-      m2 = nIndices2[0];
-      Factor = this->NbrLzValue;
-      for (int k = 1 ; k < this->NBodyValue; ++k)
-	{
-	  m2 += nIndices2[k]*Factor;
-	  Factor *= this->NbrLzValue;
-	}
- 
       for (int g = 0; g < this->NBodyValue; ++g)
 	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
     }
-  }    
+  
+  
+  for (int k = 0 ; k < this->NBodyValue; ++k)
+    mIndices2[k] = mIndices[k];
+  while (std::prev_permutation(mIndices2, mIndices2 + this->NBodyValue))
+    {
+      m1 = mIndices2[0];
+      Factor = this->NbrLzValue;
+      for (int k = 1 ; k < this->NBodyValue; ++k)
+	{
+	  m1 += mIndices2[k]*Factor;
+	  Factor *= this->NbrLzValue;
+	}
+      for (int g = 0; g < this->NBodyValue; ++g)
+	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+      
+      for (int k = 0 ; k < this->NBodyValue; ++k)
+	nIndices2[k] = nIndices[k];
+      while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
+	{
+	  
+	  m2 = nIndices2[0];
+	  Factor = this->NbrLzValue;
+	  for (int k = 1 ; k < this->NBodyValue; ++k)
+	    {
+	      m2 += nIndices2[k]*Factor;
+	      Factor *= this->NbrLzValue;
+	    }
+	  
+	  for (int g = 0; g < this->NBodyValue; ++g)
+	    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+	}
+    }    
   
   delete[] mIndices2;
   delete[] nIndices2;
   
+  
+  TmpInteraction /= FinalFactor;
+  return TmpInteraction;
+}
 
+// evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_n, assuming fermionic operators
+//
+// mIndices = array contaning the creation indices
+// nIndices = array contaning the annihilation indices
+// return value = numerical coefficient
+
+inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionNIndexAntiSymmetrizedCoefficient(int* mIndices, int* nIndices)
+{  
+  double DoubleNbrLzValue = (double) this->NbrLzValue;
+  FactorialCoefficient FactorialNBody;
+  FactorialNBody.SetToOne();
+  FactorialNBody.FactorialMultiply(this->NBodyValue);
+  double FinalFactor = FactorialNBody.GetNumericalValue();
+  for (int i = 0; i < this->NBodyValue; ++i)
+    FinalFactor *= (M_PI * DoubleNbrLzValue);
+  
+  
+  int* mIndices2 = new int[this->NBodyValue];
+  int* nIndices2 = new int[this->NBodyValue];
+  
+  int momentumTransfer = 0;
+  for (int i = 0; i < this->NBodyValue; ++i)
+    momentumTransfer += (nIndices[i] - mIndices[i]);
+  momentumTransfer /= this->NbrLzValue;
+  int shiftedMomentumTransfer = momentumTransfer + this->NBodyValue - 1;
+  int shift =  (this->NBodyValue - 1)*this->NBodyValue;
+  
+  double TmpInteraction; 
+  int m1 = mIndices[0];
+  int m2 = nIndices[0];
+  
+  int Factor = this->NbrLzValue;
+  for (int k = 1; k < this->NBodyValue; ++k)
+    {
+      m1 += mIndices[k]*Factor;
+      m2 += nIndices[k]*Factor;
+      Factor *= this->NbrLzValue;
+    }
+  int m2Initial = m2;
+  
+  TmpInteraction = 0.0;
+  for (int g = 0; g < this->NBodyValue; ++g)
+    {
+      TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+    }
+  
+  for (int k = 0 ; k < this->NBodyValue; ++k)
+    nIndices2[k] = nIndices[k];
+  while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
+    {
+      m2 = nIndices2[0];
+      Factor = this->NbrLzValue;
+      for (int k = 1 ; k < this->NBodyValue; ++k)
+	{
+	  m2 += nIndices2[k]*Factor;
+	  Factor *= this->NbrLzValue;
+	}
+      
+      for (int g = 0; g < this->NBodyValue; ++g)
+	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+    }
+  
+  
+  for (int k = 0 ; k < this->NBodyValue; ++k)
+    mIndices2[k] = mIndices[k];
+  while (std::prev_permutation(mIndices2, mIndices2 + this->NBodyValue))
+    {
+      m1 = mIndices2[0];
+      Factor = this->NbrLzValue;
+      for (int k = 1 ; k < this->NBodyValue; ++k)
+	{
+	  m1 += mIndices2[k]*Factor;
+	  Factor *= this->NbrLzValue;
+	}
+      for (int g = 0; g < this->NBodyValue; ++g)
+	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+      
+      for (int k = 0 ; k < this->NBodyValue; ++k)
+	nIndices2[k] = nIndices[k];
+      while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
+	{
+	  
+	  m2 = nIndices2[0];
+	  Factor = this->NbrLzValue;
+	  for (int k = 1 ; k < this->NBodyValue; ++k)
+	    {
+	      m2 += nIndices2[k]*Factor;
+	      Factor *= this->NbrLzValue;
+	    }
+	  
+	  for (int g = 0; g < this->NBodyValue; ++g)
+	    TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+	}
+    }    
+  
+  delete[] mIndices2;
+  delete[] nIndices2;
+  
+  
   TmpInteraction /= FinalFactor;
   return TmpInteraction;
 }

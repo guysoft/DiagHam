@@ -519,7 +519,35 @@ double FermionOnTorusWithMagneticTranslations::AA (int index, int n1, int n2)
 
 double FermionOnTorusWithMagneticTranslations::ProdA (int index, int* n, int nbrIndices)
 {
-  return 0.0;
+  this->ProdATemporaryStateMaxMomentum = this->StateMaxMomentum[index];
+  this->ProdATemporaryState = this->StateDescription[index];
+  int Index;
+  double Coefficient = 1.0;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      Index = n[i];
+      if ((this->ProdATemporaryState & (0x1l << Index)) == 0)
+	{
+	  return 0.0;
+	}
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> Index) & this->SignLookUpTableMask[Index]];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index+ 16))  & this->SignLookUpTableMask[Index+ 16]];
+#ifdef  __64_BITS__
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+      Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+#endif
+      this->ProdATemporaryState &= ~(0x1l << Index);
+    }
+  this->ProdATemporaryNbrStateInOrbit = this->NbrStateInOrbit[index];
+  if (this->ProdATemporaryState == 0x0ul)
+    {
+      this->ProdATemporaryStateMaxMomentum = 0;
+      return Coefficient;      
+    }
+  while (((this->ProdATemporaryState >> this->ProdATemporaryStateMaxMomentum) == 0) && (this->ProdATemporaryStateMaxMomentum > 0))
+    --this->ProdATemporaryStateMaxMomentum;
+
+  return Coefficient;
 }
 
 // apply a^+_m1 a^+_m2 operator to the state produced using AA method (without destroying it)
@@ -596,8 +624,44 @@ int FermionOnTorusWithMagneticTranslations::AdAd (int m1, int m2, double& coeffi
 
 int FermionOnTorusWithMagneticTranslations::ProdAd (int* m, int nbrIndices, double& coefficient, int& nbrTranslation)
 {
-  coefficient = 0.0;
-  return this->HilbertSpaceDimension;
+  coefficient = 1.0;
+  unsigned long TmpState = this->ProdATemporaryState;
+  int NewMaxMomentum = this->ProdATemporaryStateMaxMomentum;
+  int Index;
+  for (int i = nbrIndices - 1; i >= 0; --i)
+    {
+      Index = m[i];
+      if ((TmpState & (0x1l << Index)) != 0)
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+      if (Index > NewMaxMomentum)
+	{
+	  NewMaxMomentum = Index;
+	}
+      else
+	{
+	  coefficient *= this->SignLookUpTable[(TmpState >> Index) & this->SignLookUpTableMask[Index]];
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 16))  & this->SignLookUpTableMask[Index + 16]];
+#ifdef  __64_BITS__
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 32)) & this->SignLookUpTableMask[Index + 32]];
+	  coefficient *= this->SignLookUpTable[(TmpState >> (Index + 48)) & this->SignLookUpTableMask[Index + 48]];
+#endif
+	}
+      TmpState |= (0x1l << Index);
+    }
+  TmpState = this->FindCanonicalForm(TmpState, NewMaxMomentum, nbrTranslation);
+  if (this->TestXMomentumConstraint(TmpState, NewMaxMomentum) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  int TmpIndex = this->FindStateIndex(TmpState, NewMaxMomentum);
+  coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
+  coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> nbrTranslation) & 0x1ul)));
+  nbrTranslation *= this->StateShift;
+  return TmpIndex;
 }
 
 // apply a_n operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AdAd call

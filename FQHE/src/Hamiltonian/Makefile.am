@@ -135,4 +135,5 @@ AbstractQHEOnTorusWithSU3SpinAndMagneticTranslationsHamiltonian.cc \
 ParticleOnTorusWithSU3SpinAndMagneticTranslationsGenericHamiltonian.cc \
 ParticleOnCylinderInterlayerPfaffian.cc \
 ParticleOnCylinderPermanentTimes221State.cc \
-ParticleOnCylinderOneQuarterPfaffian.cc
+ParticleOnCylinderOneQuarterPfaffian.cc \
+ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian.cc

@@ -167,7 +167,9 @@ int main(int argc, char** argv)
   SparseRealMatrix* BMatrices = MPSMatrix->GetMatrices();
   SparseRealMatrix* ConjugateBMatrices = new SparseRealMatrix[NbrBMatrices];
   for (int i = 0; i < NbrBMatrices; ++i)
-    ConjugateBMatrices[i] = BMatrices[i].Transpose();
+    {
+      ConjugateBMatrices[i] = BMatrices[i].Transpose();
+    }
 
   cout << "B matrix size = " << BMatrices[0].GetNbrRow() << "x" << BMatrices[0].GetNbrColumn() << endl;
   

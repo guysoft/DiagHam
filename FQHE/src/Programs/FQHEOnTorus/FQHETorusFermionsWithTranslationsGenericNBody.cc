@@ -1,12 +1,10 @@
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
 
-#include "HilbertSpace/BosonOnTorus.h"
-#include "HilbertSpace/BosonOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 
-
-#include "Hamiltonian/ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -45,7 +43,7 @@ int main(int argc, char** argv)
 {
   cout.precision(14);
 
-  OptionManager Manager ("FQHETorusBosonsWithTranslationsNBodyHardCore" , "0.01");
+  OptionManager Manager ("FQHETorusFermionsWithTranslationsGenericNBody" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -65,7 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption ('l', "max-momentum", "maximum momentum for a single particle", 12);
   (*SystemGroup) += new SingleIntegerOption  ('x', "x-momentum", "constraint on the total momentum in the x direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hard-core interaction", 3);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hollow-core interaction", 3);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the full reduced Brillouin zone", false);
@@ -87,7 +85,7 @@ int main(int argc, char** argv)
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type FQHETorusBosonsWithTranslationsNBodyHardCore -h" << endl;
+      cout << "see man page for option syntax or type FQHETorusFermionsWithTranslationsGenericNBody -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -107,7 +105,7 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   
   char* OutputName = new char [256];
-  sprintf (OutputName, "bosons_torus_%dbody_hardcore_n_%d_2s_%d_ratio_%f.dat", NbrNBody, NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputName, "fermions_torus_%dbody_hollowcore_n_%d_2s_%d_ratio_%f.dat", NbrNBody, NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
@@ -307,6 +305,7 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
 
+//      FermionOnTorusWithMagneticTranslations* Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
       BosonOnTorusWithMagneticTranslationsShort* Space = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
@@ -315,8 +314,10 @@ int main(int argc, char** argv)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
       AbstractQHEHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
-											NbrNBody, Architecture.GetArchitecture(), Memory);
+      Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
+											    Architecture.GetArchitecture(), Memory);
+//      Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
+//											  NbrNBody, Architecture.GetArchitecture(), Memory);
 
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);

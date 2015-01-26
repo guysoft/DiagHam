@@ -222,7 +222,27 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
   
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
-    }
+      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+      for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+	{
+	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+	  int Index = 0;  
+	  	  
+	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	    {
+	      int* TmpNIndices = &(this->NBodySectorIndicesPerSum[i][j1 * this->NBodyValue]);
+	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+		{
+		  int* TmpMIndices = &(this->NBodySectorIndicesPerSum[i][j2 * this->NBodyValue]);
+		  this->NBodyInteractionFactors[i][Index] = this->EvaluateInteractionNIndexSymmetrizedCoefficient(TmpNIndices, TmpMIndices);
+		  TotalNbrInteractionFactors++;
+		  ++Index;
+		  
+		  
+		}
+	    }
+	}
+     }
   else
     {      
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
