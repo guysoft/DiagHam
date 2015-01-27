@@ -95,7 +95,6 @@ int main(int argc, char** argv)
   bool ShowTimeFlag = Manager.GetBoolean("show-time");
   int TotalSpin = 0;
   bool TwoDTranslationFlag = false;
-  bool TotalSpinConservedFlag = Manager.GetBoolean("decoupled");
   bool SU2SpinFlag = Manager.GetBoolean("su2-spin");
   bool GutzwillerFlag = false;
 
@@ -170,50 +169,23 @@ int main(int argc, char** argv)
       }
     TwoDTranslationFlag = FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0],
 									  NbrParticles, NbrSites, TotalKx[0], TotalKy[0], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag);
-    for (int i = 0; i < NbrSpaces; ++i)
-	{
-	  if ((TotalSpinConservedFlag == false) && (TwoDTranslationFlag == true))
-	    {     
-	      TotalKx[i] = 0;
-	      TotalKy[i] = 0;
-	      if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+    bool TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, TotalSpin, Statistics, GutzwillerFlag);
+    
+    if (TwoDTranslationFlag == true)
+    { 
+      for (int i = 0; i < NbrSpaces; ++i)
+      {
+	TotalKx[i] = 0;
+	TotalKy[i] = 0;
+	if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
 									  NbrParticles, NbrSites, TotalKx[i], TotalKy[i], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
-		{
-		  cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
-		  return -1;
-		}
-	     }
-	  else
-	    {
-	      if (TotalSpinConservedFlag == false)
-	      {
-		if (FTIHubbardModelFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-									  NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
-		{
-		  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-		  return -1;
-		}
-	      }
-	      else
-	      {
-		if (FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[i], NbrParticles, NbrSites, TotalSpin, Statistics, GutzwillerFlag) == false)
-		{
-		  cout << "error while retrieving system parameters from file name " << GroundStateFiles[i] << endl;
-		  return -1;
-		}
-		
-		if ((TwoDTranslationFlag == true) && (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-									  NbrParticles, NbrSites, TotalKx[i], TotalKy[i], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false))
-		{
-		  cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
-		  return -1;
-		}
-	      }
-	      
-// 		cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << NbrSiteZ << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalKz[i] << " " << TotalSpin << " " << Statistics << endl;
-	    }
+	{
+	  cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
+	  return -1;
 	}
-  
+// 		cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalSpin << " " << Statistics << endl;
+      } 
+    }
 
   GroundStates = new ComplexVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
@@ -231,7 +203,7 @@ int main(int argc, char** argv)
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
       if (TwoDTranslationFlag == false)
       {
-	if (TotalSpinConservedFlag == false)
+	if (Manager.GetBoolean("decoupled") == false)
 	{
 	  DensityMatrixFile << "#  N    lambda";
 	}
@@ -242,7 +214,7 @@ int main(int argc, char** argv)
       }
       else
       {
-	if (TotalSpinConservedFlag == false)
+	if (Manager.GetBoolean("decoupled") == false)
 	{
 	  DensityMatrixFile << "#  N    Kx    Ky    lambda";
 	}
@@ -419,7 +391,7 @@ int main(int argc, char** argv)
       double DensitySum = 0.0;
       int MinSz = -SubsystemNbrParticles;
       int MaxSz = SubsystemNbrParticles;
-      if (TotalSpinConservedFlag == false)
+      if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
 	{
 	  MinSz = 0;
 	  MaxSz = 0;
@@ -480,7 +452,7 @@ int main(int argc, char** argv)
 		      {
 			if (GutzwillerFlag == false)
 			{
-			  if (TotalSpinConservedFlag == false)
+			  if (Manager.GetBoolean("decoupled") == false)
 			  {
 			    if (TwoDTranslationFlag == false)
 			      {
@@ -521,7 +493,7 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-			  if (TotalSpinConservedFlag == false)
+			  if (Manager.GetBoolean("decoupled") == false)
 			  {
 			    if (TwoDTranslationFlag == false)
 			      {
@@ -607,20 +579,30 @@ int main(int argc, char** argv)
 	TmpDiag.SortMatrixDownOrder();
 	
 	if (DensityMatrixFileName != 0)
-	{
+	{ 
 	  ofstream DensityMatrixFile;
 	  DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 		      DensityMatrixFile.precision(14);
+	  double Trace = 0.0;
 	  if (TwoDTranslationFlag == false)
 	    {
-	      if ((SU2SpinFlag == false) || (TotalSpinConservedFlag == false))
+	      if ((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false))
 	      {
+		
 		for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		{
 		  DensityMatrixFile << SubsystemNbrParticles << " " << TmpDiag[i] << endl;
+		  Trace += TmpDiag[i];
+		}
+		cout << "Trace = " << Trace << endl;
 	      }
 	      else
 	      {
 		for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+		{
 		  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalSz << " " << TmpDiag[i] << endl;
+		  Trace += TmpDiag[i];
+		}
+		cout << "Trace = " << Trace << endl;
 	      }
 	    }
 	  else
@@ -655,7 +637,7 @@ int main(int argc, char** argv)
 	    DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out | ios::app); 		DensityMatrixFile.precision(14);
 	    if (TwoDTranslationFlag == false)
 	    {
-	      if ((SU2SpinFlag == false) || (TotalSpinConservedFlag == false))
+	      if ((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false))
 	      {
 		for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
 		  DensityMatrixFile << SubsystemNbrParticles << " " << TmpValue << endl;
