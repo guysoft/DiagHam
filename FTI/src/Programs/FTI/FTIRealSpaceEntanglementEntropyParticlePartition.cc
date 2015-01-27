@@ -390,7 +390,11 @@ int main(int argc, char** argv)
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
       int MinSz = -SubsystemNbrParticles;
+      if ((TotalSpin - ComplementaryNbrParticles) > MinSz)
+	MinSz = (TotalSpin - ComplementaryNbrParticles);
       int MaxSz = SubsystemNbrParticles;
+      if ((TotalSpin + ComplementaryNbrParticles) < MaxSz)
+	MaxSz = (TotalSpin + ComplementaryNbrParticles);
       if ((Manager.GetBoolean("decoupled") == false) || (Manager.GetBoolean("su2-spin")) == false)
 	{
 	  MinSz = 0;

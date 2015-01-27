@@ -730,7 +730,7 @@ long ParticleOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int mi
   for (int i = 0; i < nbrGroundStates; ++i)
     {
       TmpDensityMatrix.ClearMatrix();
-      this->EvaluatePartialDensityMatrixParticlePartitionCore(minIndex, nbrIndex, complementaryHilbertSpace, destinationHilbertSpace, groundStates[i], &TmpDensityMatrix);
+      Tmp += this->EvaluatePartialDensityMatrixParticlePartitionCore(minIndex, nbrIndex, complementaryHilbertSpace, destinationHilbertSpace, groundStates[i], &TmpDensityMatrix);
       TmpDensityMatrix *= weights[i];
       (*densityMatrix) += TmpDensityMatrix;
     }

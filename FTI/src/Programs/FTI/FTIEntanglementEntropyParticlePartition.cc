@@ -420,8 +420,13 @@ int main(int argc, char** argv)
     {
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
+      int ComplementaryNbrParticles = NbrParticles - SubsystemNbrParticles;
       int MinSz = -SubsystemNbrParticles;
+      if ((TotalSpin - ComplementaryNbrParticles) > MinSz)
+	MinSz = (TotalSpin - ComplementaryNbrParticles);
       int MaxSz = SubsystemNbrParticles;
+      if ((TotalSpin + ComplementaryNbrParticles) < MaxSz)
+	MaxSz = (TotalSpin + ComplementaryNbrParticles);
       if (FlagDecoupled == false)
 	{
 	  MinSz = 0;
@@ -544,15 +549,15 @@ int main(int argc, char** argv)
 				{
 				  if (Statistics == true)
 				    {
-				      				  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
-				      				    {
-				      				      PartialDensityMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
-				      				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
-				    }
-				  else
-				    {
-				      PartialDensityMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
-				    }
+				      if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
+					{
+					  PartialDensityMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+					  PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+					}
+				      else
+					{
+					  PartialDensityMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+					}
 				    }
 				  else
 				    {
@@ -711,19 +716,17 @@ int main(int argc, char** argv)
 					{
 					  if (Statistics == true)
 					    {
-					      cout << "not yet implemented for FermionOnSquareLatticeWithSpinMomentumSpace" << endl;
-					      return 0;
-					      // 				  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
-					      // 				    {
-					      // 				      HermitianMatrix TmpMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
-					      // 				      TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
-					      //						  PartialDensityMatrix += TmpMatrix;
-					      // 				    }
-					      // 				  else
-					      // 				    {
-					      // 				      HermitianMatrix TmpMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
-					      //						  PartialDensityMatrix += TmpMatrix;
-					      // 				    }
+					      				  if (NbrGroundStatePerMomentumSector[TmpIndex] == 1)
+					      				    {
+					      				      HermitianMatrix TmpMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+					      				      TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+					      						  PartialDensityMatrix += TmpMatrix;
+					      				    }
+					      				  else
+					      				    {
+					      				      HermitianMatrix TmpMatrix = ((FermionOnSquareLatticeWithSpinMomentumSpace*) Spaces[TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, SubsystemTotalSz, NbrGroundStatePerMomentumSector[TmpIndex], GroundStatePerMomentumSector[TmpIndex], CoefficientPerMomentumSector[TmpIndex], Architecture.GetArchitecture());
+					      						  PartialDensityMatrix += TmpMatrix;
+					      				    }
 					    }
 					  else
 					    {
