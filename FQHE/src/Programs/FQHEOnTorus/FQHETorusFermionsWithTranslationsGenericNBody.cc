@@ -315,7 +315,7 @@ int main(int argc, char** argv)
       
       AbstractQHEHamiltonian* Hamiltonian = 0;
       Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-											    Architecture.GetArchitecture(), Memory);
+										       NbrNBody, Architecture.GetArchitecture(), Memory);
 //      Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
 //											  NbrNBody, Architecture.GetArchitecture(), Memory);
 

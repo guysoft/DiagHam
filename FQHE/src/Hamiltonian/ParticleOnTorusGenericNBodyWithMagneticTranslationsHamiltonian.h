@@ -49,6 +49,11 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
 
  protected:
 
+  // temporary arrays used during the interaction element evaluation
+  double* QxValues;
+  double* QyValues;
+  double* Q2Values;
+  double* CosineCoffients; 
 
  public:
 
@@ -60,15 +65,17 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   //
   // particles = Hilbert space associated to the system
   // nbrParticles = number of particles
-  // lzmax = maximum Lz value reached by a particle in the state
-  // twoBodyDeltaStrength = strength of the additional two body delta interaction
+  // maxMomentum = number of flux quanta
+  // xMomentum = relative angular momentum along x 
+  // ratio = torus aspect ratio (Lx/Ly)
+  // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio,
-								      AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-								      char* precalculationFileName = 0);
+								 int nbrNBody, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+								 char* precalculationFileName = 0);
 
   // destructor
   //
@@ -96,18 +103,6 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   //   
   virtual void EvaluateInteractionFactors();
 	
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_n1 a_n2 a_n3 coupling term
-  //
-  // m1 = first creation operator index
-  // m2 = second creation operator index
-  // m3 = third creation operator index
-  // n1 = first annihilation operator index
-  // n2 = second annihilation operator index
-  // n3 = thrid annihilation operator index
-  //
-  // return value = numerical coefficient  
-  virtual double EvaluateInteractionCoefficient(int m1, int m2, int m3, int n1, int n2, int n3);
-  
   // evaluate the numerical coefficient  in front of the Prod a^+_mi Prod a+_n coupling term
   //
   // mIndices = array containing the creation operator indices
@@ -115,20 +110,7 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   // return value = numerical coefficient  
   virtual Complex EvaluateInteractionCoefficient(int* mIndices, int* nIndices);
   
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
-  //
-  // m1 = first index
-  // m2 = second index
-  // m3 = third index
-  // m4 = fourth index
-  // return value = numerical coefficient
-  virtual double EvaluateTwoBodyInteractionCoefficient(int m1, int m2, int m3, int m4);
-
-  
-  virtual Complex RecursiveEvaluateInteractionCoefficient(double* qxValues, double* qyValues, double* q2Values, 
-							  double* cosineCoffients, const double& qxFactor, const double& qyFactor, int xPosition);
-
-  virtual double RecursiveEvaluateInteractionCoefficient2(double* qxValues, double* qyValues, double* q2Values, const double& qyFactor, int yPosition);
+  virtual Complex RecursiveEvaluateInteractionCoefficient(int xPosition);
 
   virtual double VFactor(double* q2Values);
 
