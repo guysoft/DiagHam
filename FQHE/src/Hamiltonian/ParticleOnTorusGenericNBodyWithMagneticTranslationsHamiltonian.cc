@@ -257,16 +257,14 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		    {
 		      TmpNIndices[k] = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k];
 		    }
-		  Complex TmpInteraction = 0.0;
+		  double TmpInteraction = 0.0;
 		  for (int k = 0; k < this->NBodyValue; ++k)
 		    {
 		      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + k];
 		    }
-//		  TmpInteraction += this->EvaluateInteractionCoefficient(TmpMIndices[0], TmpMIndices[1], TmpMIndices[2], TmpNIndices[0], TmpNIndices[1], TmpNIndices[2]);
 		  TmpInteraction += this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
 		  while (std::prev_permutation(TmpMIndices, TmpMIndices  + this->NBodyValue))
 		    {
-//		      TmpInteraction +=this->EvaluateInteractionCoefficient(TmpMIndices[0], TmpMIndices[1], TmpMIndices[2], TmpNIndices[0], TmpNIndices[1], TmpNIndices[2]);
 		      TmpInteraction += this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);		    
 		    }
 		  while (std::prev_permutation(TmpNIndices, TmpNIndices  + this->NBodyValue))
@@ -275,16 +273,12 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 			{
 			  TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + k];
 			}
-//		      TmpInteraction +=this->EvaluateInteractionCoefficient(TmpMIndices[0], TmpMIndices[1], TmpMIndices[2], TmpNIndices[0], TmpNIndices[1], TmpNIndices[2]);
 		      TmpInteraction += this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
 		      while (std::prev_permutation(TmpMIndices, TmpMIndices  + this->NBodyValue))
 			{
-//			  TmpInteraction +=this->EvaluateInteractionCoefficient(TmpMIndices[0], TmpMIndices[1], TmpMIndices[2], TmpNIndices[0], TmpNIndices[1], TmpNIndices[2]);
 			  TmpInteraction += this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
 			}
 		    }
-//  		  cout << TmpMIndices[0] << " " << TmpMIndices[1] << " " << TmpMIndices[2] << " | " 
-//  		       << TmpNIndices[0] << " " << TmpNIndices[1] << " " << TmpNIndices[2] << " = " << TmpInteraction << endl;
 		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
@@ -307,7 +301,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 // nIndices = array containing the annihilation operator indices
 // return value = numerical coefficient  
 
-Complex ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int* mIndices, int* nIndices)
+double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int* mIndices, int* nIndices)
 {
   int Tmp;
   double Prefactor = powl(this->MaxMomentum, -this->NBodyValue + 1.0);
@@ -317,81 +311,103 @@ Complex ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::Evaluate
       this->QyValues[i] = (double) (nIndices[i] - mIndices[i]);
       this->CosineCoffients[i] = 2.0 * ((double) mIndices[i]);
     }  
-  Complex Coefficient = Prefactor * this->RecursiveEvaluateInteractionCoefficient(0);
+  double CurrentPrecision;
+  double Coefficient = Prefactor * this->RecursiveEvaluateInteractionCoefficient(0, 0.0, 0.0, 0.0, 0.0, CurrentPrecision);
   return Coefficient;
 }
   
 
-Complex ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::RecursiveEvaluateInteractionCoefficient(int xPosition)
+double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision)
 {
-  double TmpExponentialFactor = M_PI / ((double) this->MaxMomentum);
   if (xPosition < (this->NBodyValue - 1))
     {
-      Complex TotalCoefficient  = 0.0;
-      Complex Coefficient  = 1.0;
+      double TotalCoefficient  = 0.0;
+      double Coefficient  = 1.0;
       int CurrentQy = this->QyValues[xPosition];
-      while ((Norm(Coefficient) + Norm(TotalCoefficient)) != Norm(TotalCoefficient))
+      currentPrecision = 0.0;
+      double TmpPrecision;
+      double Tmp;
+      while ((fabs(Coefficient) + fabs(TotalCoefficient)) != fabs(TotalCoefficient))
 	{	        
+	  Tmp = (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
 	  this->QxValues[xPosition] = 0.0;
-	  this->Q2Values[xPosition] = this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio;
-	  Complex CurrentCoefficient = exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]);
-	  Coefficient = CurrentCoefficient * this->RecursiveEvaluateInteractionCoefficient(xPosition + 1);
-	  if (SqrNorm(CurrentCoefficient) == 0.0)
-	    CurrentCoefficient = 1.0;
-	  while ((Norm(Coefficient) + Norm(CurrentCoefficient)) != Norm(Coefficient))
+	  this->Q2Values[xPosition] = Tmp;
+	  Coefficient = this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+								      currentSumQy + this->QyValues[xPosition], 
+								      currentSumQ2 + this->Q2Values[xPosition], 
+								      currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision);
+	  currentPrecision += TmpPrecision;
+	  if (Coefficient == 0.0)
+	    TmpPrecision = 1.0;
+	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
 	    {	  
 	      ++this->QxValues[xPosition];
-	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
-
-	      CurrentCoefficient = exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]);
-	      Coefficient += Phase(TmpExponentialFactor * this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition])) * CurrentCoefficient * this->RecursiveEvaluateInteractionCoefficient(xPosition + 1);
+	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+									   currentSumQy + this->QyValues[xPosition], 
+									   currentSumQ2 + this->Q2Values[xPosition], 
+									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision);
+	      currentPrecision += TmpPrecision;
 	    }
 	  this->QxValues[xPosition] = 0.0;
-	  if (SqrNorm(Coefficient) == 0.0)
-	    CurrentCoefficient = 1.0;
+	  if (Coefficient == 0.0)
+	    TmpPrecision = 1.0;
 	  else
-	    CurrentCoefficient = 2.0 * Coefficient;
-	  while ((Norm(Coefficient) + Norm(CurrentCoefficient)) != Norm(Coefficient))
+	    TmpPrecision = 2.0 * fabs(Coefficient);
+	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
 	    {	  
 	      --this->QxValues[xPosition];
-	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
-	      CurrentCoefficient = exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]);
-	      Coefficient += Phase(TmpExponentialFactor * this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition])) * CurrentCoefficient * this->RecursiveEvaluateInteractionCoefficient(xPosition + 1);
+	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+									   currentSumQy + this->QyValues[xPosition], 
+									   currentSumQ2 + this->Q2Values[xPosition], 
+									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision);
+	      currentPrecision += TmpPrecision;
 	    }
 	  this->QyValues[xPosition] +=  (double) this->MaxMomentum;
 	  TotalCoefficient += Coefficient;
 	}
       this->QyValues[xPosition] = CurrentQy -  (double) this->MaxMomentum;
-      if (SqrNorm(TotalCoefficient) == 0.0)
+      if (TotalCoefficient == 0.0)
 	Coefficient = 1.0;
       else
 	Coefficient = 2.0 * TotalCoefficient;
-      while ((Norm(Coefficient) + Norm(TotalCoefficient)) != Norm(TotalCoefficient))
+      while ((fabs(Coefficient) + fabs(TotalCoefficient)) != fabs(TotalCoefficient))
 	{	        
 	  this->QxValues[xPosition] = 0.0;
-	  this->Q2Values[xPosition] = this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio;
-	  Complex CurrentCoefficient = exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]);
-	  Coefficient = CurrentCoefficient * this->RecursiveEvaluateInteractionCoefficient(xPosition + 1);
-	  if (SqrNorm(CurrentCoefficient) == 0.0)
-	    CurrentCoefficient = 1.0;
-	  while ((Norm(Coefficient) + Norm(CurrentCoefficient)) != Norm(Coefficient))
+	  Tmp = (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
+	  this->Q2Values[xPosition] = Tmp;
+	  Coefficient = this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+								      currentSumQy + this->QyValues[xPosition], 
+								      currentSumQ2 + this->Q2Values[xPosition], 
+								      currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision);
+	  currentPrecision += TmpPrecision;
+	  if (Coefficient == 0.0)
+	    TmpPrecision = 1.0;
+	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
 	    {	  
 	      ++this->QxValues[xPosition];
-	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
-	      CurrentCoefficient = exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]);
-	      Coefficient += Phase(TmpExponentialFactor * this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition])) * CurrentCoefficient * this->RecursiveEvaluateInteractionCoefficient(xPosition + 1);
+	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+									   currentSumQy + this->QyValues[xPosition], 
+									   currentSumQ2 + this->Q2Values[xPosition], 
+									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision);
+	      currentPrecision += TmpPrecision;
 	    }
 	  this->QxValues[xPosition] = 0.0;
-	  if (SqrNorm(Coefficient) == 0.0)
-	    CurrentCoefficient = 1.0;
+	  if (Coefficient == 0.0)
+	    TmpPrecision = 1.0;
 	  else
-	    CurrentCoefficient = 2.0 * Coefficient;
-	  while ((Norm(Coefficient) + Norm(CurrentCoefficient)) != Norm(Coefficient))
+	    TmpPrecision = 2.0 * fabs(Coefficient);
+	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
 	    {	  
 	      --this->QxValues[xPosition];
-	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
-	      CurrentCoefficient = exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]);
-	      Coefficient += Phase(TmpExponentialFactor * this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition])) * CurrentCoefficient * this->RecursiveEvaluateInteractionCoefficient(xPosition + 1);
+	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+									   currentSumQy + this->QyValues[xPosition], 
+									   currentSumQ2 + this->Q2Values[xPosition], 
+									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision);
+	      currentPrecision += TmpPrecision;
 	    }
 	  this->QyValues[xPosition] -=  (double) this->MaxMomentum;
 	  TotalCoefficient += Coefficient;
@@ -401,15 +417,15 @@ Complex ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::Recursiv
     }
   else
     {
-      this->QxValues[xPosition] = -this->QxValues[0];
-      this->QyValues[xPosition] = -this->QyValues[0];      
-      for (int k = 1; k < xPosition; ++k)
-	{
-	  this->QxValues[xPosition] -= this->QxValues[k];	
-	  this->QyValues[xPosition] -= this->QyValues[k];	
-	}
+      double TmpExponentialFactor = M_PI / ((double) this->MaxMomentum);
+      this->QxValues[xPosition] = -currentSumQx;
+      this->QyValues[xPosition] = -currentSumQy;  
       this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
-      return Phase(TmpExponentialFactor * this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition])) * (exp(- 0.5 * TmpExponentialFactor * this->Q2Values[xPosition]) * this->VFactor(this->Q2Values));
+      currentSumPhase += this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]);
+      currentPrecision = exp(- 0.5 * TmpExponentialFactor * (this->Q2Values[xPosition] + currentSumQ2)) * this->VFactor(this->Q2Values);
+      return (cos(TmpExponentialFactor * currentSumPhase) * currentPrecision);
+// if we do not assume that it is invariant under {qx}<->{-qx}
+//      return (Complex(TmpExponentialFactor * Sum2) * currentPrecision);
     }
 }
 
