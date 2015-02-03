@@ -225,7 +225,7 @@ FermionOnLatticeRealSpaceAnd2DTranslation::FermionOnLatticeRealSpaceAnd2DTransla
   this->MomentumMask = fermions.MomentumMask;
 
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateMaxMomentum = fermions.StateMaxMomentum;
 
