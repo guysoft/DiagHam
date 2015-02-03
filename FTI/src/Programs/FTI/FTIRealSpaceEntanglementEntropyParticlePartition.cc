@@ -389,6 +389,7 @@ int main(int argc, char** argv)
     {
       double EntanglementEntropy = 0.0;
       double DensitySum = 0.0;
+      int ComplementaryNbrParticles = NbrParticles - SubsystemNbrParticles;
       int MinSz = -SubsystemNbrParticles;
       if ((TotalSpin - ComplementaryNbrParticles) > MinSz)
 	MinSz = (TotalSpin - ComplementaryNbrParticles);
@@ -448,8 +449,14 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-			  cout << "Error: 2d translations not yet implemented" << endl;
-			  return -1;
+			  PartialDensityMatrix = ((FermionOnLatticeRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+			  PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+			  for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+			  {
+			    HermitianMatrix TmpMatrix = ((FermionOnLatticeRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+			    TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+			    PartialDensityMatrix += TmpMatrix;
+			  }
 			}
 		      }
 		      else

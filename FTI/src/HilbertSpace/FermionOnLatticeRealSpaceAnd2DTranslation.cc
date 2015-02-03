@@ -45,7 +45,7 @@
 #include "MathTools/FactorialCoefficient.h"
 #include "GeneralTools/Endian.h"
 #include "GeneralTools/ArrayTools.h"
-#include "Architecture/ArchitectureOperation/FQHESphereParticleEntanglementSpectrumOperation.h"
+#include "Architecture/ArchitectureOperation/FQHETorusParticleEntanglementSpectrumOperation.h"
 #include "GeneralTools/StringTools.h"
 
 #include <math.h>
@@ -803,4 +803,217 @@ ComplexVector FermionOnLatticeRealSpaceAnd2DTranslation::ConvertFromKxKyBasis(Co
       }
   delete[] FourrierCoefficients;
   return TmpVector;
+}
+
+
+// evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+// 
+// nbrParticleSector = number of particles that belong to the subsytem 
+// kxSector = kx sector in which the density matrix has to be evaluated 
+// kySector = kx sector in which the density matrix has to be evaluated 
+// groundState = reference on the total system ground state
+// architecture = pointer to the architecture to use parallelized algorithm 
+// return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+
+HermitianMatrix FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture)
+{
+  if (nbrParticleSector == 0)
+    {
+      if ((kxSector == 0) && (kySector == 0))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+    }
+  if (nbrParticleSector == this->NbrFermions)
+    {
+      if ((kxSector == this->XMomentum) && (kySector == this->YMomentum))
+	{
+	  HermitianMatrix TmpDensityMatrix(1, true);
+	  TmpDensityMatrix(0, 0) = 1.0;
+	  return TmpDensityMatrix;
+	}
+    }
+  int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
+  int ComplementaryKxMomentum = (this->XMomentum - kxSector) % this->MaxXMomentum;
+  int ComplementaryKyMomentum = (this->YMomentum - kySector) % this->MaxYMomentum;
+  FermionOnLatticeRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
+  HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
+  FermionOnLatticeRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, this->NbrSite, ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
+  cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
+
+//   cout << "dim comp = " << ComplementarySpace.LargeHilbertSpaceDimension << endl;
+  FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  Operation.ApplyOperation(architecture);
+  cout << "nbr matrix elements non zero = " << Operation.GetNbrNonZeroMatrixElements() << endl;
+  if (Operation.GetNbrNonZeroMatrixElements() > 0)	
+    return TmpDensityMatrix;
+  else
+    {
+      HermitianMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
+}
+
+
+// core part of the evaluation density matrix particle partition calculation
+// 
+// minIndex = first index to consider in complementary Hilbert space
+// nbrIndex = number of indices to consider in complementary Hilbert space
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+// return value = number of components that have been added to the density matrix
+
+long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
+												ComplexVector& groundState,  HermitianMatrix* densityMatrix)
+{
+  FermionOnLatticeRealSpaceAnd2DTranslation* TmpHilbertSpace =  (FermionOnLatticeRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
+  FermionOnLatticeRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeRealSpaceAnd2DTranslation*) destinationHilbertSpace;
+  long LargeDestinationHilbertSpaceDimension = TmpDestinationHilbertSpace->EvaluateHilbertSpaceDimension(this->NbrFermions);
+  int* TmpStatePosition = new int [LargeDestinationHilbertSpaceDimension];
+  int* TmpStatePosition2 = new int [LargeDestinationHilbertSpaceDimension];
+  Complex* TmpStateCoefficient = new Complex [LargeDestinationHilbertSpaceDimension];
+  
+  int MaxIndex = minIndex + nbrIndex;
+  long TmpNbrNonZeroElements = 0l;
+  BinomialCoefficients TmpBinomial (this->NbrFermions);
+  double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
+  for (; minIndex < MaxIndex; ++minIndex)    
+    {
+      unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
+      unsigned long TmpState0 = TmpHilbertSpace->StateDescription[minIndex];
+      int TmpXTranslation = 0;
+      bool firstRunX = true;
+      int count = 0;
+      int TmpOrbitSize = TmpHilbertSpace->NbrStateInOrbit[minIndex];
+      while ((TmpState != TmpState0) || (firstRunX == true))
+	{
+	  firstRunX = false;
+	  bool firstRunY = true;
+	  unsigned long TmpState1 = TmpState;
+	  int TmpYTranslation = 0;
+// 	  cout << minIndex << " " << TmpXTranslation << " " << TmpYTranslation << endl;
+// 	TmpXTranslation = (this->MaxXMomentum - TmpXTranslation) % this->MaxXMomentum;
+// 	TmpYTranslation = (this->MaxYMomentum - TmpYTranslation) % this->MaxYMomentum;
+	  while ((TmpState != TmpState1) || (firstRunY == true))
+	    {
+// 	      cout << minIndex << " " << TmpXTranslation << " " << TmpYTranslation << endl;
+	      count += 1;
+	      int count2 = 0;
+	      firstRunY = false;
+	      int Pos = 0;
+	      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
+	      {
+		unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
+		unsigned long TmpState20 = TmpState2;
+		int TmpOrbitSize2 = TmpDestinationHilbertSpace->FindOrbitSize(TmpState2);
+		Complex coefficient;
+		double TmpCoefficient = 1.0 / sqrt((double) (TmpOrbitSize) * (TmpOrbitSize2));
+	    
+		bool firstRunX2 = true;
+		int TmpXTranslation2 = 0;
+		while ((TmpState2 != TmpState20) || (firstRunX2 == true))
+		{
+		  firstRunX2 = false;
+		  bool firstRunY2 = true;
+		  unsigned long TmpState21 = TmpState2;
+		  int TmpYTranslation2 = 0;
+// 		  cout << "initialY = " << TmpState2 << " :  " ;
+		  while ((TmpState2 != TmpState21) || (firstRunY2 == true))
+		  {    
+// 		    cout << j << " " << TmpXTranslation2 << " " << TmpYTranslation2 << " " << TmpState20 << " " << TmpState21 << " " << TmpState2 << endl;
+// 		    cout << j << " " << count2 << " " << LargeDestinationHilbertSpaceDimension << " " << Pos << " " << j << endl;
+		    count2 += 1;
+		    firstRunY2 = false;
+		    unsigned long TmpState22 = TmpState2;
+		    if ((TmpState & TmpState22) == 0x0ul)
+		    {
+		      double TmpPhase = 2*M_PI * (TmpHilbertSpace->XMomentum * TmpXTranslation / (double) (TmpHilbertSpace->MaxXMomentum)  + TmpHilbertSpace->YMomentum * TmpYTranslation / (double) (TmpHilbertSpace->MaxYMomentum));
+		      
+		      double TmpPhase2 = 2*M_PI * (TmpDestinationHilbertSpace->XMomentum * TmpXTranslation2 / (double) (TmpDestinationHilbertSpace->MaxXMomentum)  + TmpDestinationHilbertSpace->YMomentum * TmpYTranslation2 / (double) (TmpDestinationHilbertSpace->MaxYMomentum));
+		      
+		      coefficient = TmpCoefficient * ((1.0 - (2.0 * ((double) ((TmpHilbertSpace->ReorderingSign[minIndex] >> ((TmpYTranslation * this->MaxXMomentum) + TmpXTranslation)) & 0x1ul))))) * (1.0 - (2.0 * ((double) ((TmpDestinationHilbertSpace->ReorderingSign[j] >> ((TmpYTranslation2 * this->MaxXMomentum) + TmpXTranslation2)) & 0x1ul)))) * Phase (TmpPhase + TmpPhase2) ; 
+		      
+// 		      cout << minIndex << " " << j <<  " " << TmpXTranslation << " " << TmpYTranslation << " " << TmpXTranslation2 << " " << TmpYTranslation2 << " " << Phase (TmpPhase) << " " << Phase (TmpPhase2) << endl;
+		      
+		      int TmpLzMax = this->MaxMomentum;
+		      int TmpNbrTranslationX;
+		      int TmpNbrTranslationY;
+		      unsigned long TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
+		      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+			--TmpLzMax;
+		      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+		      if (TmpPos != this->HilbertSpaceDimension)
+		      {
+			int TmpOrbitSizeFinal = this->NbrStateInOrbit[TmpPos];
+			coefficient *= (1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpPos] >> ((TmpNbrTranslationY * this->MaxXMomentum) + TmpNbrTranslationX)) & 0x1ul)))) / sqrt ((double) (TmpOrbitSizeFinal)); 
+			Complex Coefficient = TmpInvBinomial * coefficient;
+			unsigned long Sign = 0x0ul;
+			int Pos2 = TmpDestinationHilbertSpace->MaxMomentum;
+			while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+			{
+			  while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			    --Pos2;
+			  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+#ifdef  __64_BITS__
+			  TmpState3 ^= TmpState3 >> 32;
+#endif	
+			  TmpState3 ^= TmpState3 >> 16;
+			  TmpState3 ^= TmpState3 >> 8;
+			  TmpState3 ^= TmpState3 >> 4;
+			  TmpState3 ^= TmpState3 >> 2;
+			  TmpState3 ^= TmpState3 >> 1;
+			  Sign ^= TmpState3;
+			  TmpState22 &= ~(0x1ul << Pos2);
+			    --Pos2;
+			}
+		      if ((Sign & 0x1ul) == 0x0ul)		  
+			Coefficient *= 1.0;
+		      else
+			Coefficient *= -1.0;
+		      TmpStatePosition[Pos] = TmpPos;
+		      TmpStatePosition2[Pos] = j;
+		      TmpStateCoefficient[Pos] = Coefficient;
+		      ++Pos;
+		    }
+		  }
+// 		cout << TmpState2 << " " ;  
+	     this->ApplySingleYTranslation(TmpState2);
+// 	     cout << TmpState2 << endl;  
+	     ++TmpYTranslation2;
+	    }
+// 	cout << TmpState2 << " . Apply XTranslation " ;
+	this->ApplySingleXTranslation(TmpState2);
+// 	cout << TmpState2 << endl;
+	++TmpXTranslation2;
+	    }
+	}
+      if (Pos != 0)
+	{
+	  ++TmpNbrNonZeroElements;
+	  for (int j = 0; j < Pos; ++j)
+	    {
+	      int Pos2 = TmpStatePosition2[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
+	      for (int k = 0; k < Pos; ++k)
+		if (TmpStatePosition2[k] >= Pos2)
+		  {
+		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
+		  }
+	    }
+	}
+	this->ApplySingleYTranslation(TmpState);
+	++TmpYTranslation;
+	}
+	this->ApplySingleXTranslation(TmpState);      
+	++TmpXTranslation;
+      } 
+    }
+  delete[] TmpStatePosition;
+  delete[] TmpStatePosition2;
+  delete[] TmpStateCoefficient;
+  return TmpNbrNonZeroElements;
 }

@@ -153,6 +153,14 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+  
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
  protected:
 
@@ -252,6 +260,19 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // space = pointer to the Hilbert space where state is defined
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
+  
+    
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in complementary Hilbert space
+  // nbrIndex = number of indices to consider in complementary Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
+								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
 
 };
 
