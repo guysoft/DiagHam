@@ -3582,7 +3582,6 @@ RealMatrix FermionOnSphereWithSpin::EvaluatePartialEntanglementMatrixParticlePar
 long FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 										 RealVector& groundState, RealSymmetricMatrix* densityMatrix)
 {
-  cout << "warning, untested code FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore" << endl;
   FermionOnSphereWithSpin* TmpHilbertSpace = (FermionOnSphereWithSpin*) complementaryHilbertSpace;
   FermionOnSphereWithSpin* TmpDestinationHilbertSpace = (FermionOnSphereWithSpin*) destinationHilbertSpace;
   int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
@@ -3672,7 +3671,6 @@ long FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore 
 long FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 										 ComplexVector& groundState, HermitianMatrix* densityMatrix)
 {
-  cout << "warning, untested code FermionOnSphereWithSpin::EvaluatePartialDensityMatrixParticlePartitionCore" << endl;
   FermionOnSphereWithSpin* TmpHilbertSpace = (FermionOnSphereWithSpin*) complementaryHilbertSpace;
   FermionOnSphereWithSpin* TmpDestinationHilbertSpace = (FermionOnSphereWithSpin*) destinationHilbertSpace;
   int* TmpStatePosition = new int [TmpDestinationHilbertSpace->HilbertSpaceDimension];
