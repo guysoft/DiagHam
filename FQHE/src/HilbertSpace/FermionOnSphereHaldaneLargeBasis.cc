@@ -249,7 +249,7 @@ FermionOnSphereHaldaneLargeBasis::FermionOnSphereHaldaneLargeBasis (int nbrFermi
   delete[] this->KeepStateFlag;
   this->StateDescription = TmpStateDescription;
   this->LargeHilbertSpaceDimension = NewHilbertSpaceDimension;
-  if (this->LargeHilbertSpaceDimension >= (1l << 30))
+  if (this->LargeHilbertSpaceDimension >= (1l << 31))
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
@@ -856,7 +856,7 @@ RealVector& FermionOnSphereHaldaneLargeBasis::GenerateJackPolynomial(RealVector&
 		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
 		      {
 			long TmpIndex = this->FindStateIndex(TmpState);
-			if (TmpIndex < this->HilbertSpaceDimension)
+			if (TmpIndex < this->LargeHilbertSpaceDimension)
 			  Coefficient += Sign * Diff * jack[TmpIndex];
 		      }
 		  }
@@ -883,7 +883,7 @@ RealVector& FermionOnSphereHaldaneLargeBasis::GenerateJackPolynomial(RealVector&
 
 RealVector& FermionOnSphereHaldaneLargeBasis::GenerateSymmetrizedJackPolynomial(RealVector& jack, double alpha)
 {
-  jack[0] = 1.0;
+  jack[0l] = 1.0;
   double InvAlpha =  2.0 * (1.0 - alpha) / alpha;
 
   unsigned long* TmpMonomial = new unsigned long [this->NbrFermions];
@@ -900,6 +900,8 @@ RealVector& FermionOnSphereHaldaneLargeBasis::GenerateSymmetrizedJackPolynomial(
     SymSign = -1.0;
   for (long i = 1; i < this->LargeHilbertSpaceDimension; ++i)
     {
+      if (jack[i] == 0.0)
+{
       double Rho = 0.0;
       unsigned long CurrentPartition = this->StateDescription[i];
       this->ConvertToMonomial(CurrentPartition, TmpMonomial);
@@ -943,7 +945,7 @@ RealVector& FermionOnSphereHaldaneLargeBasis::GenerateSymmetrizedJackPolynomial(
 		    if ((TmpState <= MaxRoot) && (TmpState > CurrentPartition))
 		      {
 			long TmpIndex = this->FindStateIndex(TmpState);
-			if (TmpIndex < this->HilbertSpaceDimension)
+			if (TmpIndex < this->LargeHilbertSpaceDimension)
 			  Coefficient += Sign * Diff * jack[TmpIndex];
 		      }
 		  }
@@ -959,6 +961,7 @@ RealVector& FermionOnSphereHaldaneLargeBasis::GenerateSymmetrizedJackPolynomial(
 	  jack[TmpIndex] = SymSign *Coefficient;
 	}
       jack[i] = Coefficient;
+}
       if ((i & 0xffl) == 0l)
 	{
 	  cout << i << " / " << this->LargeHilbertSpaceDimension << " (" << ((i * 100) / this->LargeHilbertSpaceDimension) << "%)           \r";
