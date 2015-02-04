@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a torus with         //
-//                          generic n-body interaction                        //
+//       class of hamiltonian associated to particles on a twisted torus      //
+//                       with generic n-body interaction                      //
 //                                                                            //
-//                        last modification : 24/01/2015                      //
+//                        last modification : 31/01/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONTORUSGENERICNBODYBODYWITHMAGNETICTRANSLATIONSHAMILTONIAN_H
-#define PARTICLEONTORUSGENERICNBODYBODYWITHMAGNETICTRANSLATIONSHAMILTONIAN_H
+#ifndef PARTICLEONTWISTEDTORUSGENERICNBODYBODYWITHMAGNETICTRANSLATIONSHAMILTONIAN_H
+#define PARTICLEONTWISTEDTORUSGENERICNBODYBODYWITHMAGNETICTRANSLATIONSHAMILTONIAN_H
 
 
 #include "config.h"
@@ -44,7 +44,7 @@ using std::ostream;
 
 
 
-class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian
+class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian
 {
 
  protected:
@@ -55,11 +55,14 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   double* Q2Values;
   double* CosineCoffients; 
 
+  // angle (in radian) between the two fundamental cycles of the torus, along (L1 sin, L1 cos) and (0, L2)
+  double Angle;
+
  public:
 
   // default constructor
   //
-  ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian();
+  ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian();
 
   // constructor from default datas
   //
@@ -68,18 +71,19 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   // maxMomentum = number of flux quanta
   // xMomentum = relative angular momentum along x 
   // ratio = torus aspect ratio (Lx/Ly)
+  // theta =  angle (in pi units) between the two fundamental cycles of the torus, along (Lx sin theta, Lx cos theta) and (0, Ly)
   // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio,
-								 int nbrNBody, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
-								 char* precalculationFileName = 0);
+  ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, double theta,
+									int nbrNBody, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+									char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian();
+  ~ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian();
   
   // clone hamiltonian without duplicating datas
   //

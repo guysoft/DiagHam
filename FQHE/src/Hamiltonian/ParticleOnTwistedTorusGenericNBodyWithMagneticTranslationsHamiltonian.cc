@@ -6,10 +6,10 @@
 //                  Copyright (C) 2001-2004 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//       class of hamiltonian associated to particles on a torus with         //
-//                          generic n-body interaction                        //
+//       class of hamiltonian associated to particles on a twisted torus      //
+//                       with generic n-body interaction                      //
 //                                                                            //
-//                        last modification : 24/01/2015                      //
+//                        last modification : 31/01/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
 #include "MathTools/IntegerAlgebraTools.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "GeneralTools/StringTools.h"
@@ -44,7 +44,7 @@
 // default constructor
 //
 
-ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian()
+ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian()
 {
 }
 
@@ -55,13 +55,14 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusG
 // maxMomentum = number of flux quanta
 // xMomentum = relative angular momentum along x 
 // ratio = torus aspect ratio (Lx/Ly)
+// theta =  angle (in pi units) between the two fundamental cycles of the torus, along (Lx sin theta, Lx cos theta) and (0, Ly)
 // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio,
+ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, double theta,
 															       int nbrNBody, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 															       char* precalculationFileName)
 {
@@ -80,6 +81,7 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusG
   this->OneBodyInteractionFactors = 0;
   this->Ratio = ratio;
   this->InvRatio = 1.0 / ratio;
+  this->Angle = theta * M_PI;
   this->Architecture = architecture;
   long MinIndex;
   long MaxIndex;
@@ -108,7 +110,7 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusG
 // destructor
 //
 
-ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::~ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian()
+ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::~ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian()
 {
 }
   
@@ -116,7 +118,7 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::~ParticleOnTorus
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
   this->Particles = (ParticleOnTorusWithMagneticTranslations*) hilbertSpace;
   this->EvaluateInteractionFactors();
@@ -126,7 +128,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::SetHilbertS
 //
 // shift = shift value
 
-void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ShiftHamiltonian (double shift)
+void ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ShiftHamiltonian (double shift)
 {
   this->HamiltonianShift = shift;
 }
@@ -134,7 +136,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ShiftHamilt
 // evaluate all interaction factors
 //   
 
-void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
+void ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0l;
   this->GetIndices();
@@ -204,8 +206,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 //		  cout << this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices) << " <> ";
 // 		  cout << this->EvaluateInteractionCoefficient(TmpMIndices[0], TmpMIndices[1], TmpMIndices[2], 
 // 							       TmpNIndices[0], TmpNIndices[1], TmpNIndices[2]) << endl;
-		  double TmpInteraction = 0.0;
-		  long NbrOperations = 0l;
+		  Complex TmpInteraction = 0.0;
 		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		    {
 		      int* TmpPerm1 = Permutations[l1];
@@ -220,7 +221,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 			    {
 			      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + TmpPerm2[k]];
 			    }
-			  double Tmp = this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, NbrOperations);
+			  Complex Tmp = 0.0; //this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
 // 			  cout << i << " " << Index << " : " << TmpMIndices[0] << TmpMIndices[1] <<  TmpMIndices[2] << " | "
 // 			       << TmpNIndices[0] << TmpNIndices[1] <<  TmpNIndices[2]
 // 			       << " = " << Tmp << endl;
@@ -235,12 +236,6 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 // 		       << this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + 2] << " = "
 // 		       << TmpInteraction << endl;
 		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;		  
-		  for (int k = 0; k < this->NBodyValue; ++k)
-		    cout << TmpMIndices[k] << " ";
-		  cout << "| ";
-		  for (int k = 0; k < this->NBodyValue; ++k)
-		    cout << TmpNIndices[k] << " ";
-		  cout << " = " << TmpInteraction << " (" << NbrOperations << ")"<< endl;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -258,8 +253,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
 	    {
-	      Index = j1 * this->NbrNBodySectorIndicesPerSum[i];
-	      for (int j2 = 0; j2 <= j1; ++j2)// this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
 		  for (int k = 0; k < this->NBodyValue; ++k)
 		    {
@@ -299,14 +293,6 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		  ++Index;
 		}
 	    }
-	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
-	    {
-	      for (int j2 = j1 + 1; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
-		{
-		  this->NBodyInteractionFactors[i][j1 * this->NbrNBodySectorIndicesPerSum[i] + j2] = this->NBodyInteractionFactors[i][j2 * this->NbrNBodySectorIndicesPerSum[i] + j1];
-		  TotalNbrInteractionFactors++;		  
-		}
-	    }
 	}
     }
   delete[] this->QxValues;
@@ -324,7 +310,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 // nIndices = array containing the annihilation operator indices
 // return value = numerical coefficient  
 
-double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations)
+double ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations)
 {
   int Tmp;
   double Prefactor = powl(this->MaxMomentum, -this->NBodyValue + 1.0);
@@ -340,7 +326,7 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateI
 }
   
 
-double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations)
+double ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations)
 {
   if (xPosition < (this->NBodyValue - 1))
     {
@@ -455,8 +441,7 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::Recursive
 
 
 
-double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::VFactor(double* q2Values)
+double ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::VFactor(double* q2Values)
 {
-  return (-q2Values[0] * q2Values[0] * q2Values[1]);
-//  return 1.0;
+  return 1.0;
 }

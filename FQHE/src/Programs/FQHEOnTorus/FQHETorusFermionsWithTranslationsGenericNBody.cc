@@ -305,8 +305,8 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
 
-//      FermionOnTorusWithMagneticTranslations* Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-      BosonOnTorusWithMagneticTranslationsShort* Space = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+      FermionOnTorusWithMagneticTranslations* Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+//      BosonOnTorusWithMagneticTranslationsShort* Space = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());

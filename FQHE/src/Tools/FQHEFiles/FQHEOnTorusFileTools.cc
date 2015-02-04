@@ -281,6 +281,50 @@ bool FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nb
   return true;
 }
 
+// try to guess system information from file name for system suth an SU(2) degree of freedom
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles
+// kyMax = reference to the maximum momentum for a single particle
+// kx = reference to the x momentum
+// ky = reference to the y projection of the angular momentum
+// sz = reference to twice the z projection of the total spin
+// statistics = reference to flag for fermionic statistics
+// return value = true if no error occured
+bool FQHEOnTorusWithSpinFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& kyMax, int& kx, int& ky, int& sz, bool& statistics)
+{
+  if (FQHEOnTorusFindSystemInfoFromVectorFileName(filename, nbrParticles, kyMax, kx, ky, statistics) == false)
+    return false;
+  char* StrNbrParticles;
+
+  StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      int SizeString = 0;
+      if (StrNbrParticles[SizeString] == '-')
+	++SizeString;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] >= '0') 
+	     && (StrNbrParticles[SizeString] <= '9'))
+	++SizeString;
+      if ((StrNbrParticles[SizeString] == '_') && (SizeString != 0))
+	{
+	  StrNbrParticles[SizeString] = '\0';
+	  sz = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = '_';
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+  if (StrNbrParticles == 0)
+    {
+      cout << "can't guess sz from file name " << filename << endl;
+      return false;            
+    }
+  return true;
+}
+
 // try to guess system information from file name for system suth an SU(3) degree of freedom
 //
 // filename = vector file name

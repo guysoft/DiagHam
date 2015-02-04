@@ -28,4 +28,5 @@ ParticleOnLatticeVacancyOperator.cc \
 ParticleOnTorusKxOperator.cc \
 ParticleOnSquareLatticeWithSpinBandDensityOperator.cc \
 ParticleOnSphereSpinOperator.cc \
-ParticleOnSphereWithSpinSuperconductorOrderParameterOperator.cc
+ParticleOnSphereWithSpinSuperconductorOrderParameterOperator.cc \
+ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator.cc

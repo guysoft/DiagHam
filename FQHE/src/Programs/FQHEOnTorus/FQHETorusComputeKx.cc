@@ -8,6 +8,10 @@
 #include "HilbertSpace/BosonOnTorusShort.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/BosonOnTorusWithSpin.h"
+#include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithSpin.h"
 
 #include "Operator/ParticleOnTorusKxOperator.h"
 
@@ -30,6 +34,7 @@
 #include "Options/SingleStringOption.h"
 
 #include "Tools/FQHEFiles/FQHEOnTorusFileTools.h"
+#include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -44,6 +49,19 @@ using std::cin;
 using std::endl;
 using std::ofstream;
 using std::ios;
+
+
+// invert states from the (kx,ky) basis to the ky basis
+//
+// manager = pointer to the option manager
+// return value = 0 if no error occured
+int InvertU1KxKyStates(OptionManager* manager);
+
+// invert states from the (kx,ky) basis to the ky basis with SU(2) degree of freedom
+//
+// manager = pointer to the option manager
+// return value = 0 if no error occured
+int InvertSU2KxKyStates(OptionManager* manager);
 
 
 int main(int argc, char** argv)
@@ -89,139 +107,14 @@ int main(int argc, char** argv)
   int NbrParticles = 0;
   int MaxMomentum = 0;
   int YMomentum = -1;
+  int TotalSz = 0;
   bool Statistics = true;
-
+  bool SU2Flag = false;
+  bool SU3Flag = false;
+  bool SU4Flag = false;
   if ((Manager.GetBoolean("invert")) || (Manager.GetBoolean("invert-real")))
     {
-      int XMomentum = -1;
-      ComplexVector* InputStates = 0;
-      int NbrInputStates = 0;
-      char* OutputNamePrefix = new char [256 + strlen(Manager.GetString("interaction-name"))];
-      if (Manager.GetString("degenerated-states") == 0)
-	{
-	  if (Manager.GetString("input-state") == 0)
-	    {
-	      cout << "error, either input-state or degenerated-states has to be provided" << endl;
-	      return -1;
-	    }
-	  if (FQHEOnTorusFindSystemInfoFromVectorFileName(Manager.GetString("input-state"),
-							  NbrParticles, MaxMomentum, XMomentum, YMomentum, Statistics) == false)
-	    {
-	      cout << "error while retrieving system parameters from file name " << Manager.GetString("ground-state") << endl;
-	      return -1;
-	    }
-	  cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " Ky=" << YMomentum << " ";
-	  NbrInputStates = 1;
-	  InputStates = new ComplexVector [NbrInputStates];
-	  if (InputStates[0].ReadVector(Manager.GetString("input-state")) == false)
-	    {
-	      cout << "error while reading " << Manager.GetString("input-state") << endl;
-	      return -1;
-	    }
-	}
-      else
-	{
-	  MultiColumnASCIIFile DegeneratedFile;
-	  if (DegeneratedFile.Parse(Manager.GetString("degenerated-states")) == false)
-	    {
-	      DegeneratedFile.DumpErrors(cout);
-	      return -1;
-	    } 
-	  NbrInputStates = DegeneratedFile.GetNbrLines();
-	  if (NbrInputStates < 1)
-	    {
-	      cout << "no state found in " << Manager.GetString("degenerated-states") << endl;
-	    }
-	  InputStates = new ComplexVector [NbrInputStates];
-	  if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, 0),
-							  NbrParticles, MaxMomentum, XMomentum, YMomentum, Statistics) == false)
-	    {
-	      cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, 0) << endl;
-	      return -1;
-	    }
-	  cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Ky=" << YMomentum << " ";
-	  if (InputStates[0].ReadVector(DegeneratedFile(0, 0)) == false)
-	    {
-	      cout << "error while reading " << DegeneratedFile(0, 0) << endl;
-	      return -1;
-	    }
-	  for (int i = 1; i < NbrInputStates; ++i)
-	    {
-	      int TmpNbrParticles = 0;
-	      int TmpMaxMomentum = 0;
-	      int TmpYMomentum = -1;
-	      int TmpXMomentum = -1;
-	      bool TmpStatistics = true;
-	      if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, i),
-							      TmpNbrParticles, TmpMaxMomentum, TmpXMomentum, TmpYMomentum, TmpStatistics) == false)
-		{
-		  cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, i) << endl;
-		  return -1;
-		}
-	      if ((TmpNbrParticles != NbrParticles) || (TmpMaxMomentum != MaxMomentum) || 
-		  (TmpYMomentum != YMomentum) || (TmpXMomentum != XMomentum) || (Statistics != TmpStatistics))
-		{
-		  cout << "error, " << DegeneratedFile(0, i) << " has different system parameters than " << DegeneratedFile(0, 0) 
-		       << ", N=" << TmpNbrParticles << "(" << NbrParticles << "), N_phi=" << TmpMaxMomentum << "(" << MaxMomentum 
-		       << "), Kx=" << TmpXMomentum << "(" << XMomentum << "), Ky=" << TmpYMomentum << "(" << YMomentum << ")" << endl;
-		}
-	      if (InputStates[i].ReadVector(DegeneratedFile(0, i)) == false)
-		{
-		  cout << "error while reading " << DegeneratedFile(0, i) << endl;
-		  return -1;
-		}
-	      if (InputStates[i].GetVectorDimension() != InputStates[0].GetVectorDimension())
-		{
-		  cout << "error, " << DegeneratedFile(0, i) << " has different dimension than " << DegeneratedFile(0, 0) << endl;	      
-		}
-	    }
-	}
-      ParticleOnTorus* TotalSpace = 0;
-      ParticleOnTorusWithMagneticTranslations* TargetSpace = 0;
-      if (Statistics == false)
-	{
-	  TargetSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-	  TotalSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, YMomentum);
-	  sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, Manager.GetDouble("ratio"));
-	}
-      else
-	{
-	  TotalSpace = new FermionOnTorus (NbrParticles, MaxMomentum, YMomentum);
-	  TargetSpace = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-	  sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, Manager.GetDouble("ratio"));
-	}
-      if (InputStates[0].GetVectorDimension() != TargetSpace->GetHilbertSpaceDimension())
-	{
-	  cout << "error: vector and Hilbert-space have unequal dimensions " << InputStates[0].GetVectorDimension() 
-	       << " "<< TargetSpace->GetHilbertSpaceDimension() << endl;
-	  return -1;
-	}
-      for (int i = 0; i < NbrInputStates; ++i)
-	{
-	  char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
-	  sprintf (VectorOutputName, "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, XMomentum, YMomentum, i);
-	  ComplexVector TmpVector = TargetSpace->ConvertFromKxKyBasis(InputStates[i], TotalSpace);
-	  if (Manager.GetBoolean("invert-real") == false)
-	    {
-	      if (TmpVector.WriteVector(VectorOutputName) == false)
-		{
-		  cout << "error, can't write vector " << VectorOutputName << endl;
-		}
-	    }
-	  else
-	    {
-	      Complex TmpPhase = TmpVector.GlobalPhase();
-	      TmpVector /= TmpPhase;
-	      RealVector TmpVector2(TmpVector);
-	      TmpVector2.Normalize();
-	      if (TmpVector2.WriteVector(VectorOutputName) == false)
-		{
-		  cout << "error, can't write vector " << VectorOutputName << endl;
-		}	      
-	    }
-	  delete[] VectorOutputName;
-	}
-      return 0;
+      return InvertU1KxKyStates(&Manager);
     }
   
 
@@ -595,4 +488,305 @@ int main(int argc, char** argv)
   File.close();
   return 0;
 
+}
+
+
+
+// invert states from the (kx,ky) basis to the ky basis
+//
+// manager = pointer to the option manager
+// return value = 0 if no error occured
+
+int InvertU1KxKyStates(OptionManager* manager)
+{
+  int NbrParticles = 0;
+  int MaxMomentum = 0;
+  int YMomentum = -1;
+  bool Statistics = true;
+  bool SU2Flag = false;
+  bool SU3Flag = false;
+  bool SU4Flag = false;
+  int XMomentum = -1;
+  ComplexVector* InputStates = 0;
+  int NbrInputStates = 0;
+  char* OutputNamePrefix = new char [256 + strlen(manager->GetString("interaction-name"))];
+  if (manager->GetString("degenerated-states") == 0)
+    {
+      if (manager->GetString("input-state") == 0)
+	{
+	  cout << "error, either input-state or degenerated-states has to be provided" << endl;
+	  return -1;
+	}
+      FQHEOnSphereFindInternalSymmetryGroupFromFileName(manager->GetString("input-state"), SU2Flag, SU3Flag, SU4Flag);
+      if (SU2Flag == true)
+	{
+	  return InvertSU2KxKyStates(manager);
+	}
+      
+      if (FQHEOnTorusFindSystemInfoFromVectorFileName(manager->GetString("input-state"),
+						      NbrParticles, MaxMomentum, XMomentum, YMomentum, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << manager->GetString("ground-state") << endl;
+	  return -1;
+	}
+      cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " Ky=" << YMomentum << " ";
+      NbrInputStates = 1;
+      InputStates = new ComplexVector [NbrInputStates];
+      if (InputStates[0].ReadVector(manager->GetString("input-state")) == false)
+	{
+	  cout << "error while reading " << manager->GetString("input-state") << endl;
+	  return -1;
+	}
+    }
+  else
+    {
+      MultiColumnASCIIFile DegeneratedFile;
+      if (DegeneratedFile.Parse(manager->GetString("degenerated-states")) == false)
+	{
+	  DegeneratedFile.DumpErrors(cout);
+	  return -1;
+	} 
+      NbrInputStates = DegeneratedFile.GetNbrLines();
+      if (NbrInputStates < 1)
+	{
+	  cout << "no state found in " << manager->GetString("degenerated-states") << endl;
+	}
+      InputStates = new ComplexVector [NbrInputStates];
+      if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, 0),
+						      NbrParticles, MaxMomentum, XMomentum, YMomentum, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, 0) << endl;
+	  return -1;
+	}
+      cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Ky=" << YMomentum << " ";
+      if (InputStates[0].ReadVector(DegeneratedFile(0, 0)) == false)
+	{
+	  cout << "error while reading " << DegeneratedFile(0, 0) << endl;
+	  return -1;
+	}
+      for (int i = 1; i < NbrInputStates; ++i)
+	{
+	  int TmpNbrParticles = 0;
+	  int TmpMaxMomentum = 0;
+	  int TmpYMomentum = -1;
+	  int TmpXMomentum = -1;
+	  bool TmpStatistics = true;
+	  if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, i),
+							  TmpNbrParticles, TmpMaxMomentum, TmpXMomentum, TmpYMomentum, TmpStatistics) == false)
+	    {
+	      cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, i) << endl;
+	      return -1;
+	    }
+	  if ((TmpNbrParticles != NbrParticles) || (TmpMaxMomentum != MaxMomentum) || 
+	      (TmpYMomentum != YMomentum) || (TmpXMomentum != XMomentum) || (Statistics != TmpStatistics))
+	    {
+	      cout << "error, " << DegeneratedFile(0, i) << " has different system parameters than " << DegeneratedFile(0, 0) 
+		   << ", N=" << TmpNbrParticles << "(" << NbrParticles << "), N_phi=" << TmpMaxMomentum << "(" << MaxMomentum 
+		   << "), Kx=" << TmpXMomentum << "(" << XMomentum << "), Ky=" << TmpYMomentum << "(" << YMomentum << ")" << endl;
+	    }
+	  if (InputStates[i].ReadVector(DegeneratedFile(0, i)) == false)
+	    {
+	      cout << "error while reading " << DegeneratedFile(0, i) << endl;
+	      return -1;
+	    }
+	  if (InputStates[i].GetVectorDimension() != InputStates[0].GetVectorDimension())
+	    {
+	      cout << "error, " << DegeneratedFile(0, i) << " has different dimension than " << DegeneratedFile(0, 0) << endl;	      
+	    }
+	}
+    }
+  ParticleOnTorus* TotalSpace = 0;
+  ParticleOnTorusWithMagneticTranslations* TargetSpace = 0;
+  if (Statistics == false)
+    {
+      TargetSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+      TotalSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, YMomentum);
+      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
+    }
+  else
+    {
+      TotalSpace = new FermionOnTorus (NbrParticles, MaxMomentum, YMomentum);
+      TargetSpace = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
+    }
+  
+  if (InputStates[0].GetVectorDimension() != TargetSpace->GetHilbertSpaceDimension())
+    {
+      cout << "error: vector and Hilbert-space have unequal dimensions " << InputStates[0].GetVectorDimension() 
+	   << " "<< TargetSpace->GetHilbertSpaceDimension() << endl;
+      return -1;
+    }
+  for (int i = 0; i < NbrInputStates; ++i)
+    {
+      char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
+      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, XMomentum, YMomentum, i);
+      ComplexVector TmpVector = TargetSpace->ConvertFromKxKyBasis(InputStates[i], TotalSpace);
+      if (manager->GetBoolean("invert-real") == false)
+	{
+	  if (TmpVector.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }
+	}
+      else
+	{
+	  Complex TmpPhase = TmpVector.GlobalPhase();
+	  TmpVector /= TmpPhase;
+	  RealVector TmpVector2(TmpVector);
+	  TmpVector2.Normalize();
+	  if (TmpVector2.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }	      
+	}
+      delete[] VectorOutputName;
+    }
+  return 0;
+}
+
+// invert states from the (kx,ky) basis to the ky basis with SU(2) degree of freedom
+//
+// manager = pointer to the option manager
+// return value = 0 if no error occured
+
+int InvertSU2KxKyStates(OptionManager* manager)
+{
+  int NbrParticles = 0;
+  int MaxMomentum = 0;
+  int YMomentum = -1;
+  int TotalSz = 0;
+  bool Statistics = true;
+  bool SU2Flag = false;
+  bool SU3Flag = false;
+  bool SU4Flag = false;
+  int XMomentum = -1;
+  ComplexVector* InputStates = 0;
+  int NbrInputStates = 0;
+  char* OutputNamePrefix = new char [256 + strlen(manager->GetString("interaction-name"))];
+  if (manager->GetString("degenerated-states") == 0)
+    {
+      if (manager->GetString("input-state") == 0)
+	{
+	  cout << "error, either input-state or degenerated-states has to be provided" << endl;
+	  return -1;
+	}
+      if (FQHEOnTorusFindSystemInfoFromVectorFileName(manager->GetString("input-state"),
+						      NbrParticles, MaxMomentum, XMomentum, YMomentum, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << manager->GetString("ground-state") << endl;
+	  return -1;
+	}
+      cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " Ky=" << YMomentum << " ";
+      NbrInputStates = 1;
+      InputStates = new ComplexVector [NbrInputStates];
+      if (InputStates[0].ReadVector(manager->GetString("input-state")) == false)
+	{
+	  cout << "error while reading " << manager->GetString("input-state") << endl;
+	  return -1;
+	}
+    }
+  else
+    {
+      MultiColumnASCIIFile DegeneratedFile;
+      if (DegeneratedFile.Parse(manager->GetString("degenerated-states")) == false)
+	{
+	  DegeneratedFile.DumpErrors(cout);
+	  return -1;
+	} 
+      NbrInputStates = DegeneratedFile.GetNbrLines();
+      if (NbrInputStates < 1)
+	{
+	  cout << "no state found in " << manager->GetString("degenerated-states") << endl;
+	}
+      InputStates = new ComplexVector [NbrInputStates];
+      if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, 0),
+						      NbrParticles, MaxMomentum, XMomentum, YMomentum, Statistics) == false)
+	{
+	  cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, 0) << endl;
+	  return -1;
+	}
+      cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Ky=" << YMomentum << " ";
+      if (InputStates[0].ReadVector(DegeneratedFile(0, 0)) == false)
+	{
+	  cout << "error while reading " << DegeneratedFile(0, 0) << endl;
+	  return -1;
+	}
+      for (int i = 1; i < NbrInputStates; ++i)
+	{
+	  int TmpNbrParticles = 0;
+	  int TmpMaxMomentum = 0;
+	  int TmpYMomentum = -1;
+	  int TmpXMomentum = -1;
+	  bool TmpStatistics = true;
+	  if (FQHEOnTorusFindSystemInfoFromVectorFileName(DegeneratedFile(0, i),
+							  TmpNbrParticles, TmpMaxMomentum, TmpXMomentum, TmpYMomentum, TmpStatistics) == false)
+	    {
+	      cout << "error while retrieving system parameters from file name " << DegeneratedFile(0, i) << endl;
+	      return -1;
+	    }
+	  if ((TmpNbrParticles != NbrParticles) || (TmpMaxMomentum != MaxMomentum) || 
+	      (TmpYMomentum != YMomentum) || (TmpXMomentum != XMomentum) || (Statistics != TmpStatistics))
+	    {
+	      cout << "error, " << DegeneratedFile(0, i) << " has different system parameters than " << DegeneratedFile(0, 0) 
+		   << ", N=" << TmpNbrParticles << "(" << NbrParticles << "), N_phi=" << TmpMaxMomentum << "(" << MaxMomentum 
+		   << "), Kx=" << TmpXMomentum << "(" << XMomentum << "), Ky=" << TmpYMomentum << "(" << YMomentum << ")" << endl;
+	    }
+	  if (InputStates[i].ReadVector(DegeneratedFile(0, i)) == false)
+	    {
+	      cout << "error while reading " << DegeneratedFile(0, i) << endl;
+	      return -1;
+	    }
+	  if (InputStates[i].GetVectorDimension() != InputStates[0].GetVectorDimension())
+	    {
+	      cout << "error, " << DegeneratedFile(0, i) << " has different dimension than " << DegeneratedFile(0, 0) << endl;	      
+	    }
+	}
+    }
+  ParticleOnSphereWithSpin* TotalSpace = 0;
+  ParticleOnTorusWithSpinAndMagneticTranslations* TargetSpace = 0;
+  if (Statistics == false)
+    {
+      TargetSpace = new BosonOnTorusWithSpinAndMagneticTranslations(NbrParticles, TotalSz, MaxMomentum, XMomentum, YMomentum);
+      TotalSpace = new BosonOnTorusWithSpin(NbrParticles, MaxMomentum, TotalSz, YMomentum);
+      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f_sz_%d", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"), TotalSz);
+    }
+  else
+    {
+      TotalSpace = new FermionOnTorusWithSpin (NbrParticles, MaxMomentum, TotalSz, YMomentum);
+      TargetSpace = new FermionOnTorusWithSpinAndMagneticTranslations(NbrParticles, TotalSz, MaxMomentum, XMomentum, YMomentum);
+      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f_sz_%d", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"), TotalSz);
+    }
+  
+  if (InputStates[0].GetVectorDimension() != TargetSpace->GetHilbertSpaceDimension())
+    {
+      cout << "error: vector and Hilbert-space have unequal dimensions " << InputStates[0].GetVectorDimension() 
+	   << " "<< TargetSpace->GetHilbertSpaceDimension() << endl;
+      return -1;
+    }
+  for (int i = 0; i < NbrInputStates; ++i)
+    {
+      char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
+      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, XMomentum, YMomentum, i);
+      ComplexVector TmpVector = TargetSpace->ConvertFromKxKyBasis(InputStates[i], TotalSpace);
+      if (manager->GetBoolean("invert-real") == false)
+	{
+	  if (TmpVector.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }
+	}
+      else
+	{
+	  Complex TmpPhase = TmpVector.GlobalPhase();
+	  TmpVector /= TmpPhase;
+	  RealVector TmpVector2(TmpVector);
+	  TmpVector2.Normalize();
+	  if (TmpVector2.WriteVector(VectorOutputName) == false)
+	    {
+	      cout << "error, can't write vector " << VectorOutputName << endl;
+	    }	      
+	}
+      delete[] VectorOutputName;
+    }
+  return 0;
 }

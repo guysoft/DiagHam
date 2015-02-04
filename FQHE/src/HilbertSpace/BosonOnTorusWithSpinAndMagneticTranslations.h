@@ -132,6 +132,9 @@ class BosonOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWithS
   // number of state in each orbit
   int* NbrStateInOrbit;
 
+  // target space for operations leaving the Hilbert-space
+  BosonOnTorusWithSpinAndMagneticTranslations* TargetSpace;
+
  public:
 
   
@@ -194,6 +197,17 @@ class BosonOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWithS
   // return value = pointer to the new subspace
   AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, 
 					 SubspaceSpaceConverter& converter);
+
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
+  
+  
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
 
   // apply a^+_(d,m1) a^+_(d,m2) a_(d,n1) a_(d,n2) operator to a given state (with m1+m2=n1+n2)
   //
@@ -293,12 +307,37 @@ class BosonOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWithS
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);  
 
+  // apply a^+_m_d a_m_u operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_u a_m_d operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, double& coefficient, int& nbrTranslation);
+
   // print a given State
   //
   // Str = reference on current output stream 
   // state = ID of the state to print
   // return value = reference on current output stream 
   ostream& PrintState (ostream& Str, int state);
+
+  // convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+  //
+  // state = reference on the state to convert
+  // space = pointer to the Hilbert space where state is defined
+  // return value = state in the (Kx,Ky) basis  
+  virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
  protected:
 
@@ -788,6 +827,15 @@ inline void BosonOnTorusWithSpinAndMagneticTranslations::FermionToBoson(unsigned
     }
   for (; FinalStateKyMax <= this->KyMax; ++FinalStateKyMax)
     finalStateDown[FinalStateKyMax] = 0x0ul;
+}
+
+// return Hilbert space dimension of the target space
+//
+// return value = Hilbert space dimension
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetTargetHilbertSpaceDimension()
+{
+  return this->TargetSpace->HilbertSpaceDimension;
 }
 
 #endif

@@ -373,11 +373,34 @@ int main(int argc, char** argv)
     File.open(Manager.GetString("output-file"), ios::binary | ios::out);
   else
     {
-      char* TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
-      if (TmpFileName == 0)
+      char* TmpFileName = 0;
+      if (RealSpaceCut == false)
 	{
-	  cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
-	  return 0;
+	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", "partent");
+	  if (TmpFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
+	}
+      else
+	{
+	  char* TmpExtension = new char [512];
+	  if (RealSpaceCutCylinder == false)
+	    {
+	      sprintf(TmpExtension, "_thetabot_%.6f_thetabot_%.6f.realent", Manager.GetDouble("realspace-theta-top"), 
+		      Manager.GetDouble("realspace-theta-bot"));
+	    }
+	  else
+	    {
+	      sprintf(TmpExtension, "_x_%.6f.realent", Manager.GetDouble("realspace-cylindercut"));
+	    }
+	  TmpFileName = ReplaceExtensionToFileName(GroundStateFiles[0], "vec", TmpExtension);
+	  if (TmpFileName == 0)
+	    {
+	      cout << "no vec extension was find in " << GroundStateFiles[0] << " file name" << endl;
+	      return 0;
+	    }
 	}
       File.open(TmpFileName, ios::binary | ios::out);
       delete[] TmpFileName;

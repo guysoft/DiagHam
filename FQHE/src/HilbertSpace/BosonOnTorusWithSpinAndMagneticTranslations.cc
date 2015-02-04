@@ -31,6 +31,7 @@
 #include "config.h"
 #include "HilbertSpace/BosonOnTorusWithSpinAndMagneticTranslations.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
+#include "HilbertSpace/BosonOnTorusWithSpin.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/PeriodicMomentumQuantumNumber.h"
 #include "QuantumNumber/VectorQuantumNumber.h"
@@ -101,6 +102,7 @@ BosonOnTorusWithSpinAndMagneticTranslations::BosonOnTorusWithSpinAndMagneticTran
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->TargetSpace = this;
   if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->StateDescriptionUp = new unsigned long[this->LargeHilbertSpaceDimension];
@@ -180,6 +182,10 @@ BosonOnTorusWithSpinAndMagneticTranslations::BosonOnTorusWithSpinAndMagneticTran
   this->RescalingFactors = bosons.RescalingFactors;
   this->NbrStateInOrbit = bosons.NbrStateInOrbit;
 
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->Flag = bosons.Flag;
 }
 
@@ -270,6 +276,10 @@ BosonOnTorusWithSpinAndMagneticTranslations& BosonOnTorusWithSpinAndMagneticTran
   this->RescalingFactors = bosons.RescalingFactors;
   this->NbrStateInOrbit = bosons.NbrStateInOrbit;
 
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   this->Flag = bosons.Flag;
 
   return *this;
@@ -332,6 +342,15 @@ AbstractHilbertSpace* BosonOnTorusWithSpinAndMagneticTranslations::ExtractSubspa
 }
 
 
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void BosonOnTorusWithSpinAndMagneticTranslations::SetTargetSpace(ParticleOnSphereWithSpin* targetSpace)
+{
+  this->TargetSpace = (BosonOnTorusWithSpinAndMagneticTranslations*) targetSpace;
+}
+
 // apply a^+_(d,m1) a^+_(d,m2) a_(d,n1) a_(d,n2) operator to a given state (with m1+m2=n1+n2)
 //
 // index = index of the state on which the operator has to be applied
@@ -387,6 +406,7 @@ int BosonOnTorusWithSpinAndMagneticTranslations::AddAduAdAu (int index, int m1, 
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
+
 double BosonOnTorusWithSpinAndMagneticTranslations::AddAd (int index, int m)
 {
   cout << "warning : AddAd not implemented" << endl;
@@ -399,10 +419,83 @@ double BosonOnTorusWithSpinAndMagneticTranslations::AddAd (int index, int m)
 // index = index of the state on which the operator has to be applied
 // m = index of the creation and annihilation operator
 // return value = coefficient obtained when applying a^+_m a_m
+
 double BosonOnTorusWithSpinAndMagneticTranslations::AduAu (int index, int m)
 {
   cout << "warning : AduAu not implemented" << endl;
   return 0.0;
+}
+
+// apply a^+_m_d a_m_u operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int BosonOnTorusWithSpinAndMagneticTranslations::AddAu (int index, int m, double& coefficient, int& nbrTranslation)
+{
+  this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
+  if (this->ProdATemporaryStateUp[m] == 0)
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  coefficient = this->ProdATemporaryStateUp[m];
+  --this->ProdATemporaryStateUp[m];
+  coefficient *= this->ProdATemporaryStateDown[m];
+  --this->ProdATemporaryStateDown[m];
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  this->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
+  if (this->TargetSpace->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, nbrTranslation) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  coefficient = sqrt(coefficient);
+  int TmpIndex = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);
+  coefficient *= this->ProdANbrStateInOrbit[this->TargetSpace->NbrStateInOrbit[TmpIndex]];
+  nbrTranslation *= this->TargetSpace->StateShift;
+  return TmpIndex;
+}
+
+// apply a^+_m_u a_m_d operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int BosonOnTorusWithSpinAndMagneticTranslations::AduAd (int index, int m, double& coefficient, int& nbrTranslation)
+{
+  this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
+  if (this->ProdATemporaryStateDown[m] == 0)
+    {
+      return 0.0;
+    }
+  this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
+  this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
+  coefficient = this->ProdATemporaryStateDown[m];
+  --this->ProdATemporaryStateDown[m];
+  coefficient *= this->ProdATemporaryStateUp[m];
+  --this->ProdATemporaryStateUp[m];
+  unsigned long TmpStateUp;
+  unsigned long TmpStateDown;
+  this->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
+  if (this->TargetSpace->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, nbrTranslation) == false)
+    {
+      coefficient = 0.0;
+      return this->HilbertSpaceDimension;
+    }
+  coefficient = sqrt(coefficient);
+  int TmpIndex = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);
+  coefficient *= this->ProdANbrStateInOrbit[this->TargetSpace->NbrStateInOrbit[TmpIndex]];
+  nbrTranslation *= this->TargetSpace->StateShift;
+  return TmpIndex;
 }
 
 // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
@@ -807,5 +900,35 @@ long BosonOnTorusWithSpinAndMagneticTranslations::EvaluateHilbertSpaceDimension(
   return Count;
 }
 
+// convert a state defined in the (Kx,Ky) basis into a state in the Ky basis
+//
+// state = reference on the state to convert
+// space = pointer to the Hilbert space where state is defined
+// return value = state in the (Kx,Ky) basis
+
+ComplexVector BosonOnTorusWithSpinAndMagneticTranslations::ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space)
+{
+  BosonOnTorusWithSpin* TmpSpace = (BosonOnTorusWithSpin*) space;
+  ComplexVector TmpVector (TmpSpace->HilbertSpaceDimension, true);
+  Complex* FourrierCoefficients = new Complex [this->MomentumModulo];
+  for (int i = 0; i < this->MomentumModulo; ++i)
+    FourrierCoefficients[i] = Phase (-2.0 * M_PI * ((double) (i * this->KxMomentum)) / ((double) this->MomentumModulo));
+  for (int i = 0; i < TmpSpace->HilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpStateUp = TmpSpace->StateDescriptionUp[i];
+      unsigned long TmpStateDown = TmpSpace->StateDescriptionDown[i];
+      int NbrTranslation = 0;
+      if (this->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, NbrTranslation) == true)
+	{
+	  int Pos = this->FindStateIndex(TmpStateUp, TmpStateDown);
+	  if (Pos < this->HilbertSpaceDimension)
+	    {
+	      TmpVector[i] =  state[Pos] * FourrierCoefficients[NbrTranslation] / sqrt((double) this->NbrStateInOrbit[Pos]);
+	    }
+	}
+    }
+  delete[] FourrierCoefficients;
+  return TmpVector;
+}
 
 

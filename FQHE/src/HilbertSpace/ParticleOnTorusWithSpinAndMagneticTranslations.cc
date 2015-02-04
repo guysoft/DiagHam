@@ -124,6 +124,32 @@ int ParticleOnTorusWithSpinAndMagneticTranslations::AddAdd (int m1, int m2, doub
   return this->HilbertSpaceDimension;
 }
 
+// apply a^+_m_d a_m_u operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::AddAu (int index, int m, double& coefficient, int& nbrTranslation)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply a^+_m_u a_m_d operator to a given state
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::AduAd (int index, int m, double& coefficient, int& nbrTranslation)
+{
+  return this->HilbertSpaceDimension;
+}
+
 // apply a^+_m1_u a^+_m2_d operator to the state produced using AuAu method (without destroying it)
 //
 // m1 = first index for creation operator (spin up)
@@ -132,6 +158,20 @@ int ParticleOnTorusWithSpinAndMagneticTranslations::AddAdd (int m1, int m2, doub
 // return value = index of the destination state 
 
 int ParticleOnTorusWithSpinAndMagneticTranslations::AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation)
+{
+  return this->HilbertSpaceDimension;
+}
+
+// apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+//
+// m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+// spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+// nbrIndices = number of creation (or annihilation) operators
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslation = reference on the number of translations to be applied to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state 
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient, int& nbrTranslation)
 {
   return this->HilbertSpaceDimension;
 }

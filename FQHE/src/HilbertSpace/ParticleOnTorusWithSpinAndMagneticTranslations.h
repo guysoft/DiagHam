@@ -109,6 +109,24 @@ class ParticleOnTorusWithSpinAndMagneticTranslations :  public ParticleOnSphereW
   // return value = coefficient obtained when applying a^+_m a_m
   virtual double AduAu (int index, int m) = 0;
 
+  // apply a^+_m_d a_m_u operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AddAu (int index, int m, double& coefficient, int& nbrTranslation);
+
+  // apply a^+_m_u a_m_d operator to a given state
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int AduAd (int index, int m, double& coefficient, int& nbrTranslation);
+
   // apply a_n1_u a_n2_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
   //
   // index = index of the state on which the operator has to be applied
@@ -154,6 +172,7 @@ class ParticleOnTorusWithSpinAndMagneticTranslations :  public ParticleOnSphereW
   // m1 = first index for creation operator (spin down)
   // m2 = second index for creation operator (spin down)
   // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to be applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int AddAdd (int m1, int m2, double& coefficient, int& nbrTranslation);
 
@@ -162,9 +181,20 @@ class ParticleOnTorusWithSpinAndMagneticTranslations :  public ParticleOnSphereW
   // m1 = first index for creation operator (spin up)
   // m2 = second index for creation operator (spin down)
   // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to be applied to the resulting state to obtain the return orbit describing state
   // return value = index of the destination state 
   virtual int AduAdd (int m1, int m2, double& coefficient, int& nbrTranslation);
   
+  // apply Prod_i a^+_mi operator to the state produced using ProdA method (without destroying it)
+  //
+  // m = array containg the indices of the creation operators (first index corresponding to the leftmost operator)
+  // spinIndices = array of spin indixes associated to each annihilation operators first index corresponding to the leftmost operator, 0 stands for spin down and 1 stands for spin up)
+  // nbrIndices = number of creation (or annihilation) operators
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslation = reference on the number of translations to be applied to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state 
+  virtual int ProdAd (int* m, int* spinIndices, int nbrIndices, double& coefficient, int& nbrTranslation);
+
   // convert a state defined in the Ky basis into a state in the (Kx,Ky) basis
   //
   // state = reference on the state to convert

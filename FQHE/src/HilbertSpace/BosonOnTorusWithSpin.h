@@ -43,6 +43,8 @@ class BosonOnTorusWithSpin :  public BosonOnSphereWithSU2Spin
 {
 
   friend class BosonOnTorusShort;
+  friend class BosonOnTorusWithSpinAndMagneticTranslations;
+
  protected:
 
   // momentum along the y direction
