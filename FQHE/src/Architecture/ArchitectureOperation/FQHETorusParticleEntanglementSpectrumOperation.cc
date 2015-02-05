@@ -55,6 +55,7 @@ FQHETorusParticleEntanglementSpectrumOperation::FQHETorusParticleEntanglementSpe
   this->NbrComponent = 0;
   this->LargeFirstComponent = 0;
   this->LargeNbrComponent = this->ComplementaryHilbertSpace->GetLargeHilbertSpaceDimension();
+//   cout << "subsystem dimension = " << this->DestinationHilbertSpace->GetLargeHilbertSpaceDimension() << " "  << this->DestinationHilbertSpace->GetHilbertSpaceDimension() << endl; 
   this->OperationType = AbstractArchitectureOperation::FQHETorusParticleEntanglementSpectrumOperation;
   this->LocalOperations = 0;
   this->NbrLocalOperations = 0;
@@ -114,6 +115,7 @@ AbstractArchitectureOperation* FQHETorusParticleEntanglementSpectrumOperation::C
 
 bool FQHETorusParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
+//   cout << "this->LargeNbrComponent = " << this->LargeNbrComponent <<  endl;
   this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
   return true;
 }

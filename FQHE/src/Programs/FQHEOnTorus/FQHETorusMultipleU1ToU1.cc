@@ -55,6 +55,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('s', "single-state", "vector file that corresponds to the second component");
   (*SystemGroup) += new BooleanOption  ('a', "sym-y", "apply antiperiodic conditions with respect to Ly before symmetrizing");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-orbitals", "number of orbitals to group together when using the single-state option", 2);
+  (*SystemGroup) += new BooleanOption  ('t', "twisted-torus", "apply single particle phases during symmetrization to compensate for the pi/4 tilting of the torus");
   (*SystemGroup) += new BooleanOption  ('\n', "subset-symmetrization", "symmetrize by picking equally space orbitals");
 //   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-shift", "index of the first orbital to keep when using --subset-symmetrization", 0);
@@ -475,7 +476,7 @@ int main(int argc, char** argv)
 		}
 	      else
 		{
-		  NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision); 
+		  NbrKySectors = Space1->SymmetrizeSingleStateGroupingDistantOrbitals(State1, Manager.GetInteger("nbr-orbitals"), OutputStates, KySectors, Architecture.GetArchitecture(), Precision, Manager.GetBoolean("twisted-torus")); 
 		}
 	    }
 	  else

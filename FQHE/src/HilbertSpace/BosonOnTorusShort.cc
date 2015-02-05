@@ -2726,7 +2726,7 @@ void BosonOnTorusShort::SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (C
 // first component = index of the first vector component 
 // last component = index of the last component
 
-void BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents)
+void BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents, bool twistedTorus)
 {
   long LastComponent = (long) (firstComponent + nbrComponents);
   int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
@@ -2755,7 +2755,11 @@ void BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitalsCore (Comple
 	  unsigned long& TmpNbrParticles = TmpState[k];
 	  TmpNbrParticles = 0x0ul;
 	  for (int l = 0; l < nbrOrbitals; ++l)
+	  {
 	    TmpNbrParticles += this->TemporaryState[k + (TargetSpaceNbrOrbitals * l)];
+	    if (twistedTorus == true)
+	      TmpCoefficient *= Phase (- (double) (this->TemporaryState[k + (TargetSpaceNbrOrbitals * l)] * (k + (TargetSpaceNbrOrbitals * l)) * (k + (TargetSpaceNbrOrbitals * l)) * nbrOrbitals) * M_PI/ ((double) (this->KyMax)));
+	  }
 	  if (TmpNbrParticles > 1)
 	    Factorial1.FactorialMultiply(TmpNbrParticles);	
 	  TmpTotalKy += k * ((int) TmpNbrParticles);
@@ -2823,15 +2827,21 @@ void BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexV
       int TmpTotalKy = 0;
       int TmpNbrParticles = 0;
       int Index = 0;
+//       double phase = 0.0;
       for (int k = firstOrbitalIndex; k < this->KyMax; k += periodicity)
 	{
 	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
 	  TmpState[Index] = TmpNbrParticles2;
 	  TmpNbrParticles += ((int) TmpNbrParticles2);
 	  TmpTotalKy += Index * ((int) TmpNbrParticles2);
+// 	  if (twistedTorus == true)
+// 	  {
+// 	    phase += ((double) (this->TemporaryState[k] * k * k) );
+// 	    TmpCoefficient *= Phase (- (double) (this->TemporaryState[k] * k * k) * M_PI / ((double) (this->KyMax * periodicity)));
+// 	    cout << k << " " << ((double) (this->TemporaryState[k] * k * k) * M_PI / ((double) (this->KyMax * periodicity))) / M_PI <<  " " << this->TemporaryState[k] << endl;
+// 	  }
 	  ++Index;
 	}
-       
       if (TmpNbrParticles > 0)
 	{
 	  TmpTotalKy %= TargetSpaceNbrOrbitals;

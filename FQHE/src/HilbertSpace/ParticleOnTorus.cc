@@ -385,11 +385,11 @@ int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& i
 // architecture = pointer to the architecture
 // return value = symmetrized state
 
-int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision)
+int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision, bool twistedTorus)
 {
   int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / nbrOrbitals;
   ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
-  this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
+  this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(inputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension, twistedTorus);
   int NbrGeneratedSectors = 0;
   for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
     {
@@ -610,7 +610,7 @@ void ParticleOnTorus::SymmetrizeSingleStateGroupingNeighbouringOrbitalsCore (Com
 // last component = index of the last component
 
 void ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, 
-									int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents)
+									int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents, bool twistedTorus)
 {
 }
 

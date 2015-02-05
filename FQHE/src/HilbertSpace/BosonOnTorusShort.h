@@ -520,7 +520,7 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
   // first component = index of the first vector component 
   // last component = index of the last component
-  virtual void SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+  virtual void SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents, bool twistedTorus = false);
 
   // symmetrize a vector by keeping only a subset of equally separated orbitals
   //

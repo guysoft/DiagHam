@@ -203,7 +203,7 @@ class ParticleOnTorus :  public ParticleOnSphere
   // kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
   // architecture = pointer to the architecture
   // return value = symmetrized state
-  int SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = MACHINE_PRECISION);
+  int SymmetrizeSingleStateGroupingDistantOrbitals (ComplexVector& inputVector, int nbrOrbitals, ComplexVector*& symmetrizedVectors, int*& kySectors, AbstractArchitecture* architecture, double precision = MACHINE_PRECISION, bool twistedTorus = false);
 
   // symmetrize a vector by keeping only a subset of equally separated orbitals
   //
@@ -296,7 +296,7 @@ class ParticleOnTorus :  public ParticleOnSphere
   // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
   // first component = index of the first vector component 
   // last component = index of the last component
-  virtual void SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents);
+  virtual void SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents, bool twistedTorus = false);
 
   // symmetrize a vector by keeping only a subset of equally separated orbitals
   //

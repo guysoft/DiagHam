@@ -931,11 +931,13 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 		    unsigned long TmpState22 = TmpState2;
 		    if ((TmpState & TmpState22) == 0x0ul)
 		    {
-		      double TmpPhase = 2*M_PI * (TmpHilbertSpace->XMomentum * TmpXTranslation / (double) (TmpHilbertSpace->MaxXMomentum)  + TmpHilbertSpace->YMomentum * TmpYTranslation / (double) (TmpHilbertSpace->MaxYMomentum));
+		      double TmpPhase = 2.0 * M_PI * (TmpHilbertSpace->XMomentum * TmpXTranslation / (double) (TmpHilbertSpace->MaxXMomentum)  + TmpHilbertSpace->YMomentum * TmpYTranslation / (double) (TmpHilbertSpace->MaxYMomentum));
 		      
-		      double TmpPhase2 = 2*M_PI * (TmpDestinationHilbertSpace->XMomentum * TmpXTranslation2 / (double) (TmpDestinationHilbertSpace->MaxXMomentum)  + TmpDestinationHilbertSpace->YMomentum * TmpYTranslation2 / (double) (TmpDestinationHilbertSpace->MaxYMomentum));
+		      double TmpPhase2 = 2.0 * M_PI * (TmpDestinationHilbertSpace->XMomentum * TmpXTranslation2 / (double) (TmpDestinationHilbertSpace->MaxXMomentum)  + TmpDestinationHilbertSpace->YMomentum * TmpYTranslation2 / (double) (TmpDestinationHilbertSpace->MaxYMomentum));
 		      
-		      coefficient = TmpCoefficient * ((1.0 - (2.0 * ((double) ((TmpHilbertSpace->ReorderingSign[minIndex] >> ((TmpYTranslation * this->MaxXMomentum) + TmpXTranslation)) & 0x1ul))))) * (1.0 - (2.0 * ((double) ((TmpDestinationHilbertSpace->ReorderingSign[j] >> ((TmpYTranslation2 * this->MaxXMomentum) + TmpXTranslation2)) & 0x1ul)))) * Phase (TmpPhase + TmpPhase2) ; 
+		      coefficient = TmpCoefficient * Phase (TmpPhase + TmpPhase2) ; 
+		      
+// 		      coefficient = TmpCoefficient * ((1.0 - (2.0 * ((double) ((TmpHilbertSpace->ReorderingSign[minIndex] >> ((TmpYTranslation * this->MaxXMomentum) + TmpXTranslation)) & 0x1ul))))) * (1.0 - (2.0 * ((double) ((TmpDestinationHilbertSpace->ReorderingSign[j] >> ((TmpYTranslation2 * this->MaxXMomentum) + TmpXTranslation2)) & 0x1ul)))) * Phase (TmpPhase + TmpPhase2) ; 
 		      
 // 		      cout << minIndex << " " << j <<  " " << TmpXTranslation << " " << TmpYTranslation << " " << TmpXTranslation2 << " " << TmpYTranslation2 << " " << Phase (TmpPhase) << " " << Phase (TmpPhase2) << endl;
 		      
