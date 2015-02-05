@@ -56,7 +56,11 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   double* CosineCoffients; 
 
   // angle (in radian) between the two fundamental cycles of the torus, along (L1 sin, L1 cos) and (0, L2)
-  double Angle;
+  double Theta;
+  // cosine of theta
+  double CosTheta;
+  // sine of theta
+  double SinTheta;
 
  public:
 
@@ -112,9 +116,9 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   // mIndices = array containing the creation operator indices
   // nIndices = array containing the annihilation operator indices
   // return value = numerical coefficient  
-  virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations);
+  virtual Complex EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations);
   
-  virtual double RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations);
+  virtual Complex RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations);
 
   virtual double VFactor(double* q2Values);
 
