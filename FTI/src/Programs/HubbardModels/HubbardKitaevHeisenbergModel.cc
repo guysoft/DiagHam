@@ -818,7 +818,7 @@ int main(int argc, char** argv)
 		    }
 		  for (int i = 0; i < Space->GetHilbertSpaceDimension(); ++i)
 		    {
-		      Space->PrintState(cout, i) << endl;
+// 		      Space->PrintState(cout, i) << endl;
 		    }
 		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
