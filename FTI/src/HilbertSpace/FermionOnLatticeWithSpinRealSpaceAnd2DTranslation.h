@@ -562,9 +562,11 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResu
 										   int& nbrTranslationX, int& nbrTranslationY)
 {
   state = this->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY);
-  int TmpMaxMomentum = 2 * this->NbrSite + 1;
+  int TmpMaxMomentum = 2 * this->NbrSite - 1;
   while ((state >> TmpMaxMomentum) == 0x0ul)
-    --TmpMaxMomentum;
+    {
+      --TmpMaxMomentum;
+    }
   int TmpIndex = this->FindStateIndex(state, TmpMaxMomentum);
   if (TmpIndex < this->HilbertSpaceDimension)
     {
