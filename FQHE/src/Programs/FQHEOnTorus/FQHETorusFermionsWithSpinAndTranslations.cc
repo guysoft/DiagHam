@@ -252,10 +252,7 @@ int main(int argc, char** argv)
 	  {
 	    EigenvectorName = new char [512];
 	    char* TmpName = RemoveExtensionFromFileName(OutputName, ".dat");
-	    if (Manager.GetString("eigenstate-file") == 0)
-              sprintf (EigenvectorName, "%s_kx_%d_ky_%d", TmpName, XMomentum, YMomentum);
-	    else
-              sprintf (EigenvectorName, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), XMomentum, YMomentum);
+	    sprintf (EigenvectorName, "%s_kx_%d_ky_%d", TmpName, XMomentum, YMomentum);
 	    delete [] TmpName;
 	  }
 	double Shift = -10.0;
