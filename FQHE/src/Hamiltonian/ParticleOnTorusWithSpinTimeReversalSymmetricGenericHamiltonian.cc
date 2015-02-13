@@ -517,17 +517,21 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
 {
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);
-  double Factor =  - (((double) (m1 + m4)) + spinFluxM1 + spinFluxM4) * PIOnM * 2.0;
+  double Factor =  - (((double) (m1 + m2)) + spinFluxM1 + spinFluxM4) * PIOnM * 2.0;
   double Sum = 0.0;
   double N2 = ((double) (m1 - m4)) + spinFluxM1 - spinFluxM4;
   double N1;
+  double Q2x;
+  double Q2y;
   double Q2;
   double Precision;
   double TmpInteraction;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
-      Q2 = this->Ratio * N2 * N2;
+      Q2x = 0.0;
+      Q2y = this->Ratio * N2 * N2;
+      Q2 = Q2x + Q2y;
       if (N2 != 0.0)
 	{
 	  TmpInteraction = 0.0;
