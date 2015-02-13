@@ -8,6 +8,7 @@
 #include "HilbertSpace/FermionOnTorus.h"
 
 #include "Hamiltonian/ParticleOnTorusWithSpinGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "unknown");
+  (*SystemGroup) += new  BooleanOption  ('\n', "time-reversal", "Use model with time reversal symmetry", false);
   (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kymomenta", "Calculate all subspaces up to Ky  = MaxMomentum-1", false);
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -84,6 +86,7 @@ int main(int argc, char** argv)
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -131,11 +134,17 @@ int main(int argc, char** argv)
   char* OutputFileName = new char [512];
   if (OneBodyPseudoPotentials[2] == 0)
     {
-      sprintf (OutputFileName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, TotalSpin, XRatio);
+      if (Manager.GetBoolean("time-reversal") == false)
+	sprintf (OutputFileName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, TotalSpin, XRatio);
+      else
+	sprintf (OutputFileName, "fermions_torus_timereversal_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, TotalSpin, XRatio);
     }
   else
     {
-      sprintf (OutputFileName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, XRatio);
+      if (Manager.GetBoolean("time-reversal") == false)
+	sprintf (OutputFileName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, XRatio);
+      else
+	sprintf (OutputFileName, "fermions_torus_timereversal_kysym_%s_n_%d_2s_%d_ratio_%f.dat", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum, XRatio);
     }
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
@@ -164,7 +173,16 @@ int main(int argc, char** argv)
 	Space = new FermionOnTorusWithSpin(NbrFermions, MaxMomentum, YMomentum2);	
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
       AbstractQHEHamiltonian* Hamiltonian;
-      Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(Space, NbrFermions, MaxMomentum, XRatio,
+      if (Manager.GetBoolean("time-reversal") == false)
+	Hamiltonian = new ParticleOnTorusWithSpinGenericHamiltonian(Space, NbrFermions, MaxMomentum, XRatio,
+								  NbrPseudoPotentials[0], PseudoPotentials[0],
+								  NbrPseudoPotentials[1], PseudoPotentials[1],
+								  NbrPseudoPotentials[2], PseudoPotentials[2],
+								  Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+								  Architecture.GetArchitecture(), Memory, 0,
+								  OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+      else
+	Hamiltonian = new ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian(Space, NbrFermions, MaxMomentum, XRatio,
 								  NbrPseudoPotentials[0], PseudoPotentials[0],
 								  NbrPseudoPotentials[1], PseudoPotentials[1],
 								  NbrPseudoPotentials[2], PseudoPotentials[2],
@@ -178,11 +196,23 @@ int main(int argc, char** argv)
 	{
 	  EigenvectorName = new char [100];
 	  if (OneBodyPseudoPotentials[2] == 0)
-	    sprintf (EigenvectorName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
+	  {
+	    if (Manager.GetBoolean("time-reversal") == false)
+	      sprintf (EigenvectorName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
 		     TotalSpin, XRatio,YMomentum2);
+	    else
+	      sprintf (EigenvectorName, "fermions_torus_timereversal_kysym_%s_n_%d_2s_%d_sz_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
+		     TotalSpin, XRatio,YMomentum2);
+	  }
 	  else
-	    sprintf (EigenvectorName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
+	  {
+	    if (Manager.GetBoolean("time-reversal") == false)
+	      sprintf (EigenvectorName, "fermions_torus_su2_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
 		     XRatio,YMomentum2);
+	    else
+	      sprintf (EigenvectorName, "fermions_torus_timereversal_kysym_%s_n_%d_2s_%d_ratio_%f_ky_%d", Manager.GetString("interaction-name"), NbrFermions, MaxMomentum,
+		     XRatio,YMomentum2);
+	  }
 	}
       
       FQHEOnTorusMainTask Task (&Manager, Space, &Lanczos, Hamiltonian, YMomentum2, Shift, OutputFileName, FirstRun, EigenvectorName);

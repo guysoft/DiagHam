@@ -2805,6 +2805,7 @@ void BosonOnTorusShort::SymmetrizeSingleStateGroupingDistantOrbitalsCore (Comple
 void BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
 									unsigned long firstComponent, unsigned long nbrComponents)
 {
+  bool twistedTorus = true;
   long LastComponent = (long) (firstComponent + nbrComponents);
   int TargetSpaceNbrOrbitals = this->KyMax / periodicity;
   BosonOnTorusShort*** TargetSpaces = new BosonOnTorusShort** [this->NbrBosons + 1];
@@ -2827,7 +2828,7 @@ void BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexV
       int TmpTotalKy = 0;
       int TmpNbrParticles = 0;
       int Index = 0;
-//       double phase = 0.0;
+      double phase = 0.0;
       for (int k = firstOrbitalIndex; k < this->KyMax; k += periodicity)
 	{
 	  unsigned long& TmpNbrParticles2 = this->TemporaryState[k];
@@ -2836,14 +2837,16 @@ void BosonOnTorusShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexV
 	  TmpTotalKy += Index * ((int) TmpNbrParticles2);
 // 	  if (twistedTorus == true)
 // 	  {
-// 	    phase += ((double) (this->TemporaryState[k] * k * k) );
-// 	    TmpCoefficient *= Phase (- (double) (this->TemporaryState[k] * k * k) * M_PI / ((double) (this->KyMax * periodicity)));
-// 	    cout << k << " " << ((double) (this->TemporaryState[k] * k * k) * M_PI / ((double) (this->KyMax * periodicity))) / M_PI <<  " " << this->TemporaryState[k] << endl;
+// 	    phase += ((double) (this->TemporaryState[k] * k * k) * 2.0  / ((double) (this->KyMax)));
+// 	    TmpCoefficient *= Phase ((double) (this->TemporaryState[k] * k * k) * 2.0 * M_PI / ((double) (this->KyMax)));
+// // 	    cout << k << " " << ((double) (this->TemporaryState[k] * k * k) * 2.0  / ((double) (this->KyMax))) <<  " " << this->TemporaryState[k] << endl;
 // 	  }
 	  ++Index;
 	}
       if (TmpNbrParticles > 0)
 	{
+// 	  if (TmpNbrParticles == this->NbrBosons)
+// 	    cout << phase << endl;
 	  TmpTotalKy %= TargetSpaceNbrOrbitals;
 	  if (TargetSpaces[TmpNbrParticles][TmpTotalKy] == 0)
 	    {

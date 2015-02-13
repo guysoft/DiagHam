@@ -76,6 +76,11 @@ class ParticleOnTorusWithSpinGenericHamiltonian : public AbstractQHEOnTorusWithS
   double SpinFluxDown;
 
  public:
+   
+      
+  // default constructor
+  // 
+  ParticleOnTorusWithSpinGenericHamiltonian();
 
   // constructor from default datas
   //
