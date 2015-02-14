@@ -76,6 +76,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
   (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name (as it should appear in output files)", "hardcore");
 
+  (*PrecalculationGroup) += new BooleanOption ('\n', "regenerate-interactionelements", "regenerate the interacation matrix elements, overwriting them", false);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -108,6 +109,7 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
   int NbrNBody = Manager.GetInteger("nbr-nbody");
+  bool RegenerateElementFlag = Manager.GetBoolean("regenerate-interactionelements");
   
   char* OutputName = new char [512];
   if (Manager.GetDouble("angle") == 0.0)
@@ -315,15 +317,16 @@ int main(int argc, char** argv)
       if (Manager.GetDouble("angle") == 0.0)
 	{
 	  Hamiltonian = new ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-												  Manager.GetDouble("angle"), NbrNBody, Architecture.GetArchitecture(), Memory);
+												  Manager.GetDouble("angle"), NbrNBody, Manager.GetString("interaction-name"), RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 // 	  Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-// 											   NbrNBody, Architecture.GetArchitecture(), Memory);
+// 											   NbrNBody, Manager.GetString("interaction-name"), RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 	}
       else
 	{
 	  Hamiltonian = new ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-												  Manager.GetDouble("angle"), NbrNBody, Architecture.GetArchitecture(), Memory);
+												  Manager.GetDouble("angle"), NbrNBody, Manager.GetString("interaction-name"), RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 	}
+      RegenerateElementFlag = false;
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;

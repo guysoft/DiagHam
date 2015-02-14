@@ -77,12 +77,14 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   // ratio = torus aspect ratio (Lx/Ly)
   // theta =  angle (in pi units) between the two fundamental cycles of the torus, along (Lx sin theta, Lx cos theta) and (0, Ly)
   // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
+  // interactionName = name of the interaction, will be use to generate the interaction matrix element output file name
+  // regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, double theta,
-									int nbrNBody, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+									int nbrNBody, char* interactionName, bool regenerateElementFlag, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 									char* precalculationFileName = 0);
 
   // destructor
@@ -121,6 +123,18 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   virtual Complex RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations);
 
   virtual double VFactor(double* q2Values);
+
+  // read the interaction matrix elements from disk
+  //
+  // fileName = name of the file where the interaction matrix elements are stored
+  // return value = true if no error occured
+  bool ReadInteractionFactors(char* fileName);
+
+  // write the interaction matrix elements from disk
+  //
+  // fileName = name of the file where the interaction matrix elements are stored
+  // return value = true if no error occured
+  bool WriteInteractionFactors(char* fileName);
 
 };
 

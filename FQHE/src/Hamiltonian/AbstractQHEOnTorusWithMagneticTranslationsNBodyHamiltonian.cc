@@ -145,82 +145,15 @@ void AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian::GetIndices()
   this->NBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
   
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-  {
-  switch (this->NBodyValue)
     {
-    case 3:
-      {
-	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-	    for (int ky3 = ky2 + 1; ky3 <= this->LzMax; ++ky3) 
-	      {
-		int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
-		++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-	      }
-	for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	  {
-	    if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-	      {
-		this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-		this->NbrNBodySectorIndicesPerSum[i] = 0;
-	      }
-	  }
-	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-	    for (int ky3 = ky2 + 1; ky3 <= this->LzMax; ++ky3) 
-	      {
-		int TmpSum = (ky1 + ky2 + ky3) % this->NbrLzValue;
-		this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 3] = ky1;
-		this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky2;
-		this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 3)] = ky3;
-		++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-	      }
-      }
-     break;
-
-    case 4:
-      {
-	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 
-	    for (int ky3 = ky2 + 1; ky3 < this->LzMax; ++ky3) 
-		for (int ky4 = ky3 + 1; ky4 <= this->LzMax; ++ky4) 
-		  {
-		    int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
-		    ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		  }
-	for (int i = 0; i < this->NbrNBodySectorSums; ++i)
-	  {
-	    if (this->NbrNBodySectorIndicesPerSum[i]  > 0)
-	      {
-		this->NBodySectorIndicesPerSum[i] = new int[this->NBodyValue * this->NbrNBodySectorIndicesPerSum[i]];      
-		this->NbrNBodySectorIndicesPerSum[i] = 0;
-	      }
-	  }
-	for (int ky1 = 0; ky1 < this->LzMax; ++ky1)
-	  for (int ky2 = ky1 + 1; ky2 < this->LzMax; ++ky2) 	
-	    for (int ky3 = ky2 + 1; ky3 < this->LzMax; ++ky3) 
-	      for (int ky4 = ky3 + 1; ky4 <= this->LzMax; ++ky4) 
-		{
-		  int TmpSum = (ky1 + ky2 + ky3 + ky4) % this->NbrLzValue;
-		  this->NBodySectorIndicesPerSum[TmpSum][this->NbrNBodySectorIndicesPerSum[TmpSum] * 4] = ky1;
-		  this->NBodySectorIndicesPerSum[TmpSum][1 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky2;
-		  this->NBodySectorIndicesPerSum[TmpSum][2 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky3;
-		  this->NBodySectorIndicesPerSum[TmpSum][3 + (this->NbrNBodySectorIndicesPerSum[TmpSum] * 4)] = ky4;
-		  ++this->NbrNBodySectorIndicesPerSum[TmpSum];    
-		}
-      }
-    break;
-
-    default:
-      cout << "warning : " << this->NBodyValue << "-body interaction is not implemented in AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian" << endl;
+      this->GetAllSkewSymmetricIndices(this->NbrLzValue, this->NBodyValue, this->NbrNBodySectorIndicesPerSum, this->NBodySectorIndicesPerSum);
     }
-  }
- else
-   {
+  else
+    {
       double** SortedIndicesPerSumSymmetryFactor;
       this->GetAllSymmetricIndices(this->NbrLzValue, this->NBodyValue, this->NbrNBodySectorIndicesPerSum, this->NBodySectorIndicesPerSum, SortedIndicesPerSumSymmetryFactor);
       delete[] SortedIndicesPerSumSymmetryFactor;
-   }
+    }
 }
 
 // get all indices needed to characterize a completly symmetric tensor, sorted by the sum of the indices
@@ -342,6 +275,97 @@ long AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian::GetAllSymmetric
   for (int i = 0; i <= nbrValues; ++i)
     delete[] DimensionSymmetricGroup[i];
   delete[] DimensionSymmetricGroup;
+  return NbrElements;
+}
+
+// get all indices needed to characterize a completly skew symmetric tensor, sorted by the sum of the indices
+//
+// nbrValues = number of different values an index can have
+// nbrIndices = number of indices 
+// nbrSortedIndicesPerSum = reference on a array where the number of group of indices per each index sum value is stored
+// sortedIndicesPerSum = reference on a array where group of indices are stored (first array dimension corresponding to sum of the indices)
+// return value = total number of index groups
+
+long AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian::GetAllSkewSymmetricIndices (int nbrValues, int nbrIndices, int*& nbrSortedIndicesPerSum, 
+											     int**& sortedIndicesPerSum)
+{
+  long** BinomialCoefficients = GetBinomialCoefficients(nbrValues);
+  long NbrElements = BinomialCoefficients[nbrValues][nbrIndices];
+  int** Indices = new int* [NbrElements];
+  int* Sum = new int [NbrElements];
+  int Min = nbrIndices - 1;
+  int Max;
+  int Step;
+  int Pos = 0;
+  for (int i = nbrValues - 1; i >= Min; --i)
+    {
+      Step = BinomialCoefficients[i][nbrIndices - 1];
+      for (int j = 0; j < Step; ++j)
+	{
+	  Indices[Pos] = new int [nbrIndices];
+	  Indices[Pos][0] = i;
+	  Sum[Pos] = i;
+	  ++Pos;
+	}
+    }
+  for (int i = 1; i < nbrIndices; ++i)
+    {
+      int Pos = 0;
+      Min = nbrIndices - i - 1;
+      while (Pos < NbrElements)
+	{
+	  Max = Indices[Pos][i - 1] - 1;
+	  for (; Max >= Min; --Max)
+	    {
+	      Step = BinomialCoefficients[Max][Min];
+	      for (int j = 0; j < Step; ++j)
+		{
+		  Indices[Pos][i] = Max;
+		  Sum[Pos] += Max;
+		  ++Pos;
+		}
+	    }
+	}
+    }
+  
+  for (int i = 0; i < NbrElements; ++i)
+    {
+      Sum[i] = (Sum[i] % nbrValues);
+    }
+  
+  int MaxSum = (nbrValues - 1);
+  int MinSum = 0;
+  nbrSortedIndicesPerSum = new int [MaxSum + 1];
+  sortedIndicesPerSum = new int* [MaxSum + 1];
+  for (int i = 0; i <= MaxSum; ++i)
+    nbrSortedIndicesPerSum[i] = 0;
+  for (int i = 0; i < NbrElements; ++i)
+    ++nbrSortedIndicesPerSum[Sum[i]];
+  long* TmpPos = new long [MaxSum + 1];
+  for (int i = MinSum; i <= MaxSum; ++i)
+    {
+      sortedIndicesPerSum[i] = new int [nbrSortedIndicesPerSum[i] * nbrIndices];
+      nbrSortedIndicesPerSum[i] = 0;
+      TmpPos[i] = 0l;      
+    }
+  for (int i = 0; i < NbrElements; ++i)
+    {   
+      Pos = Sum[i];
+      Max = nbrSortedIndicesPerSum[Pos];
+      for (int j = 0; j < nbrIndices; ++j)
+	{
+	  sortedIndicesPerSum[Pos][TmpPos[Pos]] = Indices[i][j];
+	  ++TmpPos[Pos];
+	}
+      ++nbrSortedIndicesPerSum[Pos];
+      delete[] Indices[i];
+    }
+  delete[] TmpPos;
+  delete[] Sum;
+  delete[]Indices;
+  for (int i = 0; i <= nbrValues; ++i)
+    delete[] BinomialCoefficients[i];
+  delete[] BinomialCoefficients;
   return NbrElements;
 }
 

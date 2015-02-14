@@ -70,7 +70,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "name of the interaction (for the output files)", "hollowcore");
 
+  (*PrecalculationGroup) += new BooleanOption ('\n', "regenerate-interactionelements", "regenerate the interacation matrix elements, overwriting them", false);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -103,9 +105,10 @@ int main(int argc, char** argv)
   int NbrNBody = Manager.GetInteger("nbr-nbody");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
+  bool RegenerateElementFlag = Manager.GetBoolean("regenerate-interactionelements");
   
   char* OutputName = new char [256];
-  sprintf (OutputName, "fermions_torus_%dbody_hollowcore_n_%d_2s_%d_ratio_%f.dat", NbrNBody, NbrParticles, MaxMomentum, XRatio);
+  sprintf (OutputName, "fermions_torus_%dbody_%s_n_%d_2s_%d_ratio_%f.dat", NbrNBody, Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
   ofstream File;
   File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
@@ -297,7 +300,19 @@ int main(int argc, char** argv)
 	    }
 	}
     }
-  
+
+  int InteractionNbrMonomials = 1;
+  int** InteractionMonomials = new int* [InteractionNbrMonomials];
+  double* InteractionMonomialCoefficients = new double [InteractionNbrMonomials];
+  InteractionMonomials[0] = new int [NbrNBody - 1];
+  if ((NbrNBody% 2) == 0)
+    InteractionMonomialCoefficients[0] = 1.0;
+  else
+    InteractionMonomialCoefficients[0] = -1.0;
+  for (int i = 0; i < (NbrNBody - 1); ++i)
+    {
+      InteractionMonomials[0][i] = NbrNBody - 1 - i;
+    }
   for (int Pos = 0;Pos < NbrMomenta; ++Pos)
     {
       XMomentum = XMomenta[Pos];
@@ -315,10 +330,10 @@ int main(int argc, char** argv)
       
       AbstractQHEHamiltonian* Hamiltonian = 0;
       Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-										       NbrNBody, Architecture.GetArchitecture(), Memory);
-//      Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
-//											  NbrNBody, Architecture.GetArchitecture(), Memory);
-
+										       NbrNBody, Manager.GetString("interaction-name"), 
+										       InteractionNbrMonomials, InteractionMonomialCoefficients, InteractionMonomials, 
+										       RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+      RegenerateElementFlag = false;
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;

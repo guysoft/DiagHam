@@ -57,13 +57,15 @@ ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleO
 // ratio = torus aspect ratio (Lx/Ly)
 // theta =  angle (in pi units) between the two fundamental cycles of the torus, along (Lx sin theta, Lx cos theta) and (0, Ly)
 // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
+// interactionName = name of the interaction, will be use to generate the interaction matrix element output file name
+// regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, double theta,
-															       int nbrNBody, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+															       int nbrNBody, char* interactionName, bool regenerateElementFlag, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 															       char* precalculationFileName)
 {
   this->Particles = particles;
@@ -91,7 +93,17 @@ ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleO
   this->PrecalculationShift = (int) MinIndex;
   this->EvaluateExponentialFactors();
   this->HamiltonianShift = 0.0;
-  this->EvaluateInteractionFactors();
+  char* MatrixElementFileName = new char [strlen(interactionName) + 256];
+  sprintf (MatrixElementFileName, "%dbody_%s_2s_%d_ratio_%.14f_angle_%.14f.dat", this->NBodyValue, interactionName, this->MaxMomentum, this->Ratio, theta);
+  if ((regenerateElementFlag == true) || (!(IsFile(MatrixElementFileName))))
+    {
+      this->EvaluateInteractionFactors();
+      this->WriteInteractionFactors(MatrixElementFileName);
+    }
+  else
+    {
+      this->ReadInteractionFactors(MatrixElementFileName);
+    }
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -455,3 +467,76 @@ double ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::VF
 {
   return 1.0;
 }
+
+// read the interaction matrix elements from disk
+//
+// fileName = name of the file where the interaction matrix elements are stored
+// return value = true if no error occured
+
+bool ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::ReadInteractionFactors(char* fileName)
+{
+  this->GetIndices();
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "cannot open " << fileName << endl;
+      return false;
+    }
+  this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+    {
+      this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Index = j1 * this->NbrNBodySectorIndicesPerSum[i];
+	  for (int j2 = 0; j2 <= j1; ++j2)
+	    {
+	      ReadLittleEndian(File, this->NBodyInteractionFactors[i][Index].Re);
+	      ReadLittleEndian(File, this->NBodyInteractionFactors[i][Index].Im);
+	      ++Index;
+	    }
+	}
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  for (int j2 = j1 + 1; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+	    {
+	      this->NBodyInteractionFactors[i][j1 * this->NbrNBodySectorIndicesPerSum[i] + j2] = Conj(this->NBodyInteractionFactors[i][j2 * this->NbrNBodySectorIndicesPerSum[i] + j1]);
+	    }
+	}
+    }
+  File.close();
+  return true;
+}
+
+// write the interaction matrix elements from disk
+//
+// fileName = name of the file where the interaction matrix elements are stored
+// return value = true if no error occured
+
+bool ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian::WriteInteractionFactors(char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "cannot create " << fileName << endl;
+      return false;
+    }
+  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+    {
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Index = j1 * this->NbrNBodySectorIndicesPerSum[i];
+	  for (int j2 = 0; j2 <= j1; ++j2)
+	    {
+	      WriteLittleEndian(File, this->NBodyInteractionFactors[i][Index].Re);
+	      WriteLittleEndian(File, this->NBodyInteractionFactors[i][Index].Im);
+	      ++Index;
+	    }
+	}
+    }
+  File.close();
+  return true;
+}
+

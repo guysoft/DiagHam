@@ -36,6 +36,7 @@
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
 #include <algorithm>
@@ -56,13 +57,20 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusG
 // xMomentum = relative angular momentum along x 
 // ratio = torus aspect ratio (Lx/Ly)
 // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
+// interactionName = name of the interaction, will be use to generate the interaction matrix element output file name
+// nbrMonomials = number of monomials in the Fourier transformed interaction
+// monomialCoefficients = coefficients in front of each monomial in the Fourier transformed interaction
+// monomialDescription = description of each monomial in the Fourier transformed interaction
+// regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio,
-															       int nbrNBody, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
+															       int nbrNBody, char* interactionName, 
+															       int nbrMonomials, double* monomialCoefficients, int** monomialDescription, 
+															       bool regenerateElementFlag, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, 
 															       char* precalculationFileName)
 {
   this->Particles = particles;
@@ -87,7 +95,20 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusG
   this->PrecalculationShift = (int) MinIndex;
   this->EvaluateExponentialFactors();
   this->HamiltonianShift = 0.0;
-  this->EvaluateInteractionFactors();
+  char* MatrixElementFileName = new char [strlen(interactionName) + 256];
+  sprintf (MatrixElementFileName, "%dbody_%s_2s_%d_ratio_%.14f.dat", this->NBodyValue, interactionName, this->MaxMomentum, this->Ratio);
+  this->NbrMonomials = nbrMonomials;
+  this->MonomialCoefficients = monomialCoefficients;
+  this->MonomialDescription = monomialDescription;
+  if ((regenerateElementFlag == true) || (!(IsFile(MatrixElementFileName))))
+    {
+      this->EvaluateInteractionFactors();
+      this->WriteInteractionFactors(MatrixElementFileName);
+    }
+  else
+    {
+      this->ReadInteractionFactors(MatrixElementFileName);
+    }
   if (precalculationFileName == 0)
     {
       if (memory > 0)
@@ -142,6 +163,32 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
   this->QyValues = new double [this->NBodyValue];
   this->Q2Values = new double [this->NBodyValue];
   this->CosineCoffients = new double [this->NBodyValue];
+
+  int** LinearizedNBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
+  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+    {
+      LinearizedNBodySectorIndicesPerSum[i] = new int [NbrNBodySectorIndicesPerSum[i]];
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Tmp = 0;
+	  for (int k = this->NBodyValue - 1; k >= 0; --k)
+	    {
+	      Tmp *= this->MaxMomentum;
+	      Tmp += this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k];
+	    }
+	  LinearizedNBodySectorIndicesPerSum[i][j1] = Tmp;
+	}
+      SortArrayUpOrdering<int>(LinearizedNBodySectorIndicesPerSum[i], this->NbrNBodySectorIndicesPerSum[i]);
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Tmp = LinearizedNBodySectorIndicesPerSum[i][j1];
+	  for (int k = 0; k < this->NBodyValue; ++k)
+	    { 
+	      this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k] = Tmp % this->MaxMomentum;
+	      Tmp /= this->MaxMomentum;
+	    }	  
+	}
+    }
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
       int NbrPermutations = 1;
@@ -194,16 +241,16 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
 	    {
-	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+	      Index = j1 * this->NbrNBodySectorIndicesPerSum[i];
+	      for (int j2 = 0; j2 <= j1; ++j2)
 		{
 		  for (int k = 0; k < this->NBodyValue; ++k)
 		    {
 		      TmpNIndices[k]  = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k];
 		      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + k];
 		    }
-//		  cout << this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices) << " <> ";
-// 		  cout << this->EvaluateInteractionCoefficient(TmpMIndices[0], TmpMIndices[1], TmpMIndices[2], 
-// 							       TmpNIndices[0], TmpNIndices[1], TmpNIndices[2]) << endl;
+// 		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, i, TmpCanonicalMIndices TmpCanonicalNIndices, TmpCanonicalSum) == true)
+// 		    {
 		  double TmpInteraction = 0.0;
 		  long NbrOperations = 0l;
 		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
@@ -221,19 +268,9 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 			      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + TmpPerm2[k]];
 			    }
 			  double Tmp = this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, NbrOperations);
-// 			  cout << i << " " << Index << " : " << TmpMIndices[0] << TmpMIndices[1] <<  TmpMIndices[2] << " | "
-// 			       << TmpNIndices[0] << TmpNIndices[1] <<  TmpNIndices[2]
-// 			       << " = " << Tmp << endl;
 			  TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
 			}
 		    }
-// 		  cout << i << " " << Index << " : " << this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + 0]
-// 		       << this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + 1]
-// 		       << this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + 2] << " | "
-// 		       << this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + 0]
-// 		       << this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + 1]
-// 		       << this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + 2] << " = "
-// 		       << TmpInteraction << endl;
 		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;		  
 		  for (int k = 0; k < this->NBodyValue; ++k)
 		    cout << TmpMIndices[k] << " ";
@@ -243,6 +280,14 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		  cout << " = " << TmpInteraction << " (" << NbrOperations << ")"<< endl;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
+		}
+	    }
+	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	    {
+	      for (int j2 = j1 + 1; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+		{
+		  this->NBodyInteractionFactors[i][j1 * this->NbrNBodySectorIndicesPerSum[i] + j2] = this->NBodyInteractionFactors[i][j2 * this->NbrNBodySectorIndicesPerSum[i] + j1];
+		  TotalNbrInteractionFactors++;		  
 		}
 	    }
 	}
@@ -457,6 +502,118 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::Recursive
 
 double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::VFactor(double* q2Values)
 {
-  return (-q2Values[0] * q2Values[0] * q2Values[1]);
+  double Tmp = 0.0;
+  double Tmp2;
+  for (int i = 0; i < this->NbrMonomials; ++i)
+    {
+      Tmp2 = this->MonomialCoefficients[i];
+      for (int j = 0; j < (this->NBodyValue - 1); ++j)
+	{
+	  for (int k = 0; k < this->MonomialDescription[i][j]; ++k)
+	    Tmp2 *= q2Values[j];
+	}
+      Tmp += Tmp2;
+    }
+  return Tmp;
+  //  return (-q2Values[0] * q2Values[0] * q2Values[1]);
 //  return 1.0;
 }
+
+
+// read the interaction matrix elements from disk
+//
+// fileName = name of the file where the interaction matrix elements are stored
+// return value = true if no error occured
+
+bool ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ReadInteractionFactors(char* fileName)
+{
+  this->GetIndices();
+  int** LinearizedNBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
+  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+    {
+      LinearizedNBodySectorIndicesPerSum[i] = new int [NbrNBodySectorIndicesPerSum[i]];
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Tmp = 0;
+	  for (int k = this->NBodyValue - 1; k >= 0; --k)
+	    {
+	      Tmp *= this->MaxMomentum;
+	      Tmp += this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k];
+	    }
+	  LinearizedNBodySectorIndicesPerSum[i][j1] = Tmp;
+	}
+      SortArrayUpOrdering<int>(LinearizedNBodySectorIndicesPerSum[i], this->NbrNBodySectorIndicesPerSum[i]);
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Tmp = LinearizedNBodySectorIndicesPerSum[i][j1];
+	  for (int k = 0; k < this->NBodyValue; ++k)
+	    { 
+	      this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k] = Tmp % this->MaxMomentum;
+	      Tmp /= this->MaxMomentum;
+	    }	  
+	}
+    }
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "cannot open " << fileName << endl;
+      return false;
+    }
+  this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+    {
+      this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Index = j1 * this->NbrNBodySectorIndicesPerSum[i];
+	  for (int j2 = 0; j2 <= j1; ++j2)
+	    {
+	      ReadLittleEndian(File, this->NBodyInteractionFactors[i][Index].Re);
+	      ReadLittleEndian(File, this->NBodyInteractionFactors[i][Index].Im);
+	      ++Index;
+	    }
+	}
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  for (int j2 = j1 + 1; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
+	    {
+	      this->NBodyInteractionFactors[i][j1 * this->NbrNBodySectorIndicesPerSum[i] + j2] = this->NBodyInteractionFactors[i][j2 * this->NbrNBodySectorIndicesPerSum[i] + j1];
+	    }
+	}
+    }
+  File.close();
+  return true;
+}
+
+// write the interaction matrix elements from disk
+//
+// fileName = name of the file where the interaction matrix elements are stored
+// return value = true if no error occured
+
+bool ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::WriteInteractionFactors(char* fileName)
+{
+  ofstream File;
+  File.open(fileName, ios::binary | ios::out);
+  if (!File.is_open())
+    {
+      cout << "cannot create " << fileName << endl;
+      return false;
+    }
+  for (int i = 0; i < this->NbrNBodySectorSums; ++i)
+    {
+      for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
+	{
+	  int Index = j1 * this->NbrNBodySectorIndicesPerSum[i];
+	  for (int j2 = 0; j2 <= j1; ++j2)
+	    {
+	      WriteLittleEndian(File, this->NBodyInteractionFactors[i][Index].Re);
+	      WriteLittleEndian(File, this->NBodyInteractionFactors[i][Index].Im);
+	      ++Index;
+	    }
+	}
+    }
+  File.close();
+  return true;
+}
+

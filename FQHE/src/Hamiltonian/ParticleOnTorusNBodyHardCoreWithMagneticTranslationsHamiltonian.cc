@@ -214,7 +214,6 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::ShiftHamil
 }
 
 
-
 void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0l;
