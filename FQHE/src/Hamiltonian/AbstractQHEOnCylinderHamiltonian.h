@@ -72,6 +72,9 @@ class AbstractQHEOnCylinderHamiltonian : public AbstractQHEHamiltonian
   // number of Lz values in a state
   int NbrLzValue;
 
+  //mass anisotropy parameter
+  double MassAnisotropy;
+
   //amplitude of the quadratic confinement potential
   double Confinement;
 

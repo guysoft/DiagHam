@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONCYLINDERLAPLACIANDELTAHAMILTONIAN_H
-#define PARTICLEONCYLINDERLAPLACIANDELTAHAMILTONIAN_H
+#ifndef PARTICLEONCYLINDERPAIRAMPLITUDE_H
+#define PARTICLEONCYLINDERPAIRAMPLITUDE_H
 
 
 #include "config.h"
@@ -47,8 +47,16 @@ using std::ostream;
 class MathematicaOutput;
 
 
-class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinderHamiltonian
+class ParticleOnCylinderPairAmplitude : public AbstractQHEOnCylinderHamiltonian
 {
+
+ protected:
+
+ int PairCenter;
+ double PairAnisotropy;
+ int PairMomentum;
+ double Kappa;
+ int* HermiteCoefficients; 
 
  public:
 
@@ -58,19 +66,17 @@ class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinder
   // nbrParticles = number of particles
   // maxMomentum = maximum Lz value reached by a particle in the state
   // ratio = ratio between the width in the x direction and the width in the y direction
-  // massAnisotropy = mass anistropy parameter
-  // confinement = amplitude of the quadratic confinement potential
-  // electricFieldParameter = amplitude of the electric field along the cylinder
-  // bFieldfParameter = amplitude of the magnetic field (to set the energy scale)
+  // pairCenter = center of the pair
+  // pairAnisotropy = anisotropy of the pair
+  // pairMomentum = angular momentum of the pair
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnCylinderLaplacianDeltaHamiltonian(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, double massAnisotropy, double confinement, double electricFieldParameter, double bFieldParameter,
-					   AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
+  ParticleOnCylinderPairAmplitude(ParticleOnSphere* particles, int nbrParticles, int maxMomentum, double ratio, int pairCenter, double pairAniosotropy, int pairMomentum, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
-  ~ParticleOnCylinderLaplacianDeltaHamiltonian();
+  ~ParticleOnCylinderPairAmplitude();
 
   // clone hamiltonian without duplicating datas
   //
@@ -102,16 +108,8 @@ class ParticleOnCylinderLaplacianDeltaHamiltonian : public AbstractQHEOnCylinder
   // return value = numerical coefficient
   Complex EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4);
 
-  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term (for bosons)
-  //
-  // m1 = first index
-  // m2 = second index
-  // m3 = third index
-  // m4 = fourth index
-  // return value = numerical coefficient
-
-  Complex EvaluateInteractionCoefficientBosons(int m1, int m2, int m3, int m4);
-
+  //double Hermite(int m, double x);
+  void ComputeHermiteCoefficients(int MaxIndex);
 };
 
 #endif

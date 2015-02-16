@@ -14,6 +14,7 @@
 #include "Operator/ParticleOnSphereDensityDensityOperator.h"
 #include "FunctionBasis/ParticleOnCylinderFunctionBasis.h"
 #include "Hamiltonian/ParticleOnCylinderStructureFactor.h"
+#include "Hamiltonian/ParticleOnCylinderPairAmplitude.h"
 #include "Hamiltonian/ParticleOnCylinderDensityDensity.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -76,6 +77,13 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('n', "nbr-points", "number of points to evaluate", 50);
   (*SystemGroup) += new BooleanOption  ('\n', "rho-rho","evaluate rho-rho correlation", false);
   (*SystemGroup) += new BooleanOption  ('\n', "structure-factor","evaluate the guiding center structure factor", false);
+
+  (*SystemGroup) += new BooleanOption  ('\n', "pair-amplitude","evaluate the pair amplitude", false);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-center", "twice the momentum of center of the pair", -1);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "pair-anisotropy", "anisotropy parameter for the pair", 1.0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-minmomentum", "cutoff for the minimal momentum of a pair", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "pair-maxmomentum", "cutoff for the maximal momentum of a pair", -1);
+
   (*SystemGroup) += new SingleIntegerOption  ('\n', "x-points", "number of points along the cylinder", 100);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "fast-search", "amount of memory that can be allocated for fast state search (in Mbytes)", 9);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -104,6 +112,12 @@ int main(int argc, char** argv)
   double Ratio = Manager.GetDouble("ratio");
   bool EvaluateS0Q = Manager.GetBoolean("structure-factor");
   bool EvaluateRhoRho = Manager.GetBoolean("rho-rho");
+  bool EvaluatePairAmplitude = Manager.GetBoolean("pair-amplitude");
+  int PairCenter = Manager.GetInteger("pair-center");
+  double PairAnisotropy = Manager.GetDouble("pair-anisotropy");
+  int MinPairMomentumCutoff = Manager.GetInteger("pair-minmomentum");
+  int MaxPairMomentumCutoff = Manager.GetInteger("pair-maxmomentum");
+
   int HoppingCutoff = Manager.GetInteger("hopping-cutoff");
 
   unsigned long MemorySpace = ((unsigned long) Manager.GetInteger("fast-search")) << 20;
@@ -164,6 +178,43 @@ int main(int argc, char** argv)
    {
      cout << "can't open vector file " << Manager.GetString("eigenstate") << endl;
      return -1;      
+   }
+
+  if (EvaluatePairAmplitude == true)
+   {
+      long Memory = ((unsigned long) ((SingleIntegerOption*) Manager["memory"])->GetInteger()) << 20;
+
+      if (PairCenter < 0)
+        PairCenter = KyMax + 1;
+
+      cout << "Evaluating pair amplitudes. Pair centered at " << PairCenter << " , pair anisotropy = " << PairAnisotropy << endl;
+
+      cout << "Pair amplitude is defined as P^+P (M, a, p) = sum_r,rp exp(-Xr*Xr-Xrp*Xrp) * Hermite(Xr * math.sqrt(2.0)) * Hermit(Xrp * math.sqrt(2.0)) /(2^M M!) c_{p+r}^+ c_{p-r}^+ c_{p+rp} c_{p-rp} " << endl;
+
+      double Length = sqrt(2.0 * M_PI * Ratio * (KyMax + 1));
+      double kappaL = 2.0 * M_PI/Length;
+      double Height = Length/Ratio;
+      double kappaH = 2.0 * M_PI/Height;
+      double MinDimension = Length;
+      if (Height < Length)
+         MinDimension = Height;
+
+      if (MaxPairMomentumCutoff < 0)
+         MaxPairMomentumCutoff = pow(MinDimension, 2.0)/8;
+
+      for (int TmpMomentum = MinPairMomentumCutoff; TmpMomentum <= MaxPairMomentumCutoff; TmpMomentum++)
+        {	
+           AbstractHamiltonian* Hamiltonian = new ParticleOnCylinderPairAmplitude (Space, NbrParticles, KyMax, Ratio, PairCenter, PairAnisotropy, TmpMomentum, Architecture.GetArchitecture(), Memory);
+
+           ComplexVector TmpState(Space->GetHilbertSpaceDimension(), true);
+           VectorHamiltonianMultiplyOperation Operation (Hamiltonian, &State, &TmpState);
+           Operation.ApplyOperation(Architecture.GetArchitecture());
+           Complex TmpPairAmp = State * TmpState;
+           cout << "M= " << TmpMomentum << " "<<TmpPairAmp.Re << " "<<TmpPairAmp.Im << endl;
+           File << TmpMomentum << " "<<TmpPairAmp.Re << " " << TmpPairAmp.Im << endl;
+        }
+
+      return 0;
    }
 
   if (EvaluateS0Q == true)
