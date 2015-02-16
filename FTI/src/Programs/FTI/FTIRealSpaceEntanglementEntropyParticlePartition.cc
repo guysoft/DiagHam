@@ -446,6 +446,7 @@ int main(int argc, char** argv)
 			    TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
 			    PartialDensityMatrix += TmpMatrix;
 			  }
+			  cout << PartialDensityMatrix << endl;
 			}
 			else
 			{
@@ -457,6 +458,7 @@ int main(int argc, char** argv)
 			    TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
 			    PartialDensityMatrix += TmpMatrix;
 			  }
+			  cout << PartialDensityMatrix << endl;
 			}
 		      }
 		      else
