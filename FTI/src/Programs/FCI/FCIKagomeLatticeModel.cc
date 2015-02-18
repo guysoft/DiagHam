@@ -500,8 +500,8 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      char* TmpExtention = new char [512];
-	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
+ 	      char* TmpExtention = new char [512];
+	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j); 
 	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
 	    }
 	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
