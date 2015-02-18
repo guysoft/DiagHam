@@ -1054,3 +1054,37 @@ void BosonOnSquareLatticeMomentumSpace::SymmetrizeU1U1StateCore (ComplexVector& 
 	}     
     }
 }
+
+
+Complex BosonOnSquareLatticeMomentumSpace::ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix)
+{
+
+   Complex Result (0,0);
+   unsigned long * TmpState = new unsigned long [this->NbrBosons];
+   for (int i = 0; i < this->HilbertSpaceDimension; i++)
+    {
+       this->GetMonomial(i, TmpState);	
+       Complex Tmp = 1.0;
+       for (int j = 0; j < this->NbrBosons; j++)
+       {
+    	 Tmp *= overlapMatrix[TmpState[j]];
+        }
+      Result += Conj(secondVector[i]) *  firstVector[i] * Tmp; 
+    } 
+ delete []  TmpState;
+
+ return Result;
+}
+
+void  BosonOnSquareLatticeMomentumSpace::ApplyOneBodyEigenvectorChangeOnManyBodyState(Complex * phasefactor , ComplexVector & state)
+{ 
+    unsigned long * TmpState = new unsigned long [this->NbrBosons];
+    for (int i = 0; i < this->HilbertSpaceDimension; i++)
+    {
+       this->GetMonomial(i, TmpState);
+       for (int j = 0; j < this->NbrBosons; j++)
+       {
+       state[i] *= phasefactor[TmpState[j]];
+       }
+   }
+}

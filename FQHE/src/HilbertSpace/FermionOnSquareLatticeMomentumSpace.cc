@@ -1016,3 +1016,21 @@ ComplexVector FermionOnSquareLatticeMomentumSpace::InversionSymmetry(ComplexVect
   return OutputState;
 }
 
+
+Complex FermionOnSquareLatticeMomentumSpace::ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix)
+{
+   Complex Result (0,0);
+   unsigned long * TmpState = new unsigned long [this->NbrFermions];
+   for (int i = 0; i < this->HilbertSpaceDimension; i++)
+    {
+       this->GetMonomial(i, TmpState);	
+       Complex Tmp =  overlapMatrix[TmpState[0]];
+       for (int j = 1; j < this->NbrFermions; j++)
+       {
+    	 Tmp *= overlapMatrix[TmpState[j]];
+       }
+      Result += Conj(secondVector[i]) *  firstVector[i] * Tmp; 
+    } 
+
+ return Result;
+}

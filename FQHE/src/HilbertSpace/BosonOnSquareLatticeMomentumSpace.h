@@ -194,7 +194,8 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
 
   ComplexVector SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, BosonOnSquareLatticeMomentumSpace* leftSpace, BosonOnSquareLatticeMomentumSpace* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture);
 
-
+  virtual Complex ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix);
+  virtual  void ApplyOneBodyEigenvectorChangeOnManyBodyState(Complex * phasefactor , ComplexVector & state);
  protected:
 
   // evaluate Hilbert space dimension
