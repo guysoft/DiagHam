@@ -86,6 +86,10 @@ class Potts3ChainHamiltonian : public AbstractHamiltonian
 
  public:
 
+  // default constructor
+  //
+  Potts3ChainHamiltonian();
+
   // constructor from default datas
   //
   // chain = reference on Hilbert space of the associated system

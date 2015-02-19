@@ -1668,6 +1668,120 @@ void SortArrayDownOrderingPermutation(ClassName* array, long nbrValue, int& nbrP
   return;
 }
 
+// up ordering array sort using quick sort, counting the number of permutations
+//
+// array = pointer to the array
+// nbrValue = nbr of value in the array
+// nbrPermutation = reference on the number of permutation that have to be done (it has to be set to zero at the first call)
+
+template <class ClassName>
+void SortArrayUpOrderingPermutation(ClassName* array, long nbrValue, int& nbrPermutation)
+{
+  switch (nbrValue)
+    {
+    case 0:
+      return;
+    case 1:
+      return;
+    case 2:
+      {
+	if (array[0] > array[1])
+	  {
+	    ClassName TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    nbrPermutation++;
+	  }
+	return;
+      }
+      break;
+    case 3:
+      {
+	ClassName TmpElement;
+	if (array[0] > array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    nbrPermutation++;
+	  }
+	if (array[1] > array[2])
+	  {
+	    TmpElement = array[1];
+	    array[1] = array[2];
+	    array[2] = TmpElement;
+	    nbrPermutation++;
+	  }	
+	if (array[0] > array[1])
+	  {
+	    TmpElement = array[0];
+	    array[0] = array[1];
+	    array[1] = TmpElement;
+	    nbrPermutation++;
+	  }	
+	return;
+      }
+      break;
+    default:
+      {
+	int j = nbrValue - 1;
+	int i = nbrValue >> 1;
+	ClassName TmpElement;
+	if (array[0] >  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	    nbrPermutation++;
+	  }
+	if (array[i] >  array[j])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[j];
+	    array[j] = TmpElement;
+	    nbrPermutation++;
+	  }
+	if (array[0] >  array[i])
+	  {
+	    TmpElement = array[i];
+	    array[i] = array[0];
+	    array[0] = TmpElement;
+	    nbrPermutation++;
+	  }
+	--j;
+	ClassName Pivot = array[i];
+	array[i] = array[j];
+	array[j] = Pivot;
+	i = 0;
+	while (true)
+	  {
+	    while (array[++i] < Pivot);
+	    while (array[--j] > Pivot);
+	    if (i < j)
+	      {
+		TmpElement = array[i];
+		array[i] = array[j];
+		array[j] = TmpElement;	    
+		nbrPermutation++;
+	      }
+	    else
+	      break;
+	  }	
+	if(((nbrValue - 2)==i)||(array[nbrValue - 2]==array[i]))
+	  ;
+	else
+	  {
+	    array[nbrValue - 2] = array[i];
+	    array[i] = Pivot;
+	    nbrPermutation++;
+	  }
+	SortArrayUpOrderingPermutation(array, i, nbrPermutation);
+	SortArrayUpOrderingPermutation(&(array[i + 1]), nbrValue - i - 1, nbrPermutation);	
+      }
+    }
+  return;
+}
+
 
 // find an element in a sorted array (from smallest to largest)
 //

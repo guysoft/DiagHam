@@ -181,6 +181,16 @@ class Potts3Chain : public AbstractSpinChain
   // return value = index of resulting state
   int SpiSpj (int i, int j, int state, double& coefficient);
 
+  // return index of resulting state from application of S+_i S+_j S+_k operator on a given state
+  //
+  // i = position of the first S+ operator
+  // j = position of the second S+ operator
+  // k = position of the third S+ operator
+  // state = index of the state to be applied on S+_i S+_j S+_k operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  int SpiSpjSpk (int i, int j, int k, int state, double& coefficient);
+
   // return index of resulting state from application of S-_i S-_j operator on a given state
   //
   // i = position of first S- operator
@@ -189,6 +199,16 @@ class Potts3Chain : public AbstractSpinChain
   // coefficient = reference on double where numerical coefficient has to be stored
   // return value = index of resulting state
   int SmiSmj (int i, int j, int state, double& coefficient);
+
+  // return index of resulting state from application of S-_i S-_j S-_k operator on a given state
+  //
+  // i = position of the first S- operator
+  // j = position of the second S- operator
+  // k = position of the third S- operator
+  // state = index of the state to be applied on S-_i S-_j S-_k operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  int SmiSmjSmk (int i, int j, int k, int state, double& coefficient);
 
   // return index of resulting state from application of S+_i Sz_j operator on a given state
   //

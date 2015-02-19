@@ -301,7 +301,6 @@ bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& 
     {
       return false;
     }
-//   cout << nbrParticles << " " << nbrSites  << endl;
   char* StrNbrParticles;
   int SizeString;
   StrNbrParticles = strstr(filename, "_sz_");
@@ -309,8 +308,8 @@ bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& 
     {
       StrNbrParticles += 4;
       SizeString = 0;
-      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (StrNbrParticles[SizeString] >= '0') 
-	     && (StrNbrParticles[SizeString] <= '9'))
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (((StrNbrParticles[SizeString] >= '0') 
+																	&& (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] != '-')))
 	++SizeString;
       if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
 	{

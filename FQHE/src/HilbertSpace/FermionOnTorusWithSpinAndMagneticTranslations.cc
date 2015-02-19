@@ -2644,3 +2644,33 @@ ComplexVector FermionOnTorusWithSpinAndMagneticTranslations::ConvertFromNbodyBas
   cout << "vector dim = " << TmpVector.GetVectorDimension() << endl;
   return TmpVector;
 }
+
+// apply a Gutzwiller projection (in the orbital space) to a given state
+//
+// state = reference on the state to project
+// space = pointer to the Hilbert space where state is defined
+// return value = Gutzwiller projected state
+
+ComplexVector FermionOnTorusWithSpinAndMagneticTranslations::GutzwillerProjection(ComplexVector& state, ParticleOnSphere* space)
+{
+  FermionOnTorusWithSpinAndMagneticTranslations* TmpSpace = (FermionOnTorusWithSpinAndMagneticTranslations*) space;
+  ComplexVector ProjectedState (this->LargeHilbertSpaceDimension, true);
+  for (long i = 0l; i < TmpSpace->LargeHilbertSpaceDimension; ++i)
+    {
+      unsigned long TmpState = TmpSpace->StateDescription[i];
+#ifdef  __64_BITS__
+      if ((((TmpState & 0xaaaaaaaaaaaaaaaaul) >> 1) & (TmpState & 0x5555555555555555ul)) == 0x0ul)
+#else
+      if ((((TmpState & 0xaaaaaaaaul) >> 1) & (TmpState & 0x55555555ul)) == 0x0ul)
+#endif	    
+	{
+	  int TmpIndex = this->FindStateIndex(TmpState, TmpSpace->StateHighestBit[i]);
+	  if (TmpIndex < this->HilbertSpaceDimension)
+	    {
+	      ProjectedState[TmpIndex] = state[i];
+	    }
+	}
+    }
+  return ProjectedState;
+}
+

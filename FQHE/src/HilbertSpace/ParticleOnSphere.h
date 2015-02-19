@@ -973,6 +973,14 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
+  // apply a Gutzwiller projection (in the orbital space) to a given state
+  //
+  // state = reference on the state to project
+  // space = pointer to the Hilbert space where state is defined
+  // return value = Gutzwiller projected state
+  virtual ComplexVector GutzwillerProjection(ComplexVector& state, ParticleOnSphere* space);
+
+
 };
 
 // convert the Lz value from the sphere geometry to the disk geometry

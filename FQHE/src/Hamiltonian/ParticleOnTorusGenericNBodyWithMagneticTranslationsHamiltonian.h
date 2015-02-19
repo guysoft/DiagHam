@@ -139,6 +139,20 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   // return value = true if no error occured
   bool WriteInteractionFactors(char* fileName);
 
+  // test if creation/annihilation are in canonical form
+  //
+  // mIndices = array that contains the creation indices (will be modified)
+  // nIndices = array that contains the annihilation indices (will be modified)
+  // linearizedMIndices = linearized creation index
+  // linearizedNIndices = linearized annihilation index
+  // totalMomentum = momentum sector of the creation/annihilation indices
+  // canonicalMIndices = reference on the linearized creation index of the canonical form
+  // canonicalMIndices = reference on the linearized annihilation index of the canonical form
+  // canonicalTotalMomentum = reference on the momentum sector of the creation/annihilation indices of the canonical form
+  // canonicalPermutationCoefficient = additional permutation coefficient to get the canonical form
+  // return value = true if the indices are in canonical form
+  bool FindCanonicalIndices(int* mIndices, int* nIndices, int linearizedMIndices, int linearizedNIndices, int totalMomentum, int& canonicalMIndices, int& canonicalNIndices, int& canonicalTotalMomentum, double& canonicalPermutationCoefficient);
+
 };
 
 

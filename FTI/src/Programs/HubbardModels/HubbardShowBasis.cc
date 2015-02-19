@@ -57,7 +57,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "y-momentum", "set the momentum along the y direction", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n',  "max-ymomentum", "number of momentum in the y direction",2);
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1)", 1);
   
   (*SystemGroup) += new BooleanOption  ('\n', "add-index", "add index of the Hilbert space vectors");
   

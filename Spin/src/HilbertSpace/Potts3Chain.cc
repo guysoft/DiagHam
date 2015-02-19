@@ -449,6 +449,63 @@ int Potts3Chain::SpiSpj (int i, int j, int state, double& coefficient)
   return this->FindStateIndex(tmpState);
 }
 
+// return index of resulting state from application of S+_i S+_j S+_k operator on a given state
+//
+// i = position of the first S+ operator
+// j = position of the second S+ operator
+// k = position of the third S+ operator
+// state = index of the state to be applied on S+_i S+_j S+_k operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int Potts3Chain::SpiSpjSpk (int i, int j, int k, int state, double& coefficient)
+{
+  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState2 = tmpState;
+  k <<= 1;
+  tmpState2 >>= k;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << k);
+  switch (tmpState2)
+    {
+    case 0x1ul:
+      tmpState |= 0x2ul << k;
+      break;
+    case 0x0ul:
+      tmpState |= 0x1ul << k;
+      break;
+    }	  
+  j <<= 1;
+  tmpState2 = tmpState;
+  tmpState2 >>= j;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << j);
+  switch (tmpState2)
+    {
+    case 0x1ul:
+      tmpState |= 0x2ul << j;
+      break;
+    case 0x0ul:
+      tmpState |= 0x1ul << j;
+      break;
+    }	  
+  i <<= 1;
+  tmpState2 = tmpState;
+  tmpState2 >>= i;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << i);
+  switch (tmpState2)
+    {
+    case 0x1ul:
+      tmpState |= 0x2ul << i;      
+      break;
+    case 0x0ul:
+      tmpState |= 0x1ul << i;      
+      break;
+    }	  
+  return this->FindStateIndex(tmpState);
+}
+
 // return index of resulting state from application of S-_i S-_j operator on a given state
 //
 // i = position of first S- operator
@@ -462,6 +519,63 @@ int Potts3Chain::SmiSmj (int i, int j, int state, double& coefficient)
   unsigned long tmpState = this->ChainDescription[state];
   unsigned long tmpState2 = tmpState;
   j <<= 1;
+  tmpState2 >>= j;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << j);
+  switch (tmpState2)
+    {
+    case 0x2ul:
+      tmpState |= 0x1ul << j;
+      break;
+    case 0x0ul:
+      tmpState |= 0x2ul << j;
+      break;
+    }	  
+  i <<= 1;
+  tmpState2 = tmpState;
+  tmpState2 >>= i;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << i);
+  switch (tmpState2)
+    {
+    case 0x2ul:
+      tmpState |= 0x1ul << i;      
+      break;
+    case 0x0ul:
+      tmpState |= 0x2ul << i;      
+      break;
+    }	  
+  return this->FindStateIndex(tmpState);
+}
+
+// return index of resulting state from application of S-_i S-_j S-_k operator on a given state
+//
+// i = position of the first S- operator
+// j = position of the second S- operator
+// k = position of the third S- operator
+// state = index of the state to be applied on S-_i S-_j S-_k operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int Potts3Chain::SmiSmjSmk (int i, int j, int k, int state, double& coefficient)
+{
+  unsigned long tmpState = this->ChainDescription[state];
+  unsigned long tmpState2 = tmpState;
+  k <<= 1;
+  tmpState2 >>= k;
+  tmpState2 &= 0x3ul;
+  tmpState &= ~(0x3ul << k);
+  switch (tmpState2)
+    {
+    case 0x2ul:
+      tmpState |= 0x1ul << k;
+      break;
+    case 0x0ul:
+      tmpState |= 0x2ul << k;
+      break;
+    }	  
+  j <<= 1;
+  tmpState2 = tmpState;
   tmpState2 >>= j;
   tmpState2 &= 0x3ul;
   tmpState &= ~(0x3ul << j);

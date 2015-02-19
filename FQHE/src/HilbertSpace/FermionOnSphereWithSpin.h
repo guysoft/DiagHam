@@ -642,6 +642,12 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
 			  ParticleOnSphere* leftSpace, ParticleOnSphere* rightSpace,
 			  bool symmetrizedFlag = false, double coefficient = 1.0);
   
+  // apply a Gutzwiller projection (in the orbital space) to a given state
+  //
+  // state = reference on the state to project
+  // space = pointer to the Hilbert space where state is defined
+  // return value = Gutzwiller projected state
+  virtual ComplexVector GutzwillerProjection(ComplexVector& state, ParticleOnSphere* space);
 
  protected:
 

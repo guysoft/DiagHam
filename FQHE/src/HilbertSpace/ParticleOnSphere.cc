@@ -1459,3 +1459,16 @@ ComplexVector ParticleOnSphere::ConvertFromKxKyBasis(ComplexVector& state, Parti
   ComplexVector TmpVector;
   return TmpVector;
 }
+
+// apply a Gutzwiller projection (in the orbital space) to a given state
+//
+// state = reference on the state to project
+// space = pointer to the Hilbert space where state is defined
+// return value = Gutzwiller projected state
+
+ComplexVector ParticleOnSphere::GutzwillerProjection(ComplexVector& state, ParticleOnSphere* space)
+{
+  ComplexVector TmpVector;
+  return TmpVector;
+}
+

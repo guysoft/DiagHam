@@ -46,6 +46,13 @@ using std::endl;
 using std::ostream;
 
 
+// default constructor
+//
+
+Potts3ChainHamiltonian::Potts3ChainHamiltonian()
+{
+}
+
 // constructor from default datas
 //
 // chain = reference on Hilbert space of the associated system

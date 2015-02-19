@@ -4,6 +4,7 @@
 
 #include "Hamiltonian/Potts3ChainHamiltonian.h"
 #include "Hamiltonian/Potts3ChainHamiltonianWithTranslations.h"
+#include "Hamiltonian/Potts3ChainNaturalBoundaryTermHamiltonian.h"
 
 #include "HilbertSpace/Potts3Chain.h"
 #include "HilbertSpace/Potts3ChainWithTranslations.h"
@@ -66,6 +67,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('\n', "phi-flip", "phase (in 2 \\pi units) of the on-site flip term", 0.0);
   (*SystemGroup) += new  BooleanOption  ('\n', "periodic", "use periodic boundary conditions");
   (*SystemGroup) += new  SingleIntegerOption ('b', "boundary-conditions", "type of boundary conditions (0 for 1, 1 for exp(2i \\pi / 3) and -1 for exp(-2i \\pi / 3)", 0);
+  (*SystemGroup) += new  BooleanOption  ('\n', "natural-boundaryterms", "use a natural boundary term instead of the translation invariant boundary term");
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "boundaryterm-order", "perturbation order for the edge mode development involved in the natural boundary term", 0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "filter-0", "first factor coming from the filter function when using the first order correction", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "filter-1", "second factor coming from the filter function when using the first order correction", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "filter-2", "third factor coming from the filter function when using the first order correction", 0.0);
   (*SystemGroup) += new  BooleanOption  ('\n', "use-momentum", "use the momentum quantum number");
   (*SystemGroup) += new  SingleIntegerOption  ('k', "k-sector", "look at a given momentum sector (-1 if all momentum sectors have to be computed)", -1);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
@@ -106,14 +112,22 @@ int main(int argc, char** argv)
     }
   else
     {
-      sprintf (OutputFileName, "potts3_closedchain_j_%.6f_phij_%.6f_f_%.6f_phif_%.6f_b_%d_n_%d", JValue, PhiJ, FValue, PhiF, BoundaryCondition, NbrSpins);
-      if (UseMomentumFlag == false)
+      if (Manager.GetBoolean("natural-boundaryterms") == false)
 	{
-	  sprintf (CommentLine, " close potts 3 chain with %d sites  and J=%.6f, PhiJ=%.6f, F=%.6f, PhiF=%.6f, B=%d \n#\n# Q", NbrSpins, JValue, PhiJ, FValue, PhiF, BoundaryCondition);
+	  sprintf (OutputFileName, "potts3_closedchain_j_%.6f_phij_%.6f_f_%.6f_phif_%.6f_b_%d_n_%d", JValue, PhiJ, FValue, PhiF, BoundaryCondition, NbrSpins);
+	  if (UseMomentumFlag == false)
+	    {
+	      sprintf (CommentLine, " close potts 3 chain with %d sites  and J=%.6f, PhiJ=%.6f, F=%.6f, PhiF=%.6f, B=%d \n#\n# Q", NbrSpins, JValue, PhiJ, FValue, PhiF, BoundaryCondition);
+	    }
+	  else
+	    {
+	      sprintf (CommentLine, " close potts 3 chain with %d sites  and J=%.6f, PhiJ=%.6f, F=%.6f, PhiF=%.6f, B=%d \n#\n# Q K", NbrSpins, JValue, PhiJ, FValue, PhiF, BoundaryCondition);
+	    }
 	}
       else
 	{
-	  sprintf (CommentLine, " close potts 3 chain with %d sites  and J=%.6f, PhiJ=%.6f, F=%.6f, PhiF=%.6f, B=%d \n#\n# Q K", NbrSpins, JValue, PhiJ, FValue, PhiF, BoundaryCondition);
+	  sprintf (OutputFileName, "potts3_closedchain_naturalboundaryterms_%d_j_%.6f_phij_%.6f_f_%.6f_phif_%.6f_b_%d_n_%d", (int) Manager.GetInteger("boundaryterm-order"), JValue, PhiJ, FValue, PhiF, BoundaryCondition, NbrSpins);
+	  sprintf (CommentLine, " close potts 3 chain an natural boundray conditions at the order %d with %d sites  and J=%.6f, PhiJ=%.6f, F=%.6f, PhiF=%.6f, B=%d \n#\n# Q", (int) Manager.GetInteger("boundaryterm-order"), NbrSpins, JValue, PhiJ, FValue, PhiF, BoundaryCondition);
 	}
     }
   char* FullOutputFileName = new char [strlen(OutputFileName)+ 16];
@@ -164,18 +178,31 @@ int main(int argc, char** argv)
       for (; InitialQValue <= MaxQValue; ++InitialQValue)
 	{
 	  Potts3Chain* Chain = new Potts3Chain (NbrSpins, InitialQValue, 1000000);      
-	  Potts3ChainHamiltonian Hamiltonian (Chain, NbrSpins, JValue, PhiJ, FValue, PhiF, Manager.GetBoolean("periodic"), BoundaryCondition, ((long) Manager.GetInteger("memory")) << 20);
+	  Potts3ChainHamiltonian* Hamiltonian = 0;
+	  if (Manager.GetBoolean("natural-boundaryterms") == false)
+	    {
+	      Hamiltonian = new Potts3ChainHamiltonian (Chain, NbrSpins, JValue, PhiJ, FValue, PhiF, Manager.GetBoolean("periodic"), 
+							BoundaryCondition, ((long) Manager.GetInteger("memory")) << 20);
+	    }
+	  else
+	    {
+	      Hamiltonian = new Potts3ChainNaturalBoundaryTermHamiltonian(Chain, NbrSpins, JValue, PhiJ, FValue, PhiF, BoundaryCondition, 
+									  (int) Manager.GetInteger("boundaryterm-order"), 
+									  Manager.GetDouble("filter-0"), Manager.GetDouble("filter-1"), Manager.GetDouble("filter-2"),
+									  ((long) Manager.GetInteger("memory")) << 20);
+	    }
 	  char* TmpQString = new char[64];
 	  sprintf (TmpQString, "%d", InitialQValue);
 	  char* TmpEigenstateString = new char[strlen(OutputFileName) + 64];
 	  sprintf (TmpEigenstateString, "%s_q_%d", OutputFileName, InitialQValue);
-	  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, &Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
+	  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpQString, CommentLine, 0.0,  FullOutputFileName,
 				      FirstRun, TmpEigenstateString);
 	  MainTaskOperation TaskOperation (&Task);
 	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
 	  FirstRun = false;
 	  delete Chain;
 	  delete[] TmpQString;
+	  delete Hamiltonian;
 	}
     }
   return 0;

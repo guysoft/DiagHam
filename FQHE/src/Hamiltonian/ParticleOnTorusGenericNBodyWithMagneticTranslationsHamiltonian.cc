@@ -232,9 +232,15 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 	  PermutationSign[i] = TmpSign;
 	}
 
-      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+
       int* TmpNIndices =  new int [this->NBodyValue];
       int* TmpMIndices =  new int [this->NBodyValue];
+
+      this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
+      int TmpCanonicalMIndices;
+      int TmpCanonicalNIndices;
+      int TmpCanonicalSum;
+      double TmpCanonicalPermutationCoefficient;
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
 	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
@@ -249,37 +255,58 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		      TmpNIndices[k]  = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k];
 		      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + k];
 		    }
-// 		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, i, TmpCanonicalMIndices TmpCanonicalNIndices, TmpCanonicalSum) == true)
-// 		    {
-		  double TmpInteraction = 0.0;
-		  long NbrOperations = 0l;
-		  for (int l1 = 0; l1 < NbrPermutations; ++l1)
-		    {
-		      int* TmpPerm1 = Permutations[l1];
-		      for (int k = 0; k < this->NBodyValue; ++k)
+ 		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, LinearizedNBodySectorIndicesPerSum[i][j2], LinearizedNBodySectorIndicesPerSum[i][j1], i, TmpCanonicalMIndices, TmpCanonicalNIndices, TmpCanonicalSum, TmpCanonicalPermutationCoefficient) == true)
+ 		    {
+		      double TmpInteraction = 0.0;
+		      long NbrOperations = 0l;
+		      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 			{
-			  TmpNIndices[k]  = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + TmpPerm1[k]];
-			}
-		      for (int l2 = 0; l2 < NbrPermutations; ++l2)
-			{
-			  int* TmpPerm2 = Permutations[l2];
+			  int* TmpPerm1 = Permutations[l1];
 			  for (int k = 0; k < this->NBodyValue; ++k)
 			    {
-			      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + TmpPerm2[k]];
+			      TmpNIndices[k]  = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + TmpPerm1[k]];
 			    }
-			  double Tmp = this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, NbrOperations);
-			  TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
+			  for (int l2 = 0; l2 < NbrPermutations; ++l2)
+			    {
+			      int* TmpPerm2 = Permutations[l2];
+			      for (int k = 0; k < this->NBodyValue; ++k)
+				{
+				  TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + TmpPerm2[k]];
+				}
+			      double Tmp = this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, NbrOperations);
+			      TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
+			    }
 			}
+		      this->NBodyInteractionFactors[i][Index] = TmpInteraction;	
+		      for (int k = 0; k < this->NBodyValue; ++k)
+			cout << TmpMIndices[k] << " ";
+		      cout << "| ";
+		      for (int k = 0; k < this->NBodyValue; ++k)
+			cout << TmpNIndices[k] << " ";
+		      cout << " = " << TmpInteraction << " (" << NbrOperations << ")"<< endl;
+		      TotalNbrInteractionFactors++;
+		      ++Index;
 		    }
-		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;		  
-		  for (int k = 0; k < this->NBodyValue; ++k)
-		    cout << TmpMIndices[k] << " ";
-		  cout << "| ";
-		  for (int k = 0; k < this->NBodyValue; ++k)
-		    cout << TmpNIndices[k] << " ";
-		  cout << " = " << TmpInteraction << " (" << NbrOperations << ")"<< endl;
-		  TotalNbrInteractionFactors++;
-		  ++Index;
+		  else
+		    {
+		      int TmpJ1 = SearchInArray<int>(TmpCanonicalNIndices, LinearizedNBodySectorIndicesPerSum[TmpCanonicalSum], this->NbrNBodySectorIndicesPerSum[TmpCanonicalSum]);
+		      int TmpJ2 = SearchInArray<int>(TmpCanonicalMIndices, LinearizedNBodySectorIndicesPerSum[TmpCanonicalSum], this->NbrNBodySectorIndicesPerSum[TmpCanonicalSum]);
+// 		      for (int k = 0; k < this->NBodyValue; ++k)
+// 			cout << TmpMIndices[k] << " ";
+// 		      cout << "| ";
+// 		      for (int k = 0; k < this->NBodyValue; ++k)
+// 			cout << TmpNIndices[k] << " ";
+// 		      cout << "non-canonical " << i << " " << j1 << " " << j2 << " ->" << TmpCanonicalSum << " " << TmpJ1 << " " << TmpJ2 << " lin = " << TmpCanonicalNIndices << " " << TmpCanonicalMIndices << endl;
+		      this->NBodyInteractionFactors[i][Index] = TmpCanonicalPermutationCoefficient * this->NBodyInteractionFactors[TmpCanonicalSum][TmpJ1 * this->NbrNBodySectorIndicesPerSum[TmpCanonicalSum] + TmpJ2];
+// 		      for (int k = this->NBodyValue - 1; k >= 0; --k)
+// 			cout << TmpMIndices[k] << " ";
+// 		      cout << "| ";
+// 		      for (int k = this->NBodyValue - 1; k >= 0; --k)
+// 			cout << TmpNIndices[k] << " ";
+// 		      cout << " = " << this->NBodyInteractionFactors[i][Index] << " " << TmpCanonicalPermutationCoefficient <<  " " << TmpJ1 << " " << j1 << " " << TmpJ2 << " " << j2 << endl;
+		      TotalNbrInteractionFactors++;
+		      ++Index;
+		    }
 		}
 	    }
 	  for (int j1 = 0; j1 < this->NbrNBodySectorIndicesPerSum[i]; ++j1)
@@ -339,7 +366,6 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		  cout << "| ";
 		  for (int k = 0; k < this->NBodyValue; ++k)
 		    cout << TmpNIndices[k] << " ";
-		  cout << " = " << TmpInteraction << " (" << NbrOperations << ")"<< endl;
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		}
@@ -515,8 +541,6 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::VFactor(d
       Tmp += Tmp2;
     }
   return Tmp;
-  //  return (-q2Values[0] * q2Values[0] * q2Values[1]);
-//  return 1.0;
 }
 
 
@@ -617,3 +641,290 @@ bool ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::WriteIntera
   return true;
 }
 
+// test if creation/annihilation are in canonical form
+//
+// mIndices = array that contains the creation indices (will be modified)
+// nIndices = array that contains the annihilation indices (will be modified)
+// linearizedMIndices = linearized creation index
+// linearizedNIndices = linearized annihilation index
+// totalMomentum = momentum sector of the creation/annihilation indices
+// canonicalMIndices = reference on the linearized creation index of the canonical form
+// canonicalMIndices = reference on the linearized annihilation index of the canonical form
+// canonicalTotalMomentum = reference on the momentum sector of the creation/annihilation indices of the canonical form
+// canonicalPermutationCoefficient = additional permutation coefficient to get the canonical form
+// return value = true if the indices are in canonical form
+
+bool ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::FindCanonicalIndices(int* mIndices, int* nIndices, int linearizedMIndices, int linearizedNIndices, 
+											  int totalMomentum, int& canonicalMIndices, int& canonicalNIndices, 
+											  int& canonicalTotalMomentum, double& canonicalPermutationCoefficient)
+{
+//  return true;
+  int* TmpMIndices = new int [this->NBodyValue];
+  int* TmpNIndices = new int [this->NBodyValue];
+  canonicalPermutationCoefficient = 1.0;
+  canonicalMIndices = linearizedMIndices;
+  canonicalNIndices = linearizedNIndices;
+  canonicalTotalMomentum = totalMomentum;
+  canonicalPermutationCoefficient = 1.0;
+  bool IsCanonical = true;
+  for (int k = 0; k < this->NBodyValue; ++k)
+    {
+      if (mIndices[k] > 0)
+	{
+	  TmpMIndices[k] = this->MaxMomentum - mIndices[k];
+	}
+      else
+	{
+	  TmpMIndices[k] = 0;
+	}
+      if (nIndices[k] > 0)
+	{
+	  TmpNIndices[k] = this->MaxMomentum - nIndices[k];
+	}
+      else
+	{
+	  TmpNIndices[k] = 0;
+	}
+    }
+  int TmpNbrPermutation = 0;
+  SortArrayDownOrderingPermutation<int>(TmpMIndices, this->NBodyValue, TmpNbrPermutation);
+  SortArrayDownOrderingPermutation<int>(TmpNIndices, this->NBodyValue, TmpNbrPermutation);
+  int TmpCanonicalTotalMomentum = 0;
+  int TmpCanonicalMIndices = 0;
+  int TmpCanonicalNIndices = 0;
+  for (int k = this->NBodyValue - 1; k >= 0; --k)
+    {
+      TmpCanonicalMIndices *= this->MaxMomentum;
+      TmpCanonicalMIndices += TmpMIndices[k];
+      TmpCanonicalNIndices *= this->MaxMomentum;
+      TmpCanonicalNIndices += TmpNIndices[k];
+      TmpCanonicalTotalMomentum += TmpNIndices[k];
+    }
+  TmpCanonicalTotalMomentum %= this->MaxMomentum;
+  if (TmpCanonicalMIndices > TmpCanonicalNIndices)
+    {
+      int Tmp = TmpCanonicalMIndices;
+      TmpCanonicalMIndices = TmpCanonicalNIndices;
+      TmpCanonicalNIndices = Tmp;
+    }
+  if ((TmpCanonicalTotalMomentum < canonicalTotalMomentum) || 
+      ((TmpCanonicalTotalMomentum == canonicalTotalMomentum) && ((TmpCanonicalNIndices < canonicalNIndices) ||
+								 ((TmpCanonicalNIndices == canonicalNIndices) && (TmpCanonicalMIndices < canonicalMIndices)))))
+    {
+      IsCanonical = false;
+      canonicalMIndices = TmpCanonicalMIndices;
+      canonicalNIndices = TmpCanonicalNIndices;
+      canonicalTotalMomentum = TmpCanonicalTotalMomentum;
+      if ((TmpNbrPermutation & 1) == 0)
+	{
+	  canonicalPermutationCoefficient = 1.0;
+	}
+      else
+	{
+	  canonicalPermutationCoefficient = -1.0;
+	}
+    }
+  for (int i = 1; i <  this->MaxMomentum; ++i)
+    {
+      bool ResuffleMFlag = false;
+      bool ResuffleNFlag = false;
+      for (int k = 0; k < this->NBodyValue; ++k)
+	{
+	  TmpMIndices[k] = mIndices[k] - i;
+	  if (TmpMIndices[k] < 0)
+	    {
+	      TmpMIndices[k] += this->MaxMomentum;
+	      ResuffleMFlag = true;
+	    }
+	  TmpNIndices[k] = nIndices[k] - i;
+	  if (TmpNIndices[k] < 0)
+	    {
+	      TmpNIndices[k] += this->MaxMomentum;
+	      ResuffleNFlag = true;
+	    }
+	}
+      TmpNbrPermutation = 0;
+      if (ResuffleMFlag == true)
+	SortArrayDownOrderingPermutation<int>(TmpMIndices, this->NBodyValue, TmpNbrPermutation);
+      if (ResuffleNFlag == true)
+	SortArrayDownOrderingPermutation<int>(TmpNIndices, this->NBodyValue, TmpNbrPermutation);
+      TmpCanonicalTotalMomentum = 0;
+      TmpCanonicalMIndices = 0;
+      TmpCanonicalNIndices = 0;
+      for (int k = this->NBodyValue - 1; k >= 0; --k)
+	{
+	  TmpCanonicalMIndices *= this->MaxMomentum;
+	  TmpCanonicalMIndices += TmpMIndices[k];
+	  TmpCanonicalNIndices *= this->MaxMomentum;
+	  TmpCanonicalNIndices += TmpNIndices[k];
+	  TmpCanonicalTotalMomentum += TmpNIndices[k];
+	}
+      TmpCanonicalTotalMomentum %= this->MaxMomentum;
+      if (TmpCanonicalMIndices > TmpCanonicalNIndices)
+	{
+	  int Tmp = TmpCanonicalMIndices;
+	  TmpCanonicalMIndices = TmpCanonicalNIndices;
+	  TmpCanonicalNIndices = Tmp;
+	}
+      if ((TmpCanonicalTotalMomentum < canonicalTotalMomentum) || 
+	  ((TmpCanonicalTotalMomentum == canonicalTotalMomentum) && ((TmpCanonicalNIndices < canonicalNIndices) ||
+								     ((TmpCanonicalNIndices == canonicalNIndices) && (TmpCanonicalMIndices < canonicalMIndices)))))
+	{
+	  IsCanonical = false;
+	  canonicalMIndices = TmpCanonicalMIndices;
+	  canonicalNIndices = TmpCanonicalNIndices;
+	  canonicalTotalMomentum = TmpCanonicalTotalMomentum;
+	  if ((TmpNbrPermutation & 1) == 0)
+	    {
+	      canonicalPermutationCoefficient = 1.0;
+	    }
+	  else
+	    {
+	      canonicalPermutationCoefficient = -1.0;
+	    }
+ 	}
+      for (int k = 0; k < this->NBodyValue; ++k)
+	{
+	  if (TmpMIndices[k] > 0)
+	    {
+	      TmpMIndices[k] = this->MaxMomentum - TmpMIndices[k];
+	    }
+	  else
+	    {
+	      TmpMIndices[k] = 0;
+	    }
+	  if (TmpNIndices[k] > 0)
+	    {
+	      TmpNIndices[k] = this->MaxMomentum - TmpNIndices[k];
+	    }
+	  else
+	    {
+	      TmpNIndices[k] = 0;
+	    }
+	}
+      TmpNbrPermutation = 0;
+      SortArrayDownOrderingPermutation<int>(TmpMIndices, this->NBodyValue, TmpNbrPermutation);
+      SortArrayDownOrderingPermutation<int>(TmpNIndices, this->NBodyValue, TmpNbrPermutation);
+      TmpCanonicalTotalMomentum = 0;
+      TmpCanonicalMIndices = 0;
+      TmpCanonicalNIndices = 0;
+      for (int k = this->NBodyValue - 1; k >= 0; --k)
+	{
+	  TmpCanonicalMIndices *= this->MaxMomentum;
+	  TmpCanonicalMIndices += TmpMIndices[k];
+	  TmpCanonicalNIndices *= this->MaxMomentum;
+	  TmpCanonicalNIndices += TmpNIndices[k];
+	  TmpCanonicalTotalMomentum += TmpNIndices[k];
+	}
+      TmpCanonicalTotalMomentum %= this->MaxMomentum;
+      if (TmpCanonicalMIndices > TmpCanonicalNIndices)
+	{
+	  int Tmp = TmpCanonicalMIndices;
+	  TmpCanonicalMIndices = TmpCanonicalNIndices;
+	  TmpCanonicalNIndices = Tmp;
+	}
+      if ((TmpCanonicalTotalMomentum < canonicalTotalMomentum) || 
+	  ((TmpCanonicalTotalMomentum == canonicalTotalMomentum) && ((TmpCanonicalNIndices < canonicalNIndices) ||
+								     ((TmpCanonicalNIndices == canonicalNIndices) && (TmpCanonicalMIndices < canonicalMIndices)))))
+	{
+	  IsCanonical = false;
+	  canonicalMIndices = TmpCanonicalMIndices;
+	  canonicalNIndices = TmpCanonicalNIndices;
+	  canonicalTotalMomentum = TmpCanonicalTotalMomentum;
+	  if ((TmpNbrPermutation & 1) == 0)
+	    {
+	      canonicalPermutationCoefficient = 1.0;
+	    }
+	  else
+	    {
+	      canonicalPermutationCoefficient = -1.0;
+	    }
+	}
+    }
+  delete[] TmpMIndices;
+  delete[] TmpNIndices;
+  return IsCanonical;
+}
+
+// test if creation/annihilation are in canonical form
+//
+// mIndices = array that contains the creation indices (will be modified)
+// nIndices = array that contains the annihilation indices (will be modified)
+// linearizedMIndices = linearized creation index
+// linearizedNIndices = linearized annihilation index
+// totalMomentum = momentum sector of the creation/annihilation indices
+// canonicalMIndices = reference on the linearized creation index of the canonical form
+// canonicalMIndices = reference on the linearized annihilation index of the canonical form
+// canonicalTotalMomentum = reference on the momentum sector of the creation/annihilation indices of the canonical form
+// canonicalPermutationCoefficient = additional permutation coefficient to get the canonical form
+// return value = true if the indices are in canonical form
+
+// bool ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::FindCanonicalIndices2(int* mIndices, int* nIndices, int linearizedMIndices, int linearizedNIndices, 
+// 											  int totalMomentum, int& canonicalMIndices, int& canonicalNIndices, 
+// 											  int& canonicalTotalMomentum, double& canonicalPermutationCoefficient)
+// {
+// //  return true;
+//   int* TmpMIndices = new int [this->NBodyValue];
+//   int* TmpNIndices = new int [this->NBodyValue];
+//   for (int k = 0; k < this->NBodyValue; ++k)
+//     {
+//       if (mIndices[k] > 0)
+// 	{
+// 	  TmpMIndices[k] = this->MaxMomentum - mIndices[k];
+// 	}
+//       else
+// 	{
+// 	  TmpMIndices[k] = 0;
+// 	}
+//       if (nIndices[k] > 0)
+// 	{
+// 	  TmpNIndices[k] = this->MaxMomentum - nIndices[k];
+// 	}
+//       else
+// 	{
+// 	  TmpNIndices[k] = 0;
+// 	}
+//     }
+//   int TmpNbrPermutation = 0;
+//   SortArrayDownOrderingPermutation<int>(TmpMIndices, this->NBodyValue, TmpNbrPermutation);
+//   SortArrayDownOrderingPermutation<int>(TmpNIndices, this->NBodyValue, TmpNbrPermutation);
+//   if ((TmpNbrPermutation & 1) == 0)
+//     {
+//       canonicalPermutationCoefficient = 1.0;
+//     }
+//   else
+//     {
+//       canonicalPermutationCoefficient = -1.0;
+//     }
+//   canonicalTotalMomentum = 0;
+//   canonicalMIndices = 0;
+//   canonicalNIndices = 0;
+//   for (int k = this->NBodyValue - 1; k >= 0; --k)
+//     {
+//       canonicalMIndices *= this->MaxMomentum;
+//       canonicalMIndices += TmpMIndices[k];
+//       canonicalNIndices *= this->MaxMomentum;
+//       canonicalNIndices += TmpNIndices[k];
+//       canonicalTotalMomentum += TmpNIndices[k];
+//     }
+//   canonicalTotalMomentum %= this->MaxMomentum;
+//   delete[] TmpMIndices;
+//   delete[] TmpNIndices;
+//   if (canonicalMIndices > canonicalNIndices)
+//     {
+//       int Tmp = canonicalMIndices;
+//       canonicalMIndices = canonicalNIndices;
+//       canonicalNIndices = Tmp;
+//     }
+//   if (canonicalTotalMomentum < totalMomentum)
+//     return false;
+//   if (canonicalTotalMomentum > totalMomentum)
+//     return true;
+//   if (canonicalNIndices < linearizedNIndices)
+//     return false;
+//   if (canonicalNIndices > linearizedNIndices)
+//     return true;
+//   if (canonicalMIndices < linearizedMIndices)
+//     return false;
+//   return true;
+// }
