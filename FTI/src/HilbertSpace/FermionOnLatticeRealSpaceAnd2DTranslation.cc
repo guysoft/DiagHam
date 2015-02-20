@@ -890,8 +890,6 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
       FourrierCoefficientsA[i][j] = Phase (-2.0 * M_PI * ((double) (i * TmpHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
       FourrierCoefficientsB[i][j] = Phase (-2.0 * M_PI * ((double) (i * TmpDestinationHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpDestinationHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
       FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
-      
-//       cout << i << " " << j << " " << FourrierCoefficients[i][j] << endl;
     }
   }
   
@@ -946,24 +944,22 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 			--TmpLzMax;
 		      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
 		      if (TmpPos < this->HilbertSpaceDimension)
-		      {
-// 			cout << "minIndex = " << minIndex << " j = " << j << endl;
-// 			int nbrTranslationX = (this->MaxXMomentum - TmpXTranslation) % this->MaxXMomentum;
-// 			int nbrTranslationY = (this->MaxYMomentum - TmpYTranslation) % this->MaxYMomentum;
-		      
-// 			coefficient =  ((1.0 - (2.0 * ((double) ((TmpHilbertSpace->ReorderingSign[minIndex] >> ((nbrTranslationY * TmpHilbertSpace->MaxXMomentum) + nbrTranslationX)) & 0x1ul)))) * 
-// 			       FourrierCoefficientsA[nbrTranslationX][nbrTranslationY] / sqrt((double) TmpHilbertSpace->NbrStateInOrbit[minIndex]));
-		      
-// 			nbrTranslationX = (this->MaxXMomentum - TmpXTranslation2) % this->MaxXMomentum;
-// 			nbrTranslationY = (this->MaxYMomentum - TmpYTranslation2) % this->MaxYMomentum;
-// 			coefficient *=  ((1.0 - (2.0 * ((double) ((TmpDestinationHilbertSpace->ReorderingSign[j] >> ((nbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum) + nbrTranslationX)) & 0x1ul)))) * 
-// 			       FourrierCoefficientsB[nbrTranslationX][nbrTranslationY] / sqrt((double) TmpDestinationHilbertSpace->NbrStateInOrbit[j]));
-		      
+		      {      
 			int nbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
 			int nbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
-// 			coefficient =  ((1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpPos] >> ((nbrTranslationY * TmpHilbertSpace->MaxXMomentum) + nbrTranslationX)) & 0x1ul)))) / sqrt((double) (TmpDestinationHilbertSpace->NbrStateInOrbit[j] * TmpHilbertSpace->NbrStateInOrbit[minIndex])));
 			
-			Complex Coefficient = TmpInvBinomial / sqrt((double) (TmpDestinationHilbertSpace->NbrStateInOrbit[j] * TmpHilbertSpace->NbrStateInOrbit[minIndex]));
+// 			cout << nbrTranslationX << " " << nbrTranslationY << endl;
+// (1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpPos] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul)))) / sqrt((double) this->NbrStateInOrbit[TmpPos]) 
+			     
+			coefficient =   FourrierCoefficients[nbrTranslationX][nbrTranslationY] ;
+// 			cout << coefficient << " " << nbrTranslationX << " " << nbrTranslationY << " :: " ;
+// 			this->PrintState(cout, TmpPos);
+// 			cout << endl;
+			
+			Complex Coefficient = TmpInvBinomial * coefficient * FourrierCoefficientsA[TmpXTranslation][TmpYTranslation] * Conj(FourrierCoefficientsB[TmpXTranslation2][TmpYTranslation2]) / sqrt((double) (TmpDestinationHilbertSpace->NbrStateInOrbit[j] * TmpHilbertSpace->NbrStateInOrbit[minIndex]));
+			
+			
+// 			cout << "(" << TmpXTranslation << "," << TmpYTranslation << ") : " << FourrierCoefficientsA[TmpXTranslation][TmpYTranslation] << "  ---  (" << TmpXTranslation2 << "," << TmpYTranslation2 << ") : " << FourrierCoefficientsB[TmpXTranslation2][TmpYTranslation2] << endl;
 			unsigned long Sign = 0x0ul;
 			int Pos2 = TmpDestinationHilbertSpace->MaxMomentum;
 			while ((Pos2 > 0) && (TmpState22 != 0x0ul))
@@ -987,16 +983,17 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 			Coefficient *= 1.0;
 		      else
 			Coefficient *= -1.0;
+// 		      cout << Coefficient << endl;
 		      TmpStatePosition[Pos] = TmpPos;
 		      TmpStatePosition2[Pos] = j;
 		      TmpStateCoefficient[Pos] = Coefficient;
-// 		      cout << minIndex << " " << j << " " << Pos << " ::: " ;
-// 		      TmpHilbertSpace->PrintState (cout, minIndex);
-// 		      cout << " |  " ;
-// 		      TmpDestinationHilbertSpace->PrintState (cout, j);
-// 		      cout << " : " ;
-// 		      this->PrintState (cout, TmpPos);
-// 		      cout << " = " << Coefficient << endl;
+		      cout << minIndex << " (" << TmpXTranslation << "," << TmpYTranslation << ") -  " << j << " (" << TmpXTranslation2 << "," << TmpYTranslation2 << ") : " <<  Pos << " ::: " ;
+		      TmpHilbertSpace->PrintState (cout, minIndex);
+		      cout << " |  " ;
+		      TmpDestinationHilbertSpace->PrintState (cout, j);
+		      cout << " : " ;
+		      this->PrintState (cout, TmpPos);
+		      cout << " = " << Coefficient * groundState [TmpPos] << endl;
 		      ++Pos;
 		    }
 		  }
@@ -1021,7 +1018,7 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 	  for (int j = 0; j < Pos; ++j)
 	    {
 	      int Pos2 = TmpStatePosition2[j];
-	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]]) * TmpStateCoefficient[j];
+	      Complex TmpValue = Conj(groundState[TmpStatePosition[j]] * TmpStateCoefficient[j]);
 	      for (int k = 0; k < Pos; ++k)
 		if (TmpStatePosition2[k] >= Pos2)
 		  {
