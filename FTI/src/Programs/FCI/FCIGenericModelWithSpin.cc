@@ -476,26 +476,26 @@ int main(int argc, char** argv)
 	      {
 		if (Manager.GetBoolean("fixed-sz") == false)
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_t1_%f_t2_%f_kx_%d_ky_%d", FilePrefix, 
-		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, i, j);
 		}
 		else
 		 {
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_t1_%f_t2_%f_kx_%d_ky_%d_sz_%d", FilePrefix, 
-		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j, SzValue);
+		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d_sz_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, i, j, SzValue);
 		}
 	      }
 	      else
 	      {
 		if (Manager.GetBoolean("fixed-sz") == false)
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_t1_%f_t2_%f", FilePrefix, 
-		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"));
+		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString);
 		}
 		else
 		 {
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_t1_%f_t2_%f_sz_%d", FilePrefix, 
-		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), SzValue);
+		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_sz_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, SzValue);
 		}
 	      }
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
