@@ -36,7 +36,10 @@
 #endif
 
 #include <stdlib.h>
+#include <fstream>
 
+
+using std::cout;
 
 using std::endl;
 
@@ -625,7 +628,7 @@ RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixDownOrder(RealMatrix& matrix)
 RealDiagonalMatrix& RealDiagonalMatrix::SortMatrixDownOrder(ComplexMatrix& matrix)
 {
   int ReducedDim = this->NbrColumn - 2;
-  RealVector TmpV;
+  ComplexVector TmpV;
   double tmp;
   int MinPos;
   double MinValue;
