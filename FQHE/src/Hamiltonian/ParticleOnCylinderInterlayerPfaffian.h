@@ -53,6 +53,26 @@ class ParticleOnCylinderInterlayerPfaffian : public AbstractQHEOnCylinderThreeBo
  protected:
  
   // array containing all interaction factors 
+  Complex* InteractionFactorsIntra;
+  // number of interaction factors
+  int NbrInteractionFactorsIntra;
+  // arrays for indices attached to each interaction factor
+  int* M1ValueIntra;
+  int* M2ValueIntra;
+  int* M3ValueIntra;
+  int* M4ValueIntra;
+
+  // array containing all interaction factors 
+  Complex* InteractionFactorsInter;
+  // number of interaction factors
+  int NbrInteractionFactorsInter;
+  // arrays for indices attached to each interaction factor
+  int* M1ValueInter;
+  int* M2ValueInter;
+  int* M3ValueInter;
+  int* M4ValueInter;
+
+  // array containing all interaction factors 
   Complex* InteractionFactors12;
   // number of interaction factors
   int NbrInteractionFactors12;
@@ -161,6 +181,46 @@ class ParticleOnCylinderInterlayerPfaffian : public AbstractQHEOnCylinderThreeBo
   // return value = numerical coefficient
   Complex EvaluateInteractionCoefficient12(int m1, int m2, int m3, int m4, int m5, int m6);
   Complex EvaluateInteractionCoefficient32(int m1, int m2, int m3, int m4, int m5, int m6);
+
+  // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a+_m3 a_m4 a_m5 a_m6 coupling term
+  //
+  // m1 = first index
+  // m2 = second index
+  // m3 = third index
+  // m4 = fourth index
+  // m5 = fifth index
+  // m6 = sixth index
+  // return value = numerical coefficient
+  Complex EvaluateInteractionCoefficientBosons12(int m1, int m2, int m3, int m4, int m5, int m6);
+  Complex EvaluateInteractionCoefficientBosons32(int m1, int m2, int m3, int m4, int m5, int m6);
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+  Complex EvaluateInteractionCoefficientIntra(int m1, int m2, int m3, int m4);
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+  Complex EvaluateInteractionCoefficientInter(int m1, int m2, int m3, int m4);
+
+// Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+
+  int NumberOfPermutations32(int n1, int n2, int n3);
+
+// Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+
+  int NumberOfPermutations12(int n1, int n2);
 
 };
 

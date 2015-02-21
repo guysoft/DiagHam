@@ -78,8 +78,15 @@ ParticleOnCylinderInterlayerPfaffian::ParticleOnCylinderInterlayerPfaffian(Parti
   this->Architecture = architecture;
   this->EvaluateInteractionFactors();
 
-  this->OneBodyUpUp = 0;
-  this->OneBodyDownDown = 0;
+  //S2 = 1/2(Nu + Nd) + sum (m1,m2) c_m1u^+ c_m2d^+ c_m2u c_m1d
+  this->OneBodyUpUp = new Complex[this->NbrLzValue];
+  this->OneBodyDownDown = new Complex[this->NbrLzValue];
+  Complex OneHalf(0.5, 0.0);
+  for (int i = 0; i <= this->MaxMomentum; i++)
+	this->OneBodyUpUp[i] = OneHalf;
+  for (int i = 0; i <= this->MaxMomentum; i++)
+	this->OneBodyDownDown[i] = OneHalf;
+
   this->OneBodyUpDown = new Complex[this->NbrLzValue];
 
   //set Infinity to large value to get the psi sector
@@ -138,6 +145,16 @@ ParticleOnCylinderInterlayerPfaffian::~ParticleOnCylinderInterlayerPfaffian()
   delete[] this->M4Value32;
   delete[] this->M5Value32;
   delete[] this->M6Value32;
+  delete[] this->InteractionFactorsIntra;
+  delete[] this->M1ValueIntra;
+  delete[] this->M2ValueIntra;
+  delete[] this->M3ValueIntra;
+  delete[] this->M4ValueIntra;
+  delete[] this->InteractionFactorsInter;
+  delete[] this->M1ValueInter;
+  delete[] this->M2ValueInter;
+  delete[] this->M3ValueInter;
+  delete[] this->M4ValueInter;
 
   delete[] this->OneBodyUpUp;
   delete[] this->OneBodyUpDown;
@@ -204,6 +221,121 @@ void ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionFactors()
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
 
+      //2-body intra
+     
+      Pos = 0;    
+      MaxCoefficient = 0.0;
+      Complex* TmpCoefficient = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 < m1; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 < m3))
+  	             {
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientIntra(m1, m2, m3, m4);
+		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactorsIntra = 0;
+      this->M1ValueIntra = new int [Pos];
+      this->M2ValueIntra = new int [Pos];
+      this->M3ValueIntra = new int [Pos];
+      this->M4ValueIntra = new int [Pos];
+
+      this->InteractionFactorsIntra = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 < m1; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 < m3))
+		     {
+		       if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactorsIntra[this->NbrInteractionFactorsIntra] = TmpCoefficient[Pos];
+		           this->M1ValueIntra[this->NbrInteractionFactorsIntra] = m1;
+		           this->M2ValueIntra[this->NbrInteractionFactorsIntra] = m2;
+		           this->M3ValueIntra[this->NbrInteractionFactorsIntra] = m3;
+		           this->M4ValueIntra[this->NbrInteractionFactorsIntra] = m4;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactorsIntra;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction 2-body, S=1 = " << this->NbrInteractionFactorsIntra << endl;
+     cout << "====================================" << endl;
+
+
+      //2-body inter
+     
+      Pos = 0;    
+      MaxCoefficient = 0.0;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+  	             {
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientInter(m1, m2, m3, m4);
+		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactorsInter = 0;
+      this->M1ValueInter = new int [Pos];
+      this->M2ValueInter = new int [Pos];
+      this->M3ValueInter = new int [Pos];
+      this->M4ValueInter = new int [Pos];
+
+      this->InteractionFactorsInter = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+		     {
+		       if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactorsInter[this->NbrInteractionFactorsInter] = TmpCoefficient[Pos];
+		           this->M1ValueInter[this->NbrInteractionFactorsInter] = m1;
+		           this->M2ValueInter[this->NbrInteractionFactorsInter] = m2;
+		           this->M3ValueInter[this->NbrInteractionFactorsInter] = m3;
+		           this->M4ValueInter[this->NbrInteractionFactorsInter] = m4;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactorsInter;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction 2-body, S=0 = " << this->NbrInteractionFactorsInter << endl;
+     cout << "====================================" << endl;
+     delete[] TmpCoefficient;
+
+
+
+
+//----------------------------------- 3BODY ----------------------------------------------------
       Pos = 0;    
       MaxCoefficient = 0.0;
       Complex* TmpCoefficient12 = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
@@ -335,7 +467,283 @@ void ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionFactors()
     }
   else //bosons
     {
+      cout << "Bosons require more testing. " << endl;
+      exit(2);
+
+      //2-body intra
+     
+      Pos = 0;    
+      MaxCoefficient = 0.0;
+      Complex* TmpCoefficient = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= m1; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 <= m3))
+  	             {
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientIntra(m1, m2, m3, m4) * this->NumberOfPermutations12(m1, m2) * this->NumberOfPermutations12(m3, m4);
+		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactorsIntra = 0;
+      this->M1ValueIntra = new int [Pos];
+      this->M2ValueIntra = new int [Pos];
+      this->M3ValueIntra = new int [Pos];
+      this->M4ValueIntra = new int [Pos];
+
+      this->InteractionFactorsIntra = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= m1; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 <= m3))
+		     {
+		       if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactorsIntra[this->NbrInteractionFactorsIntra] = TmpCoefficient[Pos];
+		           this->M1ValueIntra[this->NbrInteractionFactorsIntra] = m1;
+		           this->M2ValueIntra[this->NbrInteractionFactorsIntra] = m2;
+		           this->M3ValueIntra[this->NbrInteractionFactorsIntra] = m3;
+		           this->M4ValueIntra[this->NbrInteractionFactorsIntra] = m4;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactorsIntra;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction 2-body, S=1 = " << this->NbrInteractionFactorsIntra << endl;
+     cout << "====================================" << endl;
+
+
+      //2-body inter
+     
+      Pos = 0;    
+      MaxCoefficient = 0.0;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+  	             {
+ 		       TmpCoefficient[Pos] = this->EvaluateInteractionCoefficientInter(m1, m2, m3, m4);
+		       if (MaxCoefficient < Norm(TmpCoefficient[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactorsInter = 0;
+      this->M1ValueInter = new int [Pos];
+      this->M2ValueInter = new int [Pos];
+      this->M3ValueInter = new int [Pos];
+      this->M4ValueInter = new int [Pos];
+
+      this->InteractionFactorsInter = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= this->MaxMomentum; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+ 	       {
+	         m4 = m1 + m2 - m3;
+	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+		     {
+		       if (Norm(TmpCoefficient[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactorsInter[this->NbrInteractionFactorsInter] = TmpCoefficient[Pos];
+		           this->M1ValueInter[this->NbrInteractionFactorsInter] = m1;
+		           this->M2ValueInter[this->NbrInteractionFactorsInter] = m2;
+		           this->M3ValueInter[this->NbrInteractionFactorsInter] = m3;
+		           this->M4ValueInter[this->NbrInteractionFactorsInter] = m4;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactorsInter;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction 2-body, S=0 = " << this->NbrInteractionFactorsInter << endl;
+     cout << "====================================" << endl;
+     delete[] TmpCoefficient;
+
+
+//--------------------------------- 3BODY ----------------------------------------------
+
+      Pos = 0;    
+      MaxCoefficient = 0.0;
+      Complex* TmpCoefficient12 = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= m1; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+            for (int m6 = 0; m6 <= this->MaxMomentum; ++m6)
+	      for (int m5 = 0; m5 <= m6; ++m5)
+ 	       {
+	         m4 = m1 + m2 + m3 - m6 - m5;
+	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+  	             {
+ 		       TmpCoefficient12[Pos] = this->EvaluateInteractionCoefficientBosons12(m1, m2, m3, m4, m5, m6) * this->NumberOfPermutations12(m1, m2) * this->NumberOfPermutations12(m5, m6);
+		       if (MaxCoefficient < Norm(TmpCoefficient12[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient12[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactors12 = 0;
+      this->M1Value12 = new int [Pos];
+      this->M2Value12 = new int [Pos];
+      this->M3Value12 = new int [Pos];
+      this->M4Value12 = new int [Pos];
+      this->M5Value12 = new int [Pos];
+      this->M6Value12 = new int [Pos];
+
+      this->InteractionFactors12 = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= m1; ++m2)
+	  for (int m3 = 0; m3 <= this->MaxMomentum; ++m3)
+            for (int m6 = 0; m6 <= this->MaxMomentum; ++m6)
+	      for (int m5 = 0; m5 <= m6; ++m5)
+ 	       {
+	         m4 = m1 + m2 + m3 - m6 - m5;
+	         if ((m4 >= 0) && (m4 <= this->MaxMomentum))
+		     {
+		       if (Norm(TmpCoefficient12[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactors12[this->NbrInteractionFactors12] = TmpCoefficient12[Pos];
+		           this->M1Value12[this->NbrInteractionFactors12] = m1;
+		           this->M2Value12[this->NbrInteractionFactors12] = m2;
+		           this->M3Value12[this->NbrInteractionFactors12] = m3;
+		           this->M4Value12[this->NbrInteractionFactors12] = m4;
+		           this->M5Value12[this->NbrInteractionFactors12] = m5;
+		           this->M6Value12[this->NbrInteractionFactors12] = m6;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<m5<<" "<<m6<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactors12;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction S=1/2 = " << this->NbrInteractionFactors12 << endl;
+     cout << "====================================" << endl;
+     delete[] TmpCoefficient12;
+
+//----------------------------------------------------------------------------------------------------------
+
+      Pos = 0;    
+      MaxCoefficient = 0.0;
+      Complex* TmpCoefficient32 = new Complex [(this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue * this->NbrLzValue)];
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= m1; ++m2)
+	  for (int m3 = 0; m3 <= m2; ++m3)
+            for (int m6 = 0; m6 <= this->MaxMomentum; ++m6)
+	      for (int m5 = 0; m5 <= m6; ++m5)
+ 	       {
+	         m4 = m1 + m2 + m3 - m6 - m5;
+	         if ((m4 >= 0) && (m4 <= m5))
+  	             {
+ 		       TmpCoefficient32[Pos] = this->EvaluateInteractionCoefficientBosons32(m1, m2, m3, m4, m5, m6) * this->NumberOfPermutations32(m1, m2, m3) * this->NumberOfPermutations32(m4, m5, m6);
+		       if (MaxCoefficient < Norm(TmpCoefficient32[Pos]))
+		         MaxCoefficient = Norm(TmpCoefficient32[Pos]);
+		       ++Pos;
+		     }
+	        }
+
+      this->NbrInteractionFactors32 = 0;
+      this->M1Value32 = new int [Pos];
+      this->M2Value32 = new int [Pos];
+      this->M3Value32 = new int [Pos];
+      this->M4Value32 = new int [Pos];
+      this->M5Value32 = new int [Pos];
+      this->M6Value32 = new int [Pos];
+
+      this->InteractionFactors32 = new Complex [Pos];
+      cout << "nbr interaction = " << Pos << endl;
+      Pos = 0;
+      MaxCoefficient *= MACHINE_PRECISION;
+
+      for (int m1 = 0; m1 <= this->MaxMomentum; ++m1)
+	for (int m2 = 0; m2 <= m1; ++m2)
+	  for (int m3 = 0; m3 <= m2; ++m3)
+            for (int m6 = 0; m6 <= this->MaxMomentum; ++m6)
+	      for (int m5 = 0; m5 <= m6; ++m5)
+ 	       {
+	         m4 = m1 + m2 + m3 - m6 - m5;
+	         if ((m4 >= 0) && (m4 <= m5))
+		     {
+		       if (Norm(TmpCoefficient32[Pos]) > MaxCoefficient)
+		         {
+		           this->InteractionFactors32[this->NbrInteractionFactors32] = TmpCoefficient32[Pos];
+		           this->M1Value32[this->NbrInteractionFactors32] = m1;
+		           this->M2Value32[this->NbrInteractionFactors32] = m2;
+		           this->M3Value32[this->NbrInteractionFactors32] = m3;
+		           this->M4Value32[this->NbrInteractionFactors32] = m4;
+		           this->M5Value32[this->NbrInteractionFactors32] = m5;
+		           this->M6Value32[this->NbrInteractionFactors32] = m6;
+                           //cout<<m1<<" "<<m2<<" "<<m3<<" "<<m4<<" "<<m5<<" "<<m6<<" "<<TmpCoefficient[Pos]<<endl;
+		           ++this->NbrInteractionFactors32;
+		         }
+		       ++Pos;
+		    }
+	       }
+
+     cout << "nbr interaction S=3/2 = " << this->NbrInteractionFactors32 << endl;
+     cout << "====================================" << endl;
+     delete[] TmpCoefficient32;
+
     }
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficientIntra(int m1, int m2, int m3, int m4)
+{
+  Complex Zero(0.0, 0.0);
+  return Zero; 
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// return value = numerical coefficient
+
+Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficientInter(int m1, int m2, int m3, int m4)
+{
+
+  Complex Coefficient(0.0, 0.0);
+  
+  if (m1==m4)
+    Coefficient.Re += 1.0;
+
+  return (Coefficient);
 }
 
 // evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term
@@ -366,16 +774,12 @@ Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficient12(i
 
      GaussianExp = exp(-Xr * Xr - Xs * Xs - Xr * Xs) * exp(-Xrp * Xrp - Xsp * Xsp - Xrp * Xsp);
 
-     Coefficient.Re = GaussianExp * (Xr - Xs) * (Xrp - Xsp) * (1.0 +  (2.0 * Xr + Xs) * (2.0 * Xs + Xr) * (2.0 * Xrp + Xsp) * (2.0 * Xsp + Xrp) + (Xr + Xs) * (Xrp + Xsp) );
-      //Coefficient.Re = GaussianExp * ( 2.0 * (Xr - Xs) * (Xrp - Xsp) + (Xr - Xs) * (Xr + Xs) * (Xrp - Xsp) * (Xrp + Xsp) );
 
-      //Coefficient.Re = GaussianExp * (Xr - Xs) * (Xrp - Xsp) * (2.0 + (Xr + Xs) * (Xrp + Xsp) + (1.0/3.0)*(Xr*Xr + Xs*Xs + Xr*Xs - 1.0) * (Xrp*Xrp + Xsp*Xsp + Xrp*Xsp - 1.0) );
-     
+     //Coefficient.Re = GaussianExp * (Xr - Xs) * (Xrp - Xsp) * (1.0 +  (2.0 * Xr + Xs) * (2.0 * Xs + Xr) * (2.0 * Xrp + Xsp) * (2.0 * Xsp + Xrp) + (Xr + Xs) * (Xrp + Xsp) );
 
-//+ 3.0 * (Xr * Xr + Xr * Xs + Xs * Xs - 1.0) * (Xrp * Xrp + Xrp * Xsp + Xsp * Xsp - 1.0)
-     Coefficient.Im = 0.0;
+     Coefficient.Re = GaussianExp * ( 0.5 * (Xr - Xs) * (Xrp - Xsp) + 1.5 * (Xr * Xr - Xs * Xs) * (Xrp * Xrp - Xsp * Xsp) ); 
 
-     return (-Coefficient * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
+     return (-Coefficient * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI) /(2.0 * M_PI * this->Ratio * this->NbrLzValue));
  
 }
 
@@ -404,6 +808,58 @@ Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficient32(i
      return (-Coefficient * 16.0 * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
  
 }
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// m5 = fifth index
+// m6 = sixth index
+// return value = numerical coefficient
+
+Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficientBosons12(int m1, int m2, int m3, int m4, int m5, int m6)
+{
+  Complex Coefficient(0,0);
+
+  return Coefficient; 
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a^+_m3 a_m4 a_m5 a_m6 coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// m5 = fifth index
+// m6 = sixth index
+// return value = numerical coefficient
+
+Complex ParticleOnCylinderInterlayerPfaffian::EvaluateInteractionCoefficientBosons32(int m1, int m2, int m3, int m4, int m5, int m6)
+{
+  double Length = sqrt(2.0 * M_PI * this->Ratio * this->NbrLzValue);
+  double kappa = 2.0 * M_PI/Length;
+  double Xr = kappa * (2.0 * m1 - m2 - m3)/3.0;
+  double Xs = kappa * (2.0 * m2 - m1 - m3)/3.0;
+  double Xrp = kappa * (2.0 * m6 - m4 - m5)/3.0;
+  double Xsp = kappa * (2.0 * m5 - m4 - m6)/3.0;
+  double GaussianExp;
+
+  Complex Coefficient(0,0);
+
+  GaussianExp = Xr * Xr + Xs * Xs + Xr * Xs;
+  Coefficient.Re = exp(-GaussianExp);
+  Coefficient.Im = 0.0;
+
+  GaussianExp = Xrp * Xrp + Xsp * Xsp + Xrp * Xsp;
+  Coefficient.Re *= exp(-GaussianExp);
+  Coefficient.Im = 0.0;
+  
+  return (Coefficient * (2.0/3.0) * sqrt(M_PI) * sqrt(3.0 * M_PI)/(2.0 * M_PI * this->Ratio * this->NbrLzValue));
+ 
+}
+
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -436,9 +892,118 @@ ComplexVector& ParticleOnCylinderInterlayerPfaffian::LowLevelAddMultiply(Complex
       int TmpC[3];
       int TmpSpinA[3];
       int TmpSpinC[3];
+      int TmpA2b[2];
+      int TmpC2b[2];
+      int TmpSpinA2b[2];
+      int TmpSpinC2b[2];
+
 
       Complex TmpInteraction;
       ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
+
+
+      for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
+	{
+
+          //UPUP
+
+	  TmpC2b[0] = this->M1ValueIntra[j];
+	  TmpC2b[1] = this->M2ValueIntra[j];
+	  TmpA2b[0] = this->M3ValueIntra[j];
+	  TmpA2b[1] = this->M4ValueIntra[j];
+
+	  TmpSpinC2b[0] = 0;
+	  TmpSpinC2b[1] = 0;
+	  TmpSpinA2b[0] = 0;
+	  TmpSpinA2b[1] = 0;
+
+	  TmpInteraction = this->InteractionFactorsIntra[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	           if (Index <= i)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                      if (Index < i)
+                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+                    }
+                } 
+	    }
+
+
+          //DOWNDOWN
+
+	  TmpC2b[0] = this->M1ValueIntra[j];
+	  TmpC2b[1] = this->M2ValueIntra[j];
+	  TmpA2b[0] = this->M3ValueIntra[j];
+	  TmpA2b[1] = this->M4ValueIntra[j];
+
+	  TmpSpinC2b[0] = 1;
+	  TmpSpinC2b[1] = 1;
+	  TmpSpinA2b[0] = 1;
+	  TmpSpinA2b[1] = 1;
+
+	  TmpInteraction = this->InteractionFactorsIntra[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	           if (Index <= i)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                      if (Index < i)
+                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+                    }
+                } 
+	    }
+
+
+	} //j
+
+      for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	{
+
+          //UPDOWN
+
+	  TmpC2b[0] = this->M1ValueInter[j];
+	  TmpC2b[1] = this->M2ValueInter[j];
+	  TmpA2b[0] = this->M3ValueInter[j];
+	  TmpA2b[1] = this->M4ValueInter[j];
+
+	  TmpSpinC2b[0] = 0;
+	  TmpSpinC2b[1] = 1;
+	  TmpSpinA2b[0] = 0;
+	  TmpSpinA2b[1] = 1;
+
+	  TmpInteraction = this->InteractionFactorsInter[j];
+	  for (int i = firstComponent; i < LastComponent; ++i)
+	    {
+	      Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              if (Coefficient2 != 0.0)
+                {
+                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	           if (Index <= i)
+                    {
+		      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                      if (Index < i)
+                        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+                    }
+                } 
+	    }
+
+	} //j
+
 
       for (int j = 0; j < this->NbrInteractionFactors12; ++j) 
 	{
@@ -756,12 +1321,123 @@ ComplexVector& ParticleOnCylinderInterlayerPfaffian::LowLevelAddMultiply(Complex
           int TmpC[3];
           int TmpSpinA[3];
           int TmpSpinC[3];
+          int TmpA2b[2];
+          int TmpC2b[2];
+          int TmpSpinA2b[2];
+          int TmpSpinC2b[2];
+
 
 	  Complex TmpInteraction;
 
 	  for (int k = 0; k < this->FastMultiplicationStep; ++k)
 	    if (PosMod != k)
 	      {		
+
+
+    		  for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
+			{
+
+		        //UPUP
+
+			TmpC2b[0] = this->M1ValueIntra[j];
+	 		TmpC2b[1] = this->M2ValueIntra[j];
+	  		TmpA2b[0] = this->M3ValueIntra[j];
+	  		TmpA2b[1] = this->M4ValueIntra[j];
+
+			TmpSpinC2b[0] = 0;
+	  		TmpSpinC2b[1] = 0;
+	  		TmpSpinA2b[0] = 0;
+	  		TmpSpinA2b[1] = 0;
+
+	  		TmpInteraction = this->InteractionFactorsIntra[j];
+	  		for (int i = firstComponent; i < LastComponent; ++i)
+	   		 {
+	      		Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              		if (Coefficient2 != 0.0)
+                		{
+                   		Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	    		       if (Index <= i)
+            		        {
+				      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+            		          //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+            		          //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+            		          if (Index < i)
+            		            vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+            		        }
+            		    } 
+	    		}
+
+
+         		 //DOWNDOWN
+
+			  TmpC2b[0] = this->M1ValueIntra[j];
+	 		 TmpC2b[1] = this->M2ValueIntra[j];
+	  		TmpA2b[0] = this->M3ValueIntra[j];
+	  		TmpA2b[1] = this->M4ValueIntra[j];
+
+			  TmpSpinC2b[0] = 1;
+	  		TmpSpinC2b[1] = 1;
+	  		TmpSpinA2b[0] = 1;
+	  		TmpSpinA2b[1] = 1;
+
+			  TmpInteraction = this->InteractionFactorsIntra[j];
+	 		 for (int i = firstComponent; i < LastComponent; ++i)
+	    		{
+	     		 Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+              		if (Coefficient2 != 0.0)
+                		{
+                   		Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+		  	           if (Index <= i)
+                		    {
+				      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                		      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                		      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                		      if (Index < i)
+                		        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+                		    }
+                		} 
+	    		}
+
+
+			} //j
+
+		      for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+			{
+
+		          //UPDOWN
+
+			  TmpC2b[0] = this->M1ValueInter[j];
+	 		 TmpC2b[1] = this->M2ValueInter[j];
+	  		TmpA2b[0] = this->M3ValueInter[j];
+	  		TmpA2b[1] = this->M4ValueInter[j];
+
+			  TmpSpinC2b[0] = 0;
+	  		TmpSpinC2b[1] = 1;
+	  		TmpSpinA2b[0] = 0;
+	  		TmpSpinA2b[1] = 1;
+
+			  TmpInteraction = this->InteractionFactorsInter[j];
+	 		 for (int i = firstComponent; i < LastComponent; ++i)
+	    		{
+	      		Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+		              if (Coefficient2 != 0.0)
+                		{
+                		   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+  	        		   if (Index <= i)
+                		    {
+				      vDestination[Index] += Coefficient * Coefficient2 * TmpInteraction * vSource[i];
+                		      //TmpParticles->PrintState(cout,i);cout<<" ";TmpParticles->PrintState(cout,Index);
+                		      //cout<<" "<<TmpC[0]<<" "<<TmpC[1]<<" "<<TmpC[2]<<" "<<TmpA[0]<<" "<<TmpA[1]<<" "<<TmpA[2]<<endl;
+                		      if (Index < i)
+                		        vDestination[i] += Coefficient * Coefficient2 * Conj(TmpInteraction) * vSource[Index];
+                		    }
+                		} 
+	    		}
+
+			} //j
+
+
+
 
 	      for (int j = 0; j < this->NbrInteractionFactors12; ++j) 
 		{
@@ -966,6 +1642,10 @@ long ParticleOnCylinderInterlayerPfaffian::PartialFastMultiplicationMemory(int f
   int TmpC[3];
   int TmpSpinA[3];
   int TmpSpinC[3];
+  int TmpA2b[2];
+  int TmpC2b[2];
+  int TmpSpinA2b[2];
+  int TmpSpinC2b[2];
 
   int LastComponent = lastComponent + firstComponent;
   ParticleOnSphereWithSpin* TmpParticles = (ParticleOnSphereWithSpin*) this->Particles->Clone();
@@ -975,6 +1655,90 @@ long ParticleOnCylinderInterlayerPfaffian::PartialFastMultiplicationMemory(int f
 
   for (int i = firstComponent; i < LastComponent; ++i)
     {
+
+	for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
+	  {
+
+	          //UPUP
+
+		  TmpC2b[0] = this->M1ValueIntra[j];
+		  TmpC2b[1] = this->M2ValueIntra[j];
+		  TmpA2b[0] = this->M3ValueIntra[j];
+		  TmpA2b[1] = this->M4ValueIntra[j];
+
+		  TmpSpinC2b[0] = 0;
+		  TmpSpinC2b[1] = 0;
+		  TmpSpinA2b[0] = 0;
+		  TmpSpinA2b[1] = 0;
+
+                  Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	          if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+                              ++Memory;
+	                      ++this->NbrInteractionPerComponent[i];                    
+	                    }
+	                } 
+		    
+
+	          //DOWNDOWN
+
+		  TmpC2b[0] = this->M1ValueIntra[j];
+		  TmpC2b[1] = this->M2ValueIntra[j];
+		  TmpA2b[0] = this->M3ValueIntra[j];
+		  TmpA2b[1] = this->M4ValueIntra[j];
+
+		  TmpSpinC2b[0] = 1;
+		  TmpSpinC2b[1] = 1;
+		  TmpSpinA2b[0] = 1;
+		  TmpSpinA2b[1] = 1;
+
+                  Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	          if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+                              ++Memory;
+	                      ++this->NbrInteractionPerComponent[i];                    
+	                    }
+	                } 
+		
+	
+	} //j
+
+
+	for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	  {
+
+	          //UPUP
+
+		  TmpC2b[0] = this->M1ValueInter[j];
+		  TmpC2b[1] = this->M2ValueInter[j];
+		  TmpA2b[0] = this->M3ValueInter[j];
+		  TmpA2b[1] = this->M4ValueInter[j];
+
+		  TmpSpinC2b[0] = 0;
+		  TmpSpinC2b[1] = 1;
+		  TmpSpinA2b[0] = 0;
+		  TmpSpinA2b[1] = 1;
+
+                  Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	          if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+                              ++Memory;
+	                      ++this->NbrInteractionPerComponent[i];                    
+	                    }
+	                } 
+		    	
+	} //j
+
+
       for (int j = 0; j < this->NbrInteractionFactors12; ++j) 
 	{
 
@@ -1112,6 +1876,11 @@ void ParticleOnCylinderInterlayerPfaffian::PartialEnableFastMultiplication(int f
   int TmpA[3]; 
   int TmpSpinC[3];
   int TmpSpinA[3]; 
+  int TmpC2b[2];
+  int TmpA2b[2]; 
+  int TmpSpinC2b[2];
+  int TmpSpinA2b[2]; 
+
   int SumIndices;
   int Pos;
   int ReducedNbrInteractionFactors;
@@ -1133,6 +1902,90 @@ void ParticleOnCylinderInterlayerPfaffian::PartialEnableFastMultiplication(int f
       TmpIndexArray = this->InteractionPerComponentIndex[PosIndex];
       TmpCoefficientArray = this->InteractionPerComponentCoefficient[PosIndex];
       Pos = 0;
+
+	for (int j = 0; j < this->NbrInteractionFactorsIntra; ++j) 
+	  {
+
+	          //UPUP
+
+		  TmpC2b[0] = this->M1ValueIntra[j];
+		  TmpC2b[1] = this->M2ValueIntra[j];
+		  TmpA2b[0] = this->M3ValueIntra[j];
+		  TmpA2b[1] = this->M4ValueIntra[j];
+
+		  TmpSpinC2b[0] = 0;
+		  TmpSpinC2b[1] = 0;
+		  TmpSpinA2b[0] = 0;
+		  TmpSpinA2b[1] = 0;
+
+		  Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	          if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			       TmpIndexArray[Pos] = Index;
+			       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactorsIntra[j];
+			       ++Pos;
+	                    }
+	                } 
+		 
+
+	          //DOWNDOWN
+
+		  TmpC2b[0] = this->M1ValueIntra[j];
+		  TmpC2b[1] = this->M2ValueIntra[j];
+		  TmpA2b[0] = this->M3ValueIntra[j];
+		  TmpA2b[1] = this->M4ValueIntra[j];
+
+		  TmpSpinC2b[0] = 1;
+		  TmpSpinC2b[1] = 1;
+		  TmpSpinA2b[0] = 1;
+		  TmpSpinA2b[1] = 1;
+
+		  Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	          if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+	       			TmpIndexArray[Pos] = Index;
+	       			TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactorsIntra[j];
+	       			++Pos;
+	                    }
+	                } 
+		 
+	} //j
+
+
+	for (int j = 0; j < this->NbrInteractionFactorsInter; ++j) 
+	  {
+
+	          //UPUP
+
+		  TmpC2b[0] = this->M1ValueInter[j];
+		  TmpC2b[1] = this->M2ValueInter[j];
+		  TmpA2b[0] = this->M3ValueInter[j];
+		  TmpA2b[1] = this->M4ValueInter[j];
+
+		  TmpSpinC2b[0] = 0;
+		  TmpSpinC2b[1] = 1;
+		  TmpSpinA2b[0] = 0;
+		  TmpSpinA2b[1] = 1;
+
+		  Coefficient2 = TmpParticles->ProdA(i, TmpA2b, TmpSpinA2b, 2);
+	          if (Coefficient2 != 0.0)
+	                {
+	                   Index = TmpParticles->ProdAd(TmpC2b, TmpSpinC2b, 2, Coefficient);
+	  	           if (Index <= i)
+	                    {
+			       TmpIndexArray[Pos] = Index;
+			       TmpCoefficientArray[Pos] = Coefficient2 * Coefficient * this->InteractionFactorsInter[j];
+			       ++Pos;
+	                    }
+	                } 
+		 
+	} //j
 
       for (int j = 0; j < this->NbrInteractionFactors12; ++j) 
 	{
@@ -1254,4 +2107,26 @@ void ParticleOnCylinderInterlayerPfaffian::PartialEnableFastMultiplication(int f
    }
 
   delete TmpParticles;
+}
+
+// Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+
+int ParticleOnCylinderInterlayerPfaffian:: NumberOfPermutations32(int n1, int n2, int n3)
+{
+  if ((n1 != n2) && (n2 != n3) && (n3 != n1) ) 
+    return 6;
+  else if ( ((n1==n2) && (n1 != n3)) || ((n1==n3) && (n1 != n2)) || ((n2==n3) && (n2 != n1)) ) 
+    return 3;
+  else
+    return 1;
+}
+
+// Get the number of permutations of annihilation/creation indices c_n1 c_n2 c_n3 for bosons
+
+int ParticleOnCylinderInterlayerPfaffian:: NumberOfPermutations12(int n1, int n2)
+{
+  if (n1 != n2)
+    return 2;
+  else
+    return 1;
 }
