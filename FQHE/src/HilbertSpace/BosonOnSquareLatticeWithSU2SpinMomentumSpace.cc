@@ -99,6 +99,7 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMom
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->TargetSpace = this;
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
@@ -184,6 +185,7 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMom
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->TargetSpace = this;
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
@@ -254,6 +256,10 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace::BosonOnSquareLatticeWithSU2SpinMom
   this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
 }
 
 // destructor
@@ -317,6 +323,10 @@ BosonOnSquareLatticeWithSU2SpinMomentumSpace& BosonOnSquareLatticeWithSU2SpinMom
   this->UniqueStateDescriptionUp = bosons.UniqueStateDescriptionUp;
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   return *this;
 }
 

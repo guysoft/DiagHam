@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//      class of S^- spin operator on the torus with magnetic translations    //
+//                   class of S^- spin operator on the sphere                 //
 //                                                                            //
-//                        last modification : 03/02/2015                      //
+//                        last modification : 20/02/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Operator/ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator.h"
+#include "Operator/ParticleOnSphereWithSpinSMinusOperator.h"
 #include "Output/MathematicaOutput.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
@@ -43,69 +43,54 @@ using std::endl;
 // constructor from default data
 //
 // particle = hilbert space associated to the particles
-// maxMomentum = number of flux quanta
-// xMomentum= momentum along the x direction
 
-ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator(ParticleOnTorusWithSpinAndMagneticTranslations* particle, int maxMomentum, int xMomentum)
+ParticleOnSphereWithSpinSMinusOperator::ParticleOnSphereWithSpinSMinusOperator(ParticleOnSphereWithSpin* particle)
 {
-  this->Particle= (ParticleOnTorusWithSpinAndMagneticTranslations*) (particle->Clone());
-  this->MaxMomentum = maxMomentum;
-  this->XMomentum = xMomentum;
-  this->ExponentialFactors = new Complex[this->MaxMomentum];
-  for (int i = 0; i < this->MaxMomentum; ++i)
-    {
-      this->ExponentialFactors[i] = Phase(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
-    }
+  this->Particle= (ParticleOnSphereWithSpin*) (particle->Clone());
+  this->NbrOrbitals = this->Particle->GetNbrOrbitals();
 }
 
 // copy constructor
 //
 // oper = operator to copy
   
-ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator(ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator& oper)
+ParticleOnSphereWithSpinSMinusOperator::ParticleOnSphereWithSpinSMinusOperator(ParticleOnSphereWithSpinSMinusOperator& oper)
 {
-  this->Particle = (ParticleOnTorusWithSpinAndMagneticTranslations*) (oper.Particle->Clone());
-  this->MaxMomentum = oper.MaxMomentum;
-  this->XMomentum = oper.XMomentum;
-  this->ExponentialFactors = new Complex[this->MaxMomentum];
-  for (int i = 0; i < this->MaxMomentum; ++i)
-    {
-      this->ExponentialFactors[i] = Phase(2.0 * M_PI * this->XMomentum * ((double) i) / ((double) this->MaxMomentum));
-    }
+  this->Particle = (ParticleOnSphereWithSpin*) (oper.Particle->Clone());
+  this->NbrOrbitals = oper.NbrOrbitals;
 }
 
 // destructor
 //
 
-ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::~ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator()
+ParticleOnSphereWithSpinSMinusOperator::~ParticleOnSphereWithSpinSMinusOperator()
 {
   delete this->Particle;
-  delete[] this->ExponentialFactors;
 }
   
 // clone operator without duplicating datas
 //
 // return value = pointer to cloned hamiltonian
 
-AbstractOperator* ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::Clone ()
+AbstractOperator* ParticleOnSphereWithSpinSMinusOperator::Clone ()
 {
-  return new ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator(*this);
+  return new ParticleOnSphereWithSpinSMinusOperator(*this);
 }
 
 // set Hilbert space
 //
 // hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+void ParticleOnSphereWithSpinSMinusOperator::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
 {
-  this->Particle = (ParticleOnTorusWithSpinAndMagneticTranslations*) hilbertSpace;
+  this->Particle = (ParticleOnSphereWithSpin*) hilbertSpace;
 }
 
 // get Hilbert space on which operator acts
 //
 // return value = pointer to used Hilbert space
 
-AbstractHilbertSpace* ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::GetHilbertSpace ()
+AbstractHilbertSpace* ParticleOnSphereWithSpinSMinusOperator::GetHilbertSpace ()
 {
   return this->Particle;
 }
@@ -114,7 +99,7 @@ AbstractHilbertSpace* ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperat
 //
 // return value = corresponding matrix elementdimension
 
-int ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::GetHilbertSpaceDimension ()
+int ParticleOnSphereWithSpinSMinusOperator::GetHilbertSpaceDimension ()
 {
   return this->Particle->GetHilbertSpaceDimension();
 }
@@ -129,8 +114,8 @@ int ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::GetHilbertSpac
 // nbrComponent = number of components to evaluate
 // return value = reference on vector where result has been stored
 
-ComplexVector& ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-												 int firstComponent, int nbrComponent)
+ComplexVector& ParticleOnSphereWithSpinSMinusOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+									   int firstComponent, int nbrComponent)
 {
   int Last = firstComponent + nbrComponent;
   int Index = 0;
@@ -140,12 +125,46 @@ ComplexVector& ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator::Low
   for (int i = firstComponent; i < Last; ++i)
     {
       Complex& Tmp = vSource[i];
-      for (int j = 0; j < this->MaxMomentum; ++j)
+      for (int j = 0; j < this->NbrOrbitals; ++j)
 	{
-	  Index = this->Particle->AddAu(i, j, Coefficient, NbrTranslations);
+	  Index = this->Particle->AddAu(i, j, Coefficient);
 	  if (Index < TargetDim)
 	    {
-	      vDestination[Index] += Tmp * this->ExponentialFactors[NbrTranslations] * Coefficient;		  
+	      vDestination[Index] += Tmp * Coefficient;		  
+	    }
+	}
+    }
+  return vDestination;
+}
+  
+
+
+// multiply a vector by the current operator for a given range of indices 
+// and store result in another vector
+//
+// vSource = vector to be multiplied
+// vDestination = vector where result has to be stored
+// firstComponent = index of the first component to evaluate
+// nbrComponent = number of components to evaluate
+// return value = reference on vector where result has been stored
+
+RealVector& ParticleOnSphereWithSpinSMinusOperator::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
+									   int firstComponent, int nbrComponent)
+{
+  int Last = firstComponent + nbrComponent;
+  int Index = 0;
+  double Coefficient = 0.0;
+  int TargetDim = this->Particle->GetTargetHilbertSpaceDimension();
+  int NbrTranslations;
+  for (int i = firstComponent; i < Last; ++i)
+    {
+      double& Tmp = vSource[i];
+      for (int j = 0; j < this->NbrOrbitals; ++j)
+	{
+	  Index = this->Particle->AddAu(i, j, Coefficient);
+	  if (Index < TargetDim)
+	    {
+	      vDestination[Index] += Tmp * Coefficient;		  
 	    }
 	}
     }

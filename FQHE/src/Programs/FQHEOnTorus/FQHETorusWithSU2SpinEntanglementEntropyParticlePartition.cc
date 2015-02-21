@@ -183,27 +183,27 @@ int main(int argc, char** argv)
 	}
     }
 
-if(ComplexFlag == false)
-{
-  GroundStates = new RealVector [NbrSpaces];  
-  for (int i = 0; i < NbrSpaces; ++i)
-    if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
-      {
-	cout << "can't open vector file " << GroundStateFiles[i] << endl;
-	return -1;      
-      }
-}
-else
-{
-  ComplexGroundStates = new ComplexVector [NbrSpaces];  
-  for (int i = 0; i < NbrSpaces; ++i)
-    if (ComplexGroundStates[i].ReadVector (GroundStateFiles[i]) == false)
-      {
-	cout << "can't open vector file " << GroundStateFiles[i] << endl;
-	return -1;      
-      }
-}
-
+  if(ComplexFlag == false)
+    {
+      GroundStates = new RealVector [NbrSpaces];  
+      for (int i = 0; i < NbrSpaces; ++i)
+	if (GroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	  {
+	    cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	    return -1;      
+	  }
+    }
+  else
+    {
+      ComplexGroundStates = new ComplexVector [NbrSpaces];  
+      for (int i = 0; i < NbrSpaces; ++i)
+	if (ComplexGroundStates[i].ReadVector (GroundStateFiles[i]) == false)
+	  {
+	    cout << "can't open vector file " << GroundStateFiles[i] << endl;
+	    return -1;      
+	  }
+    }
+  
   Spaces = new ParticleOnSphereWithSpin* [NbrSpaces];
   for (int i = 0; i < NbrSpaces; ++i)
     {
@@ -226,23 +226,23 @@ else
 	    }
 	}
       if(ComplexFlag == false)
-      {
-      if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
 	{
-	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
-	  return 0;
+	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != GroundStates[i].GetLargeVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	      return 0;
+	    }
 	}
-      }
       else
-      {
-	if (Spaces[i]->GetLargeHilbertSpaceDimension() != ComplexGroundStates[i].GetLargeVectorDimension())
 	{
-	  cout << "dimension mismatch between Hilbert space and ground state" << endl;
-	  return 0;
+	  if (Spaces[i]->GetLargeHilbertSpaceDimension() != ComplexGroundStates[i].GetLargeVectorDimension())
+	    {
+	      cout << "dimension mismatch between Hilbert space and ground state" << endl;
+	      return 0;
+	    }
 	}
-      }
     }
-
+  
   int* NbrNUp = new int[NbrSpaces];
   int* NbrNDown = new int[NbrSpaces];
   int MaxNbrNUp = 0;

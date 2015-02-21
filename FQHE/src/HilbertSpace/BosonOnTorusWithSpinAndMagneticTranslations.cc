@@ -439,21 +439,22 @@ int BosonOnTorusWithSpinAndMagneticTranslations::AddAu (int index, int m, double
   this->FermionToBoson(this->StateDescriptionUp[index], this->NUpKyMax, this->ProdATemporaryStateUp);
   if (this->ProdATemporaryStateUp[m] == 0)
     {
-      return 0.0;
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   this->FermionToBoson(this->StateDescriptionDown[index], this->NDownKyMax, this->ProdATemporaryStateDown);
   this->ProdANbrStateInOrbit = this->RescalingFactors[this->NbrStateInOrbit[index]];
   coefficient = this->ProdATemporaryStateUp[m];
   --this->ProdATemporaryStateUp[m];
+  ++this->ProdATemporaryStateDown[m];
   coefficient *= this->ProdATemporaryStateDown[m];
-  --this->ProdATemporaryStateDown[m];
   unsigned long TmpStateUp;
   unsigned long TmpStateDown;
-  this->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
+  this->TargetSpace->BosonToFermion(this->ProdATemporaryStateUp, this->ProdATemporaryStateDown, TmpStateUp, TmpStateDown);
   if (this->TargetSpace->FindCanonicalFormAndTestXMomentumConstraint(TmpStateUp, TmpStateDown, nbrTranslation) == false)
     {
       coefficient = 0.0;
-      return this->HilbertSpaceDimension;
+      return this->TargetSpace->HilbertSpaceDimension;
     }
   coefficient = sqrt(coefficient);
   int TmpIndex = this->TargetSpace->FindStateIndex(TmpStateUp, TmpStateDown);

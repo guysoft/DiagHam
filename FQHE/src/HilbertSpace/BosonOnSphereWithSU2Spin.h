@@ -108,6 +108,9 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   // array that contains the temporary state used when applying ProdA operator, the first entry being ProdATemporaryStateUp and the second entry being ProdATemporaryStateDown
   unsigned long* ProdATemporaryStateSigma[2];
 
+  // pointer to the Hilbert space where the result of any operator lies
+  BosonOnSphereWithSU2Spin* TargetSpace;
+
  public:
 
   // default constructor
@@ -154,6 +157,26 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
   //
   // return value = particle statistic
   virtual int GetParticleStatistic();
+
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
+
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
 
   // return a list of all possible quantum numbers 
   //
@@ -458,6 +481,24 @@ class BosonOnSphereWithSU2Spin :  public ParticleOnSphereWithSpin
 				      double occupationCoefficient, double* occupationCoefficientArray);
 
 };
+
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int BosonOnSphereWithSU2Spin::GetNbrOrbitals()
+{
+  return this->NbrLzValue;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int BosonOnSphereWithSU2Spin::GetNbrParticles()
+{
+  return this->NbrBosons;
+}
 
 // get the particle statistic 
 //

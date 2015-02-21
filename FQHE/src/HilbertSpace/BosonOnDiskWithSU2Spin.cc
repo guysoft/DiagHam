@@ -89,6 +89,7 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;  
+  this->TargetSpace = this;
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
@@ -184,6 +185,7 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin (int nbrBosons, int totalLz, int 
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->TargetSpace = this;
   if ( this->LargeHilbertSpaceDimension > 0l)
     {
       this->StateDescriptionUp = new unsigned long [this->LargeHilbertSpaceDimension];
@@ -253,6 +255,10 @@ BosonOnDiskWithSU2Spin::BosonOnDiskWithSU2Spin(const BosonOnDiskWithSU2Spin& bos
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
   this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
 }
 
 // destructor
@@ -311,6 +317,10 @@ BosonOnDiskWithSU2Spin& BosonOnDiskWithSU2Spin::operator = (const BosonOnDiskWit
   this->UniqueStateDescriptionSubArraySizeUp = bosons.UniqueStateDescriptionSubArraySizeUp;
   this->NbrUniqueStateDescriptionUp = bosons.NbrUniqueStateDescriptionUp;
   this->FirstIndexUniqueStateDescriptionUp = bosons.FirstIndexUniqueStateDescriptionUp;
+  if (bosons.TargetSpace != &bosons)
+    this->TargetSpace = bosons.TargetSpace;
+  else
+    this->TargetSpace = this;
   return *this;
 }
 
