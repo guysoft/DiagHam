@@ -111,9 +111,6 @@ Potts3ChainNaturalBoundaryTermHamiltonian::Potts3ChainNaturalBoundaryTermHamilto
 
 Potts3ChainNaturalBoundaryTermHamiltonian::~Potts3ChainNaturalBoundaryTermHamiltonian() 
 {
-  delete[] this->SzSzContributions;
-  if (this->FastMultiplicationFlag == true)
-    delete[] this->InteractionPerComponentIndex;
 }
 
 // set Hilbert space
@@ -359,8 +356,9 @@ void Potts3ChainNaturalBoundaryTermHamiltonian::EvaluateDiagonalMatrixElements()
 	}
       this->SzSzContributions[i] = Tmp;
     }
-  this->BoundaryFactor = Polar(this->JFactor,
-			       2.0 * M_PI * (this->PhiJ + ((this->BoundaryCondition - 1.0 + this->Chain->QValue(0)) / 3.0)));
+  // boundary factor for the 0-th order
+  this->BoundaryFactor = Polar(this->JFactor / 3.0,
+			       2.0 * M_PI * (((this->BoundaryCondition - 1.0 + this->Chain->QValue(0)) / 3.0)));
   if (this->FastMultiplicationFlag == true)
     {
       long Position = 0l;
