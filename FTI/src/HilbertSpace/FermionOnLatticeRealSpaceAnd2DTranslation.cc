@@ -836,8 +836,12 @@ HermitianMatrix FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensit
 	}
     }
   int ComplementaryNbrParticles = this->NbrFermions - nbrParticleSector;
-  int ComplementaryKxMomentum = (this->XMomentum - kxSector) % this->MaxXMomentum;
-  int ComplementaryKyMomentum = (this->YMomentum - kySector) % this->MaxYMomentum;
+  int ComplementaryKxMomentum = (this->XMomentum - kxSector);
+  if (ComplementaryKxMomentum < 0)
+    ComplementaryKxMomentum += this->MaxXMomentum;
+  int ComplementaryKyMomentum = (this->YMomentum - kySector);
+  if (ComplementaryKyMomentum < 0)
+    ComplementaryKyMomentum += this->MaxYMomentum;
   FermionOnLatticeRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
   FermionOnLatticeRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, this->NbrSite, ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
@@ -870,148 +874,100 @@ HermitianMatrix FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensit
 long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
 												ComplexVector& groundState,  HermitianMatrix* densityMatrix)
 {
-  FermionOnLatticeRealSpaceAnd2DTranslation* TmpHilbertSpace =  (FermionOnLatticeRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
+  FermionOnLatticeRealSpaceAnd2DTranslation* TmpHilbertSpace2 =  (FermionOnLatticeRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
   FermionOnLatticeRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-  long LargeDestinationHilbertSpaceDimension = TmpHilbertSpace->EvaluateHilbertSpaceDimension(this->NbrFermions);
-  int* TmpStatePosition = new int [LargeDestinationHilbertSpaceDimension*LargeDestinationHilbertSpaceDimension];
-  int* TmpStatePosition2 = new int [LargeDestinationHilbertSpaceDimension*LargeDestinationHilbertSpaceDimension];
-  Complex* TmpStateCoefficient = new Complex [LargeDestinationHilbertSpaceDimension*LargeDestinationHilbertSpaceDimension];
-  
-  Complex** FourrierCoefficientsA = new Complex* [this->MomentumModulo];
+  FermionOnLatticeRealSpace* TmpHilbertSpace = new FermionOnLatticeRealSpace(TmpHilbertSpace2->NbrFermions,
+									     TmpHilbertSpace2->NbrSite);
+  FermionOnLatticeRealSpace* TmpDestinationHilbertSpace2 = new FermionOnLatticeRealSpace(TmpDestinationHilbertSpace->NbrFermions,
+											 TmpDestinationHilbertSpace->NbrSite);
+  int* TmpStatePosition = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
+  int* TmpStatePosition2 = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
+  Complex* TmpStateCoefficient = new Complex [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
   Complex** FourrierCoefficientsB = new Complex* [this->MomentumModulo];
   Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
   for (int i = 0; i < this->MaxXMomentum; ++i)
-  {
-    FourrierCoefficientsA[i] = new Complex [this->MaxYMomentum];
-    FourrierCoefficientsB[i] = new Complex [this->MaxYMomentum];
-    FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
-    for (int j = 0; j < this->MaxYMomentum; ++j)
     {
-      FourrierCoefficientsA[i][j] = Phase (-2.0 * M_PI * ((double) (i * TmpHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
-      FourrierCoefficientsB[i][j] = Phase (-2.0 * M_PI * ((double) (i * TmpDestinationHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpDestinationHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
-      FourrierCoefficients[i][j] = Phase (-2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+      FourrierCoefficientsB[i] = new Complex [this->MaxYMomentum];
+      FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
+      for (int j = 0; j < this->MaxYMomentum; ++j)
+	{
+	  FourrierCoefficientsB[i][j] = Phase (2.0 * M_PI * ((double) (i * TmpDestinationHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpDestinationHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
+	  FourrierCoefficients[i][j] = Phase (2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
+	}
     }
-  }
   
-  cout << endl;
   int MaxIndex = minIndex + nbrIndex;
+  MaxIndex = TmpHilbertSpace->GetHilbertSpaceDimension();;
   long TmpNbrNonZeroElements = 0l;
   BinomialCoefficients TmpBinomial (this->NbrFermions);
   double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
-  int Pos = 0;
   for (; minIndex < MaxIndex; ++minIndex)    
     {
+      int Pos = 0;
       unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
-      unsigned long TmpState0 = TmpHilbertSpace->StateDescription[minIndex];
-      int TmpXTranslation = 0;
-      bool firstRunX = true;
-      while ((TmpState != TmpState0) || (firstRunX == true))
+      for (int j = 0; j < TmpDestinationHilbertSpace2->HilbertSpaceDimension; ++j)
 	{
-	  firstRunX = false;
-	  bool firstRunY = true;
-	  unsigned long TmpState1 = TmpState;
-	  int TmpYTranslation = 0;
-	  while ((TmpState != TmpState1) || (firstRunY == true))
+ 	  cout << minIndex << " " << j << " :" <<endl << "B= ";
+ 	  TmpHilbertSpace->PrintState(cout, minIndex) << endl << "A= ";
+ 	  TmpDestinationHilbertSpace2->PrintState(cout, j) << endl;
+	  unsigned long TmpState2 = TmpDestinationHilbertSpace2->StateDescription[j];
+	  int TmpDestinationNbrTranslationX;
+	  int TmpDestinationNbrTranslationY;
+	  unsigned long TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
+	  int TmpDestinationLzMax = TmpDestinationHilbertSpace->MaxMomentum;
+	  while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
+	    --TmpDestinationLzMax;
+	  int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
+	  if (((TmpState & TmpState2) == 0x0ul) && (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension()))
 	    {
-	      firstRunY = false;
-	      for (int j = 0; j < TmpDestinationHilbertSpace->HilbertSpaceDimension; ++j)
-	      {
-		unsigned long TmpState2 = TmpDestinationHilbertSpace->StateDescription[j];
-		unsigned long TmpState20 = TmpState2;
-		Complex coefficient;
-	    
-		bool firstRunX2 = true;
-		int TmpXTranslation2 = 0;
-		while ((TmpState2 != TmpState20) || (firstRunX2 == true))
-		{
-		  firstRunX2 = false;
-		  bool firstRunY2 = true;
-		  unsigned long TmpState21 = TmpState2;
-		  int TmpYTranslation2 = 0;
-// 		  cout << "initialY = " << TmpState2 << " :  " ;
-		  while ((TmpState2 != TmpState21) || (firstRunY2 == true))
-		  {    
-		    firstRunY2 = false;
-		    unsigned long TmpState22 = TmpState2;
-		    if ((TmpState & TmpState22) == 0x0ul)
+	      int TmpLzMax = this->MaxMomentum;
+	      int TmpNbrTranslationX;
+	      int TmpNbrTranslationY;
+	      unsigned long TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
+	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		--TmpLzMax;
+	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+	      if (TmpPos < this->HilbertSpaceDimension)
+		{      
+		  int NbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
+		  int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
+		  int DestinationNbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
+		  int DestinationNbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
+		  Complex Coefficient = TmpInvBinomial * FourrierCoefficients[NbrTranslationX][NbrTranslationY] * FourrierCoefficientsB[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (this->NbrStateInOrbit[TmpPos] * TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
+		  unsigned long Sign =  ((this->ReorderingSign[TmpPos] >> ((NbrTranslationY * this->MaxXMomentum) + NbrTranslationX))
+					 ^ (TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) & 0x1ul;
+		  int Pos2 = TmpDestinationHilbertSpace->MaxMomentum;
+		  unsigned long TmpState22 = TmpState2;
+		  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
 		    {
-		      int TmpLzMax = this->MaxMomentum;
-		      int TmpNbrTranslationX;
-		      int TmpNbrTranslationY;
-		      unsigned long TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
-// 		      unsigned long TmpState3 = (TmpState | TmpState2);
-		      while ((TmpState3 >> TmpLzMax) == 0x0ul)
-			--TmpLzMax;
-		      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
-		      if (TmpPos < this->HilbertSpaceDimension)
-		      {      
-			int nbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
-			int nbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
-			
-// 			cout << nbrTranslationX << " " << nbrTranslationY << endl;
-// (1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpPos] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul)))) / sqrt((double) this->NbrStateInOrbit[TmpPos]) 
-			     
-			coefficient =   FourrierCoefficients[nbrTranslationX][nbrTranslationY] ;
-// 			cout << coefficient << " " << nbrTranslationX << " " << nbrTranslationY << " :: " ;
-// 			this->PrintState(cout, TmpPos);
-// 			cout << endl;
-			
-			Complex Coefficient = TmpInvBinomial * coefficient * FourrierCoefficientsA[TmpXTranslation][TmpYTranslation] * Conj(FourrierCoefficientsB[TmpXTranslation2][TmpYTranslation2]) / sqrt((double) (TmpDestinationHilbertSpace->NbrStateInOrbit[j] * TmpHilbertSpace->NbrStateInOrbit[minIndex]));
-			
-			
-// 			cout << "(" << TmpXTranslation << "," << TmpYTranslation << ") : " << FourrierCoefficientsA[TmpXTranslation][TmpYTranslation] << "  ---  (" << TmpXTranslation2 << "," << TmpYTranslation2 << ") : " << FourrierCoefficientsB[TmpXTranslation2][TmpYTranslation2] << endl;
-			unsigned long Sign = 0x0ul;
-			int Pos2 = TmpDestinationHilbertSpace->MaxMomentum;
-			while ((Pos2 > 0) && (TmpState22 != 0x0ul))
-			{
-			  while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
-			    --Pos2;
-			  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+		      while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			--Pos2;
+		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
 #ifdef  __64_BITS__
-			  TmpState3 ^= TmpState3 >> 32;
+		      TmpState3 ^= TmpState3 >> 32;
 #endif	
-			  TmpState3 ^= TmpState3 >> 16;
-			  TmpState3 ^= TmpState3 >> 8;
-			  TmpState3 ^= TmpState3 >> 4;
-			  TmpState3 ^= TmpState3 >> 2;
-			  TmpState3 ^= TmpState3 >> 1;
-			  Sign ^= TmpState3;
-			  TmpState22 &= ~(0x1ul << Pos2);
-			    --Pos2;
-			}
-		      if ((Sign & 0x1ul) == 0x0ul)		  
-			Coefficient *= 1.0;
-		      else
-			Coefficient *= -1.0;
-// 		      cout << Coefficient << endl;
-		      TmpStatePosition[Pos] = TmpPos;
-		      TmpStatePosition2[Pos] = j;
-		      TmpStateCoefficient[Pos] = Coefficient;
-		      cout << minIndex << " (" << TmpXTranslation << "," << TmpYTranslation << ") -  " << j << " (" << TmpXTranslation2 << "," << TmpYTranslation2 << ") : " <<  Pos << " ::: " ;
-		      TmpHilbertSpace->PrintState (cout, minIndex);
-		      cout << " |  " ;
-		      TmpDestinationHilbertSpace->PrintState (cout, j);
-		      cout << " : " ;
-		      this->PrintState (cout, TmpPos);
-		      cout << " = " << Coefficient * groundState [TmpPos] << endl;
-		      ++Pos;
+		      TmpState3 ^= TmpState3 >> 16;
+		      TmpState3 ^= TmpState3 >> 8;
+		      TmpState3 ^= TmpState3 >> 4;
+		      TmpState3 ^= TmpState3 >> 2;
+		      TmpState3 ^= TmpState3 >> 1;
+		      Sign ^= TmpState3;
+		      TmpState22 &= ~(0x1ul << Pos2);
+		      --Pos2;
 		    }
-		  }
-	     this->ApplySingleYTranslation(TmpState2);
-	     ++TmpYTranslation2;
-	    }
-	this->ApplySingleXTranslation(TmpState2);
-	++TmpXTranslation2;
+		  if ((Sign & 0x1ul) != 0x0ul)		  
+		    Coefficient *= -1.0;
+		  TmpStatePosition[Pos] = TmpPos;
+		  TmpStatePosition2[Pos] = RealDestinationIndex;//j;
+		  TmpStateCoefficient[Pos] = Coefficient;
+ 		  cout << "(" << TmpNbrTranslationX << "," << TmpNbrTranslationY << ") " << endl;
+		  TmpDestinationHilbertSpace->PrintState (cout, RealDestinationIndex) << " | ";
+		  this->PrintState (cout, TmpPos) << endl;
+		  cout << " = " << Coefficient << endl;
+		  ++Pos;
+		}
 	    }
 	}
-      
-	this->ApplySingleYTranslation(TmpState);
-	++TmpYTranslation;
-	}
-	this->ApplySingleXTranslation(TmpState);      
-	++TmpXTranslation;
-      }
-    }
       if (Pos != 0)
 	{
 	  ++TmpNbrNonZeroElements;
@@ -1022,18 +978,16 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
 	      for (int k = 0; k < Pos; ++k)
 		if (TmpStatePosition2[k] >= Pos2)
 		  {
-// 		    cout << j << " " << k << " " << Pos2 << " " << TmpStatePosition2[k] << " " << TmpValue << " " << groundState[TmpStatePosition[k]] * TmpStateCoefficient[k] << endl;
 		    densityMatrix->AddToMatrixElement(Pos2, TmpStatePosition2[k], TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k]);
-// 		    cout << Pos2 << " " << TmpStatePosition2[k] << " " << TmpValue * groundState[TmpStatePosition[k]] * TmpStateCoefficient[k] << endl;
 		  }
 	    }
 	}
-    
+    }
   delete[] TmpStatePosition;
   delete[] TmpStatePosition2;
   delete[] TmpStateCoefficient;
-  delete[] FourrierCoefficientsA;
   delete[] FourrierCoefficientsB;
   delete[] FourrierCoefficients;
   return TmpNbrNonZeroElements;
 }
+
