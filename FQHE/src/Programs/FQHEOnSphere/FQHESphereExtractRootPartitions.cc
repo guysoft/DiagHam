@@ -267,7 +267,7 @@ int main(int argc, char** argv)
   char* TmpFileName = 0;
   if (Manager.GetString("input-file") != 0)
     {
-      RemoveExtensionFromFileName(Manager.GetString("input-file"), "dat");
+      BaseFileName = RemoveExtensionFromFileName(Manager.GetString("input-file"), "dat");
       TmpFileName = new char [strlen(BaseFileName) + 256]; 
       BaseFileName[strlen(BaseFileName) - 1] = '\0';
     }
@@ -558,9 +558,9 @@ int main(int argc, char** argv)
 		  char* FileName = new char[512];
 		  sprintf (FileName, "%sroot_%s%d.vec", FilePrefix, FileSuffix, NbrSavedStates); 
 		  TmpVectors[j].WriteVector(FileName);
-		  ++NbrSavedStates;
 		  delete[] FileName;
 		}
+	      ++NbrSavedStates;
 	    }
 	  else
 	    {
