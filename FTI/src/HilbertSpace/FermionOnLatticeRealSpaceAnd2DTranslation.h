@@ -271,7 +271,8 @@ class  FermionOnLatticeRealSpaceAnd2DTranslation : public FermionOnTorusWithMagn
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   // return value = number of components that have been added to the density matrix
-  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  
+								  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
 								  ComplexVector& groundState,  HermitianMatrix* densityMatrix);
 
 };

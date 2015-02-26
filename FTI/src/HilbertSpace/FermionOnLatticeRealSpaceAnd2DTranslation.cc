@@ -844,11 +844,9 @@ HermitianMatrix FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensit
     ComplementaryKyMomentum += this->MaxYMomentum;
   FermionOnLatticeRealSpaceAnd2DTranslation SubsytemSpace (nbrParticleSector, this->NbrSite, kxSector, this->MaxXMomentum, kySector, this->MaxYMomentum);
   HermitianMatrix TmpDensityMatrix (SubsytemSpace.GetHilbertSpaceDimension(), true);
-  FermionOnLatticeRealSpaceAnd2DTranslation ComplementarySpace (ComplementaryNbrParticles, this->NbrSite, ComplementaryKxMomentum, this->MaxXMomentum, ComplementaryKyMomentum, this->MaxYMomentum);
+  FermionOnLatticeRealSpace ComplementarySpace (ComplementaryNbrParticles, this->NbrSite);
   cout << "subsystem Hilbert space dimension = " << SubsytemSpace.HilbertSpaceDimension << endl;
-
-//   cout << "dim comp = " << ComplementarySpace.LargeHilbertSpaceDimension << endl;
-  FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, &ComplementarySpace, groundState, TmpDensityMatrix);
+  FQHETorusParticleEntanglementSpectrumOperation Operation(this, &SubsytemSpace, (ParticleOnTorusWithMagneticTranslations*) &ComplementarySpace, groundState, TmpDensityMatrix);
   Operation.ApplyOperation(architecture);
   cout << "nbr matrix elements non zero = " << Operation.GetNbrNonZeroMatrixElements() << endl;
   if (Operation.GetNbrNonZeroMatrixElements() > 0)	
@@ -871,27 +869,27 @@ HermitianMatrix FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensit
 // densityMatrix = reference on the density matrix where result has to stored
 // return value = number of components that have been added to the density matrix
 
-long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
-												ComplexVector& groundState,  HermitianMatrix* densityMatrix)
+long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, 
+												   ParticleOnTorusWithMagneticTranslations* complementaryHilbertSpace,  
+												   ParticleOnTorusWithMagneticTranslations* destinationHilbertSpace,
+												   ComplexVector& groundState,  HermitianMatrix* densityMatrix)
 {
-  FermionOnLatticeRealSpaceAnd2DTranslation* TmpHilbertSpace2 =  (FermionOnLatticeRealSpaceAnd2DTranslation*) complementaryHilbertSpace;
   FermionOnLatticeRealSpaceAnd2DTranslation* TmpDestinationHilbertSpace =  (FermionOnLatticeRealSpaceAnd2DTranslation*) destinationHilbertSpace;
-  FermionOnLatticeRealSpace* TmpHilbertSpace = new FermionOnLatticeRealSpace(TmpHilbertSpace2->NbrFermions,
-									     TmpHilbertSpace2->NbrSite);
-  FermionOnLatticeRealSpace* TmpDestinationHilbertSpace2 = new FermionOnLatticeRealSpace(TmpDestinationHilbertSpace->NbrFermions,
-											 TmpDestinationHilbertSpace->NbrSite);
+  FermionOnLatticeRealSpace* TmpHilbertSpace = (FermionOnLatticeRealSpace*) complementaryHilbertSpace;
+  FermionOnLatticeRealSpace* TmpDestinationFullHilbertSpace = new FermionOnLatticeRealSpace(TmpDestinationHilbertSpace->NbrFermions,
+											    TmpDestinationHilbertSpace->NbrSite);
   int* TmpStatePosition = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
   int* TmpStatePosition2 = new int [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
   Complex* TmpStateCoefficient = new Complex [TmpHilbertSpace->GetLargeHilbertSpaceDimension()];
-  Complex** FourrierCoefficientsB = new Complex* [this->MomentumModulo];
+  Complex** FourrierCoefficientsDestination = new Complex* [this->MomentumModulo];
   Complex** FourrierCoefficients = new Complex* [this->MomentumModulo];
   for (int i = 0; i < this->MaxXMomentum; ++i)
     {
-      FourrierCoefficientsB[i] = new Complex [this->MaxYMomentum];
+      FourrierCoefficientsDestination[i] = new Complex [this->MaxYMomentum];
       FourrierCoefficients[i] = new Complex [this->MaxYMomentum];
       for (int j = 0; j < this->MaxYMomentum; ++j)
 	{
-	  FourrierCoefficientsB[i][j] = Phase (2.0 * M_PI * ((double) (i * TmpDestinationHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpDestinationHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
+	  FourrierCoefficientsDestination[i][j] = Phase (2.0 * M_PI * ((double) (i * TmpDestinationHilbertSpace->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * TmpDestinationHilbertSpace->YMomentum) / ((double) this->MaxYMomentum)));
 	  FourrierCoefficients[i][j] = Phase (2.0 * M_PI * ((double) (i * this->XMomentum) / ((double) this->MaxXMomentum) + (double) (j * this->YMomentum) / ((double) this->MaxYMomentum)));
 	}
     }
@@ -905,66 +903,62 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
     {
       int Pos = 0;
       unsigned long TmpState = TmpHilbertSpace->StateDescription[minIndex];
-      for (int j = 0; j < TmpDestinationHilbertSpace2->HilbertSpaceDimension; ++j)
+      for (int j = 0; j < TmpDestinationFullHilbertSpace->HilbertSpaceDimension; ++j)
 	{
- 	  cout << minIndex << " " << j << " :" <<endl << "B= ";
- 	  TmpHilbertSpace->PrintState(cout, minIndex) << endl << "A= ";
- 	  TmpDestinationHilbertSpace2->PrintState(cout, j) << endl;
-	  unsigned long TmpState2 = TmpDestinationHilbertSpace2->StateDescription[j];
-	  int TmpDestinationNbrTranslationX;
-	  int TmpDestinationNbrTranslationY;
-	  unsigned long TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
-	  int TmpDestinationLzMax = TmpDestinationHilbertSpace->MaxMomentum;
-	  while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
-	    --TmpDestinationLzMax;
-	  int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
-	  if (((TmpState & TmpState2) == 0x0ul) && (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension()))
+	  unsigned long TmpState2 = TmpDestinationFullHilbertSpace->StateDescription[j];
+	  if ((TmpState & TmpState2) == 0x0ul)
 	    {
-	      int TmpLzMax = this->MaxMomentum;
-	      int TmpNbrTranslationX;
-	      int TmpNbrTranslationY;
-	      unsigned long TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
-	      while ((TmpState3 >> TmpLzMax) == 0x0ul)
-		--TmpLzMax;
-	      int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
-	      if (TmpPos < this->HilbertSpaceDimension)
-		{      
-		  int NbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
-		  int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
-		  int DestinationNbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
-		  int DestinationNbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
-		  Complex Coefficient = TmpInvBinomial * FourrierCoefficients[NbrTranslationX][NbrTranslationY] * FourrierCoefficientsB[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (this->NbrStateInOrbit[TmpPos] * TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
-		  unsigned long Sign =  ((this->ReorderingSign[TmpPos] >> ((NbrTranslationY * this->MaxXMomentum) + NbrTranslationX))
-					 ^ (TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) & 0x1ul;
-		  int Pos2 = TmpDestinationHilbertSpace->MaxMomentum;
-		  unsigned long TmpState22 = TmpState2;
-		  while ((Pos2 > 0) && (TmpState22 != 0x0ul))
-		    {
-		      while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
-			--Pos2;
-		      TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
+	      int TmpDestinationNbrTranslationX;
+	      int TmpDestinationNbrTranslationY;
+	      unsigned long TmpCanonicalState2 = TmpDestinationHilbertSpace->FindCanonicalForm(TmpState2, TmpDestinationNbrTranslationX, TmpDestinationNbrTranslationY);
+	      int TmpDestinationLzMax = TmpDestinationHilbertSpace->MaxMomentum;
+	      while ((TmpCanonicalState2 >> TmpDestinationLzMax) == 0x0ul)
+		--TmpDestinationLzMax;
+	      int RealDestinationIndex = TmpDestinationHilbertSpace->FindStateIndex(TmpCanonicalState2, TmpDestinationLzMax);
+	      if (RealDestinationIndex < TmpDestinationHilbertSpace->GetHilbertSpaceDimension())
+		{
+		  int TmpLzMax = this->MaxMomentum;
+		  int TmpNbrTranslationX;
+		  int TmpNbrTranslationY;
+		  unsigned long TmpState3 = this->FindCanonicalForm((TmpState | TmpState2), TmpNbrTranslationX, TmpNbrTranslationY);
+		  while ((TmpState3 >> TmpLzMax) == 0x0ul)
+		    --TmpLzMax;
+		  int TmpPos = this->FindStateIndex(TmpState3, TmpLzMax);
+		  if (TmpPos < this->HilbertSpaceDimension)
+		    {      
+		      int NbrTranslationX = (this->MaxXMomentum - TmpNbrTranslationX) % this->MaxXMomentum;
+		      int NbrTranslationY = (this->MaxYMomentum - TmpNbrTranslationY) % this->MaxYMomentum;
+		      int DestinationNbrTranslationX = (this->MaxXMomentum - TmpDestinationNbrTranslationX) % this->MaxXMomentum;
+		      int DestinationNbrTranslationY = (this->MaxYMomentum - TmpDestinationNbrTranslationY) % this->MaxYMomentum;
+		      Complex Coefficient = TmpInvBinomial * FourrierCoefficients[TmpNbrTranslationX][TmpNbrTranslationY] * FourrierCoefficientsDestination[TmpDestinationNbrTranslationX][TmpDestinationNbrTranslationY] / sqrt ((double) (this->NbrStateInOrbit[TmpPos] * TmpDestinationHilbertSpace->NbrStateInOrbit[RealDestinationIndex]));
+		      unsigned long Sign =  ((this->ReorderingSign[TmpPos] >> ((NbrTranslationY * this->MaxXMomentum) + NbrTranslationX))
+					     ^ (TmpDestinationHilbertSpace->ReorderingSign[RealDestinationIndex] >> (DestinationNbrTranslationY * TmpDestinationHilbertSpace->MaxXMomentum + DestinationNbrTranslationX))) & 0x1ul;
+		      int Pos2 = TmpDestinationHilbertSpace->MaxMomentum;
+		      unsigned long TmpState22 = TmpState2;
+		      while ((Pos2 > 0) && (TmpState22 != 0x0ul))
+			{
+			  while (((TmpState22 >> Pos2) & 0x1ul) == 0x0ul)
+			    --Pos2;
+			  TmpState3 = TmpState & ((0x1ul << (Pos2 + 1)) - 1ul);
 #ifdef  __64_BITS__
-		      TmpState3 ^= TmpState3 >> 32;
+			  TmpState3 ^= TmpState3 >> 32;
 #endif	
-		      TmpState3 ^= TmpState3 >> 16;
-		      TmpState3 ^= TmpState3 >> 8;
-		      TmpState3 ^= TmpState3 >> 4;
-		      TmpState3 ^= TmpState3 >> 2;
-		      TmpState3 ^= TmpState3 >> 1;
-		      Sign ^= TmpState3;
-		      TmpState22 &= ~(0x1ul << Pos2);
-		      --Pos2;
+			  TmpState3 ^= TmpState3 >> 16;
+			  TmpState3 ^= TmpState3 >> 8;
+			  TmpState3 ^= TmpState3 >> 4;
+			  TmpState3 ^= TmpState3 >> 2;
+			  TmpState3 ^= TmpState3 >> 1;
+			  Sign ^= TmpState3;
+			  TmpState22 &= ~(0x1ul << Pos2);
+			  --Pos2;
+			}
+		      if ((Sign & 0x1ul) != 0x0ul)		  
+			Coefficient *= -1.0;
+		      TmpStatePosition[Pos] = TmpPos;
+		      TmpStatePosition2[Pos] = RealDestinationIndex;
+		      TmpStateCoefficient[Pos] = Coefficient;
+		      ++Pos;
 		    }
-		  if ((Sign & 0x1ul) != 0x0ul)		  
-		    Coefficient *= -1.0;
-		  TmpStatePosition[Pos] = TmpPos;
-		  TmpStatePosition2[Pos] = RealDestinationIndex;//j;
-		  TmpStateCoefficient[Pos] = Coefficient;
- 		  cout << "(" << TmpNbrTranslationX << "," << TmpNbrTranslationY << ") " << endl;
-		  TmpDestinationHilbertSpace->PrintState (cout, RealDestinationIndex) << " | ";
-		  this->PrintState (cout, TmpPos) << endl;
-		  cout << " = " << Coefficient << endl;
-		  ++Pos;
 		}
 	    }
 	}
@@ -986,8 +980,14 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
   delete[] TmpStatePosition;
   delete[] TmpStatePosition2;
   delete[] TmpStateCoefficient;
-  delete[] FourrierCoefficientsB;
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    {
+      delete[] FourrierCoefficientsDestination[i];
+      delete[] FourrierCoefficients[i];
+    }
+  delete[] FourrierCoefficientsDestination;
   delete[] FourrierCoefficients;
+  delete TmpDestinationFullHilbertSpace;
   return TmpNbrNonZeroElements;
 }
 

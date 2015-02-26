@@ -465,8 +465,16 @@ int main(int argc, char** argv)
 	      char* ContentPrefix = new char[256];
 	      sprintf (ContentPrefix, "%d %d", i, j);
 	      char* EigenstateOutputFile = new char [512];
-	      sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d", FilePrefix, 
-		       Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+	      if ((Manager.GetBoolean("real-space") == false) || (Manager.GetBoolean("no-translation") == false))
+		{
+		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d", FilePrefix, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+		}
+	      else
+		{
+		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f", FilePrefix, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"));
+		}
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
 	      FirstRunFlag = false;
 	      MainTaskOperation TaskOperation (&Task);

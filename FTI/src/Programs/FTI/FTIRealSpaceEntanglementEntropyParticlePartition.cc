@@ -168,24 +168,23 @@ int main(int argc, char** argv)
 	
       }
     TwoDTranslationFlag = FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[0],
-									  NbrParticles, NbrSites, TotalKx[0], TotalKy[0], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag);
+											   NbrParticles, NbrSites, TotalKx[0], TotalKy[0], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag);
     bool TotalSpinConservedFlag = FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(GroundStateFiles[0], NbrParticles, NbrSites, TotalSpin, Statistics, GutzwillerFlag);
     
     if (TwoDTranslationFlag == true)
-    { 
-      for (int i = 0; i < NbrSpaces; ++i)
-      {
-	TotalKx[i] = 0;
-	TotalKy[i] = 0;
-	if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
-									  NbrParticles, NbrSites, TotalKx[i], TotalKy[i], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
-	{
-	  cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
-	  return -1;
-	}
-// 		cout << GroundStateFiles[i] << " " << NbrParticles << " " << NbrSiteX << " " << NbrSiteY << " " << TotalKx[i] << " " << TotalKy[i] << " " << TotalSpin << " " << Statistics << endl;
-      } 
-    }
+      { 
+	for (int i = 0; i < NbrSpaces; ++i)
+	  {
+	    TotalKx[i] = 0;
+	    TotalKy[i] = 0;
+	    if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(GroundStateFiles[i],
+										 NbrParticles, NbrSites, TotalKx[i], TotalKy[i], NbrSiteX, NbrSiteY, Statistics, GutzwillerFlag) == false)
+	      {
+		cout << "error while retrieving 2D translation parameters from file name " << GroundStateFiles[i] << endl;
+		return -1;
+	      }
+	  } 
+      }
 
   GroundStates = new ComplexVector [NbrSpaces];  
   for (int i = 0; i < NbrSpaces; ++i)
@@ -446,7 +445,6 @@ int main(int argc, char** argv)
 				  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
 				  PartialDensityMatrix += TmpMatrix;
 				}
-			      cout << PartialDensityMatrix << endl;
 			    }
 			  else
 			    {
@@ -458,7 +456,6 @@ int main(int argc, char** argv)
 				  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
 				  PartialDensityMatrix += TmpMatrix;
 				}
-			      cout << PartialDensityMatrix << endl;
 			    }
 			}
 		      else
@@ -558,7 +555,112 @@ int main(int argc, char** argv)
 		    {
 		      if (NbrGroundStatePerMomentumSector[TmpIndex] != 0)
 			{
-			  
+			  if (Statistics == true)
+			    {
+			      if (SU2SpinFlag == false)
+				{      
+				  if (TwoDTranslationFlag == false)
+				    {
+				      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((FermionOnLatticeRealSpace*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
+				    }
+				  else
+				    {				      
+				      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((FermionOnLatticeRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
+				    }
+				}
+			      else
+				{
+				  if (GutzwillerFlag == false)
+				    {
+				      if (Manager.GetBoolean("decoupled") == false)
+					{
+					  if (TwoDTranslationFlag == false)
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					  else
+					    {
+					      cout << "Error: 2d translations not yet implemented" << endl;
+					      return -1;
+					    }
+					}
+				      else
+					{
+					  if (TwoDTranslationFlag == false)
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpace*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					  else
+					    {
+					      cout << "Error: 2d translations not yet implemented" << endl;
+					      return -1;
+					    }
+					}
+				    }
+				  else
+				    {
+				      if (Manager.GetBoolean("decoupled") == false)
+					{
+					  if (TwoDTranslationFlag == false)
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					  else
+					    {
+					      cout << "Error: 2d translations not yet implemented" << endl;
+					      return -1;
+					    }
+					}
+				      else
+					{
+					  if (TwoDTranslationFlag == false)
+					    {
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
+					    }
+					  else
+					    {
+					      cout << "Error: 2d translations not yet implemented" << endl;
+					      return -1;
+					    }
+					}
+				    }
+				}
+			    }
+			  else
+			    {
+			      cout << "Error: Bosonic statistics not implemented" << endl;
+			      return -1;
+			    }			  
 			}
 		    }
 		  if (ShowTimeFlag == true)
