@@ -279,6 +279,27 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = state in the (Kx,Ky) basis
   virtual ComplexVector ConvertFromKxKyBasis(ComplexVector& state, ParticleOnSphere* space);
 
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
+  // 
+  // nbrParticleSector = number of particles that belong to the subsytem 
+  // kxSector = subsystem momentum along the x direction
+  // kySector = subsystem momentum along the x direction
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm 
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+  
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in given momentum and Sz sectors.
+  //
+  // nbrParticleSector = number of particles that belong to the subsytem
+  // kxSector = subsystem momentum along the x direction
+  // kySector = subsystem momentum along the x direction
+  // szSector  = twice the total Sz value of the subsytem
+  // groundState = reference on the total system ground state
+  // architecture = pointer to the architecture to use parallelized algorithm
+  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+  
  protected:
 
   // find state index
@@ -408,6 +429,19 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // stateDescription = reference on state description
   // return value = 0 if the sign is +1, 1 if the sign is -1
   virtual unsigned long GetSignAndApplySingleYTranslation(unsigned long& stateDescription);
+
+  // core part of the evaluation density matrix particle partition calculation
+  // 
+  // minIndex = first index to consider in source Hilbert space
+  // nbrIndex = number of indices to consider in source Hilbert space
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // destinationHilbertSpace = pointer to the destination Hilbert space  (i.e. part A)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  // return value = number of components that have been added to the density matrix
+  virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnTorusWithSpinAndMagneticTranslations* complementaryHilbertSpace,  
+								  ParticleOnTorusWithSpinAndMagneticTranslations* destinationHilbertSpace,
+								  ComplexVector& groundState, HermitianMatrix* densityMatrix);
 
 };
 

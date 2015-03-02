@@ -48,6 +48,9 @@ FQHETorusParticleEntanglementSpectrumOperation::FQHETorusParticleEntanglementSpe
   this->FullSpace  = (ParticleOnTorusWithMagneticTranslations*) fullSpace->Clone();
   this->DestinationHilbertSpace = (ParticleOnTorusWithMagneticTranslations*) destinationSpace->Clone();
   this->ComplementaryHilbertSpace = (ParticleOnTorusWithMagneticTranslations*) complementarySpace->Clone();
+  this->SpinfulFullSpace = 0;
+  this->SpinfulDestinationHilbertSpace = 0; 
+  this->SpinfulComplementaryHilbertSpace = 0;
   this->ComplexGroundState = groundState;
   this->ComplexDensityMatrix = densityMatrix;
   this->NbrNonZeroElements = 0l;
@@ -61,15 +64,59 @@ FQHETorusParticleEntanglementSpectrumOperation::FQHETorusParticleEntanglementSpe
   this->NbrLocalOperations = 0;
 }
 
+// constructor for the spinful case
+//
+// fullSpace = pointer to the full Hilbert space to use
+// destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+// complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+// groundState = reference on the total system ground state
+// densityMatrix = reference on the density matrix where result has to stored
+
+FQHETorusParticleEntanglementSpectrumOperation::FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithSpinAndMagneticTranslations* fullSpace, ParticleOnTorusWithSpinAndMagneticTranslations* destinationSpace, ParticleOnTorusWithSpinAndMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix)
+{
+  this->SpinfulFullSpace  = (ParticleOnTorusWithSpinAndMagneticTranslations*) fullSpace->Clone();
+  this->SpinfulDestinationHilbertSpace = (ParticleOnTorusWithSpinAndMagneticTranslations*) destinationSpace->Clone();
+  this->SpinfulComplementaryHilbertSpace = (ParticleOnTorusWithSpinAndMagneticTranslations*) complementarySpace->Clone();
+  this->FullSpace = 0;
+  this->DestinationHilbertSpace = 0; 
+  this->ComplementaryHilbertSpace = 0;
+  this->ComplexGroundState = groundState;
+  this->ComplexDensityMatrix = densityMatrix;
+  this->NbrNonZeroElements = 0l;
+  this->FirstComponent = 0;
+  this->NbrComponent = 0;
+  this->LargeFirstComponent = 0;
+  this->LargeNbrComponent = this->SpinfulComplementaryHilbertSpace->GetLargeHilbertSpaceDimension();
+//   cout << "subsystem dimension = " << this->DestinationHilbertSpace->GetLargeHilbertSpaceDimension() << " "  << this->DestinationHilbertSpace->GetHilbertSpaceDimension() << endl; 
+  this->OperationType = AbstractArchitectureOperation::FQHETorusParticleEntanglementSpectrumOperation;
+  this->LocalOperations = 0;
+  this->NbrLocalOperations = 0;
+}
+
 // copy constructor 
 //
 // operation = reference on operation to copy
 
 FQHETorusParticleEntanglementSpectrumOperation::FQHETorusParticleEntanglementSpectrumOperation(const FQHETorusParticleEntanglementSpectrumOperation& operation)
 {
-  this->FullSpace  = (ParticleOnTorusWithMagneticTranslations*) operation.FullSpace->Clone();
-  this->DestinationHilbertSpace = (ParticleOnTorusWithMagneticTranslations*) operation.DestinationHilbertSpace->Clone();
-  this->ComplementaryHilbertSpace = (ParticleOnTorusWithMagneticTranslations*) operation.ComplementaryHilbertSpace->Clone();
+  if (operation.SpinfulFullSpace == 0)
+    {
+      this->FullSpace  = (ParticleOnTorusWithMagneticTranslations*) operation.FullSpace->Clone();
+      this->DestinationHilbertSpace = (ParticleOnTorusWithMagneticTranslations*) operation.DestinationHilbertSpace->Clone();
+      this->ComplementaryHilbertSpace = (ParticleOnTorusWithMagneticTranslations*) operation.ComplementaryHilbertSpace->Clone();
+      this->SpinfulFullSpace = 0;
+      this->SpinfulDestinationHilbertSpace = 0; 
+      this->SpinfulComplementaryHilbertSpace = 0;
+    }
+  else
+    {
+      this->FullSpace = 0;
+      this->DestinationHilbertSpace = 0; 
+      this->ComplementaryHilbertSpace = 0;
+      this->SpinfulFullSpace  = (ParticleOnTorusWithSpinAndMagneticTranslations*) operation.SpinfulFullSpace->Clone();
+      this->SpinfulDestinationHilbertSpace = (ParticleOnTorusWithSpinAndMagneticTranslations*) operation.SpinfulDestinationHilbertSpace->Clone();
+      this->SpinfulComplementaryHilbertSpace = (ParticleOnTorusWithSpinAndMagneticTranslations*) operation.SpinfulComplementaryHilbertSpace->Clone();
+    }
   this->ComplexGroundState = operation.ComplexGroundState;
   this->ComplexDensityMatrix = operation.ComplexDensityMatrix;
   this->NbrNonZeroElements = operation.NbrNonZeroElements;
@@ -95,9 +142,18 @@ FQHETorusParticleEntanglementSpectrumOperation::~FQHETorusParticleEntanglementSp
 	}
       delete[] this->LocalOperations;
     }
-  delete this->FullSpace;
-  delete this->DestinationHilbertSpace;
-  delete this->ComplementaryHilbertSpace;
+  if (this->SpinfulFullSpace == 0)
+    {
+      delete this->FullSpace;
+      delete this->DestinationHilbertSpace;
+      delete this->ComplementaryHilbertSpace;
+    }
+  else
+    {
+      delete this->SpinfulFullSpace;
+      delete this->SpinfulDestinationHilbertSpace;
+      delete this->SpinfulComplementaryHilbertSpace;
+    }
 }
   
 // clone operation
@@ -116,7 +172,14 @@ AbstractArchitectureOperation* FQHETorusParticleEntanglementSpectrumOperation::C
 bool FQHETorusParticleEntanglementSpectrumOperation::RawApplyOperation()
 {
 //   cout << "this->LargeNbrComponent = " << this->LargeNbrComponent <<  endl;
-  this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
+  if (this->SpinfulFullSpace == 0)
+    {
+      this->NbrNonZeroElements = this->FullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->ComplementaryHilbertSpace, this->DestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
+    }
+  else
+    {
+      this->NbrNonZeroElements = this->SpinfulFullSpace->EvaluatePartialDensityMatrixParticlePartitionCore(this->LargeFirstComponent, this->LargeNbrComponent, this->SpinfulComplementaryHilbertSpace, this->SpinfulDestinationHilbertSpace, this->ComplexGroundState, &this->ComplexDensityMatrix);
+    }
   return true;
 }
 
@@ -141,9 +204,12 @@ bool FQHETorusParticleEntanglementSpectrumOperation::ArchitectureDependentApplyO
   for (int i = 0; i < ReducedNbrThreads; ++i)
     {
       this->LocalOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
-	  this->LocalOperations[i]->ComplexDensityMatrix = HermitianMatrix(this->DestinationHilbertSpace->GetHilbertSpaceDimension(), true);
-	  architecture->SetThreadOperation(this->LocalOperations[i], i);
-	  TmpFirstComponent += Step;
+      if (this->SpinfulComplementaryHilbertSpace == 0)
+	this->LocalOperations[i]->ComplexDensityMatrix = HermitianMatrix(this->DestinationHilbertSpace->GetHilbertSpaceDimension(), true);
+      else
+	this->LocalOperations[i]->ComplexDensityMatrix = HermitianMatrix(this->SpinfulDestinationHilbertSpace->GetHilbertSpaceDimension(), true);
+      architecture->SetThreadOperation(this->LocalOperations[i], i);
+      TmpFirstComponent += Step;
     }
   this->LocalOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
   architecture->SetThreadOperation(this->LocalOperations[ReducedNbrThreads], ReducedNbrThreads);

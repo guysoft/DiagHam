@@ -201,26 +201,26 @@ int main(int argc, char** argv)
       ofstream DensityMatrixFile;
       DensityMatrixFile.open(DensityMatrixFileName, ios::binary | ios::out); 
       if (TwoDTranslationFlag == false)
-      {
-	if (Manager.GetBoolean("decoupled") == false)
 	{
-	  DensityMatrixFile << "#  N    lambda";
+	  if ((Manager.GetBoolean("decoupled") == false) || (SU2SpinFlag == false))
+	    {
+	      DensityMatrixFile << "#  N    lambda";
+	    }
+	  else
+	    {
+	      DensityMatrixFile << "#  N    Sz    lambda";
+	    }
 	}
-	else
-	{
-	  DensityMatrixFile << "#  N    Sz    lambda";
-	}
-      }
       else
-      {
-	if (Manager.GetBoolean("decoupled") == false)
 	{
-	  DensityMatrixFile << "#  N    Kx    Ky    lambda";
-	}
-	else
-	{
-	  DensityMatrixFile << "#  N    Kx    Ky    Sz    lambda";
-	}
+	  if ((Manager.GetBoolean("decoupled") == false) || (SU2SpinFlag == false))
+	    {
+	      DensityMatrixFile << "#  N    Kx    Ky    lambda";
+	    }
+	  else
+	    {
+	      DensityMatrixFile << "#  N    Kx    Ky    Sz    lambda";
+	    }
       }
       DensityMatrixFile << endl;
       DensityMatrixFile.close();
@@ -416,11 +416,21 @@ int main(int argc, char** argv)
 	    {
 	      for (int SubsystemTotalKy = SubsystemTotalKyMin; SubsystemTotalKy < SubsystemTotalKyMax; ++SubsystemTotalKy)
 		{
-		  if(TwoDTranslationFlag == false)
-		    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " Sz = " << SubsystemTotalSz << endl;
+		  if ((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false))
+		    {      
+		      if(TwoDTranslationFlag == false)
+			cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << endl;
+		      else
+			cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
+		    }
 		  else
-		    cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy << endl;
-		  
+		    {      
+		      if(TwoDTranslationFlag == false)
+			cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " Sz = " << SubsystemTotalSz << endl;
+		      else
+			cout << "processing subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Kx=" << SubsystemTotalKx << " Ky=" << SubsystemTotalKy 
+			     << " Sz = " << SubsystemTotalSz << endl;
+		    }
 		  timeval TotalStartingTime;
 		  timeval TotalEndingTime;
 		  if (ShowTimeFlag == true)
@@ -496,8 +506,14 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      cout << "Error: 2d translations not yet implemented" << endl;
-				      return -1;
+				      PartialDensityMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				}
 			    }
@@ -612,8 +628,12 @@ int main(int argc, char** argv)
 					    }
 					  else
 					    {
-					      cout << "Error: 2d translations not yet implemented" << endl;
-					      return -1;
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
 					    }
 					}
 				    }
@@ -722,8 +742,16 @@ int main(int argc, char** argv)
 			    }
 			  else
 			    {
-			      for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-				DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+			      if ((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false))
+				{				  
+				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpDiag[i] << endl;
+				}
+			      else
+				{
+				  for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				    DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << SubsystemTotalSz << " " << TmpDiag[i] << endl;
+				}
 			    }
 			  DensityMatrixFile.close();
 			}
@@ -765,8 +793,17 @@ int main(int argc, char** argv)
 			      }
 			    else
 			      {
-				for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
-				  DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpValue << endl;
+				if ((SU2SpinFlag == false) || (Manager.GetBoolean("decoupled") == false))
+				  {
+				    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << TmpValue << endl;
+				  }
+				else
+				  {
+				    for (int i = 0; i < PartialDensityMatrix.GetNbrRow(); ++i)
+				      DensityMatrixFile << SubsystemNbrParticles << " " << SubsystemTotalKx << " " << SubsystemTotalKy << " " << SubsystemTotalSz 
+							<< " " <<  TmpValue << endl;
+				  }
 			      }
 			    DensityMatrixFile.close();
 			  }		  

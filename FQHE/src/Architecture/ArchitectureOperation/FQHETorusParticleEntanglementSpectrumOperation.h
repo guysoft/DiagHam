@@ -36,6 +36,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractPrecalculationOperation.h"
 #include "HilbertSpace/ParticleOnTorusWithMagneticTranslations.h"
+#include "HilbertSpace/ParticleOnTorusWithSpinAndMagneticTranslations.h"
 #include "Vector/ComplexVector.h"
 
 
@@ -50,12 +51,18 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
 
  protected:
 
-  // fullSpace = pointer to the full Hilbert space to use
+  // pointer to the full Hilbert space to use
   ParticleOnTorusWithMagneticTranslations* FullSpace;
-  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // pointer to the destination Hilbert space (i.e. part A)
   ParticleOnTorusWithMagneticTranslations* DestinationHilbertSpace;
   // pointer to the complementary Hilbert space (i.e. part B)
   ParticleOnTorusWithMagneticTranslations* ComplementaryHilbertSpace;
+  // pointer to the full spinful Hilbert space to use
+  ParticleOnTorusWithSpinAndMagneticTranslations* SpinfulFullSpace;
+  // pointer to the destination spinful Hilbert space (i.e. part A)
+  ParticleOnTorusWithSpinAndMagneticTranslations* SpinfulDestinationHilbertSpace;
+  // pointer to the complementary spinful Hilbert space (i.e. part B)
+  ParticleOnTorusWithSpinAndMagneticTranslations* SpinfulComplementaryHilbertSpace;
   // total system ground state (complex version)
   ComplexVector ComplexGroundState;
   // reduced density matrix where result is stored (complex version)
@@ -78,6 +85,15 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
   // groundState = reference on the total system ground state
   // densityMatrix = reference on the density matrix where result has to stored
   FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithMagneticTranslations* fullSpace, ParticleOnTorusWithMagneticTranslations* destinationSpace, ParticleOnTorusWithMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
+
+  // constructor for the spinful case
+  //
+  // fullSpace = pointer to the full Hilbert space to use
+  // destinationHilbertSpace = pointer to the destination Hilbert space (i.e. part A)
+  // complementaryHilbertSpace = pointer to the complementary Hilbert space (i.e. part B)
+  // groundState = reference on the total system ground state
+  // densityMatrix = reference on the density matrix where result has to stored
+  FQHETorusParticleEntanglementSpectrumOperation(ParticleOnTorusWithSpinAndMagneticTranslations* fullSpace, ParticleOnTorusWithSpinAndMagneticTranslations* destinationSpace, ParticleOnTorusWithSpinAndMagneticTranslations* complementarySpace, ComplexVector& groundState, HermitianMatrix& densityMatrix);
 
   // copy constructor 
   //
@@ -124,7 +140,10 @@ class FQHETorusParticleEntanglementSpectrumOperation: public AbstractPrecalculat
 
 inline int FQHETorusParticleEntanglementSpectrumOperation::GetHilbertSpaceDimension ()
 {
-  return this->ComplementaryHilbertSpace->GetHilbertSpaceDimension();
+  if (this->SpinfulComplementaryHilbertSpace == 0)
+    return this->ComplementaryHilbertSpace->GetHilbertSpaceDimension();
+  else
+    return this->SpinfulComplementaryHilbertSpace->GetHilbertSpaceDimension();
 }
 
 // upper bound on the number of non zero matrix element in the reduced density matrix

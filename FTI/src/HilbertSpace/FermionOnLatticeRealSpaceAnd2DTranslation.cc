@@ -895,7 +895,6 @@ long FermionOnLatticeRealSpaceAnd2DTranslation::EvaluatePartialDensityMatrixPart
     }
   
   int MaxIndex = minIndex + nbrIndex;
-  MaxIndex = TmpHilbertSpace->GetHilbertSpaceDimension();;
   long TmpNbrNonZeroElements = 0l;
   BinomialCoefficients TmpBinomial (this->NbrFermions);
   double TmpInvBinomial = 1.0 / sqrt(TmpBinomial(this->NbrFermions, TmpDestinationHilbertSpace->NbrFermions));
