@@ -49,6 +49,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "file-list", "single column file describing a list to states that have to be projected");
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "particles have a SU(2) spin");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (while happen .x.vec at the end of each stored vector)");
+  (*OutputGroup) += new BooleanOption ('\n', "gutzwiller-basis", "express the projected wave function in th Gutzwiller reduced Hilbert space");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -195,9 +196,11 @@ int main(int argc, char** argv)
   else
     MaxNbrSpaces = NbrSiteX * NbrSiteY;
   ParticleOnSphere** Spaces = new ParticleOnSphere*[MaxNbrSpaces];
+  ParticleOnSphere** TargetSpaces = new ParticleOnSphere*[MaxNbrSpaces];
   for (int i = 0; i < MaxNbrSpaces; ++i)
     {
       Spaces[i] = 0;
+      TargetSpaces[i] = 0;      
     }
   for (int i = 0; i < NbrSpaces; ++i)
     {
@@ -221,7 +224,6 @@ int main(int argc, char** argv)
 	TmpIndex = 0;
       else
 	TmpIndex = TotalKx[i] * NbrSiteY + TotalKy[i];
-      
       if (Spaces[TmpIndex] == 0)
 	{
 	  if (Statistics == true)
@@ -229,9 +231,13 @@ int main(int argc, char** argv)
 	      if (SU2SpinFlag == false)
 		{
 		  if (TwoDTranslationFlag == false)
-		    Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+		    {
+		      Spaces[TmpIndex] = new FermionOnLatticeRealSpace (NbrParticles, NbrSites);
+		    }
 		  else
-		    Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		    {
+		      Spaces[TmpIndex] = new FermionOnLatticeRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+		    }
 		}
 	      else
 		{
@@ -242,9 +248,19 @@ int main(int argc, char** argv)
 			  if (TwoDTranslationFlag == false)
 			    { 
 			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, NbrSites);
+			      if (Manager.GetBoolean("gutzwiller-basis"))
+				{
+				  TargetSpaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
+				}
 			    }
 			  else
-			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+			    {
+			      Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+			      if (Manager.GetBoolean("gutzwiller-basis"))
+				{
+				  TargetSpaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				}
+			    }
 			}
 		      else
 			{
@@ -296,7 +312,11 @@ int main(int argc, char** argv)
       else
 	TmpIndex = TotalKx[i] * NbrSiteY + TotalKy[i];
       cout << "projecting " << InputStateFiles[i] << endl;
-      ComplexVector TmpVector = Spaces[TmpIndex]->GutzwillerProjection(InputStates[i], Spaces[TmpIndex]);
+      ComplexVector TmpVector;
+      if (TargetSpaces[TmpIndex] != 0)
+	TmpVector = TargetSpaces[TmpIndex]->GutzwillerProjection(InputStates[i], Spaces[TmpIndex]);
+      else
+	TmpVector = Spaces[TmpIndex]->GutzwillerProjection(InputStates[i], Spaces[TmpIndex]);
       double TmpWeight = TmpVector.SqrNorm();
       cout << "   weight of the projected state = " << TmpWeight << endl;
       if (TmpWeight > MACHINE_PRECISION)
