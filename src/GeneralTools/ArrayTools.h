@@ -1668,6 +1668,32 @@ void SortArrayDownOrderingPermutation(ClassName* array, long nbrValue, int& nbrP
   return;
 }
 
+// down ordering array sort using bubble sort, counting the number of permutations of neighboring elements
+//
+// array = pointer to the array
+// nbrValue = nbr of value in the array
+// nbrPermutation = reference on the number of permutation that have to be done (it has to be set to zero at the first call)
+
+template <class ClassName>
+void SortArrayDownOrderingPermutationBubbleSort(ClassName* array, long nbrValue, int& nbrPermutation)
+{
+  long ReducedNbrValues = nbrValue - 1;
+  ClassName TmpElement;
+  for (long i = 0; i < ReducedNbrValues; ++i)
+    {
+      for (long j = ReducedNbrValues; j > i; --j)
+	{
+	  if (array[j] > array[j - 1])
+	    {
+	      TmpElement = array[j - 1];
+	      array[j - 1] = array[j];
+	      array[j] = TmpElement;
+	      nbrPermutation++;
+	    }
+	}
+    }
+}
+
 // up ordering array sort using quick sort, counting the number of permutations
 //
 // array = pointer to the array
