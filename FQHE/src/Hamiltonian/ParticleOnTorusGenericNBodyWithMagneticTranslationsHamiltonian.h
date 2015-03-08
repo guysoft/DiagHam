@@ -121,9 +121,9 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   // mIndices = array containing the creation operator indices
   // nIndices = array containing the annihilation operator indices
   // return value = numerical coefficient  
-  virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations);
+  virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices);
   
-  virtual double RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations);
+  virtual double RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision);
 
   virtual double VFactor(double* q2Values);
 
