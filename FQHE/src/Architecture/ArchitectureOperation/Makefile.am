@@ -22,4 +22,5 @@ FQHESquareLatticeSymmetrizeU1U1StateOperation.cc \
 FQHELatticeFourierTransformOperation.cc \
 FQHEMPSCreateStateOperation.cc \
 FQHEMPSEvaluateCFTOperation.cc \
-FQHETorusApplyCNRotationOperation.cc
+FQHETorusApplyCNRotationOperation.cc \
+FQHETorusComputeMatrixElementOperation.cc

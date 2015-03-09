@@ -47,6 +47,8 @@ using std::ostream;
 class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian
 {
 
+  friend class FQHETorusComputeMatrixElementOperation;
+
  protected:
 
   // temporary arrays used during the interaction element evaluation
@@ -123,6 +125,8 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   // return value = numerical coefficient  
   virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices);
   
+  virtual double RecursiveEvaluateInteractionCoefficient(double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision);
+
   virtual double RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision);
 
   virtual double VFactor(double* q2Values);

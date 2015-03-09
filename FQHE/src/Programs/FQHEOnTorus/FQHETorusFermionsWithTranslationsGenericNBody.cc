@@ -318,28 +318,30 @@ int main(int argc, char** argv)
     {
       InteractionMonomials[0][i] = NbrNBody - 1 - i;
     }
-  int* TmpIndices = new int [NbrNBody];
-  for (int i = 0; i < NbrNBody; ++i)
-    {
-      TmpIndices[i] = i;
-    }
-  int TmpShift = InteractionNbrMonomials;
-  while (std::next_permutation(TmpIndices, TmpIndices  + NbrNBody))
-    {
-      for (int j = 0; j < InteractionNbrMonomials; ++j)
-	{
-	  InteractionMonomials[j + TmpShift] = new int [NbrNBody];	  
-	  for (int i = 0; i < NbrNBody; ++i)
-	    {
-	      InteractionMonomials[j + TmpShift][i] = InteractionMonomials[j][TmpIndices[i]];	      
-	    }
-	  InteractionMonomialCoefficients[j + TmpShift] = InteractionMonomialCoefficients[j];
-	}
-      TmpShift += InteractionNbrMonomials;
-    }
-  cout << "TmpShift=" << TmpShift << endl;
-  delete[] TmpIndices;
-  InteractionNbrMonomials *= NbrPermutations;
+
+//   int* TmpIndices = new int [NbrNBody];
+//   for (int i = 0; i < NbrNBody; ++i)
+//     {
+//       TmpIndices[i] = i;
+//     }
+//   int TmpShift = InteractionNbrMonomials;
+//   while (std::next_permutation(TmpIndices, TmpIndices  + NbrNBody))
+//     {
+//       for (int j = 0; j < InteractionNbrMonomials; ++j)
+// 	{
+// 	  InteractionMonomials[j + TmpShift] = new int [NbrNBody];	  
+// 	  for (int i = 0; i < NbrNBody; ++i)
+// 	    {
+// 	      InteractionMonomials[j + TmpShift][i] = InteractionMonomials[j][TmpIndices[i]];	      
+// 	    }
+// 	  InteractionMonomialCoefficients[j + TmpShift] = InteractionMonomialCoefficients[j];
+// 	}
+//       TmpShift += InteractionNbrMonomials;
+//     }
+//   cout << "TmpShift=" << TmpShift << endl;
+//   delete[] TmpIndices;
+//   InteractionNbrMonomials *= NbrPermutations;
+
 
   for (int Pos = 0;Pos < NbrMomenta; ++Pos)
     {

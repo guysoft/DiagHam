@@ -93,7 +93,8 @@ class AbstractArchitectureOperation
       FQHETorusApplyCNRotationOperation = 0x18025,
       FTIComputeBandStructureOperation = 0x30001,
       FQHEMPSCreateStateOperation = 0x30002,
-      FQHEMPSEvaluateCFTOperation = 0x30003
+      FQHEMPSEvaluateCFTOperation = 0x30003,
+      FQHETorusComputeMatrixElementOperation = 0x30004
     };
   
   // destructor

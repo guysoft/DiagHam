@@ -286,8 +286,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
  		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, LinearizedNBodySectorIndicesPerSum[i][j2], LinearizedNBodySectorIndicesPerSum[i][j1], i, TmpCanonicalMIndices, TmpCanonicalNIndices, TmpCanonicalSum, TmpCanonicalPermutationCoefficient) == true)
  		    {
 		      double TmpInteraction = 0.0;
-		      //		      for (int l1 = 0; l1 < NbrPermutations; ++l1)
-		      for (int l1 = 0; l1 < 1; ++l1)
+		      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 			{
 			  int* TmpPerm1 = Permutations[l1];
 			  for (int k = 0; k < this->NBodyValue; ++k)
@@ -305,6 +304,22 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 			      TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
 			    }
 			}
+
+// 		      for (int k = 0; k < this->NBodyValue; ++k)
+// 			{
+// 			  TmpNIndices[k]  = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + k];
+// 			}
+// 		      for (int l2 = 0; l2 < NbrPermutations; ++l2)
+// 			{
+// 			  int* TmpPerm2 = Permutations[l2];
+// 			  for (int k = 0; k < this->NBodyValue; ++k)
+// 			    {
+// 			      TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + TmpPerm2[k]];
+// 			    }
+// 			  double Tmp = this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
+// 			  TmpInteraction += PermutationSign[l2] * Tmp;
+// 			}
+
 		      TmpMatrixElementIIndices[TmpNbrMatrixElements] = i;
 		      TmpMatrixElementJ1Indices[TmpNbrMatrixElements] = j1;
 		      TmpMatrixElementJ2Indices[TmpNbrMatrixElements] = j2;
@@ -452,10 +467,77 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateI
       this->CosineCoffients[i] = 2.0 * ((double) mIndices[i]);
     }  
   double CurrentPrecision;
-  double Coefficient = Prefactor * this->RecursiveEvaluateInteractionCoefficient(0, 0.0, 0.0, 0.0, 0.0, CurrentPrecision);
+  double Coefficient = Prefactor * this->RecursiveEvaluateInteractionCoefficient(0.0, 0.0, 0.0, 0.0, CurrentPrecision);
   return Coefficient;
 }
   
+double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::RecursiveEvaluateInteractionCoefficient(double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision)
+{
+  double TotalCoefficient  = 0.0;
+  double Coefficient  = 1.0;
+  int CurrentQy = this->QyValues[0];
+  currentPrecision = 0.0;
+  double TmpPrecision;
+  double Tmp;
+  while ((fabs(Coefficient) + fabs(TotalCoefficient)) != fabs(TotalCoefficient))
+    {	        
+      Tmp = (this->QyValues[0] * this->QyValues[0] * this->Ratio);
+      this->QxValues[0] = 0.0;
+      this->Q2Values[0] = Tmp;
+      Coefficient = this->RecursiveEvaluateInteractionCoefficient(1, currentSumQx + this->QxValues[0], 
+								  currentSumQy + this->QyValues[0], 
+								  currentSumQ2 + this->Q2Values[0], 
+								  currentSumPhase +  this->QxValues[0] * (this->CosineCoffients[0] + this->QyValues[0]), TmpPrecision);
+      currentPrecision += TmpPrecision;
+      if (Coefficient == 0.0)
+	TmpPrecision = 1.0;
+      while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
+	{	  
+	  ++this->QxValues[0];
+	  this->Q2Values[0] = (this->QxValues[0] * this->QxValues[0] * this->InvRatio) + Tmp;
+	  Coefficient += 2.0 * this->RecursiveEvaluateInteractionCoefficient(1, currentSumQx + this->QxValues[0], 
+									     currentSumQy + this->QyValues[0], 
+									     currentSumQ2 + this->Q2Values[0], 
+									     currentSumPhase +  this->QxValues[0] * (this->CosineCoffients[0] + this->QyValues[0]), TmpPrecision);
+	  currentPrecision += 2.0 * TmpPrecision;
+	}
+      this->QyValues[0] +=  (double) this->MaxMomentum;
+      TotalCoefficient += Coefficient;
+    }
+  this->QyValues[0] = CurrentQy -  (double) this->MaxMomentum;
+  if (TotalCoefficient == 0.0)
+    Coefficient = 1.0;
+  else
+    Coefficient = 2.0 * TotalCoefficient;
+  while ((fabs(Coefficient) + fabs(TotalCoefficient)) != fabs(TotalCoefficient))
+    {	        
+      this->QxValues[0] = 0.0;
+      Tmp = (this->QyValues[0] * this->QyValues[0] * this->Ratio);
+      this->Q2Values[0] = Tmp;
+      Coefficient = this->RecursiveEvaluateInteractionCoefficient(1, currentSumQx + this->QxValues[0], 
+								  currentSumQy + this->QyValues[0], 
+								  currentSumQ2 + this->Q2Values[0], 
+								  currentSumPhase +  this->QxValues[0] * (this->CosineCoffients[0] + this->QyValues[0]), TmpPrecision);
+      currentPrecision += TmpPrecision;
+      if (Coefficient == 0.0)
+	TmpPrecision = 1.0;
+      while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
+	{	  
+	  ++this->QxValues[0];
+	  this->Q2Values[0] = (this->QxValues[0] * this->QxValues[0] * this->InvRatio) + Tmp;
+	  Coefficient += 2.0 * this->RecursiveEvaluateInteractionCoefficient(1, currentSumQx + this->QxValues[0], 
+									     currentSumQy + this->QyValues[0], 
+									     currentSumQ2 + this->Q2Values[0], 
+									     currentSumPhase +  this->QxValues[0] * (this->CosineCoffients[0] + this->QyValues[0]), TmpPrecision);
+	  currentPrecision += 2.0 * TmpPrecision;
+	}
+      this->QyValues[0] -=  (double) this->MaxMomentum;
+      TotalCoefficient += Coefficient;
+    }      
+  this->QyValues[0] = CurrentQy;
+  return TotalCoefficient;
+}
+
 
 double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision)
 {
@@ -564,8 +646,6 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::Recursive
       currentSumPhase += this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]);
       currentPrecision = exp(- 0.5 * TmpExponentialFactor * (this->Q2Values[xPosition] + currentSumQ2)) * this->VFactor(this->Q2Values);
       return (cos(TmpExponentialFactor * currentSumPhase) * currentPrecision);
-// if we do not assume that it is invariant under {qx}<->{-qx}
-//      return (Complex(TmpExponentialFactor * Sum2) * currentPrecision);
     }
 }
 
@@ -580,8 +660,8 @@ double ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::VFactor(d
       Tmp2 = this->MonomialCoefficients[i];
       for (int j = 0; j < this->NBodyValue; ++j)
 	{
-	  for (int k = 0; k < this->MonomialDescription[i][j]; ++k)
-	    Tmp2 *= q2Values[j];
+  	  for (int k = 0; k < this->MonomialDescription[i][j]; ++k)
+  	    Tmp2 *= q2Values[j];
 	}
       Tmp += Tmp2;
     }
