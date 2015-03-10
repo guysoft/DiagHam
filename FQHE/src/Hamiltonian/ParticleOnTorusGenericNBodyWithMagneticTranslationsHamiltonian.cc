@@ -41,6 +41,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <sys/time.h>
 
 
 // default constructor
@@ -281,46 +282,25 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		    }
  		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, LinearizedNBodySectorIndicesPerSum[i][j2], LinearizedNBodySectorIndicesPerSum[i][j1], i, TmpCanonicalMIndices, TmpCanonicalNIndices, TmpCanonicalSum, TmpCanonicalPermutationCoefficient) == true)
  		    {
-// 		      double TmpInteraction = 0.0;
-// 		      for (int l1 = 0; l1 < NbrPermutations; ++l1)
-// 			{
-// 			  int* TmpPerm1 = Permutations[l1];
-// 			  for (int k = 0; k < this->NBodyValue; ++k)
-// 			    {
-// 			      TmpNIndices[k]  = this->NBodySectorIndicesPerSum[i][(j1 * this->NBodyValue) + TmpPerm1[k]];
-// 			    }
-// 			  for (int l2 = 0; l2 < NbrPermutations; ++l2)
-// 			    {
-// 			      int* TmpPerm2 = Permutations[l2];
-// 			      for (int k = 0; k < this->NBodyValue; ++k)
-// 				{
-// 				  TmpMIndices[k] = this->NBodySectorIndicesPerSum[i][(j2 * this->NBodyValue) + TmpPerm2[k]];
-// 				}
-// 			      double Tmp = this->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
-// 			      TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
-// 			    }
-// 			}
-
 		      TmpMatrixElementIIndices[TmpNbrMatrixElements] = i;
 		      TmpMatrixElementJ1Indices[TmpNbrMatrixElements] = j1;
 		      TmpMatrixElementJ2Indices[TmpNbrMatrixElements] = j2;
-//		      TmpMatrixElement[TmpNbrMatrixElements] = TmpInteraction;
 		      ++TmpNbrMatrixElements;
-// 		      for (int k = 0; k < this->NBodyValue; ++k)
-// 			cout << TmpMIndices[k] << " ";
-// 		      cout << "| ";
-// 		      for (int k = 0; k < this->NBodyValue; ++k)
-// 			cout << TmpNIndices[k] << " ";
-// 		      cout << " = " << TmpInteraction << endl;
-// 		      TotalNbrInteractionFactors++;
-// 		      ++Index;
 		    }
 		}
 	    }
 	}
 
-      FQHETorusComputeMatrixElementOperation Operation(this, TmpNbrMatrixElements, TmpMatrixElementIIndices, TmpMatrixElementJ1Indices, TmpMatrixElementJ2Indices, TmpMatrixElement);
+      cout << "generating " << TmpNbrMatrixElements << " unique matrix elements" << endl;
+      timeval TotalStartingTime;
+      gettimeofday (&TotalStartingTime, 0);
+       FQHETorusComputeMatrixElementOperation Operation(this, TmpNbrMatrixElements, TmpMatrixElementIIndices, TmpMatrixElementJ1Indices, TmpMatrixElementJ2Indices, TmpMatrixElement);
       Operation.ApplyOperation(this->Architecture);
+      timeval TotalEndingTime;
+      gettimeofday (&TotalEndingTime, 0);
+      double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
+		    (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+      cout << "generation done in " << Dt << endl;
 
       TmpNbrMatrixElements = 0l;
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
