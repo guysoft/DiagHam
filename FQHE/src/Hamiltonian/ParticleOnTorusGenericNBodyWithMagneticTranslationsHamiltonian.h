@@ -52,10 +52,10 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
  protected:
 
   // temporary arrays used during the interaction element evaluation
-  double* QxValues;
-  double* QyValues;
-  double* Q2Values;
-  double* CosineCoffients; 
+/*   double* QxValues; */
+/*   double* QyValues; */
+/*   double* Q2Values; */
+//  double* CosineCoffients; 
 
   // number of monomials in the Fourier transformed interaction
   int NbrMonomials;
@@ -123,11 +123,11 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
   // mIndices = array containing the creation operator indices
   // nIndices = array containing the annihilation operator indices
   // return value = numerical coefficient  
-  virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices);
+  virtual double EvaluateInteractionCoefficient(int* mIndices, int* nIndices, double* qxValues, double* qyValues, double* q2Values, double* cosineCoefficients);
   
-  virtual double RecursiveEvaluateInteractionCoefficient(double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision);
+  virtual double RecursiveEvaluateInteractionCoefficient(double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, double* qxValues, double* qyValues, double* q2Values, double* cosineCoefficients);
 
-  virtual double RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision);
+  virtual double RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, double* qxValues, double* qyValues, double* q2Values, double* cosineCoefficients);
 
   virtual double VFactor(double* q2Values);
 

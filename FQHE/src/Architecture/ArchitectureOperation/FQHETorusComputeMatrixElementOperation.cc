@@ -62,6 +62,7 @@ FQHETorusComputeMatrixElementOperation::FQHETorusComputeMatrixElementOperation(P
   this->OperationType = AbstractArchitectureOperation::FQHETorusComputeMatrixElementOperation;
   this->NbrMPIStage = nbrMPIStage;
   this->NbrSMPStage = nbrSMPStage;
+  this->SMPStages = new int[1]; 
 }
     
 // copy constructor 
@@ -124,10 +125,14 @@ bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
   int LastIndex = this->FirstComponent + this->NbrComponent;
   int* TmpNIndices =  new int [this->Hamiltonian->NBodyValue];
   int* TmpMIndices =  new int [this->Hamiltonian->NBodyValue];
+  double* QxValues = new double [this->Hamiltonian->NBodyValue];
+  double* QyValues = new double [this->Hamiltonian->NBodyValue];
+  double* Q2Values = new double [this->Hamiltonian->NBodyValue];
+  double* CosineCoffients = new double [this->Hamiltonian->NBodyValue];
   if (this->Hamiltonian->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
       int NbrPermutations = 1;
-      for (int i = 1; i <= this->Hamiltonian->NBodyValue; ++i)
+      for (int i = 2; i <= this->Hamiltonian->NBodyValue; ++i)
 	NbrPermutations *= i;
       int** Permutations = new int*[NbrPermutations]; 
       double* PermutationSign = new double[NbrPermutations]; 
@@ -178,7 +183,7 @@ bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
 	      int* TmpPerm1 = Permutations[l1];
 	      for (int k = 0; k < this->Hamiltonian->NBodyValue; ++k)
 		{
-		  TmpNIndices[k]  = this->Hamiltonian->NBodySectorIndicesPerSum[Index][(J1 * this->Hamiltonian->NBodyValue) + TmpPerm1[k]];
+		  TmpNIndices[k]  = this->Hamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J1 * this->Hamiltonian->NBodyValue) + TmpPerm1[k]];
 		}
 	      for (int l2 = 0; l2 < NbrPermutations; ++l2)
 		{
@@ -187,12 +192,14 @@ bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
 		    {
 		      TmpMIndices[k] = this->Hamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J2 * this->Hamiltonian->NBodyValue) + TmpPerm2[k]];
 		    }
-		  double Tmp = this->Hamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices);
+		  double Tmp = this->Hamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, 
+										 QxValues, QyValues, Q2Values, CosineCoffients);
 		  TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
 		}
 	    }
+	  this->MatrixElements[Index] = TmpInteraction;
 	}
-     delete[] PermutationSign;
+      delete[] PermutationSign;
       for (int i = 0; i < NbrPermutations; ++i)
 	{
 	  delete[] Permutations[i];
@@ -204,7 +211,11 @@ bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
     }
   delete[] TmpNIndices;
   delete[] TmpMIndices;
-   return true;
+  delete[] QxValues;
+  delete[] QyValues;
+  delete[] Q2Values;
+  delete[] CosineCoffients;
+  return true;
 }
 
 // apply operation for SMP using round robin scheduling
@@ -254,30 +265,46 @@ bool FQHETorusComputeMatrixElementOperation::ApplyOperationSMPRoundRobin(SMPArch
 
 bool FQHETorusComputeMatrixElementOperation::ArchitectureDependentApplyOperation(SMPArchitecture* architecture)
 {
-  int Step = this->NbrComponent / architecture->GetNbrThreads();
-  if (Step == 0)
-    Step = this->NbrComponent;
-  this->SMPStages[0] = 0;
-  int TotalNbrComponent = this->FirstComponent + this->NbrComponent;
-  int TmpFirstComponent = this->FirstComponent;
+  long Step = this->LargeNbrComponent / ((long) architecture->GetNbrThreads());
+  long TmpFirstComponent = this->LargeFirstComponent;
+  FQHETorusComputeMatrixElementOperation** TmpOperations = new FQHETorusComputeMatrixElementOperation* [architecture->GetNbrThreads()];
+  for(int i = 0; i < architecture->GetNbrThreads(); ++i)
+    TmpOperations[i] = (FQHETorusComputeMatrixElementOperation *) this->Clone();
   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
-  FQHETorusComputeMatrixElementOperation** TmpOperations = new  FQHETorusComputeMatrixElementOperation* [architecture->GetNbrThreads()];
+  for (int i = 0; i < ReducedNbrThreads; ++i)
+    {
+      TmpOperations[i]->SetIndicesRange(TmpFirstComponent, Step);
+      architecture->SetThreadOperation(TmpOperations[i], i);
+      TmpFirstComponent += Step;
+    }
+  TmpOperations[ReducedNbrThreads]->SetIndicesRange(TmpFirstComponent, this->LargeNbrComponent + this->LargeFirstComponent - TmpFirstComponent);  
+  architecture->SetThreadOperation(TmpOperations[ReducedNbrThreads], ReducedNbrThreads);
+  architecture->SendJobs();
+  return true;
+//   int Step = this->NbrComponent / architecture->GetNbrThreads();
+//   if (Step == 0)
+//     Step = this->NbrComponent;
+//   this->SMPStages[0] = 0;
+//   int TotalNbrComponent = this->FirstComponent + this->NbrComponent;
+//   int TmpFirstComponent = this->FirstComponent;
+//   int ReducedNbrThreads = architecture->GetNbrThreads() - 1;
+//   FQHETorusComputeMatrixElementOperation** TmpOperations = new  FQHETorusComputeMatrixElementOperation* [architecture->GetNbrThreads()];
   
    
-  for( int i = 0; i <  architecture->GetNbrThreads() ; i++)
-    {
-      TmpOperations[i] = (FQHETorusComputeMatrixElementOperation *) this->Clone();
-      architecture->SetThreadOperation(TmpOperations[i], i);
-    }
+//   for( int i = 0; i <  architecture->GetNbrThreads() ; i++)
+//     {
+//       TmpOperations[i] = (FQHETorusComputeMatrixElementOperation *) this->Clone();
+//       architecture->SetThreadOperation(TmpOperations[i], i);
+//     }
   
-  architecture->SendJobsRoundRobin();
+//   architecture->SendJobsRoundRobin();
 
-  for (int i = 0; i < architecture->GetNbrThreads(); i++)
-    {
-      delete TmpOperations[i];
-    }
-  delete[] TmpOperations;
-  return true;
+//   for (int i = 0; i < architecture->GetNbrThreads(); i++)
+//     {
+//       delete TmpOperations[i];
+//     }
+//   delete[] TmpOperations;
+//   return true;
 }
   
 // apply operation for SimpleMPI architecture

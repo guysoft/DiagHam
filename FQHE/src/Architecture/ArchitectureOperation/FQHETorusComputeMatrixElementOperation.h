@@ -88,7 +88,7 @@ class FQHETorusComputeMatrixElementOperation : public AbstractArchitectureOperat
   // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
   FQHETorusComputeMatrixElementOperation(ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian* hamiltonian, long nbrUniqueMatrixElements,
 					 int* momentumSectorIndices, int* j1Indices, int* j2Indices, Complex* matrixElements,
-					 int nbrMPIStage, int nbrSMPStage);
+					 int nbrMPIStage = 2, int nbrSMPStage = 2);
     
   // copy constructor 
   //
