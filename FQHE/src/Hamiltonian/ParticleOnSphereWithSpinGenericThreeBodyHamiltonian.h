@@ -60,9 +60,9 @@ class ParticleOnSphereWithSpinGenericThreeBodyHamiltonian : public AbstractQHEOn
 
   // array with the three-body pseudo-potentials in the S=1/2 sector
   double* ThreeBodyPseudoPotentials12;
-  // number of elements in the ThreeBodyPseudoPotential array in the S=3/2 sector
+  // number of elements in the ThreeBodyPseudoPotential array in the S=1/2 sector
   int NbrThreeBodyPseudoPotentials12;
-  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential32
+  // maxixmum relative angular momentum that is used in ThreeBodyPseudoPotential12
   int MaxRelativeAngularMomentum12;
 
   // array with the pseudo-potentials (ordered such that the last element corresponds to the delta interaction)

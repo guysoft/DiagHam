@@ -317,6 +317,8 @@ int main(int argc, char** argv)
       if (L + (2 * (NbrLz - 1)) < Max)
 	Max = L + (2 * (NbrLz - 1));
     }
+
+  cout << "WARNING : FQHESphereFermionsThreeBodyGeneric has not been tested, use at your own risk" << endl;
   for (; L <= Max; L += 2)
     {
       ParticleOnSphereWithSpin* Space = (ParticleOnSphereWithSpin*) ParticleManager.GetHilbertSpace(L);
