@@ -619,17 +619,19 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
 		      TmpInteraction2DownDown = 0.0;
 		      if (this->ThreeBodyPseudoPotentials32[3] != 0.0)
 			{
-			  TmpInteraction2UpUp += 4.0 * this->ThreeBodyPseudoPotentials32[3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
-			  TmpInteraction2DownDown += 4.0 * this->ThreeBodyPseudoPotentials32[3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
+			  TmpInteraction2UpUp += this->ThreeBodyPseudoPotentials32[3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
+			  TmpInteraction2DownDown += this->ThreeBodyPseudoPotentials32[3] * TmpProjectorCoefficients[3][i] * TmpProjectorCoefficients[3][j];
 			}
 		      for (int k = 5; k <= TmpMaxRelativeMomentum; ++k)  
 			{
 			  if (this->ThreeBodyPseudoPotentials32[k] != 0.0)
 			    {
-			      TmpInteraction2UpUp += 4.0 * this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
-			      TmpInteraction2DownDown += 4.0 * this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+			      TmpInteraction2UpUp += this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+			      TmpInteraction2DownDown += this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
 			    }
 			}
+		      TmpInteraction2UpUp *= 2.0 / 3.0;
+		      TmpInteraction2DownDown *= 2.0 / 3.0;
 		    }
 		  for (int j = 0; j < 3; ++j)
 		    {
@@ -732,8 +734,8 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
 			{
 			  if (this->ThreeBodyPseudoPotentials32[k] != 0.0)
 			    {
-			      TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
-			      TmpInteraction2DownDownUp += this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+			      TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j] * 2.0;
+			      TmpInteraction2DownDownUp += this->ThreeBodyPseudoPotentials32[k] * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j] * 2.0;
 			    }
 			}
 		    }
@@ -770,12 +772,12 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
 			{
 			  double& TmpInteraction2UpUpDown = TmpInteractionUpUpDown[j];
 			  double& TmpInteraction2DownDownUp = TmpInteractionDownDownUp[j];
-			  for (int k = 1; (k == 1) && (k <= TmpMaxRelativeMomentum); ++k)  
+			  for (int k = 1; k <= TmpMaxRelativeMomentum; ++k)  
 			    {
 			      if (this->ThreeBodyPseudoPotentials12[k] != 0.0)
 				{
-				  TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials12[k] / 12.0 * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
-				  TmpInteraction2DownDownUp += this->ThreeBodyPseudoPotentials12[k] / 12.0 * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+				  TmpInteraction2UpUpDown += this->ThreeBodyPseudoPotentials12[k] / 3.0 * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
+				  TmpInteraction2DownDownUp += this->ThreeBodyPseudoPotentials12[k] / 3.0 * TmpProjectorCoefficients[k][i] * TmpProjectorCoefficients[k][j];
 				}
 			    }
 			}
@@ -1035,7 +1037,7 @@ void    ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::EvaluateInteraction
 			{
 			  double& TmpInteraction2UpUpDown = TmpInteractionUpUpDown[j];
 			  double& TmpInteraction2DownDownUp = TmpInteractionDownDownUp[j];
-			  for (int k = 1; (k == 1) && (k <= TmpMaxRelativeMomentum); ++k)  
+			  for (int k = 1; k <= TmpMaxRelativeMomentum; ++k)  
 			    {
 			      if (this->ThreeBodyPseudoPotentials12[k] != 0.0)
 				{
@@ -1342,6 +1344,14 @@ double* ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ComputeProjectorCoe
 	    {
 	      if (spinIndex == 1)
 		{
+// 		  if (abs(Sum + ((indices[2] << 1) - this->LzMax)) <= JValue)
+// 		    for (int j = maxJValue; j >= TmpMinJ; j -= 4)
+// 		      {
+// 			Tmp += (Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[1] << 1)- this->LzMax), j) *
+// 				ClebshArray[j].GetCoefficient(Sum, ((indices[2] << 1) - this->LzMax), JValue)); 
+// 			Tmp -= (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j) *
+// 				ClebshArray[j].GetCoefficient(Sum, ((indices[2] << 1) - this->LzMax), JValue)); 
+// 		      }
 		  if (abs(Sum + ((indices[2] << 1) - this->LzMax)) <= JValue)
 		    for (int j = maxJValue; j >= TmpMinJ; j -= 4)
 		      {
@@ -1350,54 +1360,49 @@ double* ParticleOnSphereWithSpinGenericThreeBodyHamiltonian::ComputeProjectorCoe
 			Tmp -= (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j) *
 				ClebshArray[j].GetCoefficient(Sum, ((indices[2] << 1) - this->LzMax), JValue)); 
 		      }
+		  Sum = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
+		  TmpMinJ = MinJ;
+		  if (TmpMinJ < abs(Sum))
+		    TmpMinJ = abs(Sum);
+		  if (abs(Sum + ((indices[0] << 1) - this->LzMax)) <= JValue)
+		    for (int j = maxJValue; j >= TmpMinJ; j -= 4)
+		      {
+			Tmp += (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) * 
+				ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue)); 
+		      }
+		  Sum = ((indices[0] + indices[2]) << 1)  - (2 * this->LzMax);
+		  TmpMinJ = MinJ;
+		  if (TmpMinJ < abs(Sum))
+		    TmpMinJ = abs(Sum);
+		  if (abs(Sum + ((indices[1] << 1) - this->LzMax)) <= JValue)
+		    for (int j = maxJValue; j >= TmpMinJ; j -= 4)
+		      {
+			Tmp -= (Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) * 
+				ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue)); 
+		      }
+		  
+		  Sum = ((indices[2] + indices[0]) << 1)  - (2 * this->LzMax);
+		  TmpMinJ = MinJ;
+		  if (TmpMinJ < abs(Sum))
+		    TmpMinJ = abs(Sum);
+		  if (abs(Sum + ((indices[1] << 1) - this->LzMax)) <= JValue)
+		    for (int j = maxJValue; j >= TmpMinJ; j -= 4)
+		      {
+			Tmp += (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[0] << 1) - this->LzMax), j) * 
+				ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue)); 
+		      }
+		  Sum = ((indices[2] + indices[1]) << 1)  - (2 * this->LzMax);
+		  TmpMinJ = MinJ;
+		  if (TmpMinJ < abs(Sum))
+		    TmpMinJ = abs(Sum);
+		  if (abs(Sum + ((indices[0] << 1) - this->LzMax)) <= JValue)
+		    for (int j = maxJValue; j >= TmpMinJ; j -= 4)
+		      {
+			Tmp -= (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[1] << 1) - this->LzMax), j) * 
+				ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue)); 
+		      }
 		}
-	      else
-		if (spinIndex == 2)
-		  {
-		    Sum = ((indices[1] + indices[2]) << 1)  - (2 * this->LzMax);
-		    TmpMinJ = MinJ;
-		    if (TmpMinJ < abs(Sum))
-		      TmpMinJ = abs(Sum);
-		    if (abs(Sum + ((indices[0] << 1) - this->LzMax)) <= JValue)
-		      for (int j = maxJValue; j >= TmpMinJ; j -= 4)
-			{
-			  Tmp += (Clebsh.GetCoefficient(((indices[1] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) * 
-				  ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue)); 
-			}
-		    Sum = ((indices[0] + indices[2]) << 1)  - (2 * this->LzMax);
-		    TmpMinJ = MinJ;
-		    if (TmpMinJ < abs(Sum))
-		      TmpMinJ = abs(Sum);
-		    if (abs(Sum + ((indices[1] << 1) - this->LzMax)) <= JValue)
-		      for (int j = maxJValue; j >= TmpMinJ; j -= 4)
-			{
-			  Tmp -= (Clebsh.GetCoefficient(((indices[0] << 1) - this->LzMax), ((indices[2] << 1)- this->LzMax), j) * 
-				  ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue)); 
-			}
-		  }
-		else
-		  {
-		    Sum = ((indices[2] + indices[0]) << 1)  - (2 * this->LzMax);
-		    TmpMinJ = MinJ;
-		    if (TmpMinJ < abs(Sum))
-		      TmpMinJ = abs(Sum);
-		    if (abs(Sum + ((indices[1] << 1) - this->LzMax)) <= JValue)
-		      for (int j = maxJValue; j >= TmpMinJ; j -= 4)
-			{
-			  Tmp += (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[0] << 1)- this->LzMax), j) * 
-				  ClebshArray[j].GetCoefficient(Sum, ((indices[1] << 1) - this->LzMax), JValue)); 
-			}
-		    Sum = ((indices[2] + indices[1]) << 1)  - (2 * this->LzMax);
-		    TmpMinJ = MinJ;
-		    if (TmpMinJ < abs(Sum))
-		      TmpMinJ = abs(Sum);
-		    if (abs(Sum + ((indices[0] << 1) - this->LzMax)) <= JValue)
-		      for (int j = maxJValue; j >= TmpMinJ; j -= 4)
-			{
-			  Tmp -= (Clebsh.GetCoefficient(((indices[2] << 1) - this->LzMax), ((indices[1] << 1)- this->LzMax), j) * 
-				  ClebshArray[j].GetCoefficient(Sum, ((indices[0] << 1) - this->LzMax), JValue)); 
-			}
-		  }
+	      Tmp /= 6.0;
 	    }
 	  else
 	    {
