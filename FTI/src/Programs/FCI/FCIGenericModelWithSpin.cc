@@ -93,6 +93,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-y", "boundary condition twisting angle along y (in 2 Pi unit)", 0.0);
+  (*SystemGroup) += new BooleanOption  ('\n', "spin-flux", "adiabatic flux insertion corresponds to opposite phases for up and down spins");
   
   (*SystemGroup) += new BooleanOption  ('\n', "atomic-limit", "compute the spectrum in the atomic limit");
   
@@ -176,7 +177,8 @@ int main(int argc, char** argv)
     }
   else
   {
-    
+    cout << "Single band not implemented" << endl;
+    return -1;
   }
     
   char* CommentLine = new char [256];
@@ -185,7 +187,10 @@ int main(int argc, char** argv)
 //   if ((Manager.GetDouble("gamma-x") == 0.0) && (Manager.GetDouble("gamma-y") == 0.0))
 //     sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"));
 //   else
+  if (Manager.GetBoolean("spin-flux") == false)
     sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f_gx_%f_gy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+  else
+    sprintf (FileParameterString, "t1_%f_t2_%f_tpp_%f_spingx_%f_spingy_%f", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetString("eigenvalue-file")!=0)
@@ -225,18 +230,27 @@ int main(int argc, char** argv)
 	      {
 		if (Manager.GetBoolean("fixed-sz") == false)
 		{
-		  sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  if (Manager.GetBoolean("spin-flux") == false)
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  else
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_spingx_%f_spingy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 		}
 		else
 		{
-		  sprintf (EigenvalueOutputFile, "%s_v_%f_%s_sz_%d_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, SzValue, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  if (Manager.GetBoolean("spin-flux") == false)
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_sz_%d_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, SzValue, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		  else
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_sz_%d_spingx_%f_spingy_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, SzValue, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
 		}
 	      }
 	      else
 	      {
 		if (Manager.GetBoolean("fixed-sz") == false)
 		{
-		  sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		  if (Manager.GetBoolean("spin-flux") == false)
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		  else
+		    sprintf (EigenvalueOutputFile, "%s_v_%f_%s_spingx_%f_spingy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
 		}
 		else
 		{
@@ -247,9 +261,19 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      if (Manager.GetDouble("mu-s") == 0.0)
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      {
+		if (Manager.GetBoolean("spin-flux") == false)
+		  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		else
+		  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_spingx_%f_spingy_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      }
 	      else
-		sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	      {
+		if (Manager.GetBoolean("spin-flux") == false)
+		  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+		else
+		  sprintf (EigenvalueOutputFile, "%s_u_%f_v_%f_%s_spingx_%f_spingy_%f_mus_%f.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Manager.GetDouble("mu-s"));
+	      }
 	    }
 	}
     }
@@ -270,10 +294,13 @@ int main(int argc, char** argv)
       TightBindingModelUp = new Generic2DTightBindingModel(Manager.GetString("import-onebodyup")); 
     }
     
-    
+   
+   int Sign = 1;
+   if (Manager.GetBoolean("spin-flux") == true)
+    Sign = -1; 
    if (Manager.GetString("import-onebodydown") == 0)
     {
-      TightBindingModelDown = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+      TightBindingModelDown = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Sign * Manager.GetDouble("gamma-x"), Sign * Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModelDown->WriteBandStructure(BandStructureOutputFile);
@@ -286,7 +313,7 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("atomic-limit"))
   {
     TightBindingModelUp = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());  
-    TightBindingModelDown = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());  
+    TightBindingModelDown = new TightBindingModel2DAtomicLimitLattice(NbrSitesX, NbrSitesY, 2, 1, Sign * Manager.GetDouble("gamma-x"), Sign * Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());  
   }
   
   int MinKx = 0;

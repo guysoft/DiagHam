@@ -467,8 +467,8 @@ int main(int argc, char** argv)
 	      char* EigenstateOutputFile = new char [512];
 	      if ((Manager.GetBoolean("real-space") == false) || (Manager.GetBoolean("no-translation") == false))
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_kx_%d_ky_%d", FilePrefix, 
-			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), i, j);
+		  sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_t1_%f_t2_%f_gx_%f_gy_%f_kx_%d_ky_%d", FilePrefix, 
+			   Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), i, j);
 		}
 	      else
 		{

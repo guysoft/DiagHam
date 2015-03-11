@@ -11,6 +11,7 @@
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
+#include "Tools/FTIFiles/FTIHubbardModelFileTools.h"
 
 #include <iostream>
 #include <cstdlib>
@@ -43,6 +44,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption ('\n', "decoupled", "assume that the FTI states are made of two decoupled FCI copies");
   (*SystemGroup) += new BooleanOption  ('\n', "Wannier", "use Wannier basis");
   (*SystemGroup) += new BooleanOption  ('\n', "Wannier-block-diagonal", "use 'block diagonal' Wannier basis ");
+  (*SystemGroup) += new BooleanOption  ('\n', "real-space", "consider a model written in real space basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -92,12 +94,25 @@ int main(int argc, char** argv)
     {
       NbrSiteZ = 1;
       double Mass = 0.0;
-      if (FQHEOnSquareLatticeFindSystemInfoFromFileName(Manager.GetString("density-matrix"),
+      if (Manager.GetBoolean("real-space") == false)
+      {
+	if (FQHEOnSquareLatticeFindSystemInfoFromFileName(Manager.GetString("density-matrix"),
 							NbrParticles, NbrSiteX, NbrSiteY, Statistics) == false)
+	  {
+	    cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
+	    return -1;
+	  }
+      }
+      else
+      {
+	int NbrSites;
+	bool GutzwillerFlag;
+	if (FTIHubbardModelFindSystemInfoFromVectorFileName(Manager.GetString("density-matrix"), NbrParticles, NbrSites, Statistics, GutzwillerFlag) == false)
 	{
 	  cout << "can't retrieve system informations from the reduced density matrix file name" << endl;
 	  return -1;
-	} 
+	}
+      }
     }
 
   MultiColumnASCIIFile DensityMatrix;

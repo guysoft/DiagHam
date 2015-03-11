@@ -50,9 +50,6 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "su2-spin", "particles have a SU(2) spin");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "use this file name instead of the one that can be deduced from the input file name (while happen .x.vec at the end of each stored vector)");
   (*OutputGroup) += new BooleanOption ('\n', "gutzwiller-basis", "express the projected wave function in th Gutzwiller reduced Hilbert space");
-#ifdef __LAPACK__
-  (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
-#endif
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -265,9 +262,21 @@ int main(int argc, char** argv)
 		      else
 			{
 			  if (TwoDTranslationFlag == false)
+			  {
 			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpace (NbrParticles, TotalSpin[i], NbrSites, 10000000);
+			      if (Manager.GetBoolean("gutzwiller-basis"))
+				{
+				  TargetSpaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, TotalSpin[i], NbrSites, 10000000);
+				}
+			  }
 			  else
+			  {
 			    Spaces[TmpIndex] = new FermionOnLatticeWithSpinRealSpaceAnd2DTranslation (NbrParticles, TotalSpin[i], NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY, 10000000);
+			    if (Manager.GetBoolean("gutzwiller-basis"))
+				{
+				  TargetSpaces[TmpIndex] = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation (NbrParticles, TotalSpin[i], NbrSites, TotalKx[i], NbrSiteX, TotalKy[i], NbrSiteY);
+				}
+			  }
 			}
 		    }
 		  else
@@ -339,7 +348,10 @@ int main(int argc, char** argv)
 	      TmpOutputName =  new char[strlen(InputStateFiles[i])+ 24];
 	      char Tmp = (*TmpString);
 	      TmpString[0] = '\0';
-	      sprintf(TmpOutputName, "%s_gutzwillerprojected_%s", InputStateFiles[i], TmpString + 11);
+	      if (Manager.GetBoolean("gutzwiller-basis") == false)
+		sprintf(TmpOutputName, "%s_gutzwillerprojected_%s", InputStateFiles[i], TmpString + 11);
+	      else
+		sprintf(TmpOutputName, "%s_gutzwiller_gutzwillerprojected_%s", InputStateFiles[i], TmpString + 11);
 	      TmpString[0] = Tmp;
 	    }
 	  if (TmpVector.WriteVector(TmpOutputName) == false)

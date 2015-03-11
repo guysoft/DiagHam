@@ -487,8 +487,14 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      cout << "Error: 2d translations not yet implemented" << endl;
-				      return -1;
+				      PartialDensityMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles,  SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				}
 			      else
@@ -534,8 +540,14 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      cout << "Error: 2d translations not yet implemented" << endl;
-				      return -1;
+				      PartialDensityMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				}
 			      else
@@ -553,8 +565,14 @@ int main(int argc, char** argv)
 				    }
 				  else
 				    {
-				      cout << "Error: 2d translations not yet implemented" << endl;
-				      return -1;
+				      PartialDensityMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][0], Architecture.GetArchitecture());
+				      PartialDensityMatrix *= CoefficientPerMomentumSector[TmpIndex][0];
+				      for (int i = 1; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+					{
+					  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+					  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+					  PartialDensityMatrix += TmpMatrix;
+					}
 				    }
 				}
 			    }
@@ -611,8 +629,12 @@ int main(int argc, char** argv)
 					    }
 					  else
 					    {
-					      cout << "Error: 2d translations not yet implemented" << endl;
-					      return -1;
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles,  SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
 					    }
 					}
 				      else
@@ -652,8 +674,12 @@ int main(int argc, char** argv)
 					    }
 					  else
 					    {
-					      cout << "Error: 2d translations not yet implemented" << endl;
-					      return -1;
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles,  SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
 					    }
 					}
 				      else
@@ -669,8 +695,12 @@ int main(int argc, char** argv)
 					    }
 					  else
 					    {
-					      cout << "Error: 2d translations not yet implemented" << endl;
-					      return -1;
+					      for (int i = 0; i < NbrGroundStatePerMomentumSector[TmpIndex]; ++i)
+						{
+						  HermitianMatrix TmpMatrix = ((FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation*) Spaces [TmpIndex])->EvaluatePartialDensityMatrixParticlePartition(SubsystemNbrParticles, SubsystemTotalSz, SubsystemTotalKx, SubsystemTotalKy, GroundStatePerMomentumSector[TmpIndex][i], Architecture.GetArchitecture());
+						  TmpMatrix *= CoefficientPerMomentumSector[TmpIndex][i];
+						  PartialDensityMatrix += TmpMatrix;
+						}
 					    }
 					}
 				    }
