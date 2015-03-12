@@ -50,6 +50,13 @@ class Polynomial;
 
 class ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian : public ParticleOnTorusWithSpinGenericHamiltonian
 {
+//   protected:
+//     
+//     double* QxValues;
+//     double* QyValues;
+//     double* Q2Values;
+//     double* CosineCoffients;
+  
   public:
 
   // constructor from default data

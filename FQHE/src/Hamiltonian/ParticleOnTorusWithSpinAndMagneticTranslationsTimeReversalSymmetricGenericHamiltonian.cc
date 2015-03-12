@@ -5,12 +5,12 @@
 //                                                                            //
 //                  Copyright (C) 2001-2007 Nicolas Regnault                  //
 //                                                                            //
-//                        class author: Nicolas Regnault                      //
+//                        class author: Cecile Repellin                       //
 //                                                                            //
 //       class of hamiltonian associated to particles on a torus with         //
 //      two body pseudopotential interaction and magnetic translations        //
 //                                                                            //
-//                        last modification : 07/03/2014                      //
+//                        last modification : 10/02/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,7 +30,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
+#include "HilbertSpace/ParticleOnTorusWithSpinAndMagneticTranslations.h"
 #include "Vector/RealVector.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
@@ -58,44 +60,6 @@ using std::ostream;
 
 #define M1_12 0.08333333333333333
 
-// default constructor
-//
-
-ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian()
-{
-  this->Particles = 0;
-  this->LzMax = 0;
-  this->NbrLzValue = 0;
-  this->NbrParticles = 0;
-  this->MomentumModulo = 0;
-  this->Ratio = 0.0;
-  this->InvRatio = 0.0;
-  this->MaxMomentum = 0;
-  this->XMomentum = 0;
-  
-  this->FastMultiplicationFlag = false;
-  this->HermitianSymmetryFlag = false;//true;
-  this->Ratio = 0;  
-  this->InvRatio = 0;
-  this->SpinFluxUp = 0;
-  this->SpinFluxDown = 0;
-  this->HamiltonianShift = 0.0;
-  this->Architecture = 0;
-  this->PrecalculationShift = 0;  
-
-  this->NbrPseudopotentialsUpUp = 0;
-  this->PseudopotentialsUpUp = 0;
-  this->NbrPseudopotentialsDownDown = 0;
-  this->NbrPseudopotentialsUpDown = 0;
-  this->PseudopotentialsUpDown = 0;
-  
-  this->MaxNbrPseudopotentials = 0;
-  this->LaguerrePolynomials = 0;
-  this->OneBodyInteractionFactorsupup = 0;
-  this->OneBodyInteractionFactorsdowndown = 0;
-  this->OneBodyInteractionFactorsupdown = 0;
-}
-
 
 // constructor from pseudopotentials
 //
@@ -116,12 +80,7 @@ ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ParticleOnToru
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian(ParticleOnTorusWithSpinAndMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, 
-																   int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp,
-																   int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown,
-																   int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,
-																   double spinFluxUp, double spinFluxDown, 
-																   AbstractArchitecture* architecture, long memory, char* precalculationFileName, double* oneBodyPotentielUpUp, double* oneBodyPotentielDownDown, double* oneBodyPotentielUpDown)
+ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian (ParticleOnTorusWithSpinAndMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, int nbrPseudopotentialsUpUp, double* pseudopotentialsUpUp, int nbrPseudopotentialsDownDown, double* pseudopotentialsDownDown, int nbrPseudopotentialsUpDown, double* pseudopotentialsUpDown,  double spinFluxUp, double spinFluxDown,  AbstractArchitecture* architecture, long memory, char* precalculationFileName, double* oneBodyPotentielUpUp, double* oneBodyPotentielDownDown, double* oneBodyPotentielUpDown)
 {
   this->Particles = particles;
   this->MaxMomentum = maxMomentum;
@@ -129,7 +88,10 @@ ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ParticleOnToru
   this->LzMax = maxMomentum - 1;
   this->NbrLzValue = this->LzMax + 1;
   this->NbrParticles = nbrParticles;
-  this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
+  if (this->Particles->GetTotalSpin() == 0)
+    this->MomentumModulo = this->MaxMomentum;
+  else
+    this->MomentumModulo = FindGCD(this->Particles->GetTotalSpin(), this->MaxMomentum);
   this->FastMultiplicationFlag = false;
   this->HermitianSymmetryFlag = false;//true;
   this->Ratio = ratio;  
@@ -221,42 +183,16 @@ ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ParticleOnToru
 // destructor
 //
 
-ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::~ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian() 
+ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::~ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian() 
 {
-  if (this->PseudopotentialsUpUp != 0)
-    delete[] this->PseudopotentialsUpUp;
-  if (this->PseudopotentialsDownDown != 0)
-    delete[] this->PseudopotentialsDownDown;
-  if (this->PseudopotentialsUpDown != 0)
-    delete[] this->PseudopotentialsUpDown;
-  if (this->LaguerrePolynomials != 0)
-    delete[] this->LaguerrePolynomials;
 }
 
-// set Hilbert space
-//
-// hilbertSpace = pointer to Hilbert space to use
 
-void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
-{
-  this->FastMultiplicationFlag = false;
-  this->Particles = (ParticleOnTorusWithSpinAndMagneticTranslations*) hilbertSpace;
-  this->EvaluateInteractionFactors();
-}
-
-// shift Hamiltonian from a given energy
-//
-// shift = shift value
-
-void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::ShiftHamiltonian (double shift)
-{
-  this->HamiltonianShift = shift;
-}
   
 // evaluate all interaction factors
 //   
 
-void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateInteractionFactors()
+void ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::EvaluateInteractionFactors()
 {
   long TotalNbrInteractionFactors = 0;
   long TotalNbrNonZeroInteractionFactors = 0;
@@ -282,13 +218,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientUpUp(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										  this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     + this->EvaluateInteractionCoefficientUpUp(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
+					     - this->EvaluateInteractionCoefficientUpUp(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
+					     - this->EvaluateInteractionCoefficientUpUp(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    MaxCoefficient = fabs(TmpCoefficient);
@@ -308,13 +244,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientUpUp(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										  this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     + this->EvaluateInteractionCoefficientUpUp(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     - this->EvaluateInteractionCoefficientUpUp(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     - this->EvaluateInteractionCoefficientUpUp(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    {
@@ -346,13 +282,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientDownDown(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										  this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     + this->EvaluateInteractionCoefficientDownDown(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
+					     - this->EvaluateInteractionCoefficientDownDown(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
+					     - this->EvaluateInteractionCoefficientDownDown(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    MaxCoefficient = fabs(TmpCoefficient);
@@ -372,13 +308,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientDownDown(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										  this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     + this->EvaluateInteractionCoefficientDownDown(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     - this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     - this->EvaluateInteractionCoefficientDownDown(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     - this->EvaluateInteractionCoefficientDownDown(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    {
@@ -410,9 +346,10 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+		  double TmpCoefficient   = (
+					      - this->EvaluateInteractionCoefficientUpDown(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxUp)
-					     - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+					     - this->EvaluateInteractionCoefficientUpDown(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxDown));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    MaxCoefficient = fabs(TmpCoefficient);
@@ -432,9 +369,9 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (- this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+		  double TmpCoefficient   = (- this->EvaluateInteractionCoefficientUpDown(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxUp)
-					     - this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+					     - this->EvaluateInteractionCoefficientUpDown(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxDown));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    {
@@ -468,13 +405,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientUpUp(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										  this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     + this->EvaluateInteractionCoefficientUpUp(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
+					     + this->EvaluateInteractionCoefficientUpUp(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
+					     + this->EvaluateInteractionCoefficientUpUp(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp,
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp));
 		  if (m1 == m2)		    
 		    TmpCoefficient *= 0.5;
@@ -498,13 +435,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientUpUp(m1, m2, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										  this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     + this->EvaluateInteractionCoefficientUpUp(m2, m1, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     + this->EvaluateInteractionCoefficientUpUp(m1, m2, m4, m3, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
+					     + this->EvaluateInteractionCoefficientUpUp(m2, m1, m3, m4, this->NbrPseudopotentialsUpUp, this->PseudopotentialsUpUp, 
 										    this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp));
 		  if (m1 == m2)		    
 		    TmpCoefficient *= 0.5;
@@ -540,13 +477,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientDownDown(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										  this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     + this->EvaluateInteractionCoefficientDownDown(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
+					     + this->EvaluateInteractionCoefficientDownDown(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
+					     + this->EvaluateInteractionCoefficientDownDown(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown,
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown));
 		  if (m1 == m2)		    
 		    TmpCoefficient *= 0.5;
@@ -570,13 +507,13 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->IntraSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->IntraSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientDownDown(m1, m2, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										  this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     + this->EvaluateInteractionCoefficientDownDown(m2, m1, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     + this->EvaluateInteractionCoefficientDownDown(m1, m2, m4, m3, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
+					     + this->EvaluateInteractionCoefficientDownDown(m2, m1, m3, m4, this->NbrPseudopotentialsDownDown, this->PseudopotentialsDownDown, 
 										    this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxDown));
 		  if (m1 == m2)		    
 		    TmpCoefficient *= 0.5;
@@ -612,9 +549,9 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientUpDown(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+					     + this->EvaluateInteractionCoefficientUpDown(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxDown));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    MaxCoefficient = fabs(TmpCoefficient);
@@ -634,9 +571,9 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
 
-		  double TmpCoefficient   = (this->EvaluateInteractionCoefficient(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+		  double TmpCoefficient   = (this->EvaluateInteractionCoefficientUpDown(m1, m2, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxDown, this->SpinFluxUp)
-					     + this->EvaluateInteractionCoefficient(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
+					     + this->EvaluateInteractionCoefficientUpDown(m2, m1, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown, 
 										    this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxDown));
 		  if (fabs(TmpCoefficient) > MaxCoefficient)
 		    {
@@ -658,7 +595,7 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
   cout << "====================================" << endl;
 }
 
-// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 coupling term
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 upup coupling term
 //
 // m1 = first index
 // m2 = second index
@@ -672,14 +609,61 @@ void ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateI
 // spinFluxM4 = additional inserted flux for m4
 // return value = numerical coefficient
 
-double ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+double ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::EvaluateInteractionCoefficientUpUp(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
 													double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
 {
+  return this->EvaluateInteractionCoefficient (m1, m2, m3, m4, nbrPseudopotentials, pseudopotentials, spinFluxM1, spinFluxM2, spinFluxM3, spinFluxM4);
+}
+
+
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 downdown coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// nbrPseudopotentials = number of pseudopotentials
+// pseudopotentials = pseudopotential coefficients
+// spinFluxM1 = additional inserted flux for m1
+// spinFluxM2 = additional inserted flux for m2
+// spinFluxM3 = additional inserted flux for m3
+// spinFluxM4 = additional inserted flux for m4
+// return value = numerical coefficient
+
+double ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::EvaluateInteractionCoefficientDownDown(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+													double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
+{
+  m1 = (this->NbrLzValue - m1) % this->NbrLzValue;
+  m2 = (this->NbrLzValue - m2) % this->NbrLzValue;
+  m3 = (this->NbrLzValue - m3) % this->NbrLzValue;
+  m4 = (this->NbrLzValue - m4) % this->NbrLzValue;
+  return this->EvaluateInteractionCoefficientUpUp (m1, m2, m3, m4, nbrPseudopotentials, pseudopotentials, spinFluxM1, spinFluxM2, spinFluxM3, spinFluxM4);
+}
+
+// evaluate the numerical coefficient  in front of the a+_m1 a+_m2 a_m3 a_m4 updown coupling term
+//
+// m1 = first index
+// m2 = second index
+// m3 = third index
+// m4 = fourth index
+// nbrPseudopotentials = number of pseudopotentials
+// pseudopotentials = pseudopotential coefficients
+// spinFluxM1 = additional inserted flux for m1
+// spinFluxM2 = additional inserted flux for m2
+// spinFluxM3 = additional inserted flux for m3
+// spinFluxM4 = additional inserted flux for m4
+// return value = numerical coefficient
+
+double ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::EvaluateInteractionCoefficientUpDown(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+													double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
+{
+//   m4 = (this->NbrLzValue - m4) % this->NbrLzValue;
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->NbrLzValue);
-  double Factor =  - (((double) (m1-m3)) + spinFluxM1 - spinFluxM3) * PIOnM * 2.0;
-  double Sum = 0.0;
   double N2 = ((double) (m1 - m4)) + spinFluxM1 - spinFluxM4;
+  double Factor =  - (((double) (m1-m2)) + spinFluxM1 - spinFluxM3) * PIOnM * 2.0;
+  double Sum = 0.0;
   double N1;
   double Q2;
   double Precision;
@@ -764,7 +748,115 @@ double ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian::Evaluat
       Sum += Coefficient;
       N2 -= this->NbrLzValue;
     }
+//   cout << m1 << " " << m2 << " " << m3 << " " << m4 << " " << (Sum / ((double) this->NbrLzValue)) << endl;
   //Normalize per flux (gives correct energy scale for 2-particle problem)
   return (Sum / ((double) this->NbrLzValue));
+  
 }
 
+
+// set Hilbert space
+//
+// hilbertSpace = pointer to Hilbert space to use
+
+void ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::SetHilbertSpace (AbstractHilbertSpace* hilbertSpace)
+{
+  this->FastMultiplicationFlag = false;
+  this->Particles = (ParticleOnTorusWithSpinAndMagneticTranslations*) hilbertSpace;
+  this->EvaluateInteractionFactors();
+}
+
+
+// shift Hamiltonian from a given energy
+//
+// shift = shift value
+
+void ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::ShiftHamiltonian (double shift)
+{
+  this->HamiltonianShift = shift;
+}
+
+// get all the indices that should appear in the annihilation/creation operators
+//
+
+void ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian::GetIndices()
+{
+  this->NbrInterSectorSums = this->NbrLzValue;
+  this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
+  for (int i = 0; i < this->NbrInterSectorSums; ++i)
+    this->NbrInterSectorIndicesPerSum[i] = 0;      
+
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = 0; m2 <= this->LzMax; ++m2)
+	  ++this->NbrInterSectorIndicesPerSum[(m1 - m2 + this->NbrLzValue) % this->NbrLzValue];
+      this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
+      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	{
+	  if (this->NbrInterSectorIndicesPerSum[i]  > 0)
+	    {
+	      this->InterSectorIndicesPerSum[i] = new int[2 * this->NbrInterSectorIndicesPerSum[i]];      
+	      this->NbrInterSectorIndicesPerSum[i] = 0;
+	    }
+	}
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = 0; m2 <= this->LzMax; ++m2)
+	  {
+	    int TmpSum = (m1 - m2 + this->NbrLzValue) % this->NbrLzValue;
+	    this->InterSectorIndicesPerSum[TmpSum][this->NbrInterSectorIndicesPerSum[TmpSum] << 1] = m1;
+	    this->InterSectorIndicesPerSum[TmpSum][1 + (this->NbrInterSectorIndicesPerSum[TmpSum] << 1)] = m2;
+	    ++this->NbrInterSectorIndicesPerSum[TmpSum];    
+	}
+
+
+  this->NbrIntraSectorSums = this->NbrLzValue;
+  this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
+  for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+    this->NbrIntraSectorIndicesPerSum[i] = 0;      
+  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
+    {
+      for (int m1 = 0; m1 < this->LzMax; ++m1)
+	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
+	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];
+      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  if (this->NbrIntraSectorIndicesPerSum[i]  > 0)
+	    {
+	      this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
+	      this->NbrIntraSectorIndicesPerSum[i] = 0;
+	    }
+	}
+      for (int m1 = 0; m1 < this->LzMax; ++m1)
+	for (int m2 = m1 + 1; m2 <= this->LzMax; ++m2)
+	  {
+	    int TmpSum = (m1 + m2) % this->NbrLzValue;
+	    this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = m1;
+	    this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = m2;
+	    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
+	}
+    }
+  else
+    {
+      
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	  ++this->NbrIntraSectorIndicesPerSum[(m1 + m2) % this->NbrLzValue];
+      this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  if (this->NbrIntraSectorIndicesPerSum[i]  > 0)
+	    {
+	      this->IntraSectorIndicesPerSum[i] = new int[2 * this->NbrIntraSectorIndicesPerSum[i]];      
+	      this->NbrIntraSectorIndicesPerSum[i] = 0;
+	    }
+	}
+      for (int m1 = 0; m1 <= this->LzMax; ++m1)
+	for (int m2 = m1; m2 <= this->LzMax; ++m2)
+	  {
+	    int TmpSum = (m1 + m2) % this->NbrLzValue;
+	    this->IntraSectorIndicesPerSum[TmpSum][this->NbrIntraSectorIndicesPerSum[TmpSum] << 1] = m1;
+	    this->IntraSectorIndicesPerSum[TmpSum][1 + (this->NbrIntraSectorIndicesPerSum[TmpSum] << 1)] = m2;
+	    ++this->NbrIntraSectorIndicesPerSum[TmpSum];    
+	  }
+    }
+}

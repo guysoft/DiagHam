@@ -185,6 +185,22 @@ ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::ParticleOnTorusW
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+/*  
+  
+  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+    for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
+      for (int m3 = 0; m3 < this->NbrLzValue; ++m3)
+	for (int m4 = 0; m4 < this->NbrLzValue; ++m4)
+	  cout << m1 << " " << m2 << " " << m3 << " " << m4 << " " << this->EvaluateInteractionCoefficientUpDown(m1, m2, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
+												 this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp) << endl;
+
+  cout << endl;
+  for (int m1 = 0; m1 < this->NbrLzValue; ++m1)
+    for (int m2 = 0; m2 < this->NbrLzValue; ++m2)
+      for (int m3 = 0; m3 < this->NbrLzValue; ++m3)
+	for (int m4 = 0; m4 < this->NbrLzValue; ++m4)
+	  cout << m1 << " " << m2 << " " << m3 << " " << m4 << " " << this->EvaluateInteractionCoefficientUpUp(m1, m2, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
+												 this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp, this->SpinFluxUp) << endl;*/
 }
 
 // destructor
@@ -200,7 +216,13 @@ ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::~ParticleOnTorus
 //   
 
 void ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateInteractionFactors()
-{
+{  
+  /*
+  this->QxValues = new double [this->NBodyValue];
+  this->QyValues = new double [this->NBodyValue];
+  this->Q2Values = new double [this->NBodyValue];
+  this->CosineCoffients = new double [this->NBodyValue];*/
+  
   this->M1IntraValue = 0;
   this->M1InterValue = 0;
   
@@ -431,15 +453,16 @@ void ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateInt
 	  int Index = 0;
 	  for (int j1 = 0; j1 < this->NbrInterSectorIndicesPerSum[i]; ++j1)
 	    {
-	      double Factor = 2.0;
 	      int m1 = this->InterSectorIndicesPerSum[i][j1 << 1];
 	      int m2 = this->InterSectorIndicesPerSum[i][(j1 << 1) + 1];
 	      for (int j2 = 0; j2 < this->NbrInterSectorIndicesPerSum[i]; ++j2)
 		{
 		  int m3 = this->InterSectorIndicesPerSum[i][j2 << 1];
 		  int m4 = this->InterSectorIndicesPerSum[i][(j2 << 1) + 1];
-		  this->InteractionFactorsupdown[i][Index] = Factor * this->EvaluateInteractionCoefficientUpDown(m1, m2, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
-													   this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown);
+		  this->InteractionFactorsupdown[i][Index] = this->EvaluateInteractionCoefficientUpDown(m1, m2, m3, m4, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
+													   this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown) 
+		  + this->EvaluateInteractionCoefficientUpDown(m2, m1, m4, m3, this->NbrPseudopotentialsUpDown, this->PseudopotentialsUpDown,
+													   this->SpinFluxUp, this->SpinFluxDown, this->SpinFluxUp, this->SpinFluxDown) ;
 		  ++TotalNbrInteractionFactors;
 		  ++Index;
 		}
@@ -526,6 +549,7 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
   double Q2;
   double Precision;
   double TmpInteraction;
+  int count = 0;
   while ((fabs(Sum) + fabs(Coefficient)) != fabs(Sum))
     {
       N1 = 1.0;
@@ -539,10 +563,11 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
 	    if (pseudopotentials[i] != 0.0)
 	    {
 	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0* PIOnM * Q2);
+// 	      TmpInteraction += pseudopotentials[i] * Q2 * exp(-4*2*M_PI*Q2);	
 // 	      cout << i << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << this->LaguerrePolynomials[i].PolynomialEvaluate(2.0* PIOnM * Q2) << endl;
 	    }
 	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
-// 	  cout << "0" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
+// // 	  cout << "0" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
           if (fabs(Coefficient) != 0.0)
  	    Precision = Coefficient;
           else
@@ -554,17 +579,24 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
+	    {
 	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(0.0);
+// 	      TmpInteraction += pseudopotentials[i] * Q2* exp(-4*2*M_PI*Q2);
+	    }
 	  Coefficient = TmpInteraction;
 // 	  cout << "0" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
 	}
       while ((fabs(Coefficient) + Precision) != fabs(Coefficient))
 	{
+// 	  cout << "0, " << N << " : " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;	  
 	  Q2 = this->InvRatio * N1 * N1 + this->Ratio * N2 * N2;
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
+	    {
 	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
+// 	      TmpInteraction += pseudopotentials[i] * Q2 * exp(-4*2*M_PI*Q2);
+	    }
 	  Precision = 2.0 * exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 // 	  cout << "1" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
@@ -584,7 +616,10 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
 	  TmpInteraction = 0.0;
 	  for (int i=0; i< nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
+	    {
 	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
+// 	      TmpInteraction += pseudopotentials[i] * Q2 * exp(-4*2*M_PI*Q2);
+	    }
 	  Coefficient = exp(- PIOnM * Q2) * TmpInteraction;
 // 	  cout << "2" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
           if (fabs(Coefficient) != 0.0)
@@ -598,7 +633,10 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
+	    {
 	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(0.0);
+// 	      TmpInteraction += pseudopotentials[i] * Q2 * exp(-4*2*M_PI*Q2);
+	    }
 	  Coefficient = TmpInteraction;
 // 	  cout << "2" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
 	}
@@ -608,7 +646,10 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
 	  TmpInteraction = 0.0;
 	  for (int i = 0; i < nbrPseudopotentials; ++i)
 	    if (pseudopotentials[i] != 0.0)
+	    {
 	      TmpInteraction += pseudopotentials[i] * this->LaguerrePolynomials[i].PolynomialEvaluate(2.0 * PIOnM * Q2);
+// 	       TmpInteraction += pseudopotentials[i] * Q2 * exp(-4*2*M_PI*Q2);
+	    }
 	  Precision = 2.0 *  exp(- PIOnM * Q2) * TmpInteraction;
 	  Coefficient += Precision * cos (N1 * Factor);
 // 	  cout << "3" << " " << m1 << " " << m2 << " " << m3 << " " << m4 << " " << Coefficient << " " << Sum << endl;
@@ -621,3 +662,147 @@ double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateI
   //Normalize per flux (gives correct energy scale for 2-particle problem)
   return (Sum / ((double) this->NbrLzValue));
 }
+
+
+
+// evaluate the numerical coefficient  in front of the Prod a^+_mi Prod a+_n coupling term
+//
+// mIndices = array containing the creation operator indices
+// nIndices = array containing the annihilation operator indices
+// return value = numerical coefficient  
+
+// double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::EvaluateInteractionCoefficient(int m1, int m2, int m3, int m4, int nbrPseudopotentials, double* pseudopotentials,
+// 										 double spinFluxM1, double spinFluxM2, double spinFluxM3, double spinFluxM4)
+// {
+//   int Tmp;
+//   int* mIndices = new int[2];
+//   int* nIndices = new int[2];
+//   mIndices[0] = m1;
+//   mIndices[1] = m2;
+//   nIndices[0] = m3;
+//   nIndices[1] = m4;
+//   double Prefactor = powl(this->MaxMomentum, 1.0);
+//   for (int i = 0; i < 2; ++i)
+//     {
+//       this->QxValues[i] = 0.0;
+//       this->QyValues[i] = (double) (nIndices[i] - mIndices[i]);
+//       this->CosineCoffients[i] = 2.0 * ((double) mIndices[i]);
+//     }  
+//   double CurrentPrecision;
+//   double Coefficient = Prefactor * this->RecursiveEvaluateInteractionCoefficient(0, 0.0, 0.0, 0.0, 0.0, CurrentPrecision, nbrOperations);
+//   return Coefficient;
+// }
+  
+
+// double ParticleOnTorusWithSpinTimeReversalSymmetricGenericHamiltonian::RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations)
+// {
+//   if (xPosition < 1)
+//     {
+//       double TotalCoefficient  = 0.0;
+//       double Coefficient  = 1.0;
+//       int CurrentQy = this->QyValues[xPosition];
+//       currentPrecision = 0.0;
+//       double TmpPrecision;
+//       double Tmp;
+//       while ((fabs(Coefficient) + fabs(TotalCoefficient)) != fabs(TotalCoefficient))
+// 	{	        
+// 	  Tmp = (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
+// 	  this->QxValues[xPosition] = 0.0;
+// 	  this->Q2Values[xPosition] = Tmp;
+// 	  Coefficient = this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+// 								      currentSumQy + this->QyValues[xPosition], 
+// 								      currentSumQ2 + this->Q2Values[xPosition], 
+// 								      currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision, nbrOperations);
+// 	  currentPrecision += TmpPrecision;
+// 	  if (Coefficient == 0.0)
+// 	    TmpPrecision = 1.0;
+// 	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
+// 	    {	  
+// 	      ++this->QxValues[xPosition];
+// 	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+// 	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+// 									   currentSumQy + this->QyValues[xPosition], 
+// 									   currentSumQ2 + this->Q2Values[xPosition], 
+// 									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision, nbrOperations);
+// 	      currentPrecision += TmpPrecision;
+// 	    }
+// 	  this->QxValues[xPosition] = 0.0;
+// 	  if (Coefficient == 0.0)
+// 	    TmpPrecision = 1.0;
+// 	  else
+// 	    TmpPrecision = 2.0 * fabs(Coefficient);
+// 	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
+// 	    {	  
+// 	      --this->QxValues[xPosition];
+// 	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+// 	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+// 									   currentSumQy + this->QyValues[xPosition], 
+// 									   currentSumQ2 + this->Q2Values[xPosition], 
+// 									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision, nbrOperations);
+// 	      currentPrecision += TmpPrecision;
+// 	    }
+// 	  this->QyValues[xPosition] +=  (double) this->MaxMomentum;
+// 	  TotalCoefficient += Coefficient;
+// 	}
+//       this->QyValues[xPosition] = CurrentQy -  (double) this->MaxMomentum;
+//       if (TotalCoefficient == 0.0)
+// 	Coefficient = 1.0;
+//       else
+// 	Coefficient = 2.0 * TotalCoefficient;
+//       while ((fabs(Coefficient) + fabs(TotalCoefficient)) != fabs(TotalCoefficient))
+// 	{	        
+// 	  this->QxValues[xPosition] = 0.0;
+// 	  Tmp = (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
+// 	  this->Q2Values[xPosition] = Tmp;
+// 	  Coefficient = this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+// 								      currentSumQy + this->QyValues[xPosition], 
+// 								      currentSumQ2 + this->Q2Values[xPosition], 
+// 								      currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision, nbrOperations);
+// 	  currentPrecision += TmpPrecision;
+// 	  if (Coefficient == 0.0)
+// 	    TmpPrecision = 1.0;
+// 	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
+// 	    {	  
+// 	      ++this->QxValues[xPosition];
+// 	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+// 	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+// 									   currentSumQy + this->QyValues[xPosition], 
+// 									   currentSumQ2 + this->Q2Values[xPosition], 
+// 									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision, nbrOperations);
+// 	      currentPrecision += TmpPrecision;
+// 	    }
+// 	  this->QxValues[xPosition] = 0.0;
+// 	  if (Coefficient == 0.0)
+// 	    TmpPrecision = 1.0;
+// 	  else
+// 	    TmpPrecision = 2.0 * fabs(Coefficient);
+// 	  while ((fabs(Coefficient) + TmpPrecision) != fabs(Coefficient))
+// 	    {	  
+// 	      --this->QxValues[xPosition];
+// 	      this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + Tmp;
+// 	      Coefficient += this->RecursiveEvaluateInteractionCoefficient(xPosition + 1, currentSumQx + this->QxValues[xPosition], 
+// 									   currentSumQy + this->QyValues[xPosition], 
+// 									   currentSumQ2 + this->Q2Values[xPosition], 
+// 									   currentSumPhase +  this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]), TmpPrecision, nbrOperations);
+// 	      currentPrecision += TmpPrecision;
+// 	    }
+// 	  this->QyValues[xPosition] -=  (double) this->MaxMomentum;
+// 	  TotalCoefficient += Coefficient;
+// 	}      
+//       this->QyValues[xPosition] = CurrentQy;
+//       return TotalCoefficient;
+//     }
+//   else
+//     {
+//       double TmpExponentialFactor = M_PI / ((double) this->MaxMomentum);
+//       this->QxValues[xPosition] = -currentSumQx;
+//       this->QyValues[xPosition] = -currentSumQy;  
+//       this->Q2Values[xPosition] = (this->QxValues[xPosition] * this->QxValues[xPosition] * this->InvRatio) + (this->QyValues[xPosition] * this->QyValues[xPosition] * this->Ratio);
+//       currentSumPhase += this->QxValues[xPosition] * (this->CosineCoffients[xPosition] + this->QyValues[xPosition]);
+//       currentPrecision = exp(- 0.5 * TmpExponentialFactor * (this->Q2Values[xPosition] + currentSumQ2)) * this->VFactor(this->Q2Values);
+//       ++nbrOperations;
+//       return (cos(TmpExponentialFactor * currentSumPhase) * currentPrecision);
+// // if we do not assume that it is invariant under {qx}<->{-qx}
+// //      return (Complex(TmpExponentialFactor * Sum2) * currentPrecision);
+//     }
+// }

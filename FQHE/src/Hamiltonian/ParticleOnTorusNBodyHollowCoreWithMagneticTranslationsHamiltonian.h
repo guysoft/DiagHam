@@ -63,11 +63,12 @@ class ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian : public
   // nbrParticles = number of particles
   // lzmax = maximum Lz value reached by a particle in the state
   // nbrNBody = value of the n (i.e. the n-body interaction)
+  // regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
-  ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, int nbrNBody,
+  ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, int nbrNBody, bool regenerateElementFlag,
 								  AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 								  char* precalculationFileName = 0);
 

@@ -55,12 +55,13 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
 // nbrParticles = number of particles
 // lzmax = maximum Lz value reached by a particle in the state
 // nbrNBody = value of the n (i.e. the n-body interaction)
+// regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
-ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, int nbrNBody,  AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
+ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, int nbrNBody, bool regenerateElementFlag, AbstractArchitecture* architecture, long memory, bool onDiskCacheFlag, char* precalculationFileName)
 {
   this->Particles = particles;
   this->LzMax = maxMomentum - 1;
@@ -95,8 +96,8 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
       this->PrecalculatedInteractionCoefficients[m1] = new double [this->NbrEntryPrecalculatedInteractionCoefficients2];
     }
   char* InteractionCoefficientFileName = new char [512];
-  sprintf (InteractionCoefficientFileName, "%dbodydelta_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NBodyValue, this->NbrLzValue, this->Ratio);
-  if (IsFile(InteractionCoefficientFileName))
+  sprintf (InteractionCoefficientFileName, "%dbody_hollowcore_interactioncoefficient_2s_%d_ratio_%.10f.dat", this->NBodyValue, this->NbrLzValue, this->Ratio);
+  if ((regenerateElementFlag == false) && (IsFile(InteractionCoefficientFileName)))
     {
       ifstream File;
       File.open(InteractionCoefficientFileName, ios::binary | ios::in);
@@ -246,13 +247,15 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
     return 0.0;
   
   double DoubleNbrLzValue = (double) this->NbrLzValue;
-  double normalizationCoefficient = pow(DoubleNbrLzValue,((double) (this->NBodyValue + 1)) / 4.0);
-  normalizationCoefficient = 1.0;
+  double normalizationCoefficient = pow(DoubleNbrLzValue,((double) (this->NBodyValue + 1)) / 4.0) * M_PI;
+//   normalizationCoefficient = 1.0;
   double PIOnM = M_PI / DoubleNbrLzValue ;
   double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
-  int MinIter = 3;
+  int MinIter = 6;
   int TmpIndex = TmpIndices[0];
   double ExpFactor;
+  double polynomialFactor;
+  double sumRelativeMomenta;
 
   
   for (int i = nBodyValue; i < this->NBodyValue - 1; ++i)
@@ -260,13 +263,27 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
       TmpIndices[i] = TmpIndex;
       countIter[i] = 0;
     }
+    
   ExpFactor = 0.0;
+  polynomialFactor = 1.0;
+  sumRelativeMomenta = 0.0;
+  for (int j = 0; j < this->NBodyValue - 1; ++j)
+    sumRelativeMomenta += ((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue;
+  
   for (int j = 0; j < this->NBodyValue - 1; ++j)
     for (int k = j; k < this->NBodyValue - 1; ++k)
       ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  double Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
+  for (int j = 0; j < this->NBodyValue - 1; ++j)
+  {
+    for (int k = j + 1; k < this->NBodyValue - 1; ++k)
+    {
+      polynomialFactor *= ((((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue) - (((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue));
+    }      
+    polynomialFactor *= (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue + sumRelativeMomenta);
+  }
+  double Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
   
-  while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
+  while ((abs(Coefficient) + abs(Sum) != abs(Sum)) || (countIter[nBodyValue] < MinIter))
   {
     countIter[nBodyValue] += 1;
     Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
@@ -275,11 +292,25 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
     TmpIndices[nBodyValue] += this->NBodyValue;
     for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
       TmpIndices[i] = TmpIndex;
-    ExpFactor = 0;
+    
+    ExpFactor = 0.0;
+    polynomialFactor = 1.0;
+    sumRelativeMomenta = 0.0;
+    for (int j = 0; j < this->NBodyValue - 1; ++j)
+      sumRelativeMomenta += ((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue;
+  
     for (int j = 0; j < this->NBodyValue - 1; ++j)
       for (int k = j; k < this->NBodyValue - 1; ++k)
 	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
+    for (int j = 0; j < this->NBodyValue - 1; ++j)
+    {
+      for (int k = j + 1; k < this->NBodyValue - 1; ++k)
+      {
+	polynomialFactor *= ((((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue) - (((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue));
+      }      
+      polynomialFactor *= (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue + sumRelativeMomenta);
+    }
+    Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
     
   }
   
@@ -292,26 +323,52 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
   }
     
   ExpFactor = 0.0;
+  polynomialFactor = 1.0;
+  sumRelativeMomenta = 0.0;
+  for (int j = 0; j < this->NBodyValue - 1; ++j)
+    sumRelativeMomenta += ((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue;
+  
   for (int j = 0; j < this->NBodyValue - 1; ++j)
     for (int k = j; k < this->NBodyValue - 1; ++k)
       ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-  Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);
+  for (int j = 0; j < this->NBodyValue - 1; ++j)
+  {
+    for (int k = j + 1; k < this->NBodyValue - 1; ++k)
+    {
+      polynomialFactor *= ((((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue) - (((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue));
+    }      
+    polynomialFactor *= (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue + sumRelativeMomenta);
+  }
+  Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
   
   
-  while ((Coefficient + Sum != Sum) || (countIter[nBodyValue] < MinIter))
+  while ((abs(Coefficient) + abs(Sum) != abs(Sum)) || (countIter[nBodyValue] < MinIter))
   {
     countIter[nBodyValue] += 1;
     Sum += this->EvaluateGaussianSum(nBodyValue + 1, TmpIndices, 0.0, countIter, momFactor);
     if (nBodyValue == this->NBodyValue - 2)
       Sum += Coefficient;
     TmpIndices[nBodyValue] -= this->NBodyValue;
-    ExpFactor = 0;
     for (int i = nBodyValue + 1; i < this->NBodyValue - 1; ++i)
       TmpIndices[i] = TmpIndex;
+    ExpFactor = 0.0;
+    polynomialFactor = 1.0;
+    sumRelativeMomenta = 0.0;
+    for (int j = 0; j < this->NBodyValue - 1; ++j)
+      sumRelativeMomenta += ((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue;
+  
     for (int j = 0; j < this->NBodyValue - 1; ++j)
       for (int k = j; k < this->NBodyValue - 1; ++k)
 	ExpFactor += (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue)*(((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue);
-    Coefficient = normalizationCoefficient * exp(-Factor*ExpFactor);    
+    for (int j = 0; j < this->NBodyValue - 1; ++j)
+    {
+      for (int k = j + 1; k < this->NBodyValue - 1; ++k)
+      {
+	polynomialFactor *= ((((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue) - (((double) (momFactor[k])) + ((double) (TmpIndices[k])) * DoubleNbrLzValue));
+      }      
+      polynomialFactor *= (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue + sumRelativeMomenta);
+    }
+    Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
   }
   
   return Sum;

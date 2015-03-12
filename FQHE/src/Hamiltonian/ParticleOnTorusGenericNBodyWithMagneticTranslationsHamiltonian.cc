@@ -126,6 +126,7 @@ ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::ParticleOnTorusG
     }
   else
     this->LoadPrecalculation(precalculationFileName);
+
 }
 
 // destructor
@@ -165,7 +166,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
   double* QyValues = new double [this->NBodyValue];
   double* Q2Values = new double [this->NBodyValue];
   double* CosineCoefficients = new double [this->NBodyValue];
-
+  
   int** LinearizedNBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
   for (int i = 0; i < this->NbrNBodySectorSums; ++i)
     {
