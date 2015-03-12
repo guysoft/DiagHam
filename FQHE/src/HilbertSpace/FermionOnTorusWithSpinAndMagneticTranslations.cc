@@ -2000,7 +2000,7 @@ int FermionOnTorusWithSpinAndMagneticTranslations::GenerateStates(bool fullSzFla
       if (fullSzFlag == false)
 	this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, this->MaxMomentum - 1, 0, this->NbrFermionsUp, 0l);
       else
-	this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, 2 * this->MaxMomentum - 1, 2 * this->MaxMomentum - 1, 0l, 0);    
+	this->HilbertSpaceDimension = this->RawGenerateStates(this->NbrFermions, 2 * this->MaxMomentum - 1, 2 * this->MaxMomentum - 1, 0l, 0);  
     }
   else
     {

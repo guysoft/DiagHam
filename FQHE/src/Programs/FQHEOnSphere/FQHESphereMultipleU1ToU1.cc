@@ -714,6 +714,8 @@ int main(int argc, char** argv)
 	  LongRationalVector RationalOutputState;
 	  if (Manager.GetBoolean("rational") == false)
 	    {
+	      cout << "Single state symmetrization is not implemented for femionic non rational states" << endl;
+	      return -1;
 	    }
 	  else
 	    {

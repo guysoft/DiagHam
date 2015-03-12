@@ -161,4 +161,5 @@ BosonOnCP2TzSymmetry.cc \
 BosonOnCP2TzZ3Symmetry.cc \
 FermionOnCP2.cc \
 FermionOnCP2Long.cc \
-FermionOnTorusWithSpinSzSymmetryAndMagneticTranslations.cc
+FermionOnTorusWithSpinSzSymmetryAndMagneticTranslations.cc \
+FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.cc

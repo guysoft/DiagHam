@@ -727,6 +727,11 @@ class ParticleOnSphereWithSpin :  public ParticleOnSphere
   // basis = reference on the basis associated to state
   // return value = converted vector
   virtual ComplexVector ConvertFromNbodyBasis(ComplexVector& state, ParticleOnSphereWithSpin& basis);
+  
+  // get the total spin
+  //
+  //return value: total spin of the Hilbert space
+  virtual int GetTotalSpin();
 
 };
 

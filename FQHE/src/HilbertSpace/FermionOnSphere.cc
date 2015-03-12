@@ -3152,6 +3152,15 @@ long FermionOnSphere::EvaluatePartialDensityMatrixParticlePartitionCore (int min
 		  TmpStatePosition[Pos] = TmpPos;
 		  TmpStatePosition2[Pos] = j;
 		  TmpStateCoefficient[Pos] = Coefficient;
+		  //////////////
+		  cout << minIndex << "  " << j << " : " <<  Pos << " ::: " ;
+		  TmpHilbertSpace->PrintState (cout, minIndex);
+		  cout << " |  " ;
+		  TmpDestinationHilbertSpace->PrintState (cout, j);
+		  cout << " : " ;
+		  this->PrintState (cout, TmpPos);
+		  cout << " = " << Coefficient * groundState [TmpPos] << endl;
+		  /////////////
 		  ++Pos;
 		}
 	    }

@@ -1060,3 +1060,12 @@ ComplexVector ParticleOnSphereWithSpin::ConvertFromNbodyBasis(ComplexVector& sta
   ComplexVector TmpVector;
   return TmpVector;
 }
+
+
+// get the total spin
+//
+//return value: total spin of the Hilbert space
+int ParticleOnSphereWithSpin::GetTotalSpin()
+{
+ return 0; 
+}

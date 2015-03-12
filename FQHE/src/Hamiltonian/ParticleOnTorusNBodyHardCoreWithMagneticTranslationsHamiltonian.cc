@@ -237,9 +237,20 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 		{
 		  int* TmpMIndices = &(this->NBodySectorIndicesPerSum[i][j2 * this->NBodyValue]);
 		  this->NBodyInteractionFactors[i][Index] = sign * this->EvaluateInteractionNIndexSymmetrizedCoefficient(TmpNIndices, TmpMIndices);
+// 		  for (int k = 0; k < this->NBodyValue; ++k)
+// 		  {
+// 		    cout << TmpMIndices[k] << " " ;
+// 		  }
+// 		  cout << " | " ;
+// 		  for (int k = 0; k < this->NBodyValue; ++k)
+// 		  {
+// 		    cout << TmpNIndices[k] << " " ;
+// 		  }
+// 		  cout << " = " << this->NBodyInteractionFactors[i][Index] << endl;
+		  
+		  
 		  TotalNbrInteractionFactors++;
 		  ++Index;
-		  
 		  
 		}
 	    }

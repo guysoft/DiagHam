@@ -251,7 +251,7 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
 //   normalizationCoefficient = 1.0;
   double PIOnM = M_PI / DoubleNbrLzValue ;
   double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
-  int MinIter = 6;
+  int MinIter = 10;
   int TmpIndex = TmpIndices[0];
   double ExpFactor;
   double polynomialFactor;
@@ -282,6 +282,7 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
     polynomialFactor *= (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue + sumRelativeMomenta);
   }
   double Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
+  cout << polynomialFactor << " " << ExpFactor << " " << exp(-Factor*ExpFactor) << endl;
   
   while ((abs(Coefficient) + abs(Sum) != abs(Sum)) || (countIter[nBodyValue] < MinIter))
   {
