@@ -72,6 +72,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
+  (*PrecalculationGroup) += new BooleanOption ('\n', "regenerate-interactionelements", "regenerate the interaction matrix elements, overwriting them", false);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -104,6 +105,7 @@ int main(int argc, char** argv)
   int NbrNBody = Manager.GetInteger("nbr-nbody");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   bool FirstRun = true;
+  bool RegenerateElementFlag = Manager.GetBoolean("regenerate-interactionelements");
   
   char* OutputName = new char [256];
   sprintf (OutputName, "fermions_torus_%dbody_hollowcore_n_%d_2s_%d_ratio_%f.dat", NbrNBody, NbrParticles, MaxMomentum, XRatio);
@@ -306,19 +308,17 @@ int main(int argc, char** argv)
       cout << "----------------------------------------------------------------" << endl;
       cout << " Ratio = " << XRatio << endl;
 
-//      FermionOnTorusWithMagneticTranslations* Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-      BosonOnTorusWithMagneticTranslationsShort* Space = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+     FermionOnTorusWithMagneticTranslations* Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
+     Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
       Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
       if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
       AbstractQHEHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-											    Architecture.GetArchitecture(), Memory);
-//      Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, 
-//											  NbrNBody, Architecture.GetArchitecture(), Memory);
+//       Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
+// 											    Architecture.GetArchitecture(), Memory);
+     Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, NbrNBody, RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);

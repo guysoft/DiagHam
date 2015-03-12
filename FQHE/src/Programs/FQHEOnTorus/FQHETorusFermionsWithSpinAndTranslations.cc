@@ -6,10 +6,11 @@
 
 #include "HilbertSpace/FermionOnTorus.h"
 #include "HilbertSpace/FermionOnTorusWithSpinAndMagneticTranslations.h"
+#include "HilbertSpace/FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations.h"
 #include "Hamiltonian/ParticleOnTorusCoulombHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusCoulombWithSpinAndMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian.h"
-// #include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian.h"
+#include "Hamiltonian/ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian.h"
 
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
@@ -83,7 +84,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  BooleanOption  ('\n', "redundantYMomenta", "Calculate all subspaces up to YMomentum = MaxMomentum-1", false);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
-//   (*SystemGroup) += new  BooleanOption  ('\n', "time-reversal", "Use model with time reversal symmetry", false);
+  (*SystemGroup) += new  BooleanOption  ('\n', "time-reversal", "Use model with time reversal symmetry", false);
 
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 
 						      500);
@@ -187,10 +188,10 @@ int main(int argc, char** argv)
   char* OutputName = new char [512];
   if (OneBodyPseudoPotentials[2] == 0)
     {
-//       if (Manager.GetBoolean("time-reversal") == false)
+      if (Manager.GetBoolean("time-reversal") == false)
 	sprintf (OutputName, "fermions_torus_su2_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
-//       else
-// 	sprintf (OutputName, "fermions_torus_timereversal_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
+      else
+	sprintf (OutputName, "fermions_torus_timereversal_%s_n_%d_2s_%d_sz_%d_ratio_%f.dat", InteractionName, NbrFermions, MaxMomentum, TotalSpin, XRatio);
     }
   else
     {
@@ -202,7 +203,13 @@ int main(int argc, char** argv)
   File.precision(14);
 
 
-  int MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
+  int MomentumModulo;
+  if (Manager.GetBoolean("time-reversal") == false)
+    MomentumModulo = FindGCD(NbrFermions, MaxMomentum);
+  else
+  {
+   MomentumModulo = MaxMomentum; 
+  }
   int XMaxMomentum = (MomentumModulo - 1);
   if (XMomentum < 0)
     XMomentum = 0;
@@ -225,14 +232,19 @@ int main(int argc, char** argv)
 	cout << "----------------------------------------------------------------" << endl;
 	cout << " Ratio = " << XRatio << endl;
 	FermionOnTorusWithSpinAndMagneticTranslations* TotalSpace = 0;
-	if (OneBodyPseudoPotentials[2] == 0)
-	  {
-	    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
-	  }
+	if (Manager.GetBoolean("time-reversal") == false)
+	{
+	  if (OneBodyPseudoPotentials[2] == 0)
+	    {
+	      TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);	
+	    }
+	  else
+	    {
+	      TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
+	    }
+	}
 	else
-	  {
-	    TotalSpace = new FermionOnTorusWithSpinAndMagneticTranslations (NbrFermions, MaxMomentum, XMomentum, YMomentum2);	
-	  }
+	  TotalSpace = new FermionOnTorusWithSpinAndTimeReversalSymmetricMagneticTranslations (NbrFermions, TotalSpin, MaxMomentum, XMomentum, YMomentum2);
 	cout << " Total Hilbert space dimension = " << TotalSpace->GetHilbertSpaceDimension() << endl;
 	cout << "momentum = (" << XMomentum << "," << YMomentum2 << ")" << endl;
 	Architecture.GetArchitecture()->SetDimension(TotalSpace->GetHilbertSpaceDimension());	
@@ -245,7 +257,7 @@ int main(int argc, char** argv)
 	  }
 	else
 	  {
-// 	    if (Manager.GetBoolean("time-reversal") == false)
+	    if (Manager.GetBoolean("time-reversal") == false)
 	      Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsGenericHamiltonian (TotalSpace, NbrFermions, 
 												MaxMomentum, XMomentum, XRatio,
 												NbrPseudoPotentials[0], PseudoPotentials[0],
@@ -253,14 +265,14 @@ int main(int argc, char** argv)
 												NbrPseudoPotentials[2], PseudoPotentials[2],
 												Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
 												Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
-// 	      else
-// 		Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian (TotalSpace, NbrFermions, 
-// 												MaxMomentum, XMomentum, XRatio,
-// 												NbrPseudoPotentials[0], PseudoPotentials[0],
-// 												NbrPseudoPotentials[1], PseudoPotentials[1],
-// 												NbrPseudoPotentials[2], PseudoPotentials[2],
-// 												Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
-// 												Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
+	      else
+		Hamiltonian = new ParticleOnTorusWithSpinAndMagneticTranslationsTimeReversalSymmetricGenericHamiltonian (TotalSpace, NbrFermions, 
+												MaxMomentum, XMomentum, XRatio,
+												NbrPseudoPotentials[0], PseudoPotentials[0],
+												NbrPseudoPotentials[1], PseudoPotentials[1],
+												NbrPseudoPotentials[2], PseudoPotentials[2],
+												Manager.GetDouble("spinup-flux"), Manager.GetDouble("spindown-flux"),
+												Architecture.GetArchitecture(), Memory, 0, OneBodyPseudoPotentials[0], OneBodyPseudoPotentials[1], OneBodyPseudoPotentials[2]);
 	  }
 	char* EigenvectorName = 0;
 	if (Manager.GetBoolean("eigenstate"))	
