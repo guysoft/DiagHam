@@ -93,6 +93,8 @@ TightBindingModelCheckerboardLattice::TightBindingModelCheckerboardLattice(int n
     {
       this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
     }
+  if (this->BlochFormFlag == true)
+    this->FindConnectedOrbitals();
   this->ComputeBandStructure();
 }
 
