@@ -6060,7 +6060,9 @@ int BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitals (LongRationa
 								     LongRationalVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors)
 {
   int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
-      LongRationalVector** TmpVectors = new LongRationalVector*[this->NbrBosons + 1];
+  if ((((this->LzMax + 1) % periodicity) != 0) && firstOrbitalIndex < ((this->LzMax + 1) % periodicity))
+    TargetSpaceNbrOrbitals += 1; 
+  LongRationalVector** TmpVectors = new LongRationalVector*[this->NbrBosons + 1];
   for (int i = 0; i <= this->NbrBosons; ++i)
     {
       int MaxTotalLz = (TargetSpaceNbrOrbitals - 1) * i;
@@ -6117,6 +6119,8 @@ void BosonOnSphereShort::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (LongRat
 {
   long LastComponent = (long) (firstComponent + nbrComponents);
   int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
+  if ((((this->LzMax + 1) % periodicity) != 0) && firstOrbitalIndex < ((this->LzMax + 1) % periodicity))
+    TargetSpaceNbrOrbitals += 1; 
   BosonOnSphereShort*** TargetSpaces = new BosonOnSphereShort** [this->NbrBosons + 1];
   for (int i = 0; i <= this->NbrBosons; ++i)
     {

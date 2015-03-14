@@ -307,10 +307,12 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
       TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
     }
   
+  int signature = 1;
   for (int k = 0 ; k < this->NBodyValue; ++k)
     nIndices2[k] = nIndices[k];
   while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
     {
+      signature *= -1;
       m2 = nIndices2[0];
       Factor = this->NbrLzValue;
       for (int k = 1 ; k < this->NBodyValue; ++k)
@@ -320,14 +322,16 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 	}
       
       for (int g = 0; g < this->NBodyValue; ++g)
-	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+	TmpInteraction += signature * this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
     }
   
   
   for (int k = 0 ; k < this->NBodyValue; ++k)
     mIndices2[k] = mIndices[k];
+  signature = 1;
   while (std::prev_permutation(mIndices2, mIndices2 + this->NBodyValue))
     {
+      signature *= -1;
       m1 = mIndices2[0];
       Factor = this->NbrLzValue;
       for (int k = 1 ; k < this->NBodyValue; ++k)
@@ -336,13 +340,13 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 	  Factor *= this->NbrLzValue;
 	}
       for (int g = 0; g < this->NBodyValue; ++g)
-	TmpInteraction += this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
+	TmpInteraction += signature * this->PrecalculatedInteractionCoefficients[m1][shift + g] * this->PrecalculatedInteractionCoefficients[m2][shiftedMomentumTransfer*this->NBodyValue + g];
       
       for (int k = 0 ; k < this->NBodyValue; ++k)
 	nIndices2[k] = nIndices[k];
       while (std::prev_permutation(nIndices2, nIndices2 + this->NBodyValue))
 	{
-	  
+	  signature *= -1;
 	  m2 = nIndices2[0];
 	  Factor = this->NbrLzValue;
 	  for (int k = 1 ; k < this->NBodyValue; ++k)

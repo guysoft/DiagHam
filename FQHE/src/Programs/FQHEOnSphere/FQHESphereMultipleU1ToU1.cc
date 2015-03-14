@@ -606,6 +606,8 @@ int main(int argc, char** argv)
 											 Manager.GetInteger("nbr-orbitals"),
 											 RationalOutputStates, NbrParticleSectors, LzSectors);
 		      TargetNbrFluxQuanta = ((NbrFluxQuanta1 + 1) / Manager.GetInteger("nbr-orbitals")) - 1;
+		      if ((((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals")) != 0) && (Manager.GetInteger("subset-shift") < ((NbrFluxQuanta1 + 1) % Manager.GetInteger("nbr-orbitals"))))
+			  TargetNbrFluxQuanta += 1;
 		    }
 		  else
 		    {

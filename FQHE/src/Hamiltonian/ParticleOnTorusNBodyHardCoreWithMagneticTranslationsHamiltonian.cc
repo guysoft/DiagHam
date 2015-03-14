@@ -222,9 +222,9 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
-      int sign = 1;
-      for (int i = 1; i < this->NBodyValue; ++i)
-	sign *= -1;
+//       int sign = 1;
+//       for (int i = 1; i < this->NBodyValue; ++i)
+// 	sign *= -1;
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
 	{
 	  this->NBodyInteractionFactors[i] = new Complex[this->NbrNBodySectorIndicesPerSum[i] * this->NbrNBodySectorIndicesPerSum[i]];
@@ -236,19 +236,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
 		  int* TmpMIndices = &(this->NBodySectorIndicesPerSum[i][j2 * this->NBodyValue]);
-		  this->NBodyInteractionFactors[i][Index] = sign * this->EvaluateInteractionNIndexSymmetrizedCoefficient(TmpNIndices, TmpMIndices);
-// 		  for (int k = 0; k < this->NBodyValue; ++k)
-// 		  {
-// 		    cout << TmpMIndices[k] << " " ;
-// 		  }
-// 		  cout << " | " ;
-// 		  for (int k = 0; k < this->NBodyValue; ++k)
-// 		  {
-// 		    cout << TmpNIndices[k] << " " ;
-// 		  }
-// 		  cout << " = " << this->NBodyInteractionFactors[i][Index] << endl;
-		  
-		  
+		  this->NBodyInteractionFactors[i][Index] = this->EvaluateInteractionNIndexAntiSymmetrizedCoefficient(TmpNIndices, TmpMIndices);		  
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		  

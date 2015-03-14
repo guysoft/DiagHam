@@ -134,6 +134,27 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
 		  Tmp /= this->MaxMomentum;
 		}
 	    }
+// 	  long** BinomialCoefficients = GetBinomialCoefficients(this->LzMax);
+// 	  this->NbrEntryPrecalculatedInteractionCoefficients1 = BinomialCoefficients[this->LzMax][this->NBodyValue];
+// 	  for (int i = 1; i < nbrIndices; ++i)
+// 	  {
+// 	    int Pos = 0;
+// 	    Min = nbrIndices - i - 1;
+// 	    while (Pos < NbrElements)
+// 	    {
+// 	      Max = Indices[Pos][i - 1] - 1;
+// 	      for (; Max >= Min; --Max)
+// 		{
+// 		  Step = BinomialCoefficients[Max][Min];
+// 		  for (int j = 0; j < Step; ++j)
+// 		    {
+// 		      Indices[Pos][i] = Max;
+// 		      Sum[Pos] += Max;
+// 		      ++Pos;
+// 		    }
+// 		}
+// 	    }
+// 	  }
 	  	  
 	  cout << "this->NbrEntryPrecalculatedInteractionCoefficients1 = "  << this->NbrEntryPrecalculatedInteractionCoefficients1 << endl;
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
@@ -203,10 +224,24 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::~ParticleOnTo
 double* ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficientCreation(int* mIndices, int momentumTransfer)
 {
   double* Coefficient = new double [this->NBodyValue];
+  
+  int AllDifferentIndicesFlag = 1;
+  for (int i = 0; i < this->NBodyValue; ++i)
+  {
+    Coefficient[i] = 0.0;
+    for (int j = i + 1; j < this->NBodyValue; ++j)
+      {
+	AllDifferentIndicesFlag *= (mIndices[i] - mIndices[j]);
+      }
+  }
+  if (AllDifferentIndicesFlag == 0)
+    return Coefficient;
   double DoubleNbrLzValue = (double) this->NbrLzValue;
   int tmpSum = 0;
   for (int i = 0; i < this->NBodyValue; ++i)
+  {
     tmpSum += mIndices[i];
+  }
   
   int* momFactor = new int [this->NBodyValue - 1];
   int* TmpIndices = new int [(this->NBodyValue - 1)];
@@ -221,8 +256,10 @@ double* ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalu
 	int coef1 = (momFactor[j] / this->NbrLzValue) - (momFactor[j] / this->NbrLzValue) % this->NBodyValue;   
 	TmpIndices[j] = (double) (((i + momentumTransfer) % this->NBodyValue) - coef1);	
 	countIter[j] = 0;
+	
       }
     Coefficient[i] = this->EvaluateGaussianSum(0, TmpIndices, 0, countIter, momFactor);
+    cout << mIndices[0] << " " << mIndices[1] << " " << mIndices[2] << " " << mIndices[3] << " " << momentumTransfer << " " << i << " " << Coefficient[i] << endl;
   }
   delete[] TmpIndices;
   delete[] momFactor;
@@ -251,7 +288,8 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
 //   normalizationCoefficient = 1.0;
   double PIOnM = M_PI / DoubleNbrLzValue ;
   double Factor = 2.0*M_PI*this->Ratio / (DoubleNbrLzValue * ((double)(this->NBodyValue))* ((double)(this->NBodyValue)));
-  int MinIter = 10;
+  normalizationCoefficient *= (pow(this->NBodyValue, 5)/16.0) *pow(sqrt(Factor), ((double) (this->NBodyValue * (this->NBodyValue - 1) / 2)));
+  int MinIter = 6;
   int TmpIndex = TmpIndices[0];
   double ExpFactor;
   double polynomialFactor;
@@ -282,7 +320,6 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
     polynomialFactor *= (((double) (momFactor[j])) + ((double) (TmpIndices[j])) * DoubleNbrLzValue + sumRelativeMomenta);
   }
   double Coefficient = normalizationCoefficient * polynomialFactor * exp(-Factor*ExpFactor);
-  cout << polynomialFactor << " " << ExpFactor << " " << exp(-Factor*ExpFactor) << endl;
   
   while ((abs(Coefficient) + abs(Sum) != abs(Sum)) || (countIter[nBodyValue] < MinIter))
   {
@@ -519,6 +556,7 @@ double ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evalua
   for (int i = 0; i < this->NBodyValue; ++i)
     Coefficient /= (M_PI * DoubleNbrLzValue);
   
+  cout << "coef = " << Coefficient << endl;
   return (Coefficient/ (FactorialNBody.GetNumericalValue()));
 }
 

@@ -5644,6 +5644,8 @@ int FermionOnSphere::SymmetrizeSingleStatePeriodicSubsetOrbitals (LongRationalVe
 								  LongRationalVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& lzSectors)
 {
   int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
+  if ((((this->LzMax + 1) % periodicity) != 0) && firstOrbitalIndex < ((this->LzMax + 1) % periodicity))
+    TargetSpaceNbrOrbitals += 1; 
   LongRationalVector** TmpVectors = new LongRationalVector*[this->NbrFermions + 1];
   for (int i = 0; i <= this->NbrFermions; ++i)
     {
@@ -5702,6 +5704,8 @@ void FermionOnSphere::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (LongRation
 {
   long LastComponent = (long) (firstComponent + nbrComponents);
   int TargetSpaceNbrOrbitals = (this->LzMax + 1) / periodicity;
+  if ((((this->LzMax + 1) % periodicity) != 0) && firstOrbitalIndex < ((this->LzMax + 1) % periodicity))
+    TargetSpaceNbrOrbitals += 1; 
   FermionOnSphere*** TargetSpaces = new FermionOnSphere** [this->NbrFermions + 1];
   for (int i = 0; i <= this->NbrFermions; ++i)
     {
