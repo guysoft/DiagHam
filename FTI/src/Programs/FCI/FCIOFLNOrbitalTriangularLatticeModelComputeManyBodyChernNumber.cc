@@ -1,18 +1,19 @@
 #include "Options/Options.h"
+
+//#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpace.h"
 #include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
+//#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
+//#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
 
 #include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian.h"
+//#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian.h"
+//#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
-
-#include "Hamiltonian/ParticleOnLatticeKagomeLatticeSingleBandHamiltonian.h"
-#include "Tools/FTITightBinding/TightBindingModelKagomeLattice.h"
-#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
-#include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
-
+#include "Tools/FTITightBinding/TightBindingModelOFLNOrbitalTriangularLattice.h"
 #include "Tools/FQHEFiles/FQHEOnSquareLatticeFileTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
@@ -44,6 +45,10 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
+
+bool ReadOverlapMatrixASCII(char* fileName, Complex *& overlapMatrix);
+
+
 int main(int argc, char** argv)
 {
   OptionManager Manager ("FCIOFLNOrbitalTriangularLatticeModel" , "0.01");
@@ -66,18 +71,19 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbr-sitey", "number of sites along the y direction", 3);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "kx", "total x momentum", 0);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "ky", "total y momentum", 0);
-  (*SystemGroup) += new SingleIntegerOption  ('\n', "band-index", "band-index", 0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t1", "real part of the nearest neighbor hopping amplitude", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "t2", "real part of the next nearest neighbor hopping amplitude", -0.3);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "l1", "imaginary part of the nearest neighbor hopping amplitude", 0.28);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "l2", "imaginary part of the next nearest neighbor hopping amplitude", 0.2);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "mu-s", "sublattice staggered chemical potential", 0.0);
+
   (*SystemGroup) += new SingleIntegerOption  ('\n', "number-point-x", "number of points in the discretization of theta_x", 10);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "number-point-y", "number of points in the discretization of theta_y", 10);
-  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new SingleIntegerOption  ('c', "chernnumber", "chern number", 1);
 
+  (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
-  (*SystemGroup) += new SingleDoubleOption  ('\n', "v-potential", "repulsive next nearest neighbor potential strength", 0.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "laser", "strength of laser", 1.0);
+  (*SystemGroup) += new SingleIntegerOption  ('s', "nbr-spin", "number of internal degree of freedom", 4);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "cutOFF", "number of reciprocal lattice points", 20);
+
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -101,20 +107,17 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSitesX = Manager.GetInteger("nbr-sitex"); 
   int NbrSitesY = Manager.GetInteger("nbr-sitey");
-
   int TotalKx = Manager.GetInteger("kx"); 
   int TotalKy = Manager.GetInteger("ky");
   int NbrPointX = Manager.GetInteger("number-point-x");
   int NbrPointY = Manager.GetInteger("number-point-y");
-
-  BosonOnSquareLatticeMomentumSpace * Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
-//   FermionOnSquareLatticeMomentumSpace * Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
-
+  int ChernNumber = Manager.GetInteger("chernnumber");
+  int NbrSpin = Manager.GetInteger( "nbr-spin");
+  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   int IncNbrPointX =  NbrPointX+3;
   int IncNbrPointY =  NbrPointY+3;
-  long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
-  int BandIndex =  Manager.GetInteger("band-index");
-
+  int BandIndex = 0;
+  double LaserStrength = Manager.GetDouble("laser");	
   bool ExportOneBody = true; 
   bool FirstRunFlag = true;
 
@@ -128,15 +131,6 @@ int main(int argc, char** argv)
       sprintf (StatisticPrefix, "bosons");
     }
     
-
-  char* StateFilePrefix = new char [256];
-  sprintf (StateFilePrefix, "%s_singleband_kagomelattice_n_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSitesX, NbrSitesY);
-
-  char* FileParameterString = new char [256];
-  sprintf (FileParameterString, "t1_%g_t2_%g_l1_%g_l2_%g", Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"));
-
-  char* EigenstateFile = new char [512];
-  char* EigenvalueOutputFile = new char [512];
   char* CommentLine = new char [256];
   sprintf (CommentLine, "eigenvalues\n# kx ky ");
 
@@ -145,10 +139,15 @@ int main(int argc, char** argv)
   sprintf (ContentPrefix, "%d %d",  TotalKx,  TotalKy);
 
 
+  char* StateFilePrefix = new char [256];
+  sprintf (StateFilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
+
+  BosonOnSquareLatticeMomentumSpace * Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
+//   FermionOnSquareLatticeMomentumSpace * Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
+
  ComplexVector ** BandEigenvectors = new ComplexVector * [NbrSitesX*NbrSitesY];
  for(int i = 0; i <NbrSitesX*NbrSitesY; i++) 
   BandEigenvectors[i] = new ComplexVector[IncNbrPointX * IncNbrPointY];
-
 
  ComplexVector * ManyBodyState = new ComplexVector [IncNbrPointX * IncNbrPointY];
 
@@ -158,8 +157,8 @@ int main(int argc, char** argv)
  double TrueGammaX =   ( ( - 1.0) / ( (double) NbrPointX));
  double TrueGammaY =   ( ( - 1.0) / ( (double) NbrPointY));
 
- TightBindingModelKagomeLattice TightBindingModel1 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+   TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel1(LaserStrength,  NbrSpin, NbrSitesX, NbrSitesY, ChernNumber,  TrueGammaX,   TrueGammaY, Architecture.GetArchitecture(), Manager.GetInteger("cutOFF"),ExportOneBody);
+
 
  for (int Kx = 0; Kx < NbrSitesX; Kx++)
       for (int Ky = 0; Ky < NbrSitesY; Ky++)
@@ -171,20 +170,14 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"),&TightBindingModel1, true, Architecture.GetArchitecture(), Memory);
 
-  if (Manager.GetDouble("v-potential") == 0.0)
-	    {
-		sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-        	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel1, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
 
-}
-	      else
-{
-		sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-        	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-}
+char *  EigenstateFile = new char [512];
+char *  EigenvalueOutputFile = new char [512];
 
+  sprintf (EigenvalueOutputFile, "%s_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+  sprintf (EigenstateFile,"%s_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix,    TrueGammaX,  TrueGammaY,TotalKx, TotalKy);
 
   FirstRunFlag = true;
   GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
@@ -200,8 +193,9 @@ int main(int argc, char** argv)
     TrueGammaX =   ( ( (double) GammaX - 1.0) / ( (double) NbrPointX));
     TrueGammaY =   ( (  - 1.0) / ( (double) NbrPointY));
 
-    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+    TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel2(LaserStrength,  NbrSpin, NbrSitesX, NbrSitesY, ChernNumber, TrueGammaX,   TrueGammaY,Architecture.GetArchitecture(), Manager.GetInteger("cutOFF"),ExportOneBody);
+
+
 
  for (int Kx = 0; Kx < NbrSitesX; Kx++)
       for (int Ky = 0; Ky < NbrSitesY; Ky++)
@@ -219,21 +213,15 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
+
+
+     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+
   EigenstateFile = new char [512];
   EigenvalueOutputFile = new char [512];
 
-
-  if (Manager.GetDouble("v-potential") == 0.0)
-    {
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-       	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-   }
-     else
-	{
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-       	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-	}	
+  sprintf (EigenvalueOutputFile, "%s_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+  sprintf (EigenstateFile,"%s_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix,    TrueGammaX,  TrueGammaY,TotalKx, TotalKy);
 
   FirstRunFlag = true;
   GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
@@ -251,8 +239,8 @@ int main(int argc, char** argv)
        TrueGammaX =   ( ( -1.0) / ( (double) NbrPointX));
        TrueGammaY =   ( ( (double)  GammaY - 1.0) / ( (double) NbrPointY));
 
-    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+
+    TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel2(LaserStrength,  NbrSpin, NbrSitesX, NbrSitesY, ChernNumber, TrueGammaX,   TrueGammaY,Architecture.GetArchitecture(), Manager.GetInteger("cutOFF"),ExportOneBody);
 
  for (int Kx = 0; Kx < NbrSitesX; Kx++)
       for (int Ky = 0; Ky < NbrSitesY; Ky++)
@@ -270,21 +258,16 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"),Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
+
+     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+
+
   EigenstateFile = new char [512];
   EigenvalueOutputFile = new char [512];
 
-  if (Manager.GetDouble("v-potential") == 0.0)
-    {
-      sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-      sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-    }
-	      else
-    {
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-        sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-    }
-
+  sprintf (EigenvalueOutputFile, "%s_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+  sprintf (EigenstateFile,"%s_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix,    TrueGammaX,  TrueGammaY,TotalKx, TotalKy);
+ 
   FirstRunFlag = true;
   GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
   FirstRunFlag = false;
@@ -305,8 +288,7 @@ int main(int argc, char** argv)
        TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
        TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
 
-    TightBindingModelKagomeLattice TightBindingModel2 (NbrSitesX, NbrSitesY,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("l1"), Manager.GetDouble("l2"), Manager.GetDouble("mu-s"), 
-					     TrueGammaX,  TrueGammaY , Architecture.GetArchitecture(), ExportOneBody);
+    TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel2(LaserStrength,  NbrSpin, NbrSitesX, NbrSitesY, ChernNumber, TrueGammaX,   TrueGammaY,Architecture.GetArchitecture(), Manager.GetInteger("cutOFF"),ExportOneBody);
 
  for (int Kx = 0; Kx < NbrSitesX; Kx++)
       for (int Ky = 0; Ky < NbrSitesY; Ky++)
@@ -324,20 +306,15 @@ int main(int argc, char** argv)
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-  Hamiltonian = new ParticleOnLatticeKagomeLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY,Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), &TightBindingModel2, true, Architecture.GetArchitecture(), Memory);
+
+     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+
   EigenstateFile = new char [512];
   EigenvalueOutputFile = new char [512];
 
-  if (Manager.GetDouble("v-potential") == 0.0)
-  {
-     sprintf (EigenvalueOutputFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-     sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-  }
-	      else
-{
-	sprintf (EigenvalueOutputFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-       	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-}
+  sprintf (EigenvalueOutputFile, "%s_gx_%g_gy_%g_kx_%d_ky_%d.dat",StateFilePrefix, TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
+  sprintf (EigenstateFile,"%s_gx_%g_gy_%g_kx_%d_ky_%d", StateFilePrefix,    TrueGammaX,  TrueGammaY,TotalKx, TotalKy);
+ 
 
   FirstRunFlag = true;
   GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateFile);
@@ -361,15 +338,7 @@ for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
      double TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
      double TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
 
-	  if (Manager.GetDouble("v-potential") == 0.0)
-	    {
-        	sprintf (EigenstateFile, "%s_%s_u_%g_gx_%g_gy_%g_kx_%d_ky_%d.0.vec",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-
-}
-	      else
-{
-        	sprintf (EigenstateFile, "%s_%s_u_%g_v_%g_gx_%g_gy_%g_kx_%d_ky_%d.0.vec",StateFilePrefix, FileParameterString, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"),  TrueGammaX,  TrueGammaY, TotalKx, TotalKy);
-}
+     sprintf (EigenstateFile,"%s_gx_%g_gy_%g_kx_%d_ky_%d.0.vec", StateFilePrefix,    TrueGammaX,  TrueGammaY,TotalKx, TotalKy);
 
       if ( ( ManyBodyState[GammaX*IncNbrPointY+GammaY]).ReadVector(EigenstateFile) == false)
 	{
@@ -391,6 +360,7 @@ for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
 	     OverlapMatrix[MomentumIndex] = BandEigenvectors[MomentumIndex][GammaX*IncNbrPointY] * BandEigenvectors[MomentumIndex][(GammaX+1)*IncNbrPointY];
   //           OverlapMatrix[MomentumIndex] /=Norm(OverlapMatrix[MomentumIndex]);
 	}
+
        Complex Tmp = ManyBodyState[GammaX*IncNbrPointY] *  ManyBodyState[(GammaX+1)*IncNbrPointY];
 //       Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[(GammaX+1)*IncNbrPointY],  ManyBodyState[GammaX*IncNbrPointY],OverlapMatrix);
        ManyBodyState[(GammaX+1)*IncNbrPointY] *= (Conj(Tmp)/Norm(Tmp));
@@ -673,11 +643,35 @@ for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
 
 
 
+
+
+
   cout.precision(8);
   ManyBodyChernNumber /=(4.0 * M_PI);
   ManyBodyChernNumberPathIntegral/=(4.0 * M_PI);
   cout << "ManyBodyChernNumber = "<< ManyBodyChernNumber <<" " << Norm(ManyBodyChernNumber)<<" "<< Arg(ManyBodyChernNumber)/ M_PI <<endl; 
     
   cout << "ManyBodyChernNumberPathIntegral = "<<ManyBodyChernNumberPathIntegral<<" " << Norm(ManyBodyChernNumberPathIntegral)<<" "<< Arg(ManyBodyChernNumberPathIntegral)/ M_PI <<endl;  
+
+  return 0;
 }
 
+
+
+
+
+
+
+
+// write the full band structure information in an ASCII file
+//
+// fileName = name of the output file 
+// return value = true if no error occured  
+
+bool ReadOverlapMatrixASCII(char* fileName, Complex *& overlapMatrix)
+{
+  MultiColumnASCIIFile File;
+  File.Parse(fileName);
+  overlapMatrix=File.GetAsComplexArray(1);
+  return true;
+}

@@ -3,7 +3,7 @@
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
-
+#include "Architecture/MonoProcessorArchitecture.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeGenericDensityDensityInteractionSingleBandHamiltonian.h"
@@ -201,6 +201,8 @@ int main(int argc, char** argv)
  FermionOnLatticeRealSpaceAnd2DTranslation *  Space = new FermionOnLatticeRealSpaceAnd2DTranslation(NbrParticles, TightBindingModel.GetNbrBands() * TightBindingModel.GetNbrStatePerBand(), TotalKx, NbrSitesX, TotalKy, NbrSitesY);
  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
  
+
+ MonoProcessorArchitecture TmpArchitecture;
 		   
  for (int GammaX = 0; GammaX < IncNbrPointX; GammaX++)
        {
@@ -210,15 +212,21 @@ int main(int argc, char** argv)
        TrueGammaX =   ( ( (double) GammaX - 1) / ( (double) NbrPointX));
        TrueGammaY =   ( ( (double) GammaY - 1) / ( (double) NbrPointY));
      
+  cout <<"before   TightBinding"<<endl;
+  TightBindingModelCheckerboardLattice  TightBindingModel2 (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"),  TrueGammaX,  TrueGammaY, &TmpArchitecture, true, true);
 
-  TightBindingModelCheckerboardLattice  TightBindingModel2 (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"),  TrueGammaX,  TrueGammaY, Architecture.GetArchitecture(), true, true);
+  cout <<"after   TightBinding"<<endl;
 
   if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
  
+
+
+  cout <<"before   Hamiltonian"<<endl;
   HermitianMatrix TightBindingMatrix = TightBindingModel2.GetRealSpaceTightBindingHamiltonian();
   Hamiltonian = new ParticleOnLatticeRealSpaceAnd2DTranslationHamiltonian (Space, NbrParticles, TightBindingModel2.GetNbrBands() * TightBindingModel2.GetNbrStatePerBand(),   TotalKx, NbrSitesX, TotalKy, NbrSitesY,								       TightBindingMatrix, DensityDensityInteraction,  Architecture.GetArchitecture(), Memory);
+  cout <<"after   Hamiltonian"<<endl;
   char *  EigenstateOutputFile = new char [512];
   char * EigenvalueOutputFile = new char [512];
 
@@ -233,20 +241,20 @@ int main(int argc, char** argv)
     sprintf (EigenstateOutputFile, "%s_u_%f_v_%f_%s_gx_%f_gy_%f_mus_%f_kx_%d_ky_%d",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString,   TrueGammaX,  TrueGammaY, Manager.GetDouble("mu-s"), TotalKx, TotalKy);
 }
 
+  cout <<"before   TaskOperation.ApplyOperation(Architecture.GetArchitecture()) "<<endl;
 
   FirstRunFlag = true;
   GenericComplexMainTask Task1(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-
   FirstRunFlag = false;
   MainTaskOperation TaskOperation (&Task1);
   TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+
+  cout <<"after   TaskOperation.ApplyOperation(Architecture.GetArchitecture()) "<<endl;
   delete Hamiltonian;
   delete[] EigenstateOutputFile;
   delete[] EigenvalueOutputFile;
 }
 }
-
-
 
 cout <<"reading states"<<endl;
 char* EigenstateFile = new char [512];
