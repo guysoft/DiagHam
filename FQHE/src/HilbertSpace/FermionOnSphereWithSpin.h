@@ -150,10 +150,15 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
   // get the particle statistic 
   //
   // return value = particle statistic
-  int GetParticleStatistic();
+  virtual int GetParticleStatistic();
 
   // return a list of all possible quantum numbers 
   //
@@ -995,6 +1000,15 @@ inline int FermionOnSphereWithSpin::AdsigmaAdsigma (int m1, int m2, int sigma1, 
     }
   TmpState |= (0x1ul << m1);
   return this->FindStateIndex(TmpState, NewLzMax);
+}
+
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int FermionOnSphereWithSpin::GetNbrOrbitals()
+{
+  return this->NbrLzValue;
 }
 
 #endif

@@ -48,6 +48,7 @@ ParticleOnSphereWithSpinSMinusOperator::ParticleOnSphereWithSpinSMinusOperator(P
 {
   this->Particle= (ParticleOnSphereWithSpin*) (particle->Clone());
   this->NbrOrbitals = this->Particle->GetNbrOrbitals();
+  cout << "this->NbrOrbitals = " << this->NbrOrbitals << endl;
 }
 
 // copy constructor
@@ -127,7 +128,7 @@ ComplexVector& ParticleOnSphereWithSpinSMinusOperator::LowLevelAddMultiply(Compl
       Complex& Tmp = vSource[i];
       for (int j = 0; j < this->NbrOrbitals; ++j)
 	{
-	  Index = this->Particle->AddAu(i, j, Coefficient);
+	  Index = this->Particle->AddAu(i, j, j, Coefficient);
 	  if (Index < TargetDim)
 	    {
 	      vDestination[Index] += Tmp * Coefficient;		  
@@ -161,7 +162,7 @@ RealVector& ParticleOnSphereWithSpinSMinusOperator::LowLevelAddMultiply(RealVect
       double& Tmp = vSource[i];
       for (int j = 0; j < this->NbrOrbitals; ++j)
 	{
-	  Index = this->Particle->AddAu(i, j, Coefficient);
+	  Index = this->Particle->AddAu(i, j, j, Coefficient);
 	  if (Index < TargetDim)
 	    {
 	      vDestination[Index] += Tmp * Coefficient;		  

@@ -35,6 +35,7 @@
 #include "config.h"
 #include "HilbertSpace/ParticleOnTorus.h"
 #include "Matrix/RealSymmetricMatrix.h"
+#include "Matrix/SparseRealMatrix.h"
 
 
 class FermionOnTorus :  public ParticleOnTorus
@@ -284,6 +285,20 @@ class FermionOnTorus :  public ParticleOnTorus
   // groundState = reference on the total system ground state
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrFermionSector, int kySector, RealVector& groundState);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // twistMatrix = reference on the twist matrix to insert in the trace
+  // state = reference to vector that will contain the state description
+  // mPSSumIndices = diagonal indices that have to be kept in the trace
+  // nbrMPSSumIndices = number of diagonal indices that have to be kept in the trace
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, SparseRealMatrix& twistMatrix, RealVector& state, 
+					      int* mPSSumIndices, int nbrMPSSumIndices,
+					      long memory, long initialIndex, long nbrComponents);
 
  protected:
 

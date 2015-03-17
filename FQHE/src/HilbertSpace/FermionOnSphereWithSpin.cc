@@ -2998,6 +2998,11 @@ RealSymmetricMatrix FermionOnSphereWithSpin::EvaluatePartialDensityMatrix (int s
 
   FermionOnSphereWithSpin TmpDestinationHilbertSpace(nbrFermionSector, lzSector, subsytemSize - 1, szSector);
   cout << "subsystem Hilbert space dimension = " << TmpDestinationHilbertSpace.HilbertSpaceDimension << endl;
+  if (TmpDestinationHilbertSpace.HilbertSpaceDimension == 0)
+    {
+      RealSymmetricMatrix TmpDensityMatrixZero;
+      return TmpDensityMatrixZero;
+    }
   RealSymmetricMatrix TmpDensityMatrix(TmpDestinationHilbertSpace.HilbertSpaceDimension, true);
   int* TmpStatePosition = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];
   int* TmpStatePosition2 = new int [TmpDestinationHilbertSpace.HilbertSpaceDimension];

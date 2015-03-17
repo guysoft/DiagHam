@@ -44,6 +44,8 @@ using std::ostream;
 
 
 class Matrix;
+class SparseRealMatrix;
+class SparseComplexMatrix;
 
 
 class ParticleOnTorus :  public ParticleOnSphere
@@ -234,6 +236,34 @@ class ParticleOnTorus :  public ParticleOnSphere
   virtual int SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector& inputVector, int firstOrbitalIndex, int periodicity, 
 							   ComplexVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
 							   AbstractArchitecture* architecture);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // twistMatrix = reference on the twist matrix to insert in the trace
+  // state = reference to vector that will contain the state description
+  // mPSSumIndices = diagonal indices that have to be kept in the trace
+  // nbrMPSSumIndices = number of diagonal indices that have to be kept in the trace
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, SparseRealMatrix& twistMatrix, RealVector& state, 
+					      int* mPSSumIndices, int nbrMPSSumIndices,
+					      long memory, long initialIndex, long nbrComponents);
+
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // twistMatrix = reference on the twist matrix to insert in the trace
+  // state = reference to vector that will contain the state description
+  // mPSSumIndices = diagonal indices that have to be kept in the trace
+  // nbrMPSSumIndices = number of diagonal indices that have to be kept in the trace
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, SparseComplexMatrix& twistMatrix, ComplexVector& state, 
+					      int* mPSSumIndices, int nbrMPSSumIndices,
+					      long memory, long initialIndex, long nbrComponents);
 
  protected:
 
