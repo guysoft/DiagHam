@@ -61,13 +61,15 @@ using std::endl;
 // default constructor 
 //
 // eMatrixFlag = indicates that the MPS matrix will be used to compute a transfer matrix
+// torusFlag = true if the torus is the target geometry instead of the genus 0 surfaces
 
-FQHEMPSMatrixManager::FQHEMPSMatrixManager(bool eMatrixFlag)
+FQHEMPSMatrixManager::FQHEMPSMatrixManager(bool eMatrixFlag, bool torusFlag)
 {
   this->Options = 0;
   this->EMatrixFlag = eMatrixFlag;
   this->RightBMatrix = 0;
   this->LeftBMatrix = 0;
+  this->TorusFlag = torusFlag;
 }
 
 // destructor
@@ -152,9 +154,19 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*PrecalculationGroup) += new SingleStringOption('\n', "export-bmatrixname", "use a custom output file name to export the B matrices instead of the default one");
   (*PrecalculationGroup) += new BooleanOption ('\n', "only-export", "only export the B matrices in a binary file and exit from the program");
   (*PrecalculationGroup) += new SingleStringOption('\n', "matrices-cft", "optional directory where the geomerty independent CFT matrices are stored");
-  (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
-  (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1);
-  (*OutputGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
+  if (this->TorusFlag == false)
+    {
+      (*OutputGroup) += new BooleanOption ('c', "normalize-cylinder", "express the MPS in the normalized cylinder basis");
+      (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1.0);
+      (*OutputGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
+    }
+  else
+    {
+      (*OutputGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta", 0);
+      (*OutputGroup) += new SingleDoubleOption  ('\n', "angle", "angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)", 0.5);      
+      (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the torus (norm of tau)", 1.0);
+      (*OutputGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "flux insertion along the tau direction", 0.0);
+    }
   (*OutputGroup) += new BooleanOption  ('\n', "show-bmatrices", "show the B matrices");
 }
 
@@ -169,7 +181,9 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 {
   AbstractFQHEMPSMatrix* MPSMatrix = this->GetMPSMatrices(this->Options->GetBoolean("quasihole-sector"), this->Options->GetInteger("qsector-value"), 
 							  this->Options->GetString("import-bmatrices"), nbrFluxQuanta, architecture);
-  bool CylinderFlag = this->Options->GetBoolean("normalize-cylinder");
+  bool CylinderFlag = false;
+  if (this->TorusFlag == false)
+    CylinderFlag = this->Options->GetBoolean("normalize-cylinder");
   double AspectRatio = this->Options->GetDouble("aspect-ratio");
   double Kappa = 0.0;
   double Perimeter = 0.0;
@@ -198,8 +212,17 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	    {
 	      if (CylinderFlag == false)
 		{
-		  sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_%s_p_%ld_n_%d.dat", MPSMatrix->GetName(), 
-			  this->Options->GetInteger("p-truncation"), NbrBMatrices);
+		  if (this->TorusFlag == false)
+		    {
+		      sprintf(ExportFileName, "fqhemps_bmatrices_unnormalized_%s_p_%ld_n_%d.dat", MPSMatrix->GetName(), 
+			      this->Options->GetInteger("p-truncation"), NbrBMatrices);
+		    }
+		  else
+		    {
+		      sprintf(ExportFileName, "fqhemps_bmatrices_torus_%s_p_%ld_n_%d_nphi_%ld_ratio_%.6f_angle_%.6f_flux2_%.6f.dat", MPSMatrix->GetName(), 
+			      this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetInteger("nbr-fluxquanta"),
+			      this->Options->GetDouble("aspect-ratio"), this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"));
+		    }
 		}
 	      else
 		{
@@ -253,7 +276,9 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 
 AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSectorFlag, int topologicalSectorValue, char* importBMatrices, int nbrFluxQuanta, AbstractArchitecture* architecture)
 {
-  bool CylinderFlag = this->Options->GetBoolean("normalize-cylinder");
+  bool CylinderFlag = false;
+  if (this->TorusFlag == false)
+    CylinderFlag = this->Options->GetBoolean("normalize-cylinder");
   double AspectRatio = this->Options->GetDouble("aspect-ratio");
   double Kappa = 0.0;
   double Perimeter = 0.0;
@@ -465,10 +490,21 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		    }
 		  else
 		    {
-		      MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
-							    this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							    this->Options->GetBoolean("boson"), 
-							    this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
+		      if (this->TorusFlag == false)
+			{
+			  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
+								this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								this->Options->GetBoolean("boson"), 
+								this->Options->GetBoolean("trim-qsector"),CylinderFlag, Kappa);
+			}
+		      else
+			{
+			  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
+								this->Options->GetInteger("p-truncation"), NbrBMatrices,
+								true, this->Options->GetBoolean("trim-qsector"),
+								this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
+								this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"));
+			}
 		    }
 		}
 	    }
@@ -592,7 +628,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetLeftMPSMatrices(int nbrFluxQuant
 
 double FQHEMPSMatrixManager::GetCylinderPerimeter(int nbrFluxQuanta)
 {
-  if (this->Options->GetBoolean("normalize-cylinder"))
+  if ((this->TorusFlag == false) && (this->Options->GetBoolean("normalize-cylinder")))
     {
       if (this->Options->GetDouble("cylinder-perimeter") > 0.0)
 	return this->Options->GetDouble("cylinder-perimeter");

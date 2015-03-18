@@ -52,6 +52,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix()
 {
   this->UniformChargeIndexRange = true;
   this->BosonicVersion = false;
+  this->TorusFlag = false;
 }
 
 // constructor 
@@ -71,6 +72,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
   this->BosonicVersion = bosonicVersion;
+  this->TorusFlag = false;
   if (this->BosonicVersion == true)
     this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex) + 1;
   else
@@ -78,6 +80,50 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->UniformChargeIndexRange = !trimChargeIndices;
+  this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
+  for (int i = 0; i < this->NbrBMatrices; ++i)
+    {
+      this->PhysicalIndices[i] = (unsigned long) i;
+    }
+  if (this->BosonicVersion == true)
+    this->AlternateCreateBMatrices();
+  else
+    this->CreateBMatrices();
+}
+
+// constructor for the torus geometry
+//
+// laughlinIndex = power of the Laughlin part (i.e. 1/nu)
+// pLevel = |P| level truncation
+// nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+// bosonicVersion = use a version of the code that is compatible with bosonic wave functions
+// trimChargeIndices = trim the charge indices
+// nbrFluxQuanta = number of flux quanta piercing the torus
+// aspectRatio = aspect ratio of the torus(norm of tau)
+// angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+// fluxInsertion = flux insertion along the tau direction
+
+FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool bosonicVersion, bool trimChargeIndices, 
+					     int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion)
+{
+  this->NbrBMatrices = nbrBMatrices;
+  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->LaughlinIndex = laughlinIndex;
+  this->PLevel = pLevel;
+  this->BosonicVersion = bosonicVersion;
+  if (this->BosonicVersion == true)
+    this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex) + 1;
+  else
+    this->NbrNValue = (2 * this->PLevel) + this->LaughlinIndex;
+  this->NValueGlobalShift = this->PLevel;
+  this->CylinderFlag = false;
+  this->TorusFlag = true;
+  this->TorusNbrFluxQuanta = nbrFluxQuanta;
+  this->TorusAngle = angle;
+  this->TorusAspectRatio = aspectRatio;
+  this->TorusFluxInsertion = fluxInsertion;
+  this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   for (int i = 0; i < this->NbrBMatrices; ++i)
@@ -106,6 +152,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char
   this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex);
   this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
+  this->TorusFlag = false;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->LoadMatrices(fileName);
@@ -338,8 +385,18 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
 	    {
 	      double Tmp = 1.0;
 	      if (this->CylinderFlag)
-		Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-							 + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
+		{
+		  Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
+							   + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
+		}
+	      else
+		{
+		  if (this->TorusFlag)
+		    {
+		      Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
+							       + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
+		    }
+		}
 	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(i, k, j - 1), this->GetMatrixIndex(i, k, j), Tmp);
 	    }
 	}
@@ -410,7 +467,7 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
       if (BMatrices[m].GetNbrRow() > 0)
 	{
 	  ++TmpNbrBMatrices;
-	  if (this->CylinderFlag)
+	  if ((this->CylinderFlag) || (this->TorusFlag))
 	    BMatrices[m] /= sqrt((double) m);
 	}
     }
@@ -782,3 +839,50 @@ void FQHEMPSLaughlinMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnI
       columnIndex = this->NValueGlobalShift - MinQ;
     }
 }
+
+// get the matrix that into account the Jordan Wigner string on the torus geometry
+//
+// nbrFermions = number of fermions in the system
+// return value = corresponding matrix
+
+SparseRealMatrix FQHEMPSLaughlinMatrix::GetTorusStringMatrix(int nbrFermions)
+{
+  if ((nbrFermions & 1) == 1)
+    {
+      return this->AbstractFQHEMPSMatrix::GetTorusStringMatrix(nbrFermions);
+    }
+  int* TmpNbrElementPerRow =  new int [this->RealBMatrices[0].GetNbrColumn()];
+  for (int i = 0; i < this->RealBMatrices[0].GetNbrColumn(); ++i)
+    {
+      TmpNbrElementPerRow[i] = 1;
+    }
+  SparseRealMatrix StringMatrix (this->RealBMatrices[0].GetNbrRow(), this->RealBMatrices[0].GetNbrColumn(), TmpNbrElementPerRow);
+  for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
+    {
+      int MinQValue;
+      int MaxQValue;
+      this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
+      for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+	{
+	  int TmpBondIndexRange = this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
+	  if ((CurrentQValue & 1) == 0)
+	    {
+	      for (int i = 0; i < TmpBondIndexRange; ++i)
+		{
+		  int TmpIndex = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);	      
+		  StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, 1.0);
+		}
+	    }
+	  else
+	    {
+	      for (int i = 0; i < TmpBondIndexRange; ++i)
+		{
+		  int TmpIndex = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);	      
+		  StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, -1.0);
+		}
+	    }
+	}
+    }
+  return StringMatrix;
+}
+

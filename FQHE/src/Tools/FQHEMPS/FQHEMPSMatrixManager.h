@@ -51,6 +51,9 @@ class FQHEMPSMatrixManager
   // indicates that the MPS matrix will be used to compute a transfer matrix
   bool EMatrixFlag;
 
+  // flag if the torus is the target geometry instead of the genus 0 surfaces
+  bool TorusFlag;
+
   // storage of the MPS matrices 
   AbstractFQHEMPSMatrix* RightBMatrix;
   AbstractFQHEMPSMatrix* LeftBMatrix;
@@ -60,7 +63,8 @@ class FQHEMPSMatrixManager
   // default constructor 
   //
   // eMatrixFlag = indicates that the MPS matrix will be used to compute a transfer matrix
-  FQHEMPSMatrixManager(bool eMatrixFlag = false);
+  // torusFlag = true if the torus is the target geometry instead of the genus 0 surfaces
+  FQHEMPSMatrixManager(bool eMatrixFlag = false, bool torusFlag = false);
 
   // destructor
   //

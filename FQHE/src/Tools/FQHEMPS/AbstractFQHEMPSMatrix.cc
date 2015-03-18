@@ -299,6 +299,26 @@ SparseComplexMatrix* AbstractFQHEMPSMatrix::GetQuasiholeMatrices(int nbrQuasihol
   return 0;
 }
   
+// get the matrix that into account the Jordan Wigner string on the torus geometry
+//
+// nbrFermions = number of fermions in the system
+// return value = corresponding matrix
+
+SparseRealMatrix AbstractFQHEMPSMatrix::GetTorusStringMatrix(int nbrFermions)
+{
+  int* TmpNbrElementPerRow =  new int [this->RealBMatrices[0].GetNbrColumn()];
+  for (int i = 0; i < this->RealBMatrices[0].GetNbrColumn(); ++i)
+    {
+      TmpNbrElementPerRow[i] = 1;
+    }
+  SparseRealMatrix StringMatrix (this->RealBMatrices[0].GetNbrRow(), this->RealBMatrices[0].GetNbrColumn(), TmpNbrElementPerRow);
+  for (int i = 0; i < StringMatrix.GetNbrColumn(); ++i)
+    {
+      StringMatrix.SetMatrixElement(i, i, 1.0);
+    } 
+  return StringMatrix;
+}
+
 // get the range for the bond index when fixing the tuncation level and the charge index
 //
 // pLevel = tuncation level of the block

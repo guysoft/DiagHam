@@ -73,6 +73,18 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // cylinder aspect ratio
   double Kappa;
 
+
+  // true if B matrix have to be evaluated on the torus geometry
+  bool TorusFlag;
+  // number of flux quanta piercing the torus
+  int TorusNbrFluxQuanta;
+  // angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  double TorusAngle;
+  // aspect ratio of the torus(norm of tau)
+  double TorusAspectRatio;
+  // flux insertion along the tau direction
+  double TorusFluxInsertion;
+
  public:
   
   // default constructor 
@@ -90,6 +102,20 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // kappa = cylinder aspect ratio
   FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool bosonicVersion = false, 
 			bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
+
+  // constructor for the torus geometry
+  //
+  // laughlinIndex = power of the Laughlin part (i.e. 1/nu)
+  // pLevel = |P| level truncation
+  // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
+  // trimChargeIndices = trim the charge indices
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
+  FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, bool bosonicVersion, bool trimChargeIndices, 
+			int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion);
 
   // constructor from stored B matrices
   //
@@ -186,6 +212,12 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // columnIndex = matrix column index
   // padding = assume that the state has the estra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
+
+  // get the matrix that into account the Jordan Wigner string on the torus geometry
+  //
+  // nbrFermions = number of fermions in the system
+  // return value = corresponding matrix
+  virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
 
  protected:
 

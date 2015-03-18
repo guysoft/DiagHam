@@ -115,6 +115,12 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the edge matrix
   virtual SparseComplexMatrix* GetQuasiholeMatrices(int nbrQuasiholes, Complex* quasiholePositions);
   
+  // get the matrix that into account the Jordan Wigner string on the torus geometry
+  //
+  // nbrFermions = number of fermions in the system
+  // return value = corresponding matrix
+  virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
+
   // get the name describing the B matrices 
   // 
   // return value = name 
