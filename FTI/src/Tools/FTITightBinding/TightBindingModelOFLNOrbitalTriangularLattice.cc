@@ -104,6 +104,7 @@ TightBindingModelOFLNOrbitalTriangularLattice::~TightBindingModelOFLNOrbitalTria
 
 void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
+  cout<<"this->NbrBands"<<this->NbrBands<<endl;
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
   long MaxStateIndex = minStateIndex + nbrStates;
@@ -123,7 +124,6 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 	      //K2 = this->KyFactor*(((double) ky) + this->GammaY);
 	      
 	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	      cout<<"this->NbrBands"<<this->NbrBands<<endl;
 	      for (int p = 0; p< this->NbrStep ; p++)
 		{
 		  
@@ -257,6 +257,7 @@ bool TightBindingModelOFLNOrbitalTriangularLattice::WriteAsciiSpectrum(char* fil
 
 void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
+  cout<<"this->NbrBands"<<this->NbrBands<<endl;
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
   long MaxStateIndex = minStateIndex + nbrStates;
@@ -272,10 +273,8 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 	    {
 	        K1 = this->KxFactor*((double) kx);
                 K2 = this->KyFactor*((double) ky);
-
 	      
 	      HermitianMatrix TmpOneBodyHamiltonian(this->NbrBands, true);
-	      cout<<"this->NbrBands"<<this->NbrBands<<endl;
 	      for (int p = 0; p< this->NbrStep ; p++)
 		{
 		  
@@ -297,7 +296,6 @@ void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(lon
 			  int IntermediateIndex = this->GetIntermediateLinearizedIndices(p, t, Spin);
 
 			  TmpOneBodyHamiltonian.AddToMatrixElement(IntermediateIndex, IntermediateIndex,this->InvMomentum*(MomentaX*MomentaX+MomentaY*MomentaY-MomentaX*MomentaY + FluxXterm + FluxYterm ));
-			  cout <<"Phase = " << Phase(this->KxFactor * this->GammaX)<<endl;
 
 			  int IntermediateIndex1 = this->GetIntermediateLinearizedIndices(p, t+1, Spin);
 			  if (IntermediateIndex1 < IntermediateIndex)
