@@ -82,6 +82,8 @@ int main(int argc, char** argv)
   
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-kx", "Calculate all kx subspaces", false);
+  (*SystemGroup) += new  BooleanOption  ('\n', "redundant-ky", "Calculate all ky subspaces", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "triangular", "use the Hofstadter model for a triangular lattice");
@@ -308,6 +310,8 @@ else
 
   int MinKx = 0;
   int MaxKx = NbrCellX - 1;
+  if ((Manager.GetBoolean("redundant-kx")==false) && (fabs(Manager.GetDouble("gamma-x"))<1e-12)) // want to reduce zone, and no offset?
+    MaxKx = NbrCellX/2;
   if (Manager.GetInteger("only-kx") >= 0)
     {						
       MinKx = Manager.GetInteger("only-kx");
@@ -315,17 +319,19 @@ else
     }
   int MinKy = 0;
   int MaxKy = NbrCellY - 1;
+  if ((Manager.GetBoolean("redundant-ky")==false) && (fabs(Manager.GetDouble("gamma-y"))<1e-12)) // want to reduce zone, and no offset?
+    MaxKy = NbrCellY/2;
   if (Manager.GetInteger("only-ky") >= 0)
     {						
       MinKy = Manager.GetInteger("only-ky");
       MaxKy = MinKy;
     }
 
-if(Manager.GetBoolean("no-translation") == true)
-{  
- MaxKx = 0;
- MaxKy = 0;
- }
+  if(Manager.GetBoolean("no-translation") == true)
+    {  
+      MaxKx = 0;
+      MaxKy = 0;
+    }
 
   Abstract2DTightBindingModel *TightBindingModel;
   if (Manager.GetBoolean("triangular")==false)
