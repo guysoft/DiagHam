@@ -449,19 +449,19 @@ for (int GammaX = 0; GammaX <   IncNbrPointX; GammaX++)
 
    Complex Tmp = Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo], ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlusMinus);
    ManyBodyChernNumber-= Tmp;
-   cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+   //   cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
 
    Tmp =  Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo],  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY], OverlapMatrixMinusPlus);
-   cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+   //   cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
    ManyBodyChernNumber-= Tmp;   
 
    Tmp =  Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaPlusYModulo],  ManyBodyState[ShiftedGammaPlusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixPlusPlus);
    ManyBodyChernNumber+= Tmp;
-      cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+   //      cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaPlusYModulo << " ) -> ( " << ShiftedGammaPlusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
 
    Tmp =   Space->ComputeOverlapWaveFunctionsWithDifferentGamma ( ManyBodyState[ShiftedGammaX*IncNbrPointY + ShiftedGammaMinusYModulo],  ManyBodyState[ShiftedGammaMinusXModulo*IncNbrPointY + ShiftedGammaY],OverlapMatrixMinusMinus);
    ManyBodyChernNumber+= Tmp;
-     cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
+   //     cout << " ( " << ShiftedGammaX<< " , " << ShiftedGammaMinusYModulo << " ) -> ( " << ShiftedGammaMinusXModulo << " , " <<ShiftedGammaY<< " ) "<< Tmp<<endl;
 
 
    delete [] OverlapMatrixPlusPlus;
