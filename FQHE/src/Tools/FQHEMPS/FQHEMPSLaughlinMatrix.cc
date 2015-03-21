@@ -31,6 +31,7 @@
 #include "config.h"
 #include "Tools/FQHEMPS/FQHEMPSLaughlinMatrix.h"
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 
 #include "GeneralTools/Endian.h"
@@ -599,6 +600,31 @@ void FQHEMPSLaughlinMatrix::GetChargeIndexRange (int pLevel, int& minQ, int& max
   return;
 }
 
+// get the number of particles that fit the root configuration once the number of flux quanta is fixed
+// 
+// nbrFluxQuanta = number of flux quanta
+// padding = assume that the state has the extra padding
+// return value = number of particles
+
+int FQHEMPSLaughlinMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding)
+{
+  int Numerator;
+  int Denominator;
+  this->GetFillingFactor(Numerator, Denominator);
+  if (this->TorusFlag == false)
+    {
+      int NbrParticles = ((nbrFluxQuanta + 1) * Numerator);
+      if ((NbrParticles % Denominator) == 0)
+	return (NbrParticles / Denominator);
+      else
+	return ((NbrParticles / Denominator) + 1);
+    }
+  else
+    {
+      return ((nbrFluxQuanta * Numerator) / Denominator);      
+    }
+}
+
 // load the specific informations from the file header
 // 
 // file = reference on the input file stream
@@ -847,16 +873,25 @@ void FQHEMPSLaughlinMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnI
 
 SparseRealMatrix FQHEMPSLaughlinMatrix::GetTorusStringMatrix(int nbrFermions)
 {
-  if ((nbrFermions & 1) == 1)
+  if ((nbrFermions == 0) || ((nbrFermions & 1) == 1))
     {
       return this->AbstractFQHEMPSMatrix::GetTorusStringMatrix(nbrFermions);
     }
-  int* TmpNbrElementPerRow =  new int [this->RealBMatrices[0].GetNbrColumn()];
-  for (int i = 0; i < this->RealBMatrices[0].GetNbrColumn(); ++i)
+  int TmpDimension = 0;
+  if (this->RealBMatrices != 0)
+    {
+      TmpDimension = this->RealBMatrices[0].GetNbrColumn();
+    }
+  else
+    {
+      TmpDimension = this->ComplexBMatrices[0].GetNbrColumn();
+    }
+  int* TmpNbrElementPerRow =  new int [TmpDimension];
+  for (int i = 0; i < TmpDimension; ++i)
     {
       TmpNbrElementPerRow[i] = 1;
     }
-  SparseRealMatrix StringMatrix (this->RealBMatrices[0].GetNbrRow(), this->RealBMatrices[0].GetNbrColumn(), TmpNbrElementPerRow);
+  SparseRealMatrix StringMatrix (this->RealBMatrices[0].GetNbrRow(), TmpDimension, TmpNbrElementPerRow);
   for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
     {
       int MinQValue;
@@ -886,3 +921,48 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::GetTorusStringMatrix(int nbrFermions)
   return StringMatrix;
 }
 
+// get the auxiliary space indices that are related to a given topological scetor
+//
+// topologicalSector = index of the topological sector to select
+// nbrIndices = reference on the integer that will be set to the number of indices
+// return value = array that contains the auxiliary space indices related to the selected topological sector
+
+int* FQHEMPSLaughlinMatrix::GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices)
+{
+  nbrIndices = 0;
+  for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
+    {
+      int MinQValue;
+      int MaxQValue;
+      this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
+      for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+	{
+	  if ((CurrentQValue % this->LaughlinIndex) == topologicalSector)
+	    {
+	      nbrIndices += this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
+	    }
+	}
+    }
+  int* TmpIndices =  new int [nbrIndices];
+  nbrIndices = 0;
+  for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
+    {
+      int MinQValue;
+      int MaxQValue;
+      this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
+      for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+	{
+	  if ((CurrentQValue % this->LaughlinIndex) == topologicalSector)
+	    {
+	      int TmpBondIndexRange = this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
+	      for (int i = 0; i < TmpBondIndexRange; ++i)
+		{
+		  TmpIndices[nbrIndices] = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);
+		  ++nbrIndices;
+		}
+	    }
+	}
+    }
+  return TmpIndices;
+}
+  

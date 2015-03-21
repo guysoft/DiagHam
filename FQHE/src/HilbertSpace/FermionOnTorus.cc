@@ -139,7 +139,7 @@ FermionOnTorus::FermionOnTorus(const FermionOnTorus& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateKyMax = fermions.StateKyMax;
   this->KyMax = fermions.KyMax;
@@ -282,7 +282,7 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
   this->NbrFermions = fermions.NbrFermions;
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->HilbertSpaceDimension = fermions.HilbertSpaceDimension;
-  this->LargeHilbertSpaceDimension = this->LargeHilbertSpaceDimension;
+  this->LargeHilbertSpaceDimension = fermions.LargeHilbertSpaceDimension;
   this->StateDescription = fermions.StateDescription;
   this->StateKyMax = fermions.StateKyMax;
   this->KyMax = fermions.KyMax;

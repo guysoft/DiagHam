@@ -56,9 +56,11 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the number of particles", 0);
   (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum", 0);
+  (*SystemGroup) += new SingleIntegerOption ('\n', "topological-sector", "set the topological sector", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
   (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
+  (*OutputGroup) += new BooleanOption ('\n', "no-normalization", "do not normalize the final state");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -89,12 +91,7 @@ int main(int argc, char** argv)
     {
       return -1;
     }
-  if (Manager.GetInteger("nbr-fluxquanta") > 0)
-    {
-      NbrFluxQuanta = Manager.GetInteger("nbr-fluxquanta");
-    }
-  NbrParticles = NbrFluxQuanta / 3;
-  TotalKy = Manager.GetInteger("ky-momentum");
+  NbrFluxQuanta = Manager.GetInteger("nbr-fluxquanta");
   
   double AspectRatio = Manager.GetDouble("aspect-ratio");
 
@@ -104,10 +101,16 @@ int main(int argc, char** argv)
       return 0;
     }
 
+  NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, true);
+  TotalKy = Manager.GetInteger("ky-momentum");
   ParticleOnTorus* Space = 0;
   if (Manager.GetBoolean("boson") == true)
     {
-      Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy);
+      int MaxOccupation = Manager.GetInteger("boson-truncation");
+      if (MaxOccupation > NbrParticles)
+	Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy);
+      else
+	Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy, MaxOccupation);
     }
   else
     {
@@ -147,13 +150,15 @@ int main(int argc, char** argv)
 
   SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
   cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
-  SparseRealMatrix StringMatrix = MPSMatrix->GetTorusStringMatrix(NbrParticles);
+  SparseRealMatrix StringMatrix;
+  if (Manager.GetBoolean("boson") == true)
+    StringMatrix = MPSMatrix->GetTorusStringMatrix(0);
+  else
+    StringMatrix = MPSMatrix->GetTorusStringMatrix(NbrParticles);
 
 
-  int NbrMPSSumIndices = SparseBMatrices[0].GetNbrRow();
-  int* MPSSumIndices =  new int[NbrMPSSumIndices];
-  for  (int i = 0; i < NbrMPSSumIndices; ++i)
-    MPSSumIndices[i] = i;
+  int NbrMPSSumIndices;
+  int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topological-sector"), NbrMPSSumIndices);
 
   RealVector State ;
   ComplexVector ComplexState ;
@@ -170,21 +175,24 @@ int main(int argc, char** argv)
     }
   else
     {
-      Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, 0l, Space->GetLargeHilbertSpaceDimension());
-//       FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, &State, MPSRowIndex, MPSColumnIndex,
-// 					    Manager.GetInteger("precalculation-blocksize"));
-//       Operation.ApplyOperation(Architecture.GetArchitecture());
+//       Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, 0l, Space->GetLargeHilbertSpaceDimension());
+       FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, StringMatrix, &State, MPSSumIndices, NbrMPSSumIndices,
+  					    Manager.GetInteger("precalculation-blocksize"));
+       Operation.ApplyOperation(Architecture.GetArchitecture());
     }
 
   if (Architecture.GetArchitecture()->CanWriteOnDisk() == true)
     {
-      if (TwistedTorusFlag == true)
+      if (Manager.GetBoolean("no-normalization") == false)
 	{
-	  ComplexState /= ComplexState.Norm();
-	}
-      else
-	{
-	  State /= State.Norm();
+	  if (TwistedTorusFlag == true)
+	    {
+	      ComplexState /= ComplexState.Norm();
+	    }
+	  else
+	    {
+	      State /= State.Norm();
+	    }
 	}
       if (TwistedTorusFlag == true)
 	{

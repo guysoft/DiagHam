@@ -121,6 +121,13 @@ class AbstractFQHEMPSMatrix
   // return value = corresponding matrix
   virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
 
+  // get the auxiliary space indices that are related to a given topological scetor
+  //
+  // topologicalSector = index of the topological sector to select
+  // nbrIndices = reference on the integer that will be set to the number of indices
+  // return value = array that contains the auxiliary space indices related to the selected topological sector
+  virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
+  
   // get the name describing the B matrices 
   // 
   // return value = name 

@@ -32,6 +32,7 @@
 #include "Tools/FQHEMPS/FQHEMPSClustered2RMatrix.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 #include "Matrix/LongRationalMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
 #include "Architecture/ArchitectureOperation/FQHEMPSEvaluateCFTOperation.h"
@@ -94,10 +95,17 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational cent
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// torusFlag = true the torus geometry should be used instead of a genus-0 surface
+// nbrFluxQuanta = number of flux quanta piercing the torus
+// aspectRatio = aspect ratio of the torus(norm of tau)
+// angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+// fluxInsertion = flux insertion along the tau direction
 // architecture = architecture to use for precalculation
 
 FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, bool bosonicVersion, bool useRational,
-						   bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
+						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
+						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion,
+						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -114,6 +122,15 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->TorusFlag = torusFlag;
+  if (this->TorusFlag == true)
+    {
+      this->TorusNbrFluxQuanta = nbrFluxQuanta;
+      this->TorusAngle = angle;
+      this->TorusAspectRatio = aspectRatio;
+      this->TorusFluxInsertion = fluxInsertion;
+      this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+    }
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
   this->WeightPsi = LongRational(this->RIndex, 4l);
@@ -139,10 +156,17 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// torusFlag = true the torus geometry should be used instead of a genus-0 surface
+// nbrFluxQuanta = number of flux quanta piercing the torus
+// aspectRatio = aspect ratio of the torus(norm of tau)
+// angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+// fluxInsertion = flux insertion along the tau direction
 // architecture = architecture to use for precalculation
   
 FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion, bool useRational, 
-						   bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
+						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
+						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion,
+						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -159,6 +183,15 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->UseRationalFlag = useRational;
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->Kappa = kappa;
+  this->TorusFlag = torusFlag;
+  if (this->TorusFlag == true)
+    {
+      this->TorusNbrFluxQuanta = nbrFluxQuanta;
+      this->TorusAngle = angle;
+      this->TorusAspectRatio = aspectRatio;
+      this->TorusFluxInsertion = fluxInsertion;
+      this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+    }
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
   this->WeightPsi = LongRational(this->RIndex, 4l);
@@ -182,10 +215,17 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// torusFlag = true the torus geometry should be used instead of a genus-0 surface
+// nbrFluxQuanta = number of flux quanta piercing the torus
+// aspectRatio = aspect ratio of the torus(norm of tau)
+// angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+// fluxInsertion = flux insertion along the tau direction
 // architecture = architecture to use for precalculation
 
 FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion, 
-						   bool trimChargeIndices, bool cylinderFlag, double kappa, AbstractArchitecture* architecture)
+						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
+						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion,
+						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
   this->BosonicVersion = bosonicVersion;
@@ -198,6 +238,15 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices,
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->TorusFlag = torusFlag;
+  if (this->TorusFlag == true)
+    {
+      this->TorusNbrFluxQuanta = nbrFluxQuanta;
+      this->TorusAngle = angle;
+      this->TorusAspectRatio = aspectRatio;
+      this->TorusFluxInsertion = fluxInsertion;
+      this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+    }
   this->PLevel = pLevel;
   
   ConfigurationParser StateDefinition;
@@ -261,9 +310,15 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices,
 // trimChargeIndices = trim the charge indices
 // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
 // kappa = cylinder aspect ratio
+// torusFlag = true the torus geometry should be used instead of a genus-0 surface
+// nbrFluxQuanta = number of flux quanta piercing the torus
+// aspectRatio = aspect ratio of the torus(norm of tau)
+// angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+// fluxInsertion = flux insertion along the tau direction
 
 FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, 
-						   bool trimChargeIndices, bool cylinderFlag, double kappa)
+						   bool trimChargeIndices, bool cylinderFlag, double kappa, 
+						   bool torusFlag, int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion)
 {
   this->RIndex = rIndex;
   this->LaughlinIndex = laughlinIndex;
@@ -271,6 +326,15 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
   this->PLevel = pLevel;
   this->CylinderFlag = cylinderFlag;
   this->Kappa = kappa;
+  this->TorusFlag = torusFlag;
+  if (this->TorusFlag == true)
+    {
+      this->TorusNbrFluxQuanta = nbrFluxQuanta;
+      this->TorusAngle = angle;
+      this->TorusAspectRatio = aspectRatio;
+      this->TorusFluxInsertion = fluxInsertion;
+      this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+    }
   this->LoadMatrices(fileName);
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
@@ -2678,9 +2742,16 @@ void FQHEMPSClustered2RMatrix::ComputeChargeIndexRange(int pLevel, int cftSector
 
 int FQHEMPSClustered2RMatrix::GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding)
 {
-  nbrFluxQuanta += this->RIndex + 1;
-  nbrFluxQuanta *= 2;
-  return (nbrFluxQuanta / (this->RIndex + 2));
+  if (this->TorusFlag == false)
+    {
+      nbrFluxQuanta += this->RIndex + 1;
+      nbrFluxQuanta *= 2;
+      return (nbrFluxQuanta / (this->RIndex + 2));
+    }
+  else
+    {
+      return ((nbrFluxQuanta * 2) / (this->RIndex + 2));      
+    }
 }
 
 // compute the scalar product matrix at a given level
@@ -2986,8 +3057,9 @@ void FQHEMPSClustered2RMatrix::RescaleFullMatrixElements(LongRationalMatrix** ra
 // weights = weight of each primary field in the basis states
 // fusion = OPE structure coefficients, invoked only when fieldWeight != 0
 // writeIntermediate = whether to output rational scalar products and matrix elements
+
 void FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, AbstractArchitecture* architecture,
-        char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate)
+						     char* fieldName, LongRational fieldWeight, int nbrSectors, char** sectorNames, LongRational* weights, RealMatrix fusion, bool writeIntermediate)
 {
     LongRational CentralCharge12(this->CentralCharge);
     cout << "central charge = " << CentralCharge12 << endl;
@@ -3286,3 +3358,107 @@ void FQHEMPSClustered2RMatrix::ComputeMatrixElements(char* cftDirectory, Abstrac
 
     delete[] StartingLevels;
 }
+
+// get the matrix that into account the Jordan Wigner string on the torus geometry
+//
+// nbrFermions = number of fermions in the system
+// return value = corresponding matrix
+
+SparseRealMatrix FQHEMPSClustered2RMatrix::GetTorusStringMatrix(int nbrFermions)
+{
+  if ((nbrFermions == 0) || ((nbrFermions & 1) == 1))
+    {
+      return this->AbstractFQHEMPSMatrix::GetTorusStringMatrix(nbrFermions);
+    }
+  int TmpDimension = 0;
+  if (this->RealBMatrices != 0)
+    {
+      TmpDimension = this->RealBMatrices[0].GetNbrColumn();
+    }
+  else
+    {
+      TmpDimension = this->ComplexBMatrices[0].GetNbrColumn();
+    }
+  int* TmpNbrElementPerRow =  new int [TmpDimension];
+  for (int i = 0; i < TmpDimension; ++i)
+    {
+      TmpNbrElementPerRow[i] = 1;
+    }
+  SparseRealMatrix StringMatrix (TmpDimension, TmpDimension, TmpNbrElementPerRow);
+  for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
+    {
+//       for (int CurrentCFTSector = 0; CurrentCFTSector < ; ++CurrentCFTSector)
+// 	{
+// 	  int MinQValue;
+// 	  int MaxQValue;
+// 	  this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
+// 	  for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+// 	    {
+// 	      int TmpBondIndexRange = this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
+// 	      if ((CurrentQValue & 1) == 0)
+// 		{
+// 		  for (int i = 0; i < TmpBondIndexRange; ++i)
+// 		    {
+// 		      int TmpIndex = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);	      
+// 		      StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, 1.0);
+// 		    }
+// 		}
+// 	      else
+// 		{
+// 		  for (int i = 0; i < TmpBondIndexRange; ++i)
+// 		    {
+// 		      int TmpIndex = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);	      
+// 		      StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, -1.0);
+// 		    }
+// 		}
+// 	    }
+// 	}
+    }
+  return StringMatrix;
+}
+
+// get the auxiliary space indices that are related to a given topological scetor
+//
+// topologicalSector = index of the topological sector to select
+// nbrIndices = reference on the integer that will be set to the number of indices
+// return value = array that contains the auxiliary space indices related to the selected topological sector
+
+int* FQHEMPSClustered2RMatrix::GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices)
+{
+  nbrIndices = 0;
+  for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
+    {
+      int MinQValue;
+      int MaxQValue;
+      this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
+      for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+	{
+	  if ((CurrentQValue % (this->RIndex + 2)) == topologicalSector)
+	    {
+	      nbrIndices += this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
+	    }
+	}
+    }
+  int* TmpIndices =  new int [nbrIndices];
+  nbrIndices = 0;
+  for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
+    {
+      int MinQValue;
+      int MaxQValue;
+      this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
+      for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+	{
+	  if ((CurrentQValue % (this->RIndex + 2)) == topologicalSector)
+	    {
+	      int TmpBondIndexRange = this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
+	      for (int i = 0; i < TmpBondIndexRange; ++i)
+		{
+		  TmpIndices[nbrIndices] = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);
+		  ++nbrIndices;
+		}
+	    }
+	}
+    }
+  return TmpIndices;
+}
+  

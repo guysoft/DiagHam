@@ -192,6 +192,13 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int pLevel, int& minQ, int& maxQ);
 
+  // get the number of particles that fit the root configuration once the number of flux quanta is fixed
+  // 
+  // nbrFluxQuanta = number of flux quanta
+  // padding = assume that the state has the extra padding
+  // return value = number of particles
+  virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding);
+
   // compute P, N from the linearized index of the B matrix for the Laughlin states
   //
   // index = linearized index
@@ -213,12 +220,19 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // padding = assume that the state has the estra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
-  // get the matrix that into account the Jordan Wigner string on the torus geometry
+  // get the matrix that takes into account the Jordan Wigner string on the torus geometry
   //
   // nbrFermions = number of fermions in the system
   // return value = corresponding matrix
   virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
 
+  // get the auxiliary space indices that are related to a given topological scetor
+  //
+  // topologicalSector = index of the topological sector to select
+  // nbrIndices = reference on the integer that will be set to the number of indices
+  // return value = array that contains the auxiliary space indices related to the selected topological sector
+  virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
+  
  protected:
 
   // load the specific informations from the file header

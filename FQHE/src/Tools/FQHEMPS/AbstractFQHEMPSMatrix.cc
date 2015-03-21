@@ -306,12 +306,21 @@ SparseComplexMatrix* AbstractFQHEMPSMatrix::GetQuasiholeMatrices(int nbrQuasihol
 
 SparseRealMatrix AbstractFQHEMPSMatrix::GetTorusStringMatrix(int nbrFermions)
 {
-  int* TmpNbrElementPerRow =  new int [this->RealBMatrices[0].GetNbrColumn()];
-  for (int i = 0; i < this->RealBMatrices[0].GetNbrColumn(); ++i)
+  int TmpDimension = 0;
+  if (this->RealBMatrices != 0)
+    {
+      TmpDimension = this->RealBMatrices[0].GetNbrColumn();
+    }
+  else
+    {
+      TmpDimension = this->ComplexBMatrices[0].GetNbrColumn();
+    }
+  int* TmpNbrElementPerRow =  new int [TmpDimension];
+  for (int i = 0; i < TmpDimension; ++i)
     {
       TmpNbrElementPerRow[i] = 1;
     }
-  SparseRealMatrix StringMatrix (this->RealBMatrices[0].GetNbrRow(), this->RealBMatrices[0].GetNbrColumn(), TmpNbrElementPerRow);
+  SparseRealMatrix StringMatrix (TmpDimension, this->RealBMatrices[0].GetNbrColumn(), TmpNbrElementPerRow);
   for (int i = 0; i < StringMatrix.GetNbrColumn(); ++i)
     {
       StringMatrix.SetMatrixElement(i, i, 1.0);
@@ -407,3 +416,28 @@ int AbstractFQHEMPSMatrix::GetQValueCFTSectorShift(int cftSector)
   return 0;
 }
 
+// get the auxiliary space indices that are related to a given topological scetor
+//
+// topologicalSector = index of the topological sector to select
+// nbrIndices = reference on the integer that will be set to the number of indices
+// return value = array that contains the auxiliary space indices related to the selected topological sector
+
+int* AbstractFQHEMPSMatrix::GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices)
+{
+  nbrIndices = 0;
+  if (this->RealBMatrices != 0)
+    {
+      nbrIndices = this->RealBMatrices[0].GetNbrColumn();
+    }
+  else
+    {
+      nbrIndices = this->ComplexBMatrices[0].GetNbrColumn();
+    }
+  int* TmpIndices =  new int [nbrIndices];
+  for (int i = 0; i < nbrIndices; ++i)
+    {
+      TmpIndices[i] = i;
+    }
+  return TmpIndices;
+}
+  

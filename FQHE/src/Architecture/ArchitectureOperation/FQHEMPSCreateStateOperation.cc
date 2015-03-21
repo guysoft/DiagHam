@@ -66,6 +66,9 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space
   this->NbrQuasiholes = 0;
   this->MPSRowIndex = mPSRowIndex;  
   this->MPSColumnIndex = mPSColumnIndex;
+  this->TorusSpace = 0;
+  this->TopologicalSectorIndices = 0;
+  this->TopologicalSectorNbrIndices = 0;
   this->PrecalculationBlockSize = blockSize;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
 }
@@ -95,6 +98,39 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space
   this->MPSRowIndex = mPSRowIndex;  
   this->MPSColumnIndex = mPSColumnIndex;
   this->PrecalculationBlockSize = blockSize;
+  this->TorusSpace = 0;
+  this->TopologicalSectorIndices = 0;
+  this->TopologicalSectorNbrIndices = 0;
+  this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
+}
+
+// constructor for the torus geometry
+//
+// space = pointer to the Hilbert space
+// bMatrices = array that gives the B matrices 
+// state = pointer to the vector where the MPS state will be stored
+// stringMatrix = matrix that takes into account the Jordan Wigner string on the torus geometry
+// topologicalSectorIndices = array that contains the auxiliary space indices related to the selected topological sector
+// topologicalSectorNbrIndices = number of indices in TopologicalSectorIndices
+// blockSize = indicates the size of the block for precalculations
+
+FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnTorus* space, SparseRealMatrix* bMatrices, SparseRealMatrix& stringMatrix, 
+							 RealVector* state, int* topologicalSectorIndices, int topologicalSectorNbrIndices, int blockSize)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->TorusSpace = (ParticleOnTorus*) space->Clone();
+  this->Space = 0;
+  this->OutputState = state;
+  this->ComplexOutputState = 0;  
+  this->BMatrices = bMatrices;
+  this->NbrQuasiholes = 0;
+  this->MPSRowIndex = 0;  
+  this->MPSColumnIndex = 0;
+  this->PrecalculationBlockSize = blockSize;
+  this->TorusStringMatrix = stringMatrix;
+  this->TopologicalSectorIndices = topologicalSectorIndices;
+  this->TopologicalSectorNbrIndices = topologicalSectorNbrIndices;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
 }
 
@@ -107,7 +143,16 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
   this->FirstComponent = operation.FirstComponent;
   this->NbrComponent = operation.NbrComponent;
 
-  this->Space = (ParticleOnSphere*) operation.Space->Clone();
+  if (operation.Space != 0)
+    {
+      this->Space = (ParticleOnSphere*) operation.Space->Clone();
+      this->TorusSpace = 0;
+    }
+  else
+    {
+      this->TorusSpace = (ParticleOnTorus*) operation.TorusSpace->Clone();
+      this->Space = 0;
+    }
   this->OutputState = operation.OutputState;
   this->ComplexOutputState = operation.ComplexOutputState;  
   this->BMatrices = operation.BMatrices;
@@ -116,6 +161,9 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
   this->MPSRowIndex = operation.MPSRowIndex;  
   this->MPSColumnIndex = operation.MPSColumnIndex;
   this->PrecalculationBlockSize = operation.PrecalculationBlockSize;
+  this->TopologicalSectorIndices = operation.TopologicalSectorIndices;
+  this->TopologicalSectorNbrIndices = operation.TopologicalSectorNbrIndices;
+  this->TorusStringMatrix = operation.TorusStringMatrix;
   this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;	
 }
 
@@ -164,14 +212,25 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
 {
   timeval TotalStartingTime;
   gettimeofday (&TotalStartingTime, 0);
-  if (this->NbrQuasiholes == 0)
-    this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+  if (this->Space != 0)
+    {
+      if (this->NbrQuasiholes == 0)
+	{
+	  this->Space->CreateStateFromMPSDescription(this->BMatrices, *(this->OutputState), this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+	}
+      else
+	{
+	  // FIXME: the third argument "1" is a hack for the case of a single matrix at edge
+	  this->Space->CreateStateFromMPSDescription(this->BMatrices, this->QuasiholeBMatrices, 1, *(this->ComplexOutputState), 
+						     this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+	}
+    }
   else
-  {
-    // FIXME: the third argument "1" is a hack for the case of a single matrix at edge
-    this->Space->CreateStateFromMPSDescription(this->BMatrices, this->QuasiholeBMatrices, 1, *(this->ComplexOutputState), 
-					       this->MPSRowIndex, this->MPSColumnIndex, (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
-  }
+    {
+      this->TorusSpace->CreateStateFromMPSDescription(this->BMatrices, this->TorusStringMatrix, *(this->OutputState), 
+						      this->TopologicalSectorIndices, this->TopologicalSectorNbrIndices, 
+						      (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+    }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);
   double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +

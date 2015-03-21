@@ -54,6 +54,9 @@ class BosonOnTorusShort :  public ParticleOnTorus
   int NbrBosons;
   // number of bosons plus 1
   int IncNbrBosons;
+  // maximum bosonic occupation per orbital
+  int MaxOccupation;
+
   // maximum momentum value reached by a boson
   int KyMax;
   // number of Ky values in a state
@@ -116,6 +119,14 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // maxMomentum = momentum maximum value for a boson
   // momentumConstraint = index of the momentum orbit
   BosonOnTorusShort (int nbrBosons, int maxMomentum, int momentumConstraint);
+  
+  // constructor with a constraint of the total momentum of states and the maximum occupation per orbital
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson
+  // momentumConstraint = index of the momentum orbit
+  // maxOccupation = maximum bosonic occupation per orbital
+  BosonOnTorusShort (int nbrBosons, int maxMomentum, int momentumConstraint, int maxOccupation);
 
   // copy constructor (without duplicating datas)
   //
@@ -362,6 +373,19 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = symmetrized state
   virtual ComplexVector SymmetrizeU1U1SingleState (ComplexVector& leftVector, ParticleOnTorus* leftSpace, bool groupNeighbouringOrbitals,  AbstractArchitecture* architecture = 0);
   
+  // create a state from its MPS description
+  //
+  // bMatrices = array that gives the B matrices 
+  // twistMatrix = reference on the twist matrix to insert in the trace
+  // state = reference to vector that will contain the state description
+  // mPSSumIndices = diagonal indices that have to be kept in the trace
+  // nbrMPSSumIndices = number of diagonal indices that have to be kept in the trace
+  // memory = amount of memory that can be use to precompute matrix multiplications  
+  // initialIndex = initial index to compute
+  // nbrComponents = number of components to compute
+  virtual void CreateStateFromMPSDescription (SparseRealMatrix* bMatrices, SparseRealMatrix& twistMatrix, RealVector& state, 
+					      int* mPSSumIndices, int nbrMPSSumIndices,
+					      long memory, long initialIndex, long nbrComponents);
 
  protected:
 
@@ -403,6 +427,15 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // return value = Hilbert space dimension
   long EvaluateHilbertSpaceDimension(int nbrBosons, int maxMomentum, int currentKyMax, int currentMomentum);
 
+  // evaluate Hilbert space dimension, including a truncation on the occupation numbers
+  //
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson in the state
+  // currentKyMax = momentum maximum value for bosons that are still to be placed
+  // currentMomentum = current value of the momentum
+  // return value = Hilbert space dimension
+  long EvaluateHilbertSpaceDimensionTruncatedOccupation(int nbrBosons, int maxMomentum, int currentKyMax, int currentMomentum);
+
   // generate look-up table associated to current Hilbert space
   // 
   // memeory = memory size that can be allocated for the look-up table
@@ -426,6 +459,16 @@ class BosonOnTorusShort :  public ParticleOnTorus
   // currentMomentum = current value of the momentum
   // return value = position from which new states have to be stored
   int GenerateStates(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
+
+  // generate all states corresponding to the constraints, including a truncation on the occupation numbers
+  // 
+  // nbrBosons = number of bosons
+  // maxMomentum = momentum maximum value for a boson in the state
+  // currentKyMax = momentum maximum value for bosons that are still to be placed
+  // pos = position in StateDescription array where to store states
+  // currentMomentum = current value of the momentum
+  // return value = position from which new states have to be stored
+  int GenerateStatesTruncatedOccupation(int nbrBosons, int maxMomentum, int currentKyMax, int pos, int currentMomentum);
 
   // convert a bosonic state to its monomial representation
   //

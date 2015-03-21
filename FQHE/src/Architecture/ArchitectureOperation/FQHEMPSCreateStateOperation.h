@@ -36,11 +36,12 @@
 #include "Vector/RealVector.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "HilbertSpace/ParticleOnSphere.h"
+#include "HilbertSpace/ParticleOnTorus.h"
+#include "Matrix/SparseRealMatrix.h"
 
 
 
 class RealVector;
-class SparseRealMatrix;
 class SparseComplexMatrix;
 
 
@@ -51,6 +52,8 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   
   // pointer to the Hilbert space
   ParticleOnSphere* Space;
+  // pointer to the Hilbert space for the torus geometry
+  ParticleOnTorus* TorusSpace;
 
   // vector where the MPS state will be stored
   RealVector* OutputState;
@@ -69,6 +72,13 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   int MPSRowIndex;
   // column index of the MPS element that has to be evaluated
   int MPSColumnIndex;
+
+  // matrix that takes into account the Jordan Wigner string on the torus geometry
+  SparseRealMatrix TorusStringMatrix;
+  // array that contains the auxiliary space indices related to the selected topological sector
+  int* TopologicalSectorIndices;
+  // number of indices in TopologicalSectorIndices
+  int TopologicalSectorNbrIndices;
 
   // indicates the size of the block for precalculations
   int PrecalculationBlockSize;
@@ -104,6 +114,18 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   FQHEMPSCreateStateOperation(ParticleOnSphere* space, SparseRealMatrix* bMatrices, SparseComplexMatrix* quasiholeBMatrices, int nbrQuasiholes,
 			      ComplexVector* state, int mPSRowIndex, int mPSColumnIndex, int blockSize);
   
+  // constructor for the torus geometry
+  //
+  // space = pointer to the Hilbert space
+  // bMatrices = array that gives the B matrices 
+  // state = pointer to the vector where the MPS state will be stored
+  // stringMatrix = matrix that takes into account the Jordan Wigner string on the torus geometry
+  // topologicalSectorIndices = array that contains the auxiliary space indices related to the selected topological sector
+  // topologicalSectorNbrIndices = number of indices in TopologicalSectorIndices
+  // blockSize = indicates the size of the block for precalculations
+  FQHEMPSCreateStateOperation(ParticleOnTorus* space, SparseRealMatrix* bMatrices, SparseRealMatrix& stringMatrix, 
+			      RealVector* state, int* topologicalSectorIndices, int topologicalSectorNbrIndices, int blockSize);
+
   // copy constructor 
   //
   // operation = reference on operation to copy

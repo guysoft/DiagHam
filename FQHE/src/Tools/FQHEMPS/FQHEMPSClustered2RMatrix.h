@@ -127,9 +127,16 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
   FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool bosonicVersion = false, bool useRational = true, 
-			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0,
+			   AbstractArchitecture* architecture = 0);
 
   // constructor 
   //
@@ -143,9 +150,16 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
   FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion = false, bool useRational = true,
-			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+			   bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0,
+			   AbstractArchitecture* architecture = 0);
 
   // constructor from a file describing the state
   //
@@ -156,9 +170,16 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
   FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion = false, bool trimChargeIndices = false, bool cylinderFlag = false, 
-			   double kappa = 1.0, AbstractArchitecture* architecture = 0);
+			   double kappa = 1.0 ,
+			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0,
+			   AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
   //
@@ -169,7 +190,14 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0);
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
+  FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+			   bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0);
+
 
   // destructor
   //
@@ -287,6 +315,19 @@ class FQHEMPSClustered2RMatrix : public FQHEMPSLaughlinMatrix
   // return value = number of partciles
   virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding = false);
 
+  // get the matrix that into account the Jordan Wigner string on the torus geometry
+  //
+  // nbrFermions = number of fermions in the system
+  // return value = corresponding matrix
+  virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
+
+  // get the auxiliary space indices that are related to a given topological scetor
+  //
+  // topologicalSector = index of the topological sector to select
+  // nbrIndices = reference on the integer that will be set to the number of indices
+  // return value = array that contains the auxiliary space indices related to the selected topological sector
+  virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
+  
  protected:
 
   // load the specific informations from the file header
