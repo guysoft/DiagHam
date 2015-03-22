@@ -966,3 +966,20 @@ int* FQHEMPSLaughlinMatrix::GetTopologicalSectorIndices(int topologicalSector, i
   return TmpIndices;
 }
   
+// get the minimum ky momentum (i.e. within the reduced Brillouin zone) on the torus compatible with the current state
+// 
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true if we are dealing with fermions
+// return value = minimum ky momentum 
+
+int FQHEMPSLaughlinMatrix::GetTorusMinimumKyMomentum(int nbrParticles, int nbrFluxQuanta, bool statistics)
+{
+  if (statistics == false)
+    return 0;
+  if ((nbrParticles & 1) == 0)
+    return (nbrParticles / 2);
+  else
+    return 0;
+}
+  

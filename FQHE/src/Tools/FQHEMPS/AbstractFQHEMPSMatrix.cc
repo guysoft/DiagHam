@@ -163,6 +163,28 @@ void AbstractFQHEMPSMatrix::GetFillingFactor(int& numerator, int& denominator)
   denominator = 0;
 }
 
+// get the (k,r) exclude principle satisfied by the root configuration
+// 
+// pauliK = maximum number of particles in the pauliR consecutive orbitals
+// pauliR = number of consecutive orbitals
+
+void AbstractFQHEMPSMatrix::GetKRExclusionPrinciple(int& pauliK, int& pauliR)
+{
+  this->GetFillingFactor(pauliK, pauliR);
+}
+
+// get the minimum ky momentum (i.e. within the reduced Brillouin zone) on the torus compatible with the current state
+// 
+// nbrParticles = number of particles
+// nbrFluxQuanta = number of flux quanta
+// statistics = true if we are dealing with fermions
+// return value = minimum ky momentum 
+
+int AbstractFQHEMPSMatrix::GetTorusMinimumKyMomentum(int nbrParticles, int nbrFluxQuanta, bool statistics)
+{
+  return 0;
+}
+  
 // extract a block with fixed quantum numbers of a given matrix written the MPS basis
 //
 // matrix = reference on the matrix

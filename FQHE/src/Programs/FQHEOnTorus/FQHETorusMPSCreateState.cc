@@ -55,11 +55,11 @@ int main(int argc, char** argv)
   Manager += MiscGroup;
 
   (*SystemGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta and deduce the number of particles", 0);
-  (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum", 0);
+  (*SystemGroup) += new SingleIntegerOption ('y', "ky-momentum", "constraint on the total momentum modulo the maximum momentum (negative it has to be guessed from the topological sector)", -1);
   (*SystemGroup) += new SingleIntegerOption ('\n', "topological-sector", "set the topological sector", 0);
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "precalculation-blocksize", " indicates the size of the block (i.e. number of B matrices) for precalculations", 1);
-  (*OutputGroup) += new SingleStringOption ('o', "bin-output", "output the MPS state into a binary file");
-  (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the MPS state into a text file");
+  (*OutputGroup) += new BooleanOption ('t', "txt-output", "output the MPS state into a text file instead of a binary file");
+  (*OutputGroup) += new SingleStringOption ('\n', "alternate-output", "use an alternate output file name instead of the default one");
   (*OutputGroup) += new BooleanOption ('\n', "no-normalization", "do not normalize the final state");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -79,13 +79,8 @@ int main(int argc, char** argv)
   int NbrFluxQuanta = 0;
   int TotalKy = 0;
   bool TwistedTorusFlag = false;
-  char* OutputFileName = Manager.GetString("bin-output");
-  char* OutputTxtFileName = Manager.GetString("txt-output");
-  if ((OutputTxtFileName == 0) && (OutputFileName == 0))
-    {
-      cout << "error, an output file (binary or text) has to be provided" << endl;
-      return 0;
-    }
+  char* OutputFileName = 0;
+  char* OutputTxtFileName = 0;
 
   if (Manager.GetInteger("nbr-fluxquanta") <= 0)
     {
@@ -93,17 +88,34 @@ int main(int argc, char** argv)
     }
   NbrFluxQuanta = Manager.GetInteger("nbr-fluxquanta");
   
-  double AspectRatio = Manager.GetDouble("aspect-ratio");
-
   AbstractFQHEMPSMatrix* MPSMatrix = MPSMatrixManager.GetMPSMatrices(NbrFluxQuanta, Architecture.GetArchitecture()); 
   if (Manager.GetBoolean("only-export"))
     {
       return 0;
     }
 
+  double AspectRatio = Manager.GetDouble("aspect-ratio");
   NbrParticles = MPSMatrix->GetMatrixNaturalNbrParticles(NbrFluxQuanta, true);
-  TotalKy = Manager.GetInteger("ky-momentum");
+
+
+  int NbrMPSSumIndices;
+  int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topological-sector"), NbrMPSSumIndices);
+  SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
+  cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
+  SparseRealMatrix StringMatrix;
+  if (Manager.GetBoolean("boson") == true)
+    StringMatrix = MPSMatrix->GetTorusStringMatrix(0);
+  else
+    StringMatrix = MPSMatrix->GetTorusStringMatrix(NbrParticles);
+  int PauliKValue;
+  int PauliRValue;
+  MPSMatrix->GetKRExclusionPrinciple(PauliKValue, PauliRValue);
+  int ReducedBrillouinZoneSize = FindGCD(NbrParticles, NbrFluxQuanta);
+  TotalKy = MPSMatrix->GetTorusMinimumKyMomentum(NbrParticles, NbrFluxQuanta, !Manager.GetBoolean("boson"));
+
   ParticleOnTorus* Space = 0;
+  RealVector State ;
+  ComplexVector ComplexState ;
   if (Manager.GetBoolean("boson") == true)
     {
       int MaxOccupation = Manager.GetInteger("boson-truncation");
@@ -114,58 +126,130 @@ int main(int argc, char** argv)
     }
   else
     {
-#ifdef __64_BITS__
-      if (NbrFluxQuanta <= 62)
-#else
-	if (NbrFluxQuanta <= 30)
-#endif
-	  {
-	    Space = new FermionOnTorus(NbrParticles, NbrFluxQuanta, TotalKy);
-	  }
-	else
-	  {
-#ifdef __128_BIT_LONGLONG__
-	    if (NbrFluxQuanta <= 126)
-#else
-	      if (NbrFluxQuanta <= 62)
-#endif
-		{
-		  Space = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
-		}
-	      else
-		{
-#ifdef __128_BIT_LONGLONG__
-		  cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
-#else
-		  cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
-#endif
-		  return 0;
-		}
-	  }
+      bool TotalKyFlag = false;
       
+      while ((TotalKyFlag == false) && (TotalKy < NbrFluxQuanta))
+	{
+	  if (Manager.GetInteger("ky-momentum") >= 0)
+	    {
+	      TotalKy = Manager.GetInteger("ky-momentum");
+	      TotalKyFlag = true;
+	    }
+#ifdef __64_BITS__
+	  if (NbrFluxQuanta <= 62)
+#else
+	    if (NbrFluxQuanta <= 30)
+#endif
+	      {
+		Space = new FermionOnTorus(NbrParticles, NbrFluxQuanta, TotalKy);
+	      }
+	    else
+	      {
+#ifdef __128_BIT_LONGLONG__
+		if (NbrFluxQuanta <= 126)
+#else
+		  if (NbrFluxQuanta <= 62)
+#endif
+		    {
+		      Space = 0;//new FermionOnSpherePTruncatedLong(NbrParticles, TotalLz, NbrFluxQuanta, Manager.GetInteger("p-truncation"), ReferenceState);
+		    }
+		  else
+		    {
+#ifdef __128_BIT_LONGLONG__
+		      cout << "cannot generate an Hilbert space when nbr-flux > 126" << endl;
+#else
+		      cout << "cannot generate an Hilbert space when nbr-flux > 62" << endl;
+#endif
+		      return 0;
+		    }
+	      }
+	  if (TwistedTorusFlag == true)
+	    ComplexState = ComplexVector(Space->GetHilbertSpaceDimension(), true);
+	  else
+	    State = RealVector(Space->GetHilbertSpaceDimension(), true);
+	  for (int i = 0; (i < Space->GetHilbertSpaceDimension()) && (TotalKyFlag == false); ++i)
+	    {
+	      TotalKyFlag = Space->HasPauliExclusions(i, PauliKValue, PauliRValue);
+	      if (TotalKyFlag == true)
+		{
+		  cout << "find admissible configuration at " << i;
+		  if (TwistedTorusFlag == true)
+		    {
+		    }
+		  else
+		    {		
+		      Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, (long) i, 1l);
+		      if (State[i] == 0.0)
+			{
+			  TotalKyFlag = false;
+			  cout << ", but does not lead to a non-zero coefficient" << endl;
+			}
+		      else
+			{
+			  cout << " and leads to a non-zero coefficient (" << State[i] << ")" << endl;
+			  State[i] = 0.0;
+			}
+		    }
+		}
+	    }
+	  if (TotalKyFlag == false)
+	    {
+	      delete Space;
+	      TotalKy += ReducedBrillouinZoneSize;
+	    }
+	}      
+      if (TotalKy >= NbrFluxQuanta)
+	{
+	  cout << "error, can't find any root configuration" << endl;
+	  return -1;
+	}
     }
   
   cout << "Hilbert space dimension : " << Space->GetLargeHilbertSpaceDimension() << endl;
 
-
-  SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
-  cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
-  SparseRealMatrix StringMatrix;
-  if (Manager.GetBoolean("boson") == true)
-    StringMatrix = MPSMatrix->GetTorusStringMatrix(0);
+  if (Manager.GetString("alternate-output") == 0)
+    {
+      if (Manager.GetBoolean("boson") == true)
+	{
+	  if (Manager.GetBoolean("txt-output"))
+	    {
+	      OutputTxtFileName = new char [512 + strlen(MPSMatrix->GetName())];
+	      sprintf (OutputTxtFileName , "bosons_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	    }
+	  else
+	    {
+	      OutputFileName = new char [512 + strlen(MPSMatrix->GetName())];
+	      sprintf (OutputFileName , "bosons_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	    }
+	}
+      else
+	{
+	  if (Manager.GetBoolean("txt-output"))
+	    {
+	      OutputTxtFileName = new char [512 + strlen(MPSMatrix->GetName())];
+	      sprintf (OutputTxtFileName, "fermions_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	    }
+	  else
+	    {
+	      OutputFileName = new char [512 + strlen(MPSMatrix->GetName())];
+	      sprintf (OutputFileName, "fermions_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	    }
+	}
+    }
   else
-    StringMatrix = MPSMatrix->GetTorusStringMatrix(NbrParticles);
+    {
+      if (Manager.GetBoolean("txt-output"))
+	{
+	  OutputTxtFileName = new char [strlen(Manager.GetString("alternate-output")) + 1];
+	  strcpy (OutputTxtFileName, Manager.GetString("alternate-output"));
+	}
+      else
+	{
+	  OutputFileName = new char [strlen(Manager.GetString("alternate-output")) + 1];
+	  strcpy (OutputFileName, Manager.GetString("alternate-output"));
+	}
+    }
 
-
-  int NbrMPSSumIndices;
-  int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topological-sector"), NbrMPSSumIndices);
-
-  RealVector State ;
-  ComplexVector ComplexState ;
-  if (TwistedTorusFlag == true)
-    ComplexState = ComplexVector(Space->GetHilbertSpaceDimension(), true);
-  else
-    State = RealVector(Space->GetHilbertSpaceDimension(), true);
 
   if (TwistedTorusFlag == true)
     {
@@ -175,7 +259,6 @@ int main(int argc, char** argv)
     }
   else
     {
-//       Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, 0l, Space->GetLargeHilbertSpaceDimension());
        FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, StringMatrix, &State, MPSSumIndices, NbrMPSSumIndices,
   					    Manager.GetInteger("precalculation-blocksize"));
        Operation.ApplyOperation(Architecture.GetArchitecture());

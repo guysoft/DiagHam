@@ -387,6 +387,14 @@ class BosonOnTorusShort :  public ParticleOnTorus
 					      int* mPSSumIndices, int nbrMPSSumIndices,
 					      long memory, long initialIndex, long nbrComponents);
 
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  //
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  // return value = true if teh state satisfies the general Pauli exclusion principle
+  virtual bool HasPauliExclusions(int index, int pauliK, int pauliR);
+  
  protected:
 
   // convert a bosonic state into its fermionic counterpart

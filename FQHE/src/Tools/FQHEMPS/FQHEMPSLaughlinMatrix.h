@@ -199,6 +199,14 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // return value = number of particles
   virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding);
 
+  // get the minimum ky momentum (i.e. within the reduced Brillouin zone) on the torus compatible with the current state
+  // 
+  // nbrParticles = number of particles
+  // nbrFluxQuanta = number of flux quanta
+  // statistics = true if we are dealing with fermions
+  // return value = minimum ky momentum 
+  virtual int GetTorusMinimumKyMomentum(int nbrParticles, int nbrFluxQuanta, bool statistics);
+  
   // compute P, N from the linearized index of the B matrix for the Laughlin states
   //
   // index = linearized index

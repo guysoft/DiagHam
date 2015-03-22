@@ -3359,3 +3359,32 @@ void BosonOnTorusShort::CreateStateFromMPSDescription (SparseRealMatrix* bMatric
   delete[] TmpColumnIndices;
   delete[] TmpElements;
 }
+
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+//
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+// return value = true if teh state satisfies the general Pauli exclusion principle
+
+bool BosonOnTorusShort::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  this->FermionToBoson(this->StateDescription[index], this->StateKyMax[index] + this->NbrBosons - 1, 
+		       this->TemporaryState, this->TemporaryStateKyMax);  
+  for (int i = this->TemporaryStateKyMax + 1;  i < this->KyMax; ++i)
+    this->TemporaryState[i] = 0x0ul;
+  unsigned long UnsignedPauliK = (unsigned long) pauliK;
+  for (int i = 0; i < this->KyMax; ++i)
+    {
+      unsigned long TmpOccupation = 0l;
+      for (int j = 0; j < pauliR; ++j)
+	{
+	  TmpOccupation += this->TemporaryState[(i + j) % this->KyMax];
+	}
+      if (TmpOccupation > UnsignedPauliK)
+	return false;
+    }
+  return true;
+}
+  

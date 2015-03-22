@@ -139,6 +139,12 @@ class AbstractFQHEMPSMatrix
   // denominator = reference on the filling factor denominator
   virtual void GetFillingFactor(int& numerator, int& denominator);
 
+  // get the (k,r) exclude principle satisfied by the root configuration
+  // 
+  // pauliK = maximum number of particles in the pauliR consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual void GetKRExclusionPrinciple(int& pauliK, int& pauliR); 
+
   // get the number of particles that fit the root configuration once the number of flux quanta is fixed
   // 
   // nbrFluxQuanta = number of flux quanta
@@ -146,6 +152,14 @@ class AbstractFQHEMPSMatrix
   // return value = number of partciles
   virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding = false);
 
+  // get the minimum ky momentum (i.e. within the reduced Brillouin zone) on the torus compatible with the current state
+  // 
+  // nbrParticles = number of particles
+  // nbrFluxQuanta = number of flux quanta
+  // statistics = true if we are dealing with fermions
+  // return value = minimum ky momentum 
+  virtual int GetTorusMinimumKyMomentum(int nbrParticles, int nbrFluxQuanta, bool statistics);
+  
   // get the degeneracy of the transfer matrix largest eigenvalue
   // 
   // return value = degeneracy 
