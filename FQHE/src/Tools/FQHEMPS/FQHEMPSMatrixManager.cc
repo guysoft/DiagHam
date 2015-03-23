@@ -315,7 +315,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		      if (importBMatrices != 0)
 			{
 			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, importBMatrices, 
-								   this->Options->GetBoolean("boson"), this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa,
+								   this->Options->GetBoolean("boson") | this->TorusFlag, this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa,
 								   this->TorusFlag, this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
 								   this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"));
 			}
@@ -324,7 +324,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			  if (this->Options->GetString("cft") != 0)
 			    {
 			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
-								       this->Options->GetBoolean("boson"),
+								       this->Options->GetBoolean("boson") | this->TorusFlag,
 								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
 								       this->TorusFlag, this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
 								       this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"), architecture);
@@ -333,7 +333,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			    {
 			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("r-index"), 
 								       this->Options->GetInteger("laughlin-index") - 1, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-								       this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson"),
+								       this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson") | this->TorusFlag,
 								       !(this->Options->GetBoolean("use-nonrational")), 
 								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
 								       this->TorusFlag, this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 

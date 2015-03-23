@@ -214,12 +214,14 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("txt-output"))
 	    {
 	      OutputTxtFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputTxtFileName , "bosons_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      sprintf (OutputTxtFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", 
+		       Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
 	    }
 	  else
 	    {
 	      OutputFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputFileName , "bosons_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      sprintf (OutputFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", 
+		       Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
 	    }
 	}
       else
@@ -227,12 +229,14 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("txt-output"))
 	    {
 	      OutputTxtFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputTxtFileName, "fermions_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      sprintf (OutputTxtFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
+		       NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
 	    }
 	  else
 	    {
 	      OutputFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputFileName, "fermions_torus_kysym_mps_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      sprintf (OutputFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
+		       NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
 	    }
 	}
     }

@@ -3385,34 +3385,25 @@ SparseRealMatrix FQHEMPSClustered2RMatrix::GetTorusStringMatrix(int nbrFermions)
       TmpNbrElementPerRow[i] = 1;
     }
   SparseRealMatrix StringMatrix (TmpDimension, TmpDimension, TmpNbrElementPerRow);
+
   for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
     {
-//       for (int CurrentCFTSector = 0; CurrentCFTSector < ; ++CurrentCFTSector)
-// 	{
-// 	  int MinQValue;
-// 	  int MaxQValue;
-// 	  this->ComputeGlobalChargeIndexRange(CurrentPLevel, MinQValue, MaxQValue);
-// 	  for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
-// 	    {
-// 	      int TmpBondIndexRange = this->GetBondIndexRange(CurrentPLevel, CurrentQValue);
-// 	      if ((CurrentQValue & 1) == 0)
-// 		{
-// 		  for (int i = 0; i < TmpBondIndexRange; ++i)
-// 		    {
-// 		      int TmpIndex = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);	      
-// 		      StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, 1.0);
-// 		    }
-// 		}
-// 	      else
-// 		{
-// 		  for (int i = 0; i < TmpBondIndexRange; ++i)
-// 		    {
-// 		      int TmpIndex = this->GetBondIndexWithFixedChargeAndPLevel(i, CurrentPLevel, CurrentQValue);	      
-// 		      StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, -1.0);
-// 		    }
-// 		}
-// 	    }
-// 	}
+      for (int CurrentCFTSector = 0; CurrentCFTSector < this->NbrCFTSectors; ++CurrentCFTSector)
+ 	{
+	  int MinQValue;
+	  int MaxQValue;
+	  this->GetChargeIndexRange(CurrentPLevel, CurrentCFTSector, MinQValue, MaxQValue);
+	  for (int CurrentQValue = MinQValue; CurrentQValue <= MaxQValue; ++CurrentQValue)
+	    {
+	      double Coefficient = 1.0;
+	      int NbrIndices = this->GetBondIndexRange(CurrentPLevel, CurrentQValue, CurrentCFTSector);
+	      for (int i = 0; i < NbrIndices; ++i)
+		{	      
+		  int TmpIndex = 0;
+		  StringMatrix.SetMatrixElement(TmpIndex, TmpIndex, Coefficient);
+		}
+	    }
+	}
     }
   return StringMatrix;
 }
