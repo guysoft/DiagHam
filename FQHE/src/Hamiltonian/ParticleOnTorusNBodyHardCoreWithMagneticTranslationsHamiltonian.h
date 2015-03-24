@@ -154,8 +154,32 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // m4 = fourth index
   // return value = numerical coefficient
   virtual double EvaluateTwoBodyInteractionCoefficient(int m1, int m2, int m3, int m4);
+  
+  
+  //evaluate the linearized index corresponding to a series of creation indices, momentum transfer, and modulo
+  //
+  // TmpIndices = array containing the indexes of the creation operators
+  // g = modulo of the index on which the infinite sum will be performed
+  // momentumTransfer = transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
+  // return value = linearized index
+  virtual int EvaluateLinearizedIndex (int* TmpIndices, int g, int momentumTransfer);
+  
+  
+  // retrieve the separate indices starting from the linearized index
+  //
+  // linearizedIndex = linearized index
+  // g = reference on the modulo of the index on which the infinite sum will be performed
+  // momentumTransfer = reference on the transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
+  // return value = pointer to the array containing the creation indexes
+  virtual int* GetIndicesFromLinearizedIndex (int linearizedIndex, int& g, int& momentumTransfer);
 
-
+  // find the canonical index corresponding to a giving index
+  //
+  // index = index of the state whose canonical index has to be determined
+  // signe = reference on the sign of the permutation
+  //return value = canonical index
+  virtual int GetCanonicalIndex (int index, int& sign);
+  
 };
 
 // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_n, assuming bosonic operators
@@ -369,4 +393,48 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 }
 
 
+//evaluate the linearized index corresponding to a series of creation indices, momentum transfer, and modulo
+//
+// TmpIndices = array containing the indexes of the creation operators
+// g = modulo of the index on which the infinite sum will be performed
+// momentumTransfer = transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
+// return value = linearized index
+inline int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateLinearizedIndex (int* TmpIndices, int g, int momentumTransfer)
+{
+  int LinearizedIndex = pow(this->NbrLzValue, this->NBodyValue) * (g + this->NBodyValue * (this->NBodyValue - 1 + momentumTransfer));
+  for (int i = 0; i < this->NBodyValue; ++i)
+    LinearizedIndex += pow(this->NbrLzValue, i) * TmpIndices[i];
+  return LinearizedIndex;  
+}
+
+// retrieve the separate indices starting from the linearized index
+//
+// linearizedIndex = linearized index
+// g = reference on the modulo of the index on which the infinite sum will be performed
+// momentumTransfer = reference on the transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
+// return value = pointer to the array containing the creation indexes
+inline int* ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetIndicesFromLinearizedIndex (int linearizedIndex, int& g, int& momentumTransfer)
+{
+  int* TmpIndices = new int [this->NBodyValue];
+  int TmpCoefficient = pow(this->NbrLzValue, this->NBodyValue) * this->NBodyValue;
+  int TmpCoefficient1;
+  momentumTransfer = linearizedIndex / TmpCoefficient;
+  linearizedIndex -= momentumTransfer * TmpCoefficient;
+  momentumTransfer -= (this->NBodyValue - 1);
+  TmpCoefficient /= this->NBodyValue;
+  g = linearizedIndex / TmpCoefficient;
+  linearizedIndex -= g*TmpCoefficient;
+  TmpCoefficient /= this->NbrLzValue;
+  
+  int i = this->NBodyValue - 1;
+  for (; i > 0; --i)
+  {
+    TmpIndices[i] = linearizedIndex / TmpCoefficient;
+    linearizedIndex -= TmpIndices[i] * TmpCoefficient;
+    TmpCoefficient /= this->NbrLzValue;
+  }
+  TmpIndices[0] = linearizedIndex;
+  
+  return TmpIndices;
+}
 #endif

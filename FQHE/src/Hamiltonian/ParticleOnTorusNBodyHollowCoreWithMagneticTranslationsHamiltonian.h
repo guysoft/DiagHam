@@ -85,13 +85,21 @@ class ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian : public
   // return value = numerical coefficient  
   virtual double EvaluateInteractionCoefficient(double* creationCoefficients, double* annihilationCoefficients);
   
+  // evaluate all the numerical coefficients in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation operators only) for each integer modulo the NBodyValue (without using symmetries)
+  //
+  void EvaluateInteractionCoefficientCreation();
+  
+  // evaluate all the numerical coefficients in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation operators only) for each integer modulo the NBodyValue (using symmetries)
+  //
+  void EvaluateInteractionCoefficientCreationUsingSymmetries();
+  
   // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation operators only) for each integer modulo the NBodyValue
   //
-  // mIndices = array that contains the creation indices
+  // mIndices = array that contains the creation indices 
+  // g = modulo of the indices that are being summed on
   // momentumTransfer = momentum transfer operated by the \prod_i a+_mi \prod_j a_nj operator, in units of the number of flux quanta
   // return value = array of numerical coefficients 
-  double* EvaluateInteractionCoefficientCreation(int* mIndices, int momentumTransfer);
-  
+  double EvaluateIndividualInteractionCoefficientCreation(int* mIndices, int g, int momentumTransfer);
   
   // evaluate the two nested Gaussian sum for a three body interaction (for test purposes)
   //

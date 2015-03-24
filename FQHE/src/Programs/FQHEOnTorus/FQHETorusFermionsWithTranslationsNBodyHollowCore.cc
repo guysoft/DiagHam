@@ -73,6 +73,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('g', "ground", "restrict to the largest subspace");
 
   (*PrecalculationGroup) += new BooleanOption ('\n', "regenerate-interactionelements", "regenerate the interaction matrix elements, overwriting them", false);
+  (*PrecalculationGroup) += new BooleanOption ('\n', "matrixelement-only", "only evaluate the interaction matrix elements", false);
   (*PrecalculationGroup) += new BooleanOption ('\n', "disk-cache", "use disk cache for fast multiplication", false);
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-precalculation", "load precalculation from a file",0);
@@ -320,6 +321,9 @@ int main(int argc, char** argv)
 // 											    Architecture.GetArchitecture(), Memory);
      Hamiltonian = new ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio, NbrNBody, RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 
+      if (Manager.GetBoolean("matrixelement-only") == true)
+	return 0;
+      RegenerateElementFlag = false;
       double Shift = -1.0;
       Hamiltonian->ShiftHamiltonian(Shift);
       char* EigenvectorName = 0;

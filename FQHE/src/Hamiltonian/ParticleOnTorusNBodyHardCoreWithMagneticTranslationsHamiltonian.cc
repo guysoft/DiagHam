@@ -36,6 +36,7 @@
 #include "GeneralTools/StringTools.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/Endian.h"
+#include "GeneralTools/ArrayTools.h"
 
 #include <iostream>
 #include <algorithm>
@@ -222,7 +223,9 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
   if (this->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
     {
       this->NBodyInteractionFactors = new Complex* [this->NbrNBodySectorSums];
-//       int sign = 1;
+      int sign = 1;
+      if ((this->NBodyValue == 2) || (this->NBodyValue == 5))
+	sign = -1;
 //       for (int i = 1; i < this->NBodyValue; ++i)
 // 	sign *= -1;
       for (int i = 0; i < this->NbrNBodySectorSums; ++i)
@@ -236,7 +239,7 @@ void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateIn
 	      for (int j2 = 0; j2 < this->NbrNBodySectorIndicesPerSum[i]; ++j2)
 		{
 		  int* TmpMIndices = &(this->NBodySectorIndicesPerSum[i][j2 * this->NBodyValue]);
-		  this->NBodyInteractionFactors[i][Index] = this->EvaluateInteractionNIndexAntiSymmetrizedCoefficient(TmpNIndices, TmpMIndices);		  
+		  this->NBodyInteractionFactors[i][Index] = sign * this->EvaluateInteractionNIndexAntiSymmetrizedCoefficient(TmpNIndices, TmpMIndices);		  
 		  TotalNbrInteractionFactors++;
 		  ++Index;
 		  
@@ -560,3 +563,58 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
   return 0.0;
 }
 
+// find the canonical index corresponding to a giving index
+//
+//return value = canonical index
+int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetCanonicalIndex (int index, int& sign)
+{
+  sign = 1;
+  int g;
+  int momentumTransfer;
+  int* TmpIndices = this->GetIndicesFromLinearizedIndex (index, g, momentumTransfer);
+  int TmpIndex = index;  
+  int CountModulo;
+  int TmpSign;
+  int* TmpNbrPermutation = new int [this->NbrLzValue];
+  TmpNbrPermutation[0] = 0;
+  SortArrayDownOrderingPermutationBubbleSort<int>(TmpIndices, this->NBodyValue, TmpNbrPermutation[0]);
+  int TmpSumGMomentumTransfer = (g + momentumTransfer + this->NBodyValue) % this->NBodyValue;
+  momentumTransfer = - this->NBodyValue + 1;
+  g = (TmpSumGMomentumTransfer + this->NBodyValue - 1) % this->NBodyValue;
+  int CanonicalIndex = this->EvaluateLinearizedIndex(TmpIndices, g, momentumTransfer);
+  int IndexForCanonical = 0;
+  for (int j = 0; j < this->NbrLzValue - 1; ++j)
+  {
+    TmpNbrPermutation[j + 1] = TmpNbrPermutation[j];
+    CountModulo = 0;
+    for (int i = 0; i < this->NBodyValue; ++i)
+    {
+      TmpIndices[i] += 1;
+      if (TmpIndices[i] == this->NbrLzValue)
+      {
+	CountModulo += 1;
+	TmpIndices[i] = 0;
+      }      
+    }
+    TmpSumGMomentumTransfer = (TmpSumGMomentumTransfer - CountModulo) % this->NBodyValue;
+    if (CountModulo != 0)
+    {
+      SortArrayDownOrderingPermutationBubbleSort<int>(TmpIndices, this->NBodyValue, TmpNbrPermutation[j + 1]);
+
+    }
+    momentumTransfer = - this->NBodyValue + 1;
+    g = (TmpSumGMomentumTransfer + this->NBodyValue - 1) % this->NBodyValue;
+    TmpIndex = this->EvaluateLinearizedIndex(TmpIndices, g, momentumTransfer);
+    if (TmpIndex < CanonicalIndex)
+    {
+      CanonicalIndex = TmpIndex;
+      IndexForCanonical = j + 1;
+    }
+  }
+  if ((TmpNbrPermutation[IndexForCanonical] % 2) == 0)
+    sign = 1;
+  else
+    sign = -1;
+  return CanonicalIndex;
+  
+}
