@@ -362,7 +362,7 @@ int   NumXTranslations;
 int   NumYTranslations;
 
 Complex translationPhase=1.0;
- Complex tmpPhase, tmpPhase2;
+Complex tmpPhase, tmpPhase2;
 	      switch (this->LandauGaugeAxis)
 		{
 	case 'y': {

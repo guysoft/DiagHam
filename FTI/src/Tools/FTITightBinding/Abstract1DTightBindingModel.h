@@ -124,7 +124,7 @@ inline double Abstract1DTightBindingModel::GetEnergy(int bandIndex, int momentum
 // momentumIndex = linearized momentum
 // return value = reference on the one body transformation matrix
 
-inline ComplexMatrix& Abstract1DTightBindingModel::GetOneBodyMatrix(int momentumIndex)
+inline ComplexMatrix&  Abstract1DTightBindingModel::GetOneBodyMatrix(int momentumIndex)
 {
   return this->OneBodyBasis[momentumIndex];
 }
