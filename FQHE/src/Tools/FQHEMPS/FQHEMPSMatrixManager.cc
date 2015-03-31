@@ -295,6 +295,15 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
       Kappa = (2.0 * M_PI) / Perimeter;
       cout<<"Cylinder geometry, perimeter = " << Perimeter << " , kappa= " << Kappa << endl;
     }
+  double TorusAngle = 0.0;
+  double TorusFluxInsertion = 0.0;
+  double NbrFluxQuanta = 0;
+  if (this->TorusFlag == true)
+    {
+      TorusAngle = this->Options->GetDouble("angle");
+      TorusFluxInsertion = this->Options->GetDouble("flux-insertion");
+      NbrFluxQuanta = this->Options->GetInteger("nbr-fluxquanta");
+    }
 
   AbstractFQHEMPSMatrix* MPSMatrix = 0; 
   int NbrBMatrices = 2;
@@ -316,8 +325,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			{
 			  MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, importBMatrices, 
 								   this->Options->GetBoolean("boson") | this->TorusFlag, this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa,
-								   this->TorusFlag, this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
-								   this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"));
+								   this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+								   TorusAngle, TorusFluxInsertion);
 			}
 		      else
 			{
@@ -326,8 +335,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			      MPSMatrix = new FQHEMPSClustered2RMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"),
 								       this->Options->GetBoolean("boson") | this->TorusFlag,
 								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
-								       this->TorusFlag, this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
-								       this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"), architecture);
+								       this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+								       TorusAngle, TorusFluxInsertion, architecture);
 			    }
 			  else
 			    {
@@ -336,8 +345,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 								       this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson") | this->TorusFlag,
 								       !(this->Options->GetBoolean("use-nonrational")), 
 								       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
-								       this->TorusFlag, this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
-								       this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"), architecture);
+								       this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+								       TorusAngle, TorusFluxInsertion, architecture);
 			    }
 			}
 		    }
@@ -361,21 +370,28 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		  if (importBMatrices != 0)
 		    {
 		      MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 2, this->Options->GetInteger("p-truncation"), 
-									      importBMatrices, CylinderFlag, Kappa);
+									      importBMatrices, CylinderFlag, Kappa, 
+									      this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+									      TorusAngle, TorusFluxInsertion);
 		    }
 		  else
 		    {
 		      if (this->Options->GetString("cft") != 0)
 			{
 			  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("p-truncation"), NbrBMatrices, this->Options->GetString("cft"), 
-										  CylinderFlag, Kappa, architecture);
+										  this->Options->GetBoolean("boson") | this->TorusFlag, CylinderFlag, Kappa, 
+										  this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+										  TorusAngle, TorusFluxInsertion, architecture);
 			}
 		      else
 			{
 			  MPSMatrix = new FQHEMPSClustered2RQuasiholeSectorMatrix(this->Options->GetInteger("r-index"), 
-										  2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-										  this->Options->GetString("matrices-cft"), !(this->Options->GetBoolean("use-nonrational")), 
-										  this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+										  this->Options->GetInteger("laughlin-index") - 1, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+										  this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson") | this->TorusFlag, 
+										  !(this->Options->GetBoolean("use-nonrational")), 
+										  this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
+										  this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+										  TorusAngle, TorusFluxInsertion, architecture);
 			}
 		    }
 		}
@@ -436,15 +452,20 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		{
 		  if (importBMatrices != 0)
 		    {
-		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), 
+		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(this->Options->GetInteger("laughlin-index") - 1, this->Options->GetInteger("p-truncation"), 
 							       importBMatrices, 
-							       CylinderFlag, Kappa);
+							       CylinderFlag, Kappa, 
+							       this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+							       TorusAngle, TorusFluxInsertion);
 		    }
 		  else
 		    {
-		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-							       this->Options->GetString("matrices-cft"), !(this->Options->GetBoolean("use-nonrational")), 
-							       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+		      MPSMatrix = new FQHEMPSReadRezayi3Matrix(this->Options->GetInteger("laughlin-index") - 1, this->Options->GetInteger("p-truncation"), NbrBMatrices,
+							       this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson") | this->TorusFlag,
+							       !(this->Options->GetBoolean("use-nonrational")), 
+							       this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
+							       this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+							       TorusAngle, TorusFluxInsertion, architecture);
 		    }
 		}
 	      else
@@ -452,14 +473,18 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 		  if (importBMatrices != 0)
 		    {
 		      MPSMatrix = new FQHEMPSReadRezayi3QuasiholeSectorMatrix(2, this->Options->GetInteger("p-truncation"), importBMatrices, 
-									      CylinderFlag, Kappa);
+									      CylinderFlag, Kappa, 
+									      this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+									      TorusAngle, TorusFluxInsertion);
 		    }
 		  else
 		    {
 		      MPSMatrix = new FQHEMPSReadRezayi3QuasiholeSectorMatrix(2, this->Options->GetInteger("p-truncation"), NbrBMatrices,
-									      this->Options->GetString("matrices-cft"), 
+									      this->Options->GetString("matrices-cft"), this->Options->GetBoolean("boson") | this->TorusFlag, 
 									      !(this->Options->GetBoolean("use-nonrational")), 
-									      this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, architecture);
+									      this->Options->GetBoolean("trim-qsector"), CylinderFlag, Kappa, 
+									      this->TorusFlag, NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+									      TorusAngle, TorusFluxInsertion, architecture);
 		    }
 		}
 	    }
@@ -507,8 +532,8 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 			  MPSMatrix = new FQHEMPSLaughlinMatrix(this->Options->GetInteger("laughlin-index"), 
 								this->Options->GetInteger("p-truncation"), NbrBMatrices,
 								true, this->Options->GetBoolean("trim-qsector"),
-								this->Options->GetInteger("nbr-fluxquanta"), this->Options->GetDouble("aspect-ratio"), 
-								this->Options->GetDouble("angle"), this->Options->GetDouble("flux-insertion"));
+								NbrFluxQuanta, this->Options->GetDouble("aspect-ratio"), 
+								TorusAngle, TorusFluxInsertion);
 			}
 		    }
 		}

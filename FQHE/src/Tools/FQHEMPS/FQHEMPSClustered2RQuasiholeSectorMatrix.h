@@ -72,13 +72,20 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // laughlinIndex = power of the Laughlin part (i.e.  laughlinIndex=2 for the fermionic MR at nu=1/2)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // useRational = use arbitrary precision numbers for all the CFT calculations
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool useRational = true, 
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool bosonicVersion = false, bool useRational = true, 
 					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor 
@@ -90,11 +97,18 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // useRational = use arbitrary precision numbers for all the CFT calculations
   // trimChargeIndices = trim the charge indices
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational = true, 
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion = false, bool useRational = true, 
 					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor from a file describing the state
@@ -102,10 +116,17 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital + 1)
   // fileName = name of the file that contains the state description
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSClustered2RQuasiholeSectorMatrix(int pLevel, int nbrBMatrices, char* fileName, bool cylinderFlag = false, double kappa = 1.0, 
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int pLevel, int nbrBMatrices, char* fileName, bool bosonicVersion = false, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
@@ -116,7 +137,13 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // fileName = name of the file that contains the B matrices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
+  FQHEMPSClustered2RQuasiholeSectorMatrix(int rIndex, int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0);
 
   // destructor
   //
@@ -127,6 +154,12 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // cftDirectory = an optional path to the directory where all the CFT matrices are stored
   // architecture = architecture to use for precalculation
   virtual void CreateBMatrices (char* cftDirectory, AbstractArchitecture* architecture);
+
+  // get the (k,r) exclude principle satisfied by the root configuration
+  // 
+  // pauliK = maximum number of particles in the pauliR consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  virtual void GetKRExclusionPrinciple(int& pauliK, int& pauliR); 
 
   // get the filling factor of the state associated the B matrices 
   // 
@@ -149,6 +182,27 @@ class FQHEMPSClustered2RQuasiholeSectorMatrix : public FQHEMPSClustered2RMatrix
   // maxQ = reference on the lowest charge index
   virtual void ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ);
 
+  // get the matrix that into account the Jordan Wigner string on the torus geometry
+  //
+  // nbrFermions = number of fermions in the system
+  // return value = corresponding matrix
+  virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
+
+  // get the auxiliary space indices that are related to a given topological scetor
+  //
+  // topologicalSector = index of the topological sector to select
+  // nbrIndices = reference on the integer that will be set to the number of indices
+  // return value = array that contains the auxiliary space indices related to the selected topological sector
+  virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
+  
+  // get the minimum ky momentum (i.e. within the reduced Brillouin zone) on the torus compatible with the current state
+  // 
+  // nbrParticles = number of particles
+  // nbrFluxQuanta = number of flux quanta
+  // statistics = true if we are dealing with fermions
+  // return value = minimum ky momentum 
+  virtual int GetTorusMinimumKyMomentum(int nbrParticles, int nbrFluxQuanta, bool statistics);
+  
  protected:
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states

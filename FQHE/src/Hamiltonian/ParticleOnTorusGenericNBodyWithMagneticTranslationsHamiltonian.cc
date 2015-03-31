@@ -166,7 +166,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
   double* QyValues = new double [this->NBodyValue];
   double* Q2Values = new double [this->NBodyValue];
   double* CosineCoefficients = new double [this->NBodyValue];
-  
+  double Factor = pow((double) this->MaxMomentum, -0.5 * ((double) (this->NBodyValue)));
   int** LinearizedNBodySectorIndicesPerSum = new int* [this->NbrNBodySectorSums];
   for (int i = 0; i < this->NbrNBodySectorSums; ++i)
     {
@@ -320,7 +320,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 		    }
  		  if (this->FindCanonicalIndices(TmpMIndices, TmpNIndices, LinearizedNBodySectorIndicesPerSum[i][j2], LinearizedNBodySectorIndicesPerSum[i][j1], i, TmpCanonicalMIndices, TmpCanonicalNIndices, TmpCanonicalSum, TmpCanonicalPermutationCoefficient) == true)
  		    {
-		      this->NBodyInteractionFactors[i][Index] = TmpMatrixElement[TmpNbrMatrixElements];
+		      this->NBodyInteractionFactors[i][Index] = TmpMatrixElement[TmpNbrMatrixElements] * Factor;
 		      ++TmpNbrMatrixElements;
 		      TotalNbrInteractionFactors++;
 		      ++Index;
@@ -389,7 +389,7 @@ void ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian::EvaluateInt
 										 QxValues, QyValues, Q2Values, CosineCoefficients);
 			}
 		    }
-		  this->NBodyInteractionFactors[i][Index] = TmpInteraction;
+		  this->NBodyInteractionFactors[i][Index] = TmpInteraction * Factor;
 		  for (int k = 0; k < this->NBodyValue; ++k)
 		    cout << TmpMIndices[k] << " ";
 		  cout << "| ";

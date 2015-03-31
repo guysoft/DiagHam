@@ -50,13 +50,21 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // laughlinIndex = power of the Laughlin part minus 1 (i.e.  laughlinIndex=1 for the fermionic RR state)  
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // useRational = use arbitrary precision numbers for all the CFT calculations
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool useRational = true, 
-					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, AbstractArchitecture* architecture = 0);
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices = 2, bool bosonicVersion = false, bool useRational = true, 
+					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0,
+					  AbstractArchitecture* architecture = 0);
 
   // constructor 
   //
@@ -64,13 +72,20 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // pLevel = |P| level truncation
   // nbrBMatrices = number of B matrices to compute (max occupation per orbital)
   // cftDirectory = path to the directory where all the pure CFT matrices are stored
+  // bosonicVersion = use a version of the code that is compatible with bosonic wave functions
   // useRational = use arbitrary precision numbers for all the CFT calculations
   // trimChargeIndices = trim the charge indices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
   // architecture = architecture to use for precalculation
-  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool useRational = true, 
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, int nbrBMatrices, char* cftDirectory, bool bosonicVersion = false, bool useRational = true, 
 					  bool trimChargeIndices = false, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0, 
 					  AbstractArchitecture* architecture = 0);
 
   // constructor from stored B matrices
@@ -80,7 +95,13 @@ class FQHEMPSReadRezayi3QuasiholeSectorMatrix : public FQHEMPSReadRezayi3Matrix
   // fileName = name of the file that contains the B matrices
   // cylinderFlag = true if B_0 has to be normalized on the cylinder geometry
   // kappa = cylinder aspect ratio
-  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0);
+  // torusFlag = true the torus geometry should be used instead of a genus-0 surface
+  // nbrFluxQuanta = number of flux quanta piercing the torus
+  // aspectRatio = aspect ratio of the torus(norm of tau)
+  // angle = angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
+  // fluxInsertion = flux insertion along the tau direction
+  FQHEMPSReadRezayi3QuasiholeSectorMatrix(int laughlinIndex, int pLevel, char* fileName, bool cylinderFlag = false, double kappa = 1.0, 
+					  bool torusFlag = false, int nbrFluxQuanta = 0, double aspectRatio = 1.0, double angle = 0.5, double fluxInsertion = 0.0);
 
   // destructor
   //

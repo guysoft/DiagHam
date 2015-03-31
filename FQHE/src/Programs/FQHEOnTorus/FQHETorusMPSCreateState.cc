@@ -119,10 +119,59 @@ int main(int argc, char** argv)
   if (Manager.GetBoolean("boson") == true)
     {
       int MaxOccupation = Manager.GetInteger("boson-truncation");
-      if (MaxOccupation > NbrParticles)
-	Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy);
-      else
-	Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy, MaxOccupation);
+      bool TotalKyFlag = false;
+      
+      while ((TotalKyFlag == false) && (TotalKy < NbrFluxQuanta))
+	{
+	  if (Manager.GetInteger("ky-momentum") >= 0)
+	    {
+	      TotalKy = Manager.GetInteger("ky-momentum");
+	      TotalKyFlag = true;
+	    }
+	  if (MaxOccupation > NbrParticles)
+	    Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy);
+	  else
+	    Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy, MaxOccupation);
+	  if (TwistedTorusFlag == true)
+	    ComplexState = ComplexVector(Space->GetHilbertSpaceDimension(), true);
+	  else
+	    State = RealVector(Space->GetHilbertSpaceDimension(), true);
+	  for (int i = 0; (i < Space->GetHilbertSpaceDimension()) && (TotalKyFlag == false); ++i)
+	    {
+	      TotalKyFlag = Space->HasPauliExclusions(i, PauliKValue, PauliRValue);
+	      if (TotalKyFlag == true)
+		{
+		  cout << "find admissible configuration at " << i;
+		  if (TwistedTorusFlag == true)
+		    {
+		    }
+		  else
+		    {		
+		      Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, (long) i, 1l);
+		      if (State[i] == 0.0)
+			{
+			  TotalKyFlag = false;
+			  cout << ", but does not lead to a non-zero coefficient" << endl;
+			}
+		      else
+			{
+			  cout << " and leads to a non-zero coefficient (" << State[i] << ")" << endl;
+			  State[i] = 0.0;
+			}
+		    }
+		}
+	    }
+	  if (TotalKyFlag == false)
+	    {
+	      delete Space;
+	      TotalKy += ReducedBrillouinZoneSize;
+	    }
+	}      
+      if (TotalKy >= NbrFluxQuanta)
+	{
+	  cout << "error, can't find any root configuration" << endl;
+	  return -1;
+	}
     }
   else
     {
