@@ -405,6 +405,27 @@ class FermionOnTorus :  public ParticleOnTorus
   // nbrComponents = number of components to symmetrize within the first Hilbert space of inputSpaces
   virtual void SymmetrizeU1U1StateCore (ComplexVector& outputState, ComplexVector* inputStates, ParticleOnTorus** inputSpaces, int nbrStates, unsigned long firstComponent, unsigned long nbrComponents);
   
+  // symmetrize a vector by grouping distant and equally separated orbitals, core part
+  //
+  // inputVector = reference on the vector to symmetrize
+  // nbrOrbitals = number of orbitals to group together
+  // symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+  // first component = index of the first vector component 
+  // last component = index of the last component
+  virtual void SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents, bool twistedTorus = false);
+
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = symmetrized state
+  virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+							       unsigned long firstComponent, unsigned long nbrComponents);
+  
 };
 
 // get the particle statistic 

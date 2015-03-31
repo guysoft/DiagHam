@@ -631,13 +631,14 @@ int InvertU1KxKyStates(OptionManager* manager)
       else
 	{
 	  Complex TmpPhase = TmpVector.GlobalPhase();
+	  cout << "global phase = " << TmpPhase << endl;
 	  TmpVector /= TmpPhase;
 	  RealVector TmpVector2(TmpVector);
 	  TmpVector2.Normalize();
 	  if (TmpVector2.WriteVector(VectorOutputName) == false)
 	    {
 	      cout << "error, can't write vector " << VectorOutputName << endl;
-	    }	      
+	    }	
 	}
       delete[] VectorOutputName;
     }

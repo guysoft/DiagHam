@@ -343,6 +343,8 @@ int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& i
   int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / nbrOrbitals;
   ComplexVector* TmpVectors = new ComplexVector[TargetSpaceNbrOrbitals];
   ComplexVector TmpInputVector(inputVector, true);
+//   for (int j = 0; j < TmpInputVector.GetVectorDimension(); ++j)
+//     cout << TmpInputVector[j] << endl;
   this->SymmetrizeSingleStateGroupingDistantOrbitalsCore(TmpInputVector, TmpVectors, nbrOrbitals, 0ul, this->LargeHilbertSpaceDimension);
   int NbrGeneratedSectors = 0;
   for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
@@ -362,6 +364,9 @@ int ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitals (RealVector& i
       if (TmpVectors[i].GetVectorDimension() != 0)
 	{
 	  double TmpNorm = TmpVectors[i].Norm();
+// 	  for (int j = 0; j < TmpVectors[i].GetVectorDimension(); ++j)
+// 	    cout << TmpVectors[i][j] << " " ;
+// 	  cout << endl;
 	  cout << "The norm of the symmetrized vector is " << TmpNorm << endl;
 	  if (TmpNorm > precision)
 	    {

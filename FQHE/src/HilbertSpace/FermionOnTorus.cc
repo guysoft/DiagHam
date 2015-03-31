@@ -746,7 +746,10 @@ int FermionOnTorus::AdA (int index, int m, int n, double& coefficient)
       coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
 #endif
     }
+
+  
   TmpState |= (((unsigned long) (0x1)) << m);
+  
   return this->TargetSpace->FindStateIndex(TmpState, NewLzMax);
 }
 
@@ -1757,4 +1760,174 @@ bool FermionOnTorus::HasPauliExclusions(int index, int pauliK, int pauliR)
       TmpState >>= 1;
     }
   return true;
+}
+
+
+
+ 
+// symmetrize a vector by grouping distant and equally separated orbitals, core part
+//
+// inputVector = reference on the vector to symmetrize
+// nbrOrbitals = number of orbitals to group together
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest Ky to the largest Ky
+// first component = index of the first vector component 
+// last component = index of the last component
+
+void FermionOnTorus::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVector& inputVector, ComplexVector* symmetrizedVectors, int nbrOrbitals, unsigned long firstComponent, unsigned long nbrComponents, bool twistedTorus)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = this->KyMax / nbrOrbitals;
+  FermionOnTorus** TargetSpaces = new FermionOnTorus* [TargetSpaceNbrOrbitals];
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      TargetSpaces[i] = 0;
+    }  
+    
+  FermionOnTorus** IntermediaryTargetSpace = new FermionOnTorus* [nbrOrbitals];
+  for (int i = 0; i < nbrOrbitals; ++i)
+    IntermediaryTargetSpace[i] = 0;
+  IntermediaryTargetSpace[0] = new FermionOnTorus(this->NbrFermions, this->KyMax, this->TotalKy);
+
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      unsigned long TmpNbrParticles = 0x0ul;
+      unsigned long TmpState = this->StateDescription[i];
+      unsigned long TmpState1 = TmpState;
+      unsigned long TmpState2 = 0x0ul;
+      int TmpTotalKy = 0;
+      bool OrbitalOverflow = false;
+      double sign = 1;
+      int TmpIndex = 0;
+      int TmpStateIndex = i;
+      int TmpIndexTargetSpace = 0;
+      int TmpIndexNewTargetSpace = 0;
+      for (int k = 0; (k < TargetSpaceNbrOrbitals) && (OrbitalOverflow == false); ++k)
+      {
+	TmpState = (this->StateDescription[i]) >> k ;
+	TmpNbrParticles = 0x0ul;
+	for (int l = 0; l < nbrOrbitals; ++l)
+	{
+	  TmpNbrParticles += TmpState & 0x1ul;
+	  if ((TmpState & 0x1ul) == 0x1ul)
+	    TmpIndex = l;
+	  TmpState >>= TargetSpaceNbrOrbitals;
+	}
+	if (TmpNbrParticles == 0x1ul)
+	{
+	  TmpState2 |= 0x1ul << k;
+	  TmpTotalKy += k;
+	  TmpIndexNewTargetSpace += TmpIndex;
+	  TmpIndexNewTargetSpace %= nbrOrbitals;
+	  if (IntermediaryTargetSpace[TmpIndexNewTargetSpace] == 0)
+	    IntermediaryTargetSpace[TmpIndexNewTargetSpace] = new FermionOnTorus (this->NbrFermions, this->KyMax, ((this->TotalKy - TmpIndexNewTargetSpace*TargetSpaceNbrOrbitals + this->KyMax) % this->KyMax));
+	  IntermediaryTargetSpace[TmpIndexTargetSpace]->SetTargetSpace(IntermediaryTargetSpace[TmpIndexNewTargetSpace]);
+	  double coefficient;
+	  TmpStateIndex = IntermediaryTargetSpace[TmpIndexTargetSpace]->AdA (TmpStateIndex, k, k + TargetSpaceNbrOrbitals*TmpIndex, coefficient);
+	  sign *= coefficient;
+	  TmpIndexTargetSpace = TmpIndexNewTargetSpace;
+	}
+	else
+	{
+	if (TmpNbrParticles > 0x1ul)
+	  OrbitalOverflow = true;
+	}
+      }
+
+      TmpTotalKy %= TargetSpaceNbrOrbitals;
+      if (OrbitalOverflow == false)
+	{
+	  if (TargetSpaces[TmpTotalKy] == 0)
+	    {
+	      TargetSpaces[TmpTotalKy] = new FermionOnTorus (this->NbrFermions, TargetSpaceNbrOrbitals, TmpTotalKy);
+	      symmetrizedVectors[TmpTotalKy] = ComplexVector (TargetSpaces[TmpTotalKy]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpKyMax = TargetSpaces[TmpTotalKy]->KyMax - 1;
+	  while ((TmpState2 >> TmpKyMax) == 0x0ul)
+	    --TmpKyMax;
+	  int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TmpState2, TmpKyMax);
+	  if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[TmpTotalKy][TmpPos] += sign * inputVector[i];
+	    }
+	}
+    }
+  for (int i = 0; i < TargetSpaceNbrOrbitals; ++i)
+    {
+      if (TargetSpaces[i] != 0)
+	{
+	  delete TargetSpaces[i];
+	}
+    }
+}
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+// periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+									unsigned long firstComponent, unsigned long nbrComponents)
+{
+  bool twistedTorus = true;
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = this->KyMax / periodicity;
+  FermionOnTorus** TargetSpaces = new FermionOnTorus* [TargetSpaceNbrOrbitals];
+  for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+    {
+      TargetSpaces[j] = 0;
+    }
+
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      Complex TmpCoefficient = inputVector[i];
+      unsigned long TmpInputState = this->StateDescription[i];
+      int TmpTotalKy = 0;
+      int TmpNbrParticles = 0;
+      unsigned long TmpOutputState = 0x0ul;
+      int CurrentLz = 0;
+      for (int k = firstOrbitalIndex; k <= this->KyMax; k += periodicity)
+	{
+	  if ((TmpInputState & (0x1ul << k)) != 0x0ul)
+	    {
+	      TmpOutputState |= 0x1ul << CurrentLz;
+	      TmpTotalKy += CurrentLz;
+	      ++TmpNbrParticles;
+	    }
+	  ++CurrentLz;
+	} 
+      TmpTotalKy %= TargetSpaceNbrOrbitals;
+      if (TmpNbrParticles == this->NbrFermions)
+	{
+	  if (TargetSpaces[TmpTotalKy] == 0)
+	    {
+	      TargetSpaces[TmpTotalKy] = new FermionOnTorus (this->NbrFermions, TargetSpaceNbrOrbitals, TmpTotalKy);
+	      symmetrizedVectors[this->NbrFermions][TmpTotalKy] = ComplexVector(TargetSpaces[TmpTotalKy]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpKyMax = TargetSpaces[TmpTotalKy]->KyMax - 1;
+	  while ((TmpOutputState >> TmpKyMax) == 0x0ul)
+	    --TmpKyMax;
+	  int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TmpOutputState, TmpKyMax);
+	  if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[this->NbrFermions][TmpTotalKy][TmpPos] += TmpCoefficient;
+	    }
+      }
+    }
+  delete[] TmpState;
+  for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+  {
+    if (TargetSpaces[j] != 0)
+    {
+      delete TargetSpaces[j];
+    }
+  }
+  delete[] TargetSpaces;
 }

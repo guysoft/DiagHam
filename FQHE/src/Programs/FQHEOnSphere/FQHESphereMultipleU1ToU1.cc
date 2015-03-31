@@ -808,16 +808,7 @@ int main(int argc, char** argv)
 			{
 			  if (Manager.GetString("output-file") == 0)
 			    {
-			      if (Manager.GetBoolean("unnormalized-basis") == false)
-				{
-				  sprintf(FullOutputFileName, "fermions_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-					  TargetNbrFluxQuanta, LzSectors[i]);
-				}
-			      else
-				{
-				  sprintf(FullOutputFileName, "fermions_unnormalized_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], 
-					  TargetNbrFluxQuanta, LzSectors[i]);
-				}
+			      sprintf(FullOutputFileName, "fermions_unnormalized_rational_subset_n_%d_2s_%d_lz_%d.0.vec", NbrParticleSectors[i], TargetNbrFluxQuanta, LzSectors[i]);
 			    }
 			  else
 			    {

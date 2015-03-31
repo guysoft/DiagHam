@@ -303,11 +303,15 @@ int main(int argc, char** argv)
 	    }
 	  
       	  RealVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision, Architecture.GetArchitecture());
-	  if (OutputState.WriteVector(OutputFileName) == false)
-	    {
-	      cout << "error while writing output state " << OutputFileName << endl;
-	      return -1;
-	    }
+	  if (OutputState.Norm() > Precision)
+	  {
+	    OutputState /= OutputState.Norm();
+	    if (OutputState.WriteVector(OutputFileName) == false)
+	      {
+		cout << "error while writing output state " << OutputFileName << endl;
+		return -1;
+	      }
+	  }
 	  
 	  delete TargetSpace;
 	}
@@ -364,17 +368,27 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("subset-symmetrization") == true)
 		    {
-		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+		      if (Statistics == true)
+			sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
+		      else
+			sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
 			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
 		    }
 		  else
 		    {
-		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
+		      if (Statistics == true)
+			sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
+		      else
+			sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
 		    }
 		}
 	      else
 		{
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
+		  if (Statistics == true)
+		    sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
+		  else
+		    sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
 		}
 	    }
 	  for (int i = 0; i < NbrKySectors; ++i)
@@ -437,17 +451,24 @@ int main(int argc, char** argv)
 	  else
 	    {
 	      OutputFileName = new char [512];
-	      sprintf (OutputFileName, "bosons_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
+	      if (Statistics == true)
+		sprintf (OutputFileName, "fermions_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
+	      else
+		sprintf (OutputFileName, "bosons_torus_kysym_symmetrized_n_%d_2s_%d_ky_%d.0.vec", TotalNbrParticles, NbrFluxQuanta1, TotalKy);
 	    }
 	  
 	  	  
 	  ComplexVector OutputState = TargetSpace->SymmetrizeU1U1State (States, InputSpaces, NbrStates, Precision,  Architecture.GetArchitecture());
 
-	  if (OutputState.WriteVector(OutputFileName) == false)
-	    {
-	      cout << "error while writing output state " << OutputFileName << endl;
-	      return -1;
-	    }
+	  if (OutputState.Norm() > Precision)
+	  {
+	    OutputState /= OutputState.Norm();
+	    if (OutputState.WriteVector(OutputFileName) == false)
+	      {
+		cout << "error while writing output state " << OutputFileName << endl;
+		return -1;
+	      }
+	  }
 	  
 	  delete TargetSpace;
 	}
@@ -504,17 +525,27 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("subset-symmetrization") == true)
 		    {
-		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+		      if (Statistics == true)
+			sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
+		      else
+			sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
 			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
 		    }
 		  else
 		    {
-		      sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
+		      if (Statistics == true)
+			sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
+		      else
+			sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_xsymmetrized", TotalKy1);
 		    }
 		}
 	      else
 		{
-		  sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
+		  if (Statistics == true)
+		    sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
+		  else
+		    sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized", TotalKy1);
 		}
 	    }
 	  for (int i = 0; i < NbrKySectors; ++i)

@@ -585,15 +585,6 @@ int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetCanonica
   int CanonicalIndex = this->EvaluateLinearizedIndex(TmpIndices, g, momentumTransfer);
   int IndexForCanonical = 0;
   int* TmpIndices1 = new int[this->NBodyValue];
-//   for (int i = 0; i < this->NBodyValue; ++i)
-//     cout << TmpIndices[i] << " " ;
-//   cout << " ---- " ;
-//   cout << TmpIndices[0] << " " << TmpIndices[1] << " " << TmpIndices[2] << " ---- " ;
-//   for (int i = 0; i < this->NBodyValue; ++i)
-//       {
-// 	cout << TmpIndices[i] << ":";
-//       }
-//    cout << " = " ;
   for (int j = 0; j <  this->NbrLzValue - 1; ++j)
   {
     TmpNbrPermutation[j + 1] = TmpNbrPermutation[j];
@@ -620,22 +611,6 @@ int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetCanonica
       SortArrayDownOrderingPermutationBubbleSort<int>(TmpIndices, this->NBodyValue, TmpNbrPermutation[j + 1]);
 
     }
-    
-//     if (j == this->NbrLzValue - 1)
-//     {
-//       TmpSumGMomentumTransfer = SumGMomentumTransfer;
-//       TmpNbrPermutation[j + 1] = TmpNbrPermutation[0];
-//       for (int i = 0; i < this->NBodyValue; ++i)
-//       {
-// // 	cout << TmpIndices[i] << ":";
-// 	TmpIndices[i] = (this->NbrLzValue - TmpIndices[i]) % this->NbrLzValue;
-//       }
-//       CountModulo = 0;
-//       if (TmpIndices[this->NBodyValue - 1] == 0)
-// 	CountModulo += 1;
-//       int Tmp;
-//       SortArrayDownOrderingPermutationBubbleSort<int>(TmpIndices, this->NBodyValue, Tmp);
-//     }
     
     TmpSumGMomentumTransfer = (TmpSumGMomentumTransfer - CountModulo) % this->NBodyValue;
     momentumTransfer = - this->NBodyValue + 1;
