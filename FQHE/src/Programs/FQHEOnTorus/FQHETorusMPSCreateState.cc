@@ -228,6 +228,8 @@ int main(int argc, char** argv)
 		  else
 		    {		
 		      Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, (long) i, 1l);
+		      Space->PrintState(cout, i) << endl;
+		      cout << State[i] << endl;
 		      if (State[i] == 0.0)
 			{
 			  TotalKyFlag = false;

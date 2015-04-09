@@ -1744,7 +1744,7 @@ bool FermionOnTorus::HasPauliExclusions(int index, int pauliK, int pauliR)
 {
   unsigned long TmpState = this->StateDescription[index];
   unsigned long RMask = (0x1ul << pauliR) - 0x1ul;
-  TmpState |= (TmpState & RMask) >> this->KyMax;
+  TmpState |= (TmpState & RMask) << this->KyMax;
   unsigned long UnsignedPauliK = (unsigned long) pauliK;
   for (int i = 0; i < this->KyMax; ++i)
     {

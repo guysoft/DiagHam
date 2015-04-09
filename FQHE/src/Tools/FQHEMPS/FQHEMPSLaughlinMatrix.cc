@@ -33,6 +33,7 @@
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/SparseComplexMatrix.h"
 #include "HilbertSpace/BosonOnDiskShort.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include "GeneralTools/Endian.h"
 
@@ -978,7 +979,7 @@ int FQHEMPSLaughlinMatrix::GetTorusMinimumKyMomentum(int nbrParticles, int nbrFl
   if (statistics == false)
     return 0;
   if ((nbrParticles & 1) == 0)
-    return (nbrParticles / 2);
+    return (FindGCD(nbrParticles, nbrFluxQuanta) / 2);
   else
     return 0;
 }

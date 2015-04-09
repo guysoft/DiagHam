@@ -199,6 +199,26 @@ class FQHEMPSReadRezayi3Matrix : public FQHEMPSClustered2RMatrix
   // maxQ = reference on the lowest charge index
   virtual void ComputeChargeIndexRange(int pLevel, int cftSector, int& minQ, int& maxQ);
 
+  // get the number of particles that fit the root configuration once the number of flux quanta is fixed
+  // 
+  // nbrFluxQuanta = number of flux quanta
+  // padding = assume that the state has the extra padding
+  // return value = number of partciles
+  virtual int GetMatrixNaturalNbrParticles(int nbrFluxQuanta, bool padding = false);
+
+  // get the matrix that into account the Jordan Wigner string on the torus geometry
+  //
+  // nbrFermions = number of fermions in the system
+  // return value = corresponding matrix
+  virtual SparseRealMatrix GetTorusStringMatrix(int nbrFermions);
+
+  // get the auxiliary space indices that are related to a given topological scetor
+  //
+  // topologicalSector = index of the topological sector to select
+  // nbrIndices = reference on the integer that will be set to the number of indices
+  // return value = array that contains the auxiliary space indices related to the selected topological sector
+  virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
+  
  protected:
 
   // compute the linearized index of the B matrix for the (k=2,r) clustered states

@@ -1115,7 +1115,7 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::CreateBMatrices (char* cftDirector
     }
   else
     {
-      QValue = 2;
+      QValue = 2 + 3 * (this->LaughlinIndex - 1);
       QValueDenominator = 3;
       this->NbrNValue = QValueDenominator * (2 * this->PLevel) + QValue + 5;
       NValueShift = QValueDenominator * this->PLevel;
@@ -2345,84 +2345,19 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::ComputeChargeIndexRange(int pLevel
     }
   else
     {
-      QValue = 2;
+      QValue = 2 + 3 * (this->LaughlinIndex - 1);
       QValueDenominator = 3;
     }
-  if ((cftSector == 0) || (cftSector == 3))
+  if (this->BosonicVersion == false)
     {
-      for (int Q = 2; Q < this->NbrNValue; Q += 3)
+      if ((cftSector == 0) || (cftSector == 3))
 	{
-	  int QPrime = Q;
-	  int TmpP = 0;
-	  int TmpMaxP = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	  for (int Q = 2; Q < this->NbrNValue; Q += 3)
 	    {
-	      if (TmpP > TmpMaxP)
-		TmpMaxP = TmpP;	    
-	      QPrime -= (QValue - QValueDenominator);
-	      TmpP += (QPrime) / QValueDenominator - NValueShift;
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		{
-		  if (TmpP > TmpMaxP)
-		    TmpMaxP = TmpP;	    
-		  QPrime -= (QValue - QValueDenominator);
-		  TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
-		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		    {
-		      if (TmpP > TmpMaxP)
-			TmpMaxP = TmpP;	    
-		      QPrime -= (QValue - QValueDenominator);
-		      TmpP += (QPrime - 2) / QValueDenominator - NValueShift;
-		    }
-		}
-	    }
-	  QPrime = Q;
-	  TmpP = 0;
-	  int TmpMaxP2 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP2)
-		TmpMaxP2 = TmpP;	    
-	      TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
-	      QPrime += (QValue - QValueDenominator);
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		{
-		  if (TmpP > TmpMaxP2)
-		    TmpMaxP2 = TmpP;	    
-		  TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
-		  QPrime += (QValue - QValueDenominator);
-		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		    {
-		      if (TmpP > TmpMaxP2)
-			TmpMaxP2 = TmpP;	    
-		      TmpP -= (QPrime) / QValueDenominator - NValueShift;
-		      QPrime += (QValue - QValueDenominator);
-		    }
-		}
-	    }
-	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
-	    {
-	      if (Q < TmpMinQ)
-		TmpMinQ = Q;
-	      if (Q > TmpMaxQ)
-		TmpMaxQ = Q;	
-	    }    
-	}
-    }
-  if (cftSector == 1) 
-    {
-      for (int Q = 1; Q < this->NbrNValue; Q += 3)
-	{
-	  int QPrime = Q;
-	  int TmpP = 0;
-	  int TmpMaxP = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP)
-		TmpMaxP = TmpP;	    
-	      QPrime -= (QValue - QValueDenominator);
-	      TmpP += (QPrime  - 2) / QValueDenominator - NValueShift;
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP)
 		    TmpMaxP = TmpP;	    
@@ -2434,80 +2369,19 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::ComputeChargeIndexRange(int pLevel
 			TmpMaxP = TmpP;	    
 		      QPrime -= (QValue - QValueDenominator);
 		      TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP)
+			    TmpMaxP = TmpP;	    
+			  QPrime -= (QValue - QValueDenominator);
+			  TmpP += (QPrime - 2) / QValueDenominator - NValueShift;
+			}
 		    }
 		}
-	    }
-	  QPrime = Q;
-	  TmpP = 0;
-	  int TmpMaxP2 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP2)
-		TmpMaxP2 = TmpP;	    
-	      TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
-	      QPrime += (QValue - QValueDenominator);
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		{
-		  if (TmpP > TmpMaxP2)
-		    TmpMaxP2 = TmpP;	    
-		  TmpP -= (QPrime) / QValueDenominator - NValueShift;
-		  QPrime += (QValue - QValueDenominator);
-		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		    {
-		      if (TmpP > TmpMaxP2)
-			TmpMaxP2 = TmpP;	    
-		      TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
-		      QPrime += (QValue - QValueDenominator);
-		    }
-		}
-	    }
-	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
-	    {
-	      if (Q < TmpMinQ)
-		TmpMinQ = Q;
-	      if (Q > TmpMaxQ)
-		TmpMaxQ = Q;	
-	    }    
-	}
-    }
-  if (cftSector == 2) 
-    {
-      for (int Q = 0; Q < this->NbrNValue; Q += 3)
-	{
-	  int QPrime = Q;
-	  int TmpP = 0;
-	  int TmpMaxP = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP)
-		TmpMaxP = TmpP;	    
-	      QPrime -= (QValue - QValueDenominator);
-	      TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		{
-		  if (TmpP > TmpMaxP)
-		    TmpMaxP = TmpP;	    
-		  QPrime -= (QValue - QValueDenominator);
-		  TmpP += (QPrime - 2) / QValueDenominator - NValueShift;
-		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-		    {
-		      if (TmpP > TmpMaxP)
-			TmpMaxP = TmpP;	    
-		      QPrime -= (QValue - QValueDenominator);
-		      TmpP += (QPrime) / QValueDenominator - NValueShift;
-		    }
-		}
-	    }
-	  QPrime = Q;
-	  TmpP = 0;
-	  int TmpMaxP2 = 0;
-	  while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
-	    {
-	      if (TmpP > TmpMaxP2)
-		TmpMaxP2 = TmpP;	    
-	      TmpP -= (QPrime) / QValueDenominator - NValueShift;
-	      QPrime += (QValue - QValueDenominator);
-	      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
 		{
 		  if (TmpP > TmpMaxP2)
 		    TmpMaxP2 = TmpP;	    
@@ -2519,16 +2393,331 @@ void FQHEMPSReadRezayi3QuasiholeSectorMatrix::ComputeChargeIndexRange(int pLevel
 			TmpMaxP2 = TmpP;	    
 		      TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
 		      QPrime += (QValue - QValueDenominator);
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP2)
+			    TmpMaxP2 = TmpP;	    
+			  TmpP -= (QPrime) / QValueDenominator - NValueShift;
+			  QPrime += (QValue - QValueDenominator);
+			}
 		    }
 		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
 	    }
-	  if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+	}
+      if (cftSector == 1) 
+	{
+	  for (int Q = 1; Q < this->NbrNValue; Q += 3)
 	    {
-	      if (Q < TmpMinQ)
-		TmpMinQ = Q;
-	      if (Q > TmpMaxQ)
-		TmpMaxQ = Q;	
-	    }    
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue - QValueDenominator);
+		  TmpP += (QPrime  - 2) / QValueDenominator - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue - QValueDenominator);
+		      TmpP += (QPrime) / QValueDenominator - NValueShift;
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP)
+			    TmpMaxP = TmpP;	    
+			  QPrime -= (QValue - QValueDenominator);
+			  TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
+			}
+		    }
+		}
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
+		  QPrime += (QValue - QValueDenominator);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime) / QValueDenominator - NValueShift;
+		      QPrime += (QValue - QValueDenominator);
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP2)
+			    TmpMaxP2 = TmpP;	    
+			  TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
+			  QPrime += (QValue - QValueDenominator);
+			}
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
+	    }
+	}
+      if (cftSector == 2) 
+	{
+	  for (int Q = 0; Q < this->NbrNValue; Q += 3)
+	    {
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue - QValueDenominator);
+		  TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue - QValueDenominator);
+		      TmpP += (QPrime - 2) / QValueDenominator - NValueShift;
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP)
+			    TmpMaxP = TmpP;	    
+			  QPrime -= (QValue - QValueDenominator);
+			  TmpP += (QPrime) / QValueDenominator - NValueShift;
+			}
+		    }
+		}
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime) / QValueDenominator - NValueShift;
+		  QPrime += (QValue - QValueDenominator);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
+		      QPrime += (QValue - QValueDenominator);
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP2)
+			    TmpMaxP2 = TmpP;	    
+			  TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
+			  QPrime += (QValue - QValueDenominator);
+			}
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
+	    }
+	}
+    }
+  else
+    {
+      if ((cftSector == 0) || (cftSector == 3))
+	{
+	  for (int Q = 2; Q < this->NbrNValue; Q += 3)
+	    {
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue);
+		  TmpP += (QPrime) / QValueDenominator - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue);
+		      TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP)
+			    TmpMaxP = TmpP;	    
+			  QPrime -= (QValue);
+			  TmpP += (QPrime - 2) / QValueDenominator - NValueShift;
+			}
+		    }
+		}
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
+		  QPrime += (QValue);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
+		      QPrime += (QValue);
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP2)
+			    TmpMaxP2 = TmpP;	    
+			  TmpP -= (QPrime) / QValueDenominator - NValueShift;
+			  QPrime += (QValue);
+			}
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
+	    }
+	}
+      if (cftSector == 1) 
+	{
+	  for (int Q = 1; Q < this->NbrNValue; Q += 3)
+	    {
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue);
+		  TmpP += (QPrime  - 2) / QValueDenominator - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue);
+		      TmpP += (QPrime) / QValueDenominator - NValueShift;
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP)
+			    TmpMaxP = TmpP;	    
+			  QPrime -= (QValue);
+			  TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
+			}
+		    }
+		}
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
+		  QPrime += (QValue);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime) / QValueDenominator - NValueShift;
+		      QPrime += (QValue);
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP2)
+			    TmpMaxP2 = TmpP;	    
+			  TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
+			  QPrime += (QValue);
+			}
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
+	    }
+	}
+      if (cftSector == 2) 
+	{
+	  for (int Q = 0; Q < this->NbrNValue; Q += 3)
+	    {
+	      int QPrime = Q;
+	      int TmpP = 0;
+	      int TmpMaxP = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP)
+		    TmpMaxP = TmpP;	    
+		  QPrime -= (QValue);
+		  TmpP += (QPrime - 1) / QValueDenominator - NValueShift;
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP)
+			TmpMaxP = TmpP;	    
+		      QPrime -= (QValue);
+		      TmpP += (QPrime - 2) / QValueDenominator - NValueShift;
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP)
+			    TmpMaxP = TmpP;	    
+			  QPrime -= (QValue);
+			  TmpP += (QPrime) / QValueDenominator - NValueShift;
+			}
+		    }
+		}
+	      QPrime = Q;
+	      TmpP = 0;
+	      int TmpMaxP2 = 0;
+	      while ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		{
+		  if (TmpP > TmpMaxP2)
+		    TmpMaxP2 = TmpP;	    
+		  TmpP -= (QPrime) / QValueDenominator - NValueShift;
+		  QPrime += (QValue);
+		  if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+		    {
+		      if (TmpP > TmpMaxP2)
+			TmpMaxP2 = TmpP;	    
+		      TmpP -= (QPrime - 2) / QValueDenominator - NValueShift;
+		      QPrime += (QValue);
+		      if ((TmpP >= 0) && (QPrime < this->NbrNValue) && (QPrime >= 0))
+			{
+			  if (TmpP > TmpMaxP2)
+			    TmpMaxP2 = TmpP;	    
+			  TmpP -= (QPrime - 1) / QValueDenominator - NValueShift;
+			  QPrime += (QValue);
+			}
+		    }
+		}
+	      if (((this->PLevel - TmpMaxP) >= pLevel) && ((this->PLevel - TmpMaxP2) >= pLevel))
+		{
+		  if (Q < TmpMinQ)
+		    TmpMinQ = Q;
+		  if (Q > TmpMaxQ)
+		    TmpMaxQ = Q;	
+		}    
+	    }
 	}
     }
   minQ = TmpMinQ;
