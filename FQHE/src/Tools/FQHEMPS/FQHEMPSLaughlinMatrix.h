@@ -76,12 +76,16 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
 
   // true if B matrix have to be evaluated on the torus geometry
   bool TorusFlag;
+  // true if B matrix have to be evaluated on the twisted torus geometry (requiring complex B matrices)
+  bool TwistedTorusFlag;
   // number of flux quanta piercing the torus
   int TorusNbrFluxQuanta;
   // angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)
   double TorusAngle;
   // aspect ratio of the torus(norm of tau)
   double TorusAspectRatio;
+  // factor in the exponential due to tau
+  Complex TauFactor;
   // flux insertion along the tau direction
   double TorusFluxInsertion;
 

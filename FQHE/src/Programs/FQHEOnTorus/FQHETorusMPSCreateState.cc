@@ -100,8 +100,17 @@ int main(int argc, char** argv)
 
   int NbrMPSSumIndices;
   int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topological-sector"), NbrMPSSumIndices);
-  SparseRealMatrix* SparseBMatrices = MPSMatrix->GetMatrices();
-  cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
+  SparseRealMatrix* SparseBMatrices  = MPSMatrix->GetMatrices();
+  SparseComplexMatrix* SparseComplexBMatrices = MPSMatrix->GetComplexMatrices();
+  if (SparseBMatrices == 0)
+    {
+      TwistedTorusFlag = true;
+      cout << "B matrix size = " << SparseComplexBMatrices[0].GetNbrRow() << "x" << SparseComplexBMatrices[0].GetNbrColumn() << endl;
+    }
+  else
+    {
+      cout << "B matrix size = " << SparseBMatrices[0].GetNbrRow() << "x" << SparseBMatrices[0].GetNbrColumn() << endl;
+    }
   SparseRealMatrix StringMatrix;
   if (Manager.GetBoolean("boson") == true)
     StringMatrix = MPSMatrix->GetTorusStringMatrix(0);
@@ -144,6 +153,18 @@ int main(int argc, char** argv)
 		  cout << "find admissible configuration at " << i;
 		  if (TwistedTorusFlag == true)
 		    {
+		      Space->CreateStateFromMPSDescription(SparseComplexBMatrices, StringMatrix, ComplexState, 
+							   MPSSumIndices, NbrMPSSumIndices, 1l, (long) i, 1l);
+		      if ((ComplexState[i].Re == 0.0) && (ComplexState[i].Im == 0.0))
+			{
+			  TotalKyFlag = false;
+			  cout << ", but does not lead to a non-zero coefficient" << endl;
+			}
+		      else
+			{
+			  cout << " and leads to a non-zero coefficient (" << ComplexState[i] << ")" << endl;
+			  ComplexState[i] = 0.0;
+			}
 		    }
 		  else
 		    {		
@@ -224,12 +245,23 @@ int main(int argc, char** argv)
 		  cout << "find admissible configuration at " << i;
 		  if (TwistedTorusFlag == true)
 		    {
+		      Space->CreateStateFromMPSDescription(SparseComplexBMatrices, StringMatrix, ComplexState, MPSSumIndices, NbrMPSSumIndices, 1l, (long) i, 1l);
+		      Space->PrintState(cout, i) << endl;
+		      if ((ComplexState[i].Re == 0.0) && (ComplexState[i].Im == 0.0))
+			{
+			  TotalKyFlag = false;
+			  cout << ", but does not lead to a non-zero coefficient" << endl;
+			}
+		      else
+			{
+			  cout << " and leads to a non-zero coefficient (" << ComplexState[i] << ")" << endl;
+			  ComplexState[i] = 0.0;
+			}
 		    }
 		  else
 		    {		
 		      Space->CreateStateFromMPSDescription(SparseBMatrices, StringMatrix, State, MPSSumIndices, NbrMPSSumIndices, 1l, (long) i, 1l);
 		      Space->PrintState(cout, i) << endl;
-		      cout << State[i] << endl;
 		      if (State[i] == 0.0)
 			{
 			  TotalKyFlag = false;
@@ -265,14 +297,33 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("txt-output"))
 	    {
 	      OutputTxtFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputTxtFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", 
-		       Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      if (Manager.GetDouble("angle") == 0.0)
+		{
+		  sprintf (OutputTxtFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", 
+			   Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, 
+			   AspectRatio, TotalKy);
+		}
+	      else
+		{
+		  sprintf (OutputTxtFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_angle_%.6f_ky_%d.0.vec.txt", 
+			   Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, 
+			   AspectRatio, (M_PI * Manager.GetDouble("angle")), TotalKy);
+		}
 	    }
 	  else
 	    {
 	      OutputFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", 
-		       Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      if (Manager.GetDouble("angle") == 0.0)
+		{
+		  sprintf (OutputFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", 
+			   Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+		}
+	      else
+		{
+		  sprintf (OutputFileName , "bosons_torus_kysym_mps_plevel_%ld_maxocc_%ld_%s_n_%d_2s_%d_ratio_%.6f_angle_%.6f_ky_%d.0.vec", 
+			   Manager.GetInteger("p-truncation"), Manager.GetInteger("boson-truncation"), MPSMatrix->GetName(), NbrParticles, NbrFluxQuanta, 
+			   AspectRatio, (M_PI * Manager.GetDouble("angle")), TotalKy);
+		}
 	    }
 	}
       else
@@ -280,14 +331,30 @@ int main(int argc, char** argv)
 	  if (Manager.GetBoolean("txt-output"))
 	    {
 	      OutputTxtFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputTxtFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
-		       NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      if (Manager.GetDouble("angle") == 0.0)
+		{
+		  sprintf (OutputTxtFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec.txt", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
+			   NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+		}
+	      else
+		{
+		  sprintf (OutputTxtFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_angle_%.6f_ky_%d.0.vec.txt", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
+			   NbrParticles, NbrFluxQuanta, AspectRatio, (M_PI * Manager.GetDouble("angle")), TotalKy);
+		}
 	    }
 	  else
 	    {
 	      OutputFileName = new char [512 + strlen(MPSMatrix->GetName())];
-	      sprintf (OutputFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
-		       NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+	      if (Manager.GetDouble("angle") == 0.0)
+		{
+		  sprintf (OutputFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_ky_%d.0.vec", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
+			   NbrParticles, NbrFluxQuanta, AspectRatio, TotalKy);
+		}
+	      else
+		{
+		  sprintf (OutputFileName, "fermions_torus_kysym_mps_plevel_%ld_%s_n_%d_2s_%d_ratio_%.6f_angle_%.6f_ky_%d.0.vec", Manager.GetInteger("p-truncation"), MPSMatrix->GetName(), 
+			   NbrParticles, NbrFluxQuanta, AspectRatio, (M_PI * Manager.GetDouble("angle")), TotalKy);
+		}
 	    }
 	}
     }
@@ -308,9 +375,9 @@ int main(int argc, char** argv)
 
   if (TwistedTorusFlag == true)
     {
-//       FQHEMPSCreateStateOperation Operation(Space, SparseBMatrices, SparseQuasiholeBMatrices, NbrQuasiholes, &ComplexState, MPSRowIndex, MPSColumnIndex,
-// 					    Manager.GetInteger("precalculation-blocksize"));
-//       Operation.ApplyOperation(Architecture.GetArchitecture());
+       FQHEMPSCreateStateOperation Operation(Space, SparseComplexBMatrices, StringMatrix, &ComplexState, MPSSumIndices, NbrMPSSumIndices,
+					     Manager.GetInteger("precalculation-blocksize"));
+       Operation.ApplyOperation(Architecture.GetArchitecture());
     }
   else
     {

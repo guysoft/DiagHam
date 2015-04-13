@@ -327,6 +327,27 @@ class SparseComplexMatrix : public Matrix
   friend SparseComplexMatrix Multiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2, 
 				       Complex* tmpMatrixElements, int* tmpColumnIndices, Complex* tmpElements);
 
+  // multiply two matrices, minimizing the amount of temporary storage
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // return value = reference on current matrix
+  friend SparseComplexMatrix MemoryEfficientMultiply (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2);
+
+  // multiply two matrices, minimizing the amount of temporary storage
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // return value = reference on current matrix
+  friend SparseComplexMatrix MemoryEfficientMultiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2);
+
+  // multiply two matrices, minimizing the amount of temporary storage
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // return value = reference on current matrix
+  friend SparseComplexMatrix MemoryEfficientMultiply (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2);
+
   // conjugate the current sparse matrix (M1^+ A M2), assuming A is hermitian
   //
   // matrix1 = left matrix used for the conjugation

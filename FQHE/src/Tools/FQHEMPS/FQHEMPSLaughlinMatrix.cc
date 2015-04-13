@@ -71,10 +71,12 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
 {
   this->NbrBMatrices = nbrBMatrices;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->ComplexBMatrices = 0;
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
   this->BosonicVersion = bosonicVersion;
   this->TorusFlag = false;
+  this->TwistedTorusFlag = false;
   if (this->BosonicVersion == true)
     this->NbrNValue = ((2 * this->PLevel) + this->LaughlinIndex) + 1;
   else
@@ -110,7 +112,6 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
 					     int nbrFluxQuanta, double aspectRatio, double angle, double fluxInsertion)
 {
   this->NbrBMatrices = nbrBMatrices;
-  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->LaughlinIndex = laughlinIndex;
   this->PLevel = pLevel;
   this->BosonicVersion = bosonicVersion;
@@ -127,6 +128,20 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, int 
   this->TorusFluxInsertion = fluxInsertion;
   this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
   this->UniformChargeIndexRange = !trimChargeIndices;
+  if ((this->TorusAngle != 0.0) || (this->TorusFluxInsertion != 0.0))
+    {
+      this->TwistedTorusFlag = true;
+      this->TauFactor = ((2.0 * M_PI * this->TorusAspectRatio  / ((double) this->TorusNbrFluxQuanta))
+			 * Complex(-sin(this->TorusAngle * M_PI), cos(this->TorusAngle * M_PI)));
+      this->ComplexBMatrices = new SparseComplexMatrix [this->NbrBMatrices];
+      this->RealBMatrices = 0;
+    }
+  else
+    {
+      this->TwistedTorusFlag = false;
+      this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+      this->ComplexBMatrices = 0;
+    }
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   for (int i = 0; i < this->NbrBMatrices; ++i)
     {
@@ -155,6 +170,7 @@ FQHEMPSLaughlinMatrix::FQHEMPSLaughlinMatrix(int laughlinIndex, int pLevel, char
   this->NValueGlobalShift = this->PLevel;
   this->CylinderFlag = cylinderFlag;
   this->TorusFlag = false;
+  this->TwistedTorusFlag = false;
   this->Kappa = kappa;
   this->UniformChargeIndexRange = !trimChargeIndices;
   this->LoadMatrices(fileName);
@@ -341,7 +357,8 @@ void FQHEMPSLaughlinMatrix::CreateBMatrices ()
 void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
 {
   BosonOnDiskShort** U1BosonBasis = new BosonOnDiskShort* [this->PLevel + 1];
-  SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
+  SparseRealMatrix* BMatrices = 0;
+  SparseComplexMatrix* TmpComplexBMatrices = 0;
   for (int i = 0; i <= this->PLevel; ++i)
     {
       U1BosonBasis[i] = new BosonOnDiskShort(i, i, this->PLevel + 1);
@@ -377,29 +394,51 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
 	    ++TmpNbrElementPerRow[this->GetMatrixIndex(i, k, j - 1)];
 	}
     }
-  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
-  for (int i = 0; i <= this->PLevel; ++i)
+  if (this->TwistedTorusFlag == false)
     {
-      BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
-      for (int j = this->NInitialValuePerPLevel[i] + 1; j <= this->NLastValuePerPLevel[i]; ++j)
+      BMatrices = new SparseRealMatrix[this->NbrBMatrices];
+      BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+      for (int i = 0; i <= this->PLevel; ++i)
 	{
-	  for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
+	  BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
+	  for (int j = this->NInitialValuePerPLevel[i] + 1; j <= this->NLastValuePerPLevel[i]; ++j)
 	    {
-	      double Tmp = 1.0;
-	      if (this->CylinderFlag)
+	      for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
 		{
-		  Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
-							   + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
-		}
-	      else
-		{
-		  if (this->TorusFlag)
+		  double Tmp = 1.0;
+		  if (this->CylinderFlag)
 		    {
 		      Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
 							       + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
 		    }
+		  else
+		    {
+		      if (this->TorusFlag)
+			{
+			  Tmp *= exp(-this->Kappa * this->Kappa * (((double) i)
+								   + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
+			}
+		    }
+		  BMatrices[0].SetMatrixElement(this->GetMatrixIndex(i, k, j - 1), this->GetMatrixIndex(i, k, j), Tmp);
 		}
-	      BMatrices[0].SetMatrixElement(this->GetMatrixIndex(i, k, j - 1), this->GetMatrixIndex(i, k, j), Tmp);
+	    }
+	}
+    }
+  else
+    {
+      TmpComplexBMatrices = new SparseComplexMatrix[this->NbrBMatrices];
+      TmpComplexBMatrices[0] = SparseComplexMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+      for (int i = 0; i <= this->PLevel; ++i)
+	{
+	  BosonOnDiskShort* TmpSpace = U1BosonBasis[i];
+	  for (int j = this->NInitialValuePerPLevel[i] + 1; j <= this->NLastValuePerPLevel[i]; ++j)
+	    {
+	      for (int k = 0; k < TmpSpace->GetHilbertSpaceDimension(); ++k)
+		{
+		  Complex Tmp = exp(this->TauFactor * (((double) i)
+						       + (((j - 1.0 - this->NValueGlobalShift) * (j - 1.0 - this->NValueGlobalShift)) / (2.0 * (double) this->LaughlinIndex))));
+		  TmpComplexBMatrices[0].SetMatrixElement(this->GetMatrixIndex(i, k, j - 1), this->GetMatrixIndex(i, k, j), Tmp);
+		}
 	    }
 	}
     }
@@ -463,25 +502,51 @@ void FQHEMPSLaughlinMatrix::AlternateCreateBMatrices ()
   delete[] Partition2;
 
   int TmpNbrBMatrices = 0;
-  for (int m = 1; m < this->NbrBMatrices; ++m)
+  if (this->TwistedTorusFlag == false)
     {
-      BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
-      if (BMatrices[m].GetNbrRow() > 0)
+      for (int m = 1; m < this->NbrBMatrices; ++m)
 	{
-	  ++TmpNbrBMatrices;
-	  if ((this->CylinderFlag) || (this->TorusFlag))
-	    BMatrices[m] /= sqrt((double) m);
+	  BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
+	  if (BMatrices[m].GetNbrRow() > 0)
+	    {
+	      ++TmpNbrBMatrices;
+	      if ((this->CylinderFlag) || (this->TorusFlag))
+		BMatrices[m] /= sqrt((double) m);
+	    }
 	}
     }
-
-  TmpNbrBMatrices = 0;
-  for (int i = 0; i < this->NbrBMatrices; ++i)
+  else
     {
-      if (BMatrices[i].GetNbrRow() > 0)
-	this->RealBMatrices[TmpNbrBMatrices++] = BMatrices[i];
+      for (int m = 1; m < this->NbrBMatrices; ++m)
+	{
+	  TmpComplexBMatrices[m] = MemoryEfficientMultiply(TmpComplexBMatrices[m - 1], V0Matrix);
+	  if (TmpComplexBMatrices[m].GetNbrRow() > 0)
+	    {
+	      ++TmpNbrBMatrices;
+	      TmpComplexBMatrices[m] /= sqrt((double) m);
+	    }
+	}
+    }
+  TmpNbrBMatrices = 0;
+  if (this->TwistedTorusFlag == false)
+    {
+      for (int i = 0; i < this->NbrBMatrices; ++i)
+	{
+	  if (BMatrices[i].GetNbrRow() > 0)
+	    this->RealBMatrices[TmpNbrBMatrices++] = BMatrices[i];
+	}
+      delete[] BMatrices;
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBMatrices; ++i)
+	{
+	  if (TmpComplexBMatrices[i].GetNbrRow() > 0)
+	    this->ComplexBMatrices[TmpNbrBMatrices++] = TmpComplexBMatrices[i];
+	}
+      delete[] TmpComplexBMatrices;
     }
   this->NbrBMatrices = TmpNbrBMatrices;
-  delete[] BMatrices;
   for (int i = 0; i <= this->PLevel; ++i)
     delete U1BosonBasis[i];
   delete[] U1BosonBasis;
@@ -892,7 +957,11 @@ SparseRealMatrix FQHEMPSLaughlinMatrix::GetTorusStringMatrix(int nbrFermions)
     {
       TmpNbrElementPerRow[i] = 1;
     }
-  SparseRealMatrix StringMatrix (this->RealBMatrices[0].GetNbrRow(), TmpDimension, TmpNbrElementPerRow);
+  SparseRealMatrix StringMatrix;
+  if (this->RealBMatrices != 0)
+    StringMatrix = SparseRealMatrix(this->RealBMatrices[0].GetNbrRow(), TmpDimension, TmpNbrElementPerRow);
+  else
+    StringMatrix = SparseRealMatrix(this->ComplexBMatrices[0].GetNbrRow(), TmpDimension, TmpNbrElementPerRow);    
   for (int CurrentPLevel = 0; CurrentPLevel <= this->PLevel; ++CurrentPLevel)
     {
       int MinQValue;

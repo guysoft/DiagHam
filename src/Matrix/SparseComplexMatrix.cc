@@ -1603,6 +1603,324 @@ SparseComplexMatrix Multiply (const SparseRealMatrix& matrix1, const SparseCompl
   return TmpMatrix;
 }
 
+// multiply two matrices, minimizing the amount of temporary storage
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// return value = reference on current matrix
+
+SparseComplexMatrix MemoryEfficientMultiply (const SparseComplexMatrix& matrix1, const SparseComplexMatrix& matrix2)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  Complex* TmpElements = new Complex [matrix2.NbrColumn];
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      TmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0l);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (TmpElements[j] != 0.0)
+	      {
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      if (TmpMatrix.RowPointers[i] != -1l)
+	{
+	  long MinPos =  matrix1.RowPointers[i];
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+	  
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (TmpElements[j] != 0.0)
+	      {
+		TmpMatrix.MatrixElements[TmpNbrMatrixElements] = TmpElements[j];
+		TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = j;
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }
+	}
+    }
+  delete[] TmpElements;
+  return TmpMatrix;
+}
+
+// multiply two matrices, minimizing the amount of temporary storage
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// return value = reference on current matrix
+
+SparseComplexMatrix MemoryEfficientMultiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  Complex* TmpElements = new Complex [matrix2.NbrColumn];
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      TmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0l);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  double Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (TmpElements[j] != 0.0)
+	      {
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      if (TmpMatrix.RowPointers[i] != -1l)
+	{
+	  long MinPos =  matrix1.RowPointers[i];
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  double Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+	  
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (TmpElements[j] != 0.0)
+	      {
+		TmpMatrix.MatrixElements[TmpNbrMatrixElements] = TmpElements[j];
+		TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = j;
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }
+	}
+    }
+  delete[] TmpElements;
+  return TmpMatrix;
+}
+
+// multiply two matrices, minimizing the amount of temporary storage
+//
+// matrix1 = left matrix
+// matrix2 = right matrix
+// return value = reference on current matrix
+
+SparseComplexMatrix MemoryEfficientMultiply (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2)
+{
+  if (matrix2.NbrRow != matrix1.NbrColumn)
+    {
+      cout << "error, cannot multiply the two matrices" << endl;
+      return SparseRealMatrix(); 
+    }
+  long TmpNbrMatrixElements = 0l;
+  long PreviousTmpNbrMatrixElements = 0l;
+  Complex* TmpElements = new Complex [matrix2.NbrColumn];
+  for (int i = 0; i < matrix2.NbrColumn; ++i)
+    {
+      TmpElements[i] = 0.0;
+    }
+  SparseComplexMatrix TmpMatrix(matrix1.NbrRow, matrix2.NbrColumn, 0l);
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      long MinPos =  matrix1.RowPointers[i];
+      if (MinPos >= 0l)
+	{
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+   
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (TmpElements[j] != 0.0)
+	      {
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }	  
+	  if (TmpNbrMatrixElements == PreviousTmpNbrMatrixElements)
+	    {
+	      TmpMatrix.RowPointers[i] = -1l;
+	      TmpMatrix.RowLastPointers[i] = 1l;
+	    }
+	  else
+	    {
+	      TmpMatrix.RowPointers[i] = PreviousTmpNbrMatrixElements;
+	      TmpMatrix.RowLastPointers[i] = TmpNbrMatrixElements - 1;
+	    }
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[i] = -1l;
+	  TmpMatrix.RowLastPointers[i] = -1;
+	}
+    }
+  TmpMatrix.NbrMatrixElements = TmpNbrMatrixElements;
+  TmpMatrix.MatrixElements = new Complex[TmpNbrMatrixElements];
+  TmpMatrix.ColumnIndices = new int[TmpNbrMatrixElements];
+  TmpNbrMatrixElements = 0l;
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      if (TmpMatrix.RowPointers[i] != -1l)
+	{
+	  long MinPos =  matrix1.RowPointers[i];
+	  long MaxPos = matrix1.RowLastPointers[i];
+	  for (; MinPos <= MaxPos; ++MinPos)
+	    {
+	      int TmpIndex = matrix1.ColumnIndices[MinPos];
+	      long MinPos2 = matrix2.RowPointers[TmpIndex];
+	      if (MinPos2 >= 0)
+		{
+		  Complex Tmp = matrix1.MatrixElements[MinPos];
+		  long MaxPos2 = matrix2.RowLastPointers[TmpIndex];
+		  for (; MinPos2 <= MaxPos2; ++MinPos2)
+		    {
+		      TmpElements[matrix2.ColumnIndices[MinPos2]] += Tmp * matrix2.MatrixElements[MinPos2];
+		    }      
+		}
+	    }	 
+	  
+	  PreviousTmpNbrMatrixElements = TmpNbrMatrixElements;
+	  for (int j = 0; j < matrix2.NbrColumn; ++j)
+	    if (TmpElements[j] != 0.0)
+	      {
+		TmpMatrix.MatrixElements[TmpNbrMatrixElements] = TmpElements[j];
+		TmpMatrix.ColumnIndices[TmpNbrMatrixElements] = j;
+		TmpElements[j] = 0.0;
+		++TmpNbrMatrixElements;
+	      }
+	}
+    }
+  delete[] TmpElements;
+  return TmpMatrix;
+}
+
 
 // conjugate the current sparse matrix (M1^+ A M2), assuming A is symmetric
 //

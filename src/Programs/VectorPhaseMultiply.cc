@@ -32,6 +32,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('o', "output-vector", "name of the file where the output vector has to be stored");
   (*SystemGroup) += new SingleDoubleOption  ('p', "phase", "phase (in radian unit)", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "pi-unit", "the phase is expressed in pi unit instead of radian unit"); 
+  (*SystemGroup) += new BooleanOption  ('\n', "normalize-real", "set the phase such that the first component is real and positive"); 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -54,16 +55,19 @@ int main(int argc, char** argv)
       cout << "no output file" << endl;
     }
 
-  Complex Phase;
-  if (Manager.GetBoolean("pi-unit"))  
+  Complex TmpPhase;
+  if (Manager.GetBoolean("normalize-real") == false)
     {
-      Phase.Re = cos (M_PI * Manager.GetDouble("phase"));
-      Phase.Im = sin (M_PI * Manager.GetDouble("phase"));
-    }
-  else
-    {
-      Phase.Re = cos (Manager.GetDouble("phase"));
-      Phase.Im = sin (Manager.GetDouble("phase"));
+      if (Manager.GetBoolean("pi-unit"))  
+	{
+	  TmpPhase.Re = cos (M_PI * Manager.GetDouble("phase"));
+	  TmpPhase.Im = sin (M_PI * Manager.GetDouble("phase"));
+	}
+      else
+	{
+	  TmpPhase.Re = cos (Manager.GetDouble("phase"));
+	  TmpPhase.Im = sin (Manager.GetDouble("phase"));
+	}
     }
 
   RealVector InputVector1;
@@ -74,7 +78,11 @@ int main(int argc, char** argv)
 	  return -1;
 	}
       ComplexVector OutputVector (InputVector1, true);
-      OutputVector *= Phase;
+      if (Manager.GetBoolean("normalize-real") == true)
+	{
+	  TmpPhase = Phase(-Arg(OutputVector[0]));
+	}
+      OutputVector *= TmpPhase;
       OutputVector.WriteVector(Manager.GetString("output-vector"));
     }
   else
@@ -84,7 +92,11 @@ int main(int argc, char** argv)
 	{
 	  return -1;
 	}
-      OutputVector *= Phase;
+      if (Manager.GetBoolean("normalize-real") == true)
+	{
+	  TmpPhase = Phase(-Arg(OutputVector[0]));
+	}
+      OutputVector *= TmpPhase;
       OutputVector.WriteVector(Manager.GetString("output-vector"));
     }
   return 0;

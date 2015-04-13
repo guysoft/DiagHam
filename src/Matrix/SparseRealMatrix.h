@@ -245,7 +245,21 @@ class SparseRealMatrix : public Matrix
   // matrix1 = left matrix
   // matrix2 = right matrix
   // return value = reference on current matrix
-  friend SparseRealMatrix MemoryEfficientMultiply (const SparseRealMatrix& matrix, const SparseRealMatrix& matrix2);
+  friend SparseRealMatrix MemoryEfficientMultiply (const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2);
+
+  // multiply two matrices, minimizing the amount of temporary storage
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // return value = reference on current matrix
+  friend SparseComplexMatrix MemoryEfficientMultiply (const SparseRealMatrix& matrix1, const SparseComplexMatrix& matrix2);
+
+  // multiply two matrices, minimizing the amount of temporary storage
+  //
+  // matrix1 = left matrix
+  // matrix2 = right matrix
+  // return value = reference on current matrix
+  friend SparseComplexMatrix MemoryEfficientMultiply (const SparseComplexMatrix& matrix1, const SparseRealMatrix& matrix2);
 
   // multiply two matrices, providing all the required temporary arrays
   //

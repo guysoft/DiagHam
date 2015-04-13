@@ -1733,6 +1733,105 @@ void FermionOnTorus::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices,
   delete[] TmpElements;
 }
 
+// create a state from its MPS description
+//
+// bMatrices = array that gives the B matrices 
+// twistMatrix = reference on the twist matrix to insert in the trace
+// state = reference to vector that will contain the state description
+// mPSSumIndices = diagonal indices that have to be kept in the trace
+// nbrMPSSumIndices = number of diagonal indices that have to be kept in the trace
+// memory = amount of memory that can be use to precompute matrix multiplications  
+// initialIndex = initial index to compute
+// nbrComponents = number of components to compute
+
+void FermionOnTorus::CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, SparseRealMatrix& twistMatrix, ComplexVector& state, 
+						    int* mPSSumIndices, int nbrMPSSumIndices,
+						    long memory, long initialIndex, long nbrComponents)
+{
+  SparseComplexMatrix TmpMatrix;
+  long MaxIndex = initialIndex + nbrComponents;
+  if ((nbrComponents == 0l) || (MaxIndex > this->LargeHilbertSpaceDimension))
+    {
+      MaxIndex = this->LargeHilbertSpaceDimension;
+    }
+  long TmpMemory = (((long) bMatrices[0].GetNbrRow()) * ((long)bMatrices[0].GetNbrColumn()));
+  if (TmpMemory > (1l << 28))
+    TmpMemory = 1l << 28;
+  Complex* TmpMatrixElements = new Complex [TmpMemory];
+  int* TmpColumnIndices = new int [TmpMemory];
+  Complex* TmpElements = new Complex [bMatrices[0].GetNbrRow()];
+
+  if (memory <= 1l)
+    {
+      for (long i = initialIndex; i < MaxIndex; ++i)
+	{
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(twistMatrix);
+	  for (int j = 0; j < this->KyMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  Complex& TmpComponent = state[i];
+	  Complex Tmp;
+	  for (int j = 0; j < nbrMPSSumIndices; ++j)
+	    {
+	      TmpMatrix.GetMatrixElement(mPSSumIndices[j], mPSSumIndices[j], Tmp);
+	      TmpComponent += Tmp;
+	    }
+	}
+    }
+  else
+    {
+      int PrecalculationBlockSize = (int) memory;
+      unsigned long PrecalculationBlockMask = (0x1ul  << PrecalculationBlockSize) - 0x1ul;
+      int PrecalculationBlockLength  = this->KyMax - (this->KyMax % PrecalculationBlockSize);
+      int RemaingOrbtals = this->KyMax % PrecalculationBlockSize;
+      SparseComplexMatrix* TmpBlockbMatrices = new SparseComplexMatrix[1 << PrecalculationBlockSize];
+      for (unsigned long TmpState = 0x0ul; TmpState <= PrecalculationBlockMask; ++TmpState)
+	{
+	  unsigned long TmpStateDescription = TmpState;
+	  TmpBlockbMatrices[TmpState].Copy(bMatrices[TmpStateDescription & 0x1ul]);
+	  TmpStateDescription >>= 1;
+	  for (int j = 1; j < PrecalculationBlockSize; ++j)
+	    {
+	      TmpBlockbMatrices[TmpState].Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    }      
+	}
+      for (long i = initialIndex; i < MaxIndex; ++i)
+	{
+	  if (((i - initialIndex) % 10000) == 0)
+	    cout << "Completed " << (i - initialIndex) << " out of " << (MaxIndex - initialIndex) << endl; 
+	  unsigned long TmpStateDescription = this->StateDescription[i];
+	  TmpMatrix.Copy(twistMatrix);
+	  int j = 0;
+	  for (; j < PrecalculationBlockLength; j += PrecalculationBlockSize)
+	    {
+	      TmpMatrix.Multiply(TmpBlockbMatrices[TmpStateDescription & PrecalculationBlockMask], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= PrecalculationBlockSize;
+	    } 
+	  for (; j < this->KyMax; ++j)
+	    {
+	      TmpMatrix.Multiply(bMatrices[TmpStateDescription & 0x1ul], TmpMatrixElements, TmpColumnIndices, TmpElements);
+	      TmpStateDescription >>= 1;
+	    } 
+	  Complex& TmpComponent = state[i];
+	  Complex Tmp;
+	  for (int j = 0; j < nbrMPSSumIndices; ++j)
+	    {
+	      TmpMatrix.GetMatrixElement(mPSSumIndices[j], mPSSumIndices[j], Tmp);
+	      TmpComponent += Tmp;
+	    }
+	}
+    }
+  delete[] TmpMatrixElements;
+  delete[] TmpColumnIndices;
+  delete[] TmpElements;
+}
+
 // request whether state with given index satisfies a general Pauli exclusion principle
 //
 // index = state index

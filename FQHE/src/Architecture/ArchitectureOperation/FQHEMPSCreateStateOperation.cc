@@ -62,6 +62,7 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space
   this->OutputState = state;
   this->ComplexOutputState = 0;  
   this->BMatrices = bMatrices;
+  this->ComplexBMatrices = 0;
   this->QuasiholeBMatrices = 0;
   this->NbrQuasiholes = 0;
   this->MPSRowIndex = mPSRowIndex;  
@@ -93,6 +94,7 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnSphere* space
   this->OutputState = 0;
   this->ComplexOutputState = state;  
   this->BMatrices = bMatrices;
+  this->ComplexBMatrices = 0;
   this->QuasiholeBMatrices = quasiholeBMatrices;
   this->NbrQuasiholes = nbrQuasiholes;
   this->MPSRowIndex = mPSRowIndex;  
@@ -124,6 +126,38 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnTorus* space,
   this->OutputState = state;
   this->ComplexOutputState = 0;  
   this->BMatrices = bMatrices;
+  this->ComplexBMatrices = 0;
+  this->NbrQuasiholes = 0;
+  this->MPSRowIndex = 0;  
+  this->MPSColumnIndex = 0;
+  this->PrecalculationBlockSize = blockSize;
+  this->TorusStringMatrix = stringMatrix;
+  this->TopologicalSectorIndices = topologicalSectorIndices;
+  this->TopologicalSectorNbrIndices = topologicalSectorNbrIndices;
+  this->OperationType = AbstractArchitectureOperation::FQHEMPSCreateStateOperation;
+}
+
+// constructor for the torus geometry
+//
+// space = pointer to the Hilbert space
+// bMatrices = array that gives the B matrices 
+// state = pointer to the vector where the MPS state will be stored
+// stringMatrix = matrix that takes into account the Jordan Wigner string on the torus geometry
+// topologicalSectorIndices = array that contains the auxiliary space indices related to the selected topological sector
+// topologicalSectorNbrIndices = number of indices in TopologicalSectorIndices
+// blockSize = indicates the size of the block for precalculations
+
+FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(ParticleOnTorus* space, SparseComplexMatrix* bMatrices, SparseRealMatrix& stringMatrix, 
+							ComplexVector* state, int* topologicalSectorIndices, int topologicalSectorNbrIndices, int blockSize)
+{
+  this->FirstComponent = 0;
+  this->NbrComponent = space->GetHilbertSpaceDimension();
+  this->TorusSpace = (ParticleOnTorus*) space->Clone();
+  this->Space = 0;
+  this->ComplexOutputState = state;
+  this->OutputState = 0;  
+  this->ComplexBMatrices = bMatrices;
+  this->BMatrices = 0;
   this->NbrQuasiholes = 0;
   this->MPSRowIndex = 0;  
   this->MPSColumnIndex = 0;
@@ -156,6 +190,7 @@ FQHEMPSCreateStateOperation::FQHEMPSCreateStateOperation(const FQHEMPSCreateStat
   this->OutputState = operation.OutputState;
   this->ComplexOutputState = operation.ComplexOutputState;  
   this->BMatrices = operation.BMatrices;
+  this->ComplexBMatrices = operation.ComplexBMatrices;
   this->QuasiholeBMatrices = operation.QuasiholeBMatrices;
   this->NbrQuasiholes = operation.NbrQuasiholes;
   this->MPSRowIndex = operation.MPSRowIndex;  
@@ -227,9 +262,18 @@ bool FQHEMPSCreateStateOperation::RawApplyOperation()
     }
   else
     {
-      this->TorusSpace->CreateStateFromMPSDescription(this->BMatrices, this->TorusStringMatrix, *(this->OutputState), 
-						      this->TopologicalSectorIndices, this->TopologicalSectorNbrIndices, 
-						      (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+      if (this->BMatrices != 0)
+	{
+	  this->TorusSpace->CreateStateFromMPSDescription(this->BMatrices, this->TorusStringMatrix, *(this->OutputState), 
+							  this->TopologicalSectorIndices, this->TopologicalSectorNbrIndices, 
+							  (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+	}
+      else
+	{
+	  this->TorusSpace->CreateStateFromMPSDescription(this->ComplexBMatrices, this->TorusStringMatrix, *(this->ComplexOutputState), 
+							  this->TopologicalSectorIndices, this->TopologicalSectorNbrIndices, 
+							  (long) this->PrecalculationBlockSize, this->FirstComponent, this->NbrComponent);
+	}
     }
   timeval TotalEndingTime;
   gettimeofday (&TotalEndingTime, 0);

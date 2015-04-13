@@ -662,7 +662,7 @@ void ParticleOnTorus::CreateStateFromMPSDescription (SparseRealMatrix* bMatrices
 // initialIndex = initial index to compute
 // nbrComponents = number of components to compute
 
-void ParticleOnTorus::CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, SparseComplexMatrix& twistMatrix, ComplexVector& state, 
+void ParticleOnTorus::CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, SparseRealMatrix& twistMatrix, ComplexVector& state, 
 						     int* mPSSumIndices, int nbrMPSSumIndices,
 						     long memory, long initialIndex, long nbrComponents)
 {

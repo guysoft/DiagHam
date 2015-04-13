@@ -261,7 +261,7 @@ class ParticleOnTorus :  public ParticleOnSphere
   // memory = amount of memory that can be use to precompute matrix multiplications  
   // initialIndex = initial index to compute
   // nbrComponents = number of components to compute
-  virtual void CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, SparseComplexMatrix& twistMatrix, ComplexVector& state, 
+  virtual void CreateStateFromMPSDescription (SparseComplexMatrix* bMatrices, SparseRealMatrix& twistMatrix, ComplexVector& state, 
 					      int* mPSSumIndices, int nbrMPSSumIndices,
 					      long memory, long initialIndex, long nbrComponents);
 

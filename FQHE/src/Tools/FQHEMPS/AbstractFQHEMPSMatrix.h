@@ -108,6 +108,11 @@ class AbstractFQHEMPSMatrix
   // return value = pointer to the array
   virtual SparseRealMatrix* GetMatrices();
 
+  // get the array where the matrices are stored
+  //
+  // return value = pointer to the array
+  virtual SparseComplexMatrix* GetComplexMatrices();
+
   // get the edge matrix for localized quasiholes, with normal ordering
   //
   // nbrQuasiholes = number of quasiholes
@@ -316,6 +321,15 @@ inline int AbstractFQHEMPSMatrix::GetNbrMatrices()
 inline SparseRealMatrix* AbstractFQHEMPSMatrix::GetMatrices()
 {
   return this->RealBMatrices;
+}
+
+// get the array where the matrices are stored
+//
+// return value = pointer to the array
+
+inline SparseComplexMatrix* AbstractFQHEMPSMatrix::GetComplexMatrices()
+{
+  return this->ComplexBMatrices;
 }
 
 // get the number of orbitals that associated to a set of B matrices

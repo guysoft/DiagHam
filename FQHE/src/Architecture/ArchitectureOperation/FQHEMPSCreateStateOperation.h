@@ -62,6 +62,8 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
 
   // array that gives the B matrices 
   SparseRealMatrix* BMatrices;
+  // array that gives the B matrices 
+  SparseComplexMatrix* ComplexBMatrices;
 
   // array that gives the B matrices for quasiholes 
   SparseComplexMatrix* QuasiholeBMatrices;
@@ -125,6 +127,18 @@ class FQHEMPSCreateStateOperation: public AbstractArchitectureOperation
   // blockSize = indicates the size of the block for precalculations
   FQHEMPSCreateStateOperation(ParticleOnTorus* space, SparseRealMatrix* bMatrices, SparseRealMatrix& stringMatrix, 
 			      RealVector* state, int* topologicalSectorIndices, int topologicalSectorNbrIndices, int blockSize);
+
+  // constructor for the torus geometry
+  //
+  // space = pointer to the Hilbert space
+  // bMatrices = array that gives the B matrices 
+  // state = pointer to the vector where the MPS state will be stored
+  // stringMatrix = matrix that takes into account the Jordan Wigner string on the torus geometry
+  // topologicalSectorIndices = array that contains the auxiliary space indices related to the selected topological sector
+  // topologicalSectorNbrIndices = number of indices in TopologicalSectorIndices
+  // blockSize = indicates the size of the block for precalculations
+  FQHEMPSCreateStateOperation(ParticleOnTorus* space, SparseComplexMatrix* bMatrices, SparseRealMatrix& stringMatrix, 
+			      ComplexVector* state, int* topologicalSectorIndices, int topologicalSectorNbrIndices, int blockSize);
 
   // copy constructor 
   //

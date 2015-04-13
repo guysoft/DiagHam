@@ -47,6 +47,7 @@
 #include "Tools/FQHEMPS/FQHEMPSSymmetrizedStateMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
+#include "Matrix/SparseComplexMatrix.h"
 
 
 #include <cstring>
@@ -163,7 +164,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   else
     {
       (*OutputGroup) += new SingleIntegerOption ('\n', "nbr-fluxquanta", "set the total number of flux quanta", 0);
-      (*OutputGroup) += new SingleDoubleOption  ('\n', "angle", "angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit)", 0.5);      
+      (*OutputGroup) += new SingleDoubleOption  ('\n', "angle", "angle between the two vectors (i.e. 1 and tau) that span the torus (in pi unit, 0 is orthogonal to 1)", 0.0);      
       (*OutputGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the torus (norm of tau)", 1.0);
       (*OutputGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "flux insertion along the tau direction", 0.0);
     }
@@ -253,12 +254,25 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 
   if (this->Options->GetBoolean("show-bmatrices"))
     {
-      cout << "----------------------------------" << endl;
-      for (int i = 0; i < NbrBMatrices; ++i)
+      if (MPSMatrix->GetMatrices() != 0)
 	{
-	  cout << "B^[" << i << "]" << endl;
-	  (MPSMatrix->GetMatrices())[i].PrintNonZero(cout);
 	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < NbrBMatrices; ++i)
+	    {
+	      cout << "B^[" << i << "]" << endl;
+	      (MPSMatrix->GetMatrices())[i].PrintNonZero(cout);
+	      cout << "----------------------------------" << endl;
+	    }
+	}
+      else
+	{
+	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < NbrBMatrices; ++i)
+	    {
+	      cout << "B^[" << i << "]" << endl;
+	      (MPSMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
+	      cout << "----------------------------------" << endl;
+	    }
 	}
     }
 
@@ -597,12 +611,25 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetRightMPSMatrices(int nbrFluxQuan
     }
   if (this->Options->GetBoolean("show-bmatrices"))
     {
-      cout << "----------------------------------" << endl;
-      for (int i = 0; i < this->RightBMatrix->GetNbrMatrices(); ++i)
+      if (this->RightBMatrix->GetMatrices() != 0)
 	{
-	  cout << "B_R^[" << i << "]" << endl;
-	  (this->RightBMatrix->GetMatrices())[i].PrintNonZero(cout);
 	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < this->RightBMatrix->GetNbrMatrices(); ++i)
+	    {
+	      cout << "B_R^[" << i << "]" << endl;
+	      (this->RightBMatrix->GetMatrices())[i].PrintNonZero(cout);
+	      cout << "----------------------------------" << endl;
+	    }
+	}
+      else
+	{
+	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < this->RightBMatrix->GetNbrMatrices(); ++i)
+	    {
+	      cout << "B_R^[" << i << "]" << endl;
+	      (this->RightBMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
+	      cout << "----------------------------------" << endl;
+	    }
 	}
     }
 
@@ -639,12 +666,25 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetLeftMPSMatrices(int nbrFluxQuant
     }
   if (this->Options->GetBoolean("show-bmatrices"))
     {
-      cout << "----------------------------------" << endl;
-      for (int i = 0; i < this->LeftBMatrix->GetNbrMatrices(); ++i)
+      if (this->LeftBMatrix->GetMatrices() != 0)
 	{
-	  cout << "B_L^[" << i << "]" << endl;
-	  (this->LeftBMatrix->GetMatrices())[i].PrintNonZero(cout);
 	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < this->LeftBMatrix->GetNbrMatrices(); ++i)
+	    {
+	      cout << "B_L^[" << i << "]" << endl;
+	      (this->LeftBMatrix->GetMatrices())[i].PrintNonZero(cout);
+	      cout << "----------------------------------" << endl;
+	    }
+	}
+      else
+	{
+	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < this->LeftBMatrix->GetNbrMatrices(); ++i)
+	    {
+	      cout << "B_L^[" << i << "]" << endl;
+	      (this->LeftBMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
+	      cout << "----------------------------------" << endl;
+	    }
 	}
     }
 
