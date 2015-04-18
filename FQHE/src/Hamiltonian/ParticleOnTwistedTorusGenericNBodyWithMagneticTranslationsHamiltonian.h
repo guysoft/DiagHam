@@ -47,13 +47,9 @@ using std::ostream;
 class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : public AbstractQHEOnTorusWithMagneticTranslationsNBodyHamiltonian
 {
 
- protected:
+  friend class FQHETorusComputeMatrixElementOperation;
 
-  // temporary arrays used during the interaction element evaluation
-  double* QxValues;
-  double* QyValues;
-  double* Q2Values;
-  double* CosineCoffients; 
+ protected:
 
   // angle (in radian) between the two fundamental cycles of the torus, along (L1 sin, L1 cos) and (0, L2)
   double Theta;
@@ -62,6 +58,13 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   // sine of theta
   double SinTheta;
 
+  // number of monomials in the Fourier transformed interaction
+  int NbrMonomials;
+  // coefficients in front of each monomial in the Fourier transformed interaction
+  double* MonomialCoefficients;
+  // description of each monomial in the Fourier transformed interaction
+  int** MonomialDescription;
+  
  public:
 
   // default constructor
@@ -78,13 +81,18 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   // theta =  angle (in pi units) between the two fundamental cycles of the torus, along (Lx sin theta, Lx cos theta) and (0, Ly)
   // nbrNBody = type of interaction i.e. the number of density operators that are involved in the interaction
   // interactionName = name of the interaction, will be use to generate the interaction matrix element output file name
+  // nbrMonomials = number of monomials in the Fourier transformed interaction
+  // monomialCoefficients = coefficients in front of each monomial in the Fourier transformed interaction
+  // monomialDescription = description of each monomial in the Fourier transformed interaction
   // regenerateElementFlag = regenerate th interaction matrix elements instead of reading them from the harddrive
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // onDiskCacheFlag = flag to indicate if on-disk cache has to be used to store matrix elements
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum, double ratio, double theta,
-									int nbrNBody, char* interactionName, bool regenerateElementFlag, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
+									int nbrNBody, char* interactionName, 
+									int nbrMonomials, double* monomialCoefficients, int** monomialDescription, 
+									bool regenerateElementFlag, AbstractArchitecture* architecture, long memory = -1, bool onDiskCacheFlag = false, 
 									char* precalculationFileName = 0);
 
   // destructor
@@ -118,23 +126,45 @@ class ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian : pu
   // mIndices = array containing the creation operator indices
   // nIndices = array containing the annihilation operator indices
   // return value = numerical coefficient  
-  virtual Complex EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations);
+  //  virtual Complex EvaluateInteractionCoefficient(int* mIndices, int* nIndices, long& nbrOperations);
+  virtual Complex EvaluateInteractionCoefficient(int* mIndices, int* nIndices, double* qxValues, double* qyValues, double* q2Values, double* cosineCoefficients);
   
-  virtual Complex RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, long& nbrOperations);
+  //  virtual Complex RecursiveEvaluateInteractionCoefficient(double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, double* qxValues, double* qyValues, double* q2Values, double* cosineCoefficients);
+
+  virtual Complex RecursiveEvaluateInteractionCoefficient(int xPosition, double currentSumQx, double currentSumQy, double currentSumQ2, double currentSumPhase, double& currentPrecision, double* qxValues, double* qyValues, double* q2Values, double* cosineCoefficients);
 
   virtual double VFactor(double* q2Values);
+
 
   // read the interaction matrix elements from disk
   //
   // fileName = name of the file where the interaction matrix elements are stored
   // return value = true if no error occured
-  bool ReadInteractionFactors(char* fileName);
+  virtual bool ReadInteractionFactors(char* fileName);
 
   // write the interaction matrix elements from disk
   //
   // fileName = name of the file where the interaction matrix elements are stored
   // return value = true if no error occured
-  bool WriteInteractionFactors(char* fileName);
+  virtual bool WriteInteractionFactors(char* fileName);
+  
+  // test if creation/annihilation are in canonical form
+  //
+  // mIndices = array that contains the creation indices (will be modified)
+  // nIndices = array that contains the annihilation indices (will be modified)
+  // linearizedMIndices = linearized creation index
+  // linearizedNIndices = linearized annihilation index
+  // totalMomentum = momentum sector of the creation/annihilation indices
+  // canonicalMIndices = reference on the linearized creation index of the canonical form
+  // canonicalMIndices = reference on the linearized annihilation index of the canonical form
+  // canonicalTotalMomentum = reference on the momentum sector of the creation/annihilation indices of the canonical form
+  // canonicalPermutationCoefficient = additional permutation coefficient to get the canonical form
+  // conjugationFlag = true if an additional conjugation should be applied to get the canonical form
+  // return value = true if the indices are in canonical form
+  virtual bool FindCanonicalIndices(int* mIndices, int* nIndices, int linearizedMIndices, int linearizedNIndices, 
+				    int totalMomentum, int& canonicalMIndices, int& canonicalNIndices, 
+				    int& canonicalTotalMomentum, double& canonicalPermutationCoefficient,
+				    bool& conjugationFlag);
 
 };
 

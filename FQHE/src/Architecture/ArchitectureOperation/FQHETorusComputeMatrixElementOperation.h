@@ -36,6 +36,7 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/AbstractArchitectureOperation.h"
 #include "Hamiltonian/ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
+#include "Hamiltonian/ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
 
 
 class FQHETorusComputeMatrixElementOperation : public AbstractArchitectureOperation
@@ -45,6 +46,8 @@ class FQHETorusComputeMatrixElementOperation : public AbstractArchitectureOperat
   
   // pointer to the hamiltonian
   ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian* Hamiltonian;
+  // pointer to the hamiltonian (twisted torus version)
+  ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian* TwistedHamiltonian;
 
   // number of unique matrix elements
   long NbrUniqueMatrixElements;
@@ -87,6 +90,20 @@ class FQHETorusComputeMatrixElementOperation : public AbstractArchitectureOperat
   // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
   // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
   FQHETorusComputeMatrixElementOperation(ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian* hamiltonian, long nbrUniqueMatrixElements,
+					 int* momentumSectorIndices, int* j1Indices, int* j2Indices, Complex* matrixElements,
+					 int nbrMPIStage = 2, int nbrSMPStage = 2);
+    
+  // constructor 
+  //
+  // hamiltonian = pointer to the generic n-body Hamiltonian
+  // nbrUniqueMatrixElements = number of unique matrix elements
+  // momentumSectorIndices = array that contains the momentum sector of each matrix element
+  // j1Indices = array that contains the creation indices of each matrix element
+  // j2Indices = array that contains the annihilation indices of each matrix element
+  // matrixElements = array where the matrix elements will be stored
+  // nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+  // nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+  FQHETorusComputeMatrixElementOperation(ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian* hamiltonian, long nbrUniqueMatrixElements,
 					 int* momentumSectorIndices, int* j1Indices, int* j2Indices, Complex* matrixElements,
 					 int nbrMPIStage = 2, int nbrSMPStage = 2);
     

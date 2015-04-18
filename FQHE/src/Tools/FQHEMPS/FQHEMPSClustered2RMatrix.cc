@@ -57,6 +57,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix()
 {
   this->UseRationalFlag = true;
   this->BosonicVersion = false;
+  this->TwistedTorusFlag = false;
 }
 
 // constructor
@@ -82,6 +83,7 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, LongRational cent
     this->RealBMatrices = 0;
     this->ComplexBMatrices = 0;
     this->QuasiholeBMatrices = 0;
+    this->TwistedTorusFlag = false;
 }
 
 // constructor 
@@ -108,7 +110,6 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
-  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->RIndex = rIndex;
   this->BosonicVersion = bosonicVersion;
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
@@ -130,6 +131,26 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
       this->TorusAspectRatio = aspectRatio;
       this->TorusFluxInsertion = fluxInsertion;
       this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+      if ((this->TorusAngle != 0.0) || (this->TorusFluxInsertion != 0.0))
+	{
+	  this->TwistedTorusFlag = true;
+	  this->TauFactor = ((2.0 * M_PI * this->TorusAspectRatio  / ((double) this->TorusNbrFluxQuanta))
+			     * Complex(-sin(this->TorusAngle * M_PI), cos(this->TorusAngle * M_PI)));
+	  this->ComplexBMatrices = new SparseComplexMatrix [this->NbrBMatrices];
+	  this->RealBMatrices = 0;
+	}
+      else
+	{
+	  this->TwistedTorusFlag = false;
+	  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+	  this->ComplexBMatrices = 0;
+	}
+    }
+  else
+    {
+      this->TwistedTorusFlag = false;
+      this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+      this->ComplexBMatrices = 0;
     }
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
@@ -169,7 +190,6 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
 						   AbstractArchitecture* architecture)
 {
   this->NbrBMatrices = nbrBMatrices;
-  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
   this->RIndex = rIndex;
   this->BosonicVersion = bosonicVersion;
   this->LaughlinIndex = laughlinIndex;
@@ -191,6 +211,26 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
       this->TorusAspectRatio = aspectRatio;
       this->TorusFluxInsertion = fluxInsertion;
       this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+      if ((this->TorusAngle != 0.0) || (this->TorusFluxInsertion != 0.0))
+	{
+	  this->TwistedTorusFlag = true;
+	  this->TauFactor = ((2.0 * M_PI * this->TorusAspectRatio  / ((double) this->TorusNbrFluxQuanta))
+			     * Complex(-sin(this->TorusAngle * M_PI), cos(this->TorusAngle * M_PI)));
+	  this->ComplexBMatrices = new SparseComplexMatrix [this->NbrBMatrices];
+	  this->RealBMatrices = 0;
+	}
+      else
+	{
+	  this->TwistedTorusFlag = false;
+	  this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+	  this->ComplexBMatrices = 0;
+	}
+    }
+  else
+    {
+      this->TwistedTorusFlag = false;
+      this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+      this->ComplexBMatrices = 0;
     }
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
   this->WeightIdentity = LongRational(0l, 1l);
@@ -246,6 +286,20 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int pLevel, int nbrBMatrices,
       this->TorusAspectRatio = aspectRatio;
       this->TorusFluxInsertion = fluxInsertion;
       this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+      if ((this->TorusAngle != 0.0) || (this->TorusFluxInsertion != 0.0))
+	{
+	  this->TwistedTorusFlag = true;
+	  this->TauFactor = ((2.0 * M_PI * this->TorusAspectRatio  / ((double) this->TorusNbrFluxQuanta))
+			     * Complex(-sin(this->TorusAngle * M_PI), cos(this->TorusAngle * M_PI)));
+	}
+      else
+	{
+	  this->TwistedTorusFlag = false;
+	}
+    }
+  else
+    {
+      this->TwistedTorusFlag = false;
     }
   this->PLevel = pLevel;
   
@@ -334,6 +388,20 @@ FQHEMPSClustered2RMatrix::FQHEMPSClustered2RMatrix(int rIndex, int laughlinIndex
       this->TorusAspectRatio = aspectRatio;
       this->TorusFluxInsertion = fluxInsertion;
       this->Kappa = sqrt(2.0 * M_PI * this->TorusAspectRatio / ((double) this->TorusNbrFluxQuanta));
+      if ((this->TorusAngle != 0.0) || (this->TorusFluxInsertion != 0.0))
+	{
+	  this->TwistedTorusFlag = true;
+	  this->TauFactor = ((2.0 * M_PI * this->TorusAspectRatio  / ((double) this->TorusNbrFluxQuanta))
+			     * Complex(-sin(this->TorusAngle * M_PI), cos(this->TorusAngle * M_PI)));
+	}
+      else
+	{
+	  this->TwistedTorusFlag = false;
+	}
+    }
+  else
+    {
+      this->TwistedTorusFlag = false;
     }
   this->LoadMatrices(fileName);
   this->WeightPrimaryFieldMatrixElement = LongRational(this->RIndex, 4l);
@@ -556,7 +624,8 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 
   cout << "building B matrices" << endl;
 
-  SparseRealMatrix* BMatrices = new SparseRealMatrix[this->NbrBMatrices];
+  SparseRealMatrix* BMatrices = 0;
+  SparseComplexMatrix* TmpComplexBMatrices = 0;
   int* TmpNbrElementPerRow = new int[MatrixSize];
   for (int i = 0; i < MatrixSize; ++i)
     TmpNbrElementPerRow[i] = 0;
@@ -626,7 +695,16 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	}
     }
 
-  BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+  if (this->TwistedTorusFlag == false)
+    {
+      BMatrices = new SparseRealMatrix[this->NbrBMatrices];
+      BMatrices[0] = SparseRealMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+    }
+  else
+    {
+      TmpComplexBMatrices = new SparseComplexMatrix[this->NbrBMatrices];
+      TmpComplexBMatrices[0] = SparseComplexMatrix(MatrixSize, MatrixSize, TmpNbrElementPerRow);
+    }
   for (int i = 0; i <= this->PLevel; ++i)
     {
       for (int p = 0; p <= i; ++p)
@@ -659,24 +737,35 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 				    }
 				  Tmp += TmpOrthogonalBasisIdentityLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 				}
-			      if (this->CylinderFlag)
+			      if (this->TwistedTorusFlag == false)
 				{
-				  Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
-									   + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
-									   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-				}			      
-			      else
-				{
-				  if (this->TorusFlag)
+				  if (this->CylinderFlag)
 				    {
 				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
 									       + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									       + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
+				    }			      
+				  else
+				    {
+				      if (this->TorusFlag)
+					{
+					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
+										   + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
+										   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
+					}
 				    }
+				  
+				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1),
+								this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 				}
-
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1),
- 							    this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			      else
+				{
+				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightIdentityNumerical +  ((double) i)
+									       + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
+									      + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
+				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 1, p, ChargedIndex, NeutralIndex1),
+									  this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp2);
+				}
 			    }
 			}
 		    }
@@ -696,23 +785,34 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 				    }
 				  Tmp += TmpOrthogonalBasisPsiLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 				}
-			      if (this->CylinderFlag)
+			      if (this->TwistedTorusFlag == false)
 				{
-				  Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
-									   + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
-									   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
-				}			      
-			      else
-				{
-				  if (this->TorusFlag)
+				  if (this->CylinderFlag)
 				    {
 				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
 									       + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
 									       + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
+				    }			      
+				  else
+				    {
+				      if (this->TorusFlag)
+					{
+					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
+										   + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
+										   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
+					}
 				    }
+				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+								this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
 				}
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1),
- 							    this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			      else
+				{
+				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightPsiNumerical +  ((double) i)
+									      + ((j - 1.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (4.0 * QValue))
+									      + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (4.0 * QValue))));
+				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 1, p, ChargedIndex, NeutralIndex1),
+									  this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp2);
+				}
 			    }
 			}
 		    }
@@ -735,23 +835,34 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 				    }
 				  Tmp += TmpOrthogonalBasisIdentityLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 				}
-			      if (this->CylinderFlag)
+			      if (this->TwistedTorusFlag == false)
 				{
-				  Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
-									   + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
-									   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
-				}			      
-			      else
-				{
-				  if (this->TorusFlag)
+				  if (this->CylinderFlag)
 				    {
 				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
 									       + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
 									       + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
+				    }			      
+				  else
+				    {
+				      if (this->TorusFlag)
+					{
+					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightIdentityNumerical +  ((double) i)
+										   + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
+										   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
+					}
 				    }
+				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 2, p, ChargedIndex, NeutralIndex1),
+								this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
 				}
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 2, p, ChargedIndex, NeutralIndex1),
- 							    this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			      else
+				{
+				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightIdentityNumerical +  ((double) i)
+									      + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
+									      + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
+				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 0, j - 2, p, ChargedIndex, NeutralIndex1),
+									  this->Get2RMatrixIndexV2(i, 0, j, p, ChargedIndex, NeutralIndex2), Tmp2);
+				}
 			    }
 			}
 		    }
@@ -771,23 +882,34 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 				    }
 				  Tmp += TmpOrthogonalBasisPsiLeft(NeutralIndex3, NeutralIndex1) * Tmp1;
 				}
-			      if (this->CylinderFlag)
+			      if (this->TwistedTorusFlag == false)
 				{
-				  Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
-									   + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
-									   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
-				}			      
-			      else
-				{
-				  if (this->TorusFlag)
+				  if (this->CylinderFlag)
 				    {
 				      Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
 									       + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
 									       + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
+				    }			      
+				  else
+				    {
+				      if (this->TorusFlag)
+					{
+					  Tmp *= exp(-this->Kappa * this->Kappa * (WeightPsiNumerical +  ((double) i)
+										   + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
+										   + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
+					}
 				    }
+				  BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 2, p, ChargedIndex, NeutralIndex1),
+								this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
 				}
-			      BMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 2, p, ChargedIndex, NeutralIndex1),
- 							    this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp);
+			      else
+				{
+				  Complex Tmp2 = Tmp * exp(this->TauFactor * (WeightPsiNumerical +  ((double) i)
+									      + ((j - 2.0 - 0.5 * NValueShift) * (j - 1.0 - 0.5 * NValueShift) * QValueDenominator / (16.0 * QValue))
+									      + (((j - 0.5 * NValueShift) * (j - 0.5 * NValueShift)) * QValueDenominator / (16.0 * QValue))));
+				  TmpComplexBMatrices[0].SetMatrixElement(this->Get2RMatrixIndexV2(i, 1, j - 2, p, ChargedIndex, NeutralIndex1),
+									  this->Get2RMatrixIndexV2(i, 1, j, p, ChargedIndex, NeutralIndex2), Tmp2);
+				}
 			    }
 			}
 		    }
@@ -1180,26 +1302,53 @@ void FQHEMPSClustered2RMatrix::CreateBMatrices (char* cftDirectory, AbstractArch
 	    }
 	}
       int TmpNbrBMatrices = 0;
-      for (int m = 1; m < this->NbrBMatrices; ++m)
+      if (this->TwistedTorusFlag == false)
 	{
-	  BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
-	  if (BMatrices[m].GetNbrRow() > 0)
+	  for (int m = 1; m < this->NbrBMatrices; ++m)
 	    {
-	      ++TmpNbrBMatrices;
-	      if ((this->CylinderFlag) || (this->TorusFlag))
-		BMatrices[m] /= sqrt((double) m);
+	      BMatrices[m] = MemoryEfficientMultiply(BMatrices[m - 1], V0Matrix);
+	      if (BMatrices[m].GetNbrRow() > 0)
+		{
+		  ++TmpNbrBMatrices;
+		  if ((this->CylinderFlag) || (this->TorusFlag))
+		    BMatrices[m] /= sqrt((double) m);
+		}
+	    }
+	}
+      else
+	{
+	  for (int m = 1; m < this->NbrBMatrices; ++m)
+	    {
+	      TmpComplexBMatrices[m] = MemoryEfficientMultiply(TmpComplexBMatrices[m - 1], V0Matrix);
+	      if (TmpComplexBMatrices[m].GetNbrRow() > 0)
+		{
+		  ++TmpNbrBMatrices;
+		  TmpComplexBMatrices[m] /= sqrt((double) m);
+		}
 	    }
 	}
     }
   int TmpNbrBMatrices = 0;
-  for (int i = 0; i < this->NbrBMatrices; ++i)
+  if (this->TwistedTorusFlag == false)
     {
-      if (BMatrices[i].GetNbrRow() > 0)
-	this->RealBMatrices[TmpNbrBMatrices++] = BMatrices[i];
+      for (int i = 0; i < this->NbrBMatrices; ++i)
+	{
+	  if (BMatrices[i].GetNbrRow() > 0)
+	    this->RealBMatrices[TmpNbrBMatrices++] = BMatrices[i];
+	}
+      delete[] BMatrices;
+    }
+  else
+    {
+      for (int i = 0; i < this->NbrBMatrices; ++i)
+	{
+	  if (TmpComplexBMatrices[i].GetNbrRow() > 0)
+	    this->ComplexBMatrices[TmpNbrBMatrices++] = TmpComplexBMatrices[i];
+	}
+      delete[] TmpComplexBMatrices;
     }
   this->NbrBMatrices = TmpNbrBMatrices;
   
-  delete[] BMatrices;
   delete[] ScalarProductIdentity;
   delete[] ScalarProductPsi;
   for (int i = 0; i <= this->PLevel; ++i)

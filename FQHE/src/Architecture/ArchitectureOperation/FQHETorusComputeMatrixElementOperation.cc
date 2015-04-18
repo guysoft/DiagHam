@@ -32,6 +32,8 @@
 #include "config.h"
 #include "Architecture/ArchitectureOperation/FQHETorusComputeMatrixElementOperation.h"
 
+#include <algorithm>
+
 
 // constructor 
 //
@@ -49,6 +51,40 @@ FQHETorusComputeMatrixElementOperation::FQHETorusComputeMatrixElementOperation(P
 									       int nbrMPIStage, int nbrSMPStage)
 {
   this->Hamiltonian = hamiltonian;
+  this->TwistedHamiltonian = 0;
+  this->NbrUniqueMatrixElements = nbrUniqueMatrixElements;
+  this->MomentumSectorIndices = momentumSectorIndices;
+  this->J1Indices = j1Indices;
+  this->J2Indices = j2Indices;
+  this->MatrixElements = matrixElements;
+
+  this->FirstComponent = 0;
+  this->NbrComponent = (int) nbrUniqueMatrixElements;
+  this->LargeFirstComponent = 0l;
+  this->LargeNbrComponent = nbrUniqueMatrixElements;
+  this->OperationType = AbstractArchitectureOperation::FQHETorusComputeMatrixElementOperation;
+  this->NbrMPIStage = nbrMPIStage;
+  this->NbrSMPStage = nbrSMPStage;
+  this->SMPStages = new int[1]; 
+}
+    
+// constructor 
+//
+// hamiltonian = pointer to the generic n-body Hamiltonian
+// nbrUniqueMatrixElements = number of unique matrix elements
+// momentumSectorIndices = array that contains the momentum sector of each matrix element
+// j1Indices = array that contains the creation indices of each matrix element
+// j2Indices = array that contains the annihilation indices of each matrix element
+// matrixElements = array where the matrix elements will be stored
+// nbrMPIStage = number of stages in which the calculation has to be splitted in MPI mode
+// nbrSMPStage = number of stages in which the calculation has to be splitted in SMP mode
+
+FQHETorusComputeMatrixElementOperation::FQHETorusComputeMatrixElementOperation(ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian* hamiltonian, long nbrUniqueMatrixElements,
+									       int* momentumSectorIndices, int* j1Indices, int* j2Indices, Complex* matrixElements,
+									       int nbrMPIStage, int nbrSMPStage)
+{
+  this->Hamiltonian = 0;
+  this->TwistedHamiltonian = hamiltonian;
   this->NbrUniqueMatrixElements = nbrUniqueMatrixElements;
   this->MomentumSectorIndices = momentumSectorIndices;
   this->J1Indices = j1Indices;
@@ -77,6 +113,7 @@ FQHETorusComputeMatrixElementOperation::FQHETorusComputeMatrixElementOperation(c
   this->LargeNbrComponent = operation.LargeNbrComponent;
   this->OperationType = AbstractArchitectureOperation::FQHETorusComputeMatrixElementOperation;
   this->Hamiltonian = operation.Hamiltonian;
+  this->TwistedHamiltonian = operation.TwistedHamiltonian;
   this->NbrUniqueMatrixElements = operation.NbrUniqueMatrixElements;
   this->MomentumSectorIndices = operation.MomentumSectorIndices;
   this->J1Indices = operation.J1Indices;
@@ -123,42 +160,52 @@ AbstractArchitectureOperation* FQHETorusComputeMatrixElementOperation::Clone()
 bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
 {
   int LastIndex = this->FirstComponent + this->NbrComponent;
-  int* TmpNIndices =  new int [this->Hamiltonian->NBodyValue];
-  int* TmpMIndices =  new int [this->Hamiltonian->NBodyValue];
-  double* QxValues = new double [this->Hamiltonian->NBodyValue];
-  double* QyValues = new double [this->Hamiltonian->NBodyValue];
-  double* Q2Values = new double [this->Hamiltonian->NBodyValue];
-  double* CosineCoffients = new double [this->Hamiltonian->NBodyValue];
-  if (this->Hamiltonian->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)
+  int TmpNBodyValue = 0;
+  if (this->Hamiltonian != 0)
+    {
+      TmpNBodyValue = this->Hamiltonian->NBodyValue;
+    }
+  else
+    {
+      TmpNBodyValue = this->TwistedHamiltonian->NBodyValue;
+    }
+int* TmpNIndices =  new int [TmpNBodyValue];
+  int* TmpMIndices =  new int [TmpNBodyValue];
+  double* QxValues = new double [TmpNBodyValue];
+  double* QyValues = new double [TmpNBodyValue];
+  double* Q2Values = new double [TmpNBodyValue];
+  double* CosineCoefficients = new double [TmpNBodyValue];
+  if (((this->Hamiltonian != 0) && (this->Hamiltonian->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic))
+      || ((this->TwistedHamiltonian != 0) && (this->TwistedHamiltonian->Particles->GetParticleStatistic() == ParticleOnTorus::FermionicStatistic)))
     {
       int NbrPermutations = 1;
-      for (int i = 2; i <= this->Hamiltonian->NBodyValue; ++i)
+      for (int i = 2; i <= TmpNBodyValue; ++i)
 	NbrPermutations *= i;
       int** Permutations = new int*[NbrPermutations]; 
       double* PermutationSign = new double[NbrPermutations]; 
-      Permutations[0] = new int [this->Hamiltonian->NBodyValue];
-      for (int i = 0; i < this->Hamiltonian->NBodyValue; ++i)
+      Permutations[0] = new int [TmpNBodyValue];
+      for (int i = 0; i < TmpNBodyValue; ++i)
 	Permutations[0][i] = i;
       PermutationSign[0] = 1.0;
       double TmpSign = 1.0;
       for (int i = 1; i < NbrPermutations; ++i)
 	{
-	  Permutations[i] = new int [this->Hamiltonian->NBodyValue];
-	  for (int j = 0; j < this->Hamiltonian->NBodyValue; ++j)
+	  Permutations[i] = new int [TmpNBodyValue];
+	  for (int j = 0; j < TmpNBodyValue; ++j)
 	    Permutations[i][j] = Permutations[i - 1][j];
 	  int* TmpArrayPerm = Permutations[i];
-	  int Pos1 = this->Hamiltonian->NBodyValue - 1;
+	  int Pos1 = TmpNBodyValue - 1;
 	  while (TmpArrayPerm[Pos1 - 1] >= TmpArrayPerm[Pos1])
 	    --Pos1;
 	  --Pos1;
-	  int Pos2 = this->Hamiltonian->NBodyValue - 1;      
+	  int Pos2 = TmpNBodyValue - 1;      
 	  while (TmpArrayPerm[Pos2] <= TmpArrayPerm[Pos1])
 	    --Pos2;
 	  int TmpIndex = TmpArrayPerm[Pos1];
 	  TmpArrayPerm[Pos1] = TmpArrayPerm[Pos2];
 	  TmpArrayPerm[Pos2] = TmpIndex;
 	  TmpSign *= -1.0;
-	  Pos2 = this->Hamiltonian->NBodyValue - 1;   
+	  Pos2 = TmpNBodyValue - 1;   
 	  Pos1++;
 	  while (Pos1 < Pos2)
 	    {
@@ -171,33 +218,66 @@ bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
 	    }
 	  PermutationSign[i] = TmpSign;
 	}
-
-      for (int Index = this->FirstComponent;  Index < LastIndex; ++Index)
+      
+      if (this->Hamiltonian != 0)
 	{
-	  int J1 = this->J1Indices[Index];
-	  int J2 = this->J2Indices[Index];
-	  int MomentumSector = this->MomentumSectorIndices[Index];
-	  double TmpInteraction = 0.0;
-	  for (int l1 = 0; l1 < NbrPermutations; ++l1)
+	  for (int Index = this->FirstComponent;  Index < LastIndex; ++Index)
 	    {
-	      int* TmpPerm1 = Permutations[l1];
-	      for (int k = 0; k < this->Hamiltonian->NBodyValue; ++k)
+	      int J1 = this->J1Indices[Index];
+	      int J2 = this->J2Indices[Index];
+	      int MomentumSector = this->MomentumSectorIndices[Index];
+	      double TmpInteraction = 0.0;
+	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
 		{
-		  TmpNIndices[k]  = this->Hamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J1 * this->Hamiltonian->NBodyValue) + TmpPerm1[k]];
-		}
-	      for (int l2 = 0; l2 < NbrPermutations; ++l2)
-		{
-		  int* TmpPerm2 = Permutations[l2];
-		  for (int k = 0; k < this->Hamiltonian->NBodyValue; ++k)
+		  int* TmpPerm1 = Permutations[l1];
+		  for (int k = 0; k < TmpNBodyValue; ++k)
 		    {
-		      TmpMIndices[k] = this->Hamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J2 * this->Hamiltonian->NBodyValue) + TmpPerm2[k]];
+		      TmpNIndices[k]  = this->Hamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J1 * TmpNBodyValue) + TmpPerm1[k]];
 		    }
-		  double Tmp = this->Hamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, 
-										 QxValues, QyValues, Q2Values, CosineCoffients);
-		  TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
+		  for (int l2 = 0; l2 < NbrPermutations; ++l2)
+		    {
+		      int* TmpPerm2 = Permutations[l2];
+		      for (int k = 0; k < TmpNBodyValue; ++k)
+			{
+			  TmpMIndices[k] = this->Hamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J2 * TmpNBodyValue) + TmpPerm2[k]];
+			}
+		      double Tmp = this->Hamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, 
+										     QxValues, QyValues, Q2Values, CosineCoefficients);
+		      TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
+		    }
 		}
+	      this->MatrixElements[Index] = TmpInteraction;
 	    }
-	  this->MatrixElements[Index] = TmpInteraction;
+	}
+      else
+	{
+	  for (int Index = this->FirstComponent;  Index < LastIndex; ++Index)
+	    {
+	      int J1 = this->J1Indices[Index];
+	      int J2 = this->J2Indices[Index];
+	      int MomentumSector = this->MomentumSectorIndices[Index];
+	      Complex TmpInteraction = 0.0;
+	      for (int l1 = 0; l1 < NbrPermutations; ++l1)
+		{
+		  int* TmpPerm1 = Permutations[l1];
+		  for (int k = 0; k < TmpNBodyValue; ++k)
+		    {
+		      TmpNIndices[k]  = this->TwistedHamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J1 * TmpNBodyValue) + TmpPerm1[k]];
+		    }
+		  for (int l2 = 0; l2 < NbrPermutations; ++l2)
+		    {
+		      int* TmpPerm2 = Permutations[l2];
+		      for (int k = 0; k < TmpNBodyValue; ++k)
+			{
+			  TmpMIndices[k] = this->TwistedHamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J2 * TmpNBodyValue) + TmpPerm2[k]];
+			}
+		      Complex Tmp = this->TwistedHamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, 
+											     QxValues, QyValues, Q2Values, CosineCoefficients);
+		      TmpInteraction += PermutationSign[l1] * PermutationSign[l2] * Tmp;
+		    }
+		}
+	      this->MatrixElements[Index] = TmpInteraction;
+	    }
 	}
       delete[] PermutationSign;
       for (int i = 0; i < NbrPermutations; ++i)
@@ -208,13 +288,49 @@ bool FQHETorusComputeMatrixElementOperation::RawApplyOperation()
     }
   else
     {
+      if (this->Hamiltonian != 0)
+	{
+	}
+      else
+	{
+	  for (int Index = this->FirstComponent;  Index < LastIndex; ++Index)
+	    {
+	      int J1 = this->J1Indices[Index];
+	      int J2 = this->J2Indices[Index];
+	      int MomentumSector = this->MomentumSectorIndices[Index];
+	      for (int k = 0; k < TmpNBodyValue; ++k)
+		{
+		  TmpNIndices[k] = this->TwistedHamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J1 * TmpNBodyValue) + k];
+		  TmpMIndices[k] = this->TwistedHamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J2 * TmpNBodyValue) + k];
+		}
+	      Complex TmpInteraction = this->TwistedHamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, 
+												QxValues, QyValues, Q2Values, CosineCoefficients);
+	      while (std::prev_permutation(TmpMIndices, TmpMIndices  + TmpNBodyValue))
+		{
+		  TmpInteraction += this->TwistedHamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, QxValues, QyValues, Q2Values, CosineCoefficients);		    
+		}
+	      while (std::prev_permutation(TmpNIndices, TmpNIndices  + TmpNBodyValue))
+		{
+		  for (int k = 0; k < TmpNBodyValue; ++k)
+		    {
+		      TmpMIndices[k] = this->TwistedHamiltonian->NBodySectorIndicesPerSum[MomentumSector][(J2 * TmpNBodyValue) + k];
+		    }
+		  TmpInteraction += this->TwistedHamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, QxValues, QyValues, Q2Values, CosineCoefficients);
+		  while (std::prev_permutation(TmpMIndices, TmpMIndices  + TmpNBodyValue))
+		    {
+		      TmpInteraction += this->TwistedHamiltonian->EvaluateInteractionCoefficient(TmpMIndices, TmpNIndices, QxValues, QyValues, Q2Values, CosineCoefficients);
+		    }
+		}
+	      this->MatrixElements[Index] = TmpInteraction;
+	    }
+	}
     }
   delete[] TmpNIndices;
   delete[] TmpMIndices;
   delete[] QxValues;
   delete[] QyValues;
   delete[] Q2Values;
-  delete[] CosineCoffients;
+  delete[] CosineCoefficients;
   return true;
 }
 

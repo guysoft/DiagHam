@@ -51,12 +51,6 @@ class ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian : public Ab
 
  protected:
 
-  // temporary arrays used during the interaction element evaluation
-/*   double* QxValues; */
-/*   double* QyValues; */
-/*   double* Q2Values; */
-//  double* CosineCoffients; 
-
   // number of monomials in the Fourier transformed interaction
   int NbrMonomials;
   // coefficients in front of each monomial in the Fourier transformed interaction

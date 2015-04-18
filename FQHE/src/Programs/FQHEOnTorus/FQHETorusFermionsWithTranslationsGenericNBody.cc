@@ -4,6 +4,7 @@
 #include "HilbertSpace/FermionOnTorusWithMagneticTranslations.h"
 #include "HilbertSpace/BosonOnTorusWithMagneticTranslationsShort.h"
 
+#include "Hamiltonian/ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
 #include "Hamiltonian/ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian.h"
 
 #include "LanczosAlgorithm/LanczosManager.h"
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "y-momentum", "constraint on the total momentum in the y direction (negative if none)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "nbr-nbody", "number of particle that can interact simultaneously through the n-body hollow-core interaction", 3);
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
+  (*SystemGroup) += new SingleDoubleOption   ('\n', "angle", "angle between the two fundamental cycles of the torus in pi units (0 if rectangular)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the full reduced Brillouin zone", false);
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -110,7 +112,15 @@ int main(int argc, char** argv)
   bool RegenerateElementFlag = Manager.GetBoolean("regenerate-interactionelements");
   
   char* OutputName = new char [256];
-  sprintf (OutputName, "fermions_torus_%dbody_%s_n_%d_2s_%d_ratio_%f.dat", NbrNBody, Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
+  if (Manager.GetDouble("angle") == 0.0)
+    {
+      sprintf (OutputName, "fermions_torus_%dbody_%s_n_%d_2s_%d_ratio_%.6f.dat", NbrNBody, Manager.GetString("interaction-name"), NbrParticles, MaxMomentum, XRatio);
+    }
+  else
+    {
+      sprintf (OutputName, "fermions_torus_%dbody_%s_n_%d_2s_%d_ratio_%.6f_angle_%.6f.dat", NbrNBody, Manager.GetString("interaction-name"), 
+	       NbrParticles, MaxMomentum, XRatio, Manager.GetDouble("angle"));
+    }
   ofstream File;
   File.open(OutputName, ios::binary | ios::out);
   File.precision(14);
@@ -359,10 +369,20 @@ int main(int argc, char** argv)
 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
       
       AbstractQHEHamiltonian* Hamiltonian = 0;
-      Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-										       NbrNBody, Manager.GetString("interaction-name"), 
-										       InteractionNbrMonomials, InteractionMonomialCoefficients, InteractionMonomials, 
-										       RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+      if (Manager.GetDouble("angle") == 0.0)
+	{
+	  Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
+											   NbrNBody, Manager.GetString("interaction-name"), 
+											   InteractionNbrMonomials, InteractionMonomialCoefficients, InteractionMonomials, 
+											   RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+	}
+      else
+	{
+	  Hamiltonian = new ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
+												  Manager.GetDouble("angle"), NbrNBody, Manager.GetString("interaction-name"), 
+												  InteractionNbrMonomials, InteractionMonomialCoefficients, InteractionMonomials,
+												  RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+	}
       if (Manager.GetBoolean("matrixelement-only") == true)
 	return 0;
       RegenerateElementFlag = false;

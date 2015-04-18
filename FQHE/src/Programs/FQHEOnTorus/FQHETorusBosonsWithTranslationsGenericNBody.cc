@@ -302,6 +302,19 @@ int main(int argc, char** argv)
 	}
     }
   
+  int InteractionNbrMonomials = 1;
+  int NbrPermutations = 1;
+  for (int i = 2; i <= NbrNBody; ++i)
+    NbrPermutations *= i;
+  int** InteractionMonomials = new int* [NbrPermutations * InteractionNbrMonomials];
+  double* InteractionMonomialCoefficients = new double [NbrPermutations * InteractionNbrMonomials];
+  InteractionMonomials[0] = new int [NbrNBody];
+  InteractionMonomialCoefficients[0] = 1.0;
+  for (int i = 0; i < NbrNBody; ++i)
+    {
+      InteractionMonomials[0][i] = 0;
+    }
+
   for (int Pos = 0;Pos < NbrMomenta; ++Pos)
     {
       XMomentum = XMomenta[Pos];
@@ -316,15 +329,17 @@ int main(int argc, char** argv)
       AbstractQHEHamiltonian* Hamiltonian = 0;
       if (Manager.GetDouble("angle") == 0.0)
 	{
-	  Hamiltonian = new ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-												  Manager.GetDouble("angle"), NbrNBody, Manager.GetString("interaction-name"), RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
-// 	  Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-// 											   NbrNBody, Manager.GetString("interaction-name"), RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+	  Hamiltonian = new ParticleOnTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
+											   NbrNBody, Manager.GetString("interaction-name"), 
+											   InteractionNbrMonomials, InteractionMonomialCoefficients, InteractionMonomials, 
+											   RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 	}
       else
 	{
 	  Hamiltonian = new ParticleOnTwistedTorusGenericNBodyWithMagneticTranslationsHamiltonian(Space, NbrParticles, MaxMomentum, XMomentum, XRatio,
-												  Manager.GetDouble("angle"), NbrNBody, Manager.GetString("interaction-name"), RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
+												  Manager.GetDouble("angle"), NbrNBody, Manager.GetString("interaction-name"), 
+												  InteractionNbrMonomials, InteractionMonomialCoefficients, InteractionMonomials,
+												  RegenerateElementFlag, Architecture.GetArchitecture(), Memory);
 	}
       RegenerateElementFlag = false;
       double Shift = -1.0;
