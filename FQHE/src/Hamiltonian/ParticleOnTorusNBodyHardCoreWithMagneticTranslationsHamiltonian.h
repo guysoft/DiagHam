@@ -180,6 +180,20 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   //return value = canonical index
   virtual int GetCanonicalIndex (int index, int& sign);
   
+   // test if creation/annihilation are in canonical form
+  //
+  // mIndices = array that contains the creation indices (will be modified)
+  // nIndices = array that contains the annihilation indices (will be modified)
+  // linearizedMIndices = linearized creation index
+  // linearizedNIndices = linearized annihilation index
+  // totalMomentum = momentum sector of the creation/annihilation indices
+  // canonicalMIndices = reference on the linearized creation index of the canonical form
+  // canonicalMIndices = reference on the linearized annihilation index of the canonical form
+  // canonicalTotalMomentum = reference on the momentum sector of the creation/annihilation indices of the canonical form
+  // canonicalPermutationCoefficient = additional permutation coefficient to get the canonical form
+  // return value = true if the indices are in canonical form
+  virtual bool FindCanonicalIndices(int* mIndices, int* nIndices, int linearizedMIndices, int linearizedNIndices, int totalMomentum, int& canonicalMIndices, int& canonicalNIndices, int& canonicalTotalMomentum, double& canonicalPermutationCoefficient);  
+
 };
 
 // evaluate the numerical coefficient  in front of the \prod_i a+_mi \prod_j a_n, assuming bosonic operators

@@ -119,8 +119,6 @@ class ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian : public
   //return value = value of the coefficient
   double EvaluateGaussianSum(int nBodyValue, int* TmpIndices, double Sum, int* countIter, int* momFactor);
   
-   
-
 };
 
 #endif
