@@ -60,6 +60,17 @@ class FermionOnTorus :  public ParticleOnTorus
   // index of the momentum orbit
   bool TotalKyFlag;
 
+  // GCD of KyMax and NbrFermions (momemta are defined modulo MomentumModulo)
+  int MomentumModulo;
+  // value that has to be substracted to the momentum for each translation of the canonical form research
+  int MomentumIncrement;
+  // shift that has to be done on a state for each translation of the canonical form research
+  int StateShift;
+  // complementary shift (with respect to MaxMomentum) to StateShift
+  int ComplementaryStateShift;
+  // mask corresponding to StateShift
+  unsigned long MomentumMask;
+
   // array describing each state
   unsigned long* StateDescription;
   // array giving maximum Lz value reached for a fermion in a given state
@@ -323,6 +334,19 @@ class FermionOnTorus :  public ParticleOnTorus
   // return value = true if teh state satisfies the general Pauli exclusion principle
   bool HasPauliExclusions(int index, int pauliK, int pauliR);
 
+  // apply a magnetic translation along x to a given state
+  //
+  // index = state index 
+  // return value = translated state index
+  virtual int ApplyXMagneticTranslation(int index);
+
+  // apply a magnetic translation along x to a given state
+  //
+  // index = state index 
+  // sign = additional sign due to the particle statistics
+  // return value = translated state index
+  virtual int ApplyXMagneticTranslation(int index, double& sign);
+
  protected:
 
   // find state index
@@ -441,6 +465,19 @@ class FermionOnTorus :  public ParticleOnTorus
   virtual void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
 							       unsigned long firstComponent, unsigned long nbrComponents);
   
+  // symmetrize a vector by keeping only a subset of equally separated orbitals
+  //
+  // inputVector = reference on the vector to symmetrize
+  // firstOrbitalIndex = index of the first orbital to keep
+  // symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+  // periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+  // phase = an optional phase (in pi units) that can be added for each kept and occupied orbital
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = symmetrized state
+  void SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, double phase, 
+						       unsigned long firstComponent, unsigned long nbrComponents);
+
 };
 
 // get the particle statistic 

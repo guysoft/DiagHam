@@ -37,6 +37,7 @@
 #include "HilbertSpace/FermionOnDisk.h"
 #include "Matrix/Matrix.h"
 #include "GeneralTools/ArrayTools.h"
+#include "MathTools/IntegerAlgebraTools.h"
 
 #include <math.h>
 #include <algorithm>
@@ -45,6 +46,8 @@
 
 using std::cout;
 using std::endl;
+using std::dec;
+using std::hex;
 
 
 // basic constructor
@@ -59,6 +62,13 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum)
   this->IncNbrFermions = this->NbrFermions + 1;
   this->KyMax = maxMomentum;
   this->NbrLzValue = this->KyMax + 1;
+
+  this->MomentumModulo = FindGCD(this->NbrFermions, this->KyMax);
+  this->StateShift = this->KyMax / this->MomentumModulo;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
+  this->ComplementaryStateShift = this->KyMax - this->StateShift;
+  this->MomentumMask = 0x1ul << this->StateShift - 0x1ul;
+
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->KyMax);
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
@@ -100,6 +110,12 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumCo
   this->KyMax = maxMomentum;
   this->NbrLzValue = this->KyMax + 1;
   this->TotalKy = momentumConstraint;
+
+  this->MomentumModulo = FindGCD(this->NbrFermions, this->KyMax);
+  this->StateShift = this->KyMax / this->MomentumModulo;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
+  this->ComplementaryStateShift = this->KyMax - this->StateShift;
+  this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
   this->TotalKyFlag = true;
   this->HilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->KyMax);
   this->Flag.Initialize();
@@ -144,6 +160,12 @@ FermionOnTorus::FermionOnTorus(const FermionOnTorus& fermions)
   this->StateKyMax = fermions.StateKyMax;
   this->KyMax = fermions.KyMax;
   this->NbrLzValue = fermions.NbrLzValue;
+
+  this->MomentumIncrement = fermions.MomentumIncrement;
+  this->StateShift = fermions.StateShift;
+  this->ComplementaryStateShift = fermions.ComplementaryStateShift;
+  this->MomentumMask = fermions.MomentumMask;
+
   this->TotalKy = fermions.TotalKy;
   this->TotalKyFlag = fermions.TotalKyFlag;
   this->SignLookUpTable = fermions.SignLookUpTable;
@@ -170,6 +192,13 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int hilbertSpa
   this->IncNbrFermions = this->NbrFermions + 1;
   this->KyMax = maxMomentum;
   this->NbrLzValue = this->KyMax + 1;
+
+  this->MomentumModulo = FindGCD(this->NbrFermions, this->KyMax);
+  this->StateShift = this->KyMax / this->MomentumModulo;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
+  this->ComplementaryStateShift = this->KyMax - this->StateShift;
+  this->MomentumMask = 0x1ul << this->StateShift - 0x1ul;
+
   this->TotalKyFlag = false;
   this->HilbertSpaceDimension = hilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
@@ -214,6 +243,13 @@ FermionOnTorus::FermionOnTorus (int nbrFermions, int maxMomentum, int momentumCo
   this->NbrLzValue = this->KyMax + 1;
   this->TotalKy = momentumConstraint;
   this->TotalKyFlag = true;
+
+  this->MomentumModulo = FindGCD(this->NbrFermions, this->KyMax);
+  this->StateShift = this->KyMax / this->MomentumModulo;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
+  this->ComplementaryStateShift = this->KyMax - this->StateShift;
+  this->MomentumMask = 0x1ul << this->StateShift - 0x1ul;
+
   this->HilbertSpaceDimension = hilbertSpaceDimension;
   this->LargeHilbertSpaceDimension = (long) this->HilbertSpaceDimension;
   this->Flag.Initialize();
@@ -287,6 +323,12 @@ FermionOnTorus& FermionOnTorus::operator = (const FermionOnTorus& fermions)
   this->StateKyMax = fermions.StateKyMax;
   this->KyMax = fermions.KyMax;
   this->NbrLzValue = fermions.NbrLzValue;
+
+  this->MomentumIncrement = fermions.MomentumIncrement;
+  this->StateShift = fermions.StateShift;
+  this->ComplementaryStateShift = fermions.ComplementaryStateShift;
+  this->MomentumMask = fermions.MomentumMask;
+
   this->TotalKy = fermions.TotalKy;
   this->TotalKyFlag = fermions.TotalKyFlag;
   this->SignLookUpTable = fermions.SignLookUpTable;
@@ -1972,7 +2014,7 @@ void FermionOnTorus::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexVe
 // return value = symmetrized state
 
 void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
-									unsigned long firstComponent, unsigned long nbrComponents)
+								     unsigned long firstComponent, unsigned long nbrComponents)
 {
   bool twistedTorus = true;
   long LastComponent = (long) (firstComponent + nbrComponents);
@@ -2022,11 +2064,137 @@ void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVect
     }
   delete[] TmpState;
   for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
-  {
-    if (TargetSpaces[j] != 0)
     {
-      delete TargetSpaces[j];
+      if (TargetSpaces[j] != 0)
+	{
+	  delete TargetSpaces[j];
+	}
     }
-  }
   delete[] TargetSpaces;
 }
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+// periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+// phase = an optional phase (in pi units) that can be added for each kept and occupied orbital
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, double phase, 
+								     unsigned long firstComponent, unsigned long nbrComponents)
+{
+  bool twistedTorus = true;
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  int TargetSpaceNbrOrbitals = this->KyMax / periodicity;
+  FermionOnTorus** TargetSpaces = new FermionOnTorus* [TargetSpaceNbrOrbitals];
+  for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+    {
+      TargetSpaces[j] = 0;
+    }
+  double TmpPhase = -2.0 * M_PI / ((double) this->KyMax);
+  unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      Complex TmpCoefficient = inputVector[i];
+      unsigned long TmpInputState = this->StateDescription[i];
+      int TmpTotalKy = 0;
+      int TmpTotalSqrKy = 0;
+      int TmpNbrParticles = 0;
+      unsigned long TmpOutputState = 0x0ul;
+      int CurrentLz = 0;
+      for (int k = firstOrbitalIndex; k <= this->KyMax; k += periodicity)
+	{
+	  if ((TmpInputState & (0x1ul << k)) != 0x0ul)
+	    {
+	      TmpOutputState |= 0x1ul << CurrentLz;
+	      TmpTotalKy += CurrentLz;
+	      TmpTotalSqrKy += CurrentLz * CurrentLz;
+	      ++TmpNbrParticles;	      
+	    }
+	  ++CurrentLz;
+	} 
+      TmpTotalKy %= TargetSpaceNbrOrbitals;
+      if (TmpNbrParticles == this->NbrFermions)
+	{
+	  if (TargetSpaces[TmpTotalKy] == 0)
+	    {
+	      TargetSpaces[TmpTotalKy] = new FermionOnTorus (this->NbrFermions, TargetSpaceNbrOrbitals, TmpTotalKy);
+	      symmetrizedVectors[this->NbrFermions][TmpTotalKy] = ComplexVector(TargetSpaces[TmpTotalKy]->HilbertSpaceDimension, true);
+	    }	  
+	  int TmpKyMax = TargetSpaces[TmpTotalKy]->KyMax - 1;
+	  while ((TmpOutputState >> TmpKyMax) == 0x0ul)
+	    --TmpKyMax;
+	  int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TmpOutputState, TmpKyMax);
+	  if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
+	    {
+	      symmetrizedVectors[this->NbrFermions][TmpTotalKy][TmpPos] += TmpCoefficient * Phase(TmpPhase * ((double) TmpTotalSqrKy));
+	    }
+      }
+    }
+  delete[] TmpState;
+  for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+    {
+      if (TargetSpaces[j] != 0)
+	{
+	  delete TargetSpaces[j];
+	}
+    }
+  delete[] TargetSpaces;
+}
+
+// apply a magnetic translation along x to a given state
+//
+// index = state index 
+// return value = translated state index, negative if a minus phase has to be added
+
+int FermionOnTorus::ApplyXMagneticTranslation(int index)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  TmpState = (TmpState >> this->StateShift) | ((TmpState & this->MomentumMask) << this->ComplementaryStateShift);
+  int TmpKyMax = this->KyMax;
+  while ((TmpState >> TmpKyMax) == 0x0ul)
+    --TmpKyMax;
+  return this->FindStateIndex(TmpState, TmpKyMax);
+}
+
+// apply a magnetic translation along x to a given state
+//
+// index = state index 
+// sign = additional sign due to the particle statistics
+// return value = translated state index
+
+int FermionOnTorus::ApplyXMagneticTranslation(int index, double& sign)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  if (this->NbrFermions & 1)
+    {
+      sign = 1.0;
+      TmpState = (TmpState >> this->StateShift) | ((TmpState & this->MomentumMask) << this->ComplementaryStateShift);
+    }
+  else
+    {
+      unsigned long TmpState2 = TmpState & this->MomentumMask;
+      TmpState = (TmpState >> this->StateShift) | (TmpState2 << this->ComplementaryStateShift);
+#ifdef  __64_BITS__
+      TmpState2 ^= TmpState2 >> 32;
+#endif
+      TmpState2 ^= TmpState2 >> 16;
+      TmpState2 ^= TmpState2 >> 8;
+      TmpState2 ^= TmpState2 >> 4;
+      TmpState2 ^= TmpState2 >> 2;
+      TmpState2 ^= TmpState2 >> 1;
+      if (TmpState2 & 0x1ul)
+	sign = -1.0;
+      else
+	sign = -1.0;	
+    }
+  int TmpKyMax = this->KyMax;
+  while ((TmpState >> TmpKyMax) == 0x0ul)
+    --TmpKyMax;
+  return this->FindStateIndex(TmpState, TmpKyMax);
+}
+

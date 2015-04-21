@@ -22,6 +22,7 @@
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
+#include "GeneralTools/StringTools.h"
 
 #include "MathTools/IntegerAlgebraTools.h"
 
@@ -510,6 +511,7 @@ int InvertU1KxKyStates(OptionManager* manager)
   ComplexVector* InputStates = 0;
   int NbrInputStates = 0;
   char* OutputNamePrefix = new char [256 + strlen(manager->GetString("interaction-name"))];
+  char** OutputFileNames = 0;
   if (manager->GetString("degenerated-states") == 0)
     {
       if (manager->GetString("input-state") == 0)
@@ -530,12 +532,28 @@ int InvertU1KxKyStates(OptionManager* manager)
 	  return -1;
 	}
       cout << "Nbr particles=" << NbrParticles << ", Nbr flux quanta=" << MaxMomentum << " Kx=" << XMomentum << " Ky=" << YMomentum << " ";
+      if (Statistics == false)
+	{
+	  sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
+	}
+      else
+	{
+	  sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
+	}
       NbrInputStates = 1;
       InputStates = new ComplexVector [NbrInputStates];
       if (InputStates[0].ReadVector(manager->GetString("input-state")) == false)
 	{
 	  cout << "error while reading " << manager->GetString("input-state") << endl;
 	  return -1;
+	}
+      OutputFileNames = new char* [1];
+      OutputFileNames[0] = ReplaceString(manager->GetString("input-state"), "_torus_", "_torus_kysym_");
+      if (OutputFileNames[0] == 0)
+	{
+	  OutputFileNames[0] = new char [256 + strlen(OutputNamePrefix)];
+	  sprintf (OutputFileNames[0], "%s_kx_%d_ky_%d.0.vec", OutputNamePrefix, XMomentum, YMomentum);
+	  cout << "warning, can't deduce output file name from " << manager->GetString("input-state") << " will use " << OutputFileNames[0] << " instead" << endl;
 	}
     }
   else
@@ -563,6 +581,22 @@ int InvertU1KxKyStates(OptionManager* manager)
 	{
 	  cout << "error while reading " << DegeneratedFile(0, 0) << endl;
 	  return -1;
+	}
+      if (Statistics == false)
+	{
+	  sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
+	}
+      else
+	{
+	  sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
+	}
+      OutputFileNames = new char* [NbrInputStates];
+      OutputFileNames[0] = ReplaceString(manager->GetString("input-state"), "_torus_", "_torus_kysym_");
+      if (OutputFileNames[0] == 0)
+	{
+	  OutputFileNames[0] = new char [256 + strlen(OutputNamePrefix)];
+	  sprintf (OutputFileNames[0], "%s_kx_%d_ky_%d.0.vec", OutputNamePrefix, XMomentum, YMomentum);
+	  cout << "warning, can't deduce output file name from " << manager->GetString("input-state") << " will use " << OutputFileNames[0] << " instead" << endl;
 	}
       for (int i = 1; i < NbrInputStates; ++i)
 	{
@@ -593,6 +627,13 @@ int InvertU1KxKyStates(OptionManager* manager)
 	    {
 	      cout << "error, " << DegeneratedFile(0, i) << " has different dimension than " << DegeneratedFile(0, 0) << endl;	      
 	    }
+	  OutputFileNames[i] = ReplaceString(manager->GetString("input-state"), "_torus_", "_torus_kysym_");
+	  if (OutputFileNames[i] == 0)
+	    {
+	      OutputFileNames[i] = new char [256 + strlen(OutputNamePrefix)];
+	      sprintf (OutputFileNames[i], "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, XMomentum, YMomentum, i);
+	      cout << "warning, can't deduce output file name from " << manager->GetString("input-state") << " will use " << OutputFileNames[0] << " instead" << endl;
+	    }
 	}
     }
   ParticleOnTorus* TotalSpace = 0;
@@ -601,13 +642,11 @@ int InvertU1KxKyStates(OptionManager* manager)
     {
       TargetSpace = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
       TotalSpace = new BosonOnTorusShort(NbrParticles, MaxMomentum, YMomentum);
-      sprintf (OutputNamePrefix, "bosons_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
     }
   else
     {
       TotalSpace = new FermionOnTorus (NbrParticles, MaxMomentum, YMomentum);
       TargetSpace = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-      sprintf (OutputNamePrefix, "fermions_torus_kysym_%s_n_%d_2s_%d_ratio_%.6f", manager->GetString("interaction-name"), NbrParticles, MaxMomentum, manager->GetDouble("ratio"));
     }
   
   if (InputStates[0].GetVectorDimension() != TargetSpace->GetHilbertSpaceDimension())
@@ -618,14 +657,12 @@ int InvertU1KxKyStates(OptionManager* manager)
     }
   for (int i = 0; i < NbrInputStates; ++i)
     {
-      char* VectorOutputName = new char [256 + strlen(OutputNamePrefix)];
-      sprintf (VectorOutputName, "%s_kx_%d_ky_%d.%d.vec", OutputNamePrefix, XMomentum, YMomentum, i);
       ComplexVector TmpVector = TargetSpace->ConvertFromKxKyBasis(InputStates[i], TotalSpace);
       if (manager->GetBoolean("invert-real") == false)
 	{
-	  if (TmpVector.WriteVector(VectorOutputName) == false)
+	  if (TmpVector.WriteVector(OutputFileNames[i]) == false)
 	    {
-	      cout << "error, can't write vector " << VectorOutputName << endl;
+	      cout << "error, can't write vector " << OutputFileNames[i] << endl;
 	    }
 	}
       else
@@ -635,12 +672,11 @@ int InvertU1KxKyStates(OptionManager* manager)
 	  TmpVector /= TmpPhase;
 	  RealVector TmpVector2(TmpVector);
 	  TmpVector2.Normalize();
-	  if (TmpVector2.WriteVector(VectorOutputName) == false)
+	  if (TmpVector2.WriteVector(OutputFileNames[i]) == false)
 	    {
-	      cout << "error, can't write vector " << VectorOutputName << endl;
+	      cout << "error, can't write vector " << OutputFileNames[i] << endl;
 	    }	
 	}
-      delete[] VectorOutputName;
     }
   return 0;
 }

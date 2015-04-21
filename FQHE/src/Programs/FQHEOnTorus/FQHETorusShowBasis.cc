@@ -563,7 +563,7 @@ int main(int argc, char** argv)
 			      else
 				{
 				  for (int i = 0; i < Space.GetHilbertSpaceDimension(); ++i)
-				    Space.PrintState(cout, i) << " : "  << ComplexState[i] << endl;;
+				    Space.PrintState(cout, i) << " : "  << ComplexState[i] << " " << Norm(ComplexState[i]) << " " << Arg(ComplexState[i])<< endl;;
 				}
 			    }
 			}

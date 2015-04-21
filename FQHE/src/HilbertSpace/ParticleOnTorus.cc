@@ -76,6 +76,18 @@ int ParticleOnTorus::ApplyXMagneticTranslation(int index)
   return -1;
 }
   
+// apply a magnetic translation along x to a given state
+//
+// index = state index 
+// sign = additional sign due to the particle statistics
+// return value = translated state index
+
+int ParticleOnTorus::ApplyXMagneticTranslation(int index, double& sign)
+{
+  sign = 1.0;
+  return this->ApplyXMagneticTranslation(index);
+}
+
 // remove part of each Fock state, discarding component if the Fock state does not a given pattern
 //
 // inputVector = state to truncate
@@ -552,6 +564,69 @@ int ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector&
   return NbrGeneratedSectors;
 }
 
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// periodicity = momentum periodicity 
+// phase = an optional phase (in pi units) that can be added for each kept and occupied orbital
+// symmetrizedVectors = reference on the array on the symmetrized states ranging from the smallest number of particles to the largest 
+//                      number of particles and the smallest Ky to the largest Ky
+// nbrParticlesSectors = reference on the array on the particle number sectors that have been generated through the symmetrization procedure
+// kySectors = reference on the array on twice the Ky sectors that have been generated through the symmetrization procedure
+// architecture = pointer to the architecture
+// return value = number of states that have been generated through the symmetrization procedure
+
+int ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitals (ComplexVector& inputVector, int firstOrbitalIndex, int periodicity, double phase, 
+								  ComplexVector*& symmetrizedVectors, int*& nbrParticlesSectors, int*& kySectors, 
+								  AbstractArchitecture* architecture)
+{
+  double NormError = MACHINE_PRECISION;
+  int TargetSpaceNbrOrbitals = this->GetNbrOrbitals() / periodicity;
+  ComplexVector** TmpVectors = new ComplexVector*[this->GetNbrParticles() + 1];
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      TmpVectors[i] = new ComplexVector[TargetSpaceNbrOrbitals];
+    }
+  this->SymmetrizeSingleStatePeriodicSubsetOrbitalCore(inputVector, TmpVectors, firstOrbitalIndex, periodicity, phase, 0ul, this->LargeHilbertSpaceDimension);
+  int NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      ++NbrGeneratedSectors;
+	    }     
+	}
+    }  
+  if (NbrGeneratedSectors == 0)
+    return 0;
+  symmetrizedVectors = new ComplexVector[NbrGeneratedSectors];
+  kySectors = new int[NbrGeneratedSectors];
+  nbrParticlesSectors = new int[NbrGeneratedSectors];
+  NbrGeneratedSectors = 0;
+  for (int i = 0; i <= this->GetNbrParticles(); ++i)
+    {
+      for (int j = 0; j < TargetSpaceNbrOrbitals; ++j)
+	{
+	  if (TmpVectors[i][j].GetVectorDimension() != 0)	
+	    {
+	      double TmpNorm = TmpVectors[i][j].Norm();
+	      if (TmpNorm > NormError)
+		{
+		  TmpVectors[i][j] /= TmpNorm; 
+		  symmetrizedVectors[NbrGeneratedSectors] = TmpVectors[i][j];
+		  kySectors[NbrGeneratedSectors] = j;
+		  nbrParticlesSectors[NbrGeneratedSectors] = i;
+		  ++NbrGeneratedSectors;	  
+		}     
+	    }
+	}
+    }  
+  return NbrGeneratedSectors;
+}
+
 // symmetrized a product of two uncoupled states 
 //
 // outputVector = reference on the vector which will contain the symmetrized state
@@ -630,6 +705,22 @@ void ParticleOnTorus::SymmetrizeSingleStateGroupingDistantOrbitalsCore (ComplexV
 // return value = symmetrized state
 
 void ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, 
+								      unsigned long firstComponent, unsigned long nbrComponents)
+{
+}
+
+// symmetrize a vector by keeping only a subset of equally separated orbitals
+//
+// inputVector = reference on the vector to symmetrize
+// firstOrbitalIndex = index of the first orbital to keep
+// symmetrizedVectors = array on the symmetrize states ranging from the smallest Ky to the largest Ky
+// periodicity = momentum periodicity (should be a multiple of the number of orbitals)
+// phase = an optional phase (in pi units) that can be added for each kept and occupied orbital
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = symmetrized state
+
+void ParticleOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVector& inputVector, ComplexVector** symmetrizedVectors, int firstOrbitalIndex, int periodicity, double phase, 
 								      unsigned long firstComponent, unsigned long nbrComponents)
 {
 }

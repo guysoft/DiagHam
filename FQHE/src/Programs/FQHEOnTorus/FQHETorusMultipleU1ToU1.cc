@@ -59,6 +59,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "subset-symmetrization", "symmetrize by picking equally space orbitals");
 //   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-periodicity", "distance between two consecutive orbitals to keep when using --subset-symmetrization", 2);
   (*SystemGroup) += new SingleIntegerOption ('\n', "subset-shift", "index of the first orbital to keep when using --subset-symmetrization", 0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "subset-twist", "add an additional phase (in pi units) for each kept and occupied orbital when using --subset-symmetrization", 0.0);
   (*SystemGroup) += new SingleIntegerOption  ('y', "ky-momentum", "compute the vector with given ky in mode sym-y", 0);
   
   (*SystemGroup) += new SingleDoubleOption ('\n', "precision", "if the norm of the symmetrized vector is below this threshold, it is considered to be zero", MACHINE_PRECISION);
@@ -334,9 +335,17 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("subset-symmetrization") == true)
 		{
-		  NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
-										     Manager.GetInteger("nbr-orbitals"),
-										     OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		  if (Manager.GetDouble("subset-twist") == 0.0)
+		    {
+		      NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
+											 Manager.GetInteger("nbr-orbitals"),
+											 OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		    }
+		  else
+		    {
+		      cout << "subset-twist requires complex vectors" << endl;
+		      return -1;
+		    }
 		}
 	      else
 		{
@@ -491,9 +500,18 @@ int main(int argc, char** argv)
 	    {
 	      if (Manager.GetBoolean("subset-symmetrization") == true)
 		{
-		  NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
-										     Manager.GetInteger("nbr-orbitals"),
-										     OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		  if (Manager.GetDouble("subset-twist") == 0.0)
+		    {
+		      NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
+											 Manager.GetInteger("nbr-orbitals"),
+											 OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		    }
+		  else
+		    {
+		      NbrKySectors = Space1->SymmetrizeSingleStatePeriodicSubsetOrbitals(State1, Manager.GetInteger("subset-shift"),
+											 Manager.GetInteger("nbr-orbitals"), Manager.GetDouble("subset-twist"),
+											 OutputStates, NbrParticleSectors, KySectors, Architecture.GetArchitecture()); 
+		    }
 		}
 	      else
 		{

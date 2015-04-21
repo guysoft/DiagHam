@@ -114,9 +114,19 @@ Complex ParticleOnTorusKxOperator::PartialMatrixElement (RealVector& V1, RealVec
 {
   double Element = 0.0;
   int Last = firstComponent + nbrComponent;
-  for (int i = firstComponent; i < Last; ++i)
+  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      Element += V1[this->Particle->ApplyXMagneticTranslation(i)] * V2[i];
+      for (int i = firstComponent; i < Last; ++i)
+	{
+	  Element += V1[this->Particle->ApplyXMagneticTranslation(i)] * V2[i];
+	}
+    }
+  else
+    {
+      for (int i = firstComponent; i < Last; ++i)
+	{
+	  Element += V1[this->Particle->ApplyXMagneticTranslation(i)] * V2[i];
+	}
     }
   return Complex(Element);
 }
@@ -185,20 +195,45 @@ RealVector& ParticleOnTorusKxOperator::LowLevelAddMultiply(RealVector& vSource, 
 ComplexVector& ParticleOnTorusKxOperator::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
 							      int firstComponent, int nbrComponent)
 {
-  if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
+  if (this->Particle->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     {
-      int Last = firstComponent + nbrComponent;;
-      for (int i = firstComponent; i < Last; ++i)
+      double TmpSign;
+      if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
 	{
-	  vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
+	  int Last = firstComponent + nbrComponent;;
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      int TmpIndex = this->Particle->ApplyXMagneticTranslation(i, TmpSign);
+	      vDestination[TmpIndex] += TmpSign * vSource[i];
+	    }
+	}
+      else
+	{
+	  long Last = ((long) firstComponent) + ((long) nbrComponent);
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      long TmpIndex = this->Particle->ApplyXMagneticTranslation(i, TmpSign);
+	      vDestination[TmpIndex] += TmpSign * vSource[i];
+	    }
 	}
     }
   else
     {
-      long Last = ((long) firstComponent) + ((long) nbrComponent);
-      for (long i = firstComponent; i < Last; ++i)
+      if (((int) this->Particle->GetLargeHilbertSpaceDimension()) == this->Particle->GetHilbertSpaceDimension())
 	{
-	  vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
+	  int Last = firstComponent + nbrComponent;;
+	  for (int i = firstComponent; i < Last; ++i)
+	    {
+	      vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
+	    }
+	}
+      else
+	{
+	  long Last = ((long) firstComponent) + ((long) nbrComponent);
+	  for (long i = firstComponent; i < Last; ++i)
+	    {
+	      vDestination[this->Particle->ApplyXMagneticTranslation(i)] += vSource[i];
+	    }
 	}
     }
   return vDestination;
