@@ -40,6 +40,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <sys/time.h>
 #include <set>
 
 
@@ -115,6 +116,15 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
     }
   else
     {
+      cout << "generating " << this->NbrEntryPrecalculatedInteractionCoefficients1 << " creation matrix elements" << endl;
+      timeval TotalStartingTime;
+      gettimeofday (&TotalStartingTime, 0);
+      this->EvaluateInteractionCoefficientCreationUsingSymmetries();
+      timeval TotalEndingTime;
+      gettimeofday (&TotalEndingTime, 0);
+      double  Dt = (((double) (TotalEndingTime.tv_sec - TotalStartingTime.tv_sec)) +
+		    (((double) (TotalEndingTime.tv_usec - TotalStartingTime.tv_usec)) / 1000000.0));
+      cout << "generation done in " << Dt << endl;
       ofstream File;
       File.open(InteractionCoefficientFileName, ios::binary | ios::out);
       if (!File.is_open())
@@ -123,34 +133,16 @@ ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::ParticleOnTor
 	}
       else
 	{ 
-	  cout << "this->NbrEntryPrecalculatedInteractionCoefficients1 = "  << this->NbrEntryPrecalculatedInteractionCoefficients1 << endl;
-	  
-	  this->EvaluateInteractionCoefficientCreationUsingSymmetries();
-// 	  int* TmpIndices;
-// 	  int g;
-// 	  int momentumTransfer;
-// 	  for (int index = 0; index < this->NBodyValue * (2*this->NBodyValue - 1)* pow(this->NbrLzValue, this->NBodyValue); ++index)
-// 	  {
-// 	    TmpIndices = this->GetIndicesFromLinearizedIndex(index, g, momentumTransfer);
-// 	    cout << index << " " << this->EvaluateLinearizedIndex (TmpIndices, g, momentumTransfer) << endl;
-// // 	    for (int i = 0; i < this->NBodyValue ; ++i)
-// // 	      cout << TmpIndices [i] << " " ;
-// // 	    cout << g << " " << momentumTransfer << endl;
-// 	  }
-// 	  return;
-// 	  this->EvaluateInteractionCoefficientCreation();
 	  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
-	  {
-	    WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
-	  }
-
-	  delete[] InteractionCoefficientFileName;
+	    {
+	      WriteBlockLittleEndian(File, this->PrecalculatedInteractionCoefficients[m1], this->NbrEntryPrecalculatedInteractionCoefficients2);
+	    }	  
 	  File.close();
 	  
 	  
-	}
-      
+	}      
     }
+  delete[] InteractionCoefficientFileName;
   
   
   
@@ -235,144 +227,146 @@ void ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evaluate
 {
  //do not use symmetries to compute creation elements
  cout << "Generate creation elements without using the symmetries" << endl;
+ int* TmpMIndices = new int [this->NBodyValue];
+ int* TmpMIndices2 = new int [this->NBodyValue];
+ int* TmpNbrPermutations = new int [2 * this->NbrLzValue];
  for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
- {
-    int* mIndices = new int [this->NBodyValue];
-    int Tmp = m1;
-    for (int i = 0; i < this->NBodyValue; ++i)
-    {
-      mIndices[i] = Tmp % this->MaxMomentum;
-      Tmp /= this->MaxMomentum;
-    }
-    int TmpIndex = 0;
-    for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
-    {
-	int momentumTransfer = j - this->NBodyValue + 1;  
-	int AllDifferentIndicesFlag = 1;
-	for (int i = 0; i < this->NBodyValue; ++i)
-	{
-	  this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = 0.0;
-	  for (int k = i + 1; k < this->NBodyValue; ++k)
-	    AllDifferentIndicesFlag *= (mIndices[i] - mIndices[k]);
-	}
-    if (AllDifferentIndicesFlag != 0)
-    {
-      for (int g = 0; g < this->NBodyValue; ++g)
-      {
-	int Index = this->EvaluateLinearizedIndex(mIndices, g, momentumTransfer);
-	int sign;
-	int CanonicalIndex = this->GetCanonicalIndex(Index, sign);
-	int TmpG;
-	int TmpMomentumTransfer;
-	int* TmpIndices = this->GetIndicesFromLinearizedIndex (CanonicalIndex, TmpG, TmpMomentumTransfer);
-	
-	this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = sign * this->EvaluateIndividualInteractionCoefficientCreation(TmpIndices, TmpG, TmpMomentumTransfer);
-	double coefficient = this->EvaluateIndividualInteractionCoefficientCreation(mIndices, g, momentumTransfer);
-	
-	if (abs(abs(coefficient) - abs(this->PrecalculatedInteractionCoefficients[m1][TmpIndex])) > 1.0e-12)
-	{
-	for (int i = 0; i < this->NBodyValue ; ++i)
-	  cout << mIndices[i] << " " ;
-	cout << g << " " << momentumTransfer << " : " << coefficient << " ----- " ;
-	for (int i = 0; i < this->NBodyValue ; ++i)
-	  cout << TmpIndices[i] << " " ;
-	cout << TmpG << " " << TmpMomentumTransfer << " : " << this->PrecalculatedInteractionCoefficients[m1][TmpIndex] << endl;
-// // 	cout << this->PrecalculatedInteractionCoefficients[m1][TmpIndex] << " " << coefficient << endl;
-	}
-	
-	if (TmpIndex != (this->NBodyValue*j + g))
-	  cout << TmpIndex << " " << (this->NBodyValue*j + g) << endl;
-	++TmpIndex;
-      }
-    }
-    else
-	TmpIndex += this->NBodyValue;
-    }
+   {
+     int Tmp = m1;
+     for (int i = 0; i < this->NBodyValue; ++i)
+       {
+	 TmpMIndices[i] = Tmp % this->MaxMomentum;
+	 Tmp /= this->MaxMomentum;
+       }
+     int TmpIndex = 0;
+     for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
+       {
+	 int momentumTransfer = j - this->NBodyValue + 1;  
+	 int AllDifferentIndicesFlag = 1;
+	 for (int i = 0; i < this->NBodyValue; ++i)
+	   {
+	     this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = 0.0;
+	     for (int k = i + 1; k < this->NBodyValue; ++k)
+	       AllDifferentIndicesFlag *= (TmpMIndices[i] - TmpMIndices[k]);
+	   }
+	 if (AllDifferentIndicesFlag != 0)
+	   {
+	     for (int g = 0; g < this->NBodyValue; ++g)
+	       {
+		 int Index = this->EvaluateLinearizedIndex(TmpMIndices, g, momentumTransfer);
+		 int sign;
+		 int CanonicalIndex = this->GetCanonicalIndex(Index, sign, TmpMIndices2, TmpNbrPermutations);
+		 int TmpG;
+		 int TmpMomentumTransfer;
+		 this->GetIndicesFromLinearizedIndex (CanonicalIndex, TmpG, TmpMomentumTransfer, TmpMIndices2);
+		 
+		 this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = sign * this->EvaluateIndividualInteractionCoefficientCreation(TmpMIndices2, TmpG, TmpMomentumTransfer);
+		 double coefficient = this->EvaluateIndividualInteractionCoefficientCreation(TmpMIndices, g, momentumTransfer);
+		 
+		 if (abs(abs(coefficient) - abs(this->PrecalculatedInteractionCoefficients[m1][TmpIndex])) > 1.0e-12)
+		   {
+		     for (int i = 0; i < this->NBodyValue ; ++i)
+		       cout << TmpMIndices[i] << " " ;
+		     cout << g << " " << momentumTransfer << " : " << coefficient << " ----- " ;
+		     for (int i = 0; i < this->NBodyValue ; ++i)
+		       cout << TmpMIndices2[i] << " " ;
+		     cout << TmpG << " " << TmpMomentumTransfer << " : " << this->PrecalculatedInteractionCoefficients[m1][TmpIndex] << endl;
+		   }
+		 
+		 if (TmpIndex != (this->NBodyValue*j + g))
+		   cout << TmpIndex << " " << (this->NBodyValue*j + g) << endl;
+		 ++TmpIndex;
+	       }
+	   }
+	 else
+	   TmpIndex += this->NBodyValue;
+       }
    }
+ delete[] TmpMIndices;
+ delete[] TmpMIndices2;
+ delete[] TmpNbrPermutations;
 }
 
 // evaluate the numerical coefficient in front of each \prod_i a+_mi \prod_j a_nj coupling term (factor corresponding to the creation or the annihilation operators only) for each integer modulo the NBodyValue
 //
+
 void ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::EvaluateInteractionCoefficientCreationUsingSymmetries()
 {
+  int* TmpMIndices = new int [this->NBodyValue];
+  int* TmpMIndices2 = new int [this->NBodyValue];
+ int* TmpNbrPermutations = new int [2 * this->NbrLzValue];
   long NbrCreationElements = pow(this->NbrLzValue, this->NBodyValue) * this->NBodyValue * (2*this->NBodyValue - 1);
-  int* sign = new int [NbrCreationElements];
-  int nbrCanonicalElements = 0;
-  int* mapIndexToCanonical = new int [NbrCreationElements];
+  int* Sign = new int [NbrCreationElements];
+  int NbrCanonicalElements = 0;
+  int* MapIndexToCanonical = new int [NbrCreationElements];
   for (int i = 0; i < NbrCreationElements; ++i)
-  {
-     int TmpG;
-     int TmpMomentumTransfer;
-     int TmpG1;
-     int TmpMomentumTransfer1;
-     int canonicalIndex = this->GetCanonicalIndex(i, sign[i]);
-     mapIndexToCanonical[i] = canonicalIndex;
-//      cout << i << " " << canonicalIndex << endl;
-     if (canonicalIndex == i)
-       nbrCanonicalElements += 1;
-  }
+    {
+      int TmpG;
+      int TmpMomentumTransfer;
+      int TmpG1;
+      int TmpMomentumTransfer1;
+      int CanonicalIndex = this->GetCanonicalIndex(i, Sign[i], TmpMIndices, TmpNbrPermutations);
+      MapIndexToCanonical[i] = CanonicalIndex;
+      if (CanonicalIndex == i)
+	++NbrCanonicalElements;
+    }
   
-  int* canonicalIndexList = new int [nbrCanonicalElements];
-  int TmpIndex = 0;
+  int* CanonicalIndexList = new int [NbrCanonicalElements];
+  double* CanonicalInteractionCoefficients = new double [NbrCanonicalElements];
+  NbrCanonicalElements = 0;
   for (int i = 0; i < NbrCreationElements; ++i)
-  {
-     if (mapIndexToCanonical[i] == i)
-     {
-       canonicalIndexList[TmpIndex] = i;
-       ++TmpIndex;       
-     }
-  }
-  
-  double* canonicalInteractionCoefficients = new double [nbrCanonicalElements];
-  for (int i = 0; i < nbrCanonicalElements; ++i)
-  {
-    int TmpG;
-    int TmpMomentumTransfer;
-    int* TmpIndices1 = this->GetIndicesFromLinearizedIndex(canonicalIndexList[i], TmpG, TmpMomentumTransfer);
-    canonicalInteractionCoefficients[i] = this->EvaluateIndividualInteractionCoefficientCreation(TmpIndices1, TmpG, TmpMomentumTransfer);
-    
-//     for (int p = 0; p < this->NBodyValue; ++p)
-//       cout << TmpIndices1[p] << " " ;
-//     cout << TmpG << " " << TmpMomentumTransfer << " " << canonicalInteractionCoefficients[i] << endl;
-  }
-
+    {
+      if (MapIndexToCanonical[i] == i)
+	{
+	  CanonicalIndexList[NbrCanonicalElements] = i;
+	  int TmpG;
+	  int TmpMomentumTransfer;
+	  this->GetIndicesFromLinearizedIndex(i, TmpG, TmpMomentumTransfer, TmpMIndices2);
+	  CanonicalInteractionCoefficients[NbrCanonicalElements] = this->EvaluateIndividualInteractionCoefficientCreation(TmpMIndices2, TmpG, TmpMomentumTransfer);
+	  ++NbrCanonicalElements;       
+	}
+    }
   
   for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
     {
-      int* mIndices = new int [this->NBodyValue];
       int Tmp = m1;
       for (int i = 0; i < this->NBodyValue; ++i)
-      {
-	mIndices[i] = Tmp % this->MaxMomentum;
-	Tmp /= this->MaxMomentum;
-      }
+	{
+	  TmpMIndices[i] = Tmp % this->MaxMomentum;
+	  Tmp /= this->MaxMomentum;
+	}
       int TmpIndex = 0;
       for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
-      {
-	int momentumTransfer = j - this->NBodyValue + 1;
-	for (int g = 0; g < this->NBodyValue; ++g)
 	{
-	  int linearizedIndex = this->EvaluateLinearizedIndex(mIndices, g, momentumTransfer);
-	  int canonicalIndex = mapIndexToCanonical[linearizedIndex];
-	  int reducedCanonicalIndex = -1;
-	  int l = 0;
-// 	  cout << canonicalIndex << " " ;
-	  while ((l < nbrCanonicalElements) && (reducedCanonicalIndex == -1))
-	  {
-	    if (canonicalIndexList[l] == canonicalIndex)
-	      reducedCanonicalIndex = l;
-	    ++l;
-	  }
-// 	  cout << reducedCanonicalIndex << endl;
-// 	  cout << reducedCanonicalIndex << " " << nbrCanonicalElements << endl;
-	  this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = sign[linearizedIndex] * canonicalInteractionCoefficients[reducedCanonicalIndex];
-	  
-	  if (TmpIndex != (this->NBodyValue*j + g))
-	    cout << TmpIndex << " " << (this->NBodyValue*j + g) << endl;
-	  ++TmpIndex;
+	  int momentumTransfer = j - this->NBodyValue + 1;
+	  for (int g = 0; g < this->NBodyValue; ++g)
+	    {
+	      int linearizedIndex = this->EvaluateLinearizedIndex(TmpMIndices, g, momentumTransfer);
+	      int CanonicalIndex = MapIndexToCanonical[linearizedIndex];
+	      int ReducedCanonicalIndex = -1;
+	      int l = 0;
+	      while ((l < NbrCanonicalElements) && (ReducedCanonicalIndex == -1))
+		{
+		  if (CanonicalIndexList[l] == CanonicalIndex)
+		    ReducedCanonicalIndex = l;
+		  ++l;
+		}
+	      this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = Sign[linearizedIndex] * CanonicalInteractionCoefficients[ReducedCanonicalIndex];
+	      
+	      if (TmpIndex != (this->NBodyValue*j + g))
+		cout << TmpIndex << " " << (this->NBodyValue*j + g) << endl;
+	      ++TmpIndex;
+	    }
 	}
-      }
     }
+  cout << "done" << endl;
+  delete[] TmpMIndices;
+  delete[] TmpMIndices2;
+  delete[] TmpNbrPermutations;
+  delete[] CanonicalInteractionCoefficients;
+  delete[] CanonicalIndexList;
+  delete[] Sign;
+  delete[] MapIndexToCanonical;
 }
 
 

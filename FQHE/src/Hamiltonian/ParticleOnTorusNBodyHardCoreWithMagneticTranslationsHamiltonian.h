@@ -170,15 +170,19 @@ class ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian : public A
   // linearizedIndex = linearized index
   // g = reference on the modulo of the index on which the infinite sum will be performed
   // momentumTransfer = reference on the transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
+  // indices = reference on a temporary array to store the full index
+  // nbrPermutations  = temporary array to store the numebr of permutations
   // return value = pointer to the array containing the creation indexes
-  virtual int* GetIndicesFromLinearizedIndex (int linearizedIndex, int& g, int& momentumTransfer);
+  virtual void GetIndicesFromLinearizedIndex (int linearizedIndex, int& g, int& momentumTransfer, int* indices);
 
   // find the canonical index corresponding to a giving index
   //
   // index = index of the state whose canonical index has to be determined
-  // signe = reference on the sign of the permutation
+  // sign = reference on an optional sign resulting when finiding the canonical index
+  // indices = reference on a temporary array to store the full index
+  // nbrPermutations  = temporary array to store the numebr of permutations
   //return value = canonical index
-  virtual int GetCanonicalIndex (int index, int& sign);
+  virtual int GetCanonicalIndex (int index, int& sign, int* indices, int* nbrPermutations);
   
    // test if creation/annihilation are in canonical form
   //
@@ -426,10 +430,11 @@ inline int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Eval
 // linearizedIndex = linearized index
 // g = reference on the modulo of the index on which the infinite sum will be performed
 // momentumTransfer = reference on the transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
+// indices = temporary array to store the full index
 // return value = pointer to the array containing the creation indexes
-inline int* ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetIndicesFromLinearizedIndex (int linearizedIndex, int& g, int& momentumTransfer)
+
+inline void ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetIndicesFromLinearizedIndex (int linearizedIndex, int& g, int& momentumTransfer, int* indices)
 {
-  int* TmpIndices = new int [this->NBodyValue];
   int TmpCoefficient = pow(this->NbrLzValue, this->NBodyValue) * this->NBodyValue;
   int TmpCoefficient1;
   momentumTransfer = linearizedIndex / TmpCoefficient;
@@ -443,12 +448,10 @@ inline int* ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Get
   int i = this->NBodyValue - 1;
   for (; i > 0; --i)
   {
-    TmpIndices[i] = linearizedIndex / TmpCoefficient;
-    linearizedIndex -= TmpIndices[i] * TmpCoefficient;
+    indices[i] = linearizedIndex / TmpCoefficient;
+    linearizedIndex -= indices[i] * TmpCoefficient;
     TmpCoefficient /= this->NbrLzValue;
   }
-  TmpIndices[0] = linearizedIndex;
-  
-  return TmpIndices;
+  indices[0] = linearizedIndex;
 }
 #endif

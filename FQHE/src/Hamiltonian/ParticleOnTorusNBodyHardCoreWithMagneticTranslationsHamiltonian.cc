@@ -692,72 +692,66 @@ double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::Evaluate
 
 // find the canonical index corresponding to a giving index
 //
-//return value = canonical index
-int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetCanonicalIndex (int index, int& sign)
+// index = linearized index 
+// sign = reference on an optional sign resulting when finiding the canonical index
+// indices = temporary array to store the full index
+// nbrPermutations  = temporary array to store the numebr of permutations
+// return value = canonical index
+
+int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::GetCanonicalIndex (int index, int& sign, int* indices, int* nbrPermutations)
 {
   sign = 1;
   int g;
-  int momentumTransfer;
-  int* TmpIndices = this->GetIndicesFromLinearizedIndex (index, g, momentumTransfer);
+  int MomentumTransfer;
+  this->GetIndicesFromLinearizedIndex (index, g, MomentumTransfer, indices);
   int TmpIndex = index;  
   int CountModulo;
   int TmpSign;
-  int* TmpNbrPermutation = new int [2*this->NbrLzValue];
-  TmpNbrPermutation[0] = 0;
-  SortArrayDownOrderingPermutationBubbleSort<int>(TmpIndices, this->NBodyValue, TmpNbrPermutation[0]);
-  int TmpSumGMomentumTransfer = (g + momentumTransfer + this->NBodyValue) % this->NBodyValue;
+  nbrPermutations[0] = 0;
+  SortArrayDownOrderingPermutationBubbleSort<int>(indices, this->NBodyValue, nbrPermutations[0]);
+  int TmpSumGMomentumTransfer = (g + MomentumTransfer + this->NBodyValue) % this->NBodyValue;
   int SumGMomentumTransfer = TmpSumGMomentumTransfer;
-  momentumTransfer = - this->NBodyValue + 1;
+  MomentumTransfer = - this->NBodyValue + 1;
   g = (TmpSumGMomentumTransfer + this->NBodyValue - 1) % this->NBodyValue;
-  int CanonicalIndex = this->EvaluateLinearizedIndex(TmpIndices, g, momentumTransfer);
+  int CanonicalIndex = this->EvaluateLinearizedIndex(indices, g, MomentumTransfer);
   int IndexForCanonical = 0;
-  int* TmpIndices1 = new int[this->NBodyValue];
   for (int j = 0; j <  this->NbrLzValue - 1; ++j)
-  {
-    TmpNbrPermutation[j + 1] = TmpNbrPermutation[j];
-    CountModulo = 0;
-    for (int i = 0; i < this->NBodyValue; ++i)
     {
-      TmpIndices[i] += 1;
-      if (TmpIndices[i] == this->NbrLzValue)
-      {
-	CountModulo += 1;
-	TmpIndices[i] = 0;
-      }   
+      nbrPermutations[j + 1] = nbrPermutations[j];
+      CountModulo = 0;
+      for (int i = 0; i < this->NBodyValue; ++i)
+	{
+	  indices[i]++;
+	  if (indices[i] == this->NbrLzValue)
+	    {
+	      CountModulo++;
+	      indices[i] = 0;
+	    }   
+	}      
+      
+      if (CountModulo != 0)
+	{
+	  SortArrayDownOrderingPermutationBubbleSort<int>(indices, this->NBodyValue, nbrPermutations[j + 1]);	  
+	}
+      
+      TmpSumGMomentumTransfer = (TmpSumGMomentumTransfer - CountModulo) % this->NBodyValue;
+      MomentumTransfer = - this->NBodyValue + 1;
+      g = (TmpSumGMomentumTransfer + this->NBodyValue - 1) % this->NBodyValue;
+      TmpIndex = this->EvaluateLinearizedIndex(indices, g, MomentumTransfer);
+      if (TmpIndex < CanonicalIndex)
+	{
+	  CanonicalIndex = TmpIndex;
+	  IndexForCanonical = j + 1;
+	}
     }
-    
-//     for (int i = 0; i < this->NBodyValue; ++i)
-//       {
-// 	cout << TmpIndices[i] << ":";
-//       }
-//    cout << " = " ;
-    
-    
-    if (CountModulo != 0)
-    {
-      SortArrayDownOrderingPermutationBubbleSort<int>(TmpIndices, this->NBodyValue, TmpNbrPermutation[j + 1]);
-
-    }
-    
-    TmpSumGMomentumTransfer = (TmpSumGMomentumTransfer - CountModulo) % this->NBodyValue;
-    momentumTransfer = - this->NBodyValue + 1;
-    g = (TmpSumGMomentumTransfer + this->NBodyValue - 1) % this->NBodyValue;
-    TmpIndex = this->EvaluateLinearizedIndex(TmpIndices, g, momentumTransfer);
-    if (TmpIndex < CanonicalIndex)
-    {
-      CanonicalIndex = TmpIndex;
-      IndexForCanonical = j + 1;
-    }
-  }
   
-  
-  
-  if ((TmpNbrPermutation[IndexForCanonical] % 2) == 0)
+     
+  if ((nbrPermutations[IndexForCanonical] % 2) == 0)
     sign = 1;
   else
     sign = -1;
-  return CanonicalIndex;
-  
+
+  return CanonicalIndex;   
 }
 
 
