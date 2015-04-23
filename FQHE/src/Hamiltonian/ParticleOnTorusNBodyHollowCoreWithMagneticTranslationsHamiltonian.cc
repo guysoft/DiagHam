@@ -294,8 +294,11 @@ void ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evaluate
 {
   int* TmpMIndices = new int [this->NBodyValue];
   int* TmpMIndices2 = new int [this->NBodyValue];
- int* TmpNbrPermutations = new int [2 * this->NbrLzValue];
-  long NbrCreationElements = pow(this->NbrLzValue, this->NBodyValue) * this->NBodyValue * (2*this->NBodyValue - 1);
+  int* TmpNbrPermutations = new int [2 * this->NbrLzValue];
+  int PowerShift = 1;
+  for (int i = 0; i < this->NBodyValue; ++i)
+    PowerShift *= this->NbrLzValue;
+  long NbrCreationElements = PowerShift * this->NBodyValue * (2 * this->NBodyValue - 1);
   int* Sign = new int [NbrCreationElements];
   int NbrCanonicalElements = 0;
   int* MapIndexToCanonical = new int [NbrCreationElements];
@@ -327,6 +330,7 @@ void ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evaluate
 	}
     }
   
+  int Lim = 2 * this->NBodyValue - 1;
   for (int m1 = 0; m1 < this->NbrEntryPrecalculatedInteractionCoefficients1; ++m1)
     {
       int Tmp = m1;
@@ -336,30 +340,19 @@ void ParticleOnTorusNBodyHollowCoreWithMagneticTranslationsHamiltonian::Evaluate
 	  Tmp /= this->MaxMomentum;
 	}
       int TmpIndex = 0;
-      for (int j = 0; j < 2*this->NBodyValue - 1; ++j)
+      for (int j = 0; j < Lim; ++j)
 	{
 	  int momentumTransfer = j - this->NBodyValue + 1;
 	  for (int g = 0; g < this->NBodyValue; ++g)
 	    {
-	      int linearizedIndex = this->EvaluateLinearizedIndex(TmpMIndices, g, momentumTransfer);
+	      int linearizedIndex = m1 + (PowerShift * (g + (this->NBodyValue * j)));
 	      int CanonicalIndex = MapIndexToCanonical[linearizedIndex];
-	      int ReducedCanonicalIndex = -1;
-	      int l = 0;
-	      while ((l < NbrCanonicalElements) && (ReducedCanonicalIndex == -1))
-		{
-		  if (CanonicalIndexList[l] == CanonicalIndex)
-		    ReducedCanonicalIndex = l;
-		  ++l;
-		}
+	      int ReducedCanonicalIndex = SearchInArray(CanonicalIndex, CanonicalIndexList, NbrCanonicalElements);
 	      this->PrecalculatedInteractionCoefficients[m1][TmpIndex] = Sign[linearizedIndex] * CanonicalInteractionCoefficients[ReducedCanonicalIndex];
-	      
-	      if (TmpIndex != (this->NBodyValue*j + g))
-		cout << TmpIndex << " " << (this->NBodyValue*j + g) << endl;
 	      ++TmpIndex;
 	    }
 	}
     }
-  cout << "done" << endl;
   delete[] TmpMIndices;
   delete[] TmpMIndices2;
   delete[] TmpNbrPermutations;
