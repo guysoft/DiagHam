@@ -417,11 +417,15 @@ inline double ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::E
 // g = modulo of the index on which the infinite sum will be performed
 // momentumTransfer = transfer of momentum between the creation and annihilation operators, in units of the number of flux quanta
 // return value = linearized index
+
 inline int ParticleOnTorusNBodyHardCoreWithMagneticTranslationsHamiltonian::EvaluateLinearizedIndex (int* TmpIndices, int g, int momentumTransfer)
 {
-  int LinearizedIndex = pow(this->NbrLzValue, this->NBodyValue) * (g + this->NBodyValue * (this->NBodyValue - 1 + momentumTransfer));
-  for (int i = 0; i < this->NBodyValue; ++i)
-    LinearizedIndex += pow(this->NbrLzValue, i) * TmpIndices[i];
+  int LinearizedIndex = (g + this->NBodyValue * (this->NBodyValue - 1 + momentumTransfer));
+  for (int i = this->NBodyValue - 1; i >= 0; --i)
+    {
+      LinearizedIndex *= this->NbrLzValue;
+      LinearizedIndex += TmpIndices[i];
+    }
   return LinearizedIndex;  
 }
 

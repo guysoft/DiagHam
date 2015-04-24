@@ -21,12 +21,7 @@
 #include "MathTools/IntegerAlgebraTools.h"
 
 #include "Options/OptionManager.h"
-#include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleStringOption.h"
-#include "Options/SingleDoubleOption.h"
+#include "Options/Options.h"
 
 #include "Vector/ComplexVector.h"
 
@@ -76,6 +71,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "do not consider magnetic translation (only trivial translations along one axis)");
   (*SystemGroup) += new SingleStringOption ('\n', "state", "name of an optional vector state whose component values can be displayed behind each corresponding n-body state");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
+  (*SystemGroup) += new MultipleIntegerOption ('\n', "pauli", "print only states obeying a general Pauli exclusion principle",',');
   (*OutputGroup) += new BooleanOption  ('\n', "save-disk", "save output on disk");
   (*OutputGroup) += new SingleStringOption ('\n', "output-file", "use this file name instead of statistics_sphere_n_nbrparticles_q_nbrfluxquanta_z_totallz.basis");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -94,6 +90,22 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrFluxQuanta = Manager.GetInteger("nbr-flux"); 
   int MomentumModulo = FindGCD(NbrParticles, NbrFluxQuanta);
+
+  int PauliK = 0;
+  int PauliR = 0;
+  int TmpL = 0;
+  int* TmpIs = Manager.GetIntegers("pauli", TmpL);
+  if (TmpL > 0)
+    {
+      if (TmpL != 2)
+	{
+	  cout << "--pauli takes two arguments k,r describing the exclusion statistics"<<endl;
+	  exit(1);
+	}
+      PauliK = TmpIs[0];
+      PauliR = TmpIs[1];
+      cout << "applying (" << PauliK << ", " << PauliR << ") exclusion statistics" << endl;
+    }
 
   if (Manager.GetBoolean("su3-spin") == true)
     {
@@ -328,7 +340,7 @@ int main(int argc, char** argv)
 		ParticleOnTorusWithMagneticTranslations* Space;
 		if (Manager.GetBoolean("boson") == true)
 		  {
-		    Space = new BosonOnTorusWithMagneticTranslationsShort  (NbrParticles, NbrFluxQuanta, Kx, Ky);
+		    Space = new BosonOnTorusWithMagneticTranslationsShort (NbrParticles, NbrFluxQuanta, Kx, Ky);
 		  }
 		else
 		  {
@@ -337,7 +349,8 @@ int main(int argc, char** argv)
 		if (Manager.GetString("state") == 0)
 		  {
 		    for (int i = 0; i <  Space->GetHilbertSpaceDimension(); ++i)
-		      Space->PrintState(cout, i) << endl;;
+		      if ((PauliK == 0) || (Space->HasPauliExclusions(i, PauliK, PauliR)))
+			Space->PrintState(cout, i) << endl;;
 		    cout << endl;
 		  }
 		else

@@ -1447,3 +1447,32 @@ ComplexVector& FermionOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexVe
   delete[] TmpOutputMonomial;
   return outputState;
 }
+
+// request whether state with given index satisfies a general Pauli exclusion principle
+//
+// index = state index
+// pauliK = number of particles allowed in consecutive orbitals
+// pauliR = number of consecutive orbitals
+// return value = true if teh state satisfies the general Pauli exclusion principle
+
+bool FermionOnTorusWithMagneticTranslations::HasPauliExclusions(int index, int pauliK, int pauliR)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  unsigned long RMask = (0x1ul << pauliR) - 0x1ul;
+  TmpState |= (TmpState & RMask) << this->MaxMomentum;
+  unsigned long UnsignedPauliK = (unsigned long) pauliK;
+  for (int i = 0; i < this->MaxMomentum; ++i)
+    {
+      unsigned long TmpOccupation = 0l;
+      unsigned long TmpState2 = TmpState & RMask;
+      while (TmpState2 != 0x0ul)
+	{
+	  TmpOccupation += (TmpState2 & 0x1ul);
+	  TmpState2 >>= 1;
+	}
+      if (TmpOccupation > UnsignedPauliK)
+	return false;
+      TmpState >>= 1;
+    }
+  return true;
+}

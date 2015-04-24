@@ -278,6 +278,13 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
+  // request whether state with given index satisfies a general Pauli exclusion principle
+  //
+  // index = state index
+  // pauliK = number of particles allowed in consecutive orbitals
+  // pauliR = number of consecutive orbitals
+  // return value = true if teh state satisfies the general Pauli exclusion principle
+  bool HasPauliExclusions(int index, int pauliK, int pauliR);
 
  protected:
 
