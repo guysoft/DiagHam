@@ -49,4 +49,5 @@ TightBindingModelCylinderTwoOrbitalSquareLattice.cc \
 TightBindingModelMixedKagomeLattice.cc \
 TightBindingModelZhangQiLattice.cc \
 TightBindingModel2DAtomicLimitLattice.cc \
-TightBindingModelCoupledWires.cc
+TightBindingModelCoupledWires.cc \
+TightBindingModelPWaveSuperconductor.cc
