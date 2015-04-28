@@ -4,6 +4,7 @@
 //#include "HilbertSpace/FermionOnSquareLatticeMomentumSpace.h"
 //#include "HilbertSpace/FermionOnSquareLatticeWithSpinMomentumSpaceLong.h"
 //#include "HilbertSpace/FermionOnSquareLatticeMomentumSpaceLong.h"
+
 #include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 
@@ -14,6 +15,8 @@
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelOFLNOrbitalTriangularLattice.h"
+#include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
+
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
@@ -231,9 +234,11 @@ int main(int argc, char** argv)
     }
   
   
-  TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),
-								  Manager.GetInteger("cutOFF"));
-  
+  TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),  Manager.GetInteger("cutOFF"));
+
+
+
+//  TightBindingModel2DAtomicLimitLattice  TightBindingModel(NbrSitesX, NbrSitesY,  1 , 0, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
