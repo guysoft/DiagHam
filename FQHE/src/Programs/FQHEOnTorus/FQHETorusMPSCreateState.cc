@@ -137,6 +137,7 @@ int main(int argc, char** argv)
 	      TotalKy = Manager.GetInteger("ky-momentum");
 	      TotalKyFlag = true;
 	    }
+	  cout << "checking Ky=" << TotalKy << " sector" << endl;
 	  if (MaxOccupation > NbrParticles)
 	    Space = new BosonOnTorusShort(NbrParticles, NbrFluxQuanta, TotalKy);
 	  else
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
 	      TotalKyFlag = Space->HasPauliExclusions(i, PauliKValue, PauliRValue);
 	      if (TotalKyFlag == true)
 		{
-		  cout << "find admissible configuration at " << i;
+		  cout << "find admissible configuration at " << i << endl;
 		  if (TwistedTorusFlag == true)
 		    {
 		      Space->CreateStateFromMPSDescription(SparseComplexBMatrices, StringMatrix, ComplexState, 

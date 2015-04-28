@@ -249,7 +249,6 @@ class BosonOnSquareLatticeMomentumSpaceLong : public BosonOnSphereLong
   // rightSpace = pointer to the Hilbert space of the second color
   // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
   // return value = symmetrized state
-
   void SymmetrizeU1U1StateCore (ComplexVector& symmetrizedVector, ComplexVector& leftVector, ComplexVector& rightVector, BosonOnSquareLatticeMomentumSpaceLong* leftSpace, BosonOnSquareLatticeMomentumSpaceLong* rightSpace, bool unnormalizedBasisFlag, unsigned long firstComponent, unsigned long nbrComponents);
 
 
