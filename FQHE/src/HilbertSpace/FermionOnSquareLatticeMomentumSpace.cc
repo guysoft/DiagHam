@@ -1031,6 +1031,6 @@ Complex FermionOnSquareLatticeMomentumSpace::ComputeOverlapWaveFunctionsWithDiff
        }
       Result += Conj(secondVector[i]) *  firstVector[i] * Tmp; 
     } 
-
+ delete []  TmpState;
  return Result;
 }

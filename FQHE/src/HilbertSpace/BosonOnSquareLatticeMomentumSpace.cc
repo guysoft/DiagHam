@@ -1087,4 +1087,5 @@ void  BosonOnSquareLatticeMomentumSpace::ApplyOneBodyEigenvectorChangeOnManyBody
        state[i] *= phasefactor[TmpState[j]];
        }
    }
+ delete []  TmpState;
 }

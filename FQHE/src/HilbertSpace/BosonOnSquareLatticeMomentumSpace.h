@@ -41,9 +41,10 @@
 
 class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
 {
-
+  friend class BosonOnSquareLatticeWithSU2SpinMomentumSpace;
   friend class FQHESquareLatticeSymmetrizeU1U1StateOperation;
-  
+
+
  protected:
 
   // number of sites in the x direction
@@ -196,6 +197,7 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
 
   virtual Complex ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix);
   virtual  void ApplyOneBodyEigenvectorChangeOnManyBodyState(Complex * phasefactor , ComplexVector & state);
+
  protected:
 
   // evaluate Hilbert space dimension

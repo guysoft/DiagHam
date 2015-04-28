@@ -30,6 +30,7 @@
 
 
 #include "config.h"
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include "HilbertSpace/BosonOnSquareLatticeWithSU2SpinMomentumSpace.h"
 #include "QuantumNumber/AbstractQuantumNumber.h"
 #include "QuantumNumber/SzQuantumNumber.h"
@@ -1095,3 +1096,21 @@ long BosonOnSquareLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixP
   return TmpNbrNonZeroElements;
 }
 
+
+// evaluate Hilbert space dimension with a fixed number of bosons with spin up
+//
+// initialState = state to be projected
+// finalSpace = space in which the projected state is
+// finalState = state after projection
+// otherBand = true if the projection should tqke the other band
+
+void BosonOnSquareLatticeWithSU2SpinMomentumSpace::ProjectIntoTheLowestBand(ComplexVector * initialState, BosonOnSquareLatticeMomentumSpace * finalSpace, ComplexVector * finalState, bool otherBand )
+{
+
+ for(int i = 0; i < finalSpace->GetHilbertSpaceDimension(); i++)
+{
+
+ (*finalState)[i] =  (*initialState)[this->FindStateIndex(finalSpace->FermionBasis->StateDescription[i], 0)];  
+}
+ 
+}

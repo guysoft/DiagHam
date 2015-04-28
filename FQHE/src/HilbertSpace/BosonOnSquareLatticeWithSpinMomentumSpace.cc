@@ -672,3 +672,4 @@ long BosonOnSquareLatticeWithSpinMomentumSpace::EvaluateHilbertSpaceDimension(in
   return Count;
 }
 
+

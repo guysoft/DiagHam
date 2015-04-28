@@ -34,13 +34,14 @@
 
 #include "config.h"
 #include "HilbertSpace/BosonOnSphereWithSU2Spin.h"
-
+#include "HilbertSpace/BosonOnSquareLatticeMomentumSpace.h"
 #include <iostream>
-
 
 
 class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2Spin
 {
+
+  friend class FQHESquareLatticeSymmetrizeU1U1StateOperation;
 
  protected:
 
@@ -155,6 +156,14 @@ class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, int kySector, int szSector,  
 									 int nbrGroundStates, ComplexVector* groundStates, double* weights, AbstractArchitecture* architecture = 0);
 
+  // evaluate Hilbert space dimension with a fixed number of bosons with spin up
+  //
+  // initialState = state to be projected
+  // finalSpace = space in which the projected state is
+  // finalState = state after projection
+  // otherBand = true if the projection should tqke the other band
+  virtual void ProjectIntoTheLowestBand(ComplexVector * initialState, BosonOnSquareLatticeMomentumSpace * finalSpace, ComplexVector * finalState, bool otherBand = false);
+
  protected:
 
   // evaluate Hilbert space dimension
@@ -232,7 +241,6 @@ class BosonOnSquareLatticeWithSU2SpinMomentumSpace : public BosonOnSphereWithSU2
   // return value = number of components that have been added to the density matrix
   virtual long EvaluatePartialDensityMatrixParticlePartitionCore (int minIndex, int nbrIndex, ParticleOnSphere* complementaryHilbertSpace,  ParticleOnSphere* destinationHilbertSpace,
 								  int nbrGroundStates, ComplexVector* groundStates, double* weights, HermitianMatrix* densityMatrix);
-
 
 };
 
