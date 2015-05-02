@@ -160,6 +160,12 @@ class ComplexDiagonalMatrix : public Matrix
   // return value = reference om matrix elememt
   Complex& operator [] (int i);
 
+
+  // get the diagonal elements as an array
+  //
+  // return value = pointer to the array of diagonal elements
+  Complex* GetDiagonalElements();
+
   // Resize matrix
   //
   // nbrRow = new number of rows
@@ -360,5 +366,14 @@ class ComplexDiagonalMatrix : public Matrix
 #endif
 
 };
+
+// get the diagonal elements as an array
+//
+// return value = pointer to the array of diagonal elements
+
+inline Complex* ComplexDiagonalMatrix::GetDiagonalElements()
+{
+  return this->DiagonalElements;
+}
 
 #endif
