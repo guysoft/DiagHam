@@ -2131,7 +2131,7 @@ void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVect
 	  int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TmpOutputState, TmpKyMax);
 	  if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
 	    {
-	      symmetrizedVectors[this->NbrFermions][TmpTotalKy][TmpPos] += TmpCoefficient * Phase(TmpPhase * ((double) TmpTotalSqrKy));
+	      symmetrizedVectors[this->NbrFermions][TmpTotalKy][TmpPos] += TmpCoefficient * Phase(TmpPhase * (((double) TmpTotalSqrKy) - ((double) (TmpTotalKy * (this->KyMax / 2)))));
 	    }
       }
     }
@@ -2196,5 +2196,38 @@ int FermionOnTorus::ApplyXMagneticTranslation(int index, double& sign)
   while ((TmpState >> TmpKyMax) == 0x0ul)
     --TmpKyMax;
   return this->FindStateIndex(TmpState, TmpKyMax);
+}
+
+// transform a state expressed on a torus with a given angle to a state expressed on the same trous but a different angle
+//
+// inputVector = reference on the input vector
+// inputAngle = angle (in radian) between the two vectors that span the torus on which the input state is defined
+// inputAspectRatio = length ratio of the two vectors that span the torus on which the input state is defined
+// outputAngle = angle (in radian) between the two vectors that span the torus on which the output state is defined
+// outputAspectRatio = length ratio of the two vectors that span the torus on which the output state is defined
+// firstComponent = first component of the input vector that has to be symmetrized
+// nbrComponents = number of components of the input vector that have to be symmetrized
+// return value = transformed state
+
+ComplexVector FermionOnTorus::ChangeTorusAngle (ComplexVector& inputVector, double inputAngle, double inputAspectRatio, double outputAngle, double outputAspectRatio,
+						unsigned long firstComponent, unsigned long nbrComponents)
+{
+  long LastComponent = (long) (firstComponent + nbrComponents);
+  ComplexVector OutputState (this->HilbertSpaceDimension);
+  double TmpPhase = - M_PI / ((double) this->KyMax);
+  for (long i = (long) firstComponent; i < LastComponent; ++i)
+    {
+      unsigned long TmpInputState = this->StateDescription[i];
+      int TmpTotalSqrKy = 0;
+      for (int k = 0; k < this->KyMax; ++k)
+	{
+	  if ((TmpInputState & (0x1ul << k)) != 0x0ul)
+	    {
+	      TmpTotalSqrKy += k * (k - this->KyMax);
+	    }
+	} 
+      OutputState[i] = inputVector[i] * Phase(TmpPhase * ((double) TmpTotalSqrKy));
+    }
+  return OutputState;
 }
 

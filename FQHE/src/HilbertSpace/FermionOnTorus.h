@@ -347,6 +347,20 @@ class FermionOnTorus :  public ParticleOnTorus
   // return value = translated state index
   virtual int ApplyXMagneticTranslation(int index, double& sign);
 
+  // transform a state expressed on a torus with a given angle to a state expressed on the same trous but a different angle
+  //
+  // inputVector = reference on the input vector
+  // inputAngle = angle (in radian) between the two vectors that span the torus on which the input state is defined
+  // inputAspectRatio = length ratio of the two vectors that span the torus on which the input state is defined
+  // outputAngle = angle (in radian) between the two vectors that span the torus on which the output state is defined
+  // outputAspectRatio = length ratio of the two vectors that span the torus on which the output state is defined
+  // firstComponent = first component of the input vector that has to be symmetrized
+  // nbrComponents = number of components of the input vector that have to be symmetrized
+  // return value = transformed state
+  virtual ComplexVector ChangeTorusAngle (ComplexVector& inputVector, double inputAngle, double inputAspectRatio, double outputAngle, double outputAspectRatio,
+					  unsigned long firstComponent, unsigned long nbrComponents);
+
+
  protected:
 
   // find state index
