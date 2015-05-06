@@ -2117,6 +2117,7 @@ void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVect
 	    }
 	  ++CurrentLz;
 	} 
+      int FullTmpTotalKy = TmpTotalKy;
       TmpTotalKy %= TargetSpaceNbrOrbitals;
       if (TmpNbrParticles == this->NbrFermions)
 	{
@@ -2131,7 +2132,7 @@ void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVect
 	  int TmpPos = TargetSpaces[TmpTotalKy]->FindStateIndex(TmpOutputState, TmpKyMax);
 	  if (TmpPos < TargetSpaces[TmpTotalKy]->HilbertSpaceDimension)
 	    {
-	      symmetrizedVectors[this->NbrFermions][TmpTotalKy][TmpPos] += TmpCoefficient * Phase(TmpPhase * (((double) TmpTotalSqrKy) - ((double) (TmpTotalKy * (this->KyMax / 2)))));
+	      symmetrizedVectors[this->NbrFermions][TmpTotalKy][TmpPos] += TmpCoefficient * Phase(TmpPhase * (((double) TmpTotalSqrKy) - ((double) (FullTmpTotalKy * TargetSpaceNbrOrbitals))));
 	    }
       }
     }
