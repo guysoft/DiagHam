@@ -29,7 +29,7 @@
 
 
 #include "config.h"
-#include "Hamiltonian/ParticleOnLatticeRealSpaceHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian.h"
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
@@ -52,8 +52,10 @@ using std::ostream;
 // default constructor
 //
 
-ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian()
+ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian()
 {
+  this->XMomentum = 0;
+  this->MaxXMomentum = 1;
   this->DiagonalElements = 0;
 }
 
@@ -62,18 +64,25 @@ ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian()
 // particles = Hilbert space associated to the system
 // nbrParticles = number of particles
 // nbrSiteX = number of sites
+// xMomentum = momentum sector in the x direction
+// maxXMomentum = number of momentum sectors in the x direction
+// yMomentum = momentum sector in the x direction
+// maxYMomentum = number of momentum sectors in the x direction
 // tightBinding = hamiltonian corresponding to the tight-binding model in real space
 // densityDensity = matrix that gives the amplitude of each density-density interaction term
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
-ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSites, 
-													     HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
+ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSites, 
+													     int xMomentum, int maxXMomentum, HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
 													     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
-  this->NbrSites = nbrSites;    
+  this->NbrSites = nbrSites;
+  this->XMomentum = xMomentum;
+  this->MaxXMomentum = maxXMomentum;
+    
   this->LzMax = this->NbrSites - 1;
   this->HamiltonianShift = 0.0;
   this->DiagonalElements = 0;
@@ -84,16 +93,18 @@ ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian(Par
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  cout <<MinIndex<<" " <<MaxIndex<<endl;
+  cout <<" MaxIndex = "<< MaxIndex<<" MinIndex  = "<< MinIndex <<endl;
   this->PrecalculationShift = (int) MinIndex;  
-  this->HermitianSymmetryFlag = true;
+  this->HermitianSymmetryFlag = true;//true;
   
+  this->EvaluateExponentialFactors();
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
   this->EvaluateInteractionFactorsFromDensityDensity(densityDensity);
     
   if (memory > 0)
     {
       long TmpMemory = this->FastMultiplicationMemory(memory);
+      cout << TmpMemory << endl;
       if (TmpMemory < 1024)
 	cout  << "fast = " <<  TmpMemory << "b ";
       else
@@ -120,112 +131,23 @@ ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian(Par
 // destructor
 //
 
-ParticleOnLatticeRealSpaceHamiltonian::~ParticleOnLatticeRealSpaceHamiltonian()
+ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::~ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian()
 {
   if (this->DiagonalElements != 0)
     delete[] this->DiagonalElements;
+  delete[] this->ExponentialFactors;
 }
   
 
+// evaluate all exponential factors
+//   
 
-// evaluate the one body interaction factors from a tight-binding matrix
-//
-// tightBinding = hamiltonian corresponding to the tight-binding model in real space
-
-void ParticleOnLatticeRealSpaceHamiltonian::EvaluateOneBodyFactorsFromTightBingding (HermitianMatrix& tightBinding)
+void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateExponentialFactors()
 {
-  if (tightBinding.GetNbrRow() != this->NbrSites)
-    {
-      cout << "error, the dimension of the tight binding matrix does not match the number of sites" << endl;
-      return;
-    }
-  this->OneBodyGenericNbrConnectedSites = new int [this->NbrSites];
-  this->OneBodyGenericConnectedSites = new int* [this->NbrSites];
-  this->OneBodyGenericInteractionFactors = new Complex* [this->NbrSites];
-  Complex Tmp;
-  double Sign = 1.0;
-  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-    Sign = -1.0;
-  for (int i = 0; i < this->NbrSites; ++i)
-    {
-      this->OneBodyGenericNbrConnectedSites[i] = 0;
-      for (int j = 0; j <  this->NbrSites; ++j)
-	{
-	  tightBinding.GetMatrixElement(i, j, Tmp);
-	  if ((Tmp.Re != 0.0) || (Tmp.Im != 0.0))
-	    ++this->OneBodyGenericNbrConnectedSites[i];
-	}
-      if (this->OneBodyGenericNbrConnectedSites[i] > 0)
-	{
-	  this->OneBodyGenericConnectedSites[i] = new int [this->OneBodyGenericNbrConnectedSites[i]];
-	  this->OneBodyGenericInteractionFactors[i] = new Complex [this->OneBodyGenericNbrConnectedSites[i]];
-	  this->OneBodyGenericNbrConnectedSites[i] = 0;
- 	  for (int j = 0; j <  this->NbrSites; ++j)
-	    {
-	      tightBinding.GetMatrixElement(i, j, Tmp);
-	      if ((Tmp.Re != 0.0) || (Tmp.Im != 0.0))
-		{
-		  this->OneBodyGenericConnectedSites[i][this->OneBodyGenericNbrConnectedSites[i]] = j;
-		  this->OneBodyGenericInteractionFactors[i][this->OneBodyGenericNbrConnectedSites[i]] = Sign*Tmp;
-		  ++this->OneBodyGenericNbrConnectedSites[i];
-		}
-	    }
-	}
+  this->ExponentialFactors = new Complex[this->MaxXMomentum];
+  for (int i = 0; i < this->MaxXMomentum; ++i)
+    { 
+	  this->ExponentialFactors[i] = Phase(2.0 * M_PI * ((this->XMomentum * ((double) i) / ((double) this->MaxXMomentum))));
     }
 }
 
-// evaluate the two body interaction factors from a generic density-density interaction
-//
-// densityDensity = matrix that gives the amplitude of each density-density interaction term
-
-void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensityDensity (RealSymmetricMatrix& densityDensity)
-{
-  this->NbrSectorSums = 0;  
-  for (int i = 0; i < densityDensity.GetNbrRow(); ++i)
-    {
-      for (int j = i; j < densityDensity.GetNbrRow(); ++j)
-	{
-	  double Tmp;
-	  densityDensity.GetMatrixElement(i, j, Tmp);
-	  if (Tmp != 0.0)
-	    {
-	      ++this->NbrSectorSums;
-	    }
-	}
-    }
-cout <<"this->NbrSectorSums = " <<  this->NbrSectorSums   <<endl;
-  if (this->NbrSectorSums == 0)
-    {
-      return;
-    }
-  this->NbrSectorIndicesPerSum = new int[this->NbrSectorSums];
-  this->SectorIndicesPerSum = new int* [this->NbrSectorSums];
-  this->InteractionFactors = new Complex* [this->NbrSectorSums];
-  for (int i = 0; i < this->NbrSectorSums; ++i)
-    {
-      this->NbrSectorIndicesPerSum[i] = 1;
-      this->SectorIndicesPerSum[i] = new int [2];
-      this->InteractionFactors[i] = new Complex [1];
-    }
-  this->NbrSectorSums = 0;
-
-  double Sign = 1.0;
-  if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
-    Sign = -1.0;
-  for (int i = 0; i < densityDensity.GetNbrRow(); ++i)
-    {
-      for (int j = i; j < densityDensity.GetNbrRow(); ++j)
-	{
-	  double Tmp;
-	  densityDensity.GetMatrixElement(i, j, Tmp);
-	  if (Tmp != 0.0)
-	    {
-	      this->SectorIndicesPerSum[this->NbrSectorSums][0] = i;
-	      this->SectorIndicesPerSum[this->NbrSectorSums][1] = j;
-	      this->InteractionFactors[this->NbrSectorSums][0] =  Sign * Tmp;
-	      ++this->NbrSectorSums;
-	    }
-	}
-    } 
-}
-  

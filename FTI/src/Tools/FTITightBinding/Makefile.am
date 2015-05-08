@@ -50,4 +50,5 @@ TightBindingModelMixedKagomeLattice.cc \
 TightBindingModelZhangQiLattice.cc \
 TightBindingModel2DAtomicLimitLattice.cc \
 TightBindingModelCoupledWires.cc \
-TightBindingModelPWaveSuperconductor.cc
+TightBindingModelPWaveSuperconductor.cc \
+TightBindingModelHofstadterFiniteCylinder.cc

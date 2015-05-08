@@ -97,6 +97,7 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
 
 FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTranslation (int nbrFermions, int nbrSite, int xMomentum,  int maxXMomentum, unsigned long memory)
 {  
+  cout <<" Creating FermionOnLatticeRealSpaceAnd1DTranslation with  nbrFermions " <<  nbrFermions<< ",  nbrSite = "<< nbrSite << " xMomentum = "<< xMomentum<<" maxXMomentum = " << maxXMomentum<<endl;
   this->NbrFermions = nbrFermions;
   this->IncNbrFermions = this->NbrFermions + 1;
   this->NbrSite = nbrSite;
