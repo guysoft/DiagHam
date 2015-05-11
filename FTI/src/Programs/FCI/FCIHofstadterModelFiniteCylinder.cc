@@ -83,6 +83,8 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
+
+  (*SystemGroup) += new BooleanOption  ('\n', "atomic-limit", "use atomic limit tight-binding model to test interaction terms");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -214,26 +216,34 @@ else
     {  
       MaxKx = 0;
     }
+
+  TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = 0;
   double * ChemicalPotential= new double[NbrSiteX* NbrSiteY];
   for(int i = 0 ; i <NbrSiteX* NbrSiteY ; i++)
    ChemicalPotential[i] =0.0 ;
-  TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = new  TightBindingModel2DAtomicLimitLattice(NbrSiteX, 1,NbrSiteY, ChemicalPotential,0,0, Architecture.GetArchitecture());
+  if(Manager.GetBoolean("atomic-limit") == true)
+	{
+  double * ChemicalPotential= new double[NbrSiteX* NbrSiteY];
+  for(int i = 0 ; i <NbrSiteX* NbrSiteY ; i++)
+   ChemicalPotential[i] =0.0 ;
+ TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = new  TightBindingModel2DAtomicLimitLattice(NbrSiteX, 1,NbrSiteY, ChemicalPotential,0,0, Architecture.GetArchitecture());
+}
 
   TightBindingModelHofstadterFiniteCylinder  * TightBindingModel  = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
 
+  HermitianMatrix TightBindingMatrix = 0;
 
-  HermitianMatrix TightBindingMatrix = TightBindingModel1->GetRealSpaceTightBindingHamiltonian();  
+  if(Manager.GetBoolean("atomic-limit") == true)
+     TightBindingMatrix = TightBindingModel1->GetRealSpaceTightBindingHamiltonian();  
+  else
+     TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();  
+
   bool FirstRunFlag = true;
-  for (int i = MinKx; i <= MaxKx; ++i)
-    {
-	  cout << "(kx=" << i << ") : " << endl;
-	  ParticleOnSphere* Space = 0;
-	  AbstractQHEHamiltonian* Hamiltonian = 0;
-    
-        RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
-	double UPotential = Manager.GetDouble("u-potential");
-        if(Manager.GetBoolean("synthetic-dimension") ==false)
-        {
+
+  RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
+  double UPotential = Manager.GetDouble("u-potential");
+  if(Manager.GetBoolean("synthetic-dimension") ==false)
+      {
   		for (int x = 0; x <  NbrSiteX; ++x)
 		{
 		  int y = 0;
@@ -269,6 +279,15 @@ else
 	}
 
 cout <<"interaction Matrix " <<endl<<DensityDensityInteraction <<endl;
+
+
+  for (int i = MinKx; i <= MaxKx; ++i)
+    {
+	  cout << "(kx=" << i << ") : " << endl;
+	  ParticleOnSphere* Space = 0;
+	  AbstractQHEHamiltonian* Hamiltonian = 0;
+    
+
          if(Manager.GetBoolean("no-translation") == true)
 {
    Space = new FermionOnLatticeRealSpace(NbrParticles,TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
