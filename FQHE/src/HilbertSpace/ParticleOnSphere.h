@@ -343,10 +343,19 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // m = first index for creation operator
   // coefficient = reference on the double where the multiplicative factor has to be stored
   // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int Ad (int m, double& coefficient, int& nbrTranslationX);
+
+  // apply a^+_m operator to the state produced using A method (without destroying it)
+  //
+  // m = first index for creation operator
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
   // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
   // return value = index of the destination state 
   virtual int Ad (int m, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
     
+
   // check whether HilbertSpace implements ordering of operators
   //
   virtual bool HaveOrder ();

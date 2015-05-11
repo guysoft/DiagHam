@@ -471,6 +471,20 @@ int ParticleOnSphere::Ad (int m1, double& coefficient)
   return this->HilbertSpaceDimension;
 }
  
+
+// apply a^+_m operator to the state produced using AuAu method (without destroying it)
+//
+// m = first index for creation operator
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int ParticleOnSphere::Ad (int m, double& coefficient, int& nbrTranslationX)
+{
+  cout << "using int ParticleOnSphere::Ad (int m, double& coefficient, int& nbrTranslationX)"<< endl;
+  return this->HilbertSpaceDimension;
+}
+
  
 // apply a^+_m operator to the state produced using AuAu method (without destroying it)
 //
