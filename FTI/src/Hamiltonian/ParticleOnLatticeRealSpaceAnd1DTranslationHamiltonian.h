@@ -801,10 +801,12 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 	  Complex* TmpInteractionFactors = this->OneBodyGenericInteractionFactors[j];
 	  Coefficient = particles->A (index, j);
 	  double TmpCoefficient;
+
 	  if (Coefficient != 0.0)
 	  {
 	    for (int k = 0; k < TmpNbrConnectedSites; ++k)
 	      {
+
 		TmpCoefficient = Coefficient;
 		Index = particles->Ad (TmpConnectedSites[k], TmpCoefficient, NbrTranslationsX);
 		if (Index <= index)
@@ -818,6 +820,7 @@ inline void ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian::EvaluateMNOne
 		      {
 			coefficientArray[position] = TmpCoefficient * this->ExponentialFactors[NbrTranslationsX] * TmpInteractionFactors[k];
 		      }
+
 		    ++position;
 		  }
 		}

@@ -52,6 +52,7 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
   // auxiliary variables:
   // flux density:
   double FluxDensity;
+  double FluxInserted;
   // magnetic translation phases;
   Complex LxTranslationPhase;
   Complex LyTranslationPhase;
@@ -70,7 +71,7 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
   // gammaY = boundary condition twisting angle along y
   // architecture = pointer to the architecture
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
-  TightBindingModelHofstadterFiniteCylinder(int nbrSiteX, int nbrSiteY,int nbrFlux, char axis,double gammaX, double gammaY,  AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  TightBindingModelHofstadterFiniteCylinder(int nbrSiteX, int nbrSiteY,int nbrFlux, char axis,double gammaX, double gammaY,  AbstractArchitecture* architecture,   double fluxInserted = 0, bool storeOneBodyMatrices = true);
 
   // destructor
   //

@@ -106,13 +106,14 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
   this->MaxXMomentum =  maxXMomentum;
   this->MomentumModulo =  this->MaxXMomentum;
 
+  this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
   this->MomentumIncrement = (this->NbrFermions * this->StateShift / 2) % this->MomentumModulo;
   this->ComplementaryStateShift =  this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
   this->XMomentum = xMomentum % this->MaxXMomentum;
   this->StateXShift = this->NbrSite / this->MaxXMomentum;
-  //  cout <<  "this->StateXShift = " <<   this->StateXShift<<endl;
+
   this->ComplementaryStateXShift = this->MaxMomentum - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;

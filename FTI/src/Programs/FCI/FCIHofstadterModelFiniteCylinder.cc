@@ -63,7 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbrsitey", "number of sites in the y direction", 7);
   (*SystemGroup) += new SingleIntegerOption  ('q', "total-flux", "number of flux quanta per unit cell", 1);
   
-
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "flux-inserted", "flux insert in the x direction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive onsite(boson) or NN (fermion) potential strength", 1.0);
 
   (*SystemGroup) += new SingleDoubleOption  ('\n', "gamma-x", "boundary condition twisting angle along x (in 2 Pi unit)", 0.0);
@@ -138,7 +138,7 @@ else
   lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_n_%d_x_%d_y_%d", NbrParticles, NbrSiteX, NbrSiteY);
 
   char* CommentLine = new char [256];
-  sprintf (CommentLine, "eigenvalues\n# kx ky ");
+  sprintf (CommentLine, "eigenvalues\n# kx");
   char* EigenvalueOutputFile = new char [512];
   if (Manager.GetString("eigenvalue-file")!=0)
     {
@@ -150,7 +150,7 @@ else
     }
   else
     {
-      lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_u_%g",Manager.GetDouble("u-potential"));
+      lenFilePrefix += sprintf (FilePrefix+lenFilePrefix, "_u_%g_gx_%g",Manager.GetDouble("u-potential"),Manager.GetDouble("flux-inserted"));
       sprintf (EigenvalueOutputFile,"%s.dat",FilePrefix);
     }
   
@@ -160,19 +160,19 @@ else
       if ((Manager.GetBoolean("export-onebody") == true) || (Manager.GetBoolean("export-onebodytext") == true) || (Manager.GetBoolean("singleparticle-chernnumber") == true))
 	ExportOneBody = true;
 
-      Abstract2DTightBindingModel *TightBindingModel;
-      TightBindingModel = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), ExportOneBody);
+      Abstract2DTightBindingModel * TightBindingModel;
+      TightBindingModel = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), Manager.GetDouble("flux-inserted"), ExportOneBody);
       
       
       //TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
 
-    HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
+/*    HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
     RealDiagonalMatrix TmpHam2(TmpHam.GetNbrRow());
     TmpHam.LapackDiagonalize(TmpHam2);
     for (int i = 0; i < TmpHam.GetNbrRow(); ++i)
 	{
 	  cout << i << " : " << TmpHam2[i] << endl;
-	}
+	}*/
 
       for (int n=0; n<TightBindingModel->GetNbrBands()-1; ++n)
 	{
@@ -229,7 +229,7 @@ else
  TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = new  TightBindingModel2DAtomicLimitLattice(NbrSiteX, 1,NbrSiteY, ChemicalPotential,0,0, Architecture.GetArchitecture());
 }
 
-  TightBindingModelHofstadterFiniteCylinder  * TightBindingModel  = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
+  TightBindingModelHofstadterFiniteCylinder  * TightBindingModel  = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),Manager.GetDouble("flux-inserted"));
 
   HermitianMatrix TightBindingMatrix = 0;
 
@@ -239,25 +239,36 @@ else
      TightBindingMatrix = TightBindingModel->GetRealSpaceTightBindingHamiltonian();  
 
   bool FirstRunFlag = true;
+ /* RealDiagonalMatrix TmpHam2(TightBindingMatrix.GetNbrRow());
+  TightBindingMatrix.LapackDiagonalize(TmpHam2);
+
+  for (int i = 0; i < TmpHam2.GetNbrRow(); ++i)
+  {
+    cout << i << " : " << TmpHam2[i] << endl;
+  }
+*/
 
   RealSymmetricMatrix DensityDensityInteraction(TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), true);
   double UPotential = Manager.GetDouble("u-potential");
-  if(Manager.GetBoolean("synthetic-dimension") ==false)
-      {
-  		for (int x = 0; x <  NbrSiteX; ++x)
-		{
-		  int y = 0;
-		  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x+1, y), UPotential);
-         	  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y+1), UPotential);
-		  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-1, y), UPotential);
-		  for (y=1; y <  NbrSiteY-1; y++)
-		    {
+
+  if ( UPotential!= 0.0)
+	{
+	  if(Manager.GetBoolean("synthetic-dimension") ==false)
+	      {
+  			for (int x = 0; x <  NbrSiteX; ++x)
+			{
+			  int y = 0;
 			  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x+1, y), UPotential);
-			  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y+1), UPotential);
+        	 	  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y+1), UPotential);
 			  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-1, y), UPotential);
-			  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y-1), UPotential);
-	  	    }
-                  y = NbrSiteY - 1;
+			  for (y=1; y <  NbrSiteY-1; y++)
+			    {
+				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x+1, y), UPotential);
+				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y+1), UPotential);
+				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-1, y), UPotential);
+				  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y-1), UPotential);
+		  	    }
+                	  y = NbrSiteY - 1;
 		  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x+1, y), UPotential);
 		  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x-1, y), UPotential);
 		  DensityDensityInteraction.SetMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y),  TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(x, y-1), UPotential);
@@ -277,8 +288,8 @@ else
 		}
 	
 	}
-
-cout <<"interaction Matrix " <<endl<<DensityDensityInteraction <<endl;
+//cout <<"interaction Matrix " <<endl<<DensityDensityInteraction <<endl;
+}
 
 
   for (int i = MinKx; i <= MaxKx; ++i)
@@ -286,21 +297,28 @@ cout <<"interaction Matrix " <<endl<<DensityDensityInteraction <<endl;
 	  cout << "(kx=" << i << ") : " << endl;
 	  ParticleOnSphere* Space = 0;
 	  AbstractQHEHamiltonian* Hamiltonian = 0;
-    
 
          if(Manager.GetBoolean("no-translation") == true)
-{
-   Space = new FermionOnLatticeRealSpace(NbrParticles,TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
-   cout << "Fermion in real space not yet supported"<<endl;
-     exit(1);
+   {
+       Space = new FermionOnLatticeRealSpace(NbrParticles,TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand());
+
+
+ if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+     Memory = Architecture.GetArchitecture()->GetLocalMemory();
+
+ Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
+
+
+       Hamiltonian = new ParticleOnLatticeRealSpaceHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(), TightBindingMatrix, DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 }
    else
 {
  Space = new FermionOnLatticeRealSpaceAnd1DTranslation(NbrParticles,NbrSiteX*NbrSiteY,i,NbrSiteX);
 
  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
- 	Memory = Architecture.GetArchitecture()->GetLocalMemory();
- Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+     Memory = Architecture.GetArchitecture()->GetLocalMemory();
+
+ Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
 
  Hamiltonian = new ParticleOnLatticeRealSpaceAnd1DTranslationHamiltonian (Space, NbrParticles, TightBindingModel->GetNbrBands() * TightBindingModel->GetNbrStatePerBand(),  i,  NbrSiteX, TightBindingMatrix, DensityDensityInteraction, Architecture.GetArchitecture(), Memory);
 }

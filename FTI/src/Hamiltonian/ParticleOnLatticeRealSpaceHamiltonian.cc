@@ -146,6 +146,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateOneBodyFactorsFromTightBingd
   double Sign = 1.0;
   if (this->Particles->GetParticleStatistic() == ParticleOnSphere::FermionicStatistic)
     Sign = -1.0;
+
   for (int i = 0; i < this->NbrSites; ++i)
     {
       this->OneBodyGenericNbrConnectedSites[i] = 0;
@@ -167,6 +168,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateOneBodyFactorsFromTightBingd
 		{
 		  this->OneBodyGenericConnectedSites[i][this->OneBodyGenericNbrConnectedSites[i]] = j;
 		  this->OneBodyGenericInteractionFactors[i][this->OneBodyGenericNbrConnectedSites[i]] = Sign*Tmp;
+
 		  ++this->OneBodyGenericNbrConnectedSites[i];
 		}
 	    }
@@ -193,7 +195,7 @@ void ParticleOnLatticeRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensit
 	    }
 	}
     }
-cout <<"this->NbrSectorSums = " <<  this->NbrSectorSums   <<endl;
+
   if (this->NbrSectorSums == 0)
     {
       return;
