@@ -56,7 +56,6 @@ using std::endl;
 // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
 TightBindingModelHofstadterFiniteCylinder::TightBindingModelHofstadterFiniteCylinder(int nbrSiteX, int nbrSiteY, int nbrFlux, char axis,double gammaX, double gammaY,  AbstractArchitecture* architecture, double  fluxInserted, bool storeOneBodyMatrices)
 {
-  cout <<" I am in TightBindingModelHofstadterFiniteCylinder::TightBindingModelHofstadterFiniteCylinder(int nbrSiteX, int nbrSiteY, int nbrFlux, char axis,double gammaX, double gammaY,  AbstractArchitecture* architecture, bool storeOneBodyMatrices)"<<endl;
   this->NbrSiteX = nbrSiteX;
   this->NbrSiteY =  nbrSiteY;
   this->KxFactor = 2.0 * M_PI / ((double) this->NbrSiteX);

@@ -62,6 +62,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('x', "nbrsitex", "number of unit cells along the x direction", 5);
   (*SystemGroup) += new SingleIntegerOption  ('y', "nbrsitey", "number of sites in the y direction", 7);
   (*SystemGroup) += new SingleIntegerOption  ('q', "total-flux", "number of flux quanta per unit cell", 1);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "compute a single sector of momentum", -1);
   
   (*SystemGroup) += new SingleDoubleOption  ('\n', "flux-inserted", "flux insert in the x direction", 0.0);
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive onsite(boson) or NN (fermion) potential strength", 1.0);
@@ -216,6 +217,12 @@ else
     {  
       MaxKx = 0;
     }
+
+   if(Manager.GetInteger("only-kx") != -1)
+   {
+      MinKx = Manager.GetInteger("only-kx");
+      MaxKx = Manager.GetInteger("only-kx");
+   }
 
   TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = 0;
   double * ChemicalPotential= new double[NbrSiteX* NbrSiteY];
