@@ -78,6 +78,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->MomentumModulo = 1;
   this->XMomentum = 0; 
   this->YMomentum = 0;
+  this->NbrSitePerUnitCell = 0;
   this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
   this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
   this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
@@ -89,6 +90,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->StateHighestBit = 0;  
   this->LargeHilbertSpaceDimension = 0;
   this->RescalingFactors = 0;
+  this->TargetSpace = this;
 }
 
 // basic constructor
@@ -115,6 +117,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MaxXMomentum = maxXMomentum;
   this->MaxYMomentum = maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->MaxXMomentum;
 
@@ -126,6 +129,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->StateXShift = 2 * (this->NbrSite / this->MaxXMomentum);
   this->ComplementaryStateXShift = (2 * this->MaxMomentum) - this->StateXShift;
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
+  this->TargetSpace = this;
 
   this->MaxYMomentum =  maxYMomentum;
   this->YMomentum = yMomentum % this->MaxYMomentum;
@@ -215,6 +219,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MaxXMomentum = maxXMomentum;
   this->MaxYMomentum = maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->NbrFermionStates = 2 * this->NbrMomentum;
   this->MomentumModulo = this->MaxXMomentum;
 
@@ -243,7 +248,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->ComplementaryYMomentumFullMask = ~this->YMomentumFullMask; 
 
   this->NbrFermionsParity = (~((unsigned long) this->NbrFermions)) & 0x1ul;
-
+  this->TargetSpace = this;
 
   this->MaximumSignLookUp = 16;
   this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFermionsUp);
@@ -304,6 +309,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
 
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -319,7 +325,14 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::FermionOnLatticeWithSpinRealS
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
-
+  if (fermions.TargetSpace != &fermions)
+    {
+      this->TargetSpace = fermions.TargetSpace;
+    }
+  else
+    {
+      this->TargetSpace = this;
+    }
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
   this->NbrMomentum = fermions.NbrMomentum;
@@ -393,6 +406,7 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation& FermionOnLatticeWithSpinRealS
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
 
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -408,6 +422,10 @@ FermionOnLatticeWithSpinRealSpaceAnd2DTranslation& FermionOnLatticeWithSpinRealS
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+  if (fermions.TargetSpace != &fermions)
+    this->TargetSpace = fermions.TargetSpace;
+  else
+    this->TargetSpace = this;
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
@@ -490,6 +508,15 @@ ostream& FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::PrintState (ostream&
   return Str;
 }
 
+
+// set a different target space (for all basic operations)
+//
+// targetSpace = pointer to the target space
+
+void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SetTargetSpace(ParticleOnSphereWithSpin* targetSpace)
+{
+  this->TargetSpace = (FermionOnLatticeWithSpinRealSpaceAnd2DTranslation*) targetSpace;
+}
 
 // generate all states corresponding to the constraints
 //
@@ -1012,6 +1039,44 @@ int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AdsigmaAdsigma (int m1, i
 #endif
   TmpState |= (0x1ul << m1);
   return this->SymmetrizeAdAdResult(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// apply a^+_m1_sigma a^+_m2_sigma operator to the state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AdsigmaAdsigma (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  unsigned long TmpState = this->StateDescription[index];
+  if (((TmpState & (0x1ul << m1)) != 0) || ((TmpState & (0x1ul << m2)) != 0) || (m1 == m2))
+    {
+      coefficient = 0.0;
+      return this->TargetSpace->HilbertSpaceDimension;
+    }
+  coefficient = 1.0;
+  coefficient *= this->SignLookUpTable[(TmpState >> m2) & this->SignLookUpTableMask[m2]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 16))  & this->SignLookUpTableMask[m2 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 32)) & this->SignLookUpTableMask[m2 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m2 + 48)) & this->SignLookUpTableMask[m2 + 48]];
+#endif
+  TmpState |= (0x1ul << m2);
+  
+  coefficient *= this->SignLookUpTable[(TmpState >> m1) & this->SignLookUpTableMask[m1]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 16))  & this->SignLookUpTableMask[m1 + 16]];
+#ifdef  __64_BITS__
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 32)) & this->SignLookUpTableMask[m1 + 32]];
+  coefficient *= this->SignLookUpTable[(TmpState >> (m1 + 48)) & this->SignLookUpTableMask[m1 + 48]];
+#endif
+  TmpState |= (0x1ul << m1);
+  this->ProdATemporaryNbrStateInOrbit =  this->NbrStateInOrbit[index];
+  return this->SymmetrizeAdAdResultTarget(TmpState, coefficient, nbrTranslationX, nbrTranslationY);
 }
 
 // apply a^+_m operator to the state produced using Au method (without destroying it)

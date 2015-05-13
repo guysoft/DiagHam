@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 //                 class superconductor order parameter operator              // 
-//                           for particle with spin                           //
+//             for particle with spin on a lattice using translations         //
 //                                                                            //
-//                        last modification : 03/07/2014                      //
+//                        last modification : 09/05/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -29,50 +29,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef PARTICLEONSPHEREWITHSPINSUPERCONDUCTORORDERPARAMETEROPERATOR_H
-#define PARTICLEONSPHEREWITHSPINSUPERCONDUCTORORDERPARAMETEROPERATOR_H
+#ifndef PARTICLEONLATTICEREALSPACEWITHSPINAND2DTRANSLATIONSUPERCONDUCTORORDERPARAMETEROPERATOR_H
+#define PARTICLEONLATTICEREALSPACEWITHSPINAND2DTRANSLATIONSUPERCONDUCTORORDERPARAMETEROPERATOR_H
 
 
 #include "config.h"
 #include "GeneralTools/GarbageFlag.h"
-#include "Operator/AbstractOperator.h"
-#include "HilbertSpace/ParticleOnSphereWithSpin.h"
-#include "HilbertSpace/FermionOnSphereWithSpin.h"
+#include "Operator/ParticleOnSphereWithSpinSuperconductorOrderParameterOperator.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 
-class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public AbstractOperator
+
+class ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator : public ParticleOnSphereWithSpinSuperconductorOrderParameterOperator
 {
 
  protected:
 
-  // hilbert space associated to the particles
-  ParticleOnSphereWithSpin* Particle;
-  
-  // indices attached to the a+_{sigma_1,i_1} a+_{sigma_2,i_2}
-  // momentum index of the leftmost creation operator
-  int CreationMomentumIndex1;
-  // symmetry index of the rightmost creation operator
-  int CreationSymmetryIndex1;
-  // momentum index of the rightmost creation operator
-  int CreationMomentumIndex2;
-  // symmetry index of the rightmost creation operator
-  int CreationSymmetryIndex2;
-
-  // compute combination such as  a+_{sigma_1,i_1} a+_{sigma_2,i_2} +/- a+_{sigma_3,i_1} a+_{sigma_4,i_2}
-  bool CombinationFlag;
-  // symmetry index of the rightmost creation operator for the second term
-  int CreationSymmetryIndex1SecondTerm;
-  // symmetry index of the leftmost creation operator for the second term
-  int CreationSymmetryIndex2SecondTerm;
-  // sign in front of the second term
-  double CombinationSign;
-
 
  public:
   
-  // default constructor
-  //
-  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator();
-
   // constructor from default datas
   //
   // particle = hilbert space associated to the particles with the small number of particles
@@ -80,9 +54,9 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   // creationSymmetryIndex1 = symmetry index of the leftmost creation operator (0 for down, 1 for up)
   // creationMomentumIndex2 = momentum index of the rightmost creation operator (from 0 to 2S)
   // creationSymmetryIndex2 = symmetry index of the rightmost creation operator (0 for down, 1 for up)
-  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
-							       int creationMomentumIndex2, int creationSymmetryIndex2);
-
+  ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator(FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
+											 int creationMomentumIndex2, int creationSymmetryIndex2);
+  
   // constructor for operator such as a+_{sigma_1,i_1} a+_{sigma_2,i_2} +/- a+_{sigma_3,i_1} a+_{sigma_4,i_2}
   //
   // particle = hilbert space associated to the particles with the small number of particles
@@ -93,38 +67,38 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   // creationSymmetryIndex1SecondTerm = symmetry index of the rightmost creation operator for the second term
   // creationSymmetryIndex2SecondTerm = symmetry index of the leftmost creation operator for the second term
   // sign = sign in front of the second term
-  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpin* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
-							       int creationMomentumIndex2, int creationSymmetryIndex2,
-							       int creationSymmetryIndex1SecondTerm, int creationSymmetryIndex2SecondTerm, 
-							       double sign);
+  ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator(FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* particle,  int creationMomentumIndex1, int creationSymmetryIndex1,
+											 int creationMomentumIndex2, int creationSymmetryIndex2,
+											 int creationSymmetryIndex1SecondTerm, int creationSymmetryIndex2SecondTerm, 
+											 double sign);
 
   // copy constructor
   //
-  ParticleOnSphereWithSpinSuperconductorOrderParameterOperator(ParticleOnSphereWithSpinSuperconductorOrderParameterOperator& oper);
+  ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator(ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator& oper);
 
   // destructor
   //
-  ~ParticleOnSphereWithSpinSuperconductorOrderParameterOperator();
+  ~ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator();
   
   // clone operator without duplicating datas
   //
   // return value = pointer to cloned hamiltonian
-  virtual AbstractOperator* Clone ();
+  AbstractOperator* Clone ();
 
   // set Hilbert space
   //
   // hilbertSpace = pointer to Hilbert space to use
-  virtual void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
+  void SetHilbertSpace (AbstractHilbertSpace* hilbertSpace);
 
   // get Hilbert space on which operator acts
   //
   // return value = pointer to used Hilbert space
-  virtual AbstractHilbertSpace* GetHilbertSpace ();
+  AbstractHilbertSpace* GetHilbertSpace ();
 
   // return dimension of Hilbert space where operator acts
   //
   // return value = corresponding matrix elementdimension
-  virtual int GetHilbertSpaceDimension ();
+  int GetHilbertSpaceDimension ();
   
   // evaluate part of the matrix element, within a given of indices
   //
@@ -133,7 +107,7 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = corresponding matrix element
-  virtual Complex PartialMatrixElement (RealVector& V1, RealVector& V2, long firstComponent, long nbrComponent);
+  Complex PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent);
 
   // multiply a vector by the current operator for a given range of indices 
   // and store result in another vector
@@ -143,28 +117,8 @@ class ParticleOnSphereWithSpinSuperconductorOrderParameterOperator : public Abst
   // firstComponent = index of the first component to evaluate
   // nbrComponent = number of components to evaluate
   // return value = reference on vector where result has been stored
-  virtual RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
-					  int firstComponent, int nbrComponent);
-  
-  // evaluate part of the matrix element, within a given of indices
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = corresponding matrix element
-  virtual Complex PartialMatrixElement (ComplexVector& V1, ComplexVector& V2, long firstComponent, long nbrComponent);
-
-  // multiply a vector by the current operator for a given range of indices 
-  // and store result in another vector
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  virtual ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-					     int firstComponent, int nbrComponent);
+  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
+				     int firstComponent, int nbrComponent);
   
 
 };

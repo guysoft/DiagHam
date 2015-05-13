@@ -68,8 +68,8 @@ ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian()
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian(ParticleOnSphere* particles, int nbrParticles, int nbrSites, 
-													     HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
-													     AbstractArchitecture* architecture, long memory)
+									     HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensity,
+									     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
   this->NbrParticles = nbrParticles;
@@ -84,7 +84,6 @@ ParticleOnLatticeRealSpaceHamiltonian::ParticleOnLatticeRealSpaceHamiltonian(Par
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
-  cout <<MinIndex<<" " <<MaxIndex<<endl;
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;
   

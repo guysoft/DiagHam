@@ -129,6 +129,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
   this->MaxYMomentum =  maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->YMomentum = yMomentum % this->MaxYMomentum;
   this->NbrYMomentumBlocks = (2 * this->NbrSite) / this->StateXShift;
   this->StateYShift = 2 * (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
@@ -151,6 +152,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->TargetSpace = this;
   if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->Flag.Initialize();
@@ -227,6 +229,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->XMomentumMask = (0x1ul << this->StateXShift) - 0x1ul;
 
   this->MaxYMomentum =  maxYMomentum;
+  this->NbrSitePerUnitCell = this->NbrSite /  (this->MaxYMomentum * this->MaxXMomentum);
   this->YMomentum = yMomentum % this->MaxYMomentum;
   this->NbrYMomentumBlocks = (2 * this->NbrSite) / this->StateXShift;
   this->StateYShift = 2 * (this->NbrSite / (this->MaxYMomentum * this->MaxXMomentum));
@@ -249,6 +252,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
     this->HilbertSpaceDimension = 0;
   else
     this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+  this->TargetSpace = this;
   if (this->LargeHilbertSpaceDimension > 0l)
     {
       this->Flag.Initialize();
@@ -300,6 +304,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
 
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -315,6 +320,14 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation::Fermio
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+  if (fermions.TargetSpace != &fermions)
+    {
+      this->TargetSpace = fermions.TargetSpace;
+    }
+  else
+    {
+      this->TargetSpace = this;
+    }
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;
@@ -389,6 +402,7 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation& Fermio
   this->SzFlag = fermions.SzFlag;
   this->NbrSite = fermions.NbrSite;
 
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -404,6 +418,14 @@ FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation& Fermio
   this->YMomentumBlockMask = fermions.YMomentumBlockMask;  
   this->YMomentumFullMask = fermions.YMomentumFullMask;
   this->ComplementaryYMomentumFullMask = fermions.ComplementaryYMomentumFullMask; 
+  if (fermions.TargetSpace != &fermions)
+    {
+      this->TargetSpace = fermions.TargetSpace;
+    }
+  else
+    {
+      this->TargetSpace = this;
+    }
 
   this->NbrFermionStates = fermions.NbrFermionStates;
   this->MaxMomentum = fermions.MaxMomentum;

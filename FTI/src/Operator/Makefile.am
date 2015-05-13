@@ -2,4 +2,4 @@ SUBDIRS=
 
 noinst_LIBRARIES=libFTIOperator.a
 
-libFTIOperator_a_SOURCES=
+libFTIOperator_a_SOURCES=ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator.cc

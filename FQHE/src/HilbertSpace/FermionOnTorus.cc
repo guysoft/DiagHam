@@ -2096,6 +2096,8 @@ void FermionOnTorus::SymmetrizeSingleStatePeriodicSubsetOrbitalCore (ComplexVect
       TargetSpaces[j] = 0;
     }
   double TmpPhase = -2.0 * M_PI / ((double) this->KyMax);
+  if (phase >= (0.5 * M_PI))
+    TmpPhase *= -1.0;
   unsigned long* TmpState = new unsigned long[TargetSpaceNbrOrbitals];
   for (long i = (long) firstComponent; i < LastComponent; ++i)
     {
@@ -2216,6 +2218,8 @@ ComplexVector FermionOnTorus::ChangeTorusAngle (ComplexVector& inputVector, doub
   long LastComponent = (long) (firstComponent + nbrComponents);
   ComplexVector OutputState (this->HilbertSpaceDimension);
   double TmpPhase = - M_PI / ((double) this->KyMax);
+  if (inputAngle >= (0.5 * M_PI))
+    TmpPhase *= -1.0;
   for (long i = (long) firstComponent; i < LastComponent; ++i)
     {
       unsigned long TmpInputState = this->StateDescription[i];

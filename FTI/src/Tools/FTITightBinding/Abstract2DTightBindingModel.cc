@@ -874,6 +874,100 @@ double Abstract2DTightBindingModel::ComputeChernNumber(int band)
   return TmpChernNumber.Im;
 }
 
+// compute the Chern number of several bands
+//
+// bands = band indices
+// nbrBands = number of bands that have to be taken into account
+// return value = Chern number
+
+double Abstract2DTightBindingModel::ComputeChernNumber(int* bands, int nbrBands)
+{
+  cout << "warning, this code is not working !" << endl;
+  return 0.0;
+  if (this->HaveOneBodyBasis() == false)
+    {
+      cout << "error, the tight binding model does not provide the one body basis" << endl;
+      return 0.0;
+    }
+  timeval TotalStartingTime;
+  timeval TotalEndingTime;
+  gettimeofday (&(TotalStartingTime), 0);
+  Complex TmpChernNumber = 0.0;
+  Complex Tmp1[4];
+  Complex Tmp2[8];
+  for (long LinearizedMomentumIndex = 0l; LinearizedMomentumIndex < this->NbrStatePerBand; ++LinearizedMomentumIndex)
+    {
+      int Kx;
+      int Ky;
+      this->GetLinearizedMomentumIndex(LinearizedMomentumIndex, Kx, Ky);
+      int LinearizedMomentumIndexIncX = this->GetLinearizedMomentumIndex((Kx + 1) % this->NbrSiteX, Ky);
+      int LinearizedMomentumIndexDecX;
+      if (Kx > 0)
+	LinearizedMomentumIndexDecX = this->GetLinearizedMomentumIndex((Kx - 1) % this->NbrSiteX, Ky);
+      else
+	LinearizedMomentumIndexDecX = this->GetLinearizedMomentumIndex(this->NbrSiteX - 1, Ky);
+      int LinearizedMomentumIndexIncY = this->GetLinearizedMomentumIndex(Kx, (Ky + 1) % this->NbrSiteY);
+      int LinearizedMomentumIndexDecY;
+      if (Ky > 0)
+	LinearizedMomentumIndexDecY = this->GetLinearizedMomentumIndex(Kx, (Ky - 1) % this->NbrSiteY);
+      else
+	LinearizedMomentumIndexDecY = this->GetLinearizedMomentumIndex(Kx, this->NbrSiteY - 1);
+
+      ComplexMatrix& LocalBasis = this->OneBodyBasis[LinearizedMomentumIndex];
+      ComplexMatrix& LocalBasisIncX = this->OneBodyBasis[LinearizedMomentumIndexIncX];
+      ComplexMatrix& LocalBasisDecX = this->OneBodyBasis[LinearizedMomentumIndexDecX];
+      ComplexMatrix& LocalBasisIncY = this->OneBodyBasis[LinearizedMomentumIndexIncY];
+      ComplexMatrix& LocalBasisDecY = this->OneBodyBasis[LinearizedMomentumIndexDecY];  
+      Tmp1[0] = 0.0;
+      Tmp1[1] = 0.0;
+      Tmp1[2] = 0.0;
+      Tmp1[3] = 0.0;
+
+      Tmp2[0] = 0.0;
+      Tmp2[1] = 0.0;
+      Tmp2[2] = 0.0;
+      Tmp2[3] = 0.0;
+      Tmp2[4] = 0.0;
+      Tmp2[5] = 0.0;
+      Tmp2[6] = 0.0;
+      Tmp2[7] = 0.0;
+
+      for (int i = 0; i < this->NbrBands; ++i)
+	{
+	  Tmp1[0] += LocalBasis[bands[0]][i] * Conj(LocalBasisIncX[bands[0]][i]);
+	  Tmp1[1] += LocalBasis[bands[0]][i] * Conj(LocalBasisDecX[bands[0]][i]);
+	  Tmp1[2] += LocalBasis[bands[0]][i] * Conj(LocalBasisIncY[bands[0]][i]);
+	  Tmp1[3] += LocalBasis[bands[0]][i] * Conj(LocalBasisDecY[bands[0]][i]);
+
+	  Tmp2[0] += Conj(LocalBasisIncX[bands[0]][i]) * LocalBasisIncY[bands[0]][i];
+	  Tmp2[1] += Conj(LocalBasisDecX[bands[0]][i]) * LocalBasisIncY[bands[0]][i];
+	  Tmp2[2] += Conj(LocalBasisIncX[bands[0]][i]) * LocalBasisDecY[bands[0]][i];
+	  Tmp2[3] += Conj(LocalBasisDecX[bands[0]][i]) * LocalBasisDecY[bands[0]][i];
+	  Tmp2[4] += Conj(LocalBasisIncY[bands[0]][i]) * LocalBasisIncX[bands[0]][i];
+	  Tmp2[5] += Conj(LocalBasisDecY[bands[0]][i]) * LocalBasisIncX[bands[0]][i];
+	  Tmp2[6] += Conj(LocalBasisIncY[bands[0]][i]) * LocalBasisDecX[bands[0]][i];
+	  Tmp2[7] += Conj(LocalBasisDecY[bands[0]][i]) * LocalBasisDecX[bands[0]][i];
+	}
+
+      TmpChernNumber += (Tmp1[2] * Conj(Tmp1[0]) * Tmp2[0]);
+      TmpChernNumber -= (Tmp1[2] * Conj(Tmp1[1]) * Tmp2[1]);
+      TmpChernNumber -= (Tmp1[3] * Conj(Tmp1[0]) * Tmp2[2]);
+      TmpChernNumber += (Tmp1[3] * Conj(Tmp1[1]) * Tmp2[3]);
+	  
+      TmpChernNumber -= (Tmp1[0] * Conj(Tmp1[2]) * Tmp2[4]);
+      TmpChernNumber += (Tmp1[0] * Conj(Tmp1[3]) * Tmp2[5]);
+      TmpChernNumber += (Tmp1[1] * Conj(Tmp1[2]) * Tmp2[6]);
+      TmpChernNumber -= (Tmp1[1] * Conj(Tmp1[3]) * Tmp2[7]);
+
+    }
+  TmpChernNumber /= 8.0 * M_PI;
+  gettimeofday (&(TotalEndingTime), 0);
+  double Dt = (double) ((TotalEndingTime.tv_sec - TotalStartingTime.tv_sec) + 
+			((TotalEndingTime.tv_usec - TotalStartingTime.tv_usec) / 1000000.0));		      
+  cout << "Chern number computed in  " << Dt << "s" << endl;
+  return TmpChernNumber.Im;
+}
+
 // compute the Berry curvature  of a given band
 //
 // band = band index

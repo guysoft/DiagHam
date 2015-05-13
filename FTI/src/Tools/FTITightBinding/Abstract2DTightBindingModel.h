@@ -216,6 +216,13 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return = Chern number
   virtual int GetChernNumber(int band);
 
+  // compute the Chern number of several bands
+  //
+  // bands = band indices
+  // nbrBands = number of bands that have to be taken into account
+  // return value = Chern number
+  virtual double ComputeChernNumber(int* bands, int nbrBands);
+
   // get the LLL twist angle along x for Bloch construction gauge fixing
   //
   // band = band index

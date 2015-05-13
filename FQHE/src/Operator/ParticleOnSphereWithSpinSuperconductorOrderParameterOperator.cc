@@ -40,6 +40,22 @@ using std::cout;
 using std::endl;
 
 
+// default constructor
+//
+
+ParticleOnSphereWithSpinSuperconductorOrderParameterOperator::ParticleOnSphereWithSpinSuperconductorOrderParameterOperator()
+{
+  this->Particle = 0;
+  this->CreationMomentumIndex1 = 0;
+  this->CreationSymmetryIndex1 = 0;
+  this->CreationMomentumIndex2 = 0;
+  this->CreationSymmetryIndex2 = 0;
+  this->CombinationFlag = false;
+  this->CreationSymmetryIndex1SecondTerm = 0;
+  this->CreationSymmetryIndex2SecondTerm = 0;
+  this->CombinationSign = 0.0;  
+}
+
 // constructor from default datas
 //
 // particle = hilbert space associated to the particles

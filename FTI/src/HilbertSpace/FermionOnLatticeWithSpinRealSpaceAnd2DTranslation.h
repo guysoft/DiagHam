@@ -45,11 +45,14 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
 {
 
   friend class FermionOnSquareLatticeWithSU4SpinMomentumSpace;
+  friend class ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationSuperconductorOrderParameterOperator;
 
  protected:
 
   // total number of sites
   int NbrSite;
+  // number of sites per unit cell
+  int NbrSitePerUnitCell;
   
   // flag to indicate that the Hilbert space should preserve Sz
   bool SzFlag;
@@ -84,6 +87,11 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
 
   // parity of the number of fermions, 0x1ul if even, 0x0ul if odd
   unsigned long NbrFermionsParity;
+
+ protected:
+    
+  // target space for operations leaving the Hilbert space
+  FermionOnLatticeWithSpinRealSpaceAnd2DTranslation* TargetSpace;
 
  public:
 
@@ -134,7 +142,17 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
-  AbstractHilbertSpace* Clone();
+  virtual AbstractHilbertSpace* Clone();
+
+  // set a different target space (for all basic operations)
+  //
+  // targetSpace = pointer to the target space
+  virtual void SetTargetSpace(ParticleOnSphereWithSpin* targetSpace);
+  
+  // return Hilbert space dimension of the target space
+  //
+  // return value = Hilbert space dimension
+  virtual int GetTargetHilbertSpaceDimension();
 
   // print a given State
   //
@@ -300,6 +318,50 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int szSector, int kxSector, int kySector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
   
+  // get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position, sanitizing the input data first
+  // 
+  // xPosition = x coordinate of the unit cell
+  // yPosition = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital within the unit cell
+  // return value = linearized index
+  virtual int GetLinearizedIndexSafe(int xPosition, int yPosition, int orbitalIndex);
+
+  // get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position
+  // 
+  // xPosition = x coordinate of the unit cell
+  // yPosition = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital within the unit cell
+  // return value = linearized index
+  virtual int GetLinearizedIndex(int xPosition, int yPosition, int orbitalIndex);
+
+  // get the lattice position from the linearized index (e.g. used for the creation/annihilation operators)
+  // 
+  // index = linearized index
+  // xPosition = reference on the x coordinate of the unit cell
+  // yPosition =reference on the  y coordinate of the unit cell
+  // orbitalIndex = reference on the index of the orbital within the unit cell
+  virtual void GetLinearizedIndex(int index, int& xPosition, int& yPosition, int& orbitalIndex);
+
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the momentum along the y axis
+  // 
+  // return avlue = momentum along the y axis
+  virtual int GetKyMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+  
+  // get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the y axis
+  virtual int GetMaxYMomentum();
+  
  protected:
 
   // find state index
@@ -378,6 +440,61 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = index of the destination state 
   virtual int AdsigmaAdsigma (int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
 
+  // apply a^+_m1_sigma a^+_m2_sigma operator to the state, assuming a different target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AdsigmaAdsigma (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m1_u a^+_m2_u operator to the state, assuming a different target space
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AduAdu (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m1_d a^+_m2_d operator to the state, assuming a different target space 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin down)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AddAdd (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+
+  // apply a^+_m1_u a^+_m2_d operator to the state, assuming a different target space 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AduAdd (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
+  // apply a^+_m1_d a^+_m2_u operator to the state, assuming a different target space 
+  //
+  // index = index of the state on which the operator has to be applied
+  // m1 = first index for creation operator (spin up)
+  // m2 = second index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+  // nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+  // return value = index of the destination state 
+  virtual int AddAdu (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
+  
   // factorized code that is used to symmetrize the result of any operator action
   //
   // state = reference on the state that has been produced with the operator action
@@ -388,6 +505,14 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   virtual int SymmetrizeAdAdResult(unsigned long& state, double& coefficient, 
 				   int& nbrTranslationX, int& nbrTranslationY);
 
+  // factorized code that is used to symmetrize the result of any operator action when the target space is different from the current space
+  //
+  // state = reference on the state that has been produced with the operator action
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+  // nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+  // return value = index of the destination state  
+  int SymmetrizeAdAdResultTarget(unsigned long& state, double& coefficient, int& nbrTranslationX, int& nbrTranslationY);
   
   // find canonical form of a state description and if test if the state and its translated version can be used to create a state corresponding to themomentum constraint
   //
@@ -584,6 +709,66 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdd (int m1, in
   return this->AdsigmaAdsigma((m1 << 1) + 1, (m2 << 1), coefficient, nbrTranslationX, nbrTranslationY);
 }
 
+// apply a^+_m1_u a^+_m2_u operator to the state, assuming a different target space
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdu (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  return this->AdsigmaAdsigma(index, (m1 << 1) + 1, (m2 << 1) + 1, coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// apply a^+_m1_d a^+_m2_d operator to the state, assuming a different target space 
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin down)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAdd (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  return this->AdsigmaAdsigma(index, (m1 << 1), (m2 << 1), coefficient, nbrTranslationX, nbrTranslationY);
+}
+
+// apply a^+_m1_u a^+_m2_d operator to the state, assuming a different target space 
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAdd (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  return this->AdsigmaAdsigma(index, (m1 << 1) + 1, (m2 << 1), coefficient, nbrTranslationX, nbrTranslationY);
+}
+  
+// apply a^+_m1_d a^+_m2_u operator to the state, assuming a different target space 
+//
+// index = index of the state on which the operator has to be applied
+// m1 = first index for creation operator (spin up)
+// m2 = second index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations in the x direction to obtain the canonical form of the resulting state
+// nbrTranslationY = reference on the number of translations in the y direction to obtain the canonical form of the resulting state
+// return value = index of the destination state 
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAdu (int index, int m1, int m2, double& coefficient, int& nbrTranslationX, int& nbrTranslationY)
+{
+  return this->AdsigmaAdsigma(index, (m1 << 1), (m2 << 1) + 1, coefficient, nbrTranslationX, nbrTranslationY);
+}
+  
 // factorized code that is used to symmetrize the result of any operator action
 //
 // state = reference on the state that has been produced with the operator action
@@ -608,6 +793,34 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResu
       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
       nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
       coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul))); 
+    }
+  return TmpIndex;
+}
+
+// factorized code that is used to symmetrize the result of any operator action when the target space is different from the current space
+//
+// state = reference on the state that has been produced with the operator action
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// nbrTranslationX = reference on the number of translations to applied in the x direction to the resulting state to obtain the return orbit describing state
+// nbrTranslationY = reference on the number of translations to applied in the y direction to the resulting state to obtain the return orbit describing state
+// return value = index of the destination state  
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::SymmetrizeAdAdResultTarget(unsigned long& state, double& coefficient, 
+											 int& nbrTranslationX, int& nbrTranslationY)
+{
+  state = this->TargetSpace->FindCanonicalForm(state, nbrTranslationX, nbrTranslationY);
+  int TmpMaxMomentum = 2 * this->NbrSite - 1;
+  while ((state >> TmpMaxMomentum) == 0x0ul)
+    {
+      --TmpMaxMomentum;
+    }
+  int TmpIndex = this->TargetSpace->FindStateIndex(state, TmpMaxMomentum);
+  if (TmpIndex < this->TargetSpace->HilbertSpaceDimension)
+    {
+      coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->TargetSpace->NbrStateInOrbit[TmpIndex]];
+      nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
+      nbrTranslationY = (this->MaxYMomentum - nbrTranslationY) % this->MaxYMomentum;
+      coefficient *= 1.0 - (2.0 * ((double) ((this->TargetSpace->ReorderingSign[TmpIndex] >> ((nbrTranslationY * this->MaxXMomentum) + nbrTranslationX)) & 0x1ul))); 
     }
   return TmpIndex;
 }
@@ -832,6 +1045,99 @@ inline unsigned long FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetSignA
   return TmpSign;
 }
 
+// return Hilbert space dimension of the target space
+//
+// return value = Hilbert space dimension
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetTargetHilbertSpaceDimension()
+{
+  return this->TargetSpace->GetHilbertSpaceDimension();
+}
+
+// get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position, sanitizing the input data first
+// 
+// xPosition = x coordinate of the unit cell
+// yPosition = y coordinate of the unit cell
+// orbitalIndex = index of the orbital within the unit cell
+// return value = linearized index
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetLinearizedIndexSafe(int xPosition, int yPosition, int orbitalIndex)
+{
+  orbitalIndex %= this->NbrSitePerUnitCell;
+  if (orbitalIndex < 0)
+    orbitalIndex +=  this->NbrSitePerUnitCell;
+  xPosition %= this->MaxXMomentum;
+  if (xPosition < 0)
+    xPosition +=  this->MaxXMomentum;
+  yPosition %= this->MaxYMomentum;
+  if (yPosition < 0)
+    yPosition +=  this->MaxYMomentum;
+  return this->GetLinearizedIndex(xPosition, yPosition, orbitalIndex); 
+}
+
+// get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position
+// 
+// xPosition = x coordinate of the unit cell
+// yPosition = y coordinate of the unit cell
+// orbitalIndex = index of the orbital within the unit cell
+// return value = linearized index
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetLinearizedIndex(int xPosition, int yPosition, int orbitalIndex)
+{
+  return (((xPosition * this->MaxYMomentum) + yPosition) * this->NbrSitePerUnitCell) + orbitalIndex;
+}
+
+// get the lattice position from the linearized index (e.g. used for the creation/annihilation operators)
+// 
+// index = linearized index
+// xPosition = reference on the x coordinate of the unit cell
+// yPosition =reference on the  y coordinate of the unit cell
+// orbitalIndex = reference on the index of the orbital within the unit cell
+
+inline void FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetLinearizedIndex(int index, int& xPosition, int& yPosition, int& orbitalIndex)
+{
+  orbitalIndex = index % this->NbrSitePerUnitCell;
+  index /= this->NbrSitePerUnitCell;
+  xPosition = index / this->MaxYMomentum;
+  yPosition = index % this->MaxYMomentum;
+}
+
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetKxMomentum()
+{
+  return this->XMomentum;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetKyMomentum()
+{
+  return this->YMomentum;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetMaxXMomentum()
+{
+  return this->MaxXMomentum;
+}
+  
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetMaxYMomentum()
+{
+  return this->MaxYMomentum;
+}
+  
 #endif
 
 

@@ -543,12 +543,24 @@ int main(int argc, char** argv)
 		{
 		  if (Manager.GetBoolean("subset-symmetrization") == true)
 		    {
-		      if (Statistics == true)
-			sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
-			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
+		      if (Manager.GetDouble("subset-twist") == 0.0)
+			{
+			  if (Statistics == true)
+			    sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+				     TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
+			  else
+			    sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
+				     TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
+			}
 		      else
-			sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld", 
-			       TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"));
+			{
+			  if (Statistics == true)
+			    sprintf (OutputFileName, "fermions_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld_twist_%.6f", 
+				     TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"), Manager.GetDouble("subset-twist"));
+			  else
+			    sprintf (OutputFileName, "bosons_torus_kysym_sourceky_%d_ysymmetrized_subset_shift_%ld_period_%ld_twist_%.6f", 
+				     TotalKy1, Manager.GetInteger("subset-shift"), Manager.GetInteger("nbr-orbitals"), Manager.GetDouble("subset-twist"));
+			}
 		    }
 		  else
 		    {

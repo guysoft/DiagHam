@@ -126,7 +126,7 @@ int main(int argc, char** argv)
       strcpy (OutputFileName, Manager.GetString("output-file"));
     }
 
-  ComplexVector OutputState = Space->ChangeTorusAngle(State, 0.0, 0.0, 0.0, 0.0, 0, Space->GetHilbertSpaceDimension());
+  ComplexVector OutputState = Space->ChangeTorusAngle(State, Manager.GetDouble("input-angle"), 0.0, 0.0, 0.0, 0, Space->GetHilbertSpaceDimension());
   
   if (OutputState.WriteVector (OutputFileName) == false)
     {
