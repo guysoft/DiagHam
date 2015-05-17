@@ -341,6 +341,20 @@ int main(int argc, char** argv)
   if (Manager.GetDouble("angle") == 0.0)
     {
 
+      SparseRealMatrix StringMatrix;
+      if (Manager.GetBoolean("boson") == true)
+	{
+	  StringMatrix = MPSMatrix->GetTorusStringMatrix(0);
+	}
+      else
+	{
+	  StringMatrix = MPSMatrix->GetTorusStringMatrix(NbrParticles);
+	}
+
+      SparseRealMatrix TransferMatrix = TensorProduct(BMatrices[0], BMatrices[0]) + TensorProduct(BMatrices[1], BMatrices[1]);
+
+
+
       int NbrMPSSumIndices = 0;
       int* MPSSumIndices = MPSMatrix->GetTopologicalSectorIndices(Manager.GetInteger("topological-sector"), NbrMPSSumIndices);
       int* TmpNbrElementPerRow = new int [BMatrices[0].GetNbrRow()];

@@ -951,7 +951,7 @@ SparseRealMatrix& SparseRealMatrix::Multiply (const SparseRealMatrix& matrix)
 		  long MaxPos2 = matrix.RowLastPointers[TmpIndex];
 		  for (; MinPos2 <= MaxPos2; ++MinPos2)
 		    {
-		      TmpElements[matrix.ColumnIndices[MinPos2]] += 1.0;
+		      ++TmpElements[matrix.ColumnIndices[MinPos2]];
 		    }      
 		}
 	    }	    
