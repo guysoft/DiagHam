@@ -43,6 +43,7 @@ class FermionOnSphereFull :  public FermionOnSphere
 {
 
   friend class BosonOnSphereFullShort;
+  friend class FermionOnTorus;
 
  protected:
 

@@ -284,11 +284,60 @@ class FermionOnTorus :  public ParticleOnTorus
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Lz sector and fixed number of particles
   // 
   // subsytemSize = number of states that belong to the subsytem (ranging from -Lzmax to -Lzmax+subsytemSize-1)
-  // nbrBosonSector = number of particles that belong to the subsytem 
+  // nbrFermionSector = number of particles that belong to the subsytem 
   // groundState = reference on the total system ground state
   // kySector = Ky sector in which the density matrix has to be evaluated 
   // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrBosonSector, int kySector, RealVector& groundState);
+  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int kySector, RealVector& groundState);
+
+  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Ky sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // return value = density matrix of the subsytem  (return a wero dimension matrix if the density matrix is equal to zero)
+  virtual HermitianMatrix EvaluatePartialDensityMatrix (int subsytemSize, int nbrFermionSector, int kySector, ComplexVector& groundState);
+
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Ky sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual RealMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int kySector, RealVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix is only evaluated in a given Ky sector and fixed number of particles
+  // 
+  // subsytemSize = number of states that belong to the subsytem
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int subsytemSize, int nbrFermionSector, int kySector, ComplexVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. 
+  // The entanglement matrix is only evaluated in a given Ky sector and fixed number of particles for the part A 
+  // but without the Ky constraint for the part B
+  // 
+  // subsytemSize = number of states that belong to the subsytem
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual RealMatrix EvaluatePartialEntanglementMatrixFullKyPartB (int subsytemSize, int nbrFermionSector, int kySector, RealVector& groundState);
+  
+  // evaluate an entanglement matrix of a subsystem of the whole system described by a given ground state. 
+  // The entanglement matrix is only evaluated in a given Ky sector and fixed number of particles for the part A 
+  // but without the Ky constraint for the part B
+  // 
+  // subsytemSize = number of states that belong to the subsytem
+  // nbrFermionSector = number of particles that belong to the subsytem 
+  // groundState = reference on the total system ground state
+  // kySector = Ky sector in which the density matrix has to be evaluated 
+  // return value = entanglement matrix of the subsytem
+  virtual ComplexMatrix EvaluatePartialEntanglementMatrixFullKyPartB (int subsytemSize, int nbrFermionSector, int kySector, ComplexVector& groundState);
 
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given Ky sector.
   // 
