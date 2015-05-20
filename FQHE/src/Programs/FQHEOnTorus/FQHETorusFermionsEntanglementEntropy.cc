@@ -323,7 +323,7 @@ int main(int argc, char** argv)
 	  for (; SubsystemTotalKy <= SubsystemMaxTotalKy; ++SubsystemTotalKy)
 	    {
 	      cout << "processing subsystem size=" << SubsystemSize << "  subsystem nbr of particles=" << SubsystemNbrParticles << " subsystem total Ky=" << SubsystemTotalKy << endl;
-	      RealSymmetricMatrix PartialDensityMatrix = Spaces[TotalKy[0]]->EvaluatePartialDensityMatrix(SubsystemSize, SubsystemNbrParticles, SubsystemTotalKy, GroundStates[0]);
+	      RealSymmetricMatrix PartialDensityMatrix;
 	      RealMatrix PartialEntanglementMatrix;
 	      HermitianMatrix PartialComplexDensityMatrix;
 	      ComplexMatrix PartialComplexEntanglementMatrix;
