@@ -45,6 +45,7 @@
 #include "Tools/FQHEMPS/FQHEMPSN1SuperconformalMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSFixedQSectorMatrix.h"
 #include "Tools/FQHEMPS/FQHEMPSSymmetrizedStateMatrix.h"
+#include "Tools/FQHEMPS/FQHEMPSTwistedSymmetrizedStateMatrix.h"
 
 #include "Matrix/SparseRealMatrix.h"
 #include "Matrix/SparseComplexMatrix.h"
@@ -129,6 +130,8 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrize", "symmetrize two copies of the same state");
   (*SystemGroup) += new BooleanOption  ('\n', "anti-symmetrize", "anti-symmetrize two copies of the same state");
+  (*SystemGroup) += new BooleanOption  ('\n', "twisted-symmetrize", "symmetrize or anti-symmetrize two copies of the same state, using a twist");
+  (*SystemGroup) += new SingleIntegerOption ('\n', "twisted-shift", "set which orbital should be set to zero when (anti-)symmetrizing with a twist", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
   (*SystemGroup) += new BooleanOption  ('\n', "fixed-qsector", "use a group of B matrices to fix the charge sector");
   (*SystemGroup) += new BooleanOption  ('\n', "unnormalized-b", "use the unnormalized B matrix");
@@ -555,17 +558,35 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	}
       if (this->Options->GetBoolean("symmetrize") == true)
 	{
-	  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, false);
-	  MPSMatrix = MPSMatrix2;	  
-	  NbrBMatrices = MPSMatrix->GetNbrMatrices();
+	  if (this->Options->GetBoolean("twisted-symmetrize") == false)
+	    {
+	      AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, false);
+	      MPSMatrix = MPSMatrix2;	  
+	      NbrBMatrices = MPSMatrix->GetNbrMatrices();
+	    }
+	  else
+	    {
+	      AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSTwistedSymmetrizedStateMatrix(MPSMatrix, this->Options->GetInteger("twisted-shift"), false);
+	      MPSMatrix = MPSMatrix2;	  
+	      NbrBMatrices = MPSMatrix->GetNbrMatrices();
+	    }
 	}
       else
 	{
 	  if (this->Options->GetBoolean("anti-symmetrize") == true)
 	    {
-	      AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, true);
-	      MPSMatrix = MPSMatrix2;	  
-	      NbrBMatrices = MPSMatrix->GetNbrMatrices();
+	      if (this->Options->GetBoolean("twisted-symmetrize") == false)
+		{
+		  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, true);
+		  MPSMatrix = MPSMatrix2;	  
+		  NbrBMatrices = MPSMatrix->GetNbrMatrices();
+		}
+	      else
+		{
+		  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSTwistedSymmetrizedStateMatrix(MPSMatrix, this->Options->GetInteger("twisted-shift"), true);
+		  MPSMatrix = MPSMatrix2;	  
+		  NbrBMatrices = MPSMatrix->GetNbrMatrices();
+		}
 	    }
 	}
       if (this->Options->GetBoolean("fixed-qsector") == true)

@@ -13,4 +13,5 @@ FQHEMPSBlockMatrix.cc \
 FQHEMPSN1SuperconformalMatrix.cc \
 FQHEMPSFixedQSectorMatrix.cc \
 FQHEMPSClustered2ROptimizedMatrix.cc \
-FQHEMPSSymmetrizedStateMatrix.cc
+FQHEMPSSymmetrizedStateMatrix.cc \
+FQHEMPSTwistedSymmetrizedStateMatrix.cc
