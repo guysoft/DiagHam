@@ -66,6 +66,14 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // memory = amount of memory granted for precalculations
   FermionOnLatticeWithSpinSzSymmetryRealSpace (int nbrFermions, int nbrSite, bool minusSzParity, unsigned long memory = 10000000);
+  
+  // basic constructor when Sz is preserved
+  // 
+  // nbrFermions = number of fermions
+  // nbrSite = number of sites
+  // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
+  // memory = amount of memory granted for precalculations
+  FermionOnLatticeWithSpinSzSymmetryRealSpace (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, unsigned long memory = 10000000);
 
   // copy constructor (without duplicating datas)
   //
@@ -99,6 +107,7 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+  
 
  protected:
 
@@ -114,6 +123,13 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // nbrFermions = number of fermions
   // return value = Hilbert space dimension
   virtual long EvaluateHilbertSpaceDimension(int nbrFermions);
+  
+  // evaluate Hilbert space dimension with a fixed number of fermions with spin up
+  //
+  // nbrFermions = number of fermions
+  // nbrSpinUp = number of fermions with spin up
+  // return value = Hilbert space dimension
+  virtual long EvaluateHilbertSpaceDimension(int nbrFermions, int nbrSpinUp);
 
   // generate all states corresponding to the constraints
   // 
@@ -122,13 +138,22 @@ class FermionOnLatticeWithSpinSzSymmetryRealSpace : public FermionOnSphereWithSp
   // pos = position in StateDescription array where to store states
   // return value = position from which new states have to be stored
   virtual long GenerateStates(int nbrFermions, int currentSite, long pos);
+  
+  // generate all states corresponding to the constraints
+  // 
+  // nbrFermions = number of fermions
+  // currentSite = current site index in real space
+  // nbrSpinUp = number of fermions with spin up
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  virtual long GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos);
 
   // generate all states corresponding to the constraints
   // 
   // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
   // return value = number of generated states
   virtual long GenerateStatesWithSzSymmetry(bool minusParity);
-
+  
 
 };
 

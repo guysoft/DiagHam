@@ -1,11 +1,13 @@
 #include "Options/Options.h"
 
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpace.h"
+#include "HilbertSpace/FermionOnLatticeWithSpinSzSymmetryRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinRealSpaceAnd2DTranslation.h"
 #include "HilbertSpace/FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpaceAnd2DTranslation.h"
+
 
 #include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceHamiltonian.h"
 #include "Hamiltonian/ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian.h"
@@ -77,6 +79,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
   (*SystemGroup) += new BooleanOption ('\n', "fixed-sz", "fix the Sz value");
   (*SystemGroup) += new SingleIntegerOption ('\n', "sz-value", "twice the fixed Sz value", 0);
+  (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new SingleStringOption  ('\n', "model-name", "name of the one-body model", "unknown");
@@ -164,15 +168,22 @@ int main(int argc, char** argv)
       else
 	{
          if ( Manager.GetBoolean("no-translation") == false)
+	 {
 	   if ( Manager.GetBoolean ("gutzwiller") == false)
 	    sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	   else
 	     sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	 }
 	else
+	{
 	  if ( Manager.GetBoolean ("gutzwiller") == false)
-	    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	    if (Manager.GetBoolean ("szsymmetrized-basis") == false)
+	      sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	    else
+	      sprintf (FilePrefix, "%s_realspace_notranslation_szsymmetrized_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
 	  else
 	    sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	}
 	}
     }
   else
@@ -335,61 +346,72 @@ int main(int argc, char** argv)
       MaxKx = 0;
       MaxKy = 0;
     }
-    
-    
+  bool SzParity = false;
+  int MaxParity = 0;
+  int MinParity = 0;
+  if ((Manager.GetBoolean("szsymmetrized-basis") == true) && (Manager.GetInteger("sz-parity") <= 0))
+    MaxParity = 1;
+  if (Manager.GetInteger("sz-parity") == -1)
+    MinParity = 1;
   bool FirstRunFlag = true;
   for (int i = MinKx; i <= MaxKx; ++i)
     {
       for (int j = MinKy; j <= MaxKy; ++j)
 	{
-	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
- 	  if (Manager.GetBoolean("single-band") == false)
- 	    {	      
-	      ParticleOnSphereWithSpin* Space = 0;
-	      AbstractQHEHamiltonian* Hamiltonian = 0;
-	      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-		Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	      int* NbrInteractingOrbitalsupup;
-	      int** InteractingOrbitalsOrbitalIndicesupup;
-	      int** InteractingOrbitalsSpatialIndicesupup;
-	      double** InteractingOrbitalsPotentialsupup;
+	  for (int parity = MinParity; parity <= MaxParity; ++parity)
+	  {
+	    cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
+	    if (Manager.GetBoolean("szsymmetrized-basis"))
+	      cout << "Sz Parity = " << (1 - 2*parity) << endl;
+	    if (parity == 1)
+	      SzParity = true;
+	    if (Manager.GetBoolean("single-band") == false)
+	      {	      
+		ParticleOnSphereWithSpin* Space = 0;
+		AbstractQHEHamiltonian* Hamiltonian = 0;
+		if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+		  Memory = Architecture.GetArchitecture()->GetLocalMemory();
+		int* NbrInteractingOrbitalsupup;
+		int** InteractingOrbitalsOrbitalIndicesupup;
+		int** InteractingOrbitalsSpatialIndicesupup;
+		double** InteractingOrbitalsPotentialsupup;
 	      
-	      int* NbrInteractingOrbitalsdowndown;
-	      int** InteractingOrbitalsOrbitalIndicesdowndown;
-	      int** InteractingOrbitalsSpatialIndicesdowndown;
-	      double** InteractingOrbitalsPotentialsdowndown;
+		int* NbrInteractingOrbitalsdowndown;
+		int** InteractingOrbitalsOrbitalIndicesdowndown;
+		int** InteractingOrbitalsSpatialIndicesdowndown;
+		double** InteractingOrbitalsPotentialsdowndown;
 	      
-	      int* NbrInteractingOrbitalsupdown;
-	      int** InteractingOrbitalsOrbitalIndicesupdown;
-	      int** InteractingOrbitalsSpatialIndicesupdown;
-	      double** InteractingOrbitalsPotentialsupdown;
+		int* NbrInteractingOrbitalsupdown;
+		int** InteractingOrbitalsOrbitalIndicesupdown;
+		int** InteractingOrbitalsSpatialIndicesupdown;
+		double** InteractingOrbitalsPotentialsupdown;
 	      
-	      if (Manager.GetBoolean("boson") == false)
-		{
-		  FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsupup, InteractingOrbitalsOrbitalIndicesupup, 
+		if (Manager.GetBoolean("boson") == false)
+		  {
+		    FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsupup, InteractingOrbitalsOrbitalIndicesupup, 
 								    InteractingOrbitalsSpatialIndicesupup, InteractingOrbitalsPotentialsupup,
 								    false, Manager.GetDouble("vupup-potential"),0);
-		  FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsdowndown, InteractingOrbitalsOrbitalIndicesdowndown, 
+		    FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsdowndown, InteractingOrbitalsOrbitalIndicesdowndown, 
 								    InteractingOrbitalsSpatialIndicesdowndown, InteractingOrbitalsPotentialsdowndown,
 								    false, Manager.GetDouble("vdowndown-potential"),0);
-		  FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsupdown, InteractingOrbitalsOrbitalIndicesupdown, 
+		    FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsupdown, InteractingOrbitalsOrbitalIndicesupdown, 
 								    InteractingOrbitalsSpatialIndicesupdown, InteractingOrbitalsPotentialsupdown,
 								    true, Manager.GetDouble("u-potential"),Manager.GetDouble("vupdown-potential"));
-		}
+		  }
 	      
 	      
 	      
-	      if (Manager.GetBoolean("real-space") == false)
-	      {
+		if (Manager.GetBoolean("real-space") == false)
+		  {
 	  
-	      }
+		  }
 	      
-	      else
-	      {
-		RealSymmetricMatrix DensityDensityInteractionupup(TightBindingModelUp->GetNbrBands() * TightBindingModelUp->GetNbrStatePerBand(), true);
-		RealSymmetricMatrix DensityDensityInteractiondowndown(TightBindingModelDown->GetNbrBands() * TightBindingModelDown->GetNbrStatePerBand(), true);
-		RealSymmetricMatrix DensityDensityInteractionupdown(TightBindingModelUp->GetNbrBands() * TightBindingModelUp->GetNbrStatePerBand(), true);
-		 for (int x = 0; x < NbrSitesX; ++x)
+		else
+		{
+		  RealSymmetricMatrix DensityDensityInteractionupup(TightBindingModelUp->GetNbrBands() * TightBindingModelUp->GetNbrStatePerBand(), true);
+		  RealSymmetricMatrix DensityDensityInteractiondowndown(TightBindingModelDown->GetNbrBands() * TightBindingModelDown->GetNbrStatePerBand(), true);
+		  RealSymmetricMatrix DensityDensityInteractionupdown(TightBindingModelUp->GetNbrBands() * TightBindingModelUp->GetNbrStatePerBand(), true);
+		  for (int x = 0; x < NbrSitesX; ++x)
 		    {
 		      for (int y = 0; y < NbrSitesY; ++y)
 			{
@@ -429,26 +451,38 @@ int main(int argc, char** argv)
 				  
 				}
 			    }
-			}
-		    }
+			  }
+		      }
 		    
 		    
 		    
-		if (Manager.GetBoolean("boson") == false)
-		{		
-		  if (Manager.GetBoolean("no-translation") == true)
-		  {
-		    if (Manager.GetBoolean("fixed-sz"))
+		  if (Manager.GetBoolean("boson") == false)
+		  {		
+		    if (Manager.GetBoolean("no-translation") == true)
 		    {
-		      if (Manager.GetBoolean("gutzwiller") == false)
-			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, SzValue, NbrSites, 10000000);
+		      if (Manager.GetBoolean("fixed-sz"))
+		      {
+			if (Manager.GetBoolean("gutzwiller") == false)
+			{
+			  if (Manager.GetBoolean("szsymmetrized-basis") == false) 
+			    Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, SzValue, NbrSites, 10000000);
+			  else
+			  {
+			    Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace(NbrParticles, SzValue, NbrSites, SzParity);
+			  }
+			}
 		      else
 			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, SzValue, NbrSites, 10000000);
-		    }
-		    else
-		    {
-		      if (Manager.GetBoolean("gutzwiller") == false)
-			Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+		      }
+		      else
+		      {
+			if (Manager.GetBoolean("gutzwiller") == false)
+			{
+			  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+			    Space = new FermionOnLatticeWithSpinRealSpace(NbrParticles, NbrSites);
+			  else
+			    Space = new FermionOnLatticeWithSpinSzSymmetryRealSpace(NbrParticles, NbrSites, SzParity);
+			}
 		      else
 			Space = new FermionOnLatticeWithSpinAndGutzwillerProjectionRealSpace (NbrParticles, NbrSites);
 		    }
@@ -503,26 +537,42 @@ int main(int argc, char** argv)
 	      {
 		if (Manager.GetBoolean("fixed-sz") == false)
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d", FilePrefix, 
+		  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+		    sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d", FilePrefix, 
 		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, i, j);
+		  else
+		    sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d_szparity_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, i, j, (1 - 2*parity));
 		}
 		else
 		 {
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d_sz_%d", FilePrefix, 
+		   if (Manager.GetBoolean("szsymmetrized-basis") == false)
+		    sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d_sz_%d", FilePrefix, 
 		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, i, j, SzValue);
+		   else
+		     sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_kx_%d_ky_%d_sz_%d_szparity_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, i, j, SzValue, (1 - 2*parity));
 		}
 	      }
 	      else
 	      {
 		if (Manager.GetBoolean("fixed-sz") == false)
 		{
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s", FilePrefix, 
+		  if (Manager.GetBoolean("szsymmetrized-basis") == false)
+		    sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s", FilePrefix, 
 		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString);
+		  else
+		    sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_szparity_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, (1 - 2*parity));
 		}
 		else
 		 {
-		  sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_sz_%d", FilePrefix, 
+		   if (Manager.GetBoolean("szsymmetrized-basis") == false)
+		    sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_sz_%d", FilePrefix, 
 		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, SzValue);
+		   else
+		     sprintf (EigenstateOutputFile, "%s_u_%f_vuu_%f_vdd_%f_vud_%f_%s_sz_%d_szparity_%d", FilePrefix, 
+		       Manager.GetDouble("u-potential"), Manager.GetDouble("vupup-potential"), Manager.GetDouble("vdowndown-potential"), Manager.GetDouble("vupdown-potential"), FileParameterString, SzValue, (1 - 2*parity));
 		}
 	      }
 	      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
@@ -537,6 +587,7 @@ int main(int argc, char** argv)
 	      delete[] ContentPrefix;
 	    }
 	}
+    }
     }
   
  return 0;   

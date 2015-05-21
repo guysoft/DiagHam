@@ -113,7 +113,21 @@ FermionOnLatticeWithSpinSzSymmetryRealSpace::FermionOnLatticeWithSpinSzSymmetryR
       this->TargetSpace = this;
       this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
       this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, 0l);
+      cout << "No symmetry" << endl;
+      for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+      {
+	this->PrintState(cout, i);
+	cout <<  endl;
+      }
+      
+      
       this->LargeHilbertSpaceDimension = this->GenerateStatesWithSzSymmetry(minusSzParity);
+      cout << "Sz -> -Sz symmetry" << endl;
+      for (int i = 0; i < this->LargeHilbertSpaceDimension; ++i)
+      {
+	this->PrintState(cout, i);
+	cout <<  endl;
+      }
       if (this->LargeHilbertSpaceDimension >= (1l << 30))
 	this->HilbertSpaceDimension = 0;
       else
@@ -150,6 +164,78 @@ FermionOnLatticeWithSpinSzSymmetryRealSpace::FermionOnLatticeWithSpinSzSymmetryR
 	}
     }
 }
+
+
+// basic constructor
+// 
+// nbrFermions = number of fermions
+// nbrSite = total number of sites 
+// minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
+// memory = amount of memory granted for precalculations
+
+FermionOnLatticeWithSpinSzSymmetryRealSpace::FermionOnLatticeWithSpinSzSymmetryRealSpace (int nbrFermions, int totalSpin, int nbrSite, bool minusSzParity, unsigned long memory)
+{  
+  this->NbrFermions = nbrFermions;
+  this->IncNbrFermions = this->NbrFermions + 1;
+  this->SzFlag = true;
+  this->TotalLz = 0;
+  this->TotalSpin = totalSpin;
+  this->NbrFermionsUp = (totalSpin + this->NbrFermions) >> 1;
+  this->NbrFermionsDown = this->NbrFermions - this->NbrFermionsUp;
+  this->NbrSite = nbrSite;
+  this->LzMax = this->NbrSite;
+  this->NbrLzValue = this->LzMax + 1;
+  this->MaximumSignLookUp = 16;
+  this->SzParitySign = 1.0;
+  if (minusSzParity == true)
+    this->SzParitySign = -1.0;
+  this->LargeHilbertSpaceDimension = this->EvaluateHilbertSpaceDimension(this->NbrFermions, this->NbrFermionsUp);
+  cout << "Intermediate Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+  if (this->LargeHilbertSpaceDimension > 0l)
+    {
+      this->Flag.Initialize();
+      this->TargetSpace = this;
+      this->StateDescription = new unsigned long [this->LargeHilbertSpaceDimension];
+      this->LargeHilbertSpaceDimension = this->GenerateStates(this->NbrFermions, this->NbrSite - 1, this->NbrFermionsUp, 0l);
+      this->LargeHilbertSpaceDimension = this->GenerateStatesWithSzSymmetry(minusSzParity);
+      if (this->LargeHilbertSpaceDimension >= (1l << 30))
+	this->HilbertSpaceDimension = 0;
+      else
+	this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
+      cout << "Hilbert space dimension = " << this->LargeHilbertSpaceDimension << endl;
+      if (this->LargeHilbertSpaceDimension > 0l)
+	{
+	  this->StateHighestBit = new int [this->LargeHilbertSpaceDimension];  
+	  this->GenerateLookUpTable(memory);
+	  
+	  for (long i = 0l; i < this->HilbertSpaceDimension; ++i)
+	    this->GetStateSymmetry(this->StateDescription[i]);	      
+#ifdef __DEBUG__
+	  long UsedMemory = 0;
+	  UsedMemory += (long) this->HilbertSpaceDimension * (sizeof(unsigned long) + sizeof(int));
+	  cout << "memory requested for Hilbert space = ";
+	  if (UsedMemory >= 1024)
+	    if (UsedMemory >= 1048576)
+	      cout << (UsedMemory >> 20) << "Mo" << endl;
+	    else
+	      cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  else
+	    cout << UsedMemory << endl;
+	  UsedMemory = this->NbrLzValue * sizeof(int);
+	  UsedMemory += this->NbrLzValue * this->LookUpTableMemorySize * sizeof(int);
+	  cout << "memory requested for lookup table = ";
+	  if (UsedMemory >= 1024)
+	    if (UsedMemory >= 1048576)
+	      cout << (UsedMemory >> 20) << "Mo" << endl;
+	    else
+	      cout << (UsedMemory >> 10) << "ko" <<  endl;
+	  else
+	    cout << UsedMemory << endl;
+#endif
+	}
+    }
+}
+
 
 // copy constructor (without duplicating datas)
 //
@@ -319,6 +405,58 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpace::GenerateStates(int nbrFermions
 
 // generate all states corresponding to the constraints
 // 
+// nbrFermions = number of fermions
+// currentSite = current site index
+// nbrSpinUp = number of fermions with spin up
+// pos = position in StateDescription array where to store states
+// return value = position from which new states have to be stored
+
+long FermionOnLatticeWithSpinSzSymmetryRealSpace::GenerateStates(int nbrFermions, int currentSite, int nbrSpinUp, long pos)
+{
+  if ((nbrFermions == 0) && (nbrSpinUp == 0))
+    {
+      this->StateDescription[pos] = 0x0ul;	  
+      return (pos + 1l);
+    }
+  if ((currentSite < 0) || (nbrFermions < 0) || (nbrSpinUp > nbrFermions) || (nbrSpinUp < 0))
+    return pos;
+  if (nbrFermions == 1)
+    {
+      if (nbrSpinUp == 1)
+	{
+	  for (int j = currentSite; j >= 0; --j)
+	    {
+	      this->StateDescription[pos] = 0x2ul << (j << 1);
+	      ++pos;
+	    }
+	}
+      else
+	{
+	  for (int j = currentSite; j >= 0; --j)
+	    {
+	      this->StateDescription[pos] = 0x1ul << (j << 1);
+	      ++pos;
+	    }
+	}
+      return pos;
+    }
+  long TmpPos = this->GenerateStates(nbrFermions - 2, currentSite - 1, nbrSpinUp - 1, pos);
+  unsigned long Mask = 0x3ul << (currentSite << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, nbrSpinUp - 1, pos);
+  Mask = 0x2ul << ((currentSite) << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  TmpPos = this->GenerateStates(nbrFermions - 1, currentSite - 1, nbrSpinUp, pos);
+  Mask = 0x1ul << (currentSite << 1);
+  for (; pos < TmpPos; ++pos)
+    this->StateDescription[pos] |= Mask;
+  return this->GenerateStates(nbrFermions, currentSite - 1, nbrSpinUp, pos);   
+}
+
+// generate all states corresponding to the constraints
+// 
 // minusSzParity = select the  Sz <-> -Sz symmetric sector with negative parity
 // return value = number of generated states
 
@@ -372,6 +510,24 @@ long FermionOnLatticeWithSpinSzSymmetryRealSpace::EvaluateHilbertSpaceDimension(
   BinomialCoefficients binomials(2*this->NbrSite);
   long dimension = binomials(2*this->NbrSite, this->NbrFermions);
   return dimension;
+}
+
+// evaluate Hilbert space dimension with a fixed number of fermions with spin up
+//
+// nbrFermions = number of fermions
+// currentKx = current momentum along x for a single particle
+// currentKy = current momentum along y for a single particle
+// currentTotalKx = current total momentum along x
+// currentTotalKy = current total momentum along y
+// nbrSpinUp = number of fermions with spin up
+// return value = Hilbert space dimension
+
+long FermionOnLatticeWithSpinSzSymmetryRealSpace::EvaluateHilbertSpaceDimension(int nbrFermions,int nbrSpinUp)
+{
+  BinomialCoefficients binomials(this->NbrSite);
+  long Dimension = binomials(this->NbrSite, this->NbrFermionsUp);
+  Dimension *= binomials(this->NbrSite, this->NbrFermionsDown);
+  return Dimension;
 }
 
 // find state index
@@ -459,4 +615,3 @@ int FermionOnLatticeWithSpinSzSymmetryRealSpace::FindStateIndex(char* stateDescr
     --TmpLzMax;
   return this->FindStateIndex(TmpState, TmpLzMax);
 }
-
