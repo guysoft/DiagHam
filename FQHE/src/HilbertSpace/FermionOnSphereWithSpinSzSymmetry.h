@@ -150,6 +150,34 @@ class FermionOnSphereWithSpinSzSymmetry :  public FermionOnSphereWithSpinLzSzSym
   // timeCoherence = true if time coherence has to be used
   virtual void InitializeWaveFunctionEvaluation (bool timeCoherence = false);
   
+  // apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next Adu call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = first index for annihilation operator (spin up)
+  // return value =  multiplicative factor 
+  virtual double Au (int index, int n);
+  
+  // apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next Add call
+  //
+  // index = index of the state on which the operator has to be applied
+  // n = first index for annihilation operator (spin down)
+  // return value =  multiplicative factor 
+  virtual double Ad (int index, int n);
+  
+  // apply a^+_m_u operator to the state produced using Au (or Ad) method (without destroying it)
+  //
+  // m = index for creation operator (spin up)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Adu (int m, double& coefficient);
+  
+  // apply a^+_m_u operator to the state produced using Au (or Ad) method (without destroying it)
+  //
+  // m = index for creation operator (spin down)
+  // coefficient = reference on the double where the multiplicative factor has to be stored
+  // return value = index of the destination state 
+  virtual int Add (int m, double& coefficient);
+  
   protected:
 
   // get canonical expression of a given state

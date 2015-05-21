@@ -728,3 +728,142 @@ void FermionOnSphereWithSpinSzSymmetry::InitializeWaveFunctionEvaluation (bool t
 {
 }
   
+// apply a_n_u operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AduAdu call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator (spin up)
+// return value =  multiplicative factor 
+
+double FermionOnSphereWithSpinSzSymmetry::Au (int index, int n)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  n <<= 1;
+  ++n;
+  
+  if ((this->ProdATemporaryState & (0x1ul << n)) == 0)
+    return 0.0;
+  
+  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  
+//   this->ProdALzMax = this->StateHighestBit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+//   if (this->ProdATemporaryState != 0x0ul)
+//     {
+//       while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+// 	--this->ProdALzMax;
+//     }
+//   else
+//     this->ProdALzMax = 0;
+  return Coefficient;
+}
+
+
+// apply a_n_d  operator to a given state. Warning, the resulting state may not belong to the current Hilbert subspace. It will be kept in cache until next AddAdd call
+//
+// index = index of the state on which the operator has to be applied
+// n = first index for annihilation operator (spin down)
+// return value =  multiplicative factor 
+
+double FermionOnSphereWithSpinSzSymmetry::Ad (int index, int n)
+{
+  this->ProdATemporaryState = this->StateDescription[index];
+  n <<= 1;
+  
+  if ((this->ProdATemporaryState & (0x1ul << n)) == 0)
+    return 0.0;
+  
+  this->ProdASignature = this->ProdATemporaryState & FERMION_SPHERE_SU2_SYMMETRIC_BIT;
+  this->ProdATemporaryState &= FERMION_SPHERE_SU2_SYMMETRIC_MASK;
+  
+//   this->ProdALzMax = this->StateHighestBit[index];
+  double Coefficient = this->SignLookUpTable[(this->ProdATemporaryState >> n) & this->SignLookUpTableMask[n]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 16)) & this->SignLookUpTableMask[n + 16]];
+#ifdef  __64_BITS__
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 32)) & this->SignLookUpTableMask[n + 32]];
+  Coefficient *= this->SignLookUpTable[(this->ProdATemporaryState >> (n + 48)) & this->SignLookUpTableMask[n + 48]];
+#endif
+  this->ProdATemporaryState &= ~(0x1ul << n);
+//   if (this->ProdATemporaryState != 0x0ul)
+//     {
+//       while ((this->ProdATemporaryState >> this->ProdALzMax) == 0)
+// 	--this->ProdALzMax;
+//     }
+//   else
+//     this->ProdALzMax = 0;
+  return Coefficient;
+}
+
+// apply a^+_m_u operator to the state produced using Au method (without destroying it)
+//
+// m = first index for creation operator (spin up)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinSzSymmetry::Adu (int m, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+  m <<= 1;
+  ++m;
+  
+  if ((TmpState & (0x1ul << m)) != 0)
+    return this->HilbertSpaceDimension;
+//   int NewLzMax = this->ProdALzMax;
+  
+//   if (m > NewLzMax)
+//     NewLzMax = m;
+//   else
+//     {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+//     }
+  TmpState |= (0x1ul << m);
+  
+  
+//   cout <<  "ad" << m << " -> " ;
+//   for (int i = 0; i < 2*this->NbrLzValue; ++i)
+//     cout << ((TmpState >> i) & 0x1ul) << " " ;
+//   cout << (TmpState & FERMION_SPHERE_SU2_SZ_SYMMETRIC_BIT) << endl;
+  
+  return this->SymmetrizeAdAdResult(TmpState, coefficient);
+}
+
+// apply a^+_m_d operator to the state produced using Au or Ad method (without destroying it)
+//
+// m = first index for creation operator (spin down)
+// coefficient = reference on the double where the multiplicative factor has to be stored
+// return value = index of the destination state 
+
+int FermionOnSphereWithSpinSzSymmetry::Add (int m, double& coefficient)
+{
+  unsigned long TmpState = this->ProdATemporaryState;
+  m <<= 1;
+  
+  if ((TmpState & (0x1ul << m)) != 0)
+    return this->TargetSpace->HilbertSpaceDimension;
+//   int NewLzMax = this->ProdALzMax;
+  
+//   if (m > NewLzMax)
+//     NewLzMax = m;
+//   else
+//     {
+      coefficient *= this->SignLookUpTable[(TmpState >> m) & this->SignLookUpTableMask[m]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 16)) & this->SignLookUpTableMask[m + 16]];
+#ifdef  __64_BITS__
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 32)) & this->SignLookUpTableMask[m + 32]];
+      coefficient *= this->SignLookUpTable[(TmpState >> (m + 48)) & this->SignLookUpTableMask[m + 48]];
+#endif
+//     }
+  TmpState |= (0x1ul << m);
+  return this->SymmetrizeAdAdResult(TmpState, coefficient);
+}
