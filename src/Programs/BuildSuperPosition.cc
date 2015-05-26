@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 #endif
   (*SystemGroup) += new SingleDoubleOption  ('r', "random-component", "amplitude of a random component to be added",0.0);
   (*SystemGroup) += new SingleIntegerOption  ('R', "random-only", "generate a pure random vector, argument is dimension",0);
+  (*SystemGroup) += new SingleStringOption  ('\n', "random-orthogonal", "build a pure random vector orthgonal to the one provided as an argument");
   (*SystemGroup) += new BooleanOption  ('n', "no-normalize", "do NOT normalize the final vector");
   (*SystemGroup) += new SingleStringOption  ('o', "output", "names of output filename","superposition.vec");
   (*SystemGroup) += new SingleStringOption  ('f', "description-file", "build the superposition for a linear combination of a vector set described in a text file");
@@ -50,7 +51,7 @@ int main(int argc, char** argv)
 
   Manager.StandardProceedings(argv, argc, cout);
 
-  if (Manager.GetInteger("random-only")>0)
+  if (Manager.GetInteger("random-only") > 0)
     {
       int VectorDimension=Manager.GetInteger("random-only");
       if (Manager.GetBoolean("complex"))
@@ -77,6 +78,47 @@ int main(int argc, char** argv)
       exit(0);
     }
   
+  if (Manager.GetString("random-orthogonal") != 0)
+    {
+      if (Manager.GetBoolean("complex"))
+	{
+	  ComplexVector InputVector;
+	  if (InputVector.ReadVector(Manager.GetString("random-orthogonal")) == false)
+	    {
+	      cout << "can't open " << Manager.GetString("random-orthogonal") << endl;
+	      return -1;
+	    }
+	  ComplexVector Vector(InputVector.GetLargeVectorDimension());
+	  for (long i = 0l; i < InputVector.GetLargeVectorDimension(); ++i)
+	    {
+	      Vector.Re(i) = (rand() - 32767) * 0.5;
+	      Vector.Im(i) = (rand() - 32767) * 0.5;
+	    }
+	  Vector /= Vector.Norm();	  
+	  Vector.AddLinearCombination((InputVector* Vector) / (- InputVector.Norm()), InputVector);
+	  Vector.WriteVector(Manager.GetString("output"));
+	}
+      else
+	{
+	  RealVector InputVector;
+	  if (InputVector.ReadVector(Manager.GetString("random-orthogonal")) == false)
+	    {
+	      cout << "can't open " << Manager.GetString("random-orthogonal") << endl;
+	      return -1;
+	    }
+	  RealVector Vector(InputVector.GetLargeVectorDimension());
+	  for (long i = 0l; i < InputVector.GetLargeVectorDimension(); ++i)
+	    {
+	      Vector[i] = (rand() - 32767) * 0.5;
+	    }
+	  Vector.AddLinearCombination((InputVector * Vector) / (-Vector.Norm() * InputVector.Norm()), InputVector);
+	  Vector /= Vector.Norm();	  
+	  Vector.WriteVector(Manager.GetString("output"));
+	}
+      cout << "Generated random vector orthogonal to " << Manager.GetString("random-orthogonal") << endl;
+      exit(0);
+    }
+
   if (Manager.GetString("description-file") == 0)
     {
       int NbrVectors, ValidVectors=0, VectorDimension=0;

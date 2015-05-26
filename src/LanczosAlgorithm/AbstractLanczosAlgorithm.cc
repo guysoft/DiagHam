@@ -154,4 +154,12 @@ bool AbstractLanczosAlgorithm::TestConvergence ()
   return true;
 }
 
+// optional shift of the eigenstate file name indices
+//
+// return value = index shift
+
+int AbstractLanczosAlgorithm::EigenstateIndexShift()
+{
+  return 0;
+}
 

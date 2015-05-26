@@ -51,6 +51,7 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithEigenstates.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.h"
 #include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexBlockLanczosAlgorithm.h"
@@ -60,14 +61,13 @@
 
 #include "Options/OptionManager.h"
 #include "Options/OptionGroup.h"
-#include "Options/AbstractOption.h"
-#include "Options/BooleanOption.h"
-#include "Options/SingleIntegerOption.h"
-#include "Options/SingleStringOption.h"
-#include "Options/SingleDoubleOption.h"
+#include "Options/Options.h"
+
+#include "GeneralTools/MultiColumnASCIIFile.h"
 
 #include <cstdlib>
 #include <iostream>
+
 using std::cout;
 using std::endl;
 
@@ -131,6 +131,9 @@ void LanczosManager::AddOptionGroup(OptionManager* manager)
       (*LanczosGroup) += new BooleanOption ('\n', "partial-lanczos", "only run a given number of Lanczos iterations" , false);
       (*LanczosGroup) += new SingleDoubleOption ('\n', "lanczos-precision", "define Lanczos precision for eigenvalues (0 if automatically defined by the program)", 0);
       (*LanczosGroup) += new BooleanOption ('\n', "fast-disk", "use disk storage to increase speed of ground state calculation and decrease memory footprint when using Lanczos algorithm");
+      (*LanczosGroup) += new SingleStringOption ('\n', "add-projector", "use an additional projector on a subspace, the argument is a single column ASCII file that contains the list of vectors than define the projector");
+      (*LanczosGroup) += new SingleDoubleOption ('\n', "addprojector-factor", "set the energy scale factor in front of the projector when using --add-projector", 10.0);
+      (*LanczosGroup) += new BooleanOption ('\n', "addprojector-noshift", "do not shift the eigenstate indices when using the --add-projector");
       (*LanczosGroup) += new BooleanOption ('\n', "resume-fastdisk", "resume the fast-disk mode Lanczos algorithm from a stopped one (for example due to computer crash)");
     }
 }
@@ -148,23 +151,23 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
   if ((this->Options != 0) && (this->LanczosAlgorithm == 0))
     {      
       // bool ResumeFlag = ((BooleanOption*) (*(this->Options))["resume"])->GetBoolean();
-      bool DiskFlag = ((BooleanOption*) (*(this->Options))["disk"])->GetBoolean();
-      int MaxNbrIterLanczos = ((SingleIntegerOption*) (*(this->Options))["iter-max"])->GetInteger();
-      int NbrIterLanczos = ((SingleIntegerOption*) (*(this->Options))["nbr-iter"])->GetInteger();
-      int NbrEigenvalue = ((SingleIntegerOption*) (*(this->Options))["nbr-eigen"])->GetInteger();
-      bool BlockLanczosFlag = ((BooleanOption*) (*(this->Options))["block-lanczos"])->GetBoolean();
+      bool DiskFlag = this->Options->GetBoolean("disk");
+      int MaxNbrIterLanczos = this->Options->GetInteger("iter-max");
+      int NbrIterLanczos = this->Options->GetInteger("nbr-iter");
+      int NbrEigenvalue = this->Options->GetInteger("nbr-eigen");
+      bool BlockLanczosFlag = this->Options->GetBoolean("block-lanczos");
       int SizeBlockLanczos = this->Options->GetInteger("block-size");
       int VectorMemory = this->Options->GetInteger("nbr-vector");
-      bool EvaluateEigenvectors = ((BooleanOption*) (*(this->Options))["eigenstate"])->GetBoolean();
+      bool EvaluateEigenvectors = this->Options->GetBoolean("eigenstate");
       //char* InitialVectorFileName = ((SingleStringOption*) (*(this->Options))["initial-vector"])->GetString();
       //bool PartialLanczos = ((BooleanOption*) (*(this->Options))["partial-lanczos"])->GetBoolean();
       //double LanczosPrecision = ((SingleDoubleOption*) (*(this->Options))["lanczos-precision"])->GetDouble();
       bool FastDiskFlag = this->Options->GetBoolean("fast-disk");
-      bool ResumeFastDiskFlag = ((BooleanOption*) (*(this->Options))["resume-fastdisk"])->GetBoolean();
-      bool FullReorthogonalizationFlag = ((BooleanOption*) (*(this->Options))["force-reorthogonalize"])->GetBoolean();
+      bool ResumeFastDiskFlag = this->Options->GetBoolean("resume-fastdisk");
+      bool FullReorthogonalizationFlag = this->Options->GetBoolean("force-reorthogonalize");
       bool LapackFlag = false;
       if (((*(this->Options))["use-lapack"])!=NULL)
-	LapackFlag = ((BooleanOption*) (*(this->Options))["use-lapack"])->GetBoolean();
+	LapackFlag = this->Options->GetBoolean("use-lapack");
 //       if ((NbrEigenvalue > 1) || (EvaluateEigenvectors == false))
 // 	{
 // 	  FastDiskFlag = false;
@@ -239,8 +242,37 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 	      if (DiskFlag == false)
 		if (EvaluateEigenvectors == true)
 		  {
-		    cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk" << endl;
-		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(architecture, MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+		    if (this->Options->GetString("add-projector") == 0)
+		      {
+			cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateFastDisk" << endl;
+			this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(architecture, MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+		      }
+		    else
+		      {
+			cout << "Using ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk" << endl;
+			MultiColumnASCIIFile SubspaceFile;
+			if (SubspaceFile.Parse(this->Options->GetString("add-projector")) == false)
+			  {
+			    SubspaceFile.DumpErrors(cout);
+			    exit(0);
+			  }
+			int NbrStates = SubspaceFile.GetNbrLines();
+			ComplexVector* States = new ComplexVector[NbrStates];
+			for (int i = 0; i < NbrStates; ++i)
+			  {
+			    if (States[i].ReadVector(SubspaceFile(0, i)) == false)
+			      {
+				cout << "can't open vector file " << SubspaceFile(0, i) << endl;
+				exit (0);      
+			      }			    
+			  }
+			this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(NbrStates, States, 
+														     this->Options->GetDouble("addprojector-factor"), 
+														     !(this->Options->GetBoolean("addprojector-noshift")),
+														     architecture, 
+														     MaxNbrIterLanczos , FastDiskFlag, ResumeFastDiskFlag);
+			delete[] States;
+		      }
 		  }
 		else
 		  {

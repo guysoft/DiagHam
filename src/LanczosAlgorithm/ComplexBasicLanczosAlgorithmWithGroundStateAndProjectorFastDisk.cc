@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.h"
 #include "Vector/RealVector.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
@@ -54,19 +54,19 @@ using std::endl;
 
 // default constructor
 //
-
-ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateFastDisk()
-{
-}
-
-// default constructor
-//
+// nbrProjectors = dimension of the projector subspace
+// projectorVectors = array that contains the vectors that spans the projector subspace
+// projectorCoefficient = energy scale in front of the projector
+// indexShiftFlag = true if the eigenstate indices have to be shifted
 // architecture = architecture to use for matrix operations
 // maxIter = an approximation of maximal number of iteration
 // diskFlag = use disk storage to increase speed of ground state calculation
 // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
 
-ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(AbstractArchitecture* architecture, int maxIter, bool diskFlag, bool resumeDiskFlag) 
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrProjectors, ComplexVector* projectorVectors, 
+																 double projectorCoefficient, bool indexShiftFlag, 
+																 AbstractArchitecture* architecture, 
+																 int maxIter, bool diskFlag, bool resumeDiskFlag) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
@@ -78,6 +78,12 @@ ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorith
   this->GroundStateFlag = false;
   this->DiskFlag = diskFlag;
   this->ResumeDiskFlag = resumeDiskFlag;
+  this->NbrProjectors = nbrProjectors;
+  this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    this->ProjectorVectors[i] = projectorVectors[i];
+  this->ProjectorCoefficient = projectorCoefficient;
+  this->IndexShiftFlag = indexShiftFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -98,7 +104,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorith
 //
 // algorithm = algorithm from which new one will be created
 
-ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(const ComplexBasicLanczosAlgorithmWithGroundStateFastDisk& algorithm) 
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(const ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk& algorithm) 
 {
   this->Index = algorithm.Index;
   this->Hamiltonian = algorithm.Hamiltonian;
@@ -115,19 +121,26 @@ ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ComplexBasicLanczosAlgorith
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
   this->NbrEigenvalue = 1;
+  this->NbrProjectors = algorithm.NbrProjectors;
+  this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    this->ProjectorVectors[i] = algorithm.ProjectorVectors[i];
+  this->ProjectorCoefficient = algorithm.ProjectorCoefficient;
+  this->IndexShiftFlag = algorithm.IndexShiftFlag;
 }
 
 // destructor
 //
 
-ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::~ComplexBasicLanczosAlgorithmWithGroundStateFastDisk() 
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::~ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk() 
 {
+  delete[] this->ProjectorVectors;
 }
 
 // initialize Lanczos algorithm with a random vector
 //
 
-void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgorithm() 
+void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->V1 = ComplexVector (Dimension);
@@ -142,6 +155,15 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgor
 	  this->V1.Re(i) = Scale * ((double) (rand() - Shift));
 	  this->V1.Im(i) = Scale * ((double) (rand() - Shift));
 	}
+      this->V1 /= this->V1.Norm();
+      Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+      MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+      Operation1.ApplyOperation(this->Architecture);	
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
+      AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+      Operation2.ApplyOperation(this->Architecture);
+      delete[] TmpScalarProduct;
       this->V1 /= this->V1.Norm();
       if (this->DiskFlag == false)
 	this->InitialState = ComplexVector (this->V1, true);
@@ -160,7 +182,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgor
 //
 // vector = reference to the vector used as first step vector
 
-void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgorithm(const Vector& vector) 
+void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   if (this->ResumeDiskFlag == false)
@@ -168,6 +190,15 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgor
       this->V1 = ((ComplexVector &) vector);
       this->V2 = ComplexVector (Dimension);
       this->V3 = ComplexVector (Dimension);
+      Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+      MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+      Operation1.ApplyOperation(this->Architecture);	
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
+      AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+      Operation2.ApplyOperation(this->Architecture);
+      delete[] TmpScalarProduct;
+      this->V1 /= this->V1.Norm();
       if (this->DiskFlag == false)
 	this->InitialState = ComplexVector (vector);
       else
@@ -190,7 +221,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::InitializeLanczosAlgor
 // nbrEigenstates = number of needed eigenstates
 // return value = array containing the eigenstates
 
-Vector* ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetEigenstates(int nbrEigenstates)
+Vector* ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetEigenstates(int nbrEigenstates)
 {
   if (nbrEigenstates != 1)
     {
@@ -209,7 +240,7 @@ Vector* ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetEigenstates(int 
 //
 // return value = reference on last produced vector
 
-Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
+Vector& ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetGroundState()
 {
   if (this->GroundStateFlag == false)
     {
@@ -234,6 +265,7 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
 	  this->GroundState.Copy(this->InitialState, TmpComponents[0]);
 	  VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
 	  Operation1.ApplyOperation(this->Architecture);
+	  this->AddProjectorContribution(this->InitialState, this->V3);
 	  this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
 	  this->V3 /= this->V3.Norm();
 	  this->V2.Copy(this->InitialState);
@@ -242,6 +274,7 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
 	    {
 	      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V3, &this->V1);
 	      Operation1.ApplyOperation(this->Architecture);
+	      this->AddProjectorContribution(this->V3, this->V1);
   	      ComplexVector* TmpVector = new ComplexVector[2];
 	      TmpVector[0] = this->V2;
 	      TmpVector[1] = this->V3;
@@ -287,7 +320,7 @@ Vector& ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::GetGroundState()
 //
 // nbrIter = number of iteration to do 
 
-void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::RunLanczosAlgorithm (int nbrIter) 
+void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::RunLanczosAlgorithm (int nbrIter) 
 {
   this->GroundStateFlag = false;
   int Dimension;
@@ -299,6 +332,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::RunLanczosAlgorithm (i
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
+      this->AddProjectorContribution(this->V1, this->V2);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2).Re;
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), this->V1);
       this->V2 /= this->V2.Norm(); 
@@ -306,6 +340,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::RunLanczosAlgorithm (i
 	this->V2.WriteVector("vector.1");
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
       Operation2.ApplyOperation(this->Architecture);
+      this->AddProjectorContribution(this->V2, this->V3);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
@@ -359,6 +394,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::RunLanczosAlgorithm (i
       this->Index++;
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V3);
       Operation1.ApplyOperation(this->Architecture);
+      this->AddProjectorContribution(this->V2, this->V3);
       if (this->DiskFlag == true)
 	{
 	  char* TmpVectorName = new char [256];
@@ -389,74 +425,36 @@ void ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::RunLanczosAlgorithm (i
     }
 }
   
-// test if convergence has been reached
+// optional shift of the eigenstate file name indices
 //
-// return value = true if convergence has been reached
+// return value = index shift
 
-bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::TestConvergence ()
+int ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::EigenstateIndexShift()
 {
-  if ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-       (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
-    return true;
+  if (this->IndexShiftFlag == true)
+    {
+      return this->NbrProjectors;
+    }
   else
-    return false;
+    {
+      return 0;
+    }
 }
 
-// write current Lanczos state on disk
+// add the projector contribution to the hamiltonian-vector multiplication
 //
-// return value = true if no error occurs
+// initialVector = reference on the initial vector
+// destinationVector = reference on the destination vector 
 
-bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::WriteState()
+void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::AddProjectorContribution(ComplexVector& initialVector, ComplexVector& destinationVector)
 {
-  ofstream File;
-  File.open("lanczos.dat", ios::binary | ios::out);
-  WriteLittleEndian(File, this->Index);
-  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
-  int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
-  WriteLittleEndian(File, TmpDimension);
-  --TmpDimension;
-  for (int i = 0; i <= TmpDimension; ++i)    
-    {    
-      WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
-    }
-  for (int i = 0; i < TmpDimension; ++i)
-    {
-      WriteLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
-    }
-  File.close();  
-  return true;
+  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+  MultipleComplexScalarProductOperation Operation1 (&initialVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation1.ApplyOperation(this->Architecture);	
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    TmpScalarProduct[i] = this->ProjectorCoefficient * Conj(TmpScalarProduct[i]);
+  AddComplexLinearCombinationOperation Operation2 (&destinationVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation2.ApplyOperation(this->Architecture);
+  delete[] TmpScalarProduct;
 }
 
-// read current Lanczos state from disk
-//
-// return value = true if no error occurs
-
-bool ComplexBasicLanczosAlgorithmWithGroundStateFastDisk::ReadState()
-{
-  ifstream File;
-  File.open("lanczos.dat", ios::binary | ios::in);
-  ReadLittleEndian(File, this->Index);
-  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
-  int TmpDimension;
-  ReadLittleEndian(File, TmpDimension);
-  this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
-  --TmpDimension;
-  for (int i = 0; i <= TmpDimension; ++i)
-    {
-      ReadLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
-    }
-  for (int i = 0; i < TmpDimension; ++i)
-    {
-      ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
-    }
-  File.close();  
-  char* TmpVectorName = new char [256];
-  sprintf(TmpVectorName, "vector.%d", this->Index);
-  this->V1.ReadVector(TmpVectorName);
-  sprintf(TmpVectorName, "vector.%d", (this->Index + 1));
-  this->V2.ReadVector(TmpVectorName);
-  sprintf(TmpVectorName, "vector.%d", (this->Index + 2));
-  this->V3.ReadVector(TmpVectorName);
-  delete[] TmpVectorName;
-  return true;
-}

@@ -6,11 +6,12 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//               class of basic Lanczos algorithm with real vectors           //
-//                         and ground state evaluation                        //
+//              class of basic Lanczos algorithm with complex vectors         //
+//                 and ground state evaluation, using both fast disk          //
+//                     and a projector over a set of vectors                  //
 //                      (without any re-orthogonalization)                    //
 //                                                                            //
-//                        last modification : 17/09/2002                      //
+//                        last modification : 25/05/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,69 +31,55 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATEFASTDISK_H
-#define COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATEFASTDISK_H
+#ifndef COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATEANDPROJECTORFASTDISK_H
+#define COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATEANDPROJECTORFASTDISK_H
 
 
 #include "config.h"
-#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Vector/ComplexVector.h"
 
 
-class ComplexBasicLanczosAlgorithmWithGroundStateFastDisk : public AbstractLanczosAlgorithm
+class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public ComplexBasicLanczosAlgorithmWithGroundStateFastDisk
 {
 
  protected:
 
-  ComplexVector V1;
-  ComplexVector V2;
-  ComplexVector V3;
-
-  // vector that contains the initial state
-  ComplexVector InitialState;
-
-  //vector that contains the ground state (if GroundStateFlag is set to true)
-  ComplexVector GroundState;
-
-  // flag to indicate if ground state has already been compute
-  bool GroundStateFlag;
-
-  // flag to indicate the use of disk storage to increase speed of ground state calculation
-  bool DiskFlag;
-  // flag to indicate that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-  bool ResumeDiskFlag;
-
-  int Index;
-
-  // number of wanted eigenvalues
-  int NbrEigenvalue;
-  // value of the last wanted eigenvalue at previous Lanczos iteration
-  double PreviousLastWantedEigenvalue;
+  // dimension of the projector subspace
+  int NbrProjectors;
+  // array that contains the vectors that spans the projector subspace
+  ComplexVector* ProjectorVectors;
+  // energy scale in front of the projector
+  double ProjectorCoefficient;
+  // true if the eigenstate indices have to be shifted
+  bool IndexShiftFlag;
 
  public:
 
   // default constructor
   //
-  ComplexBasicLanczosAlgorithmWithGroundStateFastDisk();
-
-  // constructor
-  //
+  // nbrProjectors = dimension of the projector subspace
+  // projectorVectors = array that contains the vectors that spans the projector subspace
+  // projectorCoefficient = energy scale in front of the projector
+  // indexShiftFlag = true if the eigenstate indices have to be shifted
   // architecture = architecture to use for matrix operations
   // maxIter = an approximation of maximal number of iteration
   // diskFlag = use disk storage to increase speed of ground state calculation
   // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-  ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(AbstractArchitecture* architecture, int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrProjectors, ComplexVector* projectorVectors, double projectorCoefficient, bool indexShiftFlag,
+								  AbstractArchitecture* architecture, 
+								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
 
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
-  ComplexBasicLanczosAlgorithmWithGroundStateFastDisk(const ComplexBasicLanczosAlgorithmWithGroundStateFastDisk& algorithm);
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(const ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk& algorithm);
 
   // destructor
   //
-  ~ComplexBasicLanczosAlgorithmWithGroundStateFastDisk();
+  ~ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk();
 
   // initialize Lanczos algorithm with a random vector
   //
@@ -119,22 +106,18 @@ class ComplexBasicLanczosAlgorithmWithGroundStateFastDisk : public AbstractLancz
   // nbrIter = number of iteration to do 
   virtual void RunLanczosAlgorithm (int nbrIter);
   
-  // test if convergence has been reached
+  // optional shift of the eigenstate file name indices
   //
-  // return value = true if convergence has been reached
-  virtual bool TestConvergence ();
-  
+  // return value = index shift
+  virtual int EigenstateIndexShift();
+
  protected:
   
-  // read current Lanczos state from disk
+  // add the projector contribution to the hamiltonian-vector multiplication
   //
-  // return value = true if no error occurs
-  virtual bool ReadState();
-
-  // write current Lanczos state on disk
-  //
-  // return value = true if no error occurs
-  virtual bool WriteState();
+  // initialVector = reference on the initial vector
+  // destinationVector = reference on the destination vector 
+  virtual void AddProjectorContribution(ComplexVector& initialVector, ComplexVector& destinationVector);
 
 };
 

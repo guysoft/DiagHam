@@ -150,6 +150,11 @@ class AbstractLanczosAlgorithm
   // precision = precision needed for eigenvectors
   virtual void SetEigenvectorPrecision (double precision);
 
+  // optional shift of the eigenstate file name indices
+  //
+  // return value = index shift
+  virtual int EigenstateIndexShift();
+
  protected:
   
   // diagonalize tridiagonalized matrix and find ground state energy
