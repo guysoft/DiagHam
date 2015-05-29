@@ -77,6 +77,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('c', "chernnumber", "chern number", 1);
 
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
+  (*SystemGroup) += new BooleanOption  ('\n', "two-bands", "use the two lowest energy bands", false);
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
   (*SystemGroup) += new SingleDoubleOption  ('\n', "u-potential", "repulsive nearest neighbor potential strength", 1.0);
@@ -140,9 +141,18 @@ int main(int argc, char** argv)
 
 
   char* StateFilePrefix = new char [256];
-  sprintf (StateFilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
+  if (Manager.GetBoolean("two-bands") == false)
+      sprintf (StateFilePrefix, "%s_singleband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
+   else
+      sprintf (StateFilePrefix, "%s_twobands_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d_las_%g", StatisticPrefix,  NbrSpin, ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY, LaserStrength);
 
-  BosonOnSquareLatticeMomentumSpace * Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
+  ParticleOnSphere * Space =0;
+  if (Manager.GetBoolean("two-bands") == false)
+       Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
+  else
+       Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, TotalKx, TotalKy);
+
+
 //   FermionOnSquareLatticeMomentumSpace * Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY,  TotalKx, TotalKy);
 
  ComplexVector ** BandEigenvectors = new ComplexVector * [NbrSitesX*NbrSitesY];
@@ -151,8 +161,6 @@ int main(int argc, char** argv)
 
  ComplexVector * ManyBodyState = new ComplexVector [IncNbrPointX * IncNbrPointY];
 
-
- AbstractHamiltonian *  Hamiltonian  = 0;
 
  double TrueGammaX =   ( ( - 1.0) / ( (double) NbrPointX));
  double TrueGammaY =   ( ( - 1.0) / ( (double) NbrPointY));
@@ -171,7 +179,16 @@ int main(int argc, char** argv)
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 
-     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel1, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+ AbstractQHEHamiltonian* Hamiltonian = 0;
+
+ if (Manager.GetBoolean("two-bands") == false)
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel1, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+    }
+  else
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel1, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
+    }
 
 char *  EigenstateFile = new char [512];
 char *  EigenvalueOutputFile = new char [512];
@@ -215,7 +232,14 @@ char *  EigenvalueOutputFile = new char [512];
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 
 
-     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+ if (Manager.GetBoolean("two-bands") == false)
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+    }
+  else
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
+    }
 
   EigenstateFile = new char [512];
   EigenvalueOutputFile = new char [512];
@@ -259,7 +283,14 @@ char *  EigenvalueOutputFile = new char [512];
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 
-     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+ if (Manager.GetBoolean("two-bands") == false)
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+    }
+  else
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
+    }
 
 
   EigenstateFile = new char [512];
@@ -307,7 +338,14 @@ char *  EigenvalueOutputFile = new char [512];
     Memory = Architecture.GetArchitecture()->GetLocalMemory();
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
 
-     Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+ if (Manager.GetBoolean("two-bands") == false)
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+    }
+  else
+    {
+      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel2, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
+    }
 
   EigenstateFile = new char [512];
   EigenvalueOutputFile = new char [512];
