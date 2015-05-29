@@ -53,6 +53,7 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
   // flux density:
   double FluxDensity;
   double FluxInserted;
+
   // magnetic translation phases;
   Complex LxTranslationPhase;
   Complex LyTranslationPhase;
@@ -91,8 +92,14 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
   // y = y coordinate of the unit cell
   // orbitalIndex = index of the orbital / site within the unit cell
   // return value = linearized index  
-  virtual int GetRealSpaceTightBindingLinearizedIndex(int x, int y);
- int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y);  
+  virtual int GetRealSpaceTightBindingLinearizedIndex(int x, int y) const;
+  int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y) const;  
+
+  double GetFluxDensity() const{return FluxDensity;}
+  int GetNumberSiteX() const{return  NbrSiteX;}
+  int GetNumberSiteY() const{return  NbrSiteY;}
+
+
  protected :
 
   // core part that compute the band structure
@@ -120,7 +127,6 @@ class TightBindingModelHofstadterFiniteCylinder : public Abstract2DTightBindingM
   
 
  int  GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y, int & numXTranslations);
-
 
 };
 
@@ -189,7 +195,7 @@ inline int  TightBindingModelHofstadterFiniteCylinder::GetRealSpaceTightBindingL
 // y = y coordinate of the unit cell
 // return value = linearized index  
 
-inline int  TightBindingModelHofstadterFiniteCylinder::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y)
+inline int  TightBindingModelHofstadterFiniteCylinder::GetRealSpaceTightBindingLinearizedIndexSafe(int x, int y) const
 {
   if(x >= this->NbrSiteX)
   {
@@ -210,7 +216,7 @@ inline int  TightBindingModelHofstadterFiniteCylinder::GetRealSpaceTightBindingL
 // orbitalIndex = index of the orbital / site within the unit cell
 // return value = linearized index  
 
-inline int TightBindingModelHofstadterFiniteCylinder::GetRealSpaceTightBindingLinearizedIndex(int x, int y)
+inline int TightBindingModelHofstadterFiniteCylinder::GetRealSpaceTightBindingLinearizedIndex(int x, int y) const
 {
   return (y  + x * this->NbrSiteY); 
 }

@@ -75,13 +75,14 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
   this->NbrSite = 0;
   this->MomentumModulo = 1;
   this->XMomentum = 0; 
-  this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
-  this->MomentumIncrement = (this->NbrFermions * this->StateShift/2) % this->MomentumModulo;
-  this->ComplementaryStateShift = 2 * this->MaxMomentum - this->StateShift;
+  this->StateShift = this->MaxMomentum / this->MomentumModulo;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
+  this->ComplementaryStateShift = this->MaxMomentum - this->StateShift;
   this->MomentumMask = ((unsigned long) 1);
   this->MaximumSignLookUp = 0;
   this->LargeHilbertSpaceDimension = 0l;
   this->HilbertSpaceDimension = 0;
+  this->NbrSitePerUnitCell = 0;
   this->StateDescription = 0;
   this->StateMaxMomentum = 0;  
   this->LargeHilbertSpaceDimension = 0;
@@ -105,9 +106,9 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
   this->NbrMomentum = this->MaxMomentum + 1;
   this->MaxXMomentum =  maxXMomentum;
   this->MomentumModulo =  this->MaxXMomentum;
-
-  this->StateShift = 2 * (this->MaxMomentum / this->MomentumModulo);
-  this->MomentumIncrement = (this->NbrFermions * this->StateShift / 2) % this->MomentumModulo;
+  this->NbrSitePerUnitCell = this->NbrSite / this->MaxXMomentum;
+  this->StateShift = this->MaxMomentum / this->MomentumModulo;
+  this->MomentumIncrement = (this->NbrFermions * this->StateShift) % this->MomentumModulo;
   this->ComplementaryStateShift =  this->MaxMomentum - this->StateShift;
   this->MomentumMask = (0x1ul << this->StateShift) - 0x1ul;
 
@@ -182,7 +183,7 @@ FermionOnLatticeRealSpaceAnd1DTranslation::FermionOnLatticeRealSpaceAnd1DTransla
   this->NbrFermions = fermions.NbrFermions;  
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->NbrSite = fermions.NbrSite;
-
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;
   this->StateXShift = fermions.StateXShift;
@@ -257,7 +258,7 @@ FermionOnLatticeRealSpaceAnd1DTranslation& FermionOnLatticeRealSpaceAnd1DTransla
   this->NbrFermions = fermions.NbrFermions;  
   this->IncNbrFermions = fermions.IncNbrFermions;
   this->NbrSite = fermions.NbrSite;
-
+  this->NbrSitePerUnitCell = fermions.NbrSitePerUnitCell;
  
   this->MaxXMomentum = fermions.MaxXMomentum;
   this->XMomentum = fermions.XMomentum;

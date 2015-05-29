@@ -50,6 +50,8 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
 
   // total number of sites
   int NbrSite;
+  // number of sites per unit cell
+  int NbrSitePerUnitCell;
   
   // number of momentum sectors in the x direction 
   int MaxXMomentum;
@@ -134,6 +136,22 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // stateDescription = string describing the state
   // return value = corresponding index, -1 if an error occured
   virtual int FindStateIndex(char* stateDescription);
+
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetNbrSites();
+  
   
   // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition. The density matrix is only evaluated in a given momentum sector.
   // 
@@ -144,6 +162,30 @@ class  FermionOnLatticeRealSpaceAnd1DTranslation : public FermionOnTorusWithMagn
   // architecture = pointer to the architecture to use parallelized algorithm 
   // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
   // virtual HermitianMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrParticleSector, int kxSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
+
+  // get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position, sanitizing the input data first
+  // 
+  // xPosition = x coordinate of the unit cell
+  // yPosition = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital within the unit cell
+  // return value = linearized index
+  virtual int GetLinearizedIndexSafe(int xPosition, int orbitalIndex);
+
+  // get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position
+  // 
+  // xPosition = x coordinate of the unit cell
+  // yPosition = y coordinate of the unit cell
+  // orbitalIndex = index of the orbital within the unit cell
+  // return value = linearized index
+  virtual int GetLinearizedIndex(int xPosition, int orbitalIndex);
+
+  // get the lattice position from the linearized index (e.g. used for the creation/annihilation operators)
+  // 
+  // index = linearized index
+  // xPosition = reference on the x coordinate of the unit cell
+  // yPosition =reference on the  y coordinate of the unit cell
+  // orbitalIndex = reference on the index of the orbital within the unit cell
+  virtual void GetLinearizedIndex(int index, int& xPosition, int& orbitalIndex);
 
  protected:
 
@@ -251,7 +293,7 @@ inline int FermionOnLatticeRealSpaceAnd1DTranslation::SymmetrizeAdAdResult(unsig
     {
       coefficient *= this->RescalingFactors[this->ProdATemporaryNbrStateInOrbit][this->NbrStateInOrbit[TmpIndex]];
       nbrTranslationX = (this->MaxXMomentum - nbrTranslationX) % this->MaxXMomentum;
-      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >> ( nbrTranslationX)) & 0x1ul))); 
+      coefficient *= 1.0 - (2.0 * ((double) ((this->ReorderingSign[TmpIndex] >>  nbrTranslationX) & 0x1ul))); 
     }
   return TmpIndex;
 }
@@ -313,7 +355,6 @@ inline bool FermionOnLatticeRealSpaceAnd1DTranslation::TestMomentumConstraint(un
 inline int FermionOnLatticeRealSpaceAnd1DTranslation::FindOrbitSize(unsigned long stateDescription)
 {
   unsigned long TmpStateDescription = stateDescription;
-  unsigned long TmpStateDescription2 = stateDescription;
   int XSize = 1;
   this->ApplySingleXTranslation(TmpStateDescription);      
   while (stateDescription != TmpStateDescription)
@@ -330,9 +371,7 @@ inline int FermionOnLatticeRealSpaceAnd1DTranslation::FindOrbitSize(unsigned lon
 
 inline void FermionOnLatticeRealSpaceAnd1DTranslation::ApplySingleXTranslation(unsigned long& stateDescription)
 {
-  //cout <<"before translation = " <<(bitset<6>)  stateDescription<<endl;
   stateDescription = (stateDescription >> this->StateXShift) | ((stateDescription & this->XMomentumMask) << this->ComplementaryStateXShift);
-  //cout <<"after translation = " <<(bitset<6> ) stateDescription<<endl;
 }
 
 // get the fermonic sign when performing a single translation in the x direction on a state description, and apply the single translation
@@ -354,6 +393,78 @@ inline unsigned long FermionOnLatticeRealSpaceAnd1DTranslation::GetSignAndApplyS
   TmpSign ^= (TmpSign >> 1);
   TmpSign &= this->NbrFermionsParity;
   return TmpSign;
+}
+
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetKxMomentum()
+{
+  return this->XMomentum;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return value = maximum momentum along the x axis
+
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetMaxXMomentum()
+{
+  return this->MaxXMomentum;
+}
+
+// get the number of sites 
+// 
+// return value = number of sites
+
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetNbrSites()
+{
+  return this->NbrSite;
+}
+  
+
+
+// get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position, sanitizing the input data first
+// 
+// xPosition = x coordinate of the unit cell
+// yPosition = y coordinate of the unit cell
+// orbitalIndex = index of the orbital within the unit cell
+// return value = linearized index
+
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetLinearizedIndexSafe(int xPosition,  int orbitalIndex)
+{
+  orbitalIndex %= this->NbrSitePerUnitCell;
+  if (orbitalIndex < 0)
+    orbitalIndex +=  this->NbrSitePerUnitCell;
+  xPosition %= this->MaxXMomentum;
+  if (xPosition < 0)
+    xPosition +=  this->MaxXMomentum;
+  return this->GetLinearizedIndex(xPosition, orbitalIndex); 
+}
+
+// get the linearized index (e.g. used for the creation/annihilation operators) from the lattice position
+// 
+// xPosition = x coordinate of the unit cell
+// yPosition = y coordinate of the unit cell
+// orbitalIndex = index of the orbital within the unit cell
+// return value = linearized index
+
+inline int FermionOnLatticeRealSpaceAnd1DTranslation::GetLinearizedIndex(int xPosition,  int orbitalIndex)
+{
+  return (xPosition * this->NbrSitePerUnitCell) + orbitalIndex;
+}
+
+// get the lattice position from the linearized index (e.g. used for the creation/annihilation operators)
+// 
+// index = linearized index
+// xPosition = reference on the x coordinate of the unit cell
+// yPosition =reference on the  y coordinate of the unit cell
+// orbitalIndex = reference on the index of the orbital within the unit cell
+
+inline void FermionOnLatticeRealSpaceAnd1DTranslation::GetLinearizedIndex(int index, int& xPosition,  int& orbitalIndex)
+{
+  orbitalIndex = index % this->NbrSitePerUnitCell;
+  xPosition = index / this->NbrSitePerUnitCell;
 }
 
 #endif

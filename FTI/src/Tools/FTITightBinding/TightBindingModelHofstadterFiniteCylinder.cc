@@ -330,18 +330,18 @@ for (PosY=1; PosY<this->NbrSiteY - 1; ++PosY)
   OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(1, PosY,NumXTranslations , translationPhase);
   SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
   HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*PhaseX;
-     ++TmpIndex;
-     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(0, PosY+1,NumXTranslations, translationPhase);
-     SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
-     HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
-     ++TmpIndex;
-     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(-1, PosY,NumXTranslations, translationPhase);
-     SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
-     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX);
-     ++TmpIndex;
-     OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(0, PosY-1,NumXTranslations, translationPhase);
-     SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
-     HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0;
+  ++TmpIndex;
+  OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(0, PosY+1,NumXTranslations, translationPhase);
+  SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
+  HoppingAmplitudes[TmpPosition][TmpIndex] = -1.0;
+  ++TmpIndex;
+  OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(-1, PosY,NumXTranslations, translationPhase);
+  SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
+  HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0*Conj(PhaseX);
+  ++TmpIndex;
+  OrbitalIndices[TmpPosition][TmpIndex] =  this->EncodeSublatticeIndex(0, PosY-1,NumXTranslations, translationPhase);
+  SpatialIndices[TmpPosition][TmpIndex] = NumXTranslations;
+  HoppingAmplitudes[TmpPosition][TmpIndex] =  -1.0;
 }
 
 
@@ -408,8 +408,8 @@ HermitianMatrix  TightBindingModelHofstadterFiniteCylinder::BuildTightBindingHam
 	           if (spatialIndices[k][l] == 0)
                       TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]);
 		    else
-                    TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]* Phase(2.0*M_PI* this->FluxInserted/((double) this->NbrSiteX)*spatialIndices[k][l]));
-                }
+                      TmpHamiltonian.AddToMatrixElement(Index1, Index2, hoppingAmplitudes[k][l]* Phase(2.0*M_PI* this->FluxInserted/((double) this->NbrSiteX)*spatialIndices[k][l]));
+                  }
    
 #ifdef DEBUG_OUTPUT
 	 cout <<"x = " <<i<< " y = " <<k << " going to X = " <<  TmpX  << " Y = "<<TmpY<<" index1 = "<<Index1 << "; Index2 =" << Index2 <<" Coefficient" << hoppingAmplitudes[k][l]*tmpPhase<<"NumTranslation X = "<<NumXTranslations <<endl;

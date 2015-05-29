@@ -1,6 +1,5 @@
 #include "Options/Options.h"
 
-
 #include "HilbertSpace/FermionOnLatticeRealSpace.h"
 #include "HilbertSpace/FermionOnLatticeRealSpaceAnd1DTranslation.h"
 #include "HilbertSpace/BosonOnLatticeRealSpace.h"
@@ -25,6 +24,8 @@
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
 
+#include "Operator/ParticleOnLatticeRealSpaceAnd1DTranslationOneBodyOperator.h"
+
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
@@ -40,6 +41,8 @@ using std::endl;
 using std::ios;
 using std::ofstream;
 
+void  ComputeDensity(int NbrFermions, ComplexMatrix & eigenVectors, int X1, int Y1,  int X2, int Y2, TightBindingModelHofstadterFiniteCylinder * tightBindingModel);
+void  ComputeCurrent(FermionOnLatticeRealSpaceAnd1DTranslation * space, double fluxDensity, ComplexVector & groundState);
 
 int main(int argc, char** argv)
 {
@@ -81,11 +84,16 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new BooleanOption  ('\n', "no-translation", "use the real space representation when considering the system with all bandswithout the translations");
   (*SystemGroup) += new BooleanOption  ('\n', "synthetic-dimension", "use synthetic dimension coupling");
+  (*SystemGroup) += new BooleanOption  ('\n', "compute-density", "");
 
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 
   (*SystemGroup) += new BooleanOption  ('\n', "atomic-limit", "use atomic limit tight-binding model to test interaction terms");
+
+  (*SystemGroup) += new BooleanOption  ('\n', "compute-current", " ",false);
+  (*SystemGroup) += new SingleStringOption  ('\n', "groundstate-file", "filename for the groundstate whose current will be computed");
+
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -104,12 +112,37 @@ int main(int argc, char** argv)
   int NbrParticles = Manager.GetInteger("nbr-particles"); 
   int NbrSiteX = Manager.GetInteger("nbrsitex"); 
   int NbrSiteY = Manager.GetInteger("nbrsitey");
-
-
   int Flux = Manager.GetInteger("total-flux");
-
-
   char Axis ='y';
+
+  if( Manager.GetBoolean("compute-current") == true)
+{
+   TightBindingModelHofstadterFiniteCylinder  TightBindingModel (NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), Manager.GetDouble("flux-inserted"));
+
+   FermionOnLatticeRealSpaceAnd1DTranslation  Space (NbrParticles,NbrSiteX*NbrSiteY, Manager.GetInteger("only-kx"),NbrSiteX);
+   char* StateFileName = Manager.GetString("groundstate-file");
+   if (IsFile(StateFileName) == false)
+    {
+       cout << "state " << StateFileName << " does not exist or can't be opened" << endl;
+       return -1;           
+    }
+  ComplexVector State;
+  if (State.ReadVector(StateFileName) == false)
+   {
+      cout << "error while reading " << StateFileName << endl;
+      return -1;
+   }
+  if (State.GetVectorDimension() != Space.GetHilbertSpaceDimension())
+    {
+	      cout << "error: vector and Hilbert-space have unequal dimensions"<<endl;
+	      return -1;
+	    }
+   ComputeCurrent(&Space,TightBindingModel.GetFluxDensity() ,State);
+   return 0;
+
+}
+
+
 
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
 
@@ -167,45 +200,28 @@ else
       
       //TightBindingModel->WriteAsciiSpectrum(EigenvalueOutputFile);
 
-/*    HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
+    HermitianMatrix TmpHam (TightBindingModel->GetRealSpaceTightBindingHamiltonian());
     RealDiagonalMatrix TmpHam2(TmpHam.GetNbrRow());
-    TmpHam.LapackDiagonalize(TmpHam2);
-    for (int i = 0; i < TmpHam.GetNbrRow(); ++i)
-	{
-	  cout << i << " : " << TmpHam2[i] << endl;
-	}*/
+    ComplexMatrix Q(NbrSiteX, NbrSiteY, true); 
+    TmpHam.LapackDiagonalize(TmpHam2,Q);
+  if (Manager.GetBoolean("compute-density") == true)
+{
+ for(int X1 = 0; X1 <NbrSiteX ; X1++)
+{
+ for(int Y1 = 0; Y1 <NbrSiteY ; Y1++)
+{
+ for(int X2 = 0; X2 <NbrSiteX ; X2++)
+{
+ for(int Y2 = 0; Y2 <NbrSiteY ; Y2++)
+{
+ ComputeDensity(NbrParticles, Q,X1,Y1, X2,Y2,(TightBindingModelHofstadterFiniteCylinder *) TightBindingModel);
+}
+}
+}
+}
+}
 
-      for (int n=0; n<TightBindingModel->GetNbrBands()-1; ++n)
-	{
-	  double BandSpread = TightBindingModel->ComputeBandSpread(n);
-	  double DirectBandGap = TightBindingModel->ComputeDirectBandGap(n);
-	  cout << "Spread("<<n<<") = " << BandSpread << "  Direct Gap = " << DirectBandGap  << "  Flattening = " << (BandSpread / DirectBandGap) << endl;
-	}
-      double BandSpread = TightBindingModel->ComputeBandSpread(TightBindingModel->GetNbrBands()-1);
-      cout << "Spread("<<TightBindingModel->GetNbrBands()-1<<") = " << BandSpread << endl;
-
-      if (Manager.GetBoolean("singleparticle-chernnumber") == true)
-	{
-	  cout << "Chern number("<<TightBindingModel->GetNbrBands()-1<<") = " << TightBindingModel->ComputeChernNumber(TightBindingModel->GetNbrBands()-1) << endl;
-	}
-      if (ExportOneBody == true)
-	{
-	  char* BandStructureOutputFile = new char [512];
-	  if (Manager.GetString("export-onebodyname") != 0)
-	    strcpy(BandStructureOutputFile, Manager.GetString("export-onebodyname"));
-	  else
-	    sprintf (BandStructureOutputFile, "%s_tightbinding.dat", FilePrefix);
-	  if (Manager.GetBoolean("export-onebody") == true)
-	    {
-	      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
-	    }
-	  else
-	    {
-	      TightBindingModel->WriteBandStructureASCII(BandStructureOutputFile);
-	    }
-	  delete[] BandStructureOutputFile;
-	}
-      delete TightBindingModel;
+    delete TightBindingModel;
       return 0;
     }
 
@@ -235,7 +251,7 @@ else
    ChemicalPotential[i] =0.0 ;
  TightBindingModel2DAtomicLimitLattice * TightBindingModel1 = new  TightBindingModel2DAtomicLimitLattice(NbrSiteX, 1,NbrSiteY, ChemicalPotential,0,0, Architecture.GetArchitecture());
 }
-
+ 
   TightBindingModelHofstadterFiniteCylinder  * TightBindingModel  = new TightBindingModelHofstadterFiniteCylinder(NbrSiteX, NbrSiteY, Flux,Axis, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),Manager.GetDouble("flux-inserted"));
 
   HermitianMatrix TightBindingMatrix = 0;
@@ -383,3 +399,54 @@ else
   return 0;
 }
 
+
+void  ComputeDensity(int NbrFermions, ComplexMatrix & eigenVectors, int X1, int Y1,  int X2, int Y2, TightBindingModelHofstadterFiniteCylinder * tightBindingModel)
+{
+  int Index1 = tightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(X1, Y1);
+  int Index2 = tightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(X2, Y2);
+  Complex Result = 0.0;
+  for(int i =0; i < NbrFermions;i++)
+  {
+     for(int j =0; j < NbrFermions;j++)
+     {
+        Result+= eigenVectors.GetMatrixElement(i,Index1)*Conj(eigenVectors.GetMatrixElement(i,Index1)) * eigenVectors.GetMatrixElement(j,Index2)*Conj(eigenVectors.GetMatrixElement(j,Index2));
+     }
+  }
+ cout <<Index1 << " " << Index2<< " " << Result<<endl;
+}
+
+
+void  ComputeCurrent(FermionOnLatticeRealSpaceAnd1DTranslation * space, double fluxDensity, ComplexVector & groundState)
+{
+ Complex Test = 0.0;
+ int Ly = space->GetNbrSites() / space->GetMaxXMomentum();
+cout <<"Flux density : "<<fluxDensity<<endl;
+ for(int y =0; y < Ly;y++)
+  {
+ for(int x =0; x < space->GetMaxXMomentum();x++)
+  { 
+   ParticleOnLatticeRealSpaceAnd1DTranslationOneBodyOperator Operator(space, space->GetLinearizedIndexSafe(x+1, y), space->GetLinearizedIndexSafe(x, y));
+
+   Complex Result = Operator.PartialMatrixElement(groundState,groundState,0,space->GetHilbertSpaceDimension());
+
+   Result *= Phase(2.0*M_PI*fluxDensity*((double) y));
+   Test += 2.0*Result.Re;
+
+   cout <<x<<" " <<y <<" " <<Result<<endl;
+   }
+ }
+
+ for(int x =0; x < space->GetMaxXMomentum();x++)
+  { 
+ for(int y =0; y < Ly - 1;y++)
+  {
+   ParticleOnLatticeRealSpaceAnd1DTranslationOneBodyOperator Operator(space, space->GetLinearizedIndexSafe(x, y+1), space->GetLinearizedIndexSafe(x, y));
+   Complex Result = Operator.PartialMatrixElement(groundState,groundState,0,space->GetHilbertSpaceDimension());
+   cout <<x<<" " <<y <<" " <<Result<<endl;
+   Test += 2.0*Result.Re;
+   }
+ }
+
+cout <<"Estimated Energy = " << Test<<endl;
+
+}
