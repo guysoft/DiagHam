@@ -15,6 +15,7 @@
 //#include "Hamiltonian/ParticleOnLatticePyrochloreSlabLatticeSingleBandFiveBodyHamiltonian.h"
 
 #include "Tools/FTITightBinding/TightBindingModelOFLNOrbitalTriangularLattice.h"
+#include "Tools/FTITightBinding/Generic2DTightBindingModel.h"
 #include "Tools/FTITightBinding/TightBindingModel2DAtomicLimitLattice.h"
 
 
@@ -86,6 +87,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebody", "export the one-body information (band structure and eigenstates) in a binary file");
   (*SystemGroup) += new BooleanOption  ('\n', "export-onebodytext", "export the one-body information (band structure and eigenstates) in an ASCII text file");
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
+  (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
   (*SystemGroup) += new BooleanOption  ('\n', "no-dispersion", "use a model without dispersion and a contant gap of 10 between the two lowest bands");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
@@ -153,7 +155,9 @@ int main(int argc, char** argv)
       {
 	sprintf (FilePrefix, "%s_twoband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
       }
-    
+
+    char* FileParameterString = new char [256];
+    sprintf (FileParameterString, "las_%g_gx_%g_gy_%g", LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
     char* CommentLine = new char [256];
     sprintf (CommentLine, "eigenvalues\n# kx ky ");
     char* EigenvalueOutputFile = new char [512];
@@ -164,18 +168,18 @@ int main(int argc, char** argv)
 	if (Manager.GetBoolean("flat-band") == true)
 	  { 
 	    if (Manager.GetDouble("v-potential") == 0.0)
-	      sprintf (EigenvalueOutputFile, "%s_las_%g_gx_%g_gy_%g.dat",FilePrefix, LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      sprintf (EigenvalueOutputFile, "%s_%s.dat",FilePrefix, FileParameterString);
 	    else
 	      {
-		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+		sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
 	      }
 	  }
 	else
 	  {
 	    if (Manager.GetDouble("v-potential") == 0.0)
-	      sprintf (EigenvalueOutputFile, "%s_u_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	      sprintf (EigenvalueOutputFile, "%s_u_%g_%s.dat",FilePrefix, Manager.GetDouble("u-potential"), FileParameterString);
 	  else
-	    sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_las_%g_gx_%g_gy_%g.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), LaserStrength, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"));
+	    sprintf (EigenvalueOutputFile, "%s_u_%g_v_%g_%s.dat",FilePrefix, Manager.GetDouble("u-potential"), Manager.GetDouble("v-potential"), FileParameterString);
 	  }
       }
   
@@ -233,8 +237,18 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   
-  
-  TightBindingModelOFLNOrbitalTriangularLattice TightBindingModel(LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),  Manager.GetInteger("cutOFF"));
+  Abstract2DTightBindingModel* TightBindingModel;
+  if (Manager.GetString("import-onebody") == 0)
+    {
+      TightBindingModel = new TightBindingModelOFLNOrbitalTriangularLattice (LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),  Manager.GetInteger("cutOFF"));
+      char* BandStructureOutputFile = new char [1024];
+      sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
+      TightBindingModel->WriteBandStructure(BandStructureOutputFile);
+    }
+  else
+    {
+      TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+    }
 
 
 
@@ -284,21 +298,21 @@ int main(int argc, char** argv)
 		{ 
 		  if (Manager.GetBoolean("two-bands") == false)
 		    {
-		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
 		    }
 		  else
 		    {
-		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), &TightBindingModel, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
+		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), TightBindingModel, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
 		    }
 		}
 	      else
 		{
-		  //Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,													&TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+		  //Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,													TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 		}
 	    }
 	  else
 	    { 
-	      //Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	&TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	      //Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
 	    }
 
 	  char* ContentPrefix = new char[256];
