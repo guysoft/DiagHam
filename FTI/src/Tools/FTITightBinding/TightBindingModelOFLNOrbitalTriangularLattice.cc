@@ -34,10 +34,16 @@
 #include "Matrix/ComplexMatrix.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealDiagonalMatrix.h"
+#include "GeneralTools/Endian.h"
 
+#include <fstream>
 #include <iostream>
+
+
+using std::ofstream;
 using std::cout;
 using std::endl;
+using std::ios;
 
 //#define DEBUG_OUTPUT
 
@@ -87,6 +93,93 @@ TightBindingModelOFLNOrbitalTriangularLattice::TightBindingModelOFLNOrbitalTrian
     }
 
     this->ComputeBandStructure();  
+}
+
+// constructor from a binary file
+//
+// fileName = name of the binary file that contains the band structure information
+
+TightBindingModelOFLNOrbitalTriangularLattice::TightBindingModelOFLNOrbitalTriangularLattice(char* fileName)
+{
+  ifstream File;
+  File.open(fileName, ios::binary | ios::in);
+  if (!File.is_open())
+    {
+      cout << "Cannot open the file: " << fileName << endl;
+      return;
+    }
+  File.seekg (0l, ios::end);
+  unsigned long FileSize = File.tellg ();
+  File.close();
+
+  File.open(fileName, ios::binary | ios::in);
+  ReadLittleEndian(File, this->NbrBands);
+  ReadLittleEndian(File, this->NbrStatePerBand);
+  int HeaderSize = -1;
+  ReadLittleEndian(File, HeaderSize);
+  int CorrectDimension = 2;
+  int CorrectHeaderSize = (((2 * CorrectDimension) + 2) * sizeof(double)) + ((CorrectDimension + 1 + 3) * sizeof(int));
+  if (HeaderSize >= CorrectHeaderSize)
+    {
+      int TmpDimension = -1;
+      ReadLittleEndian(File, TmpDimension);
+      HeaderSize -= sizeof(int);
+      if (TmpDimension == CorrectDimension)
+	{
+	  ReadLittleEndian(File, this->NbrSiteX);
+	  ReadLittleEndian(File, this->KxFactor);
+	  ReadLittleEndian(File, this->GammaX);	 
+	  ReadLittleEndian(File, this->NbrSiteY);
+	  ReadLittleEndian(File, this->KyFactor);
+	  ReadLittleEndian(File, this->GammaY);	  
+	  ReadLittleEndian(File, this->NbrStep);
+	  ReadLittleEndian(File, this->NbrInternalDegree);
+	  ReadLittleEndian(File, this->LaserStrength);
+	  ReadLittleEndian(File, this->InvMomentum);
+	  ReadLittleEndian(File, this->ChernNumber);
+          HeaderSize -= (CorrectHeaderSize - sizeof(int));
+	}
+      else
+	{
+	  cout << "error : " << fileName << " does not contain a valid 2D band structure" << endl;
+	  this->NbrBands = 0;
+	  this->NbrStatePerBand = 0;
+	  File.close();
+	  return;
+	}
+      if (HeaderSize > 0) 
+	File.seekg (HeaderSize, ios::cur);
+    }
+  else
+    {
+      cout << "error : " << fileName << " does not contain a valid 2D band structure" << endl;
+      this->NbrBands = 0;
+      this->NbrStatePerBand = 0;
+      File.close();
+      return;
+    }
+  this->EnergyBandStructure = new double*[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
+      for (int j = 0; j < this->NbrStatePerBand; ++j)
+	{
+	  ReadLittleEndian(File, this->EnergyBandStructure[i][j]);
+	}
+    }
+  if (FileSize == ((sizeof(double) * this->NbrStatePerBand * this->NbrBands) + sizeof(long) + sizeof(int) + sizeof(int) + (this->NbrBands * this->NbrBands * sizeof(Complex)) + HeaderSize))
+    {
+      this->OneBodyBasis = 0;
+    }
+  else
+    {
+      this->OneBodyBasis = new ComplexMatrix [this->NbrStatePerBand];
+      for (int j = 0; j < this->NbrStatePerBand; ++j)	
+	{
+	  this->OneBodyBasis[j].ReadMatrix(File);
+	}     
+    }
+  File.close();
 }
 
 // destructor
@@ -229,4 +322,30 @@ bool TightBindingModelOFLNOrbitalTriangularLattice::WriteAsciiSpectrum(char* fil
     }
   File.close();
   return true;
+}
+
+// write an header that describes the tight binding model
+// 
+// output = reference on the output stream
+// return value  = reference on the output stream
+
+ofstream& TightBindingModelOFLNOrbitalTriangularLattice::WriteHeader(ofstream& output)
+{
+  int Dimension = 2;
+  int HeaderSize = (((2 * Dimension) + 2) * sizeof(double)) + ((Dimension + 1 + 3) * sizeof(int));
+  WriteLittleEndian(output, HeaderSize);
+  WriteLittleEndian(output, Dimension);
+  WriteLittleEndian(output, this->NbrSiteX);
+  WriteLittleEndian(output, this->KxFactor);
+  WriteLittleEndian(output, this->GammaX);
+  WriteLittleEndian(output, this->NbrSiteY);
+  WriteLittleEndian(output, this->KyFactor);
+  WriteLittleEndian(output, this->GammaY);
+  WriteLittleEndian(output, this->NbrStep);
+  WriteLittleEndian(output, this->NbrInternalDegree);
+  WriteLittleEndian(output, this->LaserStrength);
+  WriteLittleEndian(output, this->InvMomentum);
+  WriteLittleEndian(output, this->ChernNumber);
+
+  return output; 
 }

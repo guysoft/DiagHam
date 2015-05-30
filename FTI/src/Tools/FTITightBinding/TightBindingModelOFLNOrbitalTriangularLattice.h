@@ -65,6 +65,11 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
   TightBindingModelOFLNOrbitalTriangularLattice(double laserStrength, int nbrInternalDegree, int nbrSiteX,  int nbrSiteY, int chernNumber, double gammaX, double gammaY, AbstractArchitecture* architecture, int cutOFF, bool storeOneBodyMatrices = true);
 
+  // constructor from a binary file
+  //
+  // fileName = name of the binary file that contains the band structure information
+  TightBindingModelOFLNOrbitalTriangularLattice(char* fileName);
+
   // destructor
   //
   ~TightBindingModelOFLNOrbitalTriangularLattice();
@@ -94,6 +99,12 @@ class TightBindingModelOFLNOrbitalTriangularLattice : public Abstract2DTightBind
   // minStateIndex = minimum index of the state to compute
   // nbrStates = number of states to compute
   virtual void CoreComputeBandStructure(long minStateIndex = 0l, long nbrStates= 0l);
+  
+  // write an header that describes the tight binding model
+  // 
+  // output = reference on the output stream
+  // return value  = reference on the output stream
+  virtual ofstream& WriteHeader(ofstream& output);
   
 };
 

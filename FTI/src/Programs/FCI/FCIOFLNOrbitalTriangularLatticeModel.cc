@@ -237,7 +237,7 @@ int main(int argc, char** argv)
       MaxKy = MinKy;
     }
   
-  Abstract2DTightBindingModel* TightBindingModel;
+  TightBindingModelOFLNOrbitalTriangularLattice* TightBindingModel;
   if (Manager.GetString("import-onebody") == 0)
     {
       TightBindingModel = new TightBindingModelOFLNOrbitalTriangularLattice (LaserStrength, Manager.GetInteger("nbr-spin"), NbrSitesX, NbrSitesY, ChernNumber, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(),  Manager.GetInteger("cutOFF"));
@@ -247,7 +247,7 @@ int main(int argc, char** argv)
     }
   else
     {
-      TightBindingModel = new Generic2DTightBindingModel(Manager.GetString("import-onebody")); 
+      TightBindingModel = new TightBindingModelOFLNOrbitalTriangularLattice(Manager.GetString("import-onebody")); 
     }
 
 
