@@ -989,7 +989,12 @@ class ParticleOnSphere :  public AbstractQHEParticle
   // return value = Gutzwiller projected state
   virtual ComplexVector GutzwillerProjection(ComplexVector& state, ParticleOnSphere* space);
 
-
+  // Compute the overlap of two states made from different one-body wavefunction
+  //
+  //  firstVector = reference on the first vector 
+  //  secondVector = reference on the second vector 
+  // overlapMatrix = pointer to the table with the overlap between the one-body states
+  virtual Complex ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix);
 };
 
 // convert the Lz value from the sphere geometry to the disk geometry

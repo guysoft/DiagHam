@@ -192,9 +192,13 @@ class BosonOnSquareLatticeMomentumSpace : public BosonOnSphereShort
   // rightSpace = pointer to the Hilbert space of the second color
   // unnormalizedBasisFlag = assume evrything has to be done in the unnormalized basis
   // return value = symmetrized state
-
   ComplexVector SymmetrizeU1U1State (ComplexVector& leftVector, ComplexVector& rightVector, BosonOnSquareLatticeMomentumSpace* leftSpace, BosonOnSquareLatticeMomentumSpace* rightSpace, bool unnormalizedBasisFlag, AbstractArchitecture* architecture);
 
+  // Compute the overlap of two states made from different one-body wavefunction
+  //
+  //  firstVector = reference on the first vector 
+  //  secondVector = reference on the second vector 
+  // overlapMatrix = pointer to the table with the overlap between the one-body states
   virtual Complex ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix);
   virtual  void ApplyOneBodyEigenvectorChangeOnManyBodyState(Complex * phasefactor , ComplexVector & state);
 

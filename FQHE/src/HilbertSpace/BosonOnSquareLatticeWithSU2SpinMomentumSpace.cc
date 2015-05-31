@@ -1106,10 +1106,8 @@ long BosonOnSquareLatticeWithSU2SpinMomentumSpace::EvaluatePartialDensityMatrixP
 
 void BosonOnSquareLatticeWithSU2SpinMomentumSpace::ProjectIntoTheLowestBand(ComplexVector * initialState, BosonOnSquareLatticeMomentumSpace * finalSpace, ComplexVector * finalState, bool otherBand )
 {
-
  for(int i = 0; i < finalSpace->GetHilbertSpaceDimension(); i++)
 {
-
  (*finalState)[i] =  (*initialState)[this->FindStateIndex(finalSpace->FermionBasis->StateDescription[i], 0)];  
 }
  

@@ -516,7 +516,7 @@ inline bool FermionOnTorusWithMagneticTranslations::TestXMomentumConstraint(unsi
 #endif
 	  ++index;
 	}
-      if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1)) % this->MomentumModulo) == 0)
+      if ((((this->XMomentum * index) - ((this->MomentumModulo * TmpSignature) >> 1 )) % this->MomentumModulo) == 0)
 	return true;
       else
 	return false;

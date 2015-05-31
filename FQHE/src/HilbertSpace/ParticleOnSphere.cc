@@ -1486,3 +1486,13 @@ ComplexVector ParticleOnSphere::GutzwillerProjection(ComplexVector& state, Parti
   return TmpVector;
 }
 
+// Compute the overlap of two states made from different one-body wavefunction
+//
+//  firstVector = reference on the first vector 
+//  secondVector = reference on the second vector 
+// overlapMatrix = pointer to the table with the overlap between the one-body states
+Complex ParticleOnSphere::ComputeOverlapWaveFunctionsWithDifferentGamma (ComplexVector& firstVector, ComplexVector& secondVector, Complex * overlapMatrix)
+{
+  cout <<"using dummy function ParticleOnSphere::ComputeOverlapWaveFunctionsWithDifferentGamma"<<endl;
+  return Complex();
+}
