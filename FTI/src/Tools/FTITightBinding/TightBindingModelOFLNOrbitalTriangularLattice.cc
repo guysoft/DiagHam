@@ -162,7 +162,10 @@ TightBindingModelOFLNOrbitalTriangularLattice::TightBindingModelOFLNOrbitalTrian
   for (int i = 0; i < this->NbrBands; ++i)
     {
       this->EnergyBandStructure[i] = new double[this->NbrStatePerBand];
-      for (int j = 0; j < this->NbrStatePerBand; ++j)
+    }
+  for (int j = 0; j < this->NbrStatePerBand; ++j)
+    {
+      for (int i = 0; i < this->NbrBands; ++i)
 	{
 	  ReadLittleEndian(File, this->EnergyBandStructure[i][j]);
 	}
@@ -198,7 +201,6 @@ TightBindingModelOFLNOrbitalTriangularLattice::~TightBindingModelOFLNOrbitalTria
 
 void TightBindingModelOFLNOrbitalTriangularLattice::CoreComputeBandStructure(long minStateIndex, long nbrStates)
 {
-  cout<<"this->NbrBands"<<this->NbrBands<<endl;
   if (nbrStates == 0l)
     nbrStates = this->NbrStatePerBand;
   long MaxStateIndex = minStateIndex + nbrStates;
