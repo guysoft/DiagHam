@@ -69,6 +69,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('c', "chernnumber", "chern number", 1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-kx", "only evalute a given x momentum sector (negative if all kx sectors have to be computed)", -1);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "only-ky", "only evalute a given y momentum sector (negative if all ky sectors have to be computed)", -1);
+  (*SystemGroup) += new BooleanOption  ('\n', "use-inversion", "only compute the momentum sectors that are not related by the inversion symmetry");
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new BooleanOption  ('\n', "two-bands", "use the two lowest energy bands", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
@@ -253,90 +254,145 @@ int main(int argc, char** argv)
 
 
 //  TightBindingModel2DAtomicLimitLattice  TightBindingModel(NbrSitesX, NbrSitesY,  1 , 0, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());
-  bool FirstRunFlag = true;
-  for (int i = MinKx; i <= MaxKx; ++i)
+
+  int NbrMomentumSectors = 0;
+  if (Manager.GetBoolean("use-inversion") == false)
     {
-      for (int j = MinKy; j <= MaxKy; ++j)
+      for (int i = MinKx; i <= MaxKx; ++i)
 	{
-	  cout << "(kx=" << i << ",ky=" << j << ") : " << endl;
-
-	  ParticleOnSphere* Space = 0;
-	  if (Manager.GetBoolean("two-bands") == false)
+	  for (int j = MinKy; j <= MaxKy; ++j)
 	    {
-	      if (Manager.GetBoolean("boson") == false)
-		{
-		  if ((NbrSitesX * NbrSitesY) <= 63)
-		    {
-		      Space = 0;
-		      // Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		    }
-		  else
-		    {
-		      Space =0;
-		      //Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		    }
-		}
-	      else
-		{
-		  Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-		}
+	      ++NbrMomentumSectors;
 	    }
-	  else
-	    {
-	      Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
-	    }
-	  
-	  cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
-	  
-	  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
-	    Memory = Architecture.GetArchitecture()->GetLocalMemory();
-	  Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
-	  AbstractQHEHamiltonian* Hamiltonian = 0;
-	  if (Manager.GetBoolean("three-body") == false)
-	    { 
-	      if (Manager.GetBoolean("four-body") == false)
-		{ 
-		  if (Manager.GetBoolean("two-bands") == false)
-		    {
-		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
-		    }
-		  else
-		    {
-		      Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), TightBindingModel, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
-		    }
-		}
-	      else
-		{
-		  //Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,													TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-		}
-	    }
-	  else
-	    { 
-	      //Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
-	    }
-
-	  char* ContentPrefix = new char[256];
-	  sprintf (ContentPrefix, "%d %d", i, j);
-	  char* EigenstateOutputFile = new char [512];
-	  if (Manager.GetString("eigenstate-file")!=0)
-	    sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), i, j);
-	  else
-	    {
-	      char* TmpExtention = new char [512];
-	      sprintf (TmpExtention, "_kx_%d_ky_%d", i, j);
-	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
-	    }
-
-	  GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
-	  FirstRunFlag = false;
-	  MainTaskOperation TaskOperation (&Task);
-	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-	  cout << "------------------------------------" << endl;
-	  delete Hamiltonian;
-	  delete Space;
-	  delete[] EigenstateOutputFile;
-	  delete[] ContentPrefix;
 	}
+    }
+  else
+    {
+      for (int i = MinKx; i <= MaxKx; ++i)
+	{
+	  for (int j = MinKy; j <= MaxKy; ++j)
+	    {
+	      if ((i <= ((NbrSitesX - i) % NbrSitesX)) && (j <= ((NbrSitesY - j) % NbrSitesY)))
+		{
+		  ++NbrMomentumSectors;
+		}
+	    }
+	}
+    }
+  int* KxMomentumSectors = new int [NbrMomentumSectors];
+  int* KyMomentumSectors = new int [NbrMomentumSectors];
+  NbrMomentumSectors = 0;
+  if (Manager.GetBoolean("use-inversion") == false)
+    {
+      for (int i = MinKx; i <= MaxKx; ++i)
+	{
+	  for (int j = MinKy; j <= MaxKy; ++j)
+	    {
+	      KxMomentumSectors[NbrMomentumSectors] = i;
+	      KyMomentumSectors[NbrMomentumSectors] = j;
+	      ++NbrMomentumSectors;
+	    }
+	}
+    }
+  else
+    {
+      for (int i = MinKx; i <= MaxKx; ++i)
+	{
+	  for (int j = MinKy; j <= MaxKy; ++j)
+	    {
+	      if ((i <= ((NbrSitesX - i) % NbrSitesX)) && (j <= ((NbrSitesY - j) % NbrSitesY)))
+		{
+		  KxMomentumSectors[NbrMomentumSectors] = i;
+		  KyMomentumSectors[NbrMomentumSectors] = j;
+		  ++NbrMomentumSectors;
+		}
+	    }
+	}
+    }
+
+
+
+  bool FirstRunFlag = true;
+  for (int i = 0; i < NbrMomentumSectors; ++i)
+    {
+      cout << "(kx=" << KxMomentumSectors[i] << ",ky=" << KyMomentumSectors[i] << ") : " << endl;
+      
+      ParticleOnSphere* Space = 0;
+      if (Manager.GetBoolean("two-bands") == false)
+	{
+	  if (Manager.GetBoolean("boson") == false)
+	    {
+	      if ((NbrSitesX * NbrSitesY) <= 63)
+		{
+		  Space = 0;
+		  // Space = new FermionOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	      else
+		{
+		  Space =0;
+		  //Space = new FermionOnSquareLatticeMomentumSpaceLong (NbrParticles, NbrSitesX, NbrSitesY, i, j);
+		}
+	    }
+	  else
+	    {
+	      Space = new BosonOnSquareLatticeMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, KxMomentumSectors[i], KyMomentumSectors[i]);
+	    }
+	}
+      else
+	{
+	  Space = new BosonOnSquareLatticeWithSU2SpinMomentumSpace (NbrParticles, NbrSitesX, NbrSitesY, KxMomentumSectors[i], KyMomentumSectors[i]);
+	}
+	  
+      cout << "dim = " << Space->GetHilbertSpaceDimension()  << endl;
+      
+      if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
+	Memory = Architecture.GetArchitecture()->GetLocalMemory();
+      Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());	
+      AbstractQHEHamiltonian* Hamiltonian = 0;
+      if (Manager.GetBoolean("three-body") == false)
+	{ 
+	  if (Manager.GetBoolean("four-body") == false)
+	    { 
+	      if (Manager.GetBoolean("two-bands") == false)
+		{
+		  Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeSingleBandHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), TightBindingModel, Manager.GetBoolean("flat-band") , BandIndex, Architecture.GetArchitecture(), Memory);
+		}
+	      else
+		{
+		  Hamiltonian = new ParticleOnLatticeOFLNOrbitalTriangularLatticeTwoBandHamiltonian( (ParticleOnSphereWithSpin*) Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetInteger("nbr-spin"), Manager.GetInteger("cutOFF") , Manager.GetDouble("u-potential"), TightBindingModel, Manager.GetBoolean("flat-band"), Manager.GetBoolean("no-dispersion") , Architecture.GetArchitecture(), Memory);
+		}
+	    }
+	  else
+	    {
+	      //Hamiltonian = new ParticleOnLatticePyrochloreSlabLatticeSingleBandFourBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,													TightBindingModel, Manager.GetInteger("nbr-layers") - 1, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	    }
+	}
+      else
+	{ 
+	  //Hamiltonian = new ParticleOnLatticeNOrbitalSquareLatticeSingleBandThreeBodyHamiltonian(Space, NbrParticles, NbrSitesX, NbrSitesY, Manager.GetDouble("u-potential"), 0.0,	TightBindingModel,0, Manager.GetBoolean("flat-band"), Architecture.GetArchitecture(), Memory);
+	}
+      
+      char* ContentPrefix = new char[256];
+      sprintf (ContentPrefix, "%d %d", KxMomentumSectors[i], KyMomentumSectors[i]);
+      char* EigenstateOutputFile = new char [512];
+      if (Manager.GetString("eigenstate-file")!=0)
+	sprintf (EigenstateOutputFile, "%s_kx_%d_ky_%d", Manager.GetString("eigenstate-file"), KxMomentumSectors[i], KyMomentumSectors[i]);
+      else
+	{
+	  char* TmpExtention = new char [512];
+	  sprintf (TmpExtention, "_kx_%d_ky_%d", KxMomentumSectors[i], KyMomentumSectors[i]);
+	      EigenstateOutputFile = ReplaceExtensionToFileName(EigenvalueOutputFile, ".dat", TmpExtention);
+	}
+      
+      GenericComplexMainTask Task(&Manager, Hamiltonian->GetHilbertSpace(), &Lanczos, Hamiltonian, ContentPrefix, CommentLine, 0.0,  EigenvalueOutputFile, FirstRunFlag, EigenstateOutputFile);
+      FirstRunFlag = false;
+      MainTaskOperation TaskOperation (&Task);
+      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+      cout << "------------------------------------" << endl;
+      delete Hamiltonian;
+      delete Space;
+      delete[] EigenstateOutputFile;
+      delete[] ContentPrefix;
     }
     return 0;
 }
