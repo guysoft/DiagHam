@@ -4,6 +4,7 @@
 
 #include "GeneralTools/ArrayTools.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/StringTools.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/MultiColumnASCIIFile.h"
 
@@ -77,6 +78,21 @@ int main(int argc, char** argv)
       cout << "can't open file " << Manager.GetString("ground-file") << endl;
       return -1;
     }
+  char* OutputFileName = 0;
+  if (Manager.GetString("output-file") == 0)
+    {
+      OutputFileName = ReplaceString(Manager.GetString("ground-file"), "twoband", "singleband_projected");
+      if (OutputFileName == 0)
+	{
+	  cout << "can't guess output name from " << Manager.GetString("ground-file") << "(should contain twoband)" << endl;
+	  return 0;
+	}
+    }
+  else
+    {
+      OutputFileName = new char [strlen(Manager.GetString("output-file")) + 1];
+      strcpy (OutputFileName, Manager.GetString("output-file"));
+    }
 
  if (FQHEOnSquareLatticeWithSpinFindSystemInfoFromVectorFileName( Manager.GetString("ground-file"), NbrParticles, NbrSiteX, NbrSiteY, TotalKx, TotalKy, TotalSpin, Statistics) == false)
   {
@@ -102,7 +118,7 @@ int main(int argc, char** argv)
 
   ComplexVector FinalState (FinalSpace->GetHilbertSpaceDimension()); 
   InitialSpace->ProjectIntoTheLowestBand(&InitialState, FinalSpace, &FinalState);
-  FinalState.WriteVector(Manager.GetString("output-file"));
+  FinalState.WriteVector(OutputFileName);
 
   return 0;
 }
