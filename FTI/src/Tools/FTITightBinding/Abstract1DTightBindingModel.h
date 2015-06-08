@@ -98,6 +98,12 @@ class Abstract1DTightBindingModel : public AbstractTightBindingModel
   // return value = true if no error occured
   virtual bool WriteAsciiSpectrum(char* fileName);
 
+  // flatten the energy spectrum
+  //
+  // flatteningFactor = flattening factor applied to each band (the band is rescale with respect to its average value)
+  // bandShift = shift each band by bandShift times the band index
+  virtual void FlattenBands(double flatteningFactor, double bandShift);
+
  protected:
 
   // write an header that describes the tight binding model

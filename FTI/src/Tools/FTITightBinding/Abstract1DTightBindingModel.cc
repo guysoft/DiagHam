@@ -120,3 +120,31 @@ bool Abstract1DTightBindingModel::WriteAsciiSpectrum(char* fileName)
   File.close();
   return true;
 }
+
+// flatten the energy spectrum
+//
+// flatteningFactor = flattening factor applie to each band (the band is rescale with respect to its average value)
+// bandShift = shift each band by bandShift times the band index
+
+void Abstract1DTightBindingModel::FlattenBands(double flatteningFactor, double bandShift)
+{
+  double* TmpAverageEnergies = new double[this->NbrBands];
+  for (int i = 0; i < this->NbrBands; ++i)
+    TmpAverageEnergies[i] = 0.0;
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      for (int j = 0; j < this->NbrStatePerBand; ++j)      
+	TmpAverageEnergies[i] += this->EnergyBandStructure[i][j];
+      TmpAverageEnergies[i] /= (double)  this->NbrStatePerBand;
+    }
+  for (int i = 0; i < this->NbrBands; ++i)
+    {
+      for (int j = 0; j < this->NbrStatePerBand; ++j)      
+	{
+	  this->EnergyBandStructure[i][j] = (((this->EnergyBandStructure[i][j] - TmpAverageEnergies[i]) * flatteningFactor)
+					     + TmpAverageEnergies[i] + (((double) i) * bandShift));
+	}
+    }
+  delete[] TmpAverageEnergies;
+}
+

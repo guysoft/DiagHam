@@ -2053,6 +2053,8 @@ ComplexMatrix FermionOnTorus::EvaluatePartialEntanglementMatrixFullKyPartB (int 
 	  return TmpEntanglementMatrix;	  
 	}
     }
+
+  cout << "toto" << endl;
   
   int MinIndex = 0;
   int NbrFermionsComplementarySector = this->NbrFermions - nbrFermionSector;
@@ -2124,6 +2126,7 @@ ComplexMatrix FermionOnTorus::EvaluatePartialEntanglementMatrixFullKyPartB (int 
   delete[] ComplementaryHilbertSpaces;
   if (TmpNbrNonZeroElements > 0)
     {
+      cout << "tata" << endl;
       return TmpEntanglementMatrix;
     }
   else

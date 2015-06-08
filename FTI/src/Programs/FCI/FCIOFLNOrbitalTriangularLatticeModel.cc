@@ -90,6 +90,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption  ('\n', "export-onebodyname", "optional file name for the one-body information output");
   (*SystemGroup) += new SingleStringOption('\n', "import-onebody", "import information on the tight binding model from a file");
   (*SystemGroup) += new BooleanOption  ('\n', "flat-band", "use flat band model");
+  (*SystemGroup) += new SingleDoubleOption ('\n', "band-flattening", "flattening factor applied to each band, each band is rescale with respect to its average value", 1.0);
+  (*SystemGroup) += new SingleDoubleOption ('\n', "band-shifting", "shift each band by this amount times the band index", 0.0);
   (*SystemGroup) += new BooleanOption  ('\n', "no-dispersion", "use a model without dispersion and a contant gap of 10 between the two lowest bands");
   (*SystemGroup) += new BooleanOption  ('\n', "single-band", "project onto the lowest energy band");
   (*SystemGroup) += new SingleStringOption  ('\n', "eigenvalue-file", "filename for eigenvalues output");
@@ -154,7 +156,14 @@ int main(int argc, char** argv)
       }
     else
       {
-	sprintf (FilePrefix, "%s_twoband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	if ((Manager.GetDouble("band-flattening") != 1.0) || (Manager.GetDouble("band-shifting") != 0.0))
+	  {
+	    sprintf (FilePrefix, "%s_twoband_flattening_%.6f_shifting_%.6f_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetDouble("band-flattening"), Manager.GetDouble("band-shifting"), Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	  }
+	else
+	  {
+	    sprintf (FilePrefix, "%s_twoband_oflnorbitaltriangularlattice_s_%ld_c_%d_nq_%ld_n_%d_x_%d_y_%d", StatisticPrefix, Manager.GetInteger("nbr-spin"), ChernNumber,Manager.GetInteger("cutOFF") , NbrParticles, NbrSitesX, NbrSitesY);
+	  }
       }
 
     char* FileParameterString = new char [256];
@@ -251,6 +260,8 @@ int main(int argc, char** argv)
       TightBindingModel = new TightBindingModelOFLNOrbitalTriangularLattice(Manager.GetString("import-onebody")); 
     }
 
+  if ((Manager.GetDouble("band-flattening") != 1.0) || (Manager.GetDouble("band-shifting") != 0.0))
+    TightBindingModel->FlattenBands(Manager.GetDouble("band-flattening"), Manager.GetDouble("band-shifting"));
 
 
 //  TightBindingModel2DAtomicLimitLattice  TightBindingModel(NbrSitesX, NbrSitesY,  1 , 0, Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture());

@@ -96,9 +96,29 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
       this->NbrBMatrices = 2;
       this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
       cout << "symmetrizing B matrices" << endl;
+      int* TmpNbrElementPerRow = new int[this->MPSMatrix1->GetMatrices()[0].GetNbrRow()];
+      for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
+	{
+	  TmpNbrElementPerRow[i] = 1;
+	}
+      SparseRealMatrix SignMatrix (this->MPSMatrix1->GetMatrices()[0].GetNbrRow(), 
+				   this->MPSMatrix1->GetMatrices()[0].GetNbrColumn(), TmpNbrElementPerRow);
+      int TmpP;
+      int TmpQ;
+      for (int i = 0; i < SignMatrix.GetNbrRow(); ++i)
+	{
+	  this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpP, TmpQ);
+	  cout << i << " " << TmpP << " " << TmpQ << endl;
+	  if (((TmpQ / 3) & 1) == 0)
+	    SignMatrix.SetMatrixElement(i, i, -1.0);
+	  else
+	    SignMatrix.SetMatrixElement(i, i, 1.0);
+	}
+      SparseRealMatrix SignedB0Matrix = Conjugate(SignMatrix, this->MPSMatrix1->GetMatrices()[0], SignMatrix);
+
       this->RealBMatrices[0] = TensorProduct(this->MPSMatrix1->GetMatrices()[0], this->MPSMatrix2->GetMatrices()[0]);
       this->RealBMatrices[1] = (TensorProduct(this->MPSMatrix1->GetMatrices()[1], this->MPSMatrix2->GetMatrices()[0])
-				- TensorProduct(this->MPSMatrix1->GetMatrices()[0], this->MPSMatrix2->GetMatrices()[1]));
+				+ TensorProduct(SignedB0Matrix, this->MPSMatrix2->GetMatrices()[1]));
     }
   this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
@@ -262,6 +282,10 @@ void FQHEMPSSymmetrizedStateMatrix::GetMatrixBoundaryIndices(int& rowIndex, int&
   int TmpRowIndex2;
   int TmpColumnIndex2;
   this->MPSMatrix2->GetMatrixBoundaryIndices(TmpRowIndex2, TmpColumnIndex2, padding);
+  ++TmpRowIndex1;
+  ++TmpRowIndex2;
+  ++TmpColumnIndex1;
+  ++TmpColumnIndex2;
   rowIndex = TmpRowIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrRow() * TmpRowIndex2;
   columnIndex = TmpColumnIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrColumn() * TmpColumnIndex2;
 }

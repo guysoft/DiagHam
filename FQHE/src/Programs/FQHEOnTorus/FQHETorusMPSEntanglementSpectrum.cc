@@ -353,6 +353,29 @@ int main(int argc, char** argv)
 
       SparseRealMatrix TransferMatrix = TensorProduct(BMatrices[0], BMatrices[0]) + TensorProduct(BMatrices[1], BMatrices[1]);
 
+      SparseRealMatrix FullLeftOverlapMatrix = TensorProduct(StringMatrix, StringMatrix);
+
+      for (int i = 0; i <= MaxNbrFluxQuantaA; ++i)
+	{
+	  SparseRealMatrix* TmpMatrices = new SparseRealMatrix[NbrBMatrices];
+	  for (int j = 0; j < NbrBMatrices; ++j)
+	    {
+// 	      TmpMatrices[j] = Conjugate(&(ConjugateBMatrices[j]), &FullLeftOverlapMatrix, &(BMatrices[j]), 
+// 					 TmpMatrixElements, TmpColumnIndices, MaxTmpMatrixElements, Architecture.GetArchitecture()); 
+	      if ((WeightAOrbitals != 0) && (j > 0))
+		{
+		  cout << "WeightAOrbitals[" << i << "]=" << WeightAOrbitals[i] << endl;
+		  for (int k = 1; k <= j; ++k)
+		    TmpMatrices[j] *= WeightAOrbitals[i] * WeightAOrbitals[i];
+		}
+	    }
+	  FullLeftOverlapMatrix = TmpMatrices[0];
+	  for (int j = 1; j < NbrBMatrices; ++j)
+	    {
+	      FullLeftOverlapMatrix = FullLeftOverlapMatrix + TmpMatrices[j];
+	    }
+	  delete[] TmpMatrices;
+	}
 
 
       int NbrMPSSumIndices = 0;
@@ -361,7 +384,7 @@ int main(int argc, char** argv)
       for (int i = 0; i < BMatrices[0].GetNbrRow(); ++i)
 	TmpNbrElementPerRow[i] = 1;
 
-      SparseRealMatrix FullLeftOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow(), TmpNbrElementPerRow);
+//       SparseRealMatrix FullLeftOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow(), TmpNbrElementPerRow);
       SparseRealMatrix FullRightOverlapMatrix (BMatrices[0].GetNbrRow(), BMatrices[0].GetNbrRow());
       for (int i = 0; i < BMatrices[0].GetNbrRow(); ++i)
 	FullLeftOverlapMatrix.SetMatrixElement(i, i, 1.0);

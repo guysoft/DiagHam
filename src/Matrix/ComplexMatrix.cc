@@ -2117,6 +2117,10 @@ void ComplexMatrix::SingularValueDecomposition(ComplexMatrix& uMatrix, RealDiago
 double* ComplexMatrix::SingularValueDecomposition()
 {
 #ifdef HAVE_LAPACK
+  if ((this->NbrColumn == 0) || (this->NbrRow == 0))
+    {
+      return 0;
+    }
   if ((this->NbrColumn == 1) || (this->NbrRow == 1))
     {
       double* SigmaMatrix = new double[1];
@@ -2158,8 +2162,6 @@ double* ComplexMatrix::SingularValueDecomposition()
   int TmpIntegerWorkingArea;
   char Jobz = 'N';
 
-  cout << (*this) << endl;
-
   doublecomplex* TmpMatrix = new doublecomplex [this->NbrRow * this->NbrColumn];
 
   Complex* TmpColumn;
@@ -2168,8 +2170,8 @@ double* ComplexMatrix::SingularValueDecomposition()
       TmpColumn = this->Columns[j].Components;
       for (int i = 0; i < this->NbrRow; ++i)
 	{
-	  TmpMatrix[i+j*this->NbrRow].r = TmpColumn[i].Re;
-	  TmpMatrix[i+j*this->NbrRow].i = TmpColumn[i].Im;
+	  TmpMatrix[i + (j * this->NbrRow)].r = TmpColumn[i].Re;
+	  TmpMatrix[i + (j * this->NbrRow)].i = TmpColumn[i].Im;
 	}
     }
 
@@ -2185,7 +2187,7 @@ double* ComplexMatrix::SingularValueDecomposition()
   else
      RWorkDim = 1;
 
-  double* TmpRWork = new double[RWorkDim];
+  double* TmpRWork = new double[10 * RWorkDim];
 
   int DummySize = 1;
   FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, &TmpWorkingArea, &WorkingAreaSize, TmpRWork, &TmpIntegerWorkingArea, &Information);
@@ -2194,10 +2196,23 @@ double* ComplexMatrix::SingularValueDecomposition()
       cout << "warning Lapack zgesdd potential error while requesting workspace " << Information << endl;
     }
   WorkingAreaSize = ((int) TmpWorkingArea.r);
+  int MinWorkingAreaSize = 3 * MinDimension;
+  if (MaxDimension >= (7 * MinDimension))
+    {
+      MinWorkingAreaSize += MaxDimension;
+    }
+  else
+    {
+      MinWorkingAreaSize += 7 * MinDimension;
+    }
+  if (MinWorkingAreaSize > WorkingAreaSize)
+    WorkingAreaSize = MinWorkingAreaSize;
   doublecomplex* WorkingArea = new doublecomplex [WorkingAreaSize];
   IntegerWorkingAreaSize = 8 * MinDimension;
   int* IntegerWorkingArea = new int [IntegerWorkingAreaSize];
   FORTRAN_NAME(zgesdd)(&Jobz, &this->NbrRow, &this->NbrColumn, TmpMatrix, &this->NbrRow, SigmaMatrix, TmpUMatrix, &DummySize, TmpVMatrix, &DummySize, WorkingArea, &WorkingAreaSize, TmpRWork, IntegerWorkingArea, &Information);
+  delete[] WorkingArea;
+  delete[] TmpMatrix;
   delete[] TmpUMatrix;
   delete[] TmpVMatrix;
   delete[] TmpRWork;
