@@ -6,11 +6,12 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//             class of basic Lanczos algorithm with complex vectors          //
-//                         and ground state evaluation                        //
+//             class of basic Lanczos algorithm with complex vectors,         //
+//                           ground state evaluation                          //
+//                     and a projector over a set of vectors                  //
 //                      (without any re-orthogonalization)                    //
 //                                                                            //
-//                        last modification : 26/03/2002                      //
+//                        last modification : 11/06/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,52 +31,53 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATE_H
-#define COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATE_H
+#ifndef COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATEANDPROJECTOR_H
+#define COMPLEXBASICLANCZOSALGORITHMWITHGROUNDSTATEANDPROJECTOR_H
 
 
 #include "config.h"
-#include "LanczosAlgorithm/AbstractLanczosAlgorithm.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
 #include "Hamiltonian/AbstractHamiltonian.h"
 #include "Matrix/RealTriDiagonalSymmetricMatrix.h"
 #include "Vector/ComplexVector.h"
 
 
-class ComplexBasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgorithm
+class ComplexBasicLanczosAlgorithmWithGroundStateAndProjector : public ComplexBasicLanczosAlgorithmWithGroundState
 {
 
  protected:
 
-  ComplexVector V1;
-  ComplexVector V2;
-  ComplexVector V3;
+  // dimension of the projector subspace
+  int NbrProjectors;
+  // array that contains the vectors that spans the projector subspace
+  ComplexVector* ProjectorVectors;
+  // energy scale in front of the projector
+  double ProjectorCoefficient;
+  // true if the eigenstate indices have to be shifted
+  bool IndexShiftFlag;
 
-  ComplexVector InitialState;
-
-  bool GroundStateFlag;
-
-  int Index;
 
  public:
 
   // default constructor
   //
-  ComplexBasicLanczosAlgorithmWithGroundState();
-
-  // constructor
-  //
+  // nbrProjectors = dimension of the projector subspace
+  // projectorVectors = array that contains the vectors that spans the projector subspace
+  // projectorCoefficient = energy scale in front of the projector
+  // indexShiftFlag = true if the eigenstate indices have to be shifted
   // architecture = architecture to use for matrix operations
   // maxIter = an approximation of maximal number of iteration
-  ComplexBasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter = 0);
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjector(int nbrProjectors, ComplexVector* projectorVectors, double projectorCoefficient, bool indexShiftFlag,
+							  AbstractArchitecture* architecture, int maxIter = 0);
 
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
-  ComplexBasicLanczosAlgorithmWithGroundState(const ComplexBasicLanczosAlgorithmWithGroundState& algorithm);
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjector(const ComplexBasicLanczosAlgorithmWithGroundStateAndProjector& algorithm);
 
   // destructor
   //
-  ~ComplexBasicLanczosAlgorithmWithGroundState();
+  ~ComplexBasicLanczosAlgorithmWithGroundStateAndProjector();
 
   // initialize Lanczos algorithm with a random vector
   //
@@ -96,10 +98,13 @@ class ComplexBasicLanczosAlgorithmWithGroundState : public AbstractLanczosAlgori
   // nbrIter = number of iteration to do 
   virtual void RunLanczosAlgorithm (int nbrIter);
   
-  // test if convergence has been reached
+ protected:
+  
+  // add the projector contribution to the hamiltonian-vector multiplication
   //
-  // return value = true if convergence has been reached
-  virtual bool TestConvergence ();
+  // initialVector = reference on the initial vector
+  // destinationVector = reference on the destination vector 
+  virtual void AddProjectorContribution(ComplexVector& initialVector, ComplexVector& destinationVector);
 
 };
 

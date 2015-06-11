@@ -60,6 +60,10 @@ class ComplexBasicLanczosAlgorithm : public AbstractLanczosAlgorithm
 
   // default constructor
   //
+  ComplexBasicLanczosAlgorithm();
+
+  // constructor
+  //
   // architecture = architecture to use for matrix operations
   // nbrEigenvalue = number of wanted eigenvalues
   // maxIter = an approximation of maximal number of iteration
@@ -76,27 +80,27 @@ class ComplexBasicLanczosAlgorithm : public AbstractLanczosAlgorithm
 
   // initialize Lanczos algorithm with a random vector
   //
-  void InitializeLanczosAlgorithm();
+  virtual void InitializeLanczosAlgorithm();
   
   // initialize Lanczos algorithm with a given vector
   //
   // vector = reference to the vector used as first step vector
-  void InitializeLanczosAlgorithm(const Vector& vector);
+  virtual void InitializeLanczosAlgorithm(const Vector& vector);
 
   // get last produced vector
   //
   // return value = reference on last produced vector
-  Vector& GetGroundState();
+  virtual Vector& GetGroundState();
 
   // run current Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
   //
   // nbrIter = number of iteration to do 
-  void RunLanczosAlgorithm (int nbrIter);
+  virtual void RunLanczosAlgorithm (int nbrIter);
   
   // test if convergence has been reached
   //
   // return value = true if convergence has been reached
-  bool TestConvergence ();
+  virtual bool TestConvergence ();
 
 };
 

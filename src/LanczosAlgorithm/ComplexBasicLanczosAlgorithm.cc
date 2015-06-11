@@ -40,6 +40,13 @@
 
 // default constructor
 //
+
+ComplexBasicLanczosAlgorithm::ComplexBasicLanczosAlgorithm()
+{
+}
+
+// constructor
+//
 // architecture = architecture to use for matrix operations
 // nbrEigenvalue = number of wanted eigenvalues
 // maxIter = an approximation of maximal number of iteration

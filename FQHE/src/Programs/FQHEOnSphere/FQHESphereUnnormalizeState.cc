@@ -68,7 +68,8 @@ int main(int argc, char** argv)
   (*OutputGroup) += new SingleStringOption ('t', "txt-output", "output the vector into a text file");
   (*OutputGroup) += new BooleanOption ('\n', "txt-separatespin", "for the text output, use the sign convention which separates spins");
   (*OutputGroup) += new BooleanOption ('\n', "normalize", "normalize the state instead of unnormalizing");  
-  (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-component", "in the test output, hide state components whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
+  (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-component", "in the text output, hide state components whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
+  (*OutputGroup) += new SingleDoubleOption  ('\n', "hide-inputcomponent", "in the text output, hide state components whose absolute value is lower than a given error in the original normalized state (0 if all components have to be shown", 0.0);
   (*PrecalculationGroup) += new SingleStringOption  ('\n', "load-hilbert", "load Hilbert space description from the indicated file (only available for the Haldane basis)",0);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
@@ -77,7 +78,7 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereUnnormalizeState -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -88,13 +89,14 @@ int main(int argc, char** argv)
   int TotalLz = 0;
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   char* OutputTxtFileName = Manager.GetString("txt-output");
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   bool SU2Flag = false;
   bool CP2Flag = false;
   int TotalTz = 0;
   int TotalY = 0;
   int TotalSz = 0;
-  double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
+  double Error = Manager.GetDouble("hide-component");
+  double InputError = Manager.GetDouble("hide-inputcomponent");
   bool SymmetryFactor = !(Manager.GetBoolean("symmetry-factor"));
   
   bool SymFlagTz = false;
@@ -181,7 +183,11 @@ int main(int argc, char** argv)
       cout << "can't open vector file " << Manager.GetString("input-state") << endl;
       return -1;      
     }
-  
+  RealVector InputState;
+  if (InputError != 0.0)
+    {
+      InputState.Copy(OutputState);
+    }
   ParticleOnSphere* OutputBasis = 0;
   if (Statistics == true)
     {
@@ -347,11 +353,27 @@ int main(int argc, char** argv)
       if ((SU2Flag == false) || (Manager.GetBoolean("txt-separatespin") == false))
 	{
 	  if (Error == 0.0)
-	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
-	      {
-		File << OutputState[i] << " ";
-		OutputBasis->PrintStateMonomial(File, i) << endl;
-	      }
+	    {
+	      if (InputError == 0.0)
+		{
+		  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      File << OutputState[i] << " ";
+		      OutputBasis->PrintStateMonomial(File, i) << endl;
+		    }
+		}
+	      else
+		{
+		  for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
+		    {
+		      if (fabs(InputState[i]) > InputError)
+			{
+			  File << OutputState[i] << " ";
+			  OutputBasis->PrintStateMonomial(File, i) << endl;
+			}
+		    }
+		}
+	    }
 	  else
 	    for (long i = 0; i < OutputBasis->GetLargeHilbertSpaceDimension(); ++i)
 	      {
@@ -384,15 +406,17 @@ int main(int argc, char** argv)
 	}
       File.close();
     }
-  if (OutputFileName != 0)
+  else
     {
-      if (OutputState.WriteVector(OutputFileName) == false)
+      if (OutputFileName != 0)
 	{
-	  cout << "error while writing output state " << OutputFileName << endl;
-	  return -1;
-	}	  
+	  if (OutputState.WriteVector(OutputFileName) == false)
+	    {
+	      cout << "error while writing output state " << OutputFileName << endl;
+	      return -1;
+	    }	  
+	}
     }
-
   return 0;
 }
 

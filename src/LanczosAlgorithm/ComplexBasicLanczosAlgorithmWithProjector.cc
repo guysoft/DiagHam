@@ -7,10 +7,10 @@
 //                                                                            //
 //                                                                            //
 //             class of basic Lanczos algorithm with complex vectors          //
-//                         and ground state evaluation                        //
+//                     and a projector over a set of vectors                  //
 //                      (without any re-orthogonalization)                    //
 //                                                                            //
-//                        last modification : 26/03/2002                      //
+//                        last modification : 11/06/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -30,35 +30,40 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
+#include "config.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithProjector.h"
 #include "Vector/ComplexVector.h"
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/VectorHamiltonianMultiplyOperation.h"
-
+#include "Architecture/ArchitectureOperation/AddComplexLinearCombinationOperation.h"
+#include "Architecture/ArchitectureOperation/MultipleComplexScalarProductOperation.h"
 #include <stdlib.h>
 
 
 // default constructor
 //
-
-ComplexBasicLanczosAlgorithmWithGroundState::ComplexBasicLanczosAlgorithmWithGroundState()
-{
-}
-
-// constructor
-//
+// nbrProjectors = dimension of the projector subspace
+// projectorVectors = array that contains the vectors that spans the projector subspace
+// projectorCoefficient = energy scale in front of the projector
+// indexShiftFlag = true if the eigenstate indices have to be shifted
 // architecture = architecture to use for matrix operations
+// nbrEigenvalue = number of wanted eigenvalues
 // maxIter = an approximation of maximal number of iteration
 
-ComplexBasicLanczosAlgorithmWithGroundState::ComplexBasicLanczosAlgorithmWithGroundState(AbstractArchitecture* architecture, int maxIter) 
+ComplexBasicLanczosAlgorithmWithProjector::ComplexBasicLanczosAlgorithmWithProjector(int nbrProjectors, ComplexVector* projectorVectors, double projectorCoefficient, bool indexShiftFlag,
+										     AbstractArchitecture* architecture, int nbrEigenvalue, int maxIter) 
 {
   this->Index = 0;
   this->Hamiltonian = 0;
   this->V1 = ComplexVector();
   this->V2 = ComplexVector();
-  this->V3 = ComplexVector();
-  this->InitialState = ComplexVector();
-  this->GroundStateFlag = false;
+  this->NbrEigenvalue = nbrEigenvalue;
+  this->NbrProjectors = nbrProjectors;
+  this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    this->ProjectorVectors[i] = projectorVectors[i];
+  this->ProjectorCoefficient = projectorCoefficient;
+  this->IndexShiftFlag = indexShiftFlag;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -70,36 +75,44 @@ ComplexBasicLanczosAlgorithmWithGroundState::ComplexBasicLanczosAlgorithmWithGro
       this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
     }
   this->Architecture = architecture;
+  this->PreviousLastWantedEigenvalue = 0.0;
+  this->EigenvaluePrecision = MACHINE_PRECISION;
 }
 
 // copy constructor
 //
 // algorithm = algorithm from which new one will be created
 
-ComplexBasicLanczosAlgorithmWithGroundState::ComplexBasicLanczosAlgorithmWithGroundState(const ComplexBasicLanczosAlgorithmWithGroundState& algorithm) 
+ComplexBasicLanczosAlgorithmWithProjector::ComplexBasicLanczosAlgorithmWithProjector(const ComplexBasicLanczosAlgorithmWithProjector& algorithm) 
 {
   this->Index = algorithm.Index;
   this->Hamiltonian = algorithm.Hamiltonian;
   this->V1 = algorithm.V1;
   this->V2 = algorithm.V2;
-  this->V3 = algorithm.V3;
-  this->InitialState = algorithm.InitialState;
-  this->GroundStateFlag = algorithm.GroundStateFlag;
   this->TridiagonalizedMatrix = algorithm.TridiagonalizedMatrix;
   this->Architecture = algorithm.Architecture;
+  this->NbrEigenvalue = algorithm.NbrEigenvalue;
+  this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
+  this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
+  this->NbrProjectors = algorithm.NbrProjectors;
+  this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    this->ProjectorVectors[i] = algorithm.ProjectorVectors[i];
+  this->ProjectorCoefficient = algorithm.ProjectorCoefficient;
+  this->IndexShiftFlag = algorithm.IndexShiftFlag;
 }
 
 // destructor
 //
 
-ComplexBasicLanczosAlgorithmWithGroundState::~ComplexBasicLanczosAlgorithmWithGroundState() 
+ComplexBasicLanczosAlgorithmWithProjector::~ComplexBasicLanczosAlgorithmWithProjector() 
 {
 }
 
 // initialize Lanczos algorithm with a random vector
 //
 
-void ComplexBasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm() 
+void ComplexBasicLanczosAlgorithmWithProjector::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->V1 = ComplexVector (Dimension);
@@ -111,7 +124,15 @@ void ComplexBasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
       this->V1.Im(i) = (rand() - 32767) * 0.5;
     }
   this->V1 /= this->V1.Norm();
-  this->InitialState = ComplexVector (this->V1, true);
+  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+  MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation1.ApplyOperation(this->Architecture);	
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
+  AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation2.ApplyOperation(this->Architecture);
+  delete[] TmpScalarProduct;
+  this->V1 /= this->V1.Norm();
   this->Index = 0;
   this->TridiagonalizedMatrix.Resize(0, 0);
 }
@@ -120,15 +141,22 @@ void ComplexBasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm()
 //
 // vector = reference to the vector used as first step vector
 
-void ComplexBasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(const Vector& vector) 
+void ComplexBasicLanczosAlgorithmWithProjector::InitializeLanczosAlgorithm(const Vector& vector) 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
   this->V1 = vector;
   this->V2 = ComplexVector (Dimension);
   this->V3 = ComplexVector (Dimension);
-  this->InitialState = ComplexVector (vector);
+  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+  MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation1.ApplyOperation(this->Architecture);	
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
+  AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation2.ApplyOperation(this->Architecture);
+  delete[] TmpScalarProduct;
+  this->V1 /= this->V1.Norm();
   this->Index = 0;
-  this->GroundStateFlag = false;
   this->TridiagonalizedMatrix.Resize(0, 0);
 }
 
@@ -136,56 +164,18 @@ void ComplexBasicLanczosAlgorithmWithGroundState::InitializeLanczosAlgorithm(con
 //
 // return value = reference on last produced vector
 
-Vector& ComplexBasicLanczosAlgorithmWithGroundState::GetGroundState()
+Vector& ComplexBasicLanczosAlgorithmWithProjector::GetGroundState()
 {
-  if (this->GroundStateFlag == false)
-    {
-      RealVector TmpComponents (this->DiagonalizedMatrix.GetNbrRow());
-      this->TridiagonalizedMatrix.Eigenvector(this->GroundStateEnergy, TmpComponents);
-      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->InitialState, &this->V3);
-      Operation1.ApplyOperation(this->Architecture);
-      this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(0), this->InitialState);
-      this->V3 /= this->V3.Norm();
-      this->V2 *= TmpComponents[this->DiagonalizedMatrix.GetNbrRow() - 1];
-      this->V2.AddLinearCombination(TmpComponents[0], this->InitialState, TmpComponents[1], this->V3);
-      this->V2.AddLinearCombination(TmpComponents[this->DiagonalizedMatrix.GetNbrRow() - 2], this->V1);
-      ComplexVector TmpV (this->V2);
-      this->V2 = this->InitialState; 
-      this->InitialState = TmpV;
-      int lim = this->DiagonalizedMatrix.GetNbrRow() - 3;
-      cout << "Calculating vector: ";
-      for (int i = 1; i < lim; ++i)
-	{
-	  VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V3, &this->V1);
-	  Operation2.ApplyOperation(this->Architecture);
-	  this->V1.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(i), this->V3, 
-					-this->TridiagonalizedMatrix.UpperDiagonalElement(i - 1), this->V2);
-	  this->V1 /= this->V1.Norm();
-	  this->InitialState.AddLinearCombination(TmpComponents[i + 1], this->V1);
-	  ComplexVector TmpV (this->V2);
-	  this->V2 = this->V3;
-	  this->V3 = this->V1;
-	  this->V1 = TmpV;
-	  cout << ".";
-	  cout.flush();
-	}
-      cout << "done." << endl;
-      this->InitialState /= this->InitialState.Norm();
-//      cout << (this->InitialState * this->InitialState) << endl;
-//      this->Hamiltonian->Multiply(this->InitialState, this->V3);
-//      cout << "GroundStateEnergy =  " << (this->V3 * this->InitialState) << endl;
-      this->GroundStateFlag = true;
-    }
-  return this->InitialState;
+  return this->V2;
 }
 
 // run current Lanczos algorithm (continue from previous results if Lanczos algorithm has already been run)
 //
 // nbrIter = number of iteration to do 
 
-void ComplexBasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIter) 
+void ComplexBasicLanczosAlgorithmWithProjector::RunLanczosAlgorithm (int nbrIter) 
 {
-  int Dimension;
+   int Dimension;
   if (this->Index == 0)
     {
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
@@ -194,12 +184,14 @@ void ComplexBasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIt
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
       VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V1, &this->V2);
       Operation1.ApplyOperation(this->Architecture);
+      this->AddProjectorContribution(this->V1, this->V2);
       this->TridiagonalizedMatrix.DiagonalElement(Index) = (this->V1 * this->V2).Re;
       this->V2.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index), 
 				    this->V1);
       this->V2 /= this->V2.Norm(); 
       VectorHamiltonianMultiplyOperation Operation2 (this->Hamiltonian, &this->V2, &this->V3);
       Operation2.ApplyOperation(this->Architecture);
+      this->AddProjectorContribution(this->V2, this->V3);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
@@ -208,33 +200,58 @@ void ComplexBasicLanczosAlgorithmWithGroundState::RunLanczosAlgorithm (int nbrIt
       Dimension = this->TridiagonalizedMatrix.GetNbrRow() + nbrIter;
       this->TridiagonalizedMatrix.Resize(Dimension, Dimension);
     }
+  ComplexVector* TmpVector = new ComplexVector[2];
+  double* TmpCoefficient = new double[2];
   for (int i = this->Index + 2; i < Dimension; i++)
     {
-      this->V3.AddLinearCombination(-this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1), V2, 
-				    -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index), V1);
+      TmpVector[0] = this->V1;
+      TmpVector[1] = this->V2;
+      TmpCoefficient[0] = -this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index);
+      TmpCoefficient[1] = -this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1);
+      AddComplexLinearCombinationOperation Operation4 (&(this->V3),  TmpVector, 2, TmpCoefficient);
+      Operation4.ApplyOperation(this->Architecture);
       this->V3 /= this->V3.Norm();
-//      cout << this->V3 << endl;
       ComplexVector TmpV (this->V1);
       this->V1 = this->V2;
       this->V2 = this->V3;
       this->V3 = TmpV;
       this->Index++;
-      VectorHamiltonianMultiplyOperation Operation1 (this->Hamiltonian, &this->V2, &this->V2);
-      Operation1.ApplyOperation(this->Architecture);
+      VectorHamiltonianMultiplyOperation Operation3 (this->Hamiltonian, &this->V2, &this->V3);
+      Operation3.ApplyOperation(this->Architecture);
+      this->AddProjectorContribution(this->V2, this->V3);
       this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) = (this->V1 * this->V3).Re;
-//      cout << this->TridiagonalizedMatrix.UpperDiagonalElement(this->Index) << endl;
       this->TridiagonalizedMatrix.DiagonalElement(this->Index + 1) = (this->V2 * this->V3).Re;
     }
-  this->Diagonalize();
+  delete[] TmpVector;
+  delete[] TmpCoefficient;
+  if (this->PreviousLastWantedEigenvalue != 0.0)
+    {
+      this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      this->Diagonalize();
+      this->DiagonalizedMatrix.SortMatrixUpOrder();
+    }
+  else
+    {
+      this->Diagonalize();
+      this->DiagonalizedMatrix.SortMatrixUpOrder();
+      this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+    }
 }
-
-// test if convergence has been reached
+  
+// add the projector contribution to the hamiltonian-vector multiplication
 //
-// return value = true if convergence has been reached
+// initialVector = reference on the initial vector
+// destinationVector = reference on the destination vector 
 
-bool ComplexBasicLanczosAlgorithmWithGroundState::TestConvergence ()
+void ComplexBasicLanczosAlgorithmWithProjector::AddProjectorContribution(ComplexVector& initialVector, ComplexVector& destinationVector)
 {
-  return true;
+  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+  MultipleComplexScalarProductOperation Operation1 (&initialVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation1.ApplyOperation(this->Architecture);	
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    TmpScalarProduct[i] = this->ProjectorCoefficient * Conj(TmpScalarProduct[i]);
+  AddComplexLinearCombinationOperation Operation2 (&destinationVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+  Operation2.ApplyOperation(this->Architecture);
+  delete[] TmpScalarProduct;
 }
-
 

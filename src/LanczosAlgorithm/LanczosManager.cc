@@ -51,7 +51,9 @@
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundState.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithEigenstates.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateFastDisk.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateAndProjector.h"
 #include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.h"
+#include "LanczosAlgorithm/ComplexBasicLanczosAlgorithmWithProjector.h"
 #include "LanczosAlgorithm/ComplexBasicBlockLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexLanczosAlgorithm.h"
 #include "LanczosAlgorithm/FullReorthogonalizedComplexBlockLanczosAlgorithm.h"
@@ -276,21 +278,52 @@ AbstractLanczosAlgorithm* LanczosManager::GetLanczosAlgorithm(AbstractArchitectu
 		  }
 		else
 		  {
-		    cout << "Using ComplexBasicLanczosAlgorithm" << endl;
-		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithm(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		    if (this->Options->GetString("add-projector") == 0)
+		      {
+			cout << "Using ComplexBasicLanczosAlgorithm" << endl;
+			this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithm(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		      }
+		    else
+		      {
+			cout << "Using ComplexBasicLanczosAlgorithmWithProjector" << endl;
+			MultiColumnASCIIFile SubspaceFile;
+			if (SubspaceFile.Parse(this->Options->GetString("add-projector")) == false)
+			  {
+			    SubspaceFile.DumpErrors(cout);
+			    exit(0);
+			  }
+			int NbrStates = SubspaceFile.GetNbrLines();
+			ComplexVector* States = new ComplexVector[NbrStates];
+			for (int i = 0; i < NbrStates; ++i)
+			  {
+			    if (States[i].ReadVector(SubspaceFile(0, i)) == false)
+			      {
+				cout << "can't open vector file " << SubspaceFile(0, i) << endl;
+				exit (0);      
+			      }			    
+			  }
+			this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithProjector(NbrStates, States, 
+											       this->Options->GetDouble("addprojector-factor"), 
+											       !(this->Options->GetBoolean("addprojector-noshift")),
+											       architecture, 
+											       NbrEigenvalue, MaxNbrIterLanczos );
+			delete[] States;
+		      }
 		  }
 	      else
-		if (EvaluateEigenvectors == true)
-		  {
-		    cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!" << endl;
-		    exit(1);
-		    //this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(architecture, NbrIterLanczos, MaxNbrIterLanczos);
-		  }
-		else
-		  {
-		    cout << "Using ComplexBasicLanczosAlgorithmWithDiskStorage" << endl;
-		    this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithDiskStorage(architecture, NbrEigenvalue, MaxNbrIterLanczos);
-		  }
+		{
+		  if (EvaluateEigenvectors == true)
+		    {
+		      cout << "Complex Lanczos Algorithm with GroundState and Disk Storage not implemented!" << endl;
+		      exit(1);
+		      //this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithGroundStateDiskStorage(architecture, NbrIterLanczos, MaxNbrIterLanczos);
+		    }
+		  else
+		    {
+		      cout << "Using ComplexBasicLanczosAlgorithmWithDiskStorage" << endl;
+		      this->LanczosAlgorithm = new ComplexBasicLanczosAlgorithmWithDiskStorage(architecture, NbrEigenvalue, MaxNbrIterLanczos);
+		    }
+		}
 	    }
 	  else
 	    {

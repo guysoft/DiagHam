@@ -33,5 +33,7 @@ BasicArnoldiAlgorithmWithDiskStorage.cc \
 PowerMethodAlgorithm.cc \
 ImplicitlyRestartedArnoldiAlgorithm.cc \
 FullReorthogonalizedComplexBlockLanczosAlgorithmWithDiskStorage.cc \
-ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.cc
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk.cc \
+ComplexBasicLanczosAlgorithmWithProjector.cc \
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjector.cc
 #ComplexBasicLanczosAlgorithmDiskWithGroundState.cc 
