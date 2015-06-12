@@ -330,3 +330,55 @@ bool FTIHubbardModelWithSzFindSystemInfoFromVectorFileName(char* filename, int& 
     }
   return true;
 }
+
+// try to guess system information from file name
+//
+// filename = vector file name
+// nbrParticles = reference to the number of particles 
+// nbrSites = reference on the number sites
+// szValue = reference on the value of the total spin
+// xMomentum = reference on the momentum sector in the x direction
+// yMomentum = reference on the momentum sector in the y direction
+// xPeriodicity = reference on the periodicity in the x direction with respect to site numbering 
+// yPeriodicity = reference on the periodicity in the y direction with respect to site numbering
+// statistics = reference on flag for fermionic statistics (true for fermion, false for bosons)
+// gutzwiller = reference on flag  that indicated if the Gutzwiller projection was implemented within the Hilbert space
+// return value = true if no error occured
+
+bool FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(char* filename, int& nbrParticles, int& nbrSites, int& szValue, 
+								      int& xMomentum, int& yMomentum, int& xPeriodicity, int& yPeriodicity, 
+								      bool& statistics, bool& gutzwiller)
+{
+  if (FTIHubbardModelWith2DTranslationFindSystemInfoFromVectorFileName(filename, nbrParticles, nbrSites, xMomentum, yMomentum, 
+								       xPeriodicity, yPeriodicity, statistics, gutzwiller) == false)
+    {
+      return false;
+    }
+  char* StrNbrParticles;
+  int SizeString;
+  StrNbrParticles = strstr(filename, "_sz_");
+  if (StrNbrParticles != 0)
+    {
+      StrNbrParticles += 4;
+      SizeString = 0;
+      while ((StrNbrParticles[SizeString] != '\0') && (StrNbrParticles[SizeString] != '_') && (StrNbrParticles[SizeString] != '.') && (((StrNbrParticles[SizeString] >= '0') 
+																	&& (StrNbrParticles[SizeString] <= '9')) || (StrNbrParticles[SizeString] != '-')))
+	++SizeString;
+      if (((StrNbrParticles[SizeString] == '_') || (StrNbrParticles[SizeString] == '.')) && (SizeString != 0))
+	{
+          char TmpChar = StrNbrParticles[SizeString];
+	  StrNbrParticles[SizeString] = '\0';
+	  szValue = atoi(StrNbrParticles);
+	  StrNbrParticles[SizeString] = TmpChar;
+	  StrNbrParticles += SizeString;
+	}
+      else
+	StrNbrParticles = 0;
+    }
+    
+  if (StrNbrParticles == 0)
+    {
+      return false;            
+    }
+  return true;
+}

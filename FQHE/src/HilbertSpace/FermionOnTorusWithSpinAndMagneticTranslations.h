@@ -176,6 +176,21 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   // return value = pointer to cloned Hilbert space
   virtual AbstractHilbertSpace* Clone();
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
+  // get the total spin
+  //
+  //return value: total spin of the Hilbert space
+  virtual int GetTotalSpin();
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -569,6 +584,33 @@ inline unsigned long FermionOnTorusWithSpinAndMagneticTranslations::ApplySpinFli
   TmpState |= TmpState << 1;
   TmpState ^= stateDescription; 
   return TmpState;
+}
+
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetNbrOrbitals()
+{
+  return this->MaxMomentum;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetNbrParticles()
+{
+  return this->NbrFermions;
+}
+
+// get the total spin
+//
+//return value: total spin of the Hilbert space
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetTotalSpin()
+{
+  return this->TotalSpin;
 }
 
 #endif // FERMIONONTORUSWITHSPINANDMAGNETICTRANSLATIONS_H

@@ -161,6 +161,20 @@ class FermionOnLatticeWithSpinRealSpaceAnd2DTranslation : public FermionOnTorusW
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
+  // apply a^+_m_d a_m_d operator to a given state (only spin down)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AddAd (int index, int m);
+
+  // apply a^+_m_u a_m_u operator to a given state  (only spin up)
+  //
+  // index = index of the state on which the operator has to be applied
+  // m = index of the creation and annihilation operator
+  // return value = coefficient obtained when applying a^+_m a_m
+  virtual double AduAu (int index, int m);
+
   // apply a^+_m_u a_n_u operator to a given state 
   //
   // index = index of the state on which the operator has to be applied
@@ -1138,6 +1152,28 @@ inline int FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::GetMaxYMomentum()
   return this->MaxYMomentum;
 }
   
+// apply a^+_m_d a_m_d operator to a given state (only spin down)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AddAd (int index, int m)
+{
+  return this->FermionOnTorusWithSpinAndMagneticTranslations::AddAd (index, m);
+}
+
+// apply a^+_m_u a_m_u operator to a given state  (only spin up)
+//
+// index = index of the state on which the operator has to be applied
+// m = index of the creation and annihilation operator
+// return value = coefficient obtained when applying a^+_m a_m
+
+inline double FermionOnLatticeWithSpinRealSpaceAnd2DTranslation::AduAu (int index, int m)
+{
+  return this->FermionOnTorusWithSpinAndMagneticTranslations::AduAu (index, m);
+}
+
 #endif
 
 
