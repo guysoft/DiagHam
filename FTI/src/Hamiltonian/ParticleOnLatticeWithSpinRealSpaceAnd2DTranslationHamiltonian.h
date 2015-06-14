@@ -98,6 +98,13 @@ class ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian : public Par
   //
   virtual ~ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationHamiltonian();
 
+  // add an additional S^2 term to the Hamiltonian
+  //
+  // factor = factor in front of the S^2
+  // fixedSz = flag indicating whether Sz needs to be evaluated
+  // memory = amount of memory that can be used for S^2  precalculations
+  virtual void AddS2 (double factor = 1.0, bool fixedSz = true, long memory = 0l);
+
   
  protected:
    
