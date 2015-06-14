@@ -155,6 +155,16 @@ class FermionOnSphereWithSpin :  public ParticleOnSphereWithSpin
   // return value = number of orbitals
   virtual int GetNbrOrbitals();
 
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
+  // get the total spin
+  //
+  //return value: total spin of the Hilbert space
+  virtual int GetTotalSpin();
+
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -1009,6 +1019,24 @@ inline int FermionOnSphereWithSpin::AdsigmaAdsigma (int m1, int m2, int sigma1, 
 inline int FermionOnSphereWithSpin::GetNbrOrbitals()
 {
   return this->NbrLzValue;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int FermionOnSphereWithSpin::GetNbrParticles()
+{
+  return this->NbrFermions;
+}
+
+// get the total spin
+//
+//return value: total spin of the Hilbert space
+
+inline int FermionOnSphereWithSpin::GetTotalSpin()
+{
+  return this->TotalSpin;
 }
 
 #endif

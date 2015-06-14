@@ -55,6 +55,7 @@ using std::ostream;
 ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ParticleOnLatticeWithSpinChernInsulatorHamiltonian()
 {
   this->HermitianSymmetryFlag = false;
+  this->S2Hamiltonian = 0;
 }
 
 // constructor
@@ -178,6 +179,10 @@ ParticleOnLatticeWithSpinChernInsulatorHamiltonian::~ParticleOnLatticeWithSpinCh
       delete[] this->NbrInterSectorIndicesPerSum;
       delete[] this->InterSectorIndicesPerSum;
     }
+  if (this->S2Hamiltonian != 0)
+    {
+      delete this->S2Hamiltonian;
+    }
   if (this->FastMultiplicationFlag == true)
     {
       long MinIndex;
@@ -242,6 +247,17 @@ int ParticleOnLatticeWithSpinChernInsulatorHamiltonian::GetHilbertSpaceDimension
 void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::ShiftHamiltonian (double shift)
 {
   this->HamiltonianShift = shift;
+}
+
+// add an additional S^2 term to the Hamiltonian
+//
+// factor = factor in front of the S^2
+// fixedSz = flag indicating whether Sz needs to be evaluated
+// memory = amount of memory that can be used for S^2  precalculations
+
+void ParticleOnLatticeWithSpinChernInsulatorHamiltonian::AddS2(double factor, bool fixedSz, long memory)
+{
+  cout << "warning  ParticleOnLatticeWithSpinChernInsulatorHamiltonian::AddS2 is not implemented" << endl;
 }
 
 // multiply a vector by the current hamiltonian for a given range of indices 
@@ -330,6 +346,10 @@ ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelAddMu
 	  delete TmpParticles;
 	}
     }
+  if (this->S2Hamiltonian != 0)
+    {
+      this->S2Hamiltonian->LowLevelAddMultiply(vSource, vDestination, firstComponent, nbrComponent);
+    }
   return vDestination;
 }
  
@@ -396,6 +416,10 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelMulti
 	{
 	  this->LowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	}
+    }
+  if (this->S2Hamiltonian != 0)
+    {
+      this->S2Hamiltonian->LowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
     }
   return vDestinations;
 }
@@ -464,6 +488,10 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelMulti
       }
   delete[] Coefficient2;
   delete TmpParticles;
+  if (this->S2Hamiltonian != 0)
+    {
+      this->S2Hamiltonian->LowLevelMultipleAddMultiplyPartialFastMultiply(vSources,  vDestinations, nbrVectors,firstComponent, nbrComponent);
+    }
   return vDestinations;
 }
 
@@ -563,6 +591,10 @@ ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowL
 	  delete TmpParticles;
 	}
     }
+  if (this->S2Hamiltonian != 0)
+    {
+      this->S2Hamiltonian->HermitianLowLevelAddMultiply(vSource,  vDestination, firstComponent, nbrComponent);
+    }
   return vDestination;
 }
 
@@ -639,6 +671,10 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowL
 	{
 	  this->HermitianLowLevelMultipleAddMultiplyPartialFastMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
 	}
+    }
+  if (this->S2Hamiltonian != 0)
+    {
+      this->S2Hamiltonian->HermitianLowLevelMultipleAddMultiply(vSources, vDestinations, nbrVectors, firstComponent, nbrComponent);
     }
   return vDestinations;
 }

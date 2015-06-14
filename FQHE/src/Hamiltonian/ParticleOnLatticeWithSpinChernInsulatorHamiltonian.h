@@ -148,7 +148,7 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
   bool HermitianSymmetryFlag;
 
   // pointer to an optional S^2 operator in the Hamiltonian 
-  ParticleOnSphereWithSpinS2Hamiltonian* S2Hamiltonian;
+  ParticleOnLatticeWithSpinChernInsulatorHamiltonian* S2Hamiltonian;
 
   
  public:
@@ -247,13 +247,10 @@ class ParticleOnLatticeWithSpinChernInsulatorHamiltonian : public AbstractQHEHam
 
   // add an additional S^2 term to the Hamiltonian
   //
-  // totalLz = twice the projected momentum total value
-  // totalSz = twice the projected spin total value
   // factor = factor in front of the S^2
-  // memory = amount of memory that can be used for S^2  precalculations
   // fixedSz = flag indicating whether Sz needs to be evaluated
-  void AddS2 (int totalLz, int totalSz, double factor = 1.0, long memory = 0l, bool fixedSz = true);
-
+  // memory = amount of memory that can be used for S^2  precalculations
+  virtual void AddS2 (double factor = 1.0, bool fixedSz = true, long memory = 0l);
 
  protected:
  
