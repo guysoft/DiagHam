@@ -535,10 +535,10 @@ int main(int argc, char** argv)
 			    }			  
 			}
 		    }
-// 		  if (Manager.GetDouble("s2-factor") != 0.0)
-// 		    {
-// 		      Hamiltonian->AddS2(Manager.GetDouble("s2-factor"), Manager.GetBoolean("fixed-sz"), ((long) Manager.GetInteger("s2-memory")) << 20);
-// 		    }
+		  if (Manager.GetDouble("s2-factor") != 0.0)
+		    {
+		      Hamiltonian->AddS2(Manager.GetDouble("s2-factor"), Manager.GetBoolean("fixed-sz"), ((long) Manager.GetInteger("s2-memory")) << 20);
+		    }
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d", i, j);
 		  char* EigenstateOutputFile = new char [256 + strlen(FileFullPrefix) + strlen(FileParameterString)];
