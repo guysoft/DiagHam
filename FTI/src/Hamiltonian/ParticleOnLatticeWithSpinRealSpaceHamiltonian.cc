@@ -282,11 +282,11 @@ void ParticleOnLatticeWithSpinRealSpaceHamiltonian::EvaluateInteractionFactorsFr
 		{
 		  this->InterSectorIndicesPerSum[this->NbrInterSectorSums][0] = i;
 		  this->InterSectorIndicesPerSum[this->NbrInterSectorSums][1] = j;
-		  this->InteractionFactorsupdown[this->NbrInterSectorSums][0] =  Sign;
+		  this->InteractionFactorsupdown[this->NbrInterSectorSums][0] =  Sign * Tmp;
 		  ++this->NbrInterSectorSums;
 		}
 	    }
-	} 
+	}
     }
   
   if (this->NbrIntraSectorSums != 0)
@@ -316,13 +316,13 @@ void ParticleOnLatticeWithSpinRealSpaceHamiltonian::EvaluateInteractionFactorsFr
 		{
 		  this->IntraSectorIndicesPerSum[this->NbrIntraSectorSums][0] = i;
 		  this->IntraSectorIndicesPerSum[this->NbrIntraSectorSums][1] = j;
-		  this->InteractionFactorsupup[this->NbrIntraSectorSums][0] =  Sign * Tmp;   
-		  this->InteractionFactorsdowndown[this->NbrIntraSectorSums][0] =  Sign * Tmp1;   
+		  this->InteractionFactorsupup[this->NbrIntraSectorSums][0] =  Sign * Tmp;  
+		  this->InteractionFactorsdowndown[this->NbrIntraSectorSums][0] =  Sign * Tmp1;  
 		  
 		  ++this->NbrIntraSectorSums;
 		}
 	    }
-	} 
+	}
     }
 }
   
