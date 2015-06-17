@@ -63,6 +63,8 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption('\n', "hz-value", "Zeeman strength along the z axis", 0.0);
   (*SystemGroup) += new  BooleanOption  ('\n', "use-parity", "take the parity into account when computing the spectrum");
   (*SystemGroup) += new  BooleanOption  ('\n', "read-spectrum", "read the unitary matrix spectrum from the disk instead of recomputing it");
+  (*SystemGroup) += new  SingleDoubleOption('\n', "hy-tau", "fraction of the time tau where the hy hamiltonian is turned on (if negative, it is set to 1/3)", -1.0);
+  (*SystemGroup) += new  SingleDoubleOption('\n', "hz-tau", "fraction of the time tau where the hz hamiltonian is turned on (if negative, it is set to 1/2 if hy-value=0, 1/3 otherwise)", -1.0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -85,21 +87,55 @@ int main(int argc, char** argv)
   double HyValue = Manager.GetDouble("hy-value");
   double HzValue = Manager.GetDouble("hz-value");
   double JzValue = Manager.GetDouble("jz-value");
-  double TauValue = -0.5 * Manager.GetDouble("tau");
+  double TauValueHx = -0.5 * Manager.GetDouble("tau");
+  double TauValueHy = 0.0;
+  double TauValueHz = -0.5 * Manager.GetDouble("tau");
   if (HyValue != 0.0)
     {
-      TauValue = - Manager.GetDouble("tau") / 3.0;
-    }
-
-
-  char* OutputFileName = new char[1024];
-  if (Manager.GetBoolean("use-parity") == false)
-    {
-      sprintf (OutputFileName, "spin_1_2_floquet_n_%d_jz_%.6f_hx_%.6f_hy_%.6f_hz_%.6f_tau_%.6f.dat", NbrSpins, JzValue, HxValue, HyValue, HzValue, TauValue);     
+      TauValueHx = - Manager.GetDouble("tau") / 3.0;
+      TauValueHy = - Manager.GetDouble("tau") / 3.0;
+      TauValueHz = - Manager.GetDouble("tau") / 3.0;
+      if ((Manager.GetDouble("hz-tau") >= 0.0) && (Manager.GetDouble("hy-tau") >= 0.0))
+	{
+	  TauValueHx = - Manager.GetDouble("tau") * (1.0 - Manager.GetDouble("hz-tau") - Manager.GetDouble("hy-tau"));
+	  TauValueHy = - Manager.GetDouble("tau") * Manager.GetDouble("hy-tau");
+	  TauValueHz = - Manager.GetDouble("tau") * Manager.GetDouble("hz-tau");
+	  
+	}
     }
   else
     {
-      sprintf (OutputFileName, "spin_1_2_floquet_parity_n_%d_jz_%.6f_hx_%.6f_hy_%.6f_hz_%.6f_tau_%.6f.dat", NbrSpins, JzValue, HxValue, HyValue, HzValue, TauValue);     
+      if (Manager.GetDouble("hz-tau") >= 0.0)
+	{
+	  TauValueHx = - Manager.GetDouble("tau") * (1.0 - Manager.GetDouble("hz-tau"));
+	  TauValueHz = - Manager.GetDouble("tau") * Manager.GetDouble("hz-tau");
+	  
+	}
+    }
+  char* OutputFileName = new char[1024];
+  if (Manager.GetBoolean("use-parity") == false)
+    {
+      if ((Manager.GetDouble("hz-tau") >= 0.0) || (Manager.GetDouble("hy-tau") >= 0.0))
+	{
+	  sprintf (OutputFileName, "spin_1_2_floquet_n_%d_jz_%.6f_hx_%.6f_hy_%.6f_hz_%.6f_tau_%.6f_tauhy_%.6f_tauhz_%.6f.dat", 
+		   NbrSpins, JzValue, HxValue, HyValue, HzValue, Manager.GetDouble("tau"), Manager.GetDouble("hy-tau"), Manager.GetDouble("hz-tau"));     
+	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_1_2_floquet_n_%d_jz_%.6f_hx_%.6f_hy_%.6f_hz_%.6f_tau_%.6f.dat", NbrSpins, JzValue, HxValue, HyValue, HzValue, Manager.GetDouble("tau"));     
+	}
+    }
+  else
+    {
+      if ((Manager.GetDouble("hz-tau") >= 0.0) || (Manager.GetDouble("hy-tau") >= 0.0))
+	{
+	  sprintf (OutputFileName, "spin_1_2_floquet_parity_n_%d_jz_%.6f_hx_%.6f_hy_%.6f_hz_%.6f_tau_%.6f_tauhy_%.6f_tauhz_%.6f.dat", 
+		   NbrSpins, JzValue, HxValue, HyValue, HzValue, Manager.GetDouble("tau"), Manager.GetDouble("hy-tau"), Manager.GetDouble("hz-tau"));
+    	}
+      else
+	{
+	  sprintf (OutputFileName, "spin_1_2_floquet_parity_n_%d_jz_%.6f_hx_%.6f_hy_%.6f_hz_%.6f_tau_%.6f.dat", NbrSpins, JzValue, HxValue, HyValue, HzValue, Manager.GetDouble("tau"));     
+	}
     }
   ofstream File;
   if (Manager.GetBoolean("read-spectrum") == false)
@@ -191,13 +227,13 @@ int main(int argc, char** argv)
 	  ComplexMatrix UnitaryEvolution(Basis2);
 	  for (int i = 0; i < UnitaryEvolution.GetNbrColumn(); ++i)
 	    {
-	      UnitaryEvolution[i] *= Phase(TauValue * TmpDiag2[i]);
+	      UnitaryEvolution[i] *= Phase(TauValueHx * TmpDiag2[i]);
 	    }
 	  Basis2.Transpose();
 	  UnitaryEvolution.Multiply(Basis2);
 	  for (int i = 0; i < UnitaryEvolution.GetNbrColumn(); ++i)
 	    {
-	      UnitaryEvolution[i] *= Phase(TauValue * TmpDiag1[i]);
+	      UnitaryEvolution[i] *= Phase(TauValueHz * TmpDiag1[i]);
 	    }
 	  gettimeofday (&(TotalEndingTime), 0);
 	  
@@ -206,7 +242,7 @@ int main(int argc, char** argv)
 	      UnitaryEvolution.Multiply(Basis3);
 	      for (int i = 0; i < UnitaryEvolution.GetNbrColumn(); ++i)
 		{
-		  UnitaryEvolution[i] *= Phase(TauValue * TmpDiag3[i]);
+		  UnitaryEvolution[i] *= Phase(TauValueHy * TmpDiag3[i]);
 		}      
 	      Basis3.HermitianTranspose();
 	      UnitaryEvolution.Multiply(Basis3);
