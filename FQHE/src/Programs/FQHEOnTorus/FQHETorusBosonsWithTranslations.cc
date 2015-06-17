@@ -255,24 +255,8 @@ int main(int argc, char** argv)
 	    }
 	  else
 	    {
-	      if (NbrBosons&1)
-		{
-		  CenterX=0;
-		  CenterY=0;
-		}
-	      else
-		{
-		  if ((NbrBosons/MomentumModulo*MaxMomentum/MomentumModulo)&1) // p*q odd?
-		    {
-		      CenterX=MomentumModulo/2;
-		      CenterY=MomentumModulo/2;
-		    }
-		  else
-		    {
-		      CenterX=0;
-		      CenterY=0;
-		    }
-		}
+	      CenterX=0;
+	      CenterY=0;
 	      if (XRatio == 1.0)
 		{
 		  NbrMomenta=0;
