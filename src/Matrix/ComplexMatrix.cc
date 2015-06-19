@@ -1004,6 +1004,28 @@ ComplexMatrix& ComplexMatrix::Multiply (const ComplexMatrix& M, int startLine, i
   return *this;
 }
 
+// multiply two matrices, taking the hermitian conjugate of the left nmatrix first (i.e. M1^+ M2)
+//
+// M1 = first matrix
+// M2 = matrix to multiply to M1
+// return value = product of the two matrices
+
+ComplexMatrix HermitianMultiply (const ComplexMatrix& M1, const ComplexMatrix& M2)
+{
+  if (M1.NbrRow != M2.NbrRow)
+    return ComplexMatrix();
+  ComplexVector* TmpColumns = new ComplexVector [M2.NbrColumn];
+  for (int i = 0; i < M2.NbrColumn; ++i)
+    {
+      TmpColumns[i] = ComplexVector (M1.NbrColumn);
+      for (int j = 0; j < M1.NbrColumn; ++j)
+	{
+	  TmpColumns[i][j] = M1.Columns[j] * M2.Columns[i];
+	}
+    }
+  return ComplexMatrix(TmpColumns, M2.NbrColumn);
+}
+
 // divide a matrix by a real number (right multiplication)
 //
 // M = source matrix

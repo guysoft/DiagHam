@@ -351,6 +351,13 @@ class ComplexMatrix : public Matrix
   // return value = reference on current matrix
   ComplexMatrix& Multiply (const ComplexMatrix& M, int startLine, int nbrLine);
 
+  // multiply two matrices, taking the hermitian conjugate of the left nmatrix first (i.e. M1^+ M2)
+  //
+  // M1 = first matrix
+  // M2 = matrix to multiply to M1
+  // return value = product of the two matrices
+  friend ComplexMatrix HermitianMultiply (const ComplexMatrix& M1, const ComplexMatrix& M2);
+
   // divide a matrix by a real number (right multiplication)
   //
   // M = source matrix
