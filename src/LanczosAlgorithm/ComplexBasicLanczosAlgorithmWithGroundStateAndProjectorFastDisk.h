@@ -56,6 +56,13 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   // true if the eigenstate indices have to be shifted
   bool IndexShiftFlag;
 
+  //  true if the projector subspace has to be constructed automatically
+  bool AutomaticProjectorConstructionFlag;
+  // array that contains the eigenvalue of each state of the projector subspace (only useful when using the automatic projector subspace generation)
+  double* ProjectorEigenvalues;
+  // temporary matrix used for the automatic projector subspace generation
+  RealTriDiagonalSymmetricMatrix FullDiagonalizedMatrix;
+  
  public:
 
   // default constructor
@@ -68,7 +75,20 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   // maxIter = an approximation of maximal number of iteration
   // diskFlag = use disk storage to increase speed of ground state calculation
   // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
-  ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrProjectors, ComplexVector* projectorVectors, double projectorCoefficient, bool indexShiftFlag,
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrProjectors, ComplexVector* projectorVectors, double projectorCoefficient, 
+								  bool indexShiftFlag,
+								  AbstractArchitecture* architecture, 
+								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
+
+  // constructor using automatic projector construction 
+  //
+  // nbrEigenvalues = number of eigenvalues/eigenstates to compute
+  // projectorCoefficient = energy scale in front of the projector
+  // architecture = architecture to use for matrix operations
+  // maxIter = an approximation of maximal number of iteration
+  // diskFlag = use disk storage to increase speed of ground state calculation
+  // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues, double projectorCoefficient,
 								  AbstractArchitecture* architecture, 
 								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
 
@@ -111,6 +131,22 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   // return value = index shift
   virtual int EigenstateIndexShift();
 
+  // test if convergence has been reached
+  //
+  // return value = true if convergence has been reached
+  virtual bool TestConvergence ();
+  
+  // get the n first eigenvalues
+  //
+  // eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+  // nbrEigenstates = number of needed eigenvalues
+  virtual void GetEigenvalues (double*& eigenvalues, int nbrEigenvalues);
+
+  // get current diagonalized matrix
+  //
+  // return value = reference on current diagonalized matrix
+  virtual RealTriDiagonalSymmetricMatrix& GetDiagonalizedMatrix ();
+
  protected:
   
   // add the projector contribution to the hamiltonian-vector multiplication
@@ -118,6 +154,16 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
   // initialVector = reference on the initial vector
   // destinationVector = reference on the destination vector 
   virtual void AddProjectorContribution(ComplexVector& initialVector, ComplexVector& destinationVector);
+
+  // read current Lanczos state from disk
+  //
+  // return value = true if no error occurs
+  virtual bool ReadState();
+
+  // write current Lanczos state on disk
+  //
+  // return value = true if no error occurs
+  virtual bool WriteState();
 
 };
 

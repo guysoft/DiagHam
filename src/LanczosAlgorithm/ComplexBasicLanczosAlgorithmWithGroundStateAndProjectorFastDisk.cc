@@ -84,6 +84,8 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
     this->ProjectorVectors[i] = projectorVectors[i];
   this->ProjectorCoefficient = projectorCoefficient;
   this->IndexShiftFlag = indexShiftFlag;
+  this->AutomaticProjectorConstructionFlag = false;
+  this->ProjectorEigenvalues = 0;
   if (maxIter > 0)
     {
       this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
@@ -98,6 +100,51 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->PreviousLastWantedEigenvalue = 0.0;
   this->EigenvaluePrecision = MACHINE_PRECISION;
   this->NbrEigenvalue = 1;
+}
+
+// constructor using automatic projector construction 
+//
+// nbrEigenvalues = number of eigenvalues/eigenstates to compute
+// projectorCoefficient = energy scale in front of the projector
+// architecture = architecture to use for matrix operations
+// maxIter = an approximation of maximal number of iteration
+// diskFlag = use disk storage to increase speed of ground state calculation
+// resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues, double projectorCoefficient,
+																 AbstractArchitecture* architecture, 
+																 int maxIter, bool diskFlag, bool resumeDiskFlag)
+{
+  this->Index = 0;
+  this->Hamiltonian = 0;
+  this->V1 = ComplexVector();
+  this->V2 = ComplexVector();
+  this->V3 = ComplexVector();
+  this->InitialState = ComplexVector();
+  this->GroundState = ComplexVector();
+  this->GroundStateFlag = false;
+  this->DiskFlag = diskFlag;
+  this->ResumeDiskFlag = resumeDiskFlag;
+  this->NbrEigenvalue = nbrEigenvalues;
+  this->NbrProjectors = 0;
+  this->ProjectorVectors = new ComplexVector [this->NbrEigenvalue - 1];
+  this->ProjectorEigenvalues = new double [this->NbrEigenvalue - 1]; 
+  this->ProjectorCoefficient = projectorCoefficient;
+  this->IndexShiftFlag = false;
+  this->AutomaticProjectorConstructionFlag = true;
+  if (maxIter > 0)
+    {
+      this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
+      this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter);
+    }
+  else
+    {
+      this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
+      this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
+    }
+  this->Architecture = architecture;
+  this->PreviousLastWantedEigenvalue = 0.0;
+  this->EigenvaluePrecision = MACHINE_PRECISION;
 }
 
 // copy constructor
@@ -120,11 +167,25 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->Architecture = algorithm.Architecture;
   this->PreviousLastWantedEigenvalue = algorithm.PreviousLastWantedEigenvalue;
   this->EigenvaluePrecision = algorithm.EigenvaluePrecision;
-  this->NbrEigenvalue = 1;
+  this->AutomaticProjectorConstructionFlag = algorithm.AutomaticProjectorConstructionFlag;
+  this->NbrEigenvalue = algorithm.NbrEigenvalue;
   this->NbrProjectors = algorithm.NbrProjectors;
-  this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
-  for (int i = 0; i < this->NbrProjectors; ++i)
-    this->ProjectorVectors[i] = algorithm.ProjectorVectors[i];
+  if (this->AutomaticProjectorConstructionFlag == false)
+    {
+      this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	this->ProjectorVectors[i] = algorithm.ProjectorVectors[i];
+      this->ProjectorEigenvalues = 0;
+    }
+  else
+    {
+      this->ProjectorVectors = new ComplexVector [this->NbrEigenvalue - 1];     
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	this->ProjectorVectors[i] = algorithm.ProjectorVectors[i];
+      this->ProjectorEigenvalues = new double [this->NbrEigenvalue - 1]; 
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	this->ProjectorEigenvalues[i] = algorithm.ProjectorEigenvalues[i];
+    }
   this->ProjectorCoefficient = algorithm.ProjectorCoefficient;
   this->IndexShiftFlag = algorithm.IndexShiftFlag;
 }
@@ -135,6 +196,8 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
 ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::~ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk() 
 {
   delete[] this->ProjectorVectors;
+  if (this->ProjectorEigenvalues != 0)
+    delete[] this->ProjectorEigenvalues;
 }
 
 // initialize Lanczos algorithm with a random vector
@@ -143,9 +206,12 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::~ComplexBasicLa
 void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  this->V1 = ComplexVector (Dimension);
-  this->V2 = ComplexVector (Dimension);
-  this->V3 = ComplexVector (Dimension);
+  if ((this->AutomaticProjectorConstructionFlag == false) || (this->NbrProjectors == 0) || (this->ResumeDiskFlag == true))
+    {
+      this->V1 = ComplexVector (Dimension);
+      this->V2 = ComplexVector (Dimension);
+      this->V3 = ComplexVector (Dimension);
+    }
   if (this->ResumeDiskFlag == false)
     {
       int Shift = RAND_MAX / 2;
@@ -156,15 +222,18 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::Initialize
 	  this->V1.Im(i) = Scale * ((double) (rand() - Shift));
 	}
       this->V1 /= this->V1.Norm();
-      Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
-      MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
-      Operation1.ApplyOperation(this->Architecture);	
-      for (int i = 0; i < this->NbrProjectors; ++i)
-	TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
-      AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
-      Operation2.ApplyOperation(this->Architecture);
-      delete[] TmpScalarProduct;
-      this->V1 /= this->V1.Norm();
+      if (this->NbrProjectors > 0)
+	{
+	  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+	  MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+	  Operation1.ApplyOperation(this->Architecture);	
+	  for (int i = 0; i < this->NbrProjectors; ++i)
+	    TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
+	  AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+	  Operation2.ApplyOperation(this->Architecture);
+	  delete[] TmpScalarProduct;
+	  this->V1 /= this->V1.Norm();
+	}
       if (this->DiskFlag == false)
 	this->InitialState = ComplexVector (this->V1, true);
       else
@@ -190,15 +259,18 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::Initialize
       this->V1 = ((ComplexVector &) vector);
       this->V2 = ComplexVector (Dimension);
       this->V3 = ComplexVector (Dimension);
-      Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
-      MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
-      Operation1.ApplyOperation(this->Architecture);	
-      for (int i = 0; i < this->NbrProjectors; ++i)
-	TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
-      AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
-      Operation2.ApplyOperation(this->Architecture);
-      delete[] TmpScalarProduct;
-      this->V1 /= this->V1.Norm();
+      if (this->NbrProjectors > 0)
+	{
+	  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+	  MultipleComplexScalarProductOperation Operation1 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+	  Operation1.ApplyOperation(this->Architecture);	
+	  for (int i = 0; i < this->NbrProjectors; ++i)
+	    TmpScalarProduct[i] = -Conj(TmpScalarProduct[i]);
+	  AddComplexLinearCombinationOperation Operation2 (&(this->V1), this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+	  Operation2.ApplyOperation(this->Architecture);
+	  delete[] TmpScalarProduct;
+	  this->V1 /= this->V1.Norm();
+	}
       if (this->DiskFlag == false)
 	this->InitialState = ComplexVector (vector);
       else
@@ -223,17 +295,41 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::Initialize
 
 Vector* ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetEigenstates(int nbrEigenstates)
 {
-  if (nbrEigenstates != 1)
+  if (this->AutomaticProjectorConstructionFlag == false)
     {
-      return 0;
+      if (nbrEigenstates != 1)
+	{
+	  return 0;
+	}
+      else
+	{
+	  this->GetGroundState();
+	  ComplexVector* TmpVectors = new ComplexVector[1];
+	  TmpVectors[0] = this->GroundState;
+	  return TmpVectors;
+	}
     }
   else
     {
-      this->GetGroundState();
-      ComplexVector* TmpVectors = new ComplexVector[1];
-      TmpVectors[0] = this->GroundState;
-      return TmpVectors;
-    }
+      if (nbrEigenstates > this->NbrEigenvalue)
+	{
+	  return 0;	  
+	}
+      ComplexVector* TmpVectors = new ComplexVector[nbrEigenstates];
+      if (nbrEigenstates < this->NbrEigenvalue)
+	{
+	  for (int i = 0; i < nbrEigenstates; ++i)
+	    TmpVectors[i] = this->ProjectorVectors[i];
+	}
+      else
+	{
+	  for (int i = 0; i < this->NbrProjectors; ++i)
+	    TmpVectors[i] = this->ProjectorVectors[i];
+	  this->GetGroundState();
+	  TmpVectors[this->NbrProjectors] = this->GroundState;
+	}
+      return TmpVectors;    
+    } 
 }
 
 // get last produced vector
@@ -413,7 +509,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::RunLanczos
   delete[] TmpCoefficient;
   if (this->PreviousLastWantedEigenvalue != 0.0)
     {
-      this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      this->PreviousLastWantedEigenvalue = this->DiagonalizedMatrix.DiagonalElement(0);//this->NbrEigenvalue - 1);
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
     }
@@ -421,7 +517,7 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::RunLanczos
     {
       this->Diagonalize();
       this->DiagonalizedMatrix.SortMatrixUpOrder();
-      this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1);
+      this->PreviousLastWantedEigenvalue = 2.0 * this->DiagonalizedMatrix.DiagonalElement(0);//this->NbrEigenvalue - 1);
     }
 }
   
@@ -448,13 +544,198 @@ int ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::EigenstateI
 
 void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::AddProjectorContribution(ComplexVector& initialVector, ComplexVector& destinationVector)
 {
-  Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
-  MultipleComplexScalarProductOperation Operation1 (&initialVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
-  Operation1.ApplyOperation(this->Architecture);	
-  for (int i = 0; i < this->NbrProjectors; ++i)
-    TmpScalarProduct[i] = this->ProjectorCoefficient * Conj(TmpScalarProduct[i]);
-  AddComplexLinearCombinationOperation Operation2 (&destinationVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
-  Operation2.ApplyOperation(this->Architecture);
-  delete[] TmpScalarProduct;
+  if (this->NbrProjectors > 0)
+    {
+      Complex* TmpScalarProduct = new Complex[this->NbrProjectors];
+      MultipleComplexScalarProductOperation Operation1 (&initialVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+      Operation1.ApplyOperation(this->Architecture);	
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	TmpScalarProduct[i] = this->ProjectorCoefficient * Conj(TmpScalarProduct[i]);
+      AddComplexLinearCombinationOperation Operation2 (&destinationVector, this->ProjectorVectors, this->NbrProjectors, TmpScalarProduct);
+      Operation2.ApplyOperation(this->Architecture);
+      delete[] TmpScalarProduct;
+    }
 }
 
+// test if convergence has been reached
+//
+// return value = true if convergence has been reached
+
+bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::TestConvergence ()
+{
+//   if ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
+//        (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
+  if ((fabs(this->DiagonalizedMatrix.DiagonalElement(0) - this->PreviousLastWantedEigenvalue) < 
+       (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(0)))))
+    {
+      if (this->AutomaticProjectorConstructionFlag == true)
+	{
+	  if ((this->NbrProjectors + 1) == this->NbrEigenvalue)
+	    return true;
+	  else
+	    {
+	      cout << "found eigenstate " << this->NbrProjectors << endl;
+	      cout << "computing eigenstate " << this->NbrProjectors << endl;
+	      this->GetGroundState();
+	      this->ProjectorVectors[this->NbrProjectors] = ComplexVector(this->GroundState, true);
+	      if (this->NbrProjectors > 0)
+		{
+		  cout << "checking orthogonality with previously found eigenstates" << endl;
+		  for (int i = 0; i < this->NbrProjectors; ++i)
+		    {
+		      cout << "< " << i << " | " << this->NbrProjectors << " > = " 
+			   << (this->ProjectorVectors[i] * this->ProjectorVectors[this->NbrProjectors]) << endl;
+		    }
+		}
+	      this->ProjectorEigenvalues[this->NbrProjectors] = this->DiagonalizedMatrix.DiagonalElement(0);
+	      if (this->DiskFlag == true)
+		{
+		  char* TmpVectorName = new char [256];
+		  sprintf(TmpVectorName, "vectorprojector.%d", this->NbrProjectors);
+		  this->ProjectorVectors[this->NbrProjectors].WriteVector(TmpVectorName);
+		  delete[] TmpVectorName;
+		}
+	      this->NbrProjectors++;
+	      this->GroundStateFlag = false;
+	      cout << "reinitializing Lanczos " << endl;
+	      this->Index = 0;
+	      this->PreviousLastWantedEigenvalue = 0.0;	  
+	      this->InitializeLanczosAlgorithm();
+	      cout << "starting Lanczos " << endl;
+	    }
+	}
+      else
+	{
+	  return true;
+	}
+    }
+  else
+    return false;
+}
+
+// get the n first eigenvalues
+//
+// eigenvalues = reference on the array where the eigenvalues will be stored (allocation done by the method itself)
+// nbrEigenstates = number of needed eigenvalues
+
+void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetEigenvalues (double*& eigenvalues, int nbrEigenvalues)
+{
+  if (this->AutomaticProjectorConstructionFlag == false)
+    {
+      eigenvalues = new double [nbrEigenvalues];
+      for (int i = 0; i < nbrEigenvalues; ++i)
+	{
+	  eigenvalues[i] = this->DiagonalizedMatrix(i, i);
+	}
+    }
+  else
+    {
+      eigenvalues = new double [nbrEigenvalues];
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	{
+	  eigenvalues[i] = this->ProjectorEigenvalues[i];
+	}
+      for (int i = this->NbrProjectors; i < nbrEigenvalues; ++i)
+	{
+	  eigenvalues[i] = this->DiagonalizedMatrix(i, i);
+	}
+      
+    }
+}
+
+// get current diagonalized matrix
+//
+// return value = reference on current diagonalized matrix
+
+RealTriDiagonalSymmetricMatrix& ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetDiagonalizedMatrix ()
+{
+  if (this->AutomaticProjectorConstructionFlag == false)
+    {
+      return this->DiagonalizedMatrix;
+    }
+  else
+    {
+      this->FullDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->DiagonalizedMatrix.GetNbrRow() + this->NbrProjectors, true);
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	{
+	  this->FullDiagonalizedMatrix(i, i) = this->ProjectorEigenvalues[i];
+	}
+      for (int i = 0; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
+	{
+	  this->FullDiagonalizedMatrix(i + this->NbrProjectors, i + this->NbrProjectors) = this->DiagonalizedMatrix(i, i);
+	}
+      return this->FullDiagonalizedMatrix;
+    }
+}
+
+// write current Lanczos state on disk
+//
+// return value = true if no error occurs
+
+bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::WriteState()
+{
+  ofstream File;
+  File.open("lanczos.dat", ios::binary | ios::out);
+  WriteLittleEndian(File, this->Index);
+  WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  WriteLittleEndian(File, this->AutomaticProjectorConstructionFlag);
+  WriteLittleEndian(File, this->NbrProjectors);
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    WriteLittleEndian(File, this->ProjectorEigenvalues[i]);
+  int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
+  WriteLittleEndian(File, TmpDimension);
+  --TmpDimension;
+  for (int i = 0; i <= TmpDimension; ++i)    
+    {    
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
+    }
+  for (int i = 0; i < TmpDimension; ++i)
+    {
+      WriteLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
+    }
+  File.close();  
+  return true;
+}
+
+// read current Lanczos state from disk
+//
+// return value = true if no error occurs
+
+bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ReadState()
+{
+  ifstream File;
+  File.open("lanczos.dat", ios::binary | ios::in);
+  ReadLittleEndian(File, this->Index);
+  ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
+  ReadLittleEndian(File, this->AutomaticProjectorConstructionFlag);
+  ReadLittleEndian(File, this->NbrProjectors);
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    ReadLittleEndian(File, this->ProjectorEigenvalues[i]);
+  int TmpDimension;
+  ReadLittleEndian(File, TmpDimension);
+  this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);
+  --TmpDimension;
+  for (int i = 0; i <= TmpDimension; ++i)
+    {
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.DiagonalElement(i));
+    }
+  for (int i = 0; i < TmpDimension; ++i)
+    {
+      ReadLittleEndian(File, this->TridiagonalizedMatrix.UpperDiagonalElement(i));
+    }
+  File.close();  
+  char* TmpVectorName = new char [256];
+  sprintf(TmpVectorName, "vector.%d", this->Index);
+  this->V1.ReadVector(TmpVectorName);
+  sprintf(TmpVectorName, "vector.%d", (this->Index + 1));
+  this->V2.ReadVector(TmpVectorName);
+  sprintf(TmpVectorName, "vector.%d", (this->Index + 2));
+  this->V3.ReadVector(TmpVectorName);
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    {
+      sprintf(TmpVectorName, "vectorprojector.%d", i);
+      this->ProjectorVectors[i].ReadVector(TmpVectorName);
+    }
+  delete[] TmpVectorName;
+  return true;
+}
