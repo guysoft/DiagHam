@@ -411,6 +411,8 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::LowLevelMulti
 	      ++k;
 	    }
 	  delete[] Coefficient2;
+	  firstComponent += this->PrecalculationShift;
+	  LastComponent += this->PrecalculationShift;
 	}
       else
 	{
@@ -543,6 +545,8 @@ ComplexVector& ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowL
 	      TmpSum += this->HamiltonianShift * Coefficient;
 	      vDestination[k++] += TmpSum;
 	    }
+	  firstComponent += this->PrecalculationShift;
+	  LastComponent += this->PrecalculationShift;
 	}
       else
 	{
@@ -664,6 +668,8 @@ ComplexVector* ParticleOnLatticeWithSpinChernInsulatorHamiltonian::HermitianLowL
 		}
 	      ++k;
 	    }
+	  firstComponent += this->PrecalculationShift;
+	  LastComponent += this->PrecalculationShift;
 	  delete[] Coefficient2;
 	  delete[] TmpSum;
 	}

@@ -123,6 +123,7 @@ int main(int argc, char** argv)
   (*PrecalculationGroup) += new SingleIntegerOption  ('m', "memory", "amount of memory that can be allocated for fast multiplication (in Mbytes)", 500);
 #ifdef __LAPACK__
   (*PrecalculationGroup) += new SingleIntegerOption  ('\n', "s2-memory", "amount of memory that can be allocated for fast multiplication of S^2 term (in Mbytes)", 500);
+  (*PrecalculationGroup) += new SingleDoubleOption  ('\n', "s2-ratiomemory", "if positive, set the amount of memory that can be allocated for fast multiplication of S^2 term as a ratio of total memory for fast multiplication", 0.0);
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
 #ifdef __SCALAPACK__
@@ -150,6 +151,7 @@ int main(int argc, char** argv)
   int NbrSites = 2*NbrSitesX * NbrSitesY;
   int SzValue = Manager.GetInteger("sz-value");
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
+  long S2Memory = ((long) Manager.GetInteger("s2-memory")) << 20;
   bool CheckerboardFlag = Manager.GetBoolean("checkerboard");
 
   char* StatisticPrefix = new char [64];
@@ -378,6 +380,11 @@ int main(int argc, char** argv)
 		  ParticleOnLatticeWithSpinChernInsulatorHamiltonian* Hamiltonian = 0;
 		  if (Architecture.GetArchitecture()->GetLocalMemory() > 0)
 		    Memory = Architecture.GetArchitecture()->GetLocalMemory();
+		  if ((Manager.GetDouble("s2-factor") != 0.0) && (Manager.GetDouble("s2-ratiomemory") > 0.0) && (Manager.GetDouble("s2-ratiomemory") < 1.0))
+		    {
+		      S2Memory = (long) (((double) Memory) * Manager.GetDouble("s2-ratiomemory"));
+		      Memory -= S2Memory;
+		    }
 		  int* NbrInteractingOrbitalsupup;
 		  int** InteractingOrbitalsOrbitalIndicesupup;
 		  int** InteractingOrbitalsSpatialIndicesupup;
@@ -537,7 +544,7 @@ int main(int argc, char** argv)
 		    }
 		  if (Manager.GetDouble("s2-factor") != 0.0)
 		    {
-		      Hamiltonian->AddS2(Manager.GetDouble("s2-factor"), Manager.GetBoolean("fixed-sz"), ((long) Manager.GetInteger("s2-memory")) << 20);
+		      Hamiltonian->AddS2(Manager.GetDouble("s2-factor"), Manager.GetBoolean("fixed-sz"), S2Memory);
 		    }
 		  char* ContentPrefix = new char[256];
 		  sprintf (ContentPrefix, "%d %d", i, j);

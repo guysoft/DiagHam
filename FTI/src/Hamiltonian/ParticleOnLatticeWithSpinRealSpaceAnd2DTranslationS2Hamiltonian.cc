@@ -112,6 +112,7 @@ ParticleOnLatticeWithSpinRealSpaceAnd2DTranslationS2Hamiltonian::ParticleOnLatti
   long MinIndex;
   long MaxIndex;
   this->Architecture->GetTypicalRange(MinIndex, MaxIndex);
+  cout << "MinIndex=" <<  MinIndex << " MaxIndex=" << MaxIndex << endl;
   this->PrecalculationShift = (int) MinIndex;  
   this->HermitianSymmetryFlag = true;//true;
   
