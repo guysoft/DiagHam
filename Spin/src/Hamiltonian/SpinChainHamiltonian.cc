@@ -58,6 +58,7 @@ SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin
   this->J = new double [this->NbrSpin - 1];
   this->Jz = new double [this->NbrSpin - 1];
   this->HalfJ = new double [this->NbrSpin - 1];
+  this->Hz = 0;
   for (int i = 0; i < (this->NbrSpin - 1); i++)
     {
       this->J[i] = j[i];
@@ -82,11 +83,42 @@ SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin
   this->J = new double [this->NbrSpin - 1];
   this->Jz = new double [this->NbrSpin - 1];
   this->HalfJ = new double [this->NbrSpin - 1];
+  this->Hz = 0;
   for (int i = 0; i < (this->NbrSpin - 1); i++)
     {
       this->J[i] = j[i];
       this->Jz[i] = jz[i];
       this->HalfJ[i] = j[i] * 0.5;
+    }
+  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->EvaluateDiagonalMatrixElements();
+}
+
+// constructor from default datas
+//
+// chain = reference on Hilbert space of the associated system
+// nbrSpin = number of spin
+// j = array containing coupling constants between spins along x and z
+// jz = array containing coupling constants between spins along z
+// hz = array containing the amplitude of the Zeeman term along z
+
+SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* hz)
+{
+  this->Chain = chain;
+  this->NbrSpin = nbrSpin;
+  this->J = new double [this->NbrSpin - 1];
+  this->Jz = new double [this->NbrSpin - 1];
+  this->HalfJ = new double [this->NbrSpin - 1];
+  this->Hz = new double [this->NbrSpin];
+  for (int i = 0; i < (this->NbrSpin - 1); i++)
+    {
+      this->J[i] = j[i];
+      this->Jz[i] = jz[i];
+      this->HalfJ[i] = j[i] * 0.5;
+    }
+  for (int i = 0; i < this->NbrSpin; i++)
+    {
+      this->Hz[i] = hz[i];
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
@@ -101,6 +133,10 @@ SpinChainHamiltonian::~SpinChainHamiltonian()
   delete[] this->Jz;
   delete[] this->HalfJ;
   delete[] this->SzSzContributions;
+  if (this->Hz != 0)
+    {
+      delete[] this->Hz;  
+    }
 }
 
 // set Hilbert space
@@ -416,6 +452,19 @@ void SpinChainHamiltonian::EvaluateDiagonalMatrixElements()
 	{
 	  this->SzSzContributions[i] += this->Jz[j] * this->Chain->SziSzj(j, j + 1, i);
 	}
+    }
+  if (this->Hz != 0)
+    {
+      double Coefficient;
+      // Sz part
+      for (int i = 0; i < dim; i++)
+	{
+	  for (int j = 0; j < this->NbrSpin; j++)
+	    {
+	      this->Chain->Szi(j, i, Coefficient);
+	      this->SzSzContributions[i] += this->Hz[j] * Coefficient;
+	    }
+	}      
     }
 }
 

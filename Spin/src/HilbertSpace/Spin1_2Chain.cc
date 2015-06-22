@@ -44,6 +44,8 @@
 
 using std::cout;
 using std::endl;
+using std::hex;
+using std::dec;
 
 
 #define M_SQRT3 1.73205080756888
@@ -135,8 +137,8 @@ Spin1_2Chain::Spin1_2Chain (int chainLength, int sz, int memorySize)
   this->LookUpTableMask = ~this->LookUpTableMask;
   this->LookUpTable = new int [this->LookUpTableSize];
   this->StateDescription = new unsigned long [this->HilbertSpaceDimension];
-  this->StateDescription[0] = 0xffffffff; 
-  this->LargeHilbertSpaceDimension = this->GenerateStates (0, 0, 0xffffffff, this->ChainLength);
+  this->StateDescription[0] = 0xfffffffful; 
+  this->LargeHilbertSpaceDimension = this->GenerateStates (0, 0, 0xfffffffful, this->ChainLength);
   this->HilbertSpaceDimension = (int) this->LargeHilbertSpaceDimension;
 }
 
@@ -349,7 +351,7 @@ int Spin1_2Chain::GenerateStates(int statePosition, int sitePosition, unsigned c
     }
   else
     {
-      if (currentSz == this-> Sz)
+      if (currentSz == this->Sz)
 	{
 	  if (NextSitePosition == this->LookUpPosition)
 	    {
@@ -361,7 +363,7 @@ int Spin1_2Chain::GenerateStates(int statePosition, int sitePosition, unsigned c
       else
 	{
 	  currentSz -= 2;
-	  if (currentSz == this-> Sz)
+	  if (currentSz == this->Sz)
 	    {
 	      mask = ~(0x1ul << sitePosition);
 	      if (NextSitePosition == this->LookUpPosition)
@@ -631,9 +633,9 @@ int Spin1_2Chain::Szi (int i, int state, double& coefficient)
 {
   unsigned long tmpState = (this->StateDescription[state] >> i) & 0x1ul;
   if (tmpState == 0x0ul)
-    coefficient = 0.5;
-  else
     coefficient = -0.5;
+  else
+    coefficient = 0.5;
   return state;
 }
 
@@ -861,6 +863,50 @@ int Spin1_2Chain::SmiSzj (int i, int j, int state, double& coefficient)
     {
       coefficient = 0.0;
       return this->HilbertSpaceDimension;
+    }
+  return this->HilbertSpaceDimension;
+}
+
+// return index of resulting state from application of S+_i S-_j Sz_k operator on a given state
+//
+// i = position of S+ operator
+// j = position of S- operator
+// k = position of Sz operator
+// state = index of the state to be applied on S+_i S-_j Sz_k operator
+// coefficient = reference on double where numerical coefficient has to be stored
+// return value = index of resulting state
+
+int Spin1_2Chain::SpiSmjSzk (int i, int j, int k, int state, double& coefficient)
+{
+  unsigned long tmpState = this->StateDescription[state];
+  if (((tmpState >> k) & 0x1ul) == 0x0ul)
+    coefficient = -0.5;
+  else
+    coefficient = 0.5;
+  unsigned long State = tmpState;
+  unsigned long tmpState2 = tmpState;
+  tmpState >>= j;
+  tmpState &= 0x1ul;
+  if (i != j)
+    {
+      tmpState2 >>= i; 
+      tmpState2 &= 0x1ul;
+      tmpState2 <<= 1;
+      tmpState2 |= tmpState;
+      if (tmpState2 == 0x1ul)
+	{
+	  return this->FindStateIndex((State | (0x1ul << i)) & ~(0x1ul << j));
+	}
+      else
+	{
+	  coefficient = 0.0;
+	  return this->HilbertSpaceDimension;
+	}
+    }
+  if (tmpState == 0x1ul)
+    {
+      coefficient *= -0.25;
+      return state;
     }
   return this->HilbertSpaceDimension;
 }

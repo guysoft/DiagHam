@@ -58,6 +58,9 @@ class SpinChainHamiltonian : public AbstractHamiltonian
   // array containing coupling constants between spins along z
   double* Jz;
 
+  // amplitude of the Zeeman term along z
+  double* Hz;
+
   int NbrSpin;
 
   double* SzSzContributions;
@@ -78,6 +81,15 @@ class SpinChainHamiltonian : public AbstractHamiltonian
   // j = array containing coupling constants between spins along x and z
   // jz = array containing coupling constants between spins along z
   SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz);
+
+  // constructor from default datas
+  //
+  // chain = reference on Hilbert space of the associated system
+  // nbrSpin = number of spin
+  // j = array containing coupling constants between spins along x and z
+  // jz = array containing coupling constants between spins along z
+  // hz = array containing the amplitude of the Zeeman term along z
+  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* hz);
 
   // destructor
   //

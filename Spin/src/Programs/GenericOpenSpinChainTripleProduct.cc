@@ -2,7 +2,7 @@
 #include "Matrix/RealSymmetricMatrix.h"
 #include "Matrix/RealMatrix.h"
 
-#include "Hamiltonian/SpinChainHamiltonian.h"
+#include "Hamiltonian/SpinChainTripleProductHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1Chain.h"
@@ -13,7 +13,7 @@
 
 #include "LanczosAlgorithm/LanczosManager.h"
 
-#include "MainTask/GenericRealMainTask.h"
+#include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
 
@@ -38,14 +38,14 @@ int main(int argc, char** argv)
   cout.precision(14); 
 
   // some running options and help
-  OptionManager Manager ("GenericOpenSpinChain" , "0.01");
+  OptionManager Manager ("GenericOpenSpinChainTripleProduct" , "0.01");
   OptionGroup* ToolsGroup  = new OptionGroup ("tools options");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
 
   ArchitectureManager Architecture;
-  LanczosManager Lanczos(false);
+  LanczosManager Lanczos(true);
 
   Manager += SystemGroup;
   Architecture.AddOptionGroup(&Manager);
@@ -60,16 +60,18 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleIntegerOption ('\n', "nbr-sz", "number of sz value to evaluate (0 for all sz sectors)", 0);
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "isotropic coupling constant value", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('z', "djz-value", "delta compare to the coupling constant value along z", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('c', "chi-value", "coupling constant  in front of the triple product S_i . (S_{i+1} x S_{i+2})", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "hz-value", "amplitude of the Zeeman term along the z axis", 0.0);
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
   (*ToolsGroup) += new BooleanOption  ('\n', "show-hamiltonian", "show matrix representation of the hamiltonian");
+  (*ToolsGroup) += new BooleanOption  ('\n', "test-hermitian", "test if the hamiltonian is hermitian");
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
   
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type GenericOpenSpinChain -h" << endl;
+      cout << "see man page for option syntax or type GenericOpenSpinChainTripleProduct -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -98,22 +100,22 @@ int main(int argc, char** argv)
     {      
       if (Manager.GetDouble("hz-value") == 0)
 	{
-	  sprintf (OutputParameterFileName, "j_%f", Manager.GetDouble("j-value"));
+	  sprintf (OutputParameterFileName, "j_%f_chi_%f", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"));
 	}
       else
 	{
-	  sprintf (OutputParameterFileName, "j_%f_hz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("hz-value"));
+	  sprintf (OutputParameterFileName, "j_%f_chi_%f_hz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"), Manager.GetDouble("hz-value"));
 	}
     }
   else
     {
       if (Manager.GetDouble("hz-value") == 0)
 	{
-	  sprintf (OutputParameterFileName, "j_%f_djz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"));
+	  sprintf (OutputParameterFileName, "j_%f_djz_%f_chi_%f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), Manager.GetDouble("chi-value"));
 	}
       else
 	{
-	  sprintf (OutputParameterFileName, "j_%f_djz_%f_hz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), Manager.GetDouble("hz-value"));
+	  sprintf (OutputParameterFileName, "j_%f_djz_%f_chi_%f_hz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), Manager.GetDouble("chi-value"), Manager.GetDouble("hz-value"));
 	}
     }
     
@@ -127,6 +129,10 @@ int main(int argc, char** argv)
   double TmpDeltaJz = Manager.GetDouble("djz-value");
   for (int i = 0; i < (NbrSpins - 1); ++i)
     JzValues[i] = JValues[i] + TmpDeltaJz;
+  double* ChiValues = new double [NbrSpins - 1];
+  ChiValues[0] = Manager.GetDouble("chi-value");
+  for (int i = 1; i < (NbrSpins - 1); ++i)
+    ChiValues[i] = ChiValues[0];
   double* HzValues = 0;
   if (Manager.GetDouble("hz-value") != 0)
     {
@@ -170,17 +176,17 @@ int main(int argc, char** argv)
 	  }
 	}
 	  
-      SpinChainHamiltonian* Hamiltonian = 0;
+      SpinChainTripleProductHamiltonian* Hamiltonian = 0;
       if (HzValues == 0)
-	Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues);
+	Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues);
       else
-	Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues, HzValues);
+	Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues, HzValues);
       char* TmpSzString = new char[64];
       char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
       sprintf (TmpSzString, "%d", InitalSzValue);
       sprintf (TmpEigenstateString, "%s_%s_sz_%d", OutputFileName, OutputParameterFileName, InitalSzValue);
-      GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-			       FirstRun, TmpEigenstateString);
+      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				  FirstRun, TmpEigenstateString);
       MainTaskOperation TaskOperation (&Task);
       TaskOperation.ApplyOperation(Architecture.GetArchitecture());
       FirstRun = false;

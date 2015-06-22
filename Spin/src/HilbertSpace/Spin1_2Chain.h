@@ -272,6 +272,16 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = index of resulting state
   virtual int SmiSzj (int i, int j, int state, double& coefficient);
 
+  // return index of resulting state from application of S+_i S-_j Sz_k operator on a given state
+  //
+  // i = position of S+ operator
+  // j = position of S- operator
+  // k = position of Sz operator
+  // state = index of the state to be applied on S+_i S-_j Sz_k operator
+  // coefficient = reference on double where numerical coefficient has to be stored
+  // return value = index of resulting state
+  virtual int SpiSmjSzk (int i, int j, int k, int state, double& coefficient);
+
   // translate a state assuming the system have periodic boundary conditions (increasing the site index)
   //
   // nbrTranslations = number of translations to apply
@@ -335,7 +345,7 @@ class Spin1_2Chain : public AbstractSpinChain
 
   virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
 
- private:
+ protected:
 
   // generate Spin 1/2 states
   //

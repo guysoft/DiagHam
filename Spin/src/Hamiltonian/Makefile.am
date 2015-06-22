@@ -38,4 +38,5 @@ Potts3ChainHamiltonianWithTranslations.cc \
 SpinChainZ2InteractingHamiltonianWithTranslations.cc \
 SpinChainXYZNaturalBoundaryTermHamiltonian.cc \
 Potts3ChainNaturalBoundaryTermHamiltonian.cc \
-SpinChainPureHFieldHamiltonian.cc
+SpinChainPureHFieldHamiltonian.cc \
+SpinChainTripleProductHamiltonian.cc
