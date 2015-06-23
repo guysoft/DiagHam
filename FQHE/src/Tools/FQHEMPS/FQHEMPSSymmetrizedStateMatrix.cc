@@ -130,12 +130,16 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
   this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NLastValuePerPLevelCFTSector = new int* [this->PLevel + 1];
+  this->NbrIndexPerPLevelCFTSectorQValue = new int** [this->PLevel + 1];
+  this->GlobalIndexMapper = new int*** [this->PLevel + 1];
   for (int p = 0; p <= this->PLevel; ++p)
     {
       this->NbrNValuesPerPLevelCFTSector[p] = new int [this->NbrCFTSectors];
       this->NInitialValuePerPLevelCFTSector[p] = new int [this->NbrCFTSectors];
       this->NLastValuePerPLevelCFTSector[p] = new int [this->NbrCFTSectors];
-      for (int currentCFTSector = 0; currentCFTSector < this->NbrCFTSectors; ++currentCFTSector)
+      this->NbrIndexPerPLevelCFTSectorQValue[p] = new int* [this->NbrCFTSectors];
+      this->GlobalIndexMapper[p] = new int** [this->NbrCFTSectors];
+      for (int CurrentCFTSector = 0; CurrentCFTSector < this->NbrCFTSectors; ++CurrentCFTSector)
 	{
 	  int MinQ = 1 << 30;
 	  int MaxQ = -(1 << 30);
@@ -145,8 +149,8 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	      int MaxQ1 = 0;
 	      int MinQ2 = 0;
 	      int MaxQ2 = 0;
-	      this->MPSMatrix1->GetChargeIndexRange(j, currentCFTSector, MinQ1, MaxQ1);
-	      this->MPSMatrix2->GetChargeIndexRange(p - j, currentCFTSector, MinQ2, MaxQ2);
+	      this->MPSMatrix1->GetChargeIndexRange(j, CurrentCFTSector, MinQ1, MaxQ1);
+	      this->MPSMatrix2->GetChargeIndexRange(p - j, CurrentCFTSector, MinQ2, MaxQ2);
 	      if ((MinQ1 + MinQ2) < MinQ)
 		{
 		  MinQ = MinQ1 + MinQ2;
@@ -155,12 +159,74 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 		{
 		  MaxQ = MaxQ1 + MaxQ2;
 		}
-	      this->NInitialValuePerPLevelCFTSector[p][currentCFTSector] = MinQ;
-	      this->NLastValuePerPLevelCFTSector[p][currentCFTSector] = MaxQ;
-	      this->NbrNValuesPerPLevelCFTSector[p][currentCFTSector] = this->NLastValuePerPLevelCFTSector[p][currentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][currentCFTSector] + 1;
+	      this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
+	      this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
+	      this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
+	      this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int[MaxQ - MinQ + 1];
+	      this->GlobalIndexMapper[p][CurrentCFTSector] = new int*[MaxQ - MinQ + 1];
 	    } 
 	}
     }
+  int TmpFullMatrixSize = this->MPSMatrix1->GetMatrices()[0].GetNbrRow() *  this->MPSMatrix2->GetMatrices()[0].GetNbrRow();
+  this->TensorProductIndexConvertion = new int [TmpFullMatrixSize];
+  for (int i = 0; i < TmpFullMatrixSize; ++i)
+    this->TensorProductIndexConvertion[i] = -1;
+  int TmpIndex = 0;
+  for (int p = 0; p <= this->PLevel; ++p)
+    {
+      for (int CurrentCFTSector = 0; CurrentCFTSector < this->NbrCFTSectors; ++CurrentCFTSector)
+	{
+	  int MinQ = this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector];
+	  int MaxQ = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector];
+	  int TmpQ1 = 0;
+	  int TmpQ2 = 0;
+	  int TmpPLevel1 = 0;
+	  int TmpPLevel2 = 0;
+	  for (; MinQ <= MaxQ; ++MinQ)
+	    {
+	      int InitialTmpIndex = TmpIndex;
+	      for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
+		{
+		  this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
+		  for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
+		    {
+		      this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
+		      if (((TmpQ1 + TmpQ2) == MinQ) && ((TmpPLevel1 + TmpPLevel2) == p))
+			{
+			  this->TensorProductIndexConvertion[(j * this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) + i] = TmpIndex;
+			  ++TmpIndex;
+			}
+		    }
+		}
+	      this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]] = TmpIndex - InitialTmpIndex;
+	      if (TmpIndex > InitialTmpIndex)
+		{
+		  this->GlobalIndexMapper[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]] = new int[this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]]];
+		  for (int i = InitialTmpIndex; i < TmpIndex; ++i)
+		    {
+		      this->GlobalIndexMapper[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]][i - InitialTmpIndex] = i;
+		    }
+		}
+	      else
+		{ 
+		  this->GlobalIndexMapper[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]] = 0;
+		}
+	    }
+	}
+    }
+  cout << "actual B matrix size " << TmpIndex << endl;
+  int* TmpKeptIndices2 = new int [TmpIndex];
+  for (int i = 0; i < TmpFullMatrixSize; ++i)
+    {
+      if (this->TensorProductIndexConvertion[i] >= 0)
+	TmpKeptIndices2[this->TensorProductIndexConvertion[i]] = i;
+    }
+  for (int j = 0; j <  this->NbrBMatrices; ++j)
+    {
+      this->RealBMatrices[j] =  this->RealBMatrices[j].ExtractMatrix(TmpIndex, TmpIndex, TmpKeptIndices2, TmpKeptIndices2);
+    }
+  delete[] TmpKeptIndices2;
+
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
   for (int i = 0; i < this->NbrBMatrices; ++i)
     {
@@ -293,7 +359,7 @@ void FQHEMPSSymmetrizedStateMatrix::GetMatrixBoundaryIndices(int& rowIndex, int&
   ++TmpRowIndex2;
   ++TmpColumnIndex1;
   ++TmpColumnIndex2;
-  rowIndex = TmpRowIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrRow() * TmpRowIndex2;
-  columnIndex = TmpColumnIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrColumn() * TmpColumnIndex2;
+  rowIndex = this->TensorProductIndexConvertion[TmpRowIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrRow() * TmpRowIndex2];
+  columnIndex = this->TensorProductIndexConvertion[TmpColumnIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrColumn() * TmpColumnIndex2];
 }
 

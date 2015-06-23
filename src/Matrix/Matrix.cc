@@ -181,6 +181,7 @@ void Matrix::ResizeAndClean (int nbrRow, int nbrColumn)
 
 void Matrix::ClearMatrix ()
 {
+  this->ResizeAndClean(this->NbrRow, this->NbrColumn);
 }
 
 #ifdef USE_HILBERT_SPACE

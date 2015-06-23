@@ -395,13 +395,13 @@ int main(int argc, char** argv)
 	{
 	  ComplexMatrix EMatrix (ETransposeHamiltonian->GetHilbertSpaceDimension(), ETransposeHamiltonian->GetHilbertSpaceDimension());
 	  ETransposeHamiltonian->GetHamiltonian(EMatrix);
-	  cout << EMatrix << endl;
+	  EMatrix.PrintNonZero(cout);
 	}
       if (EHamiltonian != 0)
 	{
 	  ComplexMatrix EMatrix (EHamiltonian->GetHilbertSpaceDimension(), EHamiltonian->GetHilbertSpaceDimension());
 	  EHamiltonian->GetHamiltonian(EMatrix);
-	  cout << EMatrix << endl;
+	  EMatrix.PrintNonZero(cout);
 	}      
     }
 

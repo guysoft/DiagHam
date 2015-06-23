@@ -600,6 +600,9 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::TestConver
 	      cout << "reinitializing Lanczos " << endl;
 	      this->Index = 0;
 	      this->PreviousLastWantedEigenvalue = 0.0;	  
+	      
+	      this->TridiagonalizedMatrix.ClearMatrix();
+	      this->DiagonalizedMatrix.ClearMatrix();
 	      this->InitializeLanczosAlgorithm();
 	      cout << "starting Lanczos " << endl;
 	    }

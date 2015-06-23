@@ -77,6 +77,9 @@ class FQHEMPSSymmetrizedStateMatrix : public AbstractFQHEMPSMatrix
 
   int**** GlobalIndexMapper;
 
+  // table to convert from the tensor product index to the reshuffled full auxiliary space indices 
+  int* TensorProductIndexConvertion;
+
  public:
   
   // default constructor 
