@@ -115,7 +115,18 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	      else
 		SignMatrix.SetMatrixElement(i, i, 1.0);
 	    }
+// 	  SparseRealMatrix SignMatrix2 (this->MPSMatrix2->GetMatrices()[0].GetNbrRow(), 
+// 					this->MPSMatrix2->GetMatrices()[0].GetNbrColumn(), TmpNbrElementPerRow);
+// 	  for (int i = 0; i < SignMatrix2.GetNbrRow(); ++i)
+// 	    {
+// 	      this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(i, TmpP, TmpQ);
+// 	      if ((TmpQ & 1) == 0)
+// 		SignMatrix2.SetMatrixElement(i, i, 1.0);
+// 	      else
+// 		SignMatrix2.SetMatrixElement(i, i, -1.0);
+// 	    }
 	  SparseRealMatrix SignedB0Matrix = Multiply(SignMatrix, this->MPSMatrix1->GetMatrices()[0]);
+//	  SparseRealMatrix SignedB1Matrix = Multiply(SignMatrix2, this->MPSMatrix2->GetMatrices()[1]);
 	  this->RealBMatrices[0] = TensorProduct(this->MPSMatrix1->GetMatrices()[0], this->MPSMatrix2->GetMatrices()[0]);
 	  this->RealBMatrices[1] = (TensorProduct(this->MPSMatrix1->GetMatrices()[1], this->MPSMatrix2->GetMatrices()[0])
 				    + TensorProduct(SignedB0Matrix, this->MPSMatrix2->GetMatrices()[1]));

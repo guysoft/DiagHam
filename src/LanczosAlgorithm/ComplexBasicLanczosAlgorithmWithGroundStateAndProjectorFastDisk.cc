@@ -563,8 +563,6 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::AddProject
 
 bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::TestConvergence ()
 {
-//   if ((fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1) - this->PreviousLastWantedEigenvalue) < 
-//        (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(this->NbrEigenvalue - 1)))))
   if ((fabs(this->DiagonalizedMatrix.DiagonalElement(0) - this->PreviousLastWantedEigenvalue) < 
        (this->EigenvaluePrecision * fabs(this->DiagonalizedMatrix.DiagonalElement(0)))))
     {
@@ -605,6 +603,7 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::TestConver
 	      this->DiagonalizedMatrix.ClearMatrix();
 	      this->InitializeLanczosAlgorithm();
 	      cout << "starting Lanczos " << endl;
+	      return false;
 	    }
 	}
       else
