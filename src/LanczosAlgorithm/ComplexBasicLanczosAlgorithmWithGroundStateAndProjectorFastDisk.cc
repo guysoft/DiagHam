@@ -79,6 +79,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->DiskFlag = diskFlag;
   this->ResumeDiskFlag = resumeDiskFlag;
   this->NbrProjectors = nbrProjectors;
+  this->InitialNbrProjectors = nbrProjectors;
   this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
   for (int i = 0; i < this->NbrProjectors; ++i)
     this->ProjectorVectors[i] = projectorVectors[i];
@@ -127,10 +128,64 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->ResumeDiskFlag = resumeDiskFlag;
   this->NbrEigenvalue = nbrEigenvalues;
   this->NbrProjectors = 0;
+  this->InitialNbrProjectors = 0;
   this->ProjectorVectors = new ComplexVector [this->NbrEigenvalue - 1];
   this->ProjectorEigenvalues = new double [this->NbrEigenvalue - 1]; 
   this->ProjectorCoefficient = projectorCoefficient;
   this->IndexShiftFlag = false;
+  this->AutomaticProjectorConstructionFlag = true;
+  if (maxIter > 0)
+    {
+      this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter, true);
+      this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(maxIter);
+    }
+  else
+    {
+      this->TridiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
+      this->DiagonalizedMatrix = RealTriDiagonalSymmetricMatrix();
+    }
+  this->Architecture = architecture;
+  this->PreviousLastWantedEigenvalue = 0.0;
+  this->EigenvaluePrecision = MACHINE_PRECISION;
+}
+
+// constructor using both automatic projector construction and an initial set of projectors
+//
+// nbrEigenvalues = number of eigenvalues/eigenstates to compute
+// nbrProjectors = dimension of the projector subspace
+// projectorVectors = array that contains the vectors that spans the projector subspace
+// projectorCoefficient = energy scale in front of the projector
+// indexShiftFlag = true if the eigenstate indices have to be shifted
+// architecture = architecture to use for matrix operations
+// maxIter = an approximation of maximal number of iteration
+// diskFlag = use disk storage to increase speed of ground state calculation
+// resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+
+ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues,
+																 int nbrProjectors, ComplexVector* projectorVectors,
+																 double projectorCoefficient, bool indexShiftFlag,
+																 AbstractArchitecture* architecture, 
+																 int maxIter, bool diskFlag, bool resumeDiskFlag)
+{
+  this->Index = 0;
+  this->Hamiltonian = 0;
+  this->V1 = ComplexVector();
+  this->V2 = ComplexVector();
+  this->V3 = ComplexVector();
+  this->InitialState = ComplexVector();
+  this->GroundState = ComplexVector();
+  this->GroundStateFlag = false;
+  this->DiskFlag = diskFlag;
+  this->ResumeDiskFlag = resumeDiskFlag;
+  this->NbrEigenvalue = nbrEigenvalues;
+  this->NbrProjectors = nbrProjectors;
+  this->InitialNbrProjectors = nbrProjectors;
+  this->ProjectorVectors = new ComplexVector [this->NbrEigenvalue - 1 + this->InitialNbrProjectors];
+  for (int i = 0; i < this->NbrProjectors; ++i)
+    this->ProjectorVectors[i] = projectorVectors[i];
+  this->ProjectorEigenvalues = new double [this->NbrEigenvalue - 1]; 
+  this->ProjectorCoefficient = projectorCoefficient;
+  this->IndexShiftFlag = indexShiftFlag;
   this->AutomaticProjectorConstructionFlag = true;
   if (maxIter > 0)
     {
@@ -170,6 +225,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
   this->AutomaticProjectorConstructionFlag = algorithm.AutomaticProjectorConstructionFlag;
   this->NbrEigenvalue = algorithm.NbrEigenvalue;
   this->NbrProjectors = algorithm.NbrProjectors;
+  this->InitialNbrProjectors = algorithm.InitialNbrProjectors;
   if (this->AutomaticProjectorConstructionFlag == false)
     {
       this->ProjectorVectors = new ComplexVector [this->NbrProjectors];
@@ -179,7 +235,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ComplexBasicLan
     }
   else
     {
-      this->ProjectorVectors = new ComplexVector [this->NbrEigenvalue - 1];     
+      this->ProjectorVectors = new ComplexVector [this->NbrEigenvalue - 1 + this->InitialNbrProjectors];     
       for (int i = 0; i < this->NbrProjectors; ++i)
 	this->ProjectorVectors[i] = algorithm.ProjectorVectors[i];
       this->ProjectorEigenvalues = new double [this->NbrEigenvalue - 1]; 
@@ -206,7 +262,7 @@ ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::~ComplexBasicLa
 void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::InitializeLanczosAlgorithm() 
 {
   int Dimension = this->Hamiltonian->GetHilbertSpaceDimension();
-  if ((this->AutomaticProjectorConstructionFlag == false) || (this->NbrProjectors == 0) || (this->ResumeDiskFlag == true))
+  if ((this->AutomaticProjectorConstructionFlag == false) || ((this->NbrProjectors - this->InitialNbrProjectors) == 0) || (this->ResumeDiskFlag == true))
     {
       this->V1 = ComplexVector (Dimension);
       this->V2 = ComplexVector (Dimension);
@@ -319,14 +375,14 @@ Vector* ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetEige
       if (nbrEigenstates < this->NbrEigenvalue)
 	{
 	  for (int i = 0; i < nbrEigenstates; ++i)
-	    TmpVectors[i] = this->ProjectorVectors[i];
+	    TmpVectors[i] = this->ProjectorVectors[this->InitialNbrProjectors + i];
 	}
       else
 	{
-	  for (int i = 0; i < this->NbrProjectors; ++i)
-	    TmpVectors[i] = this->ProjectorVectors[i];
+	  for (int i = this->InitialNbrProjectors; i < this->NbrProjectors; ++i)
+	    TmpVectors[i - this->InitialNbrProjectors] = this->ProjectorVectors[i];
 	  this->GetGroundState();
-	  TmpVectors[this->NbrProjectors] = this->GroundState;
+	  TmpVectors[this->NbrEigenvalue - 1] = this->GroundState;
 	}
       return TmpVectors;    
     } 
@@ -568,24 +624,24 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::TestConver
     {
       if (this->AutomaticProjectorConstructionFlag == true)
 	{
-	  if ((this->NbrProjectors + 1) == this->NbrEigenvalue)
+	  if ((this->NbrProjectors - this->InitialNbrProjectors+ 1) == this->NbrEigenvalue)
 	    return true;
 	  else
 	    {
-	      cout << "found eigenstate " << this->NbrProjectors << endl;
-	      cout << "computing eigenstate " << this->NbrProjectors << endl;
+	      cout << "found eigenstate " << (this->NbrProjectors - this->InitialNbrProjectors) <<endl;
+	      cout << "computing eigenstate " << (this->NbrProjectors - this->InitialNbrProjectors) << endl;
 	      this->GetGroundState();
 	      this->ProjectorVectors[this->NbrProjectors] = ComplexVector(this->GroundState, true);
 	      if (this->NbrProjectors > 0)
 		{
-		  cout << "checking orthogonality with previously found eigenstates" << endl;
+		  cout << "checking orthogonality with previously other projector states" << endl;
 		  for (int i = 0; i < this->NbrProjectors; ++i)
 		    {
 		      cout << "< " << i << " | " << this->NbrProjectors << " > = " 
 			   << (this->ProjectorVectors[i] * this->ProjectorVectors[this->NbrProjectors]) << endl;
 		    }
 		}
-	      this->ProjectorEigenvalues[this->NbrProjectors] = this->DiagonalizedMatrix.DiagonalElement(0);
+	      this->ProjectorEigenvalues[this->NbrProjectors - this->InitialNbrProjectors] = this->DiagonalizedMatrix.DiagonalElement(0);
 	      if (this->DiskFlag == true)
 		{
 		  char* TmpVectorName = new char [256];
@@ -633,15 +689,14 @@ void ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetEigenva
   else
     {
       eigenvalues = new double [nbrEigenvalues];
-      for (int i = 0; i < this->NbrProjectors; ++i)
+      for (int i = 0; i < (this->NbrProjectors - this->InitialNbrProjectors); ++i)
 	{
 	  eigenvalues[i] = this->ProjectorEigenvalues[i];
 	}
       for (int i = this->NbrProjectors; i < nbrEigenvalues; ++i)
 	{
 	  eigenvalues[i] = this->DiagonalizedMatrix(i, i);
-	}
-      
+	}      
     }
 }
 
@@ -657,14 +712,14 @@ RealTriDiagonalSymmetricMatrix& ComplexBasicLanczosAlgorithmWithGroundStateAndPr
     }
   else
     {
-      this->FullDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->DiagonalizedMatrix.GetNbrRow() + this->NbrProjectors, true);
-      for (int i = 0; i < this->NbrProjectors; ++i)
+      this->FullDiagonalizedMatrix = RealTriDiagonalSymmetricMatrix(this->DiagonalizedMatrix.GetNbrRow() + (this->NbrProjectors - this->InitialNbrProjectors), true);
+      for (int i = 0; i < (this->NbrProjectors - this->InitialNbrProjectors); ++i)
 	{
 	  this->FullDiagonalizedMatrix(i, i) = this->ProjectorEigenvalues[i];
 	}
       for (int i = 0; i < this->DiagonalizedMatrix.GetNbrRow(); ++i)
 	{
-	  this->FullDiagonalizedMatrix(i + this->NbrProjectors, i + this->NbrProjectors) = this->DiagonalizedMatrix(i, i);
+	  this->FullDiagonalizedMatrix(i + this->NbrProjectors - this->InitialNbrProjectors, i + this->NbrProjectors - this->InitialNbrProjectors) = this->DiagonalizedMatrix(i, i);
 	}
       return this->FullDiagonalizedMatrix;
     }

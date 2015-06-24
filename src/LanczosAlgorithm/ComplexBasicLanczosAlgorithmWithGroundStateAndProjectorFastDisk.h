@@ -49,6 +49,9 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
 
   // dimension of the projector subspace
   int NbrProjectors;
+  // initial dimension of the projector subspace (before it is increased by the automatic generation)
+  int InitialNbrProjectors;
+
   // array that contains the vectors that spans the projector subspace
   ComplexVector* ProjectorVectors;
   // energy scale in front of the projector
@@ -92,6 +95,22 @@ class ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk : public C
 								  AbstractArchitecture* architecture, 
 								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
 
+  // constructor using both automatic projector construction and an initial set of projectors
+  //
+  // nbrEigenvalues = number of eigenvalues/eigenstates to compute
+  // nbrProjectors = dimension of the projector subspace
+  // projectorVectors = array that contains the vectors that spans the projector subspace
+  // projectorCoefficient = energy scale in front of the projector
+  // indexShiftFlag = true if the eigenstate indices have to be shifted
+  // architecture = architecture to use for matrix operations
+  // maxIter = an approximation of maximal number of iteration
+  // diskFlag = use disk storage to increase speed of ground state calculation
+  // resumeDiskFlag = indicates that the Lanczos algorithm has to be resumed from an unfinished one (loading initial Lanczos algorithm state from disk)
+  ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk(int nbrEigenvalues, 
+								  int nbrProjectors, ComplexVector* projectorVectors,
+								  double projectorCoefficient, bool indexShiftFlag,
+								  AbstractArchitecture* architecture, 
+								  int maxIter = 0, bool diskFlag = false, bool resumeDiskFlag = false);
   // copy constructor
   //
   // algorithm = algorithm from which new one will be created
