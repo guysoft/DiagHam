@@ -585,7 +585,7 @@ int ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::EigenstateI
 {
   if (this->IndexShiftFlag == true)
     {
-      return this->NbrProjectors;
+      return this->InitialNbrProjectors;
     }
   else
     {
