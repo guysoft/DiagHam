@@ -174,6 +174,13 @@ class FQHEMPSSymmetrizedStateMatrix : public AbstractFQHEMPSMatrix
   // maxQ = reference on the lowest charge index
   virtual void GetChargeIndexRange (int pLevel, int cftSector, int& minQ, int& maxQ);
 
+  // compute the level and the charge index of a given matrix index
+  //
+  // index = matrix index
+  // pLevel = reference on the level
+  // qValue = reference on the charge index
+  virtual void GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue);
+
   // get the boundary indices of the MPS representation
   //
   // rowIndex = matrix row index

@@ -2073,6 +2073,30 @@ ostream& SparseRealMatrix::PrintNonZero (ostream& str, double error)
   return str;
 }
 
+// output the matrix in a sparse display (column formatted output), using labels for the row and column indices
+//
+// str = reference on output stream
+// rowLabels = array of labels for the row indices
+// columnLabels = array of labels for the column indices
+// error = numerical accuracy below which a matrix element is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& SparseRealMatrix::PrintNonZero (ostream& str, char** rowLabels, char** columnLabels, double error) 
+{
+  for (long i = 0; i < this->NbrRow; ++i)
+    if (this->RowPointers[i] >= 0l)
+      {
+	long MinPos = this->RowPointers[i];
+	long MaxPos = this->RowLastPointers[i];
+	while (MinPos <= MaxPos)
+	  {
+	    str << rowLabels[i] << " " << columnLabels[this->ColumnIndices[MinPos]] << " " << this->MatrixElements[MinPos] << endl;
+	    ++MinPos;
+	  }
+      }
+  return str;
+}
+
 #ifdef USE_OUTPUT
 
 // Mathematica Output Stream overload

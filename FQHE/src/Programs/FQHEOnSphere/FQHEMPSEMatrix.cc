@@ -270,6 +270,7 @@ int main(int argc, char** argv)
   TensorProductSparseMatrixHamiltonian* EHamiltonian = 0;
   int PTruncationLevel = MPSLeftMatrix->GetTruncationLevel();
   int NbrCFTSectors = MPSLeftMatrix->GetNbrCFTSectors();
+  char** EMatrixIndexString = 0;
   if (Manager.GetBoolean("diagonal-block"))
     {
       long EffectiveDimension = 0l;
@@ -380,7 +381,28 @@ int main(int argc, char** argv)
 	    }
 	  EHamiltonian = new TensorProductSparseMatrixHamiltonian(NbrBMatrices, ConjugateSparseBMatrices, ConjugateSparseRightBMatrices, Coefficients, Architecture.GetArchitecture()); 
 	}
-     }
+      if (Manager.GetBoolean("show-fulllabel"))
+	{
+	  EMatrixIndexString = new char* [TmpBMatrixDimension];
+	  int TmpPLevelLeft;
+	  int TmpQLeft;
+	  int TmpPLevelRight;
+	  int TmpQRight;
+	  for (int i = 0; i < TmpBMatrixDimension; ++i)
+	    {
+	      MPSLeftMatrix->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevelLeft, TmpQLeft);
+	      for (int j = 0; j < TmpRightBMatrixDimension; ++j)
+		{
+		  MPSRightMatrix->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevelRight, TmpQRight);
+		  EMatrixIndexString[(i * TmpRightBMatrixDimension) + j] = new char [128];
+		  sprintf (EMatrixIndexString[(i * TmpRightBMatrixDimension) + j], 
+			   "(Q=%d, P=%d, i=%d)x(Q=%d, P=%d, i=%d)", TmpQLeft, TmpPLevelLeft, i,
+			   TmpQRight, TmpPLevelRight, j);
+		}
+	    }
+	}
+    }
+
   if (Manager.GetBoolean("power-method") == true)
     {
       if (ETransposeHamiltonian != 0)
@@ -395,13 +417,27 @@ int main(int argc, char** argv)
 	{
 	  ComplexMatrix EMatrix (ETransposeHamiltonian->GetHilbertSpaceDimension(), ETransposeHamiltonian->GetHilbertSpaceDimension());
 	  ETransposeHamiltonian->GetHamiltonian(EMatrix);
-	  EMatrix.PrintNonZero(cout);
+	  if (Manager.GetBoolean("show-fulllabel"))
+	    {
+	      EMatrix.PrintNonZero(cout, EMatrixIndexString, EMatrixIndexString);
+	    }
+	  else
+	    {
+	      EMatrix.PrintNonZero(cout);
+	    }
 	}
       if (EHamiltonian != 0)
 	{
 	  ComplexMatrix EMatrix (EHamiltonian->GetHilbertSpaceDimension(), EHamiltonian->GetHilbertSpaceDimension());
 	  EHamiltonian->GetHamiltonian(EMatrix);
-	  EMatrix.PrintNonZero(cout);
+	  if (Manager.GetBoolean("show-fulllabel"))
+	    {
+	      EMatrix.PrintNonZero(cout, EMatrixIndexString, EMatrixIndexString);
+	    }
+	  else
+	    {
+	      EMatrix.PrintNonZero(cout);
+	    }
 	}      
     }
 

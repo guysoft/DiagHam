@@ -747,6 +747,43 @@ ostream& Matrix::PrintNonZero (ostream& str, double error)
   return str;  
 }
 
+// output the matrix in a sparse display (column formatted output), using labels for the row and column indices
+//
+// str = reference on output stream
+// error = numerical accuracy below which a matrix element is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& Matrix::PrintNonZero (ostream& str, char** rowLabels, char** columnLabels, double error)
+{
+  if ((this->MatrixType & Matrix::RealElements) == Matrix::RealElements)
+    {
+      double Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (fabs(Tmp) > error)
+		str << rowLabels[i] << " " << columnLabels[j] << " " << Tmp << endl;
+	    }      
+	}
+    }
+  else
+    {
+      Complex Tmp;
+      for (int i = 0; i < this->NbrRow; ++i)
+	{
+	  for (int j = 0; j < this->NbrColumn; ++j)
+	    {
+	      this->GetMatrixElement(i, j, Tmp);
+	      if (Norm(Tmp) > error)
+		str << rowLabels[i] << " " << columnLabels[j] << " " << Tmp << endl;
+	    }
+	}
+     }
+  return str;  
+}
+
 #ifdef __MPI__
 
 // send a matrix to a given MPI process

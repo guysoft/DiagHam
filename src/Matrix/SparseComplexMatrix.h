@@ -450,6 +450,15 @@ class SparseComplexMatrix : public Matrix
   // return value = reference on output stream
   ostream& PrintNonZero (ostream& str, double error = MACHINE_PRECISION);
 
+  // output the matrix in a sparse display (column formatted output), using labels for the row and column indices
+  //
+  // str = reference on output stream
+  // rowLabels = array of labels for the row indices
+  // columnLabels = array of labels for the column indices
+  // error = numerical accuracy below which a matrix element is considered to be equal to zero
+  // return value = reference on output stream  
+  virtual ostream& PrintNonZero (ostream& str, char** rowLabels, char** columnLabels, double error = MACHINE_PRECISION);
+
   // Output Stream overload
   //
   // Str = reference on output stream

@@ -115,6 +115,12 @@ class FQHEMPSMatrixManager
   // return value = pointer to the MPS matrice class  
   AbstractFQHEMPSMatrix* GetMPSMatrices(bool quasiholeSectorFlag, int topologicalSectorValue, char* importBMatrices, int nbrFluxQuanta, AbstractArchitecture* architecture);
 
+  // show the B matrices
+  // 
+  // bMatrixSymbol = symbol when displaying a B matrix
+  // bMatrix = pointer to the MPS 
+  void ShowBMatrices(const char* bMatrixSymbol, AbstractFQHEMPSMatrix* bMatrix);
+
 };
 
 #endif

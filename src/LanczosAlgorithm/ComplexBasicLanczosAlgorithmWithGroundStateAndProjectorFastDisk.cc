@@ -737,8 +737,12 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::WriteState
   WriteLittleEndian(File, this->PreviousLastWantedEigenvalue);
   WriteLittleEndian(File, this->AutomaticProjectorConstructionFlag);
   WriteLittleEndian(File, this->NbrProjectors);
-  for (int i = 0; i < this->NbrProjectors; ++i)
-    WriteLittleEndian(File, this->ProjectorEigenvalues[i]);
+  WriteLittleEndian(File, this->InitialNbrProjectors);
+  if (this->ProjectorEigenvalues != 0)
+    {
+      for (int i = 0; i < (this->NbrProjectors - this->InitialNbrProjectors); ++i)
+	WriteLittleEndian(File, this->ProjectorEigenvalues[i]);
+    }
   int TmpDimension = this->TridiagonalizedMatrix.GetNbrRow();
   WriteLittleEndian(File, TmpDimension);
   --TmpDimension;
@@ -766,8 +770,12 @@ bool ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::ReadState(
   ReadLittleEndian(File, this->PreviousLastWantedEigenvalue);
   ReadLittleEndian(File, this->AutomaticProjectorConstructionFlag);
   ReadLittleEndian(File, this->NbrProjectors);
-  for (int i = 0; i < this->NbrProjectors; ++i)
-    ReadLittleEndian(File, this->ProjectorEigenvalues[i]);
+  ReadLittleEndian(File, this->InitialNbrProjectors);
+  if (this->ProjectorEigenvalues != 0)
+    {
+      for (int i = 0; i < this->NbrProjectors; ++i)
+	ReadLittleEndian(File, this->ProjectorEigenvalues[i]);
+    }
   int TmpDimension;
   ReadLittleEndian(File, TmpDimension);
   this->TridiagonalizedMatrix.Resize(TmpDimension, TmpDimension);

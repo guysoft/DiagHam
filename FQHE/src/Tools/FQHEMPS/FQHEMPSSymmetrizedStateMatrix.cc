@@ -64,7 +64,7 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 {
   this->MPSMatrix1 = matrix1;
   this->MPSMatrix2 = matrix2;
-  this->PLevel = this->MPSMatrix1->GetTruncationLevel();
+  this->PLevel = this->MPSMatrix1->GetTruncationLevel() + this->MPSMatrix2->GetTruncationLevel();
   this->NbrCFTSectors = 1;  
   this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
   this->NbrBMatrices = 0;
@@ -160,22 +160,25 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	      int MaxQ1 = 0;
 	      int MinQ2 = 0;
 	      int MaxQ2 = 0;
-	      this->MPSMatrix1->GetChargeIndexRange(j, CurrentCFTSector, MinQ1, MaxQ1);
-	      this->MPSMatrix2->GetChargeIndexRange(p - j, CurrentCFTSector, MinQ2, MaxQ2);
-	      if ((MinQ1 + MinQ2) < MinQ)
+	      if ((j <= this->MPSMatrix1->GetTruncationLevel()) && ((p - j) <= this->MPSMatrix2->GetTruncationLevel()))
 		{
-		  MinQ = MinQ1 + MinQ2;
+		  this->MPSMatrix1->GetChargeIndexRange(j, CurrentCFTSector, MinQ1, MaxQ1);
+		  this->MPSMatrix2->GetChargeIndexRange(p - j, CurrentCFTSector, MinQ2, MaxQ2);
+		  if ((MinQ1 + MinQ2) < MinQ)
+		    {
+		      MinQ = MinQ1 + MinQ2;
+		    }
+		  if ((MaxQ1 + MaxQ2) > MaxQ)
+		    {
+		      MaxQ = MaxQ1 + MaxQ2;
+		    }
 		}
-	      if ((MaxQ1 + MaxQ2) > MaxQ)
-		{
-		  MaxQ = MaxQ1 + MaxQ2;
-		}
-	      this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
-	      this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
-	      this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
-	      this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int[MaxQ - MinQ + 1];
-	      this->GlobalIndexMapper[p][CurrentCFTSector] = new int*[MaxQ - MinQ + 1];
-	    } 
+	    }
+	  this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
+	  this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
+	  this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
+	  this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int[MaxQ - MinQ + 1];
+	  this->GlobalIndexMapper[p][CurrentCFTSector] = new int*[MaxQ - MinQ + 1];
 	}
     }
   int TmpFullMatrixSize = this->MPSMatrix1->GetMatrices()[0].GetNbrRow() *  this->MPSMatrix2->GetMatrices()[0].GetNbrRow();
@@ -183,10 +186,13 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
   for (int i = 0; i < TmpFullMatrixSize; ++i)
     this->TensorProductIndexConvertion[i] = -1;
   int TmpIndex = 0;
+  this->StartingIndexPerPLevelCFTSectorQValue = new int** [this->PLevel + 1];
   for (int p = 0; p <= this->PLevel; ++p)
     {
+      this->StartingIndexPerPLevelCFTSectorQValue[p] = new int* [this->NbrCFTSectors];
       for (int CurrentCFTSector = 0; CurrentCFTSector < this->NbrCFTSectors; ++CurrentCFTSector)
 	{
+	  this->StartingIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int [this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector]];
 	  int MinQ = this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector];
 	  int MaxQ = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector];
 	  int TmpQ1 = 0;
@@ -195,6 +201,7 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	  int TmpPLevel2 = 0;
 	  for (; MinQ <= MaxQ; ++MinQ)
 	    {
+	      this->StartingIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]] = TmpIndex;
 	      int InitialTmpIndex = TmpIndex;
 	      for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
 		{
@@ -350,6 +357,33 @@ void FQHEMPSSymmetrizedStateMatrix::GetChargeIndexRange (int pLevel, int cftSect
 {
   minQ = this->NInitialValuePerPLevelCFTSector[pLevel][cftSector];
   maxQ = this->NLastValuePerPLevelCFTSector[pLevel][cftSector];
+}
+
+// compute the level and the charge index of a given matrix index
+//
+// index = matrix index
+// pLevel = reference on the level
+// qValue = reference on the charge index
+
+void FQHEMPSSymmetrizedStateMatrix::GetChargeAndPLevelFromMatrixIndex(int index, int& pLevel, int& qValue)
+{
+  pLevel = 0;
+  for (int p = 1; p <= this->PLevel; ++p)
+    {
+      if (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][0][0] <= index)
+	{
+	  pLevel = p;
+	}
+    }
+  
+  qValue = this->NInitialValuePerPLevelCFTSector[pLevel][0];
+  for (int MinQ = 1; MinQ < this->NbrNValuesPerPLevelCFTSector[pLevel][0]; ++MinQ)
+    {
+      if (this->StartingIndexPerPLevelCFTSectorQValue[pLevel][0][MinQ] <= index)
+	{
+	  qValue = this->NInitialValuePerPLevelCFTSector[pLevel][0] + MinQ;
+	}
+    }
 }
 
 // get the boundary indices of the MPS representation

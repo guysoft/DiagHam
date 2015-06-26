@@ -172,6 +172,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
       (*OutputGroup) += new SingleDoubleOption  ('\n', "flux-insertion", "flux insertion along the tau direction", 0.0);
     }
   (*OutputGroup) += new BooleanOption  ('\n', "show-bmatrices", "show the B matrices");
+  (*OutputGroup) += new BooleanOption  ('\n', "show-fulllabel", "when displaying an auxiliary space index, show its full description (i.e. including its quantum numbers)");
 }
 
 
@@ -255,29 +256,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	cout << "B[" << i << "] = " << MPSMatrix->GetMatrices()[i].ComputeNbrNonZeroMatrixElements() << endl;
     }
 
-  if (this->Options->GetBoolean("show-bmatrices"))
-    {
-      if (MPSMatrix->GetMatrices() != 0)
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < NbrBMatrices; ++i)
-	    {
-	      cout << "B^[" << i << "]" << endl;
-	      (MPSMatrix->GetMatrices())[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
-      else
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < NbrBMatrices; ++i)
-	    {
-	      cout << "B^[" << i << "]" << endl;
-	      (MPSMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
-    }
+  this->ShowBMatrices("B", MPSMatrix);
 
   return MPSMatrix;
 }
@@ -630,29 +609,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetRightMPSMatrices(int nbrFluxQuan
 	  return this->LeftBMatrix;
 	}
     }
-  if (this->Options->GetBoolean("show-bmatrices"))
-    {
-      if (this->RightBMatrix->GetMatrices() != 0)
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < this->RightBMatrix->GetNbrMatrices(); ++i)
-	    {
-	      cout << "B_R^[" << i << "]" << endl;
-	      (this->RightBMatrix->GetMatrices())[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
-      else
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < this->RightBMatrix->GetNbrMatrices(); ++i)
-	    {
-	      cout << "B_R^[" << i << "]" << endl;
-	      (this->RightBMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
-    }
+  this->ShowBMatrices("B_R", this->RightBMatrix);
 
   return this->RightBMatrix;
 }
@@ -685,30 +642,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetLeftMPSMatrices(int nbrFluxQuant
 	  return this->RightBMatrix;
 	}
     }
-  if (this->Options->GetBoolean("show-bmatrices"))
-    {
-      if (this->LeftBMatrix->GetMatrices() != 0)
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < this->LeftBMatrix->GetNbrMatrices(); ++i)
-	    {
-	      cout << "B_L^[" << i << "]" << endl;
-	      (this->LeftBMatrix->GetMatrices())[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
-      else
-	{
-	  cout << "----------------------------------" << endl;
-	  for (int i = 0; i < this->LeftBMatrix->GetNbrMatrices(); ++i)
-	    {
-	      cout << "B_L^[" << i << "]" << endl;
-	      (this->LeftBMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
-	      cout << "----------------------------------" << endl;
-	    }
-	}
-    }
-
+  this->ShowBMatrices("B_L", this->LeftBMatrix);
   return this->LeftBMatrix;
 }
 
@@ -729,3 +663,78 @@ double FQHEMPSMatrixManager::GetCylinderPerimeter(int nbrFluxQuanta)
   return -1.0;
 }
 
+// show the B matrices
+// 
+// bMatrixSymbol = symbol when displaying a B matrix
+// bMatrix = pointer to the MPS 
+
+void  FQHEMPSMatrixManager::ShowBMatrices(const char* bMatrixSymbol, AbstractFQHEMPSMatrix* bMatrix)
+{
+  int TmpBMatrixDimension = 0;
+  if (bMatrix->GetMatrices() != 0)
+    {	
+      TmpBMatrixDimension = (bMatrix->GetMatrices())[0].GetNbrRow();
+    }
+  else
+    {
+       TmpBMatrixDimension = (bMatrix->GetComplexMatrices())[0].GetNbrRow();
+    }   
+  char** TmpIndexString = 0;
+  if (this->Options->GetBoolean("show-fulllabel"))
+    {
+      TmpIndexString = new char* [TmpBMatrixDimension];
+      int TmpPLevel;
+      int TmpQ;
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	{
+	  bMatrix->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel, TmpQ);
+	  TmpIndexString[i] = new char [128];
+	  sprintf (TmpIndexString[i], "(Q=%d, P=%d, i=%d)", TmpQ, TmpPLevel, i);
+	}
+    }
+  if (this->Options->GetBoolean("show-bmatrices"))
+    {
+      if (bMatrix->GetMatrices() != 0)
+	{	
+	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < bMatrix->GetNbrMatrices(); ++i)
+	    {
+	      cout << bMatrixSymbol << "^[" << i << "]" << endl;
+	      if (this->Options->GetBoolean("show-fulllabel"))
+		{	      
+		  (bMatrix->GetMatrices())[i].PrintNonZero(cout, TmpIndexString, TmpIndexString);
+		}
+	      else
+		{	      
+		  (bMatrix->GetMatrices())[i].PrintNonZero(cout);
+		}
+	      cout << "----------------------------------" << endl;
+	    }
+	}
+      else
+	{
+	  cout << "----------------------------------" << endl;
+	  for (int i = 0; i < bMatrix->GetNbrMatrices(); ++i)
+	    {
+	      cout << bMatrixSymbol << "^[" << i << "]" << endl;
+	      if (this->Options->GetBoolean("show-fulllabel"))
+		{	      
+		  (bMatrix->GetComplexMatrices())[i].PrintNonZero(cout, TmpIndexString, TmpIndexString);
+		}
+	      else
+		{
+		  (bMatrix->GetComplexMatrices())[i].PrintNonZero(cout);
+		}
+	      cout << "----------------------------------" << endl;
+	    }
+	}
+    }
+  if (this->Options->GetBoolean("show-fulllabel"))
+    {
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	{
+	  delete[] TmpIndexString[i];
+	}
+      delete[] TmpIndexString;
+    }
+}
