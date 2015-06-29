@@ -383,7 +383,7 @@ int main(int argc, char** argv)
 	}
       if (Manager.GetBoolean("show-fulllabel"))
 	{
-	  EMatrixIndexString = new char* [TmpBMatrixDimension];
+	  EMatrixIndexString = new char* [TmpBMatrixDimension * TmpRightBMatrixDimension];
 	  int TmpPLevelLeft;
 	  int TmpQLeft;
 	  int TmpPLevelRight;
@@ -396,7 +396,7 @@ int main(int argc, char** argv)
 		  MPSRightMatrix->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevelRight, TmpQRight);
 		  EMatrixIndexString[(i * TmpRightBMatrixDimension) + j] = new char [128];
 		  sprintf (EMatrixIndexString[(i * TmpRightBMatrixDimension) + j], 
-			   "(Q=%d, P=%d, i=%d)x(Q=%d, P=%d, i=%d)", TmpQLeft, TmpPLevelLeft, i,
+			   "(Q=%d, P=%d, i=%d)x(Q=%d, P=%d, j=%d)", TmpQLeft, TmpPLevelLeft, i,
 			   TmpQRight, TmpPLevelRight, j);
 		}
 	    }

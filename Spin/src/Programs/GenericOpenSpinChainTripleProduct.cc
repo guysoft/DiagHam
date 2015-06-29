@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 	    return -1;
 	  }
 	}
-	  
+      
       SpinChainTripleProductHamiltonian* Hamiltonian = 0;
       if (HzValues == 0)
 	Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues);

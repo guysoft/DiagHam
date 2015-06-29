@@ -1,6 +1,6 @@
 SUBDIRS=
 
-bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii MatrixBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf TestDiagHamVectors ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors VectorComplex2RealImaginary VectorRealImaginary2Complex GenericMatrixMultiplication
+bin_PROGRAMS=ExplicitMatrixExample ResizeLanczos GenericOverlap VectorBinary2Ascii MatrixBinary2Ascii ReplayLanczos ReplayFastLanczos ExtractLinearlyIndependentVectors GenerateRandomNumbers BuildSuperPosition TestDiagHamConf TestDiagHamVectors ReorthogonalizeVectorSet MergeMCHistories MCHistoryToText NormalizeVector PrintAllThreeJ ZeroingVector CountingZero VectorAscii2Binary MatrixElement DiffBinaryVectors GenericHamiltonianDiagonalization VectorPhaseMultiply VectorRational2Double MergeVectors VectorComplex2RealImaginary VectorRealImaginary2Complex GenericMatrixMultiplication LevelStatistics
 
 ExplicitMatrixExample_SOURCES=ExplicitMatrixExample.cc
 
@@ -59,6 +59,8 @@ VectorComplex2RealImaginary_SOURCES=VectorComplex2RealImaginary.cc
 VectorRealImaginary2Complex_SOURCES=VectorRealImaginary2Complex.cc
 
 GenericMatrixMultiplication_SOURCES=GenericMatrixMultiplication.cc
+
+LevelStatistics_SOURCES=LevelStatistics.cc
 
 ExplicitMatrixExample_DEPENDENCIES=$(top_builddir)/src/Architecture/libArchitecture.a $(top_builddir)/src/Architecture/ArchitectureOperation/libArchitectureOperation.a $(top_builddir)/src/Interaction/libInteraction.a $(top_builddir)/src/Interaction/InternalInteraction/libInternalInteraction.a $(top_builddir)/src/Operator/libOperator.a $(top_builddir)/src/LanczosAlgorithm/libLanczosAlgorithm.a $(top_builddir)/src/Hamiltonian/libHamiltonian.a $(top_builddir)/src/HilbertSpace/libHilbertSpace.a $(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a $(top_builddir)/src/QuantumNumber/libQuantumNumber.a $(top_builddir)/src/Output/libOutput.a $(top_builddir)/src/Polynomial/libPolynomial.a $(top_builddir)/src/GeneralTools/libGeneralTools.a $(top_builddir)/src/MathTools/libMathTools.a $(top_builddir)/Base/src/BitmapTools/BitmapPicture/libBitmapPicture.a $(top_builddir)/Base/src/BitmapTools/Color/libColor.a $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/FunctionBasis/libFunctionBasis.a
 
@@ -172,3 +174,6 @@ GenericMatrixMultiplication_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a 
 
 GenericMatrixMultiplication_LDADD= -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/Output -lMatrix -lVector -lOptions -lMathTools -lGeneralTools -lMathTools -lOutput @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBDIR@ @BLAS_LIBDIR@ @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @SCALAPACK_LIBS@ @FORTRAN2C_LIBS@ @BZ2_LIBS@ @GMP_LIBS@ @INTELMKL_LIBS@
 
+LevelStatistics_DEPENDENCIES=$(top_builddir)/src/Vector/libVector.a $(top_builddir)/src/Matrix/libMatrix.a  $(top_builddir)/src/Options/libOptions.a $(top_builddir)/src/MathTools/libMathTools.a  $(top_builddir)/src/GeneralTools/libGeneralTools.a 
+
+LevelStatistics_LDADD= -L$(top_builddir)/src/Vector -L$(top_builddir)/src/Matrix  -L$(top_builddir)/src/Options -L$(top_builddir)/src/GeneralTools -L$(top_builddir)/src/MathTools -L$(top_builddir)/src/Output -lMatrix -lVector -lOptions -lMathTools -lGeneralTools -lMathTools -lOutput @MATH_LIBS@ @THREAD_LIBS@ @LAPACK_LIBDIR@ @BLAS_LIBDIR@ @LAPACK_LIBS@ @BLAS_LIBS@ @SCALAPACK_LIBDIR@ @SCALAPACK_LIBS@ @FORTRAN2C_LIBS@ @BZ2_LIBS@ @GMP_LIBS@ @INTELMKL_LIBS@
