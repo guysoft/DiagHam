@@ -10,10 +10,13 @@
 #include "Architecture/AbstractArchitecture.h"
 #include "Architecture/ArchitectureOperation/MainTaskOperation.h"
 
-#include "GeneralTools/ListIterator.h"
 #include "MathTools/IntegerAlgebraTools.h"
+
+#include "GeneralTools/ListIterator.h"
 #include "GeneralTools/ConfigurationParser.h"
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
 
 #include "Options/Options.h"
 
@@ -62,10 +65,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleDoubleOption ('r', "ratio", "ratio between the two torus lengths", 1.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spinup-flux", "inserted flux for particles with spin up (in 2pi / N_phi unit)", 0.0);
   (*SystemGroup) += new SingleDoubleOption ('\n', "spindown-flux", "inserted flux for particles with spin down (in 2pi / N_phi unit)", 0.0);
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
-  (*SystemGroup) += new  SingleStringOption ('\n', "interaction-name", "interaction name as it should appear in output files (if the NAME option is not used in the interaction file)", "unknown");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-file", "file describing the 2-body interaction in terms of the pseudo-potential");
+  (*SystemGroup) += new SingleStringOption ('\n', "interaction-name", "interaction name as it should appear in output files (if the NAME option is not used in the interaction file)", "unknown");
   (*SystemGroup) += new BooleanOption  ('\n', "all-points", "calculate all points", false);
   (*SystemGroup) += new BooleanOption  ('\n', "full-reducedbz", "calculate all points within the reduced Brillouin zone", false);
+  (*SystemGroup) += new SingleStringOption ('\n', "selected-points", "provide a two column ascii file that indicates which momentum sectors have to be computed");
   (*SystemGroup) += new BooleanOption  ('\n', "get-hvalue", "compute mean value of the Hamiltonian against each eigenstate");
   (*SystemGroup) += new BooleanOption  ('\n', "no-sz", "use the hilbert space with non conserved sz");
   (*SystemGroup) += new  SingleStringOption ('\n', "use-hilbert", "name of the file that contains the vector files used to describe the reduced Hilbert space (replace the n-body basis)");
@@ -179,74 +183,89 @@ int main(int argc, char** argv)
     }
   else
     {
-       if (Manager.GetBoolean("all-points"))
+      if (Manager.GetString("selected-points") == 0)
 	{
-	  NbrMomenta = MaxMomentum * MomentumModulo;
-	  XMomenta = new int[NbrMomenta];
-	  YMomenta = new int[NbrMomenta];
-	  NbrMomenta = 0;
-	  for (int x = 0; x < MomentumModulo; ++x)
+	  if (Manager.GetBoolean("all-points"))
 	    {
-	      for (int y = 0; y < MaxMomentum; ++y)
+	      NbrMomenta = MaxMomentum * MomentumModulo;
+	      XMomenta = new int[NbrMomenta];
+	      YMomenta = new int[NbrMomenta];
+	      NbrMomenta = 0;
+	      for (int x = 0; x < MomentumModulo; ++x)
 		{
-		  XMomenta[NbrMomenta] = x;
-		  YMomenta[NbrMomenta] = y;
-		  NbrMomenta++;
+		  for (int y = 0; y < MaxMomentum; ++y)
+		    {
+		      XMomenta[NbrMomenta] = x;
+		      YMomenta[NbrMomenta] = y;
+		      NbrMomenta++;
+		    }
+		}
+	    }
+	  else
+	    {
+	      if (XMomentum >= 0)
+		{
+		  NbrMomenta = MaxMomentum;
+		  XMomenta = new int[NbrMomenta];
+		  YMomenta = new int[NbrMomenta];
+		  NbrMomenta = 0;
+		  for (int y = 0; y < MaxMomentum; ++y)
+		    {
+		      XMomenta[NbrMomenta] = XMomentum;
+		      YMomenta[NbrMomenta] = y;
+		      NbrMomenta++;
+		    }
+		}
+	      else
+		{
+		  if (YMomentum >= 0)
+		    {
+		      NbrMomenta = MomentumModulo;
+		      XMomenta = new int[NbrMomenta];
+		      YMomenta = new int[NbrMomenta];
+		      NbrMomenta = 0;
+		      for (int x = 0; x < MomentumModulo; ++x)
+			{
+			  XMomenta[NbrMomenta] = x;
+			  YMomenta[NbrMomenta] = YMomentum;
+			  NbrMomenta++;
+			}
+		    }
+		  else
+		    {
+		      int TmpMax = MomentumModulo;
+		      if ((XRatio == 1.0) && (Manager.GetBoolean("full-reducedbz") == false))
+			{
+			  int TmpMax = (MomentumModulo + 1) / 2;
+			}
+		      NbrMomenta = TmpMax * TmpMax;
+		      XMomenta = new int[NbrMomenta];
+		      YMomenta = new int[NbrMomenta];
+		      NbrMomenta = 0;
+		      for (int x = 0; x < TmpMax; ++x)
+			{
+			  for (int y = 0; y < TmpMax; ++y)
+			    {
+			      XMomenta[NbrMomenta] = x;
+			      YMomenta[NbrMomenta] = y;
+			      NbrMomenta++;
+			    }
+			}
+		    }
 		}
 	    }
 	}
-       else
-	 {
-	   if (XMomentum >= 0)
-	     {
-	       NbrMomenta = MaxMomentum;
-	       XMomenta = new int[NbrMomenta];
-	       YMomenta = new int[NbrMomenta];
-	       NbrMomenta = 0;
-	       for (int y = 0; y < MaxMomentum; ++y)
-		 {
-		   XMomenta[NbrMomenta] = XMomentum;
-		   YMomenta[NbrMomenta] = y;
-		   NbrMomenta++;
-		 }
-	     }
-	   else
-	     {
-	       if (YMomentum >= 0)
-		 {
-		   NbrMomenta = MomentumModulo;
-		   XMomenta = new int[NbrMomenta];
-		   YMomenta = new int[NbrMomenta];
-		   NbrMomenta = 0;
-		   for (int x = 0; x < MomentumModulo; ++x)
-		     {
-		       XMomenta[NbrMomenta] = x;
-		       YMomenta[NbrMomenta] = YMomentum;
-		       NbrMomenta++;
-		     }
-		 }
-	       else
-		 {
-		   int TmpMax = MomentumModulo;
-		   if ((XRatio == 1.0) && (Manager.GetBoolean("full-reducedbz") == false))
-		     {
-		       int TmpMax = (MomentumModulo + 1) / 2;
-		     }
-		   NbrMomenta = TmpMax * TmpMax;
-		   XMomenta = new int[NbrMomenta];
-		   YMomenta = new int[NbrMomenta];
-		   NbrMomenta = 0;
-		   for (int x = 0; x < TmpMax; ++x)
-		     {
-		       for (int y = 0; y < TmpMax; ++y)
-			 {
-			   XMomenta[NbrMomenta] = x;
-			   YMomenta[NbrMomenta] = y;
-			   NbrMomenta++;
-			 }
-		     }
-		 }
-	     }
+      else
+	{
+	  MultiColumnASCIIFile MomentumFile;
+	  if (MomentumFile.Parse(Manager.GetString("selected-points")) == false)
+	    {
+	      MomentumFile.DumpErrors(cout);
+	      return -1;
+	    }
+	  NbrMomenta = MomentumFile.GetNbrLines();
+	  XMomenta = MomentumFile.GetAsIntegerArray(0);
+	  YMomenta = MomentumFile.GetAsIntegerArray(1);
 	}
     }
   bool FirstRun = true;
