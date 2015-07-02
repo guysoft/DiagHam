@@ -239,10 +239,10 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
       if (this->TensorProductIndexConvertion[i] >= 0)
 	TmpKeptIndices2[this->TensorProductIndexConvertion[i]] = i;
     }
-  for (int j = 0; j <  this->NbrBMatrices; ++j)
-    {
-      this->RealBMatrices[j] =  this->RealBMatrices[j].ExtractMatrix(TmpIndex, TmpIndex, TmpKeptIndices2, TmpKeptIndices2);
-    }
+//   for (int j = 0; j <  this->NbrBMatrices; ++j)
+//     {
+//       this->RealBMatrices[j] =  this->RealBMatrices[j].ExtractMatrix(TmpIndex, TmpIndex, TmpKeptIndices2, TmpKeptIndices2);
+//     }
   delete[] TmpKeptIndices2;
 
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
@@ -406,5 +406,28 @@ void FQHEMPSSymmetrizedStateMatrix::GetMatrixBoundaryIndices(int& rowIndex, int&
   ++TmpColumnIndex2;
   rowIndex = this->TensorProductIndexConvertion[TmpRowIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrRow() * TmpRowIndex2];
   columnIndex = this->TensorProductIndexConvertion[TmpColumnIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrColumn() * TmpColumnIndex2];
+}
+
+// print a given state of the auxiliary space
+//
+// str = reference on the output stream
+// index = index of the state
+// return value = reference on the output stream
+
+ostream& FQHEMPSSymmetrizedStateMatrix::PrintAuxiliarySpaceState(ostream& str, int index)
+{
+  int TmpPLevel1;
+  int TmpQ1;
+  this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(index % this->MPSMatrix1->GetMatrices()[0].GetNbrRow(), TmpPLevel1, TmpQ1);
+  int TmpPLevel2;
+  int TmpQ2;
+  this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(index / this->MPSMatrix1->GetMatrices()[0].GetNbrRow(), TmpPLevel2, TmpQ2);
+  str << "|" << (index  % this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) << ": Q1=" << TmpQ1 << " P1=" << TmpPLevel1 
+      << "> x |" << (index / this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) << ": Q2=" << TmpQ2 << " P2=" << TmpPLevel2 << ">";
+//   int TmpPLevel;
+//   int TmpQ;
+//   this->GetChargeAndPLevelFromMatrixIndex(index, TmpPLevel, TmpQ);
+//   str << "|" << index << ": Q=" << TmpQ << " P=" << TmpPLevel << ">";
+  return str;
 }
 

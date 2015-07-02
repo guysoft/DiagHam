@@ -32,6 +32,7 @@ int main(int argc, char** argv)
 
   (*SystemGroup) += new SingleStringOption ('s', "spectrum", "name of the file that contains the spectrum");
   (*SystemGroup) += new SingleIntegerOption ('c', "energy-column", "index of the column that contains the energies (0 being the first column)", 1);
+  (*SystemGroup) += new SingleIntegerOption ('d', "degeneracy-column", "index of the optional column that contains the energies degeneracy not appearing explicitly in the spectrum (must be larger than energy-column)", 0);
   (*SystemGroup) += new BooleanOption('\n', "z2-symmetry", "assume that the spectrum is invariant under the transformation Q<->-Q and that only the Q>=0 are available in the spectrum");
   
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
@@ -56,17 +57,17 @@ int main(int argc, char** argv)
     }
   double** Spectrum;
   int* SpectrumSize;
-  double* SpectrumWeight;
+  int* SpectrumWeight;
   int NbrSectors = 1;
   if (Manager.GetInteger("energy-column") == 0)
     {
       int TmpSize = SpectrumFile.GetNbrLines();
       SpectrumSize = new int [1];
       Spectrum = new double*[1];
-      SpectrumWeight = new double[1];
+      SpectrumWeight = new int[1];
       Spectrum[0] = SpectrumFile.GetAsDoubleArray(0);
       SpectrumSize[0] = TmpSize;
-      SpectrumWeight[0] = 1.0;
+      SpectrumWeight[0] = 1;
     }
   else
     {
@@ -88,18 +89,30 @@ int main(int argc, char** argv)
 	}
       Spectrum = new double*[NbrSectors];
       SpectrumSize = new int[NbrSectors];
-      SpectrumWeight = new double[NbrSectors];
+      SpectrumWeight = new int[NbrSectors];
+      int* TmpDegeneracy = 0;
+      if (Manager.GetInteger("degeneracy-column") >= 0)
+	{
+	  TmpDegeneracy = SpectrumFile.GetAsIntegerArray(Manager.GetInteger("degeneracy-column"));
+	}
       NbrSectors = 0;
       int CurrentIndex = 0;
-      SpectrumWeight[0] = 1.0;
+      SpectrumWeight[0] = 1;
       if (Manager.GetBoolean("z2-symmetry"))
 	{
 	  for (int j = 0; j < NbrQuantumNumber; ++j)
 	    {
 	      if (QuantumNumbers[j][0] > 0)
 		{
-		  SpectrumWeight[0] *= 2.0;
+		  SpectrumWeight[0] *= 2;
 		}
+	    }
+	}
+      else
+	{
+	  if (TmpDegeneracy != 0)
+	    {
+	      SpectrumWeight[0] = TmpDegeneracy[0];
 	    }
 	}
       for (int i = 1; i < TmpSize; ++i)
@@ -113,15 +126,22 @@ int main(int argc, char** argv)
 		  CurrentIndex = i;
 		  j = NbrQuantumNumber;
 		  ++NbrSectors;
-		  SpectrumWeight[NbrSectors] = 1.0;
+		  SpectrumWeight[NbrSectors] = 1;
 		  if (Manager.GetBoolean("z2-symmetry"))
 		    {
 		      for (int k = 0; k < NbrQuantumNumber; ++k)
 			{
 			  if (QuantumNumbers[k][i] > 0)
 			    {
-			      SpectrumWeight[NbrSectors] *= 2.0;
+			      SpectrumWeight[NbrSectors] *= 2;
 			    }
+			}
+		    }
+		  else
+		    {
+		      if (TmpDegeneracy != 0)
+			{
+			  SpectrumWeight[NbrSectors] = TmpDegeneracy[i];
 			}
 		    }
 		}
@@ -168,18 +188,18 @@ int main(int argc, char** argv)
 	      TmpSupDiff = Spectrum[i][j + 1] - Spectrum[i][j];
 	      if (TmpInfDiff > TmpSupDiff)
 		{
-		  Min += TmpSupDiff * SpectrumWeight[i];
-		  Max += TmpInfDiff * SpectrumWeight[i];
+		  Min += TmpSupDiff * ((double) SpectrumWeight[i]);
+		  Max += TmpInfDiff * ((double) SpectrumWeight[i]);
 		}
 	      else
 		{
-		  Max += TmpSupDiff * SpectrumWeight[i];
-		  Min += TmpInfDiff * SpectrumWeight[i];
+		  Max += TmpSupDiff * ((double) SpectrumWeight[i]);
+		  Min += TmpInfDiff * ((double) SpectrumWeight[i]);
 		}
 	    }
 	}
 //       for (int j = 0; j < SpectrumSize[i]; ++j)
-// 	cout << i << " " << j << " " << Spectrum[i][j] << endl;
+//  	cout << i << " " << j << " " << Spectrum[i][j] << " " << SpectrumWeight[i] << endl;
     }
   cout << (Min / Max) << endl;
   return 0;

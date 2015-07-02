@@ -3550,6 +3550,47 @@ ostream& operator << (ostream& str, RealVector& v)
   return str;
 }
 
+// output the vector in a sparse display
+//
+// str = reference on output stream
+// error = numerical accuracy below which a vector component is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& RealVector::PrintNonZero(ostream& str, double error)
+{
+  this->Localize();
+  for (long i = 0; i < this->LargeDimension; ++i)
+    {
+      if (fabs(this->Components[i]) > error)
+	{
+	  str << i << " " << this->Components[i] << endl;
+	}
+    }
+  this->Delocalize();
+  return str;
+}
+
+// output the vector in a sparse display, using labels for the component indices
+//
+// str = reference on output stream
+// componentLabels = array of labels for the component indices
+// error = numerical accuracy below which a vector component is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& RealVector::PrintNonZero(ostream& str, char** componentLabels, double error)
+{
+  this->Localize();
+  for (long i = 0; i < this->LargeDimension; ++i)
+    {
+      if (fabs(this->Components[i]) > error)
+	{
+	  str << componentLabels[i] << " " << this->Components[i] << endl;
+	}
+    }
+  this->Delocalize();
+  return str;
+}
+
 // output file stream overload
 //
 // file = reference on output file stream

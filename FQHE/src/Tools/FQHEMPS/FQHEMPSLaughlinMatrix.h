@@ -245,6 +245,13 @@ class FQHEMPSLaughlinMatrix : public AbstractFQHEMPSMatrix
   // return value = array that contains the auxiliary space indices related to the selected topological sector
   virtual int* GetTopologicalSectorIndices(int topologicalSector, int& nbrIndices);
   
+  // print a given state of the auxiliary space
+  //
+  // str = reference on the output stream
+  // index = index of the state
+  // return value = reference on the output stream
+  virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
+
  protected:
 
   // load the specific informations from the file header

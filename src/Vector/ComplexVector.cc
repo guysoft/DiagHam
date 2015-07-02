@@ -2468,6 +2468,49 @@ ostream& operator << (ostream& Str, const ComplexVector& P)
   return Str;
 }
 
+// output the vector in a sparse display
+//
+// str = reference on output stream
+// error = numerical accuracy below which a vector component is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& ComplexVector::PrintNonZero(ostream& str, double error)
+{
+  this->Localize();
+  double SqrError = error * error;
+  for (long i = 0; i < this->LargeDimension; ++i)
+    {
+      if (((this->Components[i].Re * this->Components[i].Re) + (this->Components[i].Im * this->Components[i].Im)) > SqrError)
+	{
+	  str << i << " " << this->Components[i] << endl;
+	}
+    }
+  this->Delocalize();
+  return str;
+}
+
+// output the vector in a sparse display, using labels for the component indices
+//
+// str = reference on output stream
+// componentLabels = array of labels for the component indices
+// error = numerical accuracy below which a vector component is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& ComplexVector::PrintNonZero(ostream& str, char** componentLabels, double error)
+{
+  this->Localize();
+  double SqrError = error * error;
+  for (long i = 0; i < this->LargeDimension; ++i)
+    {
+      if (((this->Components[i].Re * this->Components[i].Re) + (this->Components[i].Im * this->Components[i].Im)) > SqrError)
+	{
+	  str << componentLabels[i] << " " << this->Components[i] << endl;
+	}
+    }
+  this->Delocalize();
+  return str;
+}
+
 #ifdef USE_OUTPUT
 // Mathematica Output Stream overload
 //

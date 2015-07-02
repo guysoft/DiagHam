@@ -173,6 +173,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
     }
   (*OutputGroup) += new BooleanOption  ('\n', "show-bmatrices", "show the B matrices");
   (*OutputGroup) += new BooleanOption  ('\n', "show-fulllabel", "when displaying an auxiliary space index, show its full description (i.e. including its quantum numbers)");
+  (*OutputGroup) += new BooleanOption  ('\n', "show-auxiliaryspace", "show the auxiliary space");
 }
 
 
@@ -680,6 +681,13 @@ void  FQHEMPSMatrixManager::ShowBMatrices(const char* bMatrixSymbol, AbstractFQH
        TmpBMatrixDimension = (bMatrix->GetComplexMatrices())[0].GetNbrRow();
     }   
   char** TmpIndexString = 0;
+  if (this->Options->GetBoolean("show-auxiliaryspace"))
+    {
+      for (int i = 0; i < TmpBMatrixDimension; ++i)
+	{
+	  bMatrix->PrintAuxiliarySpaceState(cout, i) << endl;
+	}
+    }
   if (this->Options->GetBoolean("show-fulllabel"))
     {
       TmpIndexString = new char* [TmpBMatrixDimension];

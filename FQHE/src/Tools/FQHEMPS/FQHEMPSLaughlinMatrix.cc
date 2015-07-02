@@ -1053,3 +1053,18 @@ int FQHEMPSLaughlinMatrix::GetTorusMinimumKyMomentum(int nbrParticles, int nbrFl
     return 0;
 }
   
+// print a given state of the auxiliary space
+//
+// str = reference on the output stream
+// index = index of the state
+// return value = reference on the output stream
+
+ostream& FQHEMPSLaughlinMatrix::PrintAuxiliarySpaceState(ostream& str, int index)
+{
+  int TmpPLevel;
+  int TmpQ;
+  this->GetChargeAndPLevelFromMatrixIndex(index, TmpPLevel, TmpQ);
+  str << "|" << index << ": Q=" << TmpQ << " P=" << TmpPLevel << ">";
+  return str;
+}
+

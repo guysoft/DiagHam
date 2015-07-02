@@ -256,6 +256,51 @@ ostream& Vector::PrintComponent(ostream& str, long index)
   return str;
 }
 
+// output the vector in a sparse display
+//
+// str = reference on output stream
+// error = numerical accuracy below which a vector component is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& Vector::PrintNonZero(ostream& str, double error)
+{
+  switch (this->VectorType & Vector::DataTypeMask)
+    {
+    case (Vector::RealDatas):
+      return ((RealVector*) this)->PrintNonZero(str, error);
+      break;
+    case (Vector::ComplexDatas):
+      return ((ComplexVector*) this)->PrintNonZero(str, error);
+      break;
+    default:
+      str << "unknown vector type " << this->VectorType << endl; 
+    }
+  return str;
+}
+
+// output the vector in a sparse display, using labels for the component indices
+//
+// str = reference on output stream
+// componentLabels = array of labels for the component indices
+// error = numerical accuracy below which a vector component is considered to be equal to zero
+// return value = reference on output stream  
+
+ostream& Vector::PrintNonZero(ostream& str, char** componentLabels, double error)
+{
+  switch (this->VectorType & Vector::DataTypeMask)
+    {
+    case (Vector::RealDatas):
+      return ((RealVector*) this)->PrintNonZero(str, componentLabels, error);
+      break;
+    case (Vector::ComplexDatas):
+      return ((ComplexVector*) this)->PrintNonZero(str, componentLabels, error);
+      break;
+    default:
+      str << "unknown vector type " << this->VectorType << endl; 
+    }
+  return str;
+}
+
 #ifdef __MPI__
 
 // send a vector to a given MPI process

@@ -463,3 +463,15 @@ int* AbstractFQHEMPSMatrix::GetTopologicalSectorIndices(int topologicalSector, i
   return TmpIndices;
 }
   
+// print a given state of the auxiliary space
+//
+// str = reference on the output stream
+// index = index of the state
+// return value = reference on the output stream
+
+ostream& AbstractFQHEMPSMatrix::PrintAuxiliarySpaceState(ostream& str, int index)
+{
+  str << "|" << index << ">";
+  return str;
+}
+

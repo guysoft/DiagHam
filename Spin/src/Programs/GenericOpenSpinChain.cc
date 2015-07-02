@@ -5,6 +5,8 @@
 #include "Hamiltonian/SpinChainHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainNew.h"
+#include "HilbertSpace/Spin1_2ChainMirrorSymmetry.h"
 #include "HilbertSpace/Spin1Chain.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -61,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('j', "j-value", "isotropic coupling constant value", 1.0);
   (*SystemGroup) += new  SingleDoubleOption ('z', "djz-value", "delta compare to the coupling constant value along z", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "hz-value", "amplitude of the Zeeman term along the z axis", 0.0);
+  (*SystemGroup) += new  BooleanOption ('\n', "use-mirror", "use the mirror symmetry");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -86,12 +89,26 @@ int main(int argc, char** argv)
   if ((SpinValue & 1) == 0)
     {
       sprintf (OutputFileName, "spin_%d_openchain_n_%d", (SpinValue / 2), NbrSpins);
-      sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
+      if (Manager.GetBoolean("use-mirror") == true)
+	{
+	  sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz P_mirror ", (SpinValue / 2), NbrSpins);
+	}
+      else
+	{
+	  sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
+	}
     }
   else
     {
       sprintf (OutputFileName, "spin_%d_2_openchain_n_%d", SpinValue, NbrSpins);
-      sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz", SpinValue, NbrSpins);
+      if (Manager.GetBoolean("use-mirror") == true)
+	{
+	  sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz P_mirror", SpinValue, NbrSpins);
+	}
+      else
+	{
+	  sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz", SpinValue, NbrSpins);
+	}
     }
   char* OutputParameterFileName = new char [256];
   if (Manager.GetDouble("djz-value") == 0)
@@ -140,6 +157,7 @@ int main(int argc, char** argv)
   int InitalSzValue = MaxSzValue & 1;
   if  (Manager.GetDouble("hz-value") != 0)
     InitalSzValue = -MaxSzValue;
+//  InitalSzValue = -MaxSzValue;
   if (Manager.GetInteger("initial-sz") > 1)
     {
       InitalSzValue += (Manager.GetInteger("initial-sz") & ~1);
@@ -149,45 +167,101 @@ int main(int argc, char** argv)
       MaxSzValue = InitalSzValue + ((Manager.GetInteger("nbr-sz") - 1) * 2);
     }
   bool FirstRun = true;
-  for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
+  if (Manager.GetBoolean("use-mirror") == true)
     {
-      AbstractSpinChain* Chain = 0;
-      switch (SpinValue)
+      for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
 	{
-	case 1 :
-	  Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
-	  break;
-	case 2 :
-	  Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
-	  break;
-	default :
-	  {
-	    if ((SpinValue & 1) == 0)
-	      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+	  for (int Mirror = 0; Mirror < 2; ++Mirror)
+	    { 
+	      AbstractSpinChain* Chain = 0;
+	      switch (SpinValue)
+		{
+		case 1 :
+		  {
+		    Chain = new Spin1_2ChainMirrorSymmetry (NbrSpins, InitalSzValue, Mirror, 1000000);
+		  }
+		  break;
+		default :
+		  {
+		    if ((SpinValue & 1) == 0)
+		      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		    else 
+		      cout << "spin " << SpinValue << "/2 are not available" << endl;
+		    return -1;
+		  }
+		}
+	      if (Chain->GetHilbertSpaceDimension() > 0)
+		{
+// 		  for (int i = 0; i < Chain->GetHilbertSpaceDimension(); ++i)
+// 		    Chain->PrintState(cout, i) << endl;
+		  
+		  SpinChainHamiltonian* Hamiltonian = 0;
+		  if (HzValues == 0)
+		    Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues);
+		  else
+		    Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues, HzValues);
+		  char* TmpSzString = new char[64];
+		  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+		  sprintf (TmpSzString, "%d %d", InitalSzValue, Mirror);
+		  sprintf (TmpEigenstateString, "%s_%s_sz_%d_m_%d", OutputFileName, OutputParameterFileName, InitalSzValue, Mirror);
+		  GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+					   FirstRun, TmpEigenstateString);
+		  MainTaskOperation TaskOperation (&Task);
+		  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+		  FirstRun = false;
+		  delete Hamiltonian;
+		  delete[] TmpSzString;
+		  delete[] TmpEigenstateString;
+		}
+	      delete Chain;
+	    }
+	}
+    }
+  else
+    {
+      for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
+	{
+	  AbstractSpinChain* Chain = 0;
+	  switch (SpinValue)
+	    {
+	    case 1 :
+	      {
+		Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
+		//	    Chain = new Spin1_2ChainNew (NbrSpins, InitalSzValue, 1000000);
+	      }
+	      break;
+	    case 2 :
+	      Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
+	      break;
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
 	    else 
 	      cout << "spin " << SpinValue << "/2 are not available" << endl;
-	    return -1;
-	  }
-	}
+		return -1;
+	      }
+	    }
 	  
-      SpinChainHamiltonian* Hamiltonian = 0;
-      if (HzValues == 0)
-	Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues);
-      else
-	Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues, HzValues);
-      char* TmpSzString = new char[64];
-      char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
-      sprintf (TmpSzString, "%d", InitalSzValue);
-      sprintf (TmpEigenstateString, "%s_%s_sz_%d", OutputFileName, OutputParameterFileName, InitalSzValue);
-      GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-			       FirstRun, TmpEigenstateString);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      FirstRun = false;
-      delete Hamiltonian;
-      delete Chain;
-      delete[] TmpSzString;
-      delete[] TmpEigenstateString;
+	  SpinChainHamiltonian* Hamiltonian = 0;
+	  if (HzValues == 0)
+	    Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues);
+	  else
+	    Hamiltonian = new SpinChainHamiltonian(Chain, NbrSpins, JValues, JzValues, HzValues);
+	  char* TmpSzString = new char[64];
+	  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+	  sprintf (TmpSzString, "%d", InitalSzValue);
+	  sprintf (TmpEigenstateString, "%s_%s_sz_%d", OutputFileName, OutputParameterFileName, InitalSzValue);
+	  GenericRealMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				   FirstRun, TmpEigenstateString);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  FirstRun = false;
+	  delete Hamiltonian;
+	  delete Chain;
+	  delete[] TmpSzString;
+	  delete[] TmpEigenstateString;
+	}
     }
   delete[] OutputFileName;
   delete[] CommentLine;

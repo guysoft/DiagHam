@@ -791,6 +791,21 @@ class ComplexVector : public Vector
   // return value  = reference on output stream
   virtual ostream& PrintComponent(ostream& str, long index);
 
+  // output the vector in a sparse display
+  //
+  // str = reference on output stream
+  // error = numerical accuracy below which a vector component is considered to be equal to zero
+  // return value = reference on output stream  
+  virtual ostream& PrintNonZero(ostream& str, double error = MACHINE_PRECISION);
+
+  // output the vector in a sparse display, using labels for the component indices
+  //
+  // str = reference on output stream
+  // componentLabels = array of labels for the component indices
+  // error = numerical accuracy below which a vector component is considered to be equal to zero
+  // return value = reference on output stream  
+  virtual ostream& PrintNonZero(ostream& str, char** componentLabels, double error = MACHINE_PRECISION);
+
 #ifdef USE_OUTPUT
   // Mathematica Output Stream overload
   //

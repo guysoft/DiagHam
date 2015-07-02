@@ -289,6 +289,13 @@ class AbstractFQHEMPSMatrix
   // return value  = array of physical indices
   virtual unsigned long* GetPhysicalIndices();
 
+  // print a given state of the auxiliary space
+  //
+  // str = reference on the output stream
+  // index = index of the state
+  // return value = reference on the output stream
+  virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
+
  protected:
 
   // load the specific informations from the file header

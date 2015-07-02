@@ -6,9 +6,9 @@
 //                  Copyright (C) 2001-2002 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//                           class of spin 1/2 chain                          //
+//               class of spin 1/2 chain with a fixed Sz value                //
 //                                                                            //
-//                        last modification : 05/03/2001                      //
+//                        last modification : 29/06/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SPIN1_2CHAIN_H
-#define SPIN1_2CHAIN_H
+#ifndef SPIN1_2CHAINNEW_H
+#define SPIN1_2CHAINNEW_H
 
 
 #include "config.h"
@@ -42,127 +42,70 @@
 using std::ostream;
 
 
-class Spin1_2Chain : public AbstractSpinChain
+class Spin1_2ChainNew : public AbstractSpinChain
 {
 
  protected:
 
+  // number of sites
   int ChainLength;
-
+  // twice the Sz value
   int Sz;
+  // true if Sz is set for the Hilbert space
   bool FixedQuantumNumberFlag;
-  
-  int* LookUpTable;
-  unsigned long LookUpTableMask;
-  int LookUpPosition;
-  int LookUpTableSize;
 
   // array describing each n-nody state 
   unsigned long* StateDescription;
+
+  // maximum shift used for searching a position in the look-up table
+  int MaximumLookUpShift;
+  // memory used for the look-up table
+  unsigned long LookUpTableMemorySize;
+  // shift used for configurations with a spin up at a given largest position
+  int* LookUpTableShift;
+  // look-up table
+  int** LookUpTable;
+
 
  public:
 
 
   // default constructor
   //
-  Spin1_2Chain ();
-
-  // constructor for complete Hilbert space with no restriction on total spin projection Sz
-  //
-  // chainLength = number of spin 1/2
-  // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2Chain (int chainLength, int memorySize);
+  Spin1_2ChainNew ();
 
   // constructor for complete Hilbert space with no restriction on total spin projection Sz
   //
   // chainLength = number of spin 1/2
   // sz = twice the value of total Sz component
   // memorySize = memory size in bytes allowed for look-up table
-  Spin1_2Chain (int chainLength, int sz, int memorySize);
-
-  // constructor from pre-constructed datas
-  //
-  // hilbertSpaceDimension = Hilbert space dimension
-  // chainDescription = array describing states
-  // chainLength = number of spin 1/2
-  // sz = twice the value of total Sz component
-  // fixedQuantumNumberFlag = true if hilbert space is restricted to a given quantum number
-  // lookUpTable = look-up table
-  // lookUpTableSize = look-Up table size
-  // lookUpTablePosition = last position described by the look-Up table
-  // lookUpTableMask = look-Up table mask
-  Spin1_2Chain (int hilbertSpaceDimension, unsigned long* chainDescription, int chainLength, 
-		int sz, bool fixedQuantumNumberFlag, int* lookUpTable, int lookUpTableSize, 
-		int lookUpPosition, unsigned long lookUpTableMask);
+  Spin1_2ChainNew (int chainLength, int sz, int memorySize);
 
   // copy constructor (without duplicating datas)
   //
   // chain = reference on chain to copy
-  Spin1_2Chain (const Spin1_2Chain& chain);
+  Spin1_2ChainNew (const Spin1_2ChainNew& chain);
 
   // destructor
   //
-  ~Spin1_2Chain ();
+  ~Spin1_2ChainNew ();
 
   // assignement (without duplicating datas)
   //
   // chain = reference on chain to copy
   // return value = reference on current chain
-  Spin1_2Chain& operator = (const Spin1_2Chain& chain);
+  Spin1_2ChainNew& operator = (const Spin1_2ChainNew& chain);
 
   // clone Hilbert space (without duplicating datas)
   //
   // return value = pointer to cloned Hilbert space
   virtual AbstractHilbertSpace* Clone();
 
-  // re-initialize chain with another total Sz component
-  //
-  // sz = twice the value of total Sz component
-  // return value = reference on current chain  
-  virtual Spin1_2Chain& Reinitialize(int sz);
-
-  // return Hilbert space dimension
-  //
-  // return value = Hilbert space dimension
-  virtual int GetHilbertSpaceDimension() {return this->HilbertSpaceDimension;};
-
-  // return a list of all possible quantum numbers 
-  //
-  // return value = pointer to corresponding quantum number
-  virtual List<AbstractQuantumNumber*> GetQuantumNumbers ();
-
-  // return quantum number associated to a given state
-  //
-  // index = index of the state
-  // return value = pointer to corresponding quantum number
-  virtual AbstractQuantumNumber* GetQuantumNumber (int index);
-
   // return value of spin projection on (Oz) for a given state
   //
   // index = index of the state to test
   // return value = spin projection on (Oz)
   virtual int TotalSz (int index);
-
-  // return matrix representation of Sx
-  //
-  // i = operator position
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  virtual Matrix& Sxi (int i, Matrix& M);
-
-  // return matrix representation of i * Sy
-  //
-  // i = operator position
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  Matrix& Syi (int i, Matrix& M);
-
-  // return matrix representation of Sz
-  //
-  // i = operator position
-  // M = matrix where representation has to be stored
-  // return value = corresponding matrix
-  virtual Matrix& Szi (int i, Matrix& M);
 
   // return index of resulting state from application of S+_i operator on a given state
   //
@@ -192,7 +135,7 @@ class Spin1_2Chain : public AbstractSpinChain
   //
   // state = index of the state to be applied on Sz_i operator
   // return value = total Sz value
-  virtual unsigned long Parity (int state);
+  virtual unsigned long GetParity (int state);
 
   // return index of resulting state from application of P_ij operator on a given state
   //
@@ -210,14 +153,6 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = corresponding eigenvalue
   virtual double SziSzj (int i, int j, int state);
   
-  // return the eigenvalue the product of consecutive Sz_i's 
-  //
-  // indexMin = index of the leftmost site 
-  // indexMax = index of the righttmost site 
-  // state = index of the state to consider
-  // return value = corresponding eigenvalue (either -1 or +1)
-  virtual int ProdSzj (int indexMin, int indexMax, int state);
-
   // return index of resulting state from application of S-_i S+_j operator on a given state
   //
   // i = position of S- operator
@@ -290,19 +225,6 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = index of resulting state
   virtual int TranslateState (int nbrTranslations, int state);
 
-  // extract subspace with a fixed quantum number
-  //
-  // q = quantum number value
-  // converter = reference on subspace-space converter to use
-  // return value = pointer to the new subspace
-  virtual AbstractHilbertSpace* ExtractSubspace (AbstractQuantumNumber& q, SubspaceSpaceConverter& converter);
-
-  // find state index
-  //
-  // state = state description
-  // return value = corresponding index
-  virtual int FindStateIndex(unsigned long state);
-
   // print a given State
   //
   // Str = reference on current output stream 
@@ -310,67 +232,38 @@ class Spin1_2Chain : public AbstractSpinChain
   // return value = reference on current output stream 
   virtual ostream& PrintState (ostream& Str, int state);
 
-  // evaluate a density matrix of a subsystem of the whole system described by a given ground state, using particle partition.
-  // 
-  // nbrSpinUp = number of spin up that belong to the subsytem 
-  // groundState = reference on the total system ground state
-  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrixParticlePartition (int nbrSpinUpSector, RealVector& groundState);
-
-  // evaluate a density matrix of a subsystem of the whole system described by a given ground state. The density matrix is only evaluated in a given Sz sector.
-  // 
-  // nbrSites = number of sites that are part of the A subsytem 
-  // szSector = Sz sector in which the density matrix has to be evaluated 
-  // groundState = reference on the total system ground state
-  // architecture = pointer to the architecture to use parallelized algorithm 
-  // return value = density matrix of the subsytem (return a wero dimension matrix if the density matrix is equal to zero)
-  virtual RealSymmetricMatrix EvaluatePartialDensityMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
-
-  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
-  // 
-  // nbrSites = number of sites that are part of the A subsytem 
-  // szSector = Sz sector in which the density matrix has to be evaluated 
-  // groundState = reference on the total system ground state
-  // architecture = pointer to the architecture to use parallelized algorithm 
-  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
-
-  virtual RealMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, RealVector& groundState, AbstractArchitecture* architecture = 0);
-	
-  // evaluate entanglement matrix of a subsystem of the whole system described by a given ground state. The entanglement matrix density matrix is only evaluated in a given Sz sector.
-  // 
-  // nbrSites = number of sites that are part of the A subsytem 
-  // szSector = Sz sector in which the density matrix has to be evaluated 
-  // groundState = reference on the total system ground state
-  // architecture = pointer to the architecture to use parallelized algorithm 
-  // return value = entanglement matrix of the subsytem (return a zero dimension matrix if the entanglement matrix is equal to zero)
-
-  virtual ComplexMatrix EvaluatePartialEntanglementMatrix (int nbrSites, int szSector, ComplexVector& groundState, AbstractArchitecture* architecture = 0);
-
  protected:
 
-  // generate Spin 1/2 states
+  // find state index
   //
-  // statePosition = position for the new states
-  // sitePosition = site on chain where spin has to be changed
-  // currentStateDescription = description of current state
-  // return value = number of generated states
-  virtual int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription);
-
-  // generate Spin 1/2 states for a given total spin projection Sz
-  //
-  // statePosition = position for the new states
-  // sitePosition = site on chain where spin has to be changed
-  // currentStateDescription = description of current state
-  // currentSz = total Sz value of current state
-  // return value = number of generated states
-  virtual int GenerateStates(int statePosition, int sitePosition, unsigned currentStateDescription, int currentSz);
+  // stateDescription = state description
+  // return value = corresponding index
+  virtual int FindStateIndex(unsigned long stateDescription);
 
   // evaluate Hilbert space dimension
   //
-  // nbrSpins = number of spins
-  // sz = twice the z projection of the total momentum
+  // sz = twice the Sz value
+  // nbrSites = number of sites
   // return value = Hilbert space dimension
-  virtual int EvaluateHilbertSpaceDimension(int nbrSpins, int szMax);
+  long EvaluateHilbertSpaceDimension(int sz, int nbrSites);
+
+  // generate all states
+  // 
+  // nbrSpinUp = number of spin up
+  // currentPosition = current position to consider in the chain
+  // pos = position in StateDescription array where to store states
+  // return value = position from which new states have to be stored
+  long GenerateStates(int nbrSpinUp, int currentPosition, long pos);
+
+  // generate look-up table associated to current Hilbert space
+  // 
+  // memory = memory size that can be allocated for the look-up table
+  // stateMask = an optional mask to apply to each state to focus on the relevant bits
+#ifdef __64_BITS__
+  virtual void GenerateLookUpTable(unsigned long memory, unsigned long stateMask = 0xfffffffffffffffful);
+#else
+  virtual void GenerateLookUpTable(unsigned long memory, unsigned long stateMask = 0xfffffffful);
+#endif
 
 };
 

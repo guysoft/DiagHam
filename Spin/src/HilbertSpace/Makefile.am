@@ -18,4 +18,7 @@ Spin1_2ChainFull.cc \
 Potts3ChainWithTranslations.cc \
 Spin1_2ChainFixedParity.cc \
 Spin1_2ChainFixedParityWithTranslations.cc \
-Potts4Chain.cc 
+Potts4Chain.cc \
+Spin1_2ChainMirrorSymmetry.cc \
+Spin1_2ChainNew.cc
+

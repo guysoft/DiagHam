@@ -52,6 +52,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "two-columns", "output complex or rational vectors as a two column formatted text file");
 
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "hide-component", "hide state components (and thus the corresponding n-body state) whose absolute value is lower than a given error (0 if all components have to be shown", 0.0);
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
@@ -117,12 +118,35 @@ int main(int argc, char** argv)
       else
 	{
 	  cout.precision(14);
-	  if (Manager.GetBoolean("add-index") == true)
-	    for (long i = MinValue; i < MaxValue; ++i)
-	      cout << i << " " << State[(i - MinValue)] << endl;
+	  if (Manager.GetDouble("hide-component") == 0.0)
+	    {
+	      if (Manager.GetBoolean("add-index") == true)
+		for (long i = MinValue; i < MaxValue; ++i)
+		  cout << i << " " << State[(i - MinValue)] << endl;
+	      else
+		for (long i = MinValue; i < MaxValue; ++i)
+		  cout << State[(i - MinValue)] << endl;
+	    }
 	  else
-	    for (long i = MinValue; i < MaxValue; ++i)
-	      cout << State[(i - MinValue)] << endl;
+	    {
+	      double TmpError = Manager.GetDouble("hide-component");
+	      if (Manager.GetBoolean("add-index") == true)
+		{
+		  for (long i = MinValue; i < MaxValue; ++i)
+		    {
+		      if (fabs(State[(i - MinValue)]) > TmpError)
+			cout << i << " " << State[(i - MinValue)] << endl;
+		    }
+		}
+	      else
+		{
+		  for (long i = MinValue; i < MaxValue; ++i)
+		    {
+		      if (fabs(State[(i - MinValue)]) > TmpError)
+			cout << State[(i - MinValue)] << endl;
+		    }
+		}
+	    }
 	}
       return 0;
     }
@@ -186,23 +210,68 @@ int main(int argc, char** argv)
       else
 	{
 	  cout.precision(14);
-	  if (Manager.GetBoolean("two-columns") == false)
+	  if (Manager.GetDouble("hide-component") == 0.0)
 	    {
-	      if (Manager.GetBoolean("add-index") == true)
-		for (long i = MinValue; i < MaxValue; ++i)
-		  cout << i << " " << State[(i - MinValue)] << endl;
+	      if (Manager.GetBoolean("two-columns") == false)
+		{
+		  if (Manager.GetBoolean("add-index") == true)
+		    for (long i = MinValue; i < MaxValue; ++i)
+		      cout << i << " " << State[(i - MinValue)] << endl;
+		  else
+		    for (long i = MinValue; i < MaxValue; ++i)
+		      cout << State[(i - MinValue)] << endl;
+		}
 	      else
-		for (long i = MinValue; i < MaxValue; ++i)
-		  cout << State[(i - MinValue)] << endl;
+		{
+		  if (Manager.GetBoolean("add-index") == true)
+		    for (long i = MinValue; i < MaxValue; ++i)
+		      cout << i << " " << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+		  else
+		    for (long i = MinValue; i < MaxValue; ++i)
+		      cout << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+		}
 	    }
 	  else
 	    {
-	      if (Manager.GetBoolean("add-index") == true)
-		for (long i = MinValue; i < MaxValue; ++i)
-		  cout << i << " " << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+	      double TmpError = Manager.GetDouble("hide-component");
+	      if (Manager.GetBoolean("two-columns") == false)
+		{
+		  if (Manager.GetBoolean("add-index") == true)
+		    {
+		      for (long i = MinValue; i < MaxValue; ++i)
+			{
+			  if (Norm(State[(i - MinValue)]) > TmpError)
+			    cout << i << " " << State[(i - MinValue)] << endl;
+			}
+		    }
+		  else
+		    {
+		      for (long i = MinValue; i < MaxValue; ++i)
+			{
+			  if (Norm(State[(i - MinValue)]) > TmpError)
+			    cout << State[(i - MinValue)] << endl;
+			}
+		    }
+		}
 	      else
-		for (long i = MinValue; i < MaxValue; ++i)
-		  cout << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+		{
+		  if (Manager.GetBoolean("add-index") == true)
+		    {
+		      for (long i = MinValue; i < MaxValue; ++i)
+			{
+			  if (Norm(State[(i - MinValue)]) > TmpError)
+			    cout << i << " " << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+			}
+		    }
+		  else
+		    {
+		      for (long i = MinValue; i < MaxValue; ++i)
+			{
+			  if (Norm(State[(i - MinValue)]) > TmpError)
+			    cout << State[(i - MinValue)].Re << " " << State[(i - MinValue)].Im << endl;
+			}
+		    }
+		}
 	    }
 	}
       return 0;
