@@ -17,6 +17,7 @@
 
 #include "GeneralTools/FilenameTools.h"
 #include "GeneralTools/ConfigurationParser.h"
+#include "GeneralTools/StringTools.h"
 
 #include "Tools/FQHEFiles/QHEOnSphereFileTools.h"
 
@@ -59,6 +60,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleIntegerOption  ('\n', "memory", "maximum memory (in MBytes) that can allocated for precalculations when using huge mode", 100);
   (*SystemGroup) += new SingleIntegerOption  ('\n', "normalization", "indicates which component should be set to one", 0l);
   (*SystemGroup) += new SingleDoubleOption  ('r', "aspect-ratio", "aspect ratio of the cylinder", 1.0);
+  (*SystemGroup) += new SingleDoubleOption  ('\n', "cylinder-perimeter", "if non zero, fix the cylinder perimeter (in magnetic length unit) instead of the aspect ratio", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "symmetry-factor", "do not remove(add) the symmetry factor when (un)normalizing");
   (*SystemGroup) += new BooleanOption  ('\n', "conformal-limit", "indicate that the input state is in the conformal limit basis instead of the unnormalized basis");
   (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the unnormalized vector that will be generated");
@@ -74,7 +76,7 @@ int main(int argc, char** argv)
       cout << "see man page for option syntax or type FQHESphereUnnormalizeState -h" << endl;
       return -1;
     }
-  if (((BooleanOption*) Manager["help"])->GetBoolean() == true)
+  if (Manager.GetBoolean("help") == true)
     {
       Manager.DisplayHelp (cout);
       return 0;
@@ -83,13 +85,14 @@ int main(int argc, char** argv)
   int NbrParticles = 0;
   int LzMax = 0;
   int TotalLz = 0;
-  double Ratio = ((SingleDoubleOption*) Manager["aspect-ratio"])->GetDouble();
+  double Ratio = Manager.GetDouble("aspect-ratio");
+  double Perimeter = Manager.GetDouble("cylinder-perimeter");
   bool HaldaneBasisFlag = Manager.GetBoolean("haldane");
   char* OutputTxtFileName = Manager.GetString("txt-output");
-  bool SymmetrizedBasis = ((BooleanOption*) Manager["symmetrized-basis"])->GetBoolean();
+  bool SymmetrizedBasis = Manager.GetBoolean("symmetrized-basis");
   bool SU2Flag = false;
   int TotalSz = 0;
-  double Error = ((SingleDoubleOption*) Manager["hide-component"])->GetDouble();
+  double Error = Manager.GetDouble("hide-component");
   bool SymmetryFactor = !(Manager.GetBoolean("symmetry-factor"));
 	   
   bool Statistics = true;
@@ -117,6 +120,10 @@ int main(int argc, char** argv)
 	}
 
     }
+  if (Perimeter > 0.0)
+    {
+      Ratio = (Perimeter * Perimeter) / (2.0 * M_PI * (LzMax + 1));
+    }  
   char* OutputFileName = 0;
   if (Manager.GetString("output-file") != 0)
     {
@@ -125,22 +132,54 @@ int main(int argc, char** argv)
     }
   else
     {
-      OutputFileName = new char [512];
-      if (Statistics == true)
-	{
-	  if (Manager.GetBoolean("normalize"))	
-	    sprintf (OutputFileName, "fermions_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+      if (Manager.GetBoolean("normalize"))	
+	{	      
+	  if (strstr(Manager.GetString("input-state"), "_unnormalized_") == 0)
+	    {
+	      OutputFileName = new char [512];
+	      if (Statistics == true)
+		{
+		  if (Perimeter > 0.0)	
+		    {
+		      sprintf (OutputFileName, "fermions_cylinder_perimeter_%.6f_n_%d_2s_%d_lz_%d.0.vec", Perimeter, NbrParticles, LzMax, TotalLz);
+		    }
+		  else
+		    {
+		      sprintf (OutputFileName, "fermions_cylinder_ratio_%.6f_n_%d_2s_%d_lz_%d.0.vec", Ratio, NbrParticles, LzMax, TotalLz);
+		    }
+		}
+	      else
+		{
+		  if (Perimeter > 0.0)	
+		    {
+		      sprintf (OutputFileName, "bosons_cylinder_perimeter_%.6f_n_%d_2s_%d_lz_%d.0.vec", Perimeter, NbrParticles, LzMax, TotalLz);
+		    }
+		  else
+		    {
+		      sprintf (OutputFileName, "bosons_cylinder_ratio_%.6f_n_%d_2s_%d_lz_%d.0.vec", Ratio, NbrParticles, LzMax, TotalLz);
+		    }
+		}
+	    }
 	  else
-	    //sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
-              cout<<"Only normalize is implemented."<<endl;
-	}
+	    {
+	      char* TmpName = new char [512];
+	      if (Perimeter > 0.0)	
+		{
+		  sprintf (TmpName, "_cylinder_perimeter_%.6f_", Perimeter);
+		}
+	      else
+		{
+		  sprintf (TmpName, "_cylinder_ratio_%.6f_", Ratio);
+		}
+	      OutputFileName = ReplaceString(Manager.GetString("input-state"), "_unnormalized_", TmpName);
+	      delete[] TmpName;
+	    }
+	}      
       else
 	{
-	  if (Manager.GetBoolean("normalize"))	
-	    sprintf (OutputFileName, "bosons_normalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
-	  else
-	    //sprintf (OutputFileName, "bosons_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
-              cout<<"Only normalize is implemented."<<endl;
+	  //sprintf (OutputFileName, "fermions_unnormalized_n_%d_2s_%d_lz_%d.0.vec", NbrParticles, LzMax, TotalLz);
+	  cout<< "Only normalize is implemented." << endl;
+	  return 0;
 	}
     }
 

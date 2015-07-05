@@ -58,9 +58,10 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix()
 //
 // matrix1 = MPS matrices that desribe the first state 
 // matrix2 = MPS matrices that desribe the second state 
-// antiSymmetrizeFlag - true if anti-symmetrization 
-
-FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatrix* matrix1, AbstractFQHEMPSMatrix* matrix2, bool antiSymmetrizeFlag)
+// antiSymmetrizeFlag = true if anti-symmetrization 
+// unalignedSectorFlag = true if the unalign sector has to be consider
+ 
+FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatrix* matrix1, AbstractFQHEMPSMatrix* matrix2, bool antiSymmetrizeFlag, bool unalignedSectorFlag)
 {
   this->MPSMatrix1 = matrix1;
   this->MPSMatrix2 = matrix2;
@@ -69,6 +70,7 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
   this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
   this->NbrBMatrices = 0;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
+  this->AlignedSectorFlag = !unalignedSectorFlag;
   if (antiSymmetrizeFlag == false)
     {
       this->NbrBMatrices = this->MPSMatrix1->GetNbrMatrices();
@@ -209,7 +211,11 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 		  for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
 		    {
 		      this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
-		      if (((TmpQ1 + TmpQ2) == MinQ) && ((TmpPLevel1 + TmpPLevel2) == p))
+		      if (((TmpQ1 + TmpQ2) == MinQ) 
+			  && ((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
+			  && (((this->AlignedSectorFlag == true) && (((TmpQ1 - TmpQ2) % 3) == 0))
+			      || ((this->AlignedSectorFlag == false) && (((TmpQ1 > TmpQ2) && (((TmpQ1 - TmpQ2) % 3) == 1)) 
+									 || ((TmpQ1 < TmpQ2) && (((TmpQ2 - TmpQ1) % 3) == 2))))))
 			{
 			  this->TensorProductIndexConvertion[(j * this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) + i] = TmpIndex;
 			  ++TmpIndex;
@@ -239,10 +245,10 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
       if (this->TensorProductIndexConvertion[i] >= 0)
 	TmpKeptIndices2[this->TensorProductIndexConvertion[i]] = i;
     }
-//   for (int j = 0; j <  this->NbrBMatrices; ++j)
-//     {
-//       this->RealBMatrices[j] =  this->RealBMatrices[j].ExtractMatrix(TmpIndex, TmpIndex, TmpKeptIndices2, TmpKeptIndices2);
-//     }
+  for (int j = 0; j <  this->NbrBMatrices; ++j)
+    {
+      this->RealBMatrices[j] =  this->RealBMatrices[j].ExtractMatrix(TmpIndex, TmpIndex, TmpKeptIndices2, TmpKeptIndices2);
+    }
   delete[] TmpKeptIndices2;
 
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
@@ -267,8 +273,15 @@ char* FQHEMPSSymmetrizedStateMatrix::GetName()
 {
   char* TmpName1 = this->MPSMatrix1->GetName();
   char* TmpName2 = this->MPSMatrix2->GetName();
-  char* TmpName3 = new char [strlen(TmpName1) + strlen(TmpName2) + 64];
-  sprintf (TmpName3, "symmetrized_%s_%s", TmpName1, TmpName2);
+  char* TmpName3 = new char [strlen(TmpName1) + strlen(TmpName2) + 256];
+  if (this->AlignedSectorFlag == true)
+    {
+      sprintf (TmpName3, "symmetrized_%s_%s", TmpName1, TmpName2);
+    }
+  else
+    {
+      sprintf (TmpName3, "symmetrized_unaligned_%s_%s", TmpName1, TmpName2);
+    }
   return TmpName3;
 }
 
@@ -401,9 +414,12 @@ void FQHEMPSSymmetrizedStateMatrix::GetMatrixBoundaryIndices(int& rowIndex, int&
   int TmpColumnIndex2;
   this->MPSMatrix2->GetMatrixBoundaryIndices(TmpRowIndex2, TmpColumnIndex2, padding);
   ++TmpRowIndex1;
-  ++TmpRowIndex2;
   ++TmpColumnIndex1;
-  ++TmpColumnIndex2;
+  if (this->AlignedSectorFlag == true)
+    {
+      ++TmpRowIndex2;
+      ++TmpColumnIndex2;
+    }
   rowIndex = this->TensorProductIndexConvertion[TmpRowIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrRow() * TmpRowIndex2];
   columnIndex = this->TensorProductIndexConvertion[TmpColumnIndex1 + this->MPSMatrix1->GetMatrices()[0].GetNbrColumn() * TmpColumnIndex2];
 }

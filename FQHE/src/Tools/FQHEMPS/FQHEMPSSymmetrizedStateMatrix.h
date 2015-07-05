@@ -57,6 +57,9 @@ class FQHEMPSSymmetrizedStateMatrix : public AbstractFQHEMPSMatrix
   // CFT sector that has to be selected
   int CFTSector;
 
+  // true if the aligned sector is selected
+  bool AlignedSectorFlag;
+
   // degeneracy of the transfer matrix largest eigenvalue
   int TransferMatrixLargestEigenvalueDegeneracy;
 
@@ -90,8 +93,9 @@ class FQHEMPSSymmetrizedStateMatrix : public AbstractFQHEMPSMatrix
   //
   // matrix1 = MPS matrices that desribe the first state 
   // matrix2 = MPS matrices that desribe the second state 
-  // antiSymmetrizeFlag - true if anti-symmetrization 
-  FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatrix* matrix1, AbstractFQHEMPSMatrix* matrix2, bool antiSymmetrizeFlag);
+  // antiSymmetrizeFlag = true if anti-symmetrization 
+  // unalignedSectorFlag = true if the unalign sector has to be consider
+  FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatrix* matrix1, AbstractFQHEMPSMatrix* matrix2, bool antiSymmetrizeFlag, bool unalignedSectorFlag);
 
   // destructor
   //
@@ -208,6 +212,11 @@ inline void FQHEMPSSymmetrizedStateMatrix::GetFillingFactor(int& numerator, int&
   this->MPSMatrix1->GetFillingFactor(numerator, denominator);
   this->MPSMatrix2->GetFillingFactor(TmpNumerator, denominator);
   numerator += TmpNumerator;
+/*   if (this->AlignedSectorFlag == true) */
+/*     { */
+/*       numerator *= 2; */
+/*       denominator *= 2; */
+/*     } */
 }
 
 // get the degeneracy of the transfer matrix largest eigenvalue

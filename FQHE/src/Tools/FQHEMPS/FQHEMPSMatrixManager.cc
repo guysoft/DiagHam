@@ -130,6 +130,7 @@ void FQHEMPSMatrixManager::AddOptionGroup(OptionManager* manager, const char* co
   (*SystemGroup) += new SingleStringOption  ('\n', "with-quasiholes", "state has to be built with quasihole whose location is given in a text file");
   (*SystemGroup) += new BooleanOption  ('\n', "symmetrize", "symmetrize two copies of the same state");
   (*SystemGroup) += new BooleanOption  ('\n', "anti-symmetrize", "anti-symmetrize two copies of the same state");
+  (*SystemGroup) += new BooleanOption  ('\n', "unalign-sector", "choose the unaligned sector when symmetrizing / anti-symmetrizing");
   (*SystemGroup) += new BooleanOption  ('\n', "twisted-symmetrize", "symmetrize or anti-symmetrize two copies of the same state, using a twist");
   (*SystemGroup) += new SingleIntegerOption ('\n', "twisted-shift", "set which orbital should be set to zero when (anti-)symmetrizing with a twist", 1);
   (*SystemGroup) += new BooleanOption  ('\n', "trim-qsector", " trim the charge indices, assuming an iMPS");
@@ -540,7 +541,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	{
 	  if (this->Options->GetBoolean("twisted-symmetrize") == false)
 	    {
-	      AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, false);
+	      AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, false, this->Options->GetBoolean("unalign-sector"));
 	      MPSMatrix = MPSMatrix2;	  
 	      NbrBMatrices = MPSMatrix->GetNbrMatrices();
 	    }
@@ -557,7 +558,7 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
 	    {
 	      if (this->Options->GetBoolean("twisted-symmetrize") == false)
 		{
-		  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, true);
+		  AbstractFQHEMPSMatrix* MPSMatrix2 = new FQHEMPSSymmetrizedStateMatrix(MPSMatrix, MPSMatrix, true, this->Options->GetBoolean("unalign-sector"));
 		  MPSMatrix = MPSMatrix2;	  
 		  NbrBMatrices = MPSMatrix->GetNbrMatrices();
 		}
