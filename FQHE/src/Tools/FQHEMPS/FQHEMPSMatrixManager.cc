@@ -204,6 +204,10 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(int nbrFluxQuanta, A
 	{
 	  Perimeter = sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
 	}
+      if (this->Options->GetBoolean("twisted-symmetrize"))
+	{
+	  Perimeter *= 2.0;
+	}
       Kappa = (2.0 * M_PI) / Perimeter;
     }
   int NbrBMatrices = MPSMatrix->GetNbrMatrices();
@@ -289,6 +293,10 @@ AbstractFQHEMPSMatrix* FQHEMPSMatrixManager::GetMPSMatrices(bool quasiholeSector
       else
 	{
 	  Perimeter = sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * AspectRatio);
+	}
+      if (this->Options->GetBoolean("twisted-symmetrize"))
+	{
+	  Perimeter *= 2.0;
 	}
       Kappa = (2.0 * M_PI) / Perimeter;
       cout<<"Cylinder geometry, perimeter = " << Perimeter << " , kappa= " << Kappa << endl;
@@ -657,10 +665,14 @@ double FQHEMPSMatrixManager::GetCylinderPerimeter(int nbrFluxQuanta)
 {
   if ((this->TorusFlag == false) && (this->Options->GetBoolean("normalize-cylinder")))
     {
+      double Perimeter = 0.0;
       if (this->Options->GetDouble("cylinder-perimeter") > 0.0)
-	return this->Options->GetDouble("cylinder-perimeter");
+	 Perimeter = this->Options->GetDouble("cylinder-perimeter");
       else
-	return (sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * this->Options->GetDouble("aspect-ratio")));
+	Perimeter = (sqrt(2.0 * M_PI * (nbrFluxQuanta + 1) * this->Options->GetDouble("aspect-ratio")));
+      if (this->Options->GetBoolean("twisted-symmetrize"))
+	Perimeter *= 2.0;
+      return Perimeter;
     }
   return -1.0;
 }

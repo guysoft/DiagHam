@@ -219,3 +219,40 @@ long ParticleOnTorusWithSpinAndMagneticTranslations::EvaluatePartialDensityMatri
   cout << "warning : EvaluatePartialDensityMatrixParticlePartitionCore not implemented" << endl; 
   return 0l; 
 }
+
+// get the momentum along the x axis
+// 
+  // return avlue = momentum along the x axis
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::GetKxMomentum()
+{
+  return 0;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::GetKyMomentum()
+{
+  return 0;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::GetMaxXMomentum()
+{
+  return 1;
+}
+  
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+int ParticleOnTorusWithSpinAndMagneticTranslations::GetMaxYMomentum()
+{
+  return 1;
+}
+  

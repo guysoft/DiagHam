@@ -176,6 +176,13 @@ class FQHEMPSTwistedSymmetrizedStateMatrix : public AbstractFQHEMPSMatrix
   // padding = assume that the state has the estra padding
   virtual void GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding = false);
 
+  // print a given state of the auxiliary space
+  //
+  // str = reference on the output stream
+  // index = index of the state
+  // return value = reference on the output stream
+  virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
+
 };
 
 // get the filling factor of the state associated the B matrices 

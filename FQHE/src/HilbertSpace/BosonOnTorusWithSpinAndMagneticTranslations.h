@@ -168,6 +168,41 @@ class BosonOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWithS
   // return value = pointer to cloned Hilbert space
   AbstractHilbertSpace* Clone();
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
+  // get the total spin
+  //
+  //return value: total spin of the Hilbert space
+  virtual int GetTotalSpin();
+
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the momentum along the y axis
+  // 
+  // return avlue = momentum along the y axis
+  virtual int GetKyMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+  
+  // get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the y axis
+  virtual int GetMaxYMomentum();
+  
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -838,4 +873,68 @@ inline int BosonOnTorusWithSpinAndMagneticTranslations::GetTargetHilbertSpaceDim
   return this->TargetSpace->HilbertSpaceDimension;
 }
 
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetNbrOrbitals()
+{
+  return this->MaxMomentum;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetNbrParticles()
+{
+  return this->NbrBosons;
+}
+
+// get the total spin
+//
+//return value: total spin of the Hilbert space
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetTotalSpin()
+{
+  return this->TotalSpin;
+}
+
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetKxMomentum()
+{
+  return this->KxMomentum;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetKyMomentum()
+{
+  return this->KyMomentum;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetMaxXMomentum()
+{
+  return this->MomentumModulo;
+}
+
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+inline int BosonOnTorusWithSpinAndMagneticTranslations::GetMaxYMomentum()
+{
+  return this->MaxMomentum;
+}
+  
+  
 #endif

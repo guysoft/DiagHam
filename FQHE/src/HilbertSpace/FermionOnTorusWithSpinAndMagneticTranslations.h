@@ -191,6 +191,26 @@ class FermionOnTorusWithSpinAndMagneticTranslations :  public ParticleOnTorusWit
   //return value: total spin of the Hilbert space
   virtual int GetTotalSpin();
 
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the momentum along the y axis
+  // 
+  // return avlue = momentum along the y axis
+  virtual int GetKyMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+  
+  // get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the y axis
+  virtual int GetMaxYMomentum();
+  
   // get the particle statistic 
   //
   // return value = particle statistic
@@ -613,6 +633,42 @@ inline int FermionOnTorusWithSpinAndMagneticTranslations::GetTotalSpin()
   return this->TotalSpin;
 }
 
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetKxMomentum()
+{
+  return this->XMomentum;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetKyMomentum()
+{
+  return this->YMomentum;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetMaxXMomentum()
+{
+  return this->MomentumModulo;
+}
+
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+inline int FermionOnTorusWithSpinAndMagneticTranslations::GetMaxYMomentum()
+{
+  return this->MaxMomentum;
+}
+  
 #endif // FERMIONONTORUSWITHSPINANDMAGNETICTRANSLATIONS_H
 
 

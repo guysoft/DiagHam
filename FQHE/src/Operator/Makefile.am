@@ -30,4 +30,5 @@ ParticleOnSquareLatticeWithSpinBandDensityOperator.cc \
 ParticleOnSphereSpinOperator.cc \
 ParticleOnSphereWithSpinSuperconductorOrderParameterOperator.cc \
 ParticleOnTorusWithSpinAndMagneticTranslationsSMinusOperator.cc \
-ParticleOnSphereWithSpinSMinusOperator.cc
+ParticleOnSphereWithSpinSMinusOperator.cc \
+ParticleOnTorusWithSpinAndMagneticTranslationsS2Operator.cc

@@ -106,32 +106,34 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
   this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NLastValuePerPLevelCFTSector = new int* [this->PLevel + 1];
+  this->NbrIndexPerPLevelCFTSectorQValue = new int** [this->PLevel + 1];
+  this->GlobalIndexMapper = new int*** [this->PLevel + 1];
   for (int p = 0; p <= this->PLevel; ++p)
     {
       this->NbrNValuesPerPLevelCFTSector[p] = new int [this->NbrCFTSectors];
       this->NInitialValuePerPLevelCFTSector[p] = new int [this->NbrCFTSectors];
       this->NLastValuePerPLevelCFTSector[p] = new int [this->NbrCFTSectors];
-      for (int currentCFTSector = 0; currentCFTSector < this->NbrCFTSectors; ++currentCFTSector)
+      this->NbrIndexPerPLevelCFTSectorQValue[p] = new int* [this->NbrCFTSectors];
+      this->GlobalIndexMapper[p] = new int** [this->NbrCFTSectors];
+      for (int CurrentCFTSector = 0; CurrentCFTSector < this->NbrCFTSectors; ++CurrentCFTSector)
 	{
-	  int MinQ = 1 << 30;
-	  int MaxQ = -(1 << 30);
-	  for (int j = 0; j <= p; ++j)
+	  int MinQ;
+	  int MaxQ;
+	  this->MPSMatrix->GetChargeIndexRange(p, CurrentCFTSector, MinQ, MaxQ);
+	  this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
+	  this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
+	  this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
+	  this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int[MaxQ - MinQ + 1];
+	  this->GlobalIndexMapper[p][CurrentCFTSector] = new int*[MaxQ - MinQ + 1];
+	  for (int TmpQ = MinQ; TmpQ <= MaxQ; ++TmpQ)
 	    {
-	      int MinQ1 = 0;
-	      int MaxQ1 = 0;
-	      this->MPSMatrix->GetChargeIndexRange(j, currentCFTSector, MinQ1, MaxQ1);
-	      if (MinQ1 < MinQ)
+	      this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][TmpQ - MinQ] = this->MPSMatrix->GetBondIndexRange(p, TmpQ, CurrentCFTSector);
+	      this->GlobalIndexMapper[p][CurrentCFTSector][TmpQ - MinQ] = new int [this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][TmpQ - MinQ]];
+	      for (int i = 0; i < this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][TmpQ - MinQ]; ++i)
 		{
-		  MinQ = MinQ1;
+		  this->GlobalIndexMapper[p][CurrentCFTSector][TmpQ - MinQ][i] = this->MPSMatrix->GetBondIndexWithFixedChargePLevelCFTSector(i, p, TmpQ, CurrentCFTSector);
 		}
-	      if (MaxQ1 > MaxQ)
-		{
-		  MaxQ = MaxQ1;
-		}
-	      this->NInitialValuePerPLevelCFTSector[p][currentCFTSector] = MinQ;
-	      this->NLastValuePerPLevelCFTSector[p][currentCFTSector] = MaxQ;
-	      this->NbrNValuesPerPLevelCFTSector[p][currentCFTSector] = this->NLastValuePerPLevelCFTSector[p][currentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][currentCFTSector] + 1;
-	    } 
+	    }
 	}
     }
   this->PhysicalIndices = new unsigned long[this->NbrBMatrices];
@@ -256,5 +258,20 @@ void FQHEMPSTwistedSymmetrizedStateMatrix::GetChargeIndexRange (int pLevel, int 
 void FQHEMPSTwistedSymmetrizedStateMatrix::GetMatrixBoundaryIndices(int& rowIndex, int& columnIndex, bool padding)
 {
   this->MPSMatrix->GetMatrixBoundaryIndices(rowIndex, columnIndex, padding);
+}
+
+// print a given state of the auxiliary space
+//
+// str = reference on the output stream
+// index = index of the state
+// return value = reference on the output stream
+
+ostream& FQHEMPSTwistedSymmetrizedStateMatrix::PrintAuxiliarySpaceState(ostream& str, int index)
+{
+  int TmpPLevel;
+  int TmpQ;
+  this->MPSMatrix->GetChargeAndPLevelFromMatrixIndex(index, TmpPLevel, TmpQ);
+  str << "|" << index << ": Q=" << TmpQ << " P=" << TmpPLevel << ">";
+  return str;
 }
 
