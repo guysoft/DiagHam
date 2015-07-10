@@ -133,7 +133,7 @@ Complex ParticleOnTorusWithSpinAndMagneticTranslationsS2Operator::PartialMatrixE
   int NbrTranslations;
   int Index;
   
-  for (int i = (int) firstComponent; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Last; ++i)
     {
       for (int m = 0; m < NbrFluxQuanta; ++m)
 	{
@@ -197,7 +197,7 @@ ComplexVector& ParticleOnTorusWithSpinAndMagneticTranslationsS2Operator::LowLeve
   int NbrTranslations;
   int Index;
 
-  for (int i = (int) firstComponent; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Last; ++i)
     {
       for (int m = 0; m < NbrFluxQuanta; ++m)
 	{

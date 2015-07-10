@@ -137,7 +137,7 @@ Complex ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationS2Operator::PartialMat
   int NbrTranslationsY;  
   int Index;
   
-  for (int i = (int) firstComponent; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Last; ++i)
     {
       for (int m = 0; m < NbrSites; ++m)
 	{
@@ -207,7 +207,7 @@ ComplexVector& ParticleOnLatticeRealSpaceWithSpinAnd2DTranslationS2Operator::Low
   int NbrTranslationsY;  
   int Index;
 
-  for (int i = (int) firstComponent; i < Dim; ++i)
+  for (int i = (int) firstComponent; i < Last; ++i)
     {
       for (int m = 0; m < NbrSites; ++m)
 	{

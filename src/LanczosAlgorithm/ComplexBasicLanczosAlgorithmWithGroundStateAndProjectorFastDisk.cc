@@ -384,6 +384,7 @@ Vector* ComplexBasicLanczosAlgorithmWithGroundStateAndProjectorFastDisk::GetEige
 	  this->GetGroundState();
 	  TmpVectors[this->NbrEigenvalue - 1] = this->GroundState;
 	}
+      this->NbrProjectors = this->InitialNbrProjectors;
       return TmpVectors;    
     } 
 }

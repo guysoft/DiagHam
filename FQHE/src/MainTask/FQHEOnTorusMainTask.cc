@@ -675,11 +675,11 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 			{
 			  if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
 			    {	  
-			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i));
 			    }
 			  else
 			    {
-			      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+			      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i));		  
 			    }
 			  Eigenvectors[i].WriteVector(TmpVectorName);
 			}
@@ -974,11 +974,11 @@ int FQHEOnTorusMainTask::ExecuteMainTask()
 			{
 			  if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
 			    {	  
-			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+			      sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i));
 			    }
 			  else
 			    {
-			      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+			      sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i));		  
 			    }
 			  Eigenvectors[i].WriteVector(TmpVectorName);
 			}

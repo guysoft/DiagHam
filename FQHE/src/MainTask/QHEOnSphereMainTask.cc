@@ -759,7 +759,7 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		  char* TmpVectorName = new char [strlen(this->EigenvectorFileName) + 32];
 		  for (int i = 0; i < this->NbrEigenvalue; ++i)
 		    {
-		      sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, i, CurrentNbrIterLanczos);		  
+		      sprintf (TmpVectorName, "%s.%d.part.%d.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i), CurrentNbrIterLanczos);		  
 		      Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
 		  delete[] TmpVectorName;
@@ -855,11 +855,11 @@ int QHEOnSphereMainTask::ExecuteMainTask()
 		    {
 		      if ((this->PartialLanczos == false) || (CurrentNbrIterLanczos < this->NbrIterLanczos))
 			{	  
-			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, i);
+			  sprintf (TmpVectorName, "%s.%d.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i));
 			}
 		      else
 			{
-			  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, i);		  
+			  sprintf (TmpVectorName, "%s.%d.part.vec", this->EigenvectorFileName, (Lanczos->EigenstateIndexShift() + i));		  
 			}
 		      Eigenvectors[i].WriteVector(TmpVectorName);
 		    }
