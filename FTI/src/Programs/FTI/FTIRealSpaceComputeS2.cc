@@ -40,6 +40,7 @@ using std::ofstream;
 
 int main(int argc, char** argv)
 {
+  cout.precision(14);
   OptionManager Manager ("FTIRealSpaceComputeS2" , "0.01");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
