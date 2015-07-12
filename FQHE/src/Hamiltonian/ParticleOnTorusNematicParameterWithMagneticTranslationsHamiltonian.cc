@@ -74,18 +74,14 @@ ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian::ParticleOnTo
 // maxMomentum = maximum Lz value reached by a particle in the state
 // xMomentum = momentum in the x direction (modulo GCD of nbrParticles and maxMomentum)
 // ratio = ratio between the width in the x direction and the width in the y direction
-// haveCoulomb = flag indicating whether a coulomb term is present
-// landauLevel = landauLevel to be simulated (GaAs (>=0) or graphene (<0))
-// nbrPseudopotentials = number of pseudopotentials indicated
-// pseudopotentials = pseudopotential coefficients
-// noWignerEnergy = do not consider the energy contribution from the Wigner crystal 
+// length = characteristic length (in magnetic lentgh unit) used in the order parameter, i.e. (cos q_xl - cos q_yl)
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
 
 ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian::ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, 
 														     int nbrParticles, int maxMomentum, 
-														     int xMomentum, double ratio, 
+														     int xMomentum, double ratio, double length, 
 														     AbstractArchitecture* architecture, long memory, 
 														     char* precalculationFileName)
 {
@@ -95,6 +91,7 @@ ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian::ParticleOnTo
   this->MaxMomentum = maxMomentum;
   this->XMomentum = xMomentum;
   this->NbrParticles = nbrParticles;
+  this->Length = length;
   this->MomentumModulo = FindGCD(this->NbrParticles, this->MaxMomentum);
   this->FastMultiplicationFlag = false;
   this->HermitianSymmetryFlag = true;
@@ -154,8 +151,8 @@ double ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian::Evalu
   double Coefficient = 1.0;
   double PIOnM = M_PI / ((double) this->MaxMomentum);
   double Factor =  - ((double) (m1-m3)) * PIOnM * 2.0;
-  double FactorQx =  sqrt (2.0 * PIOnM * this->InvRatio);
-  double FactorQy =  sqrt (2.0 * PIOnM * this->Ratio);
+  double FactorQx =  sqrt (2.0 * PIOnM * this->InvRatio) * this->Length;
+  double FactorQy =  sqrt (2.0 * PIOnM * this->Ratio) * this->Length;
   double Sum = 0.0;
   double N2 = (double) (m1 - m4);
   double N1;

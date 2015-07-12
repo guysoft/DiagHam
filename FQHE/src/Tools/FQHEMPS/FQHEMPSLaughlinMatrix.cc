@@ -806,6 +806,8 @@ void FQHEMPSLaughlinMatrix::ComputeChargeIndexRange(int pLevel, int& minQ, int& 
       for (maxQ = this->NbrNValue - 1; maxQ >= 0; --maxQ)
 	if (2 * pLevel + twop(maxQ - this->NValueGlobalShift, this->LaughlinIndex) <= 2 * this->PLevel)
 	  break;
+//      --minQ;
+//      ++maxQ;
       cout << "N range at " << pLevel << ": [" << minQ - this->NValueGlobalShift << "," << maxQ - this->NValueGlobalShift << "] (+" << this->NValueGlobalShift << ")" << endl;
       
       cout << "other method" << endl;

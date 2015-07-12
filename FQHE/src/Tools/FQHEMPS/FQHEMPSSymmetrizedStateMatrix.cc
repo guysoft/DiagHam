@@ -156,26 +156,52 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	{
 	  int MinQ = 1 << 30;
 	  int MaxQ = -(1 << 30);
-	  for (int j = 0; j <= p; ++j)
+	  int TmpQ1 = 0;
+	  int TmpQ2 = 0;
+	  int TmpPLevel1 = 0;
+	  int TmpPLevel2 = 0;
+	  for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
 	    {
-	      int MinQ1 = 0;
-	      int MaxQ1 = 0;
-	      int MinQ2 = 0;
-	      int MaxQ2 = 0;
-	      if ((j <= this->MPSMatrix1->GetTruncationLevel()) && ((p - j) <= this->MPSMatrix2->GetTruncationLevel()))
+	      this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
+	      for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
 		{
-		  this->MPSMatrix1->GetChargeIndexRange(j, CurrentCFTSector, MinQ1, MaxQ1);
-		  this->MPSMatrix2->GetChargeIndexRange(p - j, CurrentCFTSector, MinQ2, MaxQ2);
-		  if ((MinQ1 + MinQ2) < MinQ)
+		  this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
+		  if (((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
+		      && (((this->AlignedSectorFlag == true) && (((TmpQ1 - TmpQ2) % 3) == 0))
+			  || ((this->AlignedSectorFlag == false) && (((TmpQ1 > TmpQ2) && (((TmpQ1 - TmpQ2) % 3) == 1)) 
+								     || ((TmpQ1 < TmpQ2) && (((TmpQ2 - TmpQ1) % 3) == 2))))))
 		    {
-		      MinQ = MinQ1 + MinQ2;
-		    }
-		  if ((MaxQ1 + MaxQ2) > MaxQ)
-		    {
-		      MaxQ = MaxQ1 + MaxQ2;
+		      if ((TmpQ1 + TmpQ2) < MinQ)
+			{
+			  MinQ = TmpQ1 + TmpQ2;
+			}
+		      if ((TmpQ1 + TmpQ2) > MaxQ)
+			{
+			  MaxQ = TmpQ1 + TmpQ2;
+			}
 		    }
 		}
 	    }
+// 	  for (int j = 0; j <= p; ++j)
+// 	    {
+// 	      int MinQ1 = 0;
+// 	      int MaxQ1 = 0;
+// 	      int MinQ2 = 0;
+// 	      int MaxQ2 = 0;
+// 	      if ((j <= this->MPSMatrix1->GetTruncationLevel()) && ((p - j) <= this->MPSMatrix2->GetTruncationLevel()))
+// 		{
+// 		  this->MPSMatrix1->GetChargeIndexRange(j, CurrentCFTSector, MinQ1, MaxQ1);
+// 		  this->MPSMatrix2->GetChargeIndexRange(p - j, CurrentCFTSector, MinQ2, MaxQ2);
+// 		  if ((MinQ1 + MinQ2) < MinQ)
+// 		    {
+// 		      MinQ = MinQ1 + MinQ2;
+// 		    }
+// 		  if ((MaxQ1 + MaxQ2) > MaxQ)
+// 		    {
+// 		      MaxQ = MaxQ1 + MaxQ2;
+// 		    }
+// 		}
+// 	    }
 	  this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
 	  this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
 	  this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;

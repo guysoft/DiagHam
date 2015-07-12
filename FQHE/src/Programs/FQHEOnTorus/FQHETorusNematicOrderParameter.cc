@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new SingleStringOption('i', "input-state", "name of the file containing the state whose Kx momentum has to be computed");
   (*SystemGroup) += new SingleStringOption('\n', "degenerated-states", "name of the file containing a list of states (override input-state)");
   (*SystemGroup) += new SingleStringOption ('\n',  "interaction-name", "name that should be inserted in the output file names", "nematic_parameter");
+  (*SystemGroup) += new SingleDoubleOption ('\n',  "length", "characteristic length (in magnetic lentgh unit) used in the order parameter", 1.0);
   (*MiscGroup) += new BooleanOption ('h', "help", "display this help");
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
@@ -183,12 +184,12 @@ int main(int argc, char** argv)
   if (Statistics == false)
     {
       Space = new BosonOnTorusWithMagneticTranslationsShort(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-      sprintf (OutputNamePrefix, "bosons_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+      sprintf (OutputNamePrefix, "bosons_torus_%s_l_%.6f_n_%d_2s_%d", Manager.GetString("interaction-name"), Manager.GetDouble("length"), NbrParticles, MaxMomentum);
     }
   else
     {
       Space = new FermionOnTorusWithMagneticTranslations(NbrParticles, MaxMomentum, XMomentum, YMomentum);
-      sprintf (OutputNamePrefix, "fermions_torus_%s_n_%d_2s_%d", Manager.GetString("interaction-name"), NbrParticles, MaxMomentum);
+      sprintf (OutputNamePrefix, "fermions_torus_%s_l_%.6f_n_%d_2s_%d", Manager.GetString("interaction-name"), Manager.GetDouble("length"), NbrParticles, MaxMomentum);
     }
 
   Architecture.GetArchitecture()->SetDimension(Space->GetHilbertSpaceDimension());
@@ -207,7 +208,7 @@ int main(int argc, char** argv)
   char* OutputName = new char [256 + strlen(OutputNamePrefix)];
   sprintf (OutputName, "%s_ratio_%.6f_kx_%d_ky_%d.dat", OutputNamePrefix, Ratio, XMomentum, YMomentum);
 
-  ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian NematicParameter(Space, NbrParticles, MaxMomentum, XMomentum, Ratio, Architecture.GetArchitecture(), 0l);
+  ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian NematicParameter(Space, NbrParticles, MaxMomentum, XMomentum, Ratio, Manager.GetDouble("length"), Architecture.GetArchitecture(), 0l);
 //   HermitianMatrix NematicParameterRep (Space->GetHilbertSpaceDimension(),true);
 //   NematicParameter.GetHamiltonian(NematicParameterRep);
   HermitianMatrix NematicParameterRep (NbrInputStates,true);

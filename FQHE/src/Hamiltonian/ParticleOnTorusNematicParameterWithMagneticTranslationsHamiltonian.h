@@ -53,6 +53,9 @@ class ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian : publi
 
  protected:
 
+  // characteristic length (in magnetic lentgh unit) used in the order parameter, i.e. (cos q_xl - cos q_yl)
+  double Length;
+
  public:
 
   // default constructor
@@ -66,16 +69,12 @@ class ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian : publi
   // maxMomentum = maximum Lz value reached by a particle in the state
   // xMomentum = momentum in the x direction (modulo GCD of nbrBosons and maxMomentum)
   // ratio = ratio between the width in the x direction and the width in the y direction
-  // haveCoulomb = flag indicating whether a coulomb term is present
-  // landauLevel = landauLevel to be simulated
-  // nbrPseudopotentials = number of pseudopotentials indicated
-  // pseudopotentials = pseudopotential coefficients
-  // noWignerEnergy = do not consider the energy contribution from the Wigner crystal 
+  // length = characteristic length (in magnetic lentgh unit) used in the order parameter, i.e. (cos q_xl - cos q_yl)
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   // precalculationFileName = option file name where precalculation can be read instead of reevaluting them
   ParticleOnTorusNematicParameterWithMagneticTranslationsHamiltonian(ParticleOnTorusWithMagneticTranslations* particles, int nbrParticles, int maxMomentum, int xMomentum,
-								     double ratio, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
+								     double ratio, double length, AbstractArchitecture* architecture, long memory = -1, char* precalculationFileName = 0);
 
   // destructor
   //
