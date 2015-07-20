@@ -67,6 +67,10 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
   this->MPSMatrix2 = matrix2;
   this->PLevel = this->MPSMatrix1->GetTruncationLevel() + this->MPSMatrix2->GetTruncationLevel();
   this->NbrCFTSectors = 1;  
+  if ((antiSymmetrizeFlag == true) && (unalignedSectorFlag == false))
+    {
+      this->NbrCFTSectors = 2;        
+    }
   this->TransferMatrixLargestEigenvalueDegeneracy = 1;  
   this->NbrBMatrices = 0;
   this->RealBMatrices = new SparseRealMatrix [this->NbrBMatrices];
@@ -160,53 +164,69 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	  int TmpQ2 = 0;
 	  int TmpPLevel1 = 0;
 	  int TmpPLevel2 = 0;
-	  for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
+	  if (this->AlignedSectorFlag == true)
 	    {
-	      this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
-	      for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
+	      for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
 		{
-		  this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
-		  if (((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
-		      && (((this->AlignedSectorFlag == true) && (((TmpQ1 - TmpQ2) % 3) == 0))
-			  || ((this->AlignedSectorFlag == false) && (((TmpQ1 > TmpQ2) && (((TmpQ1 - TmpQ2) % 3) == 1)) 
-								     || ((TmpQ1 < TmpQ2) && (((TmpQ2 - TmpQ1) % 3) == 2))))))
+		  this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
+		  for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
 		    {
-		      if ((TmpQ1 + TmpQ2) < MinQ)
+		      this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
+		      if (((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
+			  && (((abs(TmpQ1 - TmpQ2)) % 6) == (CurrentCFTSector * 3)))
 			{
-			  MinQ = TmpQ1 + TmpQ2;
+			  if ((TmpQ1 + TmpQ2) < MinQ)
+			    {
+			      MinQ = TmpQ1 + TmpQ2;
+			    }
+			  if ((TmpQ1 + TmpQ2) > MaxQ)
+			    {
+			      MaxQ = TmpQ1 + TmpQ2;
+			    }
 			}
-		      if ((TmpQ1 + TmpQ2) > MaxQ)
+		    }
+		}	      
+	    }
+	  else
+	    {
+	      for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
+		{
+		  this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
+		  for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
+		    {
+		      this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
+		      if (((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
+			  && (((TmpQ1 > TmpQ2) && (((TmpQ1 - TmpQ2) % 3) == 1)) 
+			      || ((TmpQ1 < TmpQ2) && (((TmpQ2 - TmpQ1) % 3) == 2))))
 			{
-			  MaxQ = TmpQ1 + TmpQ2;
+			  if ((TmpQ1 + TmpQ2) < MinQ)
+			    {
+			      MinQ = TmpQ1 + TmpQ2;
+			    }
+			  if ((TmpQ1 + TmpQ2) > MaxQ)
+			    {
+			      MaxQ = TmpQ1 + TmpQ2;
+			    }
 			}
 		    }
 		}
 	    }
-// 	  for (int j = 0; j <= p; ++j)
-// 	    {
-// 	      int MinQ1 = 0;
-// 	      int MaxQ1 = 0;
-// 	      int MinQ2 = 0;
-// 	      int MaxQ2 = 0;
-// 	      if ((j <= this->MPSMatrix1->GetTruncationLevel()) && ((p - j) <= this->MPSMatrix2->GetTruncationLevel()))
-// 		{
-// 		  this->MPSMatrix1->GetChargeIndexRange(j, CurrentCFTSector, MinQ1, MaxQ1);
-// 		  this->MPSMatrix2->GetChargeIndexRange(p - j, CurrentCFTSector, MinQ2, MaxQ2);
-// 		  if ((MinQ1 + MinQ2) < MinQ)
-// 		    {
-// 		      MinQ = MinQ1 + MinQ2;
-// 		    }
-// 		  if ((MaxQ1 + MaxQ2) > MaxQ)
-// 		    {
-// 		      MaxQ = MaxQ1 + MaxQ2;
-// 		    }
-// 		}
-// 	    }
-	  this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
-	  this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
-	  this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
-	  this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int[MaxQ - MinQ + 1];
-	  this->GlobalIndexMapper[p][CurrentCFTSector] = new int*[MaxQ - MinQ + 1];
+	  if (MinQ == (1 << 30))
+	    {
+	      this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = 0;
+	      this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = -1;
+	      this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = 0;
+	      this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = 0;
+	      this->GlobalIndexMapper[p][CurrentCFTSector] = 0;
+	    }
+	  else
+	    {
+	      this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] = MinQ;
+	      this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] = MaxQ;
+	      this->NbrNValuesPerPLevelCFTSector[p][CurrentCFTSector] = this->NLastValuePerPLevelCFTSector[p][CurrentCFTSector] - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector] + 1;
+	      this->NbrIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector] = new int[MaxQ - MinQ + 1];
+	      this->GlobalIndexMapper[p][CurrentCFTSector] = new int*[MaxQ - MinQ + 1];
+	    }
 	}
     }
   int TmpFullMatrixSize = this->MPSMatrix1->GetMatrices()[0].GetNbrRow() *  this->MPSMatrix2->GetMatrices()[0].GetNbrRow();
@@ -231,20 +251,40 @@ FQHEMPSSymmetrizedStateMatrix::FQHEMPSSymmetrizedStateMatrix(AbstractFQHEMPSMatr
 	    {
 	      this->StartingIndexPerPLevelCFTSectorQValue[p][CurrentCFTSector][MinQ - this->NInitialValuePerPLevelCFTSector[p][CurrentCFTSector]] = TmpIndex;
 	      int InitialTmpIndex = TmpIndex;
-	      for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
+	      if (this->AlignedSectorFlag == true)
 		{
-		  this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
-		  for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
+		  for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
 		    {
-		      this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
-		      if (((TmpQ1 + TmpQ2) == MinQ) 
-			  && ((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
-			  && (((this->AlignedSectorFlag == true) && (((TmpQ1 - TmpQ2) % 3) == 0))
-			      || ((this->AlignedSectorFlag == false) && (((TmpQ1 > TmpQ2) && (((TmpQ1 - TmpQ2) % 3) == 1)) 
-									 || ((TmpQ1 < TmpQ2) && (((TmpQ2 - TmpQ1) % 3) == 2))))))
+		      this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
+		      for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
 			{
-			  this->TensorProductIndexConvertion[(j * this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) + i] = TmpIndex;
-			  ++TmpIndex;
+			  this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
+			  if (((TmpQ1 + TmpQ2) == MinQ) 
+			      && ((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
+			      && ((abs(TmpQ1 - TmpQ2)) % 6) == (CurrentCFTSector * 3))
+			    {
+			      this->TensorProductIndexConvertion[(j * this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) + i] = TmpIndex;
+			      ++TmpIndex;
+			    }
+			}
+		    }
+		}
+	      else
+		{
+		  for (int i = 0; i < this->MPSMatrix1->GetMatrices()[0].GetNbrRow(); ++i)
+		    {
+		      this->MPSMatrix1->GetChargeAndPLevelFromMatrixIndex(i, TmpPLevel1, TmpQ1);
+		      for (int j = 0; j < this->MPSMatrix2->GetMatrices()[0].GetNbrRow(); ++j)
+			{
+			  this->MPSMatrix2->GetChargeAndPLevelFromMatrixIndex(j, TmpPLevel2, TmpQ2);
+			  if (((TmpQ1 + TmpQ2) == MinQ) 
+			      && ((TmpPLevel1 + TmpPLevel2 + (((TmpQ1 - TmpQ2) * (TmpQ1 - TmpQ2)) / 12)) == p) 
+			      && (((TmpQ1 > TmpQ2) && (((TmpQ1 - TmpQ2) % 3) == 1)) 
+				  || ((TmpQ1 < TmpQ2) && (((TmpQ2 - TmpQ1) % 3) == 2))))
+			    {
+			      this->TensorProductIndexConvertion[(j * this->MPSMatrix1->GetMatrices()[0].GetNbrRow()) + i] = TmpIndex;
+			      ++TmpIndex;
+			    }
 			}
 		    }
 		}
@@ -471,5 +511,22 @@ ostream& FQHEMPSSymmetrizedStateMatrix::PrintAuxiliarySpaceState(ostream& str, i
 //   this->GetChargeAndPLevelFromMatrixIndex(index, TmpPLevel, TmpQ);
 //   str << "|" << index << ": Q=" << TmpQ << " P=" << TmpPLevel << ">";
   return str;
+}
+
+// get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+//
+// cftSector = index of the CFT sector
+// return value = Q sector shift
+
+int FQHEMPSSymmetrizedStateMatrix::GetQValueCFTSectorShift(int cftSector)
+{
+  if (this->AlignedSectorFlag == true) 
+    {
+      return (cftSector * 3);
+    }
+  else
+    {
+      return 0;
+    }
 }
 

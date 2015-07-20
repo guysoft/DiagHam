@@ -222,7 +222,7 @@ long ParticleOnTorusWithSpinAndMagneticTranslations::EvaluatePartialDensityMatri
 
 // get the momentum along the x axis
 // 
-  // return avlue = momentum along the x axis
+// return avlue = momentum along the x axis
 
 int ParticleOnTorusWithSpinAndMagneticTranslations::GetKxMomentum()
 {

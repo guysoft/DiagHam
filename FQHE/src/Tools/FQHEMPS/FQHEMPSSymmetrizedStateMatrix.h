@@ -199,6 +199,12 @@ class FQHEMPSSymmetrizedStateMatrix : public AbstractFQHEMPSMatrix
   // return value = reference on the output stream
   virtual ostream& PrintAuxiliarySpaceState(ostream& str, int index);
 
+  // get the Q sector shift for a given CFT sector compared to the x=0 CFT sector
+  //
+  // cftSector = index of the CFT sector
+  // return value = Q sector shift
+  virtual int GetQValueCFTSectorShift(int cftSector);
+
 };
 
 // get the filling factor of the state associated the B matrices 
@@ -212,11 +218,11 @@ inline void FQHEMPSSymmetrizedStateMatrix::GetFillingFactor(int& numerator, int&
   this->MPSMatrix1->GetFillingFactor(numerator, denominator);
   this->MPSMatrix2->GetFillingFactor(TmpNumerator, denominator);
   numerator += TmpNumerator;
-/*   if (this->AlignedSectorFlag == true) */
-/*     { */
-/*       numerator *= 2; */
-/*       denominator *= 2; */
-/*     } */
+  if (this->AlignedSectorFlag == true) 
+    {
+      numerator *= 2;
+      denominator *= 2;
+    }
 }
 
 // get the degeneracy of the transfer matrix largest eigenvalue

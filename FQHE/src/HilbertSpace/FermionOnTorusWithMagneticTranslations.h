@@ -163,6 +163,36 @@ class FermionOnTorusWithMagneticTranslations :  public ParticleOnTorusWithMagnet
   // return value = state momentum in the y direction
   int GetYMomentumValue(int index);
 
+  // get the number of orbitals
+  //
+  // return value = number of orbitals
+  virtual int GetNbrOrbitals();
+
+  // get the number of particles
+  //
+  // return value = number of particles
+  virtual int GetNbrParticles();
+
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the momentum along the y axis
+  // 
+  // return avlue = momentum along the y axis
+  virtual int GetKyMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+  
+  // get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the y axis
+  virtual int GetMaxYMomentum();
+  
   // return a list of all possible quantum numbers 
   //
   // return value = pointer to corresponding quantum number
@@ -412,6 +442,60 @@ inline int FermionOnTorusWithMagneticTranslations::GetParticleStatistic()
   return ParticleOnTorusWithMagneticTranslations::FermionicStatistic;
 }
 
+// get the number of orbitals
+//
+// return value = number of orbitals
+
+inline int FermionOnTorusWithMagneticTranslations::GetNbrOrbitals()
+{
+  return this->MaxMomentum;
+}
+
+// get the number of particles
+//
+// return value = number of particles
+
+inline int FermionOnTorusWithMagneticTranslations::GetNbrParticles()
+{
+  return this->NbrFermions;
+}
+
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+inline int FermionOnTorusWithMagneticTranslations::GetKxMomentum()
+{
+  return this->XMomentum;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+inline int FermionOnTorusWithMagneticTranslations::GetKyMomentum()
+{
+  return this->YMomentum;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+inline int FermionOnTorusWithMagneticTranslations::GetMaxXMomentum()
+{
+  return this->MomentumModulo;
+}
+  
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+inline int FermionOnTorusWithMagneticTranslations::GetMaxYMomentum()
+{
+  return this->MaxMomentum;
+}
+  
 // find canonical form of a state description
 //
 // stateDescription = unsigned integer describing the state

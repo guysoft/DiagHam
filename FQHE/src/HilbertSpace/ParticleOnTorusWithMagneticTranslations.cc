@@ -219,3 +219,40 @@ ComplexVector& ParticleOnTorusWithMagneticTranslations::CoreC4Rotation (ComplexV
   cout << "warning : CoreC4Rotation not implemented" << endl;
   return outputState;
 }
+
+// get the momentum along the x axis
+// 
+// return avlue = momentum along the x axis
+
+int ParticleOnTorusWithMagneticTranslations::GetKxMomentum()
+{
+  return 0;
+}
+
+// get the momentum along the y axis
+// 
+// return avlue = momentum along the y axis
+
+int ParticleOnTorusWithMagneticTranslations::GetKyMomentum()
+{
+  return 0;
+}
+
+// get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the x axis
+
+int ParticleOnTorusWithMagneticTranslations::GetMaxXMomentum()
+{
+  return 1;
+}
+  
+// get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+// 
+// return avlue = maximum momentum along the y axis
+
+int ParticleOnTorusWithMagneticTranslations::GetMaxYMomentum()
+{
+  return 1;
+}
+  

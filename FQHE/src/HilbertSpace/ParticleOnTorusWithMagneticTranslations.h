@@ -66,6 +66,26 @@ class ParticleOnTorusWithMagneticTranslations :  public ParticleOnSphere
   // return value = particle statistic
   virtual int GetParticleStatistic() = 0;
 
+  // get the momentum along the x axis
+  // 
+  // return avlue = momentum along the x axis
+  virtual int GetKxMomentum();
+
+  // get the momentum along the y axis
+  // 
+  // return avlue = momentum along the y axis
+  virtual int GetKyMomentum();
+
+  // get the maximum momentum along the x axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the x axis
+  virtual int GetMaxXMomentum();
+  
+  // get the maximum momentum along the y axis (i.e. the number of momentum sectors)
+  // 
+  // return avlue = maximum momentum along the y axis
+  virtual int GetMaxYMomentum();
+  
   // apply a^+_m1 a^+_m2 a_n1 a_n2 operator to a given state (with m1+m2=n1+n2)
   //
   // index = index of the state on which the operator has to be applied
