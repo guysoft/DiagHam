@@ -20,5 +20,5 @@ Spin1_2ChainFixedParity.cc \
 Spin1_2ChainFixedParityWithTranslations.cc \
 Potts4Chain.cc \
 Spin1_2ChainMirrorSymmetry.cc \
-Spin1_2ChainNew.cc
-
+Spin1_2ChainNew.cc \
+Spin1_2ChainParitySymmetry.cc

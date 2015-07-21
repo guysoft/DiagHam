@@ -71,7 +71,11 @@ Spin1_2ChainMirrorSymmetry::Spin1_2ChainMirrorSymmetry (int chainLength, int sz,
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
+#ifdef __64_BITS__
+  if (this->ChainLength  > 64)
+#else
   if (this->ChainLength  > 32)
+#endif
     {
       this->ChainLength = 1;
     }

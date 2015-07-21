@@ -67,7 +67,11 @@ Spin1_2ChainNew::Spin1_2ChainNew (int chainLength, int sz, int memorySize)
 {
   this->Flag.Initialize();
   this->ChainLength = chainLength;
+#ifdef __64_BITS__
+  if (this->ChainLength  > 64)
+#else
   if (this->ChainLength  > 32)
+#endif
     {
       this->ChainLength = 1;
     }

@@ -5,6 +5,7 @@
 #include "Hamiltonian/SpinChainTripleProductHamiltonian.h"
 
 #include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainParitySymmetry.h"
 #include "HilbertSpace/Spin1Chain.h"
 
 #include "Architecture/ArchitectureManager.h"
@@ -62,6 +63,7 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('z', "djz-value", "delta compare to the coupling constant value along z", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('c', "chi-value", "coupling constant  in front of the triple product S_i . (S_{i+1} x S_{i+2})", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "hz-value", "amplitude of the Zeeman term along the z axis", 0.0);
+  (*SystemGroup) += new  BooleanOption ('\n', "use-parity", "use the parity symmetry");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
 #endif
@@ -88,12 +90,26 @@ int main(int argc, char** argv)
   if ((SpinValue & 1) == 0)
     {
       sprintf (OutputFileName, "spin_%d_openchain_n_%d", (SpinValue / 2), NbrSpins);
-      sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
+      if (Manager.GetBoolean("use-parity") == true)
+	{
+	  sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz P_parity ", (SpinValue / 2), NbrSpins);
+	}
+      else
+	{
+	  sprintf (CommentLine, " open spin %d chain with %d sites \n# 2Sz ", (SpinValue / 2), NbrSpins);
+	}
     }
   else
     {
       sprintf (OutputFileName, "spin_%d_2_openchain_n_%d", SpinValue, NbrSpins);
-      sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz", SpinValue, NbrSpins);
+      if (Manager.GetBoolean("use-parity") == true)
+	{
+	  sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz P_parity", SpinValue, NbrSpins);
+	}
+      else
+	{
+	  sprintf (CommentLine, " open spin %d/2 chain with %d sites \n# 2Sz P_parity", SpinValue, NbrSpins);
+	}
     }
   char* OutputParameterFileName = new char [256];
   if (Manager.GetDouble("djz-value") == 0)
@@ -157,43 +173,74 @@ int main(int argc, char** argv)
   bool FirstRun = true;
   for (; InitalSzValue <= MaxSzValue; InitalSzValue +=2)
     {
-      AbstractSpinChain* Chain = 0;
-      switch (SpinValue)
+      int MaxParity = 0;
+      if ((InitalSzValue == 0) && (Manager.GetBoolean("use-parity") == true))
 	{
-	case 1 :
-	  Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
-	  break;
-	case 2 :
-	  Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
-	  break;
-	default :
-	  {
-	    if ((SpinValue & 1) == 0)
-	      cout << "spin " << (SpinValue / 2) << " are not available" << endl;
-	    else 
-	      cout << "spin " << SpinValue << "/2 are not available" << endl;
-	    return -1;
-	  }
+	  MaxParity = 1;
 	}
-      
-      SpinChainTripleProductHamiltonian* Hamiltonian = 0;
-      if (HzValues == 0)
-	Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues);
-      else
-	Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues, HzValues);
-      char* TmpSzString = new char[64];
-      char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
-      sprintf (TmpSzString, "%d", InitalSzValue);
-      sprintf (TmpEigenstateString, "%s_%s_sz_%d", OutputFileName, OutputParameterFileName, InitalSzValue);
-      GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
-				  FirstRun, TmpEigenstateString);
-      MainTaskOperation TaskOperation (&Task);
-      TaskOperation.ApplyOperation(Architecture.GetArchitecture());
-      FirstRun = false;
-      delete Hamiltonian;
-      delete Chain;
-      delete[] TmpSzString;
-      delete[] TmpEigenstateString;
+      for (int Parity = 0; Parity <= MaxParity; ++Parity)
+	{ 
+	  AbstractSpinChain* Chain = 0;
+	  switch (SpinValue)
+	    {
+	    case 1 :
+	      {
+		if (MaxParity == 1)
+		  {
+		    Chain = new Spin1_2ChainParitySymmetry (NbrSpins, Parity, 1000000);
+		  }
+		else
+		  {
+		    Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
+		  }
+	      }
+	      break;
+	    case 2 :
+	      Chain = new Spin1Chain (NbrSpins, InitalSzValue, 1000000);
+	      break;
+	    default :
+	      {
+		if ((SpinValue & 1) == 0)
+		  cout << "spin " << (SpinValue / 2) << " are not available" << endl;
+		else 
+		  cout << "spin " << SpinValue << "/2 are not available" << endl;
+		return -1;
+	      }
+	    }
+	  
+	  SpinChainTripleProductHamiltonian* Hamiltonian = 0;
+	  if (HzValues == 0)
+	    Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues);
+	  else
+	    Hamiltonian = new SpinChainTripleProductHamiltonian(Chain, NbrSpins, JValues, JzValues, ChiValues, HzValues);
+	  char* TmpSzString = new char[64];
+	  char* TmpEigenstateString = new char[strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+	  if (Manager.GetBoolean("use-parity") == true)
+	    {
+	      sprintf (TmpSzString, "%d %d", InitalSzValue, Parity);
+	    }
+	  else
+	    {
+	      sprintf (TmpSzString, "%d", InitalSzValue);
+	    }
+	  if (MaxParity == 1)
+	    {
+	      sprintf (TmpEigenstateString, "%s_%s_sz_%d_p_%d", OutputFileName, OutputParameterFileName, InitalSzValue, Parity);
+	    }
+	  else
+	    {
+	      sprintf (TmpEigenstateString, "%s_%s_sz_%d", OutputFileName, OutputParameterFileName, InitalSzValue);
+	    }
+	  GenericComplexMainTask Task(&Manager, Chain, &Lanczos, Hamiltonian, TmpSzString, CommentLine, 0.0,  FullOutputFileName,
+				      FirstRun, TmpEigenstateString);
+	  MainTaskOperation TaskOperation (&Task);
+	  TaskOperation.ApplyOperation(Architecture.GetArchitecture());
+	  FirstRun = false;
+	  delete Hamiltonian;
+	  delete Chain;
+	  delete[] TmpSzString;
+	  delete[] TmpEigenstateString;
+	}
     }
   delete[] OutputFileName;
   delete[] CommentLine;
