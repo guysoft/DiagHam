@@ -4,7 +4,7 @@
 
 #include "Hamiltonian/SpinChainTripleProductHamiltonian.h"
 
-#include "HilbertSpace/Spin1_2Chain.h"
+#include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1_2ChainParitySymmetry.h"
 #include "HilbertSpace/Spin1Chain.h"
 
@@ -17,6 +17,9 @@
 #include "MainTask/GenericComplexMainTask.h"
 
 #include "GeneralTools/FilenameTools.h"
+#include "GeneralTools/MultiColumnASCIIFile.h"
+
+#include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
 
 #include "Options/Options.h"
 
@@ -63,6 +66,9 @@ int main(int argc, char** argv)
   (*SystemGroup) += new  SingleDoubleOption ('z', "djz-value", "delta compare to the coupling constant value along z", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('c', "chi-value", "coupling constant  in front of the triple product S_i . (S_{i+1} x S_{i+2})", 0.0);
   (*SystemGroup) += new  SingleDoubleOption ('\n', "hz-value", "amplitude of the Zeeman term along the z axis", 0.0);
+  (*SystemGroup) += new  SingleDoubleOption ('\n', "random-hzvalue", "amplitude of the random Zeeman term on each site", 0.0);
+  (*SystemGroup) += new  SingleIntegerOption ('\n', "run-id", "add an additional run id to the file name when using the --random-hzvalue option", 0);
+  (*SystemGroup) += new  SingleStringOption ('\n', "fullhz-values", "name of the file that contains the Zeeman term amplitudes for each site");
   (*SystemGroup) += new  BooleanOption ('\n', "use-parity", "use the parity symmetry");
 #ifdef __LAPACK__
   (*ToolsGroup) += new BooleanOption  ('\n', "use-lapack", "use LAPACK libraries instead of DiagHam libraries");
@@ -112,26 +118,44 @@ int main(int argc, char** argv)
 	}
     }
   char* OutputParameterFileName = new char [256];
-  if (Manager.GetDouble("djz-value") == 0)
+  if (Manager.GetDouble("djz-value") == 0.0)
     {      
-      if (Manager.GetDouble("hz-value") == 0)
+      if ((Manager.GetDouble("hz-value") == 0.0) && (Manager.GetDouble("random-hzvalue") == 0.0))
 	{
-	  sprintf (OutputParameterFileName, "j_%f_chi_%f", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"));
+	  sprintf (OutputParameterFileName, "j_%.6f_chi_%.6f", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"));
 	}
       else
 	{
-	  sprintf (OutputParameterFileName, "j_%f_chi_%f_hz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"), Manager.GetDouble("hz-value"));
+	  if (Manager.GetDouble("random-hzvalue") == 0.0)
+	    {
+	      sprintf (OutputParameterFileName, "j_%.6f_chi_%.6f_hz_%.6f", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"), Manager.GetDouble("hz-value"));
+	    }
+	  else
+	    {
+	      sprintf (OutputParameterFileName, "j_%.6f_chi_%.6f_hz_%.6f_randomhz_%.6f_runid_%ld", Manager.GetDouble("j-value"), Manager.GetDouble("chi-value"), 
+		       Manager.GetDouble("hz-value"), Manager.GetDouble("random-hzvalue"), Manager.GetInteger("run-id"));
+	    }
 	}
     }
   else
     {
-      if (Manager.GetDouble("hz-value") == 0)
+      if ((Manager.GetDouble("hz-value") == 0.0) && (Manager.GetDouble("random-hzvalue") == 0.0))
 	{
-	  sprintf (OutputParameterFileName, "j_%f_djz_%f_chi_%f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), Manager.GetDouble("chi-value"));
+	  sprintf (OutputParameterFileName, "j_%.6f_djz_%.6f_chi_%.6f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), Manager.GetDouble("chi-value"));
 	}
       else
 	{
-	  sprintf (OutputParameterFileName, "j_%f_djz_%f_chi_%f_hz_%f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), Manager.GetDouble("chi-value"), Manager.GetDouble("hz-value"));
+	  if (Manager.GetDouble("random-hzvalue") == 0.0)
+	    {
+	      sprintf (OutputParameterFileName, "j_%.6f_djz_%.6f_chi_%.6f_hz_%.6f", Manager.GetDouble("j-value"), Manager.GetDouble("djz-value"), 
+		       Manager.GetDouble("chi-value"), Manager.GetDouble("hz-value"));
+	    }
+	  else
+	    {
+	      sprintf (OutputParameterFileName, "j_%.6f_djz_%.6f_chi_%.6f_hz_%.6f_randomhz_%.6f_runid_%ld", Manager.GetDouble("j-value"), 
+		       Manager.GetDouble("djz-value"), Manager.GetDouble("chi-value"), 
+		       Manager.GetDouble("hz-value"), Manager.GetDouble("random-hzvalue"), Manager.GetInteger("run-id"));
+	    }
 	}
     }
     
@@ -150,17 +174,64 @@ int main(int argc, char** argv)
   for (int i = 1; i < (NbrSpins - 1); ++i)
     ChiValues[i] = ChiValues[0];
   double* HzValues = 0;
-  if (Manager.GetDouble("hz-value") != 0)
+  if (Manager.GetString("fullhz-values") != 0)
     {
-      HzValues = new double [NbrSpins];
-      HzValues[0] = Manager.GetDouble("hz-value");
-      for (int i = 1; i < NbrSpins; ++i)
-	HzValues[i] = HzValues[0];
+      MultiColumnASCIIFile HFieldFile;
+      if (HFieldFile.Parse(Manager.GetString("fullhz-values")) == false)
+	{
+	  HFieldFile.DumpErrors(cout);
+	  return -1;
+	}
+      if (HFieldFile.GetNbrLines() == NbrSpins)
+	{
+	  HzValues = HFieldFile.GetAsDoubleArray(0);
+	}
+      else
+	{
+	  if (HFieldFile.GetNbrLines() > NbrSpins)
+	    {
+	      cout << "warning, " << Manager.GetString("fullhz-values") << " has more hz values than the number of sites" << endl;
+	      HzValues = HFieldFile.GetAsDoubleArray(0);
+	    }
+	  else
+	    {
+	      cout << "error, " << Manager.GetString("fullhz-values") << " has less hz values than the number of sites" << endl;
+	      return 0;
+	    }	  
+	}
     }
-
+  else
+    {
+      if ((Manager.GetDouble("hz-value") != 0.0) || (Manager.GetDouble("random-hzvalue") != 0.0))
+	{
+	  HzValues = new double [NbrSpins];
+	  HzValues[0] = Manager.GetDouble("hz-value");
+	  for (int i = 1; i < NbrSpins; ++i)
+	    HzValues[i] = HzValues[0];
+	  if (Manager.GetDouble("random-hzvalue") != 0.0)
+	    {
+	      AbstractRandomNumberGenerator* RandomNumber = new StdlibRandomNumberGenerator (0);
+	      RandomNumber->UseTimeSeed();
+	      char* HzOutputFileName = new char [strlen(OutputFileName) + strlen(OutputParameterFileName) + 64];
+	      sprintf (HzOutputFileName, "%s_%s.hzvalues", OutputFileName, OutputParameterFileName);
+	      ofstream File;
+	      File.open(HzOutputFileName, ios::binary | ios::out); 
+	      File.precision(14); 
+	      for (int i = 0; i < NbrSpins; ++i)
+		{
+		  double Tmp = Manager.GetDouble("random-hzvalue") * (2.0 * RandomNumber->GetRealRandomNumber() - 1.0);
+		  HzValues[i] += Tmp;
+		  File << Tmp << endl;
+		}
+	      File.close();
+	      
+	    }
+      
+	}
+    }
   int MaxSzValue = NbrSpins * SpinValue;
   int InitalSzValue = MaxSzValue & 1;
-  if  (Manager.GetDouble("hz-value") != 0)
+  if  ((Manager.GetDouble("hz-value") != 0) || (Manager.GetDouble("random-hzvalue") != 0.0))
     InitalSzValue = -MaxSzValue;
   if (Manager.GetInteger("initial-sz") > 1)
     {
@@ -191,7 +262,7 @@ int main(int argc, char** argv)
 		  }
 		else
 		  {
-		    Chain = new Spin1_2Chain (NbrSpins, InitalSzValue, 1000000);
+		    Chain = new Spin1_2ChainNew (NbrSpins, InitalSzValue, 1000000);
 		  }
 	      }
 	      break;
