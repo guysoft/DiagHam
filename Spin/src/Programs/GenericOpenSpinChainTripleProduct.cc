@@ -4,6 +4,7 @@
 
 #include "Hamiltonian/SpinChainTripleProductHamiltonian.h"
 
+#include "HilbertSpace/Spin1_2Chain.h"
 #include "HilbertSpace/Spin1_2ChainNew.h"
 #include "HilbertSpace/Spin1_2ChainParitySymmetry.h"
 #include "HilbertSpace/Spin1Chain.h"

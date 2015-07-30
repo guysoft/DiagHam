@@ -97,6 +97,7 @@ int main(int argc, char** argv)
   (*LanczosGroup) += new  BooleanOption ('\n', "project-s2", "add a projector onto the spin S2 groundstate");
   (*LanczosGroup) += new  BooleanOption ('\n', "project-p2", "add a projector onto the isospin P2 groundstate");
   (*LanczosGroup) += new  BooleanOption ('\n', "project-l2", "add a projector onto the angular momentum L2 groundstate");
+  (*LanczosGroup) += new  BooleanOption ('\n', "project-l2-s2", "add a projector onto the common groundstate of L2+S2");
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-storage", "additional number of vectors in RAM when using projected Lanczos", 2);
   (*LanczosGroup) += new SingleIntegerOption  ('\n', "projector-iter-max", "maximum number of iterations for internal lanczos",100);
   (*LanczosGroup) += new SingleDoubleOption ('\n', "projector-precision", "define Lanczos precision for projection (0 if automatically defined by the program)", 1e-14);
