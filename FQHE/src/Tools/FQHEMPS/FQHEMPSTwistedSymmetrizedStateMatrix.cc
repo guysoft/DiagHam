@@ -102,6 +102,11 @@ FQHEMPSTwistedSymmetrizedStateMatrix::FQHEMPSTwistedSymmetrizedStateMatrix(Abstr
 	  this->RealBMatrices[0] = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[0]);
 	  this->RealBMatrices[1] = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[1]);
 	}
+//       SparseRealMatrix TmpB00 = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[0]);
+//       SparseRealMatrix TmpB10 = Multiply(this->MPSMatrix->GetMatrices()[1], this->MPSMatrix->GetMatrices()[0]);
+//       SparseRealMatrix TmpB01 = Multiply(this->MPSMatrix->GetMatrices()[0], this->MPSMatrix->GetMatrices()[1]);
+//       this->RealBMatrices[0] = CreateBlockDiagonalMatrix(TmpB00, TmpB00, 1.0, -1.0);
+//       this->RealBMatrices[1] = CreateBlockOffDiagonalMatrix(TmpB10, TmpB01, 1.0, -1.0);
     }
   this->NbrNValuesPerPLevelCFTSector = new int* [this->PLevel + 1];
   this->NInitialValuePerPLevelCFTSector = new int* [this->PLevel + 1];

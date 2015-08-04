@@ -111,6 +111,16 @@ class AbstractTightBindingModel
   // return value = tight binding hamiltonian
   virtual HermitianMatrix GetRealSpaceTightBindingHamiltonian();
 
+  // get the tight binding hamiltonian in real space , without assuming its hermiticity
+  // 
+  // return value = tight binding hamiltonian
+  virtual ComplexMatrix GetRealSpaceTightBindingNonHermitianHamiltonian();
+
+  // test the tight binding hamiltonian in real space, checking its hermiticity
+  // 
+  // return value = true if the tight binding hamiltonian is hermitian
+  bool TestRealSpaceTightBindingHamiltonian();
+
   // write the energy spectrum in an ASCII file
   //
   // fileName = name of the ASCII file 
@@ -168,6 +178,15 @@ class AbstractTightBindingModel
   // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
   // return value = tight binding hamiltonian in real space 
   virtual HermitianMatrix BuildTightBindingHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
+  
+  // build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions but without assuming its hermiticiy
+  //
+  // nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+  // orbitalIndices = array that gives the orbital indices of the connected orbitals
+  // spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+  // hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+  // return value = tight binding hamiltonian in real space 
+  virtual ComplexMatrix BuildTightBindingNonHermitianHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes);
 
  protected:
 

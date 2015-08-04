@@ -582,7 +582,6 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	  this->OneBodyGenericInteractionFactorsupup[i][0] += -this->KineticFactorIsotropic;
 	  this->OneBodyGenericInteractionFactorsdowndown[i][0] += -this->KineticFactorIsotropic;
 	  this->OneBodyGenericInteractionFactorsupdown[i][0] += Complex(- this->KineticFactorAnisotropic, 0.0);
-	  
 	}
       
       if (jy < this->NbrSite)
@@ -590,14 +589,12 @@ void ParticleOnLatticeWithSpinKitaevHeisenbergHamiltonian::EvaluateInteractionFa
 	  this->OneBodyGenericInteractionFactorsupup[i][1] += -this->KineticFactorIsotropic;
 	  this->OneBodyGenericInteractionFactorsdowndown[i][1] += -this->KineticFactorIsotropic;
 	  this->OneBodyGenericInteractionFactorsupdown[i][1] += Complex(0.0,  this->KineticFactorAnisotropic);
-	  
 	}
       
       if (jz < this->NbrSite)
 	{
-	  this->OneBodyGenericInteractionFactorsupup[i][2] += -this->KineticFactorIsotropic - this->KineticFactorAnisotropic;
-	  this->OneBodyGenericInteractionFactorsdowndown[i][2] += -this->KineticFactorIsotropic + this->KineticFactorAnisotropic;
-	  
+ 	  this->OneBodyGenericInteractionFactorsupup[i][2] += -this->KineticFactorIsotropic - this->KineticFactorAnisotropic;
+ 	  this->OneBodyGenericInteractionFactorsdowndown[i][2] += -this->KineticFactorIsotropic + this->KineticFactorAnisotropic;	  
 	}
       //    cout << i << " " << this->InteractionFactorsupup[i][0] << " " << this->InteractionFactorsupup[i][1] << " " << this->InteractionFactorsupup[i][2] << endl;
     }

@@ -44,6 +44,7 @@ AbstractRandomNumberGenerator::~AbstractRandomNumberGenerator()
 
 // set seed of the random number generator to system time
 //
+
 void AbstractRandomNumberGenerator::UseTimeSeed()
 {
   this->SetSeed(time(NULL));
@@ -53,6 +54,7 @@ void AbstractRandomNumberGenerator::UseTimeSeed()
 // get real random number with gaussian distribution (uses multiple calls to generator)
 //
 // return value = random number
+
 double AbstractRandomNumberGenerator::GetGaussianRandomNumber ()
 {
   double fac, rsq, v1, v2;

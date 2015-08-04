@@ -32,9 +32,9 @@
 using std::cout;
 using std::endl;
 
-#include "Vector/RealVector.h";
-#include "Vector/RealPtrVector.h";
-#include "MathTools/RandomNumber/NumRecRandomGenerator.h";
+#include "Vector/RealVector.h"
+#include "Vector/RealPtrVector.h"
+#include "MathTools/RandomNumber/NumRecRandomGenerator.h"
 
 #include <sys/time.h>
 

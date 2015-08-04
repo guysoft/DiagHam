@@ -1712,19 +1712,61 @@ SparseRealMatrix SparseRealMatrix::Transpose ()
 //
 // matrix1 = first matrix (i.e. the one at starting from the first row, first column)
 // matrix2 = second matrix
+// coefficient1 = optional multiplicative coefficient in front of matrix1
+// coefficient2 = optional multiplicative coefficient in front of matrix2
 // return value = sparse block diagonal matrix
 
-SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2)
+SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, double coefficient1, double coefficient2)
 {
   SparseRealMatrix TmpMatrix(matrix1.NbrRow + matrix2.NbrRow, matrix1.NbrColumn + matrix2.NbrColumn, matrix1.NbrMatrixElements + matrix2.NbrMatrixElements);
   for (long i = 0; i < matrix1.NbrMatrixElements; ++i)
-    TmpMatrix.MatrixElements[i] = matrix1.MatrixElements[i];
+    TmpMatrix.MatrixElements[i] = coefficient1 * matrix1.MatrixElements[i];
   for (long i = 0; i < matrix2.NbrMatrixElements; ++i)
-    TmpMatrix.MatrixElements[i + matrix1.NbrMatrixElements] = matrix2.MatrixElements[i];
+    TmpMatrix.MatrixElements[i + matrix1.NbrMatrixElements] = coefficient2 * matrix2.MatrixElements[i];
   for (long i = 0; i < matrix1.NbrMatrixElements; ++i)
     TmpMatrix.ColumnIndices[i] = matrix1.ColumnIndices[i];
   for (long i = 0; i < matrix2.NbrMatrixElements; ++i)
     TmpMatrix.ColumnIndices[i + matrix1.NbrMatrixElements] = matrix1.NbrColumn + matrix2.ColumnIndices[i];
+  for (int i = 0; i < matrix1.NbrRow; ++i)
+    {
+      TmpMatrix.RowPointers[i] = matrix1.RowPointers[i];
+      TmpMatrix.RowLastPointers[i] = matrix1.RowLastPointers[i];
+    }
+  for (int i = 0; i < matrix2.NbrRow; ++i)
+    {
+      if (matrix2.RowPointers[i] >= 0l)
+	{
+	  TmpMatrix.RowPointers[matrix1.NbrRow + i] = matrix1.NbrMatrixElements + matrix2.RowPointers[i];
+	  TmpMatrix.RowLastPointers[matrix1.NbrRow + i] = matrix1.NbrMatrixElements + matrix2.RowLastPointers[i];
+	}
+      else
+	{
+	  TmpMatrix.RowPointers[matrix1.NbrRow + i] = -1l;
+	  TmpMatrix.RowLastPointers[matrix1.NbrRow + i] = -1l;
+	}
+    }
+  return  TmpMatrix;
+}
+  
+// create an  block off-diagonal matrix from two matrices 
+//
+// matrix1 = first matrix (i.e. the one at starting from the first row)
+// matrix2 = second matrix
+// coefficient1 = optional multiplicative coefficient in front of matrix1
+// coefficient2 = optional multiplicative coefficient in front of matrix2
+// return value = sparse block diagonal matrix
+
+SparseRealMatrix CreateBlockOffDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, double coefficient1, double coefficient2)
+{
+  SparseRealMatrix TmpMatrix(matrix1.NbrRow + matrix2.NbrRow, matrix1.NbrColumn + matrix2.NbrColumn, matrix1.NbrMatrixElements + matrix2.NbrMatrixElements);
+  for (long i = 0; i < matrix1.NbrMatrixElements; ++i)
+    TmpMatrix.MatrixElements[i] = coefficient1 * matrix1.MatrixElements[i];
+  for (long i = 0; i < matrix2.NbrMatrixElements; ++i)
+    TmpMatrix.MatrixElements[i + matrix1.NbrMatrixElements] = coefficient2 * matrix2.MatrixElements[i];
+  for (long i = 0; i < matrix1.NbrMatrixElements; ++i)
+    TmpMatrix.ColumnIndices[i] = matrix2.NbrColumn + matrix1.ColumnIndices[i];
+  for (long i = 0; i < matrix2.NbrMatrixElements; ++i)
+    TmpMatrix.ColumnIndices[i + matrix1.NbrMatrixElements] = matrix2.ColumnIndices[i];
   for (int i = 0; i < matrix1.NbrRow; ++i)
     {
       TmpMatrix.RowPointers[i] = matrix1.RowPointers[i];

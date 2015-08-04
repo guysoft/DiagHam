@@ -74,6 +74,13 @@ class AbstractRandomNumberGenerator
   // return value = random number
   virtual double GetGaussianRandomNumber ();
 
+  // get real random number with gaussian distribution with a given mean value and standard deviation (uses multiple calls to generator)
+  //
+  // meanValue = mean value (i.e <x>) of the gaussian distribution
+  // deviation = standard deviation (i.e. sqrt(<x^2>-<x>^2)) of the gaussian distribution
+  // return value = random number
+  virtual double GetGaussianRandomNumber (double meanValue, double deviation);
+
   // get integer random number between 0 and GetMaxInteger
   //
   // return value = random number
@@ -91,5 +98,17 @@ class AbstractRandomNumberGenerator
   
 
 };
+
+
+// get real random number with gaussian distribution with a given mean value and standard deviation (uses multiple calls to generator)
+//
+// meanValue = mean value (i.e <x>) of the gaussian distribution
+// deviation = standard deviation (i.e. sqrt(<x^2>-<x>^2)) of the gaussian distribution
+// return value = random number
+
+inline double AbstractRandomNumberGenerator::GetGaussianRandomNumber (double meanValue, double deviation)
+{
+  return ((this->GetGaussianRandomNumber() * deviation) + meanValue);
+}
 
 #endif

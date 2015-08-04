@@ -45,82 +45,135 @@ using std::endl;
 using std::ostream;
 
 
-// constructor from default datas
+// constructor from default data
 //
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // j = array containing coupling constants between spins
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j)
+SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
-  this->J = new double [this->NbrSpin - 1];
-  this->Jz = new double [this->NbrSpin - 1];
-  this->HalfJ = new double [this->NbrSpin - 1];
   this->Hz = 0;
-  for (int i = 0; i < (this->NbrSpin - 1); i++)
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+  if (this->PeriodicBoundaryConditions == false)
     {
-      this->J[i] = j[i];
-      this->Jz[i] = j[i];
-      this->HalfJ[i] = j[i] * 0.5;
+      this->J = new double [this->NbrSpin - 1];
+      this->Jz = new double [this->NbrSpin - 1];
+      this->HalfJ = new double [this->NbrSpin - 1];
+      for (int i = 0; i < (this->NbrSpin - 1); i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = j[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	}
+    }
+  else
+    {
+      this->J = new double [this->NbrSpin];
+      this->Jz = new double [this->NbrSpin];
+      this->HalfJ = new double [this->NbrSpin];
+      for (int i = 0; i < this->NbrSpin; i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = j[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	}
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
 
-// constructor from default datas
+// constructor from default data
 //
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // j = array containing coupling constants between spins along x and z
 // jz = array containing coupling constants between spins along z
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz)
+SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
-  this->J = new double [this->NbrSpin - 1];
-  this->Jz = new double [this->NbrSpin - 1];
-  this->HalfJ = new double [this->NbrSpin - 1];
   this->Hz = 0;
-  for (int i = 0; i < (this->NbrSpin - 1); i++)
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+  if (this->PeriodicBoundaryConditions == false)
     {
-      this->J[i] = j[i];
-      this->Jz[i] = jz[i];
-      this->HalfJ[i] = j[i] * 0.5;
+      this->J = new double [this->NbrSpin - 1];
+      this->Jz = new double [this->NbrSpin - 1];
+      this->HalfJ = new double [this->NbrSpin - 1];
+      for (int i = 0; i < (this->NbrSpin - 1); i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	}
+    }
+  else
+    {
+      cout << "check " << endl;
+      this->J = new double [this->NbrSpin];
+      this->Jz = new double [this->NbrSpin];
+      this->HalfJ = new double [this->NbrSpin];
+      for (int i = 0; i < this->NbrSpin; i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	}
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
 }
 
-// constructor from default datas
+// constructor with a generic magnetic field
 //
 // chain = reference on Hilbert space of the associated system
 // nbrSpin = number of spin
 // j = array containing coupling constants between spins along x and z
 // jz = array containing coupling constants between spins along z
 // hz = array containing the amplitude of the Zeeman term along z
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* hz)
+SpinChainHamiltonian::SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* hz, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
-  this->J = new double [this->NbrSpin - 1];
-  this->Jz = new double [this->NbrSpin - 1];
-  this->HalfJ = new double [this->NbrSpin - 1];
-  this->Hz = new double [this->NbrSpin];
-  for (int i = 0; i < (this->NbrSpin - 1); i++)
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+  if (this->PeriodicBoundaryConditions == false)
     {
-      this->J[i] = j[i];
-      this->Jz[i] = jz[i];
-      this->HalfJ[i] = j[i] * 0.5;
+      this->J = new double [this->NbrSpin - 1];
+      this->Jz = new double [this->NbrSpin - 1];
+      this->HalfJ = new double [this->NbrSpin - 1];
+      for (int i = 0; i < (this->NbrSpin - 1); i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	}
     }
+  else
+    {
+      this->J = new double [this->NbrSpin];
+      this->Jz = new double [this->NbrSpin];
+      this->HalfJ = new double [this->NbrSpin];
+      for (int i = 0; i < this->NbrSpin; i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	}
+   }
+  this->Hz = new double [this->NbrSpin];
   for (int i = 0; i < this->NbrSpin; i++)
     {
       this->Hz[i] = hz[i];
     }
-  this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
+  this->PeriodicBoundaryConditions = false;
   this->EvaluateDiagonalMatrixElements();
 }
 
@@ -193,114 +246,6 @@ void SpinChainHamiltonian::ShiftHamiltonian (double shift)
     this->SzSzContributions[i] += shift;
 }
   
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex SpinChainHamiltonian::MatrixElement (RealVector& V1, RealVector& V2) 
-{
-  double x = 0.0;
-  double coef;
-  int MaxPos = this->NbrSpin - 1;
-  int pos;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  for (int i = 0; i < dim; i++)
-    {
-
-      // J part of Hamiltonian      
-      for (int j = 0; j < MaxPos; j++)
-	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
-	    x+= V1[pos] * this->HalfJ[j] * coef * V2[i];
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
-	    x+= V1[pos] * this->HalfJ[j] * coef * V2[i];
-	}
-
-      // SzSz contributions
-      x += V1[i] * this->SzSzContributions[i] * V2[i];
-    }
-  return Complex(x);
-}
-  
-// evaluate matrix element
-//
-// V1 = vector to left multiply with current matrix
-// V2 = vector to right multiply with current matrix
-// return value = corresponding matrix element
-
-Complex SpinChainHamiltonian::MatrixElement (ComplexVector& V1, ComplexVector& V2) 
-{
-  return Complex();
-}
-
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-RealVector& SpinChainHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination) 
-{
-  return this->LowLevelMultiply(vSource, vDestination, 0, this->Chain->GetHilbertSpaceDimension());
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-RealVector& SpinChainHamiltonian::LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-						   int firstComponent, int nbrComponent) 
-{
-  int LastComponent = firstComponent + nbrComponent;
-  int dim = this->Chain->GetHilbertSpaceDimension();
-  double coef;
-  int pos;
-  int MaxPos = this->NbrSpin - 1;
-  vDestination.ClearVector();
-  for (int i = firstComponent; i < LastComponent; ++i)
-    {
-      double TmpValue = vSource[i];
-      vDestination[i] += this->SzSzContributions[i] * TmpValue;
-      // J part of Hamiltonian      
-      for (int j = 0; j < MaxPos; ++j)
-	{
-	  pos = this->Chain->SmiSpj(j, j + 1, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
-	    }
-	  pos = this->Chain->SmiSpj(j + 1, j, i, coef);
-	  if (pos != dim)
-	    {
-	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
-	    }
-	}
-    }
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-RealVector& SpinChainHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination)
-{
-  return this->LowLevelAddMultiply(vSource, vDestination, 0, this->Chain->GetHilbertSpaceDimension());
-}
-
 // multiply a vector by the current hamiltonian for a given range of indices 
 // and add result to another vector, low level function (no architecture optimization)
 //
@@ -336,63 +281,23 @@ RealVector& SpinChainHamiltonian::LowLevelAddMultiply(RealVector& vSource, RealV
 	      vDestination[pos] += this->HalfJ[j] * coef * TmpValue;
 	    }
 	}
+      if (this->PeriodicBoundaryConditions == true)
+	{
+	  pos = this->Chain->SmiSpj(MaxPos, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += this->HalfJ[MaxPos] * coef * TmpValue;
+	    }
+	  pos = this->Chain->SmiSpj(0, MaxPos, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += this->HalfJ[MaxPos] * coef * TmpValue;
+	    }
+	}
     }
   return vDestination;
 }
 
-// multiply a vector by the current hamiltonian and store result in another vector
-// low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& SpinChainHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination) 
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and store result in another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector where result has to be stored
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-
-ComplexVector& SpinChainHamiltonian::LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-						   int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// return value = reference on vectorwhere result has been stored
-
-ComplexVector& SpinChainHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination)
-{
-  return vDestination;
-}
-
-// multiply a vector by the current hamiltonian for a given range of indices 
-// and add result to another vector, low level function (no architecture optimization)
-//
-// vSource = vector to be multiplied
-// vDestination = vector at which result has to be added
-// firstComponent = index of the first component to evaluate
-// nbrComponent = number of components to evaluate
-// return value = reference on vector where result has been stored
-ComplexVector& SpinChainHamiltonian::LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-							int firstComponent, int nbrComponent)
-{
-  return vDestination;
-}
- 
 // return a list of left interaction operators
 //
 // return value = list of left interaction operators
@@ -442,15 +347,19 @@ List<Matrix*> SpinChainHamiltonian::RightInteractionOperators()
 void SpinChainHamiltonian::EvaluateDiagonalMatrixElements()
 {
   int dim = this->Chain->GetHilbertSpaceDimension();
-
+  int MaxSite = this->NbrSpin - 1;
   // SzSz part
   for (int i = 0; i < dim; i++)
     {
       // SzSz part
       this->SzSzContributions[i] = 0.0;
-      for (int j = 0; j < (this->NbrSpin - 1); j++)
+      for (int j = 0; j < MaxSite; j++)
 	{
 	  this->SzSzContributions[i] += this->Jz[j] * this->Chain->SziSzj(j, j + 1, i);
+	}
+      if (this->PeriodicBoundaryConditions == true)
+	{
+	  this->SzSzContributions[i] += this->Jz[MaxSite] * this->Chain->SziSzj(MaxSite, 0, i);
 	}
     }
   if (this->Hz != 0)
@@ -466,73 +375,5 @@ void SpinChainHamiltonian::EvaluateDiagonalMatrixElements()
 	    }
 	}      
     }
-}
-
-// Output Stream overload
-//
-// Str = reference on output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-ostream& operator << (ostream& Str, SpinChainHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Chain->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Chain->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
-    {
-      for (int j = 0; j < H.Chain->GetHilbertSpaceDimension(); j++)
-	{
-	  Str << TmpV[j][i] << "    ";
-	}
-      Str << endl;
-    }
-  return Str;
-}
-
-// Mathematica Output Stream overload
-//
-// Str = reference on Mathematica output stream
-// H = Hamiltonian to print
-// return value = reference on output stream
-
-MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonian& H) 
-{
-  RealVector TmpV2 (H.Chain->GetHilbertSpaceDimension(), true);
-  RealVector* TmpV = new RealVector [H.Chain->GetHilbertSpaceDimension()];
-  for (int i = 0; i < H.Chain->GetHilbertSpaceDimension(); i++)
-    {
-      TmpV[i] = RealVector(H.Chain->GetHilbertSpaceDimension());
-      if (i > 0)
-	TmpV2[i - 1] = 0.0;
-      TmpV2[i] = 1.0;
-      H.LowLevelMultiply (TmpV2, TmpV[i]);
-    }
-  Str << "{";
-  for (int i = 0; i < (H.Chain->GetHilbertSpaceDimension() - 1); i++)
-    {
-      Str << "{";
-      for (int j = 0; j < (H.Chain->GetHilbertSpaceDimension() - 1); j++)
-	{
-	  Str << TmpV[j][i] << ",";
-	}
-      Str << TmpV[H.Chain->GetHilbertSpaceDimension() - 1][i];
-      Str << "},";
-    }
-  Str << "{";
-  for (int j = 0; j < (H.Chain->GetHilbertSpaceDimension() - 1); j++)
-    {
-      Str << TmpV[j][H.Chain->GetHilbertSpaceDimension() - 1] << ",";
-    }
-  Str << TmpV[H.Chain->GetHilbertSpaceDimension() - 1][H.Chain->GetHilbertSpaceDimension() - 1];
-  Str << "}}";
-  return Str;
 }
 

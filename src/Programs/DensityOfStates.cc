@@ -21,37 +21,34 @@ using std::ofstream;
 // spectrumFileName = specrtum file name
 // manager = pointer to the option manager
 // spectrum = reference on the two dimensional array where the spectrum will be stored
-// spectrumSize = number of levels per quantum number sector
+// spectrumSize = number of sattes per quantum number sector
 // spectrumWeight = degeneracy associated to each quantum number sector
 // nbrSectors = number of quantum number sectors
-// minAverageSpacing = reference on the minimum level spacing 
-// maxAverageSpacing = reference on the maximum level spacing 
-// averageSpacing = reference on the average level spacing 
-// nbrSpacings = reference on the number of level spacings
+// minEnergy = reference on the minimum energy
+// maxEnergy = reference on the maximum energy
+// nbrStates = reference on the number of states
 // return value = true if no error occured
-bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
-				      int*& spectrumWeight, int& nbrSectors, double& minAverageSpacing, double& maxAverageSpacing, double& averageSpacing,
-				      long& nbrSpacings);
+bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
+				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates);
 
 
-// perform level statistics on a parsed spectrum
+// perform the density of states on a parsed spectrum
 //
 // spectrum = two dimensional array where the spectrum is stored
 // spectrumSize = number of levels per quantum number sector
 // spectrumWeight = degeneracy associated to each quantum number sector
 // nbrSectors = number of quantum number sectors
-// minAverageSpacing = minimum level spacing 
-// maxAverageSpacing = maximum level spacing 
-// averageSpacing =average level spacing 
-// nbrSpacings = number of level spacings
-// nbrBins = number of bins for th level statistics
-// binSize = level spacing range for each bin
-// nbrSpacingPerBin = array that contains the number of level spacing per bin
-// nbrRejectedSpacings = reference on the number of rejected level spacings (i.e. that cannot be stored in any bin)
-// nbrAcceptedSpacings = reference on the number of accepted level spacings (i.e. that can be stored in a bin)
-void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
-					   double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
-					   int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings);
+// minEnergy = minimum level spacing 
+// maxEnergy = maximum level spacing 
+// nbrStates = number of states
+// nbrBins = number of bins for the density of states
+// binSize = density of states range for each bin
+// nbrStatePerBin = array that contains the number of level spacing per bin
+// nbrRejectedStates = reference on the number of states (i.e. that cannot be stored in any bin)
+// nbrAcceptedStates = reference on the number of states (i.e. that can be stored in a bin)
+void DensityOfStatesPerformDensityOfStates(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
+					   double minEnergy, double maxEnergy, long nbrStates,
+					   int nbrBins, double binSize, long* nbrStatePerBin, long& nbrRejectedStates, long& nbrAcceptedStates);
 
 
 
@@ -60,7 +57,7 @@ int main(int argc, char** argv)
   cout.precision(14); 
 
   // some running options and help
-  OptionManager Manager ("LevelStatistics" , "0.01");
+  OptionManager Manager ("DensityOfStates" , "0.01");
   OptionGroup* OutputGroup = new OptionGroup ("output options");
   OptionGroup* MiscGroup = new OptionGroup ("misc options");
   OptionGroup* SystemGroup = new OptionGroup ("system options");
@@ -76,14 +73,15 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption('\n', "z2-symmetry", "assume that the spectrum is invariant under the transformation Q<->-Q and that only the Q>=0 are available in the spectrum");
   (*SystemGroup) += new SingleIntegerOption('\n', "filter-column", "if equal or greater than 0, apply a filter on the corresponding quantum number column", -1);
   (*SystemGroup) += new SingleIntegerOption('\n', "filter-value", "value of the quantum number that should be kept if --filter-value is applied", 0);
-  (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the level statistics will be stored (if none, try to deduce it from either --spectrum or --multiple-spectra replacing the dat extension with levelstat)");
-  (*OutputGroup) += new SingleDoubleOption ('b', "bin-spacing", "spacing range for each bin", 0.1);
+  (*SystemGroup) += new BooleanOption('\n', "discard-quantumnumbers", "do not use any information (such as the degeneragy) from the quantum numbers");
+  (*OutputGroup) += new SingleStringOption ('o', "output-file", "name of the output file where the density of states will be stored (if none, try to deduce it from either --spectrum or --multiple-spectra replacing the dat extension with dos)");
+  (*OutputGroup) += new SingleIntegerOption ('b', "nbr-bins", "number of bins", 100);
   (*MiscGroup) += new BooleanOption  ('h', "help", "display this help");
 
 
   if (Manager.ProceedOptions(argv, argc, cout) == false)
     {
-      cout << "see man page for option syntax or type LevelStatistics -h" << endl;
+      cout << "see man page for option syntax or type DensityOfStates -h" << endl;
       return -1;
     }
   if (Manager.GetBoolean("help") == true)
@@ -103,7 +101,7 @@ int main(int argc, char** argv)
     {
       if (Manager.GetString("multiple-spectra") == 0)
 	{  
-	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectrum"), "dat", "levelstat");
+	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("spectrum"), "dat", "dos");
 	  if (OutputFileName == 0)
 	    {
 	      cout << "error, can't guess output file name from " << Manager.GetString("spectrum") << endl;
@@ -112,7 +110,7 @@ int main(int argc, char** argv)
 	}
       else
 	{
-	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-spectra"), "dat", "levelstat");
+	  OutputFileName = ReplaceExtensionToFileName(Manager.GetString("multiple-spectra"), "dat", "dos");
 	  if (OutputFileName == 0)
 	    {
 	      cout << "error, can't guess output file name from " << Manager.GetString("multiple-spectra") << endl;
@@ -127,10 +125,9 @@ int main(int argc, char** argv)
     }
 
 
-  double AverageSpacing = 0.0;
-  double MinAverageSpacing = 1.0e300;
-  double MaxAverageSpacing = 0.0;
-  long NbrSpacings = 0l;
+  double MinEnergy = 1.0e300;
+  double MaxEnergy = -1.0e300;
+  long NbrStates = 0l;
   int* SpectrumSize;
   double** Spectrum;
   int* SpectrumWeight;
@@ -138,8 +135,8 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("multiple-spectra") == 0)
     {
-      if (LevelStatisticsParseSpectrumFile(Manager.GetString("spectrum"), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					   MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings) == false)
+      if (DensityOfStatesParseSpectrumFile(Manager.GetString("spectrum"), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+			       MinEnergy, MaxEnergy, NbrStates) == false)
 	{
 	  return 0;
 	}
@@ -163,8 +160,8 @@ int main(int argc, char** argv)
       for (int i = 0; i < SpectraFile.GetNbrLines(); ++i)
 	{
 	  cout << "checking file " << SpectraFile(0, i) << endl;
-	  if (LevelStatisticsParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					       MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings) == false)
+	  if (DensityOfStatesParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+					       MinEnergy, MaxEnergy, NbrStates) == false)
 	    {
 	      return 0;
 	    }
@@ -178,35 +175,32 @@ int main(int argc, char** argv)
 	  delete[] SpectrumWeight;	  
 	}
     }
-  
-  AverageSpacing /= (double) NbrSpacings;
-  MinAverageSpacing /= AverageSpacing;
-  MaxAverageSpacing /= AverageSpacing;
 
-  double BinSize = Manager.GetDouble("bin-spacing");
-  int NbrBins = ((int) (MaxAverageSpacing / BinSize)) + 1;
-  long* NbrSpacingPerBin = new long [NbrBins];
+  int NbrBins = Manager.GetInteger("nbr-bins");
+  MaxEnergy +=  0.001 * (MaxEnergy - MinEnergy) / ((double) NbrBins);
+  double BinSize = (MaxEnergy - MinEnergy) / ((double) NbrBins);
+  long* NbrStatePerBin = new long [NbrBins];
   for (int i = 0 ; i < NbrBins; ++i)
-    NbrSpacingPerBin[i] = 0l;
-  long NbrRejectedSpacings = 0l;
-  long NbrAcceptedSpacings = 0l;
+    NbrStatePerBin[i] = 0l;
+  long NbrRejectedStates = 0l;
+  long NbrAcceptedStates = 0l;
 
 
   if (Manager.GetString("multiple-spectra") == 0)
     {
       double DummyAverageSpacing = 0.0;
-      double DummyMinAverageSpacing = 1.0e300;
-      double DummyMaxAverageSpacing = 0.0;
-      long DummyNbrSpacings = 0l; 
-      if (LevelStatisticsParseSpectrumFile(Manager.GetString("spectrum"), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					   DummyMinAverageSpacing, DummyMaxAverageSpacing, DummyAverageSpacing, DummyNbrSpacings) == false)
+      double DummyMinEnergy = 1.0e300;
+      double DummyMaxEnergy = -1.0e300;
+      long DummyNbrStates = 0l; 
+      if (DensityOfStatesParseSpectrumFile(Manager.GetString("spectrum"), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+					   DummyMinEnergy, DummyMaxEnergy, DummyNbrStates) == false)
 	{
 	  return 0;
 	}
 
-      LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					    MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
-					    NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings);
+      DensityOfStatesPerformDensityOfStates(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+					    MinEnergy, MaxEnergy, NbrStates,
+					    NbrBins, BinSize, NbrStatePerBin, NbrRejectedStates, NbrAcceptedStates);
       for (int i = 0; i < NbrSectors; ++i)
 	{    
 	  if (SpectrumSize[i] > 0)
@@ -227,19 +221,19 @@ int main(int argc, char** argv)
       for (int i = 0; i < SpectraFile.GetNbrLines(); ++i)
 	{
 	  double DummyAverageSpacing = 0.0;
-	  double DummyMinAverageSpacing = 1.0e300;
-	  double DummyMaxAverageSpacing = 0.0;
-	  long DummyNbrSpacings = 0l; 
+	  double DummyMinEnergy = 1.0e300;
+	  double DummyMaxEnergy = 0.0;
+	  long DummyNbrStates = 0l; 
 	  cout << "processing file " << SpectraFile(0, i) << endl;
-	  if (LevelStatisticsParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-					       DummyMinAverageSpacing, DummyMaxAverageSpacing, DummyAverageSpacing, DummyNbrSpacings) == false)
+	  if (DensityOfStatesParseSpectrumFile(SpectraFile(0, i), &Manager, Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+					       DummyMinEnergy, DummyMaxEnergy, DummyNbrStates) == false)
 	    {
 	      return 0;
 	    }
 	  
-	  LevelStatisticsPerformLevelStatistics(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
-						MinAverageSpacing, MaxAverageSpacing, AverageSpacing, NbrSpacings,
-						NbrBins, BinSize, NbrSpacingPerBin, NbrRejectedSpacings, NbrAcceptedSpacings);
+	  DensityOfStatesPerformDensityOfStates(Spectrum, SpectrumSize, SpectrumWeight, NbrSectors,
+						MinEnergy, MaxEnergy, NbrStates,
+						NbrBins, BinSize, NbrStatePerBin, NbrRejectedStates, NbrAcceptedStates);
 	  for (int i = 0; i < NbrSectors; ++i)
 	    {    
 	      if (SpectrumSize[i] > 0)
@@ -254,53 +248,52 @@ int main(int argc, char** argv)
   double Sum = 0.0;
   for (int i = 0 ; i < NbrBins; ++i)
     {
-      double PSpacing = (((double) NbrSpacingPerBin[i]) / ((double) NbrSpacings));
-      Sum += PSpacing;
+      double DOS = (((double) NbrStatePerBin[i]) / ((double) NbrStates));
+      Sum += DOS;
     }
 
-  long MaxNbrSpacingPerBin = 0l;
-  long MinNbrSpacingPerBin = NbrSpacings;
+  long MaxNbrStatePerBin = 0l;
+  long MinNbrStatePerBin = NbrStates;
   for (int i = 0 ; i < NbrBins; ++i)
     {
-      if (NbrSpacingPerBin[i] > MaxNbrSpacingPerBin)
+      if (NbrStatePerBin[i] > MaxNbrStatePerBin)
 	{
-	  MaxNbrSpacingPerBin = NbrSpacingPerBin[i];
+	  MaxNbrStatePerBin = NbrStatePerBin[i];
 	}
-      if (NbrSpacingPerBin[i] < MinNbrSpacingPerBin)
+      if (NbrStatePerBin[i] < MinNbrStatePerBin)
 	{
-	  MinNbrSpacingPerBin = NbrSpacingPerBin[i];
+	  MinNbrStatePerBin = NbrStatePerBin[i];
 	}
     }
-
+  
   ofstream File;
   File.open(OutputFileName, ios::binary | ios::out);
   File.precision(14);
-  File << "# Min spacing " << MinAverageSpacing << endl;
-  File << "# Max spacing " << MaxAverageSpacing << endl;
-  File << "# Average spacing = " << AverageSpacing << endl;
-  File << "# Nbr points = " << NbrSpacings << endl;
-  File << "# Nbr rejected points = " << NbrRejectedSpacings << endl;
-  File << "# int ds P(s) = " << Sum << endl;
-  File << "# Min nbr spacings per bin " << MinNbrSpacingPerBin << endl;
-  File << "# Max nbr spacings per bin " << MaxNbrSpacingPerBin << endl;
-  File << "# Max spacing " << MaxAverageSpacing << endl;
-  File << "# s P(s)" << endl;
+  File << "# Min energy " << MinEnergy << endl;
+  File << "# Max energy " << MaxEnergy << endl;
+  File << "# Nbr of states = " << NbrStates << endl;
+  File << "# Nbr rejected states = " << NbrRejectedStates << endl;
+  File << "# int dE rho(E) = " << Sum << endl;
+  File << "# Min nbr of states per bin " << MinNbrStatePerBin << endl;
+  File << "# Max nbr of states per bin " << MaxNbrStatePerBin << endl;
+  File << "# Bin size " << BinSize << endl;
+  File << "# E P(E)" << endl;
   for (int i = 0 ; i < NbrBins; ++i)
     {
-      double PSpacing = (((double) NbrSpacingPerBin[i]) / ((double) NbrSpacings));
-      File << (BinSize * (((double) i) + 0.5)) << " " << (PSpacing / BinSize) << endl;
+      double DOS = (((double) NbrStatePerBin[i]) / ((double) NbrStates));
+      File << (MinEnergy + (BinSize * (((double) i) + 0.5))) << " " << (DOS / BinSize) << endl;
     }  
   File.close();
 
-  cout << "Min spacing " << MinAverageSpacing << endl;
-  cout << "Max spacing " << MaxAverageSpacing << endl;
-  cout << "Average spacing = " << AverageSpacing << endl;
-  cout << "Nbr points = " << NbrSpacings << endl;
-  cout << "Nbr rejected points = " << NbrRejectedSpacings << endl;
-  cout << "int ds P(s) = " << Sum << endl;
-  cout << "Min nbr spacings per bin " << MinNbrSpacingPerBin << endl;
-  cout << "Max nbr spacings per bin " << MaxNbrSpacingPerBin << endl;
-  delete[] NbrSpacingPerBin;
+  cout << "Min energy " << MinEnergy << endl;
+  cout << "Max energy " << MaxEnergy << endl;
+  cout << "Nbr of states = " << NbrStates << endl;
+  cout << "Nbr rejected states = " << NbrRejectedStates << endl;
+  cout << "int dE rho(E) = " << Sum << endl;
+  cout << "Min nbr of states per bin " << MinNbrStatePerBin << endl;
+  cout << "Max nbr of states per bin " << MaxNbrStatePerBin << endl;
+  cout << "Bin size " << BinSize << endl;
+  delete[] NbrStatePerBin;
 
   return 0;
 }
@@ -310,18 +303,16 @@ int main(int argc, char** argv)
 // spectrumFileName = specrtum file name
 // manager = pointer to the option manager
 // spectrum = reference on the two dimensional array where the spectrum will be stored
-// spectrumSize = number of levels per quantum number sector
+// spectrumSize = number of sattes per quantum number sector
 // spectrumWeight = degeneracy associated to each quantum number sector
 // nbrSectors = number of quantum number sectors
-// minAverageSpacing = reference on the minimum level spacing 
-// maxAverageSpacing = reference on the maximum level spacing 
-// averageSpacing = reference on the average level spacing 
-// nbrSpacings = reference on the number of level spacings
+// minEnergy = reference on the minimum energy
+// maxEnergy = reference on the maximum energy
+// nbrStates = reference on the number of states
 // return value = true if no error occured
 
-bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
-				      int*& spectrumWeight, int& nbrSectors, double& minAverageSpacing, double& maxAverageSpacing, double& averageSpacing,
-				      long& nbrSpacings)
+bool DensityOfStatesParseSpectrumFile(char* spectrumFileName, OptionManager* manager, double**& spectrum, int*& spectrumSize, 
+				      int*& spectrumWeight, int& nbrSectors, double& minEnergy, double& maxEnergy, long& nbrStates)
 {
   MultiColumnASCIIFile SpectrumFile;
   if (SpectrumFile.Parse(spectrumFileName) == false)
@@ -330,13 +321,13 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
       return false;
     }
   nbrSectors = 1;
-  if (manager->GetInteger("energy-column") == 0)
+  if ((manager->GetInteger("energy-column") == 0) || (manager->GetBoolean("discard-quantumnumbers") == true))
     {
       int TmpSize = SpectrumFile.GetNbrLines();
       spectrumSize = new int [1];
       spectrum = new double*[1];
       spectrumWeight = new int[1];
-      spectrum[0] = SpectrumFile.GetAsDoubleArray(0);
+      spectrum[0] = SpectrumFile.GetAsDoubleArray(manager->GetInteger("energy-column"));
       spectrumSize[0] = TmpSize;
       spectrumWeight[0] = 1;
     }
@@ -509,21 +500,20 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
 
   for (int i = 0; i < nbrSectors; ++i)
     {     
-      if (spectrumSize[i] > 1)
+      if (spectrumSize[i] > 0)
 	{
-	  nbrSpacings += spectrumSize[i] - 1;
+	  nbrStates += spectrumSize[i];
 	  int Lim = spectrumSize[i];	  
-	  for (int j = 1; j < Lim; ++j)
+	  for (int j = 0; j < Lim; ++j)
 	    {
-	      double TmpDiff = spectrum[i][j] - spectrum[i][j - 1];
-	      averageSpacing += TmpDiff;
-	      if (TmpDiff > maxAverageSpacing)
+	      double TmpEnergy =  spectrum[i][j];
+	      if (TmpEnergy > maxEnergy)
 		{
-		  maxAverageSpacing = TmpDiff;
+		  maxEnergy = TmpEnergy;
 		}
-	      if (TmpDiff < minAverageSpacing)
+	      if (TmpEnergy < minEnergy)
 		{
-		  minAverageSpacing = TmpDiff;
+		  minEnergy = TmpEnergy;
 		}
 	    }
 	}
@@ -531,43 +521,44 @@ bool LevelStatisticsParseSpectrumFile(char* spectrumFileName, OptionManager* man
   return true;
 }
 
-// perform level statistics on a parsed spectrum
+// perform the density of states on a parsed spectrum
 //
 // spectrum = two dimensional array where the spectrum is stored
 // spectrumSize = number of levels per quantum number sector
 // spectrumWeight = degeneracy associated to each quantum number sector
 // nbrSectors = number of quantum number sectors
-// minAverageSpacing = minimum level spacing 
-// maxAverageSpacing = maximum level spacing 
-// averageSpacing =average level spacing 
-// nbrSpacings = number of level spacings
-// nbrBins = number of bins for th level statistics
-// binSize = level spacing range for each bin
-// nbrSpacingPerBin = array that contains the number of level spacing per bin
-// nbrRejectedSpacings = reference on the number of rejected level spacings (i.e. that cannot be stored in any bin)
-// nbrAcceptedSpacings = reference on the number of accepted level spacings (i.e. that can be stored in a bin)
+// minEnergy = minimum level spacing 
+// maxEnergy = maximum level spacing 
+// nbrStates = number of states
+// nbrBins = number of bins for the density of states
+// binSize = density of states range for each bin
+// nbrStatePerBin = array that contains the number of level spacing per bin
+// nbrRejectedStates = reference on the number of states (i.e. that cannot be stored in any bin)
+// nbrAcceptedStates = reference on the number of states (i.e. that can be stored in a bin)
 
-void LevelStatisticsPerformLevelStatistics(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
-					   double minAverageSpacing, double maxAverageSpacing, double averageSpacing, long nbrSpacings,
-					   int nbrBins, double binSize, long* nbrSpacingPerBin, long& nbrRejectedSpacings, long& nbrAcceptedSpacings)
+void DensityOfStatesPerformDensityOfStates(double** spectrum, int* spectrumSize, int* spectrumWeight, int nbrSectors, 
+					   double minEnergy, double maxEnergy, long nbrStates,
+					   int nbrBins, double binSize, long* nbrStatePerBin, long& nbrRejectedStates, long& nbrAcceptedStates)
 {
   for (int i = 0; i < nbrSectors; ++i)
     {     
-      if (spectrumSize[i] > 1)
+      if (spectrumSize[i] > 0)
 	{
 	  int Lim = spectrumSize[i];	  
-	  for (int j = 1; j < Lim; ++j)
+	  for (int j = 0; j < Lim; ++j)
 	    {
-	      double TmpDiff = (spectrum[i][j] - spectrum[i][j - 1]) / averageSpacing;
+	      double TmpDiff = (spectrum[i][j] - minEnergy);
+	      if (TmpDiff < 0.0)
+		TmpDiff = 0.0;
 	      int TmpIndex = int (TmpDiff / binSize);
 	      if (TmpIndex < nbrBins)
 		{
-		  nbrSpacingPerBin[TmpIndex]++;
-		  ++nbrAcceptedSpacings;
+		  nbrStatePerBin[TmpIndex]++;
+		  ++nbrAcceptedStates;
 		}
 	      else
 		{
-		  ++ nbrRejectedSpacings;
+		  ++ nbrRejectedStates;
 		}
 	    }
 	}

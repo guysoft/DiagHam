@@ -65,8 +65,13 @@ class SpinChainTripleProductHamiltonian : public AbstractHamiltonian
   // amplitude of the Zeeman term along z
   double* Hz;
 
+  // flag to indicate if  periodic boundary conditions should be used
+  bool PeriodicBoundaryConditions;
+
+  // length of the spin chain
   int NbrSpin;
 
+  // array to store the diagonal contribution of the Hamiltonian
   double* SzSzContributions;
 
  public:
@@ -77,7 +82,8 @@ class SpinChainTripleProductHamiltonian : public AbstractHamiltonian
   // nbrSpin = number of spin
   // j = array containing coupling constants between spins
   // chi = array containing the coupling constants of the triple product
-  SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* chi);
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* chi, bool periodicBoundaryConditions = false);
 
   // constructor from default datas
   //
@@ -86,7 +92,8 @@ class SpinChainTripleProductHamiltonian : public AbstractHamiltonian
   // j = array containing coupling constants between spins along x and z
   // jz = array containing coupling constants between spins along z
   // chi = array containing the coupling constants of the triple product
-  SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi);
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi, bool periodicBoundaryConditions = false);
 
   // constructor from default datas
   //
@@ -96,7 +103,8 @@ class SpinChainTripleProductHamiltonian : public AbstractHamiltonian
   // jz = array containing coupling constants between spins along z
   // chi = array containing the coupling constants of the triple product
   // hz = array containing the amplitude of the Zeeman term along z
-  SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi, double* hz);
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi, double* hz, bool periodicBoundaryConditions = false);
 
   // destructor
   //

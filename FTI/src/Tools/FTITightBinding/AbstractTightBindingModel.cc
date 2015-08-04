@@ -430,6 +430,20 @@ HermitianMatrix AbstractTightBindingModel::BuildTightBindingHamiltonianRealSpace
   return TmpHamiltonian;
 }
 
+// build the tight binding hamiltonian in real space from the hopping parameters of the unit cell located at the origin, assuming periodic boundary conditions but without assuming its hermiticiy
+//
+// nbrConnectedOrbitals = array that gives the number of connected orbitals for each orbital within the unit cell located at the origin
+// orbitalIndices = array that gives the orbital indices of the connected orbitals
+// spatialIndices = array that gives the coordinates of the connected orbitals (each coordinate being a consecutive series of d integers where d is the space dimension)
+// hoppingAmplitudes = array that gives the hopping amplitudes for each pair of connected orbitals
+// return value = tight binding hamiltonian in real space 
+
+ComplexMatrix AbstractTightBindingModel::BuildTightBindingNonHermitianHamiltonianRealSpace(int* nbrConnectedOrbitals, int** orbitalIndices, int** spatialIndices, Complex** hoppingAmplitudes)
+{
+  ComplexMatrix TmpHamiltonian;
+  return TmpHamiltonian;
+}
+
 // get the tight binding hamiltonian in real space 
 // 
 // return value = tight binding hamiltonian
@@ -444,6 +458,40 @@ HermitianMatrix AbstractTightBindingModel::GetRealSpaceTightBindingHamiltonian()
 							      this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
     }
   return TmpMatrix;
+}
+
+// get the tight binding hamiltonian in real space , without assuming its hermiticity
+// 
+// return value = tight binding hamiltonian
+
+ComplexMatrix AbstractTightBindingModel::GetRealSpaceTightBindingNonHermitianHamiltonian()
+{
+  ComplexMatrix TmpMatrix;
+  this->FindConnectedOrbitals();
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      TmpMatrix = this->BuildTightBindingNonHermitianHamiltonianRealSpace(this->NbrConnectedOrbitals, this->ConnectedOrbitalIndices,
+									  this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
+      return TmpMatrix;
+    }
+  return TmpMatrix;
+}
+
+// test the tight binding hamiltonian in real space, checking its hermiticity
+// 
+// return value = true if the tight binding hamiltonian is hermitian
+
+bool AbstractTightBindingModel::TestRealSpaceTightBindingHamiltonian()
+{
+  ComplexMatrix TmpMatrix;
+  this->FindConnectedOrbitals();
+  if (this->NbrConnectedOrbitals != 0)
+    {
+      TmpMatrix = this->BuildTightBindingNonHermitianHamiltonianRealSpace(this->NbrConnectedOrbitals, this->ConnectedOrbitalIndices,
+									  this->ConnectedOrbitalSpatialIndices, this->ConnectedOrbitalHoppingAmplitudes);
+      return TmpMatrix.TestHermitian();
+    }
+  return false;
 }
 
 // find the orbitals connected to those located at the origin unit cell

@@ -468,6 +468,12 @@ class ComplexMatrix : public Matrix
   // return value = number of non-zero matrix elements
   long ComputeNbrNonZeroMatrixElements();
 
+  // check if a complex matrix is hermitian
+  //
+  // error = maximum relative error allowed
+  // return value = true if the matrix is hermitian
+  bool TestHermitian(double error = MACHINE_PRECISION);
+
   // evaluate the real part of the matrix trace
   //
   // return value = real part of the matrix trace 

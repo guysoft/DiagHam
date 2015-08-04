@@ -49,6 +49,7 @@ class SpinChainHamiltonian : public AbstractHamiltonian
 
  protected:
   
+  //pointer to Hilbert space of the associated system
   AbstractSpinChain* Chain;
 
   // array containing coupling constants between spins along x and z
@@ -61,35 +62,43 @@ class SpinChainHamiltonian : public AbstractHamiltonian
   // amplitude of the Zeeman term along z
   double* Hz;
 
+  // flag to indicate if  periodic boundary conditions should be used
+  bool PeriodicBoundaryConditions;
+
+  // length of the spin chain
   int NbrSpin;
 
+  // array to store the diagonal contribution of the Hamiltonian
   double* SzSzContributions;
 
  public:
 
-  // constructor from default datas
+  // constructor from default data
   //
   // chain = pointer to Hilbert space of the associated system
   // nbrSpin = number of spin
   // j = array containing coupling constants between spins
-  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j);
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, bool periodicBoundaryConditions = false);
 
-  // constructor from default datas
+  // constructor from default data
   //
   // chain = reference on Hilbert space of the associated system
   // nbrSpin = number of spin
   // j = array containing coupling constants between spins along x and z
   // jz = array containing coupling constants between spins along z
-  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz);
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, bool periodicBoundaryConditions = false);
 
-  // constructor from default datas
+  // constructor with a generic magnetic field
   //
   // chain = reference on Hilbert space of the associated system
   // nbrSpin = number of spin
   // j = array containing coupling constants between spins along x and z
   // jz = array containing coupling constants between spins along z
   // hz = array containing the amplitude of the Zeeman term along z
-  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* hz);
+  // periodicBoundaryConditions = true if periodic boundary conditions have to be used
+  SpinChainHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* hz, bool periodicBoundaryConditions = false);
 
   // destructor
   //
@@ -126,47 +135,6 @@ class SpinChainHamiltonian : public AbstractHamiltonian
   // shift = shift value
   void ShiftHamiltonian (double shift);
 
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (RealVector& V1, RealVector& V2);
-  
-  // evaluate matrix element
-  //
-  // V1 = vector to left multiply with current matrix
-  // V2 = vector to right multiply with current matrix
-  // return value = corresponding matrix element
-  Complex MatrixElement (ComplexVector& V1, ComplexVector& V2);
-
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of idinces 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  RealVector& LowLevelMultiply(RealVector& vSource, RealVector& vDestination, 
-			       int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination);
-
   // multiply a vector by the current hamiltonian for a given range of indices 
   // and add result to another vector, low level function (no architecture optimization)
   //
@@ -178,44 +146,6 @@ class SpinChainHamiltonian : public AbstractHamiltonian
   RealVector& LowLevelAddMultiply(RealVector& vSource, RealVector& vDestination, 
 				  int firstComponent, int nbrComponent);
 
-  // multiply a vector by the current hamiltonian and store result in another vector
-  // low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // return value = reference on vectorwhere result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and store result in another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector where result has to be stored
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				  int firstComponent, int nbrComponent);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // return value = reference on vectorwhere result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination);
-
-  // multiply a vector by the current hamiltonian for a given range of indices 
-  // and add result to another vector, low level function (no architecture optimization)
-  //
-  // vSource = vector to be multiplied
-  // vDestination = vector at which result has to be added
-  // firstComponent = index of the first component to evaluate
-  // nbrComponent = number of components to evaluate
-  // return value = reference on vector where result has been stored
-  ComplexVector& LowLevelAddMultiply(ComplexVector& vSource, ComplexVector& vDestination, 
-				     int firstComponent, int nbrComponent);
- 
   // return a list of left interaction operators
   //
   // return value = list of left interaction operators
@@ -226,21 +156,7 @@ class SpinChainHamiltonian : public AbstractHamiltonian
   // return value = list of right interaction operators
   List<Matrix*> RightInteractionOperators();  
 
-  // Output Stream overload
-  //
-  // Str = reference on output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend ostream& operator << (ostream& Str, SpinChainHamiltonian& H);
-
-  // Mathematica Output Stream overload
-  //
-  // Str = reference on Mathematica output stream
-  // H = Hamiltonian to print
-  // return value = reference on output stream
-  friend MathematicaOutput& operator << (MathematicaOutput& Str, SpinChainHamiltonian& H);
-
- private:
+ protected:
  
   // evaluate all matrix elements
   //   

@@ -454,8 +454,19 @@ class SparseRealMatrix : public Matrix
   //
   // matrix1 = first matrix (i.e. the one at starting from the first row, first column)
   // matrix2 = second matrix
+  // coefficient1 = optional multiplicative coefficient in front of matrix1
+  // coefficient2 = optional multiplicative coefficient in front of matrix2
   // return value = sparse block diagonal matrix
-  friend SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2);
+  friend SparseRealMatrix CreateBlockDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, double coefficient1 = 1.0, double coefficient2 = 1.0);
+  
+  // create an  block off-diagonal matrix from two matrices 
+  //
+  // matrix1 = first matrix (i.e. the one at starting from the first row)
+  // matrix2 = second matrix
+  // coefficient1 = optional multiplicative coefficient in front of matrix1
+  // coefficient2 = optional multiplicative coefficient in front of matrix2
+  // return value = sparse block diagonal matrix
+  friend SparseRealMatrix CreateBlockOffDiagonalMatrix(const SparseRealMatrix& matrix1, const SparseRealMatrix& matrix2, double coefficient1 = 1.0, double coefficient2 = 1.0);
   
   // extract a submatrix 
   //

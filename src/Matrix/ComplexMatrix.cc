@@ -1472,6 +1472,42 @@ long ComplexMatrix::ComputeNbrNonZeroMatrixElements()
   return NbrNonZero;
 }
 
+// check if a complex matrix is hermitian
+//
+// error = maximum relative error allowed
+// return value = true if the matrix is hermitian
+
+bool ComplexMatrix::TestHermitian(double error)
+{
+  cout << "check hermiticity" << endl;
+  if (this->NbrRow != this->NbrColumn)
+    {
+      cout << "error, not a square matrix" << endl;
+      return false;
+    }
+  Complex Tmp1;
+  Complex Tmp2;
+  double AverageNorm = 0.0;
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = i; j < this->NbrColumn; ++j)
+      {
+	AverageNorm += Norm(this->Columns[j][i]);
+      }
+  AverageNorm /= 0.5 * ((double) this->NbrRow) * ((double) (this->NbrRow + 1));
+  for (int i = 0; i < this->NbrRow; ++i)
+    for (int j = i; j < this->NbrColumn; ++j)
+      {
+	Tmp1 = this->Columns[j][i];
+	Tmp2 = this->Columns[i][j];
+	if (Norm(Tmp1 - Conj(Tmp2)) > (error * AverageNorm))
+	  {
+	    cout << "error at " << i << " " << j << " : " << Tmp1 << " " << Tmp2 << " " << Norm(Tmp1 - Conj(Tmp2)) << " (should be lower than " << (error * AverageNorm) << ")" << endl;
+	  }
+      }
+  cout << "check done" << endl;
+}
+
+
 // evaluate the real part of the matrix trace
 //
 // return value = real part of the matrix trace 

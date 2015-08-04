@@ -75,6 +75,10 @@ class StdlibRandomNumberGenerator: public AbstractRandomNumberGenerator
   // seed = new seed
   void SetSeed(const unsigned long& seed);
   
+  // set seed of the random number generator to system time
+  //
+  virtual void UseTimeSeed();
+  
   // get real random number between 0 and 1
   //
   // return value = random number

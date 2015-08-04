@@ -51,24 +51,45 @@ using std::ostream;
 // nbrSpin = number of spin
 // j = array containing coupling constants between spins
 // chi = array containing the coupling constants of the triple product
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* chi)
+SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* chi, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
-  this->J = new double [this->NbrSpin - 1];
-  this->Jz = new double [this->NbrSpin - 1];
-  this->HalfJ = new double [this->NbrSpin - 1];
-  this->Chi = new double [this->NbrSpin - 1];
-  this->HalfChi = new double [this->NbrSpin - 1];
-  this->Hz = 0;
-  for (int i = 0; i < (this->NbrSpin - 1); i++)
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+      this->Hz = 0;
+  if (this->PeriodicBoundaryConditions == false)
     {
-      this->J[i] = j[i];
-      this->Jz[i] = j[i];
-      this->HalfJ[i] = j[i] * 0.5;
-      this->Chi[i] = chi[i]; 
-      this->HalfChi[i] = chi[i] * 0.5; 
+      this->J = new double [this->NbrSpin - 1];
+      this->Jz = new double [this->NbrSpin - 1];
+      this->HalfJ = new double [this->NbrSpin - 1];
+      this->Chi = new double [this->NbrSpin - 1];
+      this->HalfChi = new double [this->NbrSpin - 1];
+      for (int i = 0; i < (this->NbrSpin - 1); i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = j[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	  this->Chi[i] = chi[i]; 
+	  this->HalfChi[i] = chi[i] * 0.5; 
+	}
+    }
+  else
+    {
+      this->J = new double [this->NbrSpin];
+      this->Jz = new double [this->NbrSpin];
+      this->HalfJ = new double [this->NbrSpin];
+      this->Chi = new double [this->NbrSpin];
+      this->HalfChi = new double [this->NbrSpin];
+      for (int i = 0; i < this->NbrSpin; i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = j[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	  this->Chi[i] = chi[i]; 
+	  this->HalfChi[i] = chi[i] * 0.5; 
+	}
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
@@ -81,24 +102,45 @@ SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpi
 // j = array containing coupling constants between spins along x and z
 // jz = array containing coupling constants between spins along z
 // chi = array containing the coupling constants of the triple product
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi)
+SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
-  this->J = new double [this->NbrSpin - 1];
-  this->Jz = new double [this->NbrSpin - 1];
-  this->HalfJ = new double [this->NbrSpin - 1];
-  this->Chi = new double [this->NbrSpin - 1];
-  this->HalfChi = new double [this->NbrSpin - 1];
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
   this->Hz = 0;
-  for (int i = 0; i < (this->NbrSpin - 1); i++)
+  if (this->PeriodicBoundaryConditions == false)
     {
-      this->J[i] = j[i];
-      this->Jz[i] = jz[i];
-      this->HalfJ[i] = j[i] * 0.5;
-      this->Chi[i] = chi[i]; 
-      this->HalfChi[i] = chi[i] * 0.5; 
+      this->J = new double [this->NbrSpin - 1];
+      this->Jz = new double [this->NbrSpin - 1];
+      this->HalfJ = new double [this->NbrSpin - 1];
+      this->Chi = new double [this->NbrSpin - 1];
+      this->HalfChi = new double [this->NbrSpin - 1];
+      for (int i = 0; i < (this->NbrSpin - 1); i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	  this->Chi[i] = chi[i]; 
+	  this->HalfChi[i] = chi[i] * 0.5; 
+	}
+    }
+  else
+    {
+      this->J = new double [this->NbrSpin];
+      this->Jz = new double [this->NbrSpin];
+      this->HalfJ = new double [this->NbrSpin];
+      this->Chi = new double [this->NbrSpin];
+      this->HalfChi = new double [this->NbrSpin];
+      for (int i = 0; i < this->NbrSpin; i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	  this->Chi[i] = chi[i]; 
+	  this->HalfChi[i] = chi[i] * 0.5; 
+	}
     }
   this->SzSzContributions = new double [this->Chain->GetHilbertSpaceDimension()];
   this->EvaluateDiagonalMatrixElements();
@@ -112,25 +154,46 @@ SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpi
 // jz = array containing the coupling constants between spins along z
 // chi = array containing the coupling constants of the triple product
 // hz = array containing the amplitude of the Zeeman term along z
+// periodicBoundaryConditions = true if periodic boundary conditions have to be used
 
-SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi, double* hz)
+SpinChainTripleProductHamiltonian::SpinChainTripleProductHamiltonian(AbstractSpinChain* chain, int nbrSpin, double* j, double* jz, double* chi, double* hz, bool periodicBoundaryConditions)
 {
   this->Chain = chain;
   this->NbrSpin = nbrSpin;
-  this->J = new double [this->NbrSpin - 1];
-  this->Jz = new double [this->NbrSpin - 1];
-  this->HalfJ = new double [this->NbrSpin - 1];
-  this->Chi = new double [this->NbrSpin - 1];
-  this->HalfChi = new double [this->NbrSpin - 1];
-  this->Hz = new double [this->NbrSpin];
-  for (int i = 0; i < (this->NbrSpin - 1); i++)
+  this->PeriodicBoundaryConditions = periodicBoundaryConditions;
+  if (this->PeriodicBoundaryConditions == false)
     {
-      this->J[i] = j[i];
-      this->Jz[i] = jz[i];
-      this->HalfJ[i] = j[i] * 0.5;
-      this->Chi[i] = chi[i]; 
-      this->HalfChi[i] = chi[i] * 0.5; 
+      this->J = new double [this->NbrSpin - 1];
+      this->Jz = new double [this->NbrSpin - 1];
+      this->HalfJ = new double [this->NbrSpin - 1];
+      this->Chi = new double [this->NbrSpin - 1];
+      this->HalfChi = new double [this->NbrSpin - 1];
+      for (int i = 0; i < (this->NbrSpin - 1); i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	  this->Chi[i] = chi[i]; 
+	  this->HalfChi[i] = chi[i] * 0.5; 
+	}
     }
+  else
+    {
+      this->J = new double [this->NbrSpin];
+      this->Jz = new double [this->NbrSpin];
+      this->HalfJ = new double [this->NbrSpin];
+      this->Chi = new double [this->NbrSpin];
+      this->HalfChi = new double [this->NbrSpin];
+      for (int i = 0; i < this->NbrSpin; i++)
+	{
+	  this->J[i] = j[i];
+	  this->Jz[i] = jz[i];
+	  this->HalfJ[i] = j[i] * 0.5;
+	  this->Chi[i] = chi[i]; 
+	  this->HalfChi[i] = chi[i] * 0.5; 
+	}
+    }
+  this->Hz = new double [this->NbrSpin];
   for (int i = 0; i < this->NbrSpin; i++)
     {
       this->Hz[i] = hz[i];
@@ -291,7 +354,94 @@ ComplexVector& SpinChainTripleProductHamiltonian::LowLevelAddMultiply(ComplexVec
 	{
 	  vDestination[pos] += (this->HalfJ[MaxPos] * coef) * TmpValue;
 	}
-    }
+      if (this->PeriodicBoundaryConditions == true)
+	{
+	  pos = this->Chain->SmiSpj(MaxPos + 1, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (this->HalfJ[MaxPos + 1] * coef) * TmpValue;
+	    }
+	  pos = this->Chain->SmiSpj(0, MaxPos + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos] += (this->HalfJ[MaxPos + 1] * coef) * TmpValue;
+	    }
+
+	  pos = this->Chain->SpiSmjSzk(MaxPos, MaxPos + 1, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im += (this->HalfChi[MaxPos] * coef) * TmpValue.Re;
+	      vDestination[pos].Re -= (this->HalfChi[MaxPos] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(0, MaxPos, MaxPos + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im += (this->HalfChi[MaxPos] * coef) * TmpValue.Re;
+	      vDestination[pos].Re -= (this->HalfChi[MaxPos] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(MaxPos + 1, 0, MaxPos, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im += (this->HalfChi[MaxPos] * coef) * TmpValue.Re;
+	      vDestination[pos].Re -= (this->HalfChi[MaxPos] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(MaxPos + 1, MaxPos, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im -= (this->HalfChi[MaxPos] * coef) * TmpValue.Re;
+	      vDestination[pos].Re += (this->HalfChi[MaxPos] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(MaxPos, 0, MaxPos + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im -= (this->HalfChi[MaxPos] * coef) * TmpValue.Re;
+	      vDestination[pos].Re += (this->HalfChi[MaxPos] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(0, MaxPos + 1, MaxPos, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im -= (this->HalfChi[MaxPos] * coef) * TmpValue.Re;
+	      vDestination[pos].Re += (this->HalfChi[MaxPos] * coef) * TmpValue.Im;
+	    }
+
+	  pos = this->Chain->SpiSmjSzk(MaxPos + 1, 0, 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im += (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Re;
+	      vDestination[pos].Re -= (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(1, MaxPos + 1, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im += (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Re;
+	      vDestination[pos].Re -= (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(0, 1, MaxPos + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im += (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Re;
+	      vDestination[pos].Re -= (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(0, MaxPos + 1, 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im -= (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Re;
+	      vDestination[pos].Re += (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(MaxPos + 1, 1, 0, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im -= (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Re;
+	      vDestination[pos].Re += (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Im;
+	    }
+	  pos = this->Chain->SpiSmjSzk(1, 0, MaxPos + 1, i, coef);
+	  if (pos != dim)
+	    {
+	      vDestination[pos].Im -= (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Re;
+	      vDestination[pos].Re += (this->HalfChi[MaxPos + 1] * coef) * TmpValue.Im;
+	    }
+	}
+   }
   return vDestination;
 }
  
@@ -301,15 +451,20 @@ ComplexVector& SpinChainTripleProductHamiltonian::LowLevelAddMultiply(ComplexVec
 void SpinChainTripleProductHamiltonian::EvaluateDiagonalMatrixElements()
 {
   int dim = this->Chain->GetHilbertSpaceDimension();
+  int MaxSite = this->NbrSpin - 1;
 
   // SzSz part
   for (int i = 0; i < dim; i++)
     {
       // SzSz part
       this->SzSzContributions[i] = 0.0;
-      for (int j = 0; j < (this->NbrSpin - 1); j++)
+      for (int j = 0; j < MaxSite; j++)
 	{
 	  this->SzSzContributions[i] += this->Jz[j] * this->Chain->SziSzj(j, j + 1, i);
+	}
+      if (this->PeriodicBoundaryConditions == true)
+	{
+	  this->SzSzContributions[i] += this->Jz[MaxSite] * this->Chain->SziSzj(MaxSite, 0, i);
 	}
     }
   if (this->Hz != 0)

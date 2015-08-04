@@ -3,12 +3,12 @@
 //                                                                            //
 //                            DiagHam  version 0.01                           //
 //                                                                            //
-//                  Copyright (C) 2001-2002 Nicolas Regnault                  //
+//                  Copyright (C) 2001-2012 Nicolas Regnault                  //
 //                                                                            //
 //                                                                            //
-//    class of random number generator based on the stdlib rand function      //
+//  class of tight binding model for the Kitaev-Heisenberg honeycomb lattice  //
 //                                                                            //
-//                        last modification : 15/09/2004                      //
+//                        last modification : 01/08/2015                      //
 //                                                                            //
 //                                                                            //
 //    This program is free software; you can redistribute it and/or modify    //
@@ -28,57 +28,50 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
+#ifndef TIGHTBINDINGMODELKITAEVHEISENBERGHONEYCOMBLATTICE_H
+#define TIGHTBINDINGMODELKITAEVHEISENBERGHONEYCOMBLATTICE_H
+
+
 #include "config.h"
-#include "MathTools/RandomNumber/StdlibRandomNumberGenerator.h"
-
-#include <sys/time.h>
+#include "Tools/FTITightBinding/Abstract2DTightBindingModel.h"
 
 
-// constructor
-//
-// seed = optional seed definition (0 if none)
-
-StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const unsigned int& seed)
+class TightBindingModelKitaevHeisenbergHoneycombLattice : public Abstract2DTightBindingModel
 {
-  this->NbrGeneratedNumbers = 0ul;
-  if (seed != 0)
-    srand (seed);
-  this->iset = 0;
-}
 
-// copy constructor
-//
-// generator = generator to copy
+ protected:
 
-StdlibRandomNumberGenerator::StdlibRandomNumberGenerator(const StdlibRandomNumberGenerator& generator)
-{
-  this->NbrGeneratedNumbers = generator.NbrGeneratedNumbers;
-  this->iset=generator.iset;
-}
+  // amplitude of the isotropic nearest neighbor hopping term
+  double KineticFactorIsotropic;
+  // amplitude of the anisotropic nearest neighbor hopping term
+  double KineticFactorAnisotropic;
+  // phase of the anisotropic hoping amplitude between neareast neighbor sitesc(in pi units)
+  double KineticFactorAnisotropicPhase;
 
-// destructor
-//
+ public:
 
-StdlibRandomNumberGenerator::~StdlibRandomNumberGenerator()
-{
-}
+  // default constructor
+  //
+  // nbrSiteX = number of sites in the x direction
+  // nbrSiteY = number of sites in the y direction
+  // t = isotropic hoping amplitude between neareast neighbor sites
+  // tPrime = anisotropic hoping amplitude between next neareast neighbor sites
+  // tPrimePhase = additional phase for the anisotropic hoping amplitude between neareast neighbor sitesc(in pi units)
+  // architecture = pointer to the architecture
+  // storeOneBodyMatrices = flag to indicate if the one body transformation matrices have to be computed and stored
+  TightBindingModelKitaevHeisenbergHoneycombLattice(int nbrSiteX, int nbrSiteY, double t, double tPrime, double tPrimePhase, 
+						    AbstractArchitecture* architecture, bool storeOneBodyMatrices = true);
+  // destructor
+  //
+  ~TightBindingModelKitaevHeisenbergHoneycombLattice();
 
-// clone random number generator 
-//
-// return value = clone of the random number generator
+ protected :
 
-AbstractRandomNumberGenerator* StdlibRandomNumberGenerator::Clone ()
-{
-  return new StdlibRandomNumberGenerator(*this);
-}
+  // find the orbitals connected to those located at the origin unit cell
+  // 
+  virtual void FindConnectedOrbitals();
 
-// set seed of the random number generator to system time
-//
+};
 
-void StdlibRandomNumberGenerator::UseTimeSeed()
-{
-  struct timeval TmpTime;
-  gettimeofday(&TmpTime,NULL);
-  srand((unsigned int) (TmpTime.tv_sec + TmpTime.tv_usec));
-}
 
+#endif
