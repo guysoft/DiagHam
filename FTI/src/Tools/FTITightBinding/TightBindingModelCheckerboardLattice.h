@@ -93,7 +93,7 @@ class TightBindingModelCheckerboardLattice : public Abstract2DTightBindingModel
   // blochFormFlag = use the Bloch form instead of the the traditional form
   TightBindingModelCheckerboardLattice(int nbrSiteX, int nbrSiteY, int nx1, int ny1, int nx2, int ny2, int offset, double t1, double t2, double t2p, double mus, 
 				       double gammaX, double gammaY, 
-				       AbstractArchitecture* architecture, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
+				       AbstractArchitecture* architecture, int offsetReal = 0, bool storeOneBodyMatrices = true, bool blochFormFlag = false);
 
   // destructor
   //

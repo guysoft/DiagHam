@@ -78,6 +78,8 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   double** ProjectedMomenta;
   //second coordinate in momentum space of the second spanning vector of the reciprocal lattice for a tilted lattice
   int Offset;
+  //second coordinate in real space of the second spanning vector of the direct lattice for a tilted lattice
+  int OffsetReal;
 
   // unitary & involutory matrix where the (a, b) element Iab appears in: I|x,y,a> = sum_b Iab |-x-d_ax,-y-d_ay,b>
   ComplexMatrix Inversion;
@@ -331,6 +333,14 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   //
   bool SetEmbeddingFromAsciiFile(char* embeddingFileName);
   
+   // compute the index in real space lattice starting from the cartesian coordinates
+  //
+  // i = cartesian coordinate in the x direction of the Bravais lattice
+  // j = cartesian coordinate in the y direction of the Bravais lattice
+  // p = reference on the first lattice index
+  // q = reference on the second lattice index
+  virtual void GetRealSpaceIndex (int i, int j, int& p, int& q);
+  
  protected:
 
   // write an header that describes the tight binding model
@@ -379,7 +389,6 @@ class Abstract2DTightBindingModel : public Abstract1DTightBindingModel
   // return value = tight binding hamiltonian in real space 
   virtual HermitianMatrix BuildTightBindingHamiltonianReciprocalSpace(int kx, int ky, int* nbrConnectedOrbitals, int** orbitalIndices, 
 								      int** spatialIndices, Complex** hoppingAmplitudes);
-
 };
 
 // get the linearized momentum index
@@ -598,4 +607,16 @@ inline double Abstract2DTightBindingModel::GetProjectedMomentum(int kx, int ky, 
    this->EmbeddingY = embeddingY;
  }
 
+ 
+  // compute the index in real space lattice starting from the cartesian coordinates
+  //
+  // i = cartesian coordinate in the x direction of the Bravais lattice
+  // j = cartesian coordinate in the y direction of the Bravais lattice
+  // p = reference on the first lattice index
+  // q = reference on the second lattice index
+  inline void Abstract2DTightBindingModel::GetRealSpaceIndex (int i, int j, int& p, int& q)
+  {
+    p = i - this->OffsetReal * j;
+    q = j;
+  }
 #endif

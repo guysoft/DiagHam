@@ -69,6 +69,7 @@ Abstract2DTightBindingModel::Abstract2DTightBindingModel()
   this->LLLGammaX = NULL;
   this->LLLGammaY = NULL;
   this->Offset = 0;
+  this->OffsetReal = 0;
   this->ProjectedMomenta = 0;
   this->Inversion = ComplexMatrix();
 }
@@ -1406,12 +1407,18 @@ HermitianMatrix Abstract2DTightBindingModel::BuildTightBindingHamiltonianRecipro
 											 int** spatialIndices, Complex** hoppingAmplitudes)
 {
    HermitianMatrix TmpHamiltonian(this->NbrBands, true);
+   double TmpKx = this->GetProjectedMomentum(kx, ky, 0);
+   double TmpKy = this->GetProjectedMomentum(kx, ky, 1);
+   int p;
+   int q;
+   
    for (int k = 0; k < this->NbrBands; ++k)
      {
        for (int l = 0; l < nbrConnectedOrbitals[k]; ++l)
 	 {
-	   double TmpPhase = ((this->KxFactor * (((double) kx) ) * ((double) spatialIndices[k][l << 1])) 
-			      + (this->KyFactor * (((double) ky)) * ((double) spatialIndices[k][(l << 1) + 1])));
+	   this->GetRealSpaceIndex(spatialIndices[k][l << 1], spatialIndices[k][(l << 1) + 1], p, q);
+	   double TmpPhase = ((TmpKx * ((double) p)) 
+			      + (TmpKy * ((double) q)));
 	   if (k >= orbitalIndices[k][l])
 	     TmpHamiltonian.AddToMatrixElement(k, orbitalIndices[k][l], Conj(hoppingAmplitudes[k][l]) * Phase(TmpPhase));
 	 }
@@ -1456,7 +1463,10 @@ void Abstract2DTightBindingModel::CoreComputeBandStructure(long minStateIndex, l
 #endif
 		      this->OneBodyBasis[Index] = TmpMatrix;
 		      for (int i = 0; i < this->NbrBands; ++i)
+		      {
 			this->EnergyBandStructure[i][Index] = TmpDiag(i, i);
+// 			cout << i << " " << Index << " " << TmpDiag(i,i) << endl;
+		      }
 		    }
 		  else
 		    {

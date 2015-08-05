@@ -313,6 +313,16 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 
       int* TmpIndices;
       int* TmpIndices2;
+      
+      double TmpKx1 = 0.0;
+      double TmpKx2 = 0.0;
+      double TmpKx3 = 0.0;
+      double TmpKx4 = 0.0;
+      double TmpKy1 = 0.0;
+      double TmpKy2 = 0.0;
+      double TmpKy3 = 0.0;
+      double TmpKy4 = 0.0;
+      
       for (int sigma1 = 0; sigma1 < NbrInternalIndices; ++sigma1)
 	{
 	  for (int sigma3 = 0; sigma3 < NbrInternalIndices; ++sigma3)
@@ -332,6 +342,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 		      this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 		      int kx2, ky2;
 		      this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+		      TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+		      TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+		      TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+		      TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  int Index3 = TmpIndices[i2];
@@ -340,7 +354,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 			  int kx4, ky4;
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
-
+			  TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+			  TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+			  TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+			  TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 			  (*TmpInteractionFactor) = 0.0;
 			  for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
 			    {
@@ -354,26 +371,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx2 - TmpKx4)* ((double) XOrbital2))
+										      + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 				  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+										      + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 				  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+										      + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 				  (*TmpInteractionFactor) -= (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+										      + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 				}
 			    }
 			  
@@ -404,6 +421,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 			  int kx2, ky2;
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+			  TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+			  TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+			  TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+			  TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 			  for (int i2 = 0; i2 < Lim2; i2 += 2)
 			    {
 			      int Index3 = TmpIndices2[i2];
@@ -412,6 +433,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 			      int kx4, ky4;
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+			      TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+			      TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+			      TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+			      TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 
 			      (*TmpInteractionFactor) = 0.0;
 			      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -426,26 +451,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 													      SigmaToBand[sigma3], SigmaToBand[sigma4], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 													      SigmaToBand[sigma4], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma4], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) -= (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 													      SigmaToBand[sigma4], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 				    }
 				}
 			      
@@ -481,6 +506,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 			  int kx2, ky2;
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+			  TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+			  TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+			  TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+			  TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      int Index3 = TmpIndices[i2];
@@ -489,6 +518,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 			      int kx4, ky4;
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+			      TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+			      TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+			      TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+			      TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 
 			      (*TmpInteractionFactor) = 0.0;
 			      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -503,26 +536,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma2], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma2], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double)  XOrbital2))
+											  + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma2], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) -= (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma2], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 				    }
 				}			      
 			      if (Index3 == Index4)
@@ -553,6 +586,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 			      int kx2, ky2;
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+			      TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+			      TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+			      TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+			      TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
 				  int Index3 = TmpIndices2[i2];
@@ -561,6 +598,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 				  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 				  int kx4, ky4;
 				  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+				  TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+				  TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+				  TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+				  TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 
 				  (*TmpInteractionFactor) = 0.0;				  
 				  for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -569,32 +610,32 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 					{
 					  int Orbital2 = this->InteractingOrbitalsOrbitalIndices[Orbital1][k];
 					  int XOrbital2 = this->InteractingOrbitalsSpatialIndices[Orbital1][2 * k];
-					  int YOrbital2 = this->InteractingOrbitalsSpatialIndices[Orbital1][(2 * k) + 1];
+					  int YOrbital2 = this->InteractingOrbitalsSpatialIndices[Orbital1][(2 * k) + 1]; 
 					  double TmpPotential = this->InteractingOrbitalsPotentials[Orbital1][k];
 					  (*TmpInteractionFactor) -= (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index1, Index2, 
 														  SigmaToBand[sigma3], SigmaToBand[sigma4], 
 														  SigmaToBand[sigma1], SigmaToBand[sigma2], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double)  XOrbital2))
+											      + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 					  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 														  SigmaToBand[sigma4], SigmaToBand[sigma3], 
 														  SigmaToBand[sigma1], SigmaToBand[sigma2], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+											      + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 					  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 														  SigmaToBand[sigma3], SigmaToBand[sigma4], 
 														  SigmaToBand[sigma2], SigmaToBand[sigma1], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+											      + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 					  (*TmpInteractionFactor) -= (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 														  SigmaToBand[sigma4], SigmaToBand[sigma3], 
 														  SigmaToBand[sigma2], SigmaToBand[sigma1], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+											      + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 					}
 				    }
 				  ++TmpInteractionFactor;
@@ -610,8 +651,19 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
       
     }
   else
-    {
+    {      
       // bosonic interaction
+      
+      double TmpKx1 = 0.0;
+      double TmpKx2 = 0.0;
+      double TmpKx3 = 0.0;
+      double TmpKx4 = 0.0;
+      double TmpKy1 = 0.0;
+      double TmpKy2 = 0.0;
+      double TmpKy3 = 0.0;
+      double TmpKy4 = 0.0;
+      
+            
       for (int kx1 = 0; kx1 < this->NbrSiteX; ++kx1)
 	for (int kx2 = 0; kx2 < this->NbrSiteX; ++kx2)
 	  for (int ky1 = 0; ky1 < this->NbrSiteY; ++ky1)
@@ -676,6 +728,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 		      this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 		      int kx2, ky2;
 		      this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+		      TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+		      TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+		      TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+		      TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  int Index3 = TmpIndices[i2];
@@ -684,6 +740,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 			  int kx4, ky4;
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+			  TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+			  TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+			  TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+			  TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 
 			  (*TmpInteractionFactor) = 0.0;
 			  for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -698,26 +758,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double) XOrbital2))
+										      + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 				  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+										      + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 				  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+										      + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 				  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 													  SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													  SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													  Orbital1, Orbital2, Orbital1, Orbital2)
-							      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-										      + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+							      * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+										      + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 				}
 			    }
 			  if (Index1 == Index2)
@@ -751,6 +811,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 			  int kx2, ky2;
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+			  TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+			  TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+			  TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+			  TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 			  for (int i2 = 0; i2 < Lim2; i2 += 2)
 			    {
 			      int Index3 = TmpIndices2[i2];
@@ -759,6 +823,11 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 			      int kx4, ky4;
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+			      TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+			      TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+			      TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+			      TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
+
 
 			      (*TmpInteractionFactor) = 0.0;
 			      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -773,26 +842,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 													      SigmaToBand[sigma3], SigmaToBand[sigma4], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 													      SigmaToBand[sigma4], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma4], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 													      SigmaToBand[sigma4], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 				    }
 				}
 			      
@@ -829,6 +898,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 			  int kx2, ky2;
 			  this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+			  TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+			  TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+			  TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+			  TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 			  for (int i2 = 0; i2 < Lim; i2 += 2)
 			    {
 			      int Index3 = TmpIndices[i2];
@@ -837,6 +910,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 			      int kx4, ky4;
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+			      TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+			      TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+			      TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+			      TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 
 			      (*TmpInteractionFactor) = 0.0;
 			      for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -851,26 +928,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma2], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma1], SigmaToBand[sigma2], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma2], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 				      (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 													      SigmaToBand[sigma3], SigmaToBand[sigma3], 
 													      SigmaToBand[sigma2], SigmaToBand[sigma1], 
 													      Orbital1, Orbital2, Orbital1, Orbital2)
-								  * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-											  + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+								  * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2))
+											  + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2))));
 				    }
 				}			      
 			      if (Index3 == Index4)
@@ -901,6 +978,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index1, kx1, ky1);
 			      int kx2, ky2;
 			      this->TightBindingModel->GetLinearizedMomentumIndex(Index2, kx2, ky2);
+			      TmpKx1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 0);
+			      TmpKx2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 0);
+			      TmpKy1 = this->TightBindingModel->GetProjectedMomentum(kx1, ky1, 1);
+			      TmpKy2 = this->TightBindingModel->GetProjectedMomentum(kx2, ky2, 1);
 			      for (int i2 = 0; i2 < Lim2; i2 += 2)
 				{
 				  int Index3 = TmpIndices2[i2];
@@ -909,6 +990,10 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 				  this->TightBindingModel->GetLinearizedMomentumIndex(Index3, kx3, ky3);
 				  int kx4, ky4;
 				  this->TightBindingModel->GetLinearizedMomentumIndex(Index4, kx4, ky4);
+				  TmpKx3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 0);
+				  TmpKx4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 0);
+				  TmpKy3 = this->TightBindingModel->GetProjectedMomentum(kx3, ky3, 1);
+				  TmpKy4 = this->TightBindingModel->GetProjectedMomentum(kx4, ky4, 1);
 
 				  (*TmpInteractionFactor) = 0.0;				  
 				  for (int Orbital1 = 0; Orbital1 < this->TightBindingModel->GetNbrBands(); ++Orbital1)
@@ -923,26 +1008,26 @@ void ParticleOnLatticeGenericDensityDensityInteractionTwoBandHamiltonian::Evalua
 														  SigmaToBand[sigma3], SigmaToBand[sigma4], 
 														  SigmaToBand[sigma1], SigmaToBand[sigma2], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx4) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky2 - ky4) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx2 - TmpKx4) * ((double) XOrbital2))
+											      + (-(TmpKy2 - TmpKy4) * ((double) YOrbital2))));
 					  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index1, Index2, 
 														  SigmaToBand[sigma4], SigmaToBand[sigma3], 
 														  SigmaToBand[sigma1], SigmaToBand[sigma2], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx2 - kx3) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky2 - ky3) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx2 - TmpKx3) * ((double) XOrbital2))
+											      + (-(TmpKy2 - TmpKy3) * ((double) YOrbital2))));
 					  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index3, Index4, Index2, Index1, 
 														  SigmaToBand[sigma3], SigmaToBand[sigma4], 
 														  SigmaToBand[sigma2], SigmaToBand[sigma1], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx4) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky1 - ky4) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx1 - TmpKx4) * ((double) XOrbital2))
+											      + (-(TmpKy1 - TmpKy4) * ((double) YOrbital2))));
 					  (*TmpInteractionFactor) += (this->ComputeTransfomationBasisContribution(OneBodyBasis, Index4, Index3, Index2, Index1, 
 														  SigmaToBand[sigma4], SigmaToBand[sigma3], 
 														  SigmaToBand[sigma2], SigmaToBand[sigma1], 
 														  Orbital1, Orbital2, Orbital1, Orbital2)
-								      * TmpPotential * Phase ((-this->KxFactor * ((double) ((kx1 - kx3) * XOrbital2)))
-											      + (-this->KyFactor * ((double) ((ky1 - ky3) * YOrbital2)))));
+								      * TmpPotential * Phase ((-(TmpKx1 - TmpKx3) * ((double) XOrbital2)))
+											      + (-(TmpKy1 - TmpKy3) * ((double) YOrbital2)));
 					}
 				    }
 				  ++TmpInteractionFactor;
