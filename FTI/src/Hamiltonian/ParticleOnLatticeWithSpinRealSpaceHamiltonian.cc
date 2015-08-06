@@ -230,7 +230,7 @@ void ParticleOnLatticeWithSpinRealSpaceHamiltonian::EvaluateInteractionFactorsFr
 	  double Tmp1;
 	  densityDensityupup.GetMatrixElement(i, j, Tmp);
 	  densityDensitydowndown.GetMatrixElement(i, j, Tmp1);
-	  if ((Tmp != 0.0) || (Tmp1 != 0))
+	  if ((Tmp != 0.0) || (Tmp1 != 0.0))
 	    {
 	      ++this->NbrIntraSectorSums;
 	    }

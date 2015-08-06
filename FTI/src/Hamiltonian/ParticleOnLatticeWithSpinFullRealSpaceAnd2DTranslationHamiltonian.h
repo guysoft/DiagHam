@@ -89,13 +89,17 @@ class ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian : public
   // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
   // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
   // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+  // sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+  // sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+  // szSz = matrix that gives the amplitude of each Sz_i Sz_j term
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
 								    int xMomentum, int maxXMomentum, int yMomentum, int maxYMomentum, 
 								    HermitianMatrix& tightBinding,
 								    RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
-								    RealSymmetricMatrix& densityDensityupdown,
+								    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+								    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz,
 								    AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
@@ -216,7 +220,6 @@ class ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian : public
 };
 
 
-
 // core part of the AddMultiply method involving the two-body interaction
 // 
 // particles = pointer to the Hilbert space
@@ -240,12 +243,14 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
     {
       int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
       TmpIndices = this->IntraSectorIndicesPerSum[j];
+      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
@@ -257,15 +262,7 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 		    }
 		  ++TmpInteractionFactor;
 		}
-	      
-	    }
-	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
-	  if (Coefficient3 != 0.0)
-	    {
-	      Coefficient4 = vSource[index];
-	      Coefficient4 *= Coefficient3;
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -275,22 +272,82 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 		    }
 		  ++TmpInteractionFactor;
 		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
 	    }
 	}
-    }
-  for (int j = 0; j < this->NbrInterSectorSums; ++j)
-    {
-      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim2; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    {
+		      vDestination[Index] += (Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor)) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
 		{
 		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -315,7 +372,7 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
 inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
-												      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+														     ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -330,12 +387,14 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
     {
       int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
       TmpIndices = this->IntraSectorIndicesPerSum[j];
+      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
@@ -346,14 +405,7 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
 		  ++TmpInteractionFactor;
 		}
-	    }
-	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
-	  if (Coefficient3 != 0.0)
-	    {
-	      for (int p = 0; p < nbrVectors; ++p)
-		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -362,22 +414,76 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
 		  ++TmpInteractionFactor;
 		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    for (int p = 0; p < nbrVectors; ++p)
+		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    for (int p = 0; p < nbrVectors; ++p)
+		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    for (int p = 0; p < nbrVectors; ++p)
+		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    for (int p = 0; p < nbrVectors; ++p)
+		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		  ++TmpInteractionFactor;
+		}
 	    }
 	}
-    }
-    for (int j = 0; j < this->NbrInterSectorSums; ++j)
-    {
-      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim2; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim2) >> 2]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    for (int p = 0; p < nbrVectors; ++p)
+		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index < Dim)
+		    for (int p = 0; p < nbrVectors; ++p)
+		      vDestinations[p][Index] += Coefficient * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor) * tmpCoefficients[p];
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
 		{
 		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -415,12 +521,14 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
     {
       int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
       TmpIndices = this->IntraSectorIndicesPerSum[j];
+      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
@@ -434,14 +542,7 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
 		    }
 		  ++TmpInteractionFactor;
 		}
-	    }
-	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
-	  if (Coefficient3 != 0.0)
-	    {
-	      Coefficient4 = vSource[index];
-	      Coefficient4 *= Coefficient3;
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -453,22 +554,94 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
 		    }
 		  ++TmpInteractionFactor;
 		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+	      Coefficient4 = vSource[index];
+	      Coefficient4 *= Coefficient3;
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
 	    }
 	}
-    }
-    for (int j = 0; j < this->NbrInterSectorSums; ++j)
-    {
-      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim2; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
 	      Coefficient4 = vSource[index];
 	      Coefficient4 *= Coefficient3;
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			TmpSum += vSource[Index] * (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]);
+		      vDestination[Index] += (Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * Coefficient4;
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
 		{
 		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -496,7 +669,7 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
 // tmpCoefficients = a temporary array whose size is nbrVectors
 
 inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::HermitianEvaluateMNTwoBodyAddMultiplyComponent(ParticleOnSphereWithSpin* particles, int index, ComplexVector* vSources, 
-																 ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
+															      ComplexVector* vDestinations, int nbrVectors, Complex* tmpCoefficients)
 {
   //int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -512,12 +685,14 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
     {
       int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
       TmpIndices = this->IntraSectorIndicesPerSum[j];
+      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
-	      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
@@ -543,14 +718,7 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
 		    }
 		  ++TmpInteractionFactor;
 		}
-	    }
-	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
-	  if (Coefficient3 != 0.0)
-	    {
-	      for (int p = 0; p < nbrVectors; ++p)
-		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-	      
-	      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
 	      for (int i2 = 0; i2 < Lim; i2 += 2)
 		{
 		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -574,22 +742,166 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
 		    }
 		  ++TmpInteractionFactor;
 		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	    }
+	  Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
+	  if (Coefficient3 != 0.0)
+	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+	      for (int p = 0; p < nbrVectors; ++p)
+		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim2; i2 += 2)
+		{
+		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
 	    }
 	}
-    }
-    for (int j = 0; j < this->NbrInterSectorSums; ++j)
-    {
-      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-      TmpIndices2 = this->InterSectorIndicesPerSum[j];
       for (int i1 = 0; i1 < Lim2; i1 += 2)
 	{
 	  Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	  if (Coefficient3 != 0.0)
 	    {
+	      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
 	      for (int p = 0; p < nbrVectors; ++p)
 		tmpCoefficients[p] = Coefficient3 * vSources[p][index];
-
-	      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+	      for (int i2 = 0; i2 < Lim; i2 += 2)
+		{
+		  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		  if (Index <= index)
+		    {
+		      if (Index < index)
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			      TmpSum[p] += (Coefficient * Coefficient3) * Conj((*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY]) * vSources[p][Index];
+			    }
+			}
+		      else
+			{
+			  for (int p = 0; p < nbrVectors; ++p)
+			    {
+			      vDestinations[p][Index] += Coefficient * (*TmpInteractionFactor) * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * tmpCoefficients[p];
+			    }
+			}
+		    }
+		  ++TmpInteractionFactor;
+		}
+	      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 	      for (int i2 = 0; i2 < Lim2; i2 += 2)
 		{
 		  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -629,7 +941,8 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::H
 // coefficientArray = array of the numerical coefficients related to the indexArray
 // position = reference on the current position in arrays indexArray and coefficientArray
 
-inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, int* indexArray, Complex* coefficientArray, long& position)
+inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::EvaluateMNTwoBodyFastMultiplicationComponent(ParticleOnSphereWithSpin* particles, int index, 
+															    int* indexArray, Complex* coefficientArray, long& position)
 {
   int Dim = particles->GetHilbertSpaceDimension();
   double Coefficient;
@@ -648,15 +961,41 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	{
 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	  TmpIndices = this->IntraSectorIndicesPerSum[j];
+	  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
 	      Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	      if (Coefficient3 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+		  TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  ++position;
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  ++position;
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+		  for (int i2 = 0; i2 < Lim2; i2 += 2)
+		    {
+		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
 		      if (Index < Dim)
 			{
 			  indexArray[position] = Index;
@@ -669,7 +1008,19 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	      Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	      if (Coefficient3 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+		  TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  ++position;
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -681,19 +1032,50 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 			}
 		      ++TmpInteractionFactor;
 		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		  for (int i2 = 0; i2 < Lim2; i2 += 2)
+		    {
+		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  ++position;
+			}
+		      ++TmpInteractionFactor;
+		    }
 		}
 	    }
-	}
-      for (int j = 0; j < this->NbrInterSectorSums; ++j)
-	{
-	  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim2; i1 += 2)
 	    {
 	      Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	      if (Coefficient3 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+		  TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  ++position;
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index < Dim)
+			{
+			  indexArray[position] = Index;
+			  coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			  ++position;
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -715,15 +1097,59 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	{
 	  int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	  TmpIndices = this->IntraSectorIndicesPerSum[j];
+	  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim; i1 += 2)
 	    {
 	      Coefficient3 = particles->AuAu(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	      if (Coefficient3 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+		  TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index <= index)
+			{
+			  if (Index == index)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			  else
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index <= index)
+			{
+			  if (Index == index)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			  else
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim2; i2 += 2)
+		    {
+		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
 		      if (Index <= index)
 			{
 			  if (Index == index)
@@ -745,7 +1171,28 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	      Coefficient3 = particles->AdAd(index, TmpIndices[i1], TmpIndices[i1 + 1]);
 	      if (Coefficient3 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+		  TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index <= index)
+			{
+			  if (Index == index)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			  else
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
 		  for (int i2 = 0; i2 < Lim; i2 += 2)
 		    {
 		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -766,19 +1213,77 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 			}
 		      ++TmpInteractionFactor;
 		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		  for (int i2 = 0; i2 < Lim2; i2 += 2)
+		    {
+		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index <= index)
+			{
+			  if (Index == index)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			  else
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
 		}
 	    }
-	}
-	for (int j = 0; j < this->NbrInterSectorSums; ++j)
-	{
-	  int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	  TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	  for (int i1 = 0; i1 < Lim2; i1 += 2)
 	    {
 	      Coefficient3 = particles->AuAd(index, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 	      if (Coefficient3 != 0.0)
 		{
-		  TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+		  TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index <= index)
+			{
+			  if (Index == index)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			  else
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+		  for (int i2 = 0; i2 < Lim; i2 += 2)
+		    {
+		      Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+		      if (Index <= index)
+			{
+			  if (Index == index)
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = 0.5 * Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			  else
+			    {
+			      indexArray[position] = Index;
+			      coefficientArray[position] = Coefficient * Coefficient3 * this->ExponentialFactors[NbrTranslationsX][NbrTranslationsY] * (*TmpInteractionFactor);
+			      ++position;
+			    }
+			}
+		      ++TmpInteractionFactor;
+		    }
+		  TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 		  for (int i2 = 0; i2 < Lim2; i2 += 2)
 		    {
 		      Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -833,15 +1338,39 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	      TmpIndices = this->IntraSectorIndicesPerSum[j];
+	      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
 		  Coefficient3 = particles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+		      for (int i2 = 0; i2 < Lim2; i2 += 2)
+			{
+			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index < Dim)
 			    {
 			      ++memory;
@@ -853,7 +1382,18 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 		  Coefficient3 = particles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -864,19 +1404,47 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 			    }
 			  ++TmpInteractionFactor;
 			}
+		      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		      for (int i2 = 0; i2 < Lim2; i2 += 2)
+			{
+			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
 		    }
 		}
-	    }
-	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
-	    {
-	      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	      for (int i1 = 0; i1 < Lim2; i1 += 2)
 		{
 		  Coefficient3 = particles->AuAd(i, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index < Dim)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 		      for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -900,15 +1468,39 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 	    {
 	      int Lim = 2 * this->NbrIntraSectorIndicesPerSum[j];
 	      TmpIndices = this->IntraSectorIndicesPerSum[j];
+	      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
+	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	      for (int i1 = 0; i1 < Lim; i1 += 2)
 		{
 		  Coefficient3 = particles->AuAu(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsupup[j][(i1 * Lim) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsupupupup[j][(i1 * Lim) >> 2]);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsdowndownupup[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsupdownupup[j][(i1 * Lim2) >> 2]);
+		      for (int i2 = 0; i2 < Lim2; i2 += 2)
+			{
+			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
 			  if (Index <= i)
 			    {
 			      ++memory;
@@ -920,7 +1512,18 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 		  Coefficient3 = particles->AdAd(i, TmpIndices[i1], TmpIndices[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsdowndown[j][(i1 * Lim) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsupupdowndown[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsdowndowndowndown[j][(i1 * Lim) >> 2]);
 		      for (int i2 = 0; i2 < Lim; i2 += 2)
 			{
 			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
@@ -931,19 +1534,47 @@ inline void ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::E
 			    }
 			  ++TmpInteractionFactor;
 			}
+		      TmpInteractionFactor = &(this->InteractionFactorsupdowndowndown[j][(i1 * Lim2) >> 2]);
+		      for (int i2 = 0; i2 < Lim2; i2 += 2)
+			{
+			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
 		    }
 		}
-	    }
-	  for (int j = 0; j < this->NbrInterSectorSums; ++j)
-	    {
-	      int Lim2 = 2 * this->NbrInterSectorIndicesPerSum[j];
-	      TmpIndices2 = this->InterSectorIndicesPerSum[j];
 	      for (int i1 = 0; i1 < Lim2; i1 += 2)
 		{
 		  Coefficient3 = particles->AuAd(i, TmpIndices2[i1], TmpIndices2[i1 + 1]);
 		  if (Coefficient3 != 0.0)
 		    {
-		      TmpInteractionFactor = &(this->InteractionFactorsupdown[j][(i1 * Lim2) >> 2]);
+		      TmpInteractionFactor = &(this->InteractionFactorsupupupdown[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AduAdu(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsdowndownupdown[j][(i1 * Lim) >> 2]);
+		      for (int i2 = 0; i2 < Lim; i2 += 2)
+			{
+			  Index = particles->AddAdd(TmpIndices[i2], TmpIndices[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);
+			  if (Index <= i)
+			    {
+			      ++memory;
+			      ++this->NbrInteractionPerComponent[i - this->PrecalculationShift];
+			    }
+			  ++TmpInteractionFactor;
+			}
+		      TmpInteractionFactor = &(this->InteractionFactorsupdownupdown[j][(i1 * Lim2) >> 2]);
 		      for (int i2 = 0; i2 < Lim2; i2 += 2)
 			{
 			  Index = particles->AduAdd(TmpIndices2[i2], TmpIndices2[i2 + 1], Coefficient, NbrTranslationsX, NbrTranslationsY);

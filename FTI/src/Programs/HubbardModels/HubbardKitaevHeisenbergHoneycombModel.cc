@@ -241,7 +241,38 @@ int main(int argc, char** argv)
 	  DensityDensityInteractionupdown.SetMatrixElement(i, i, UPotential);
 	}
     }
-  
+  RealSymmetricMatrix SxSxInteraction(NbrSites, true);
+  RealSymmetricMatrix SySyInteraction(NbrSites, true);
+  RealSymmetricMatrix SzSzInteraction(NbrSites, true);
+  // beware : the factor 4.0 is for compatibility reasons with the other Kitaev-Heisenberg code
+  double TmpJ1 = 4.0 * Manager.GetDouble("j1");
+  double TmpJ2 = 4.0 * Manager.GetDouble("j2");
+  for (int i = 0; i < NbrSitesX; ++i)
+    {
+      for (int j = 0; j < NbrSitesY; ++j)
+	{
+	  SxSxInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,  TmpJ1 - TmpJ2);
+	  SySyInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,  TmpJ1 + TmpJ2);
+	  SzSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,  TmpJ1 - TmpJ2);
+					     
+	  SxSxInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJ1 - TmpJ2);
+	  SySyInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJ1 - TmpJ2);
+	  SzSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 0) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i - 1, j + 1, 2) >> 1,  TmpJ1 + TmpJ2);
+
+	  SxSxInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJ1 + TmpJ2);
+	  SySyInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJ1 - TmpJ2);
+	  SzSzInteraction.AddToMatrixElement(TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i, j, 2) >> 1,
+					     TightBindingModel->GetRealSpaceTightBindingLinearizedIndexSafe(i + 1, j, 0) >> 1,  TmpJ1 - TmpJ2);
+	}
+    }
   bool FirstRunFlag = true;
 
   int MinXMomentum = 0;
@@ -317,7 +348,8 @@ int main(int argc, char** argv)
 	      Hamiltonian = new ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites,XMomentum, NbrSitesX,
 												  YMomentum, NbrSitesY, TightBindingMatrix,
 												  DensityDensityInteractionupup, DensityDensityInteractiondowndown, 
-												  DensityDensityInteractionupdown,
+												  DensityDensityInteractionupdown, SxSxInteraction,
+												  SySyInteraction, SzSzInteraction,
 												  Architecture.GetArchitecture(), Memory);
 // 	      Hamiltonian = new ParticleOnLatticeWithSpinKitaevHeisenbergAnd2DTranslationHamiltonian(Space, NbrParticles, NbrSites, NbrBonds, SitesA, 
 // 												     SitesB, BondTypes, XMomentum, NbrSitesX, YMomentum, NbrSitesY,

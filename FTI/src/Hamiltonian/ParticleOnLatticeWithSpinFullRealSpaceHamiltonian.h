@@ -36,7 +36,7 @@
 
 #include "config.h"
 #include "HilbertSpace/ParticleOnSphereWithSpin.h"
-#include "Hamiltonian/ParticleOnLatticeWithSpinChernInsulatorHamiltonian.h"
+#include "Hamiltonian/ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian.h"
 #include "Vector/ComplexVector.h"
 #include "Matrix/HermitianMatrix.h"
 #include "Matrix/RealSymmetricMatrix.h"
@@ -52,7 +52,7 @@ using std::endl;
 class AbstractArchitecture;
 
 
-class ParticleOnLatticeWithSpinFullRealSpaceHamiltonian : public ParticleOnLatticeWithSpinChernInsulatorHamiltonian
+class ParticleOnLatticeWithSpinFullRealSpaceHamiltonian : public ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian
 {
 
  protected:
@@ -104,11 +104,15 @@ class ParticleOnLatticeWithSpinFullRealSpaceHamiltonian : public ParticleOnLatti
   // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
   // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
   // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+  // sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+  // sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+  // szSz = matrix that gives the amplitude of each Sz_i Sz_j term
   // architecture = architecture to use for precalculation
   // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
   ParticleOnLatticeWithSpinFullRealSpaceHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
 						    HermitianMatrix& tightBinding, RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
-						    RealSymmetricMatrix& densityDensityupdown,
+						    RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+						    RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz,
 						    AbstractArchitecture* architecture, long memory = -1);
 
   // destructor
@@ -171,12 +175,14 @@ class ParticleOnLatticeWithSpinFullRealSpaceHamiltonian : public ParticleOnLatti
   // tightBinding = hamiltonian corresponding to the tight-binding model in real space, orbitals with even indices (resp. odd indices) are considered as spin up (resp. spin down)
   virtual void EvaluateOneBodyFactorsFromTightBingding (HermitianMatrix& tightBinding);
 
-  // evaluate the two body interaction factors from a generic density-density interaction
+  // evaluate the two body interaction factors from a generic density-density interaction and a generic anisotropic Heisenberg interaction
   //
   // densityDensityupup = matrix that gives the amplitude of each density-density interaction term for particles with spin up
   // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
   // densityDensityupup = matrix that gives the amplitude of each density-density interaction term for particles with opposite spins
-  virtual void EvaluateInteractionFactorsFromDensityDensity (RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, RealSymmetricMatrix& densityDensityupdown) ;
+  virtual void EvaluateInteractionFactorsFromDensityDensityAndHeisenberg (RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
+									  RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+									  RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz);
   
 };
 

@@ -122,26 +122,71 @@ ParticleOnLatticeQuantumSpinHallTwoBandHamiltonian::~ParticleOnLatticeQuantumSpi
       for (int i = 0; i < this->NbrIntraSectorSums; ++i)
 	{
 	  delete[] this->InteractionFactorsupupupup[i];
-	  delete[] this->InteractionFactorsupupdowndown[i];
-	  delete[] this->InteractionFactorsdowndownupup[i];
-	  delete[] this->InteractionFactorsdowndowndowndown[i];
-	  delete[] this->InteractionFactorsupdownupup[i];
-	  delete[] this->InteractionFactorsupdowndowndown[i];
 	}
       delete[] this->InteractionFactorsupupupup;
+    }
+  if (this->InteractionFactorsupupdowndown != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupupdowndown[i];
+	}
       delete[] this->InteractionFactorsupupdowndown;
+    }
+  if (this->InteractionFactorsdowndownupup != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsdowndownupup[i];
+	}
       delete[] this->InteractionFactorsdowndownupup;
+    }
+  if (this->InteractionFactorsdowndowndowndown != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsdowndowndowndown[i];
+	}
       delete[] this->InteractionFactorsdowndowndowndown;
+    }
+  if (this->InteractionFactorsupdownupup != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupdownupup[i];
+	}
       delete[] this->InteractionFactorsupdownupup;
+    }
+  if (this->InteractionFactorsupdowndowndown != 0)
+    {
+      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupdowndowndown[i];
+	}
       delete[] this->InteractionFactorsupdowndowndown;
+    }
+  if (this->InteractionFactorsupupupdown != 0)
+    {
       for (int i = 0; i < this->NbrInterSectorSums; ++i)
 	{
 	  delete[] this->InteractionFactorsupupupdown[i];
-	  delete[] this->InteractionFactorsdowndownupdown[i];
-	  delete[] this->InteractionFactorsupdownupdown[i];
 	}
       delete[] this->InteractionFactorsupupupdown;
-      delete[] this->InteractionFactorsdowndownupdown;
+    }
+  if (this->InteractionFactorsdowndownupdown != 0)
+    {
+      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	{
+ 	  delete[] this->InteractionFactorsdowndownupdown[i];
+	}
+     delete[] this->InteractionFactorsdowndownupdown;
+    }
+  if (this->InteractionFactorsupdownupdown != 0)
+    {
+      for (int i = 0; i < this->NbrInterSectorSums; ++i)
+	{
+	  delete[] this->InteractionFactorsupdownupdown[i];
+	}
       delete[] this->InteractionFactorsupdownupdown;
     }
 }

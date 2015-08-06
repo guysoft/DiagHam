@@ -69,13 +69,17 @@ ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::ParticleOnLatticeWithSpinFull
 // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
 // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
 // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+// sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+// sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+// szSz = matrix that gives the amplitude of each Sz_i Sz_j term
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
 ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::ParticleOnLatticeWithSpinFullRealSpaceHamiltonian(ParticleOnSphereWithSpin* particles, int nbrParticles, int nbrSites, 
 												     HermitianMatrix& tightBinding, 
 												     RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, 
-												     RealSymmetricMatrix& densityDensityupdown,
+												     RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+												     RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz,
 												     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -104,7 +108,7 @@ ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::ParticleOnLatticeWithSpinFull
   
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
   
-  this->EvaluateInteractionFactorsFromDensityDensity(densityDensityupup, densityDensitydowndown, densityDensityupdown);
+  this->EvaluateInteractionFactorsFromDensityDensityAndHeisenberg(densityDensityupup, densityDensitydowndown, densityDensityupdown, sxSx, sySy, szSz);
     
   if (memory > 0)
     {
@@ -262,23 +266,40 @@ void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateOneBodyFactorsFr
     }
 }
 
-// evaluate the two body interaction factors from a generic density-density interaction
+// evaluate the two body interaction factors from a generic density-density interaction and a generic anisotropic Heisenberg interaction
 //
 // densityDensityIntra = matrix that gives the amplitude of each density-density interaction term for particles with the same spin
 // densityDensityInter = matrix that gives the amplitude of each density-density interaction term for particles with opposite spins
+// sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+// sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+// szSz = matrix that gives the amplitude of each Sz_i Sz_j term
 
-void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensityDensity (RealSymmetricMatrix& densityDensityupup, RealSymmetricMatrix& densityDensitydowndown, RealSymmetricMatrix& densityDensityupdown)
+void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateInteractionFactorsFromDensityDensityAndHeisenberg (RealSymmetricMatrix& densityDensityupup, 
+														   RealSymmetricMatrix& densityDensitydowndown,
+														   RealSymmetricMatrix& densityDensityupdown, RealSymmetricMatrix& sxSx,
+														   RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz)
 {
+  long TotalNbrInteractionFactors = 0;
+  this->InteractionFactorsupup = 0;
+  this->InteractionFactorsdowndown = 0;
+  this->InteractionFactorsupdown = 0;
+
   this->NbrIntraSectorSums = 0;  
   for (int i = 0; i < densityDensityupup.GetNbrRow(); ++i)
     {
       for (int j = i; j < densityDensityupup.GetNbrRow(); ++j)
 	{
-	  double Tmp;
-	  double Tmp1;
-	  densityDensityupup.GetMatrixElement(i, j, Tmp);
-	  densityDensitydowndown.GetMatrixElement(i, j, Tmp1);
-	  if ((Tmp != 0.0) || (Tmp1 != 0))
+	  double Tmpupup;
+	  double Tmpdowndown;
+	  double TmpSxSx;
+	  double TmpSySy;
+	  double TmpSzSz;
+	  densityDensityupup.GetMatrixElement(i, j, Tmpupup);
+	  densityDensitydowndown.GetMatrixElement(i, j, Tmpdowndown);
+	  sxSx.GetMatrixElement(i, j, TmpSxSx);
+	  sySy.GetMatrixElement(i, j, TmpSySy);
+	  szSz.GetMatrixElement(i, j, TmpSzSz);
+	  if ((Tmpupup != 0.0) || (Tmpdowndown != 0.0) || (TmpSxSx != 0.0) || (TmpSySy != 0.0) || (TmpSzSz != 0.0))
 	    {
 	      ++this->NbrIntraSectorSums;
 	    }
@@ -289,16 +310,23 @@ void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateInteractionFacto
   this->NbrInterSectorSums = 0;
   for (int i = 0; i < densityDensityupdown.GetNbrRow(); ++i)
     {
-      for (int j = 0; j < densityDensityupdown.GetNbrRow(); ++j)
+      for (int j = i; j < densityDensityupdown.GetNbrRow(); ++j)
 	{
-	  double Tmp;
-	  densityDensityupdown.GetMatrixElement(i, j, Tmp);
-	  if (Tmp != 0.0)
+	  double Tmpupdown;
+	  double TmpSxSx;
+	  double TmpSySy;
+	  double TmpSzSz;
+	  densityDensityupdown.GetMatrixElement(i, j, Tmpupdown);
+	  sxSx.GetMatrixElement(i, j, TmpSxSx);
+	  sySy.GetMatrixElement(i, j, TmpSySy);
+	  szSz.GetMatrixElement(i, j, TmpSzSz);
+	  if ((Tmpupdown != 0.0) || (TmpSxSx != 0.0) || (TmpSySy != 0.0) || (TmpSzSz != 0.0))
 	    {
 	      ++this->NbrInterSectorSums;
 	    }
 	}
     }
+
   if ((this->NbrInterSectorSums == 0) && (this->NbrIntraSectorSums == 0))
     {
       return;
@@ -312,45 +340,74 @@ void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateInteractionFacto
     {
       this->NbrInterSectorIndicesPerSum = new int[this->NbrInterSectorSums];
       this->InterSectorIndicesPerSum = new int* [this->NbrInterSectorSums];
-      this->InteractionFactorsupdown = new Complex* [this->NbrInterSectorSums];
-      for (int i = 0; i < this->NbrInterSectorSums; ++i)
-	{
-	  this->NbrInterSectorIndicesPerSum[i] = 1;
-	  this->InterSectorIndicesPerSum[i] = new int [2];
-	  this->InteractionFactorsupdown[i] = new Complex [1];
-	}
+      this->InteractionFactorsupdownupdown = new Complex* [this->NbrInterSectorSums];
+      this->InteractionFactorsupupupdown = new Complex* [this->NbrInterSectorSums];
+      this->InteractionFactorsdowndownupdown = new Complex* [this->NbrInterSectorSums];
       this->NbrInterSectorSums = 0;
       for (int i = 0; i < densityDensityupdown.GetNbrRow(); ++i)
 	{
-	  for (int j = 0; j < densityDensityupdown.GetNbrRow(); ++j)
+	  for (int j = i; j < densityDensityupdown.GetNbrRow(); ++j)
 	    {
-	      double Tmp;
-	      densityDensityupdown.GetMatrixElement(i, j, Tmp);
-	      if (Tmp != 0.0)
-		{
-		  this->InterSectorIndicesPerSum[this->NbrInterSectorSums][0] = i;
-		  this->InterSectorIndicesPerSum[this->NbrInterSectorSums][1] = j;
-		  this->InteractionFactorsupdown[this->NbrInterSectorSums][0] =  Sign * Tmp;
+	      double Tmpupdown;
+	      double TmpSxSx;
+	      double TmpSySy;
+	      double TmpSzSz;
+	      densityDensityupdown.GetMatrixElement(i, j, Tmpupdown);
+	      sxSx.GetMatrixElement(i, j, TmpSxSx);
+	      sySy.GetMatrixElement(i, j, TmpSySy);
+	      szSz.GetMatrixElement(i, j, TmpSzSz);
+	      if ((Tmpupdown != 0.0) || (TmpSxSx != 0.0) || (TmpSySy != 0.0) || (TmpSzSz != 0.0))
+ 		{
+// 		  if ()
+// 		    {
+// 		      this->NbrInterSectorIndicesPerSum[this->NbrInterSectorSums] = 1;
+// 		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums] = new int [2];
+// 		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums] = new Complex [1];
+// 		      this->InteractionFactorsupupupdown[this->NbrInterSectorSums] = new Complex [1];
+// 		      this->InteractionFactorsdowndownupdown[this->NbrInterSectorSums] = new Complex [1];
+// 		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums][0] = i;
+// 		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums][1] = j;
+// 		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][0] =  Sign * (Tmpupdown - (0.5 * TmpSzSz));
+// 		      this->InteractionFactorsupupupdown[this->NbrInterSectorSums][0] = 0.0;
+// 		      this->InteractionFactorsdowndownupdown[this->NbrInterSectorSums][0] = 0.0;
+// 		    }
+// 		  else
+// 		    {
+		      this->NbrInterSectorIndicesPerSum[this->NbrInterSectorSums] = 2;
+		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums] = new int [4];
+		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums] = new Complex [4];
+		      this->InteractionFactorsupupupdown[this->NbrInterSectorSums] = new Complex [2];
+		      this->InteractionFactorsdowndownupdown[this->NbrInterSectorSums] = new Complex [2];
+		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums][0] = i;
+		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums][1] = j;
+		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums][2] = j;
+		      this->InterSectorIndicesPerSum[this->NbrInterSectorSums][3] = i;
+		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][0] =  Sign * (Tmpupdown - (0.25 * TmpSzSz));
+		      this->InteractionFactorsupupupdown[this->NbrInterSectorSums][0] = 0.0;
+		      this->InteractionFactorsdowndownupdown[this->NbrInterSectorSums][0] = 0.0;
+		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][1] =  -0.25 * Sign * (TmpSxSx + TmpSySy);
+		      this->InteractionFactorsupupupdown[this->NbrInterSectorSums][1] = 0.0;
+		      this->InteractionFactorsdowndownupdown[this->NbrInterSectorSums][1] = 0.0;
+		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][2] =  -0.25 * Sign * (TmpSxSx + TmpSySy);
+		      this->InteractionFactorsupdownupdown[this->NbrInterSectorSums][3] =  Sign * (-0.25 * TmpSzSz);
+// 		    }
 		  ++this->NbrInterSectorSums;
 		}
 	    }
 	}
     }
+
   
   if (this->NbrIntraSectorSums != 0)
     {
       this->NbrIntraSectorIndicesPerSum = new int[this->NbrIntraSectorSums];
       this->IntraSectorIndicesPerSum = new int* [this->NbrIntraSectorSums];
-      this->InteractionFactorsupup = new Complex* [this->NbrIntraSectorSums];
-      this->InteractionFactorsdowndown = new Complex* [this->NbrIntraSectorSums];
-      
-      for (int i = 0; i < this->NbrIntraSectorSums; ++i)
-	{
-	  this->NbrIntraSectorIndicesPerSum[i] = 1;
-	  this->IntraSectorIndicesPerSum[i] = new int [2];
-	  this->InteractionFactorsupup[i] = new Complex [1];
-	  this->InteractionFactorsdowndown[i] = new Complex [1];
-	}
+      this->InteractionFactorsupupupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndowndowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupupdowndown = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsdowndownupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdownupup = new Complex* [this->NbrIntraSectorSums];
+      this->InteractionFactorsupdowndowndown = new Complex* [this->NbrIntraSectorSums];
       this->NbrIntraSectorSums = 0;
       for (int i = 0; i < densityDensityupup.GetNbrRow(); ++i)
 	{
@@ -358,19 +415,57 @@ void ParticleOnLatticeWithSpinFullRealSpaceHamiltonian::EvaluateInteractionFacto
 	    {
 	      double Tmp;
 	      double Tmp1;
+	      double TmpSxSx;
+	      double TmpSySy;
+	      double TmpSzSz;
 	      densityDensityupup.GetMatrixElement(i, j, Tmp);
 	      densityDensitydowndown.GetMatrixElement(i, j, Tmp1);
-	      if ((Tmp != 0.0) || (Tmp1 != 0.0))
+	      sxSx.GetMatrixElement(i, j, TmpSxSx);
+	      sySy.GetMatrixElement(i, j, TmpSySy);
+	      szSz.GetMatrixElement(i, j, TmpSzSz);
+	      if ((Tmp != 0.0) || (Tmp1 != 0.0) || (TmpSxSx != 0.0) || (TmpSySy != 0.0) || (TmpSzSz != 0.0))
 		{
+		  this->NbrIntraSectorIndicesPerSum[this->NbrIntraSectorSums] = 1;
+		  this->IntraSectorIndicesPerSum[this->NbrIntraSectorSums] = new int [2];
+		  this->InteractionFactorsupupupup[this->NbrIntraSectorSums] = new Complex [1];
+		  this->InteractionFactorsdowndowndowndown[this->NbrIntraSectorSums] = new Complex [1];
+		  this->InteractionFactorsupupdowndown[this->NbrIntraSectorSums] = new Complex [1];
+		  this->InteractionFactorsdowndownupup[this->NbrIntraSectorSums] = new Complex [1];
 		  this->IntraSectorIndicesPerSum[this->NbrIntraSectorSums][0] = i;
 		  this->IntraSectorIndicesPerSum[this->NbrIntraSectorSums][1] = j;
-		  this->InteractionFactorsupup[this->NbrIntraSectorSums][0] =  Sign * Tmp;  
-		  this->InteractionFactorsdowndown[this->NbrIntraSectorSums][0] =  Sign * Tmp1;  
-		  
+		  this->InteractionFactorsupupupup[this->NbrIntraSectorSums][0] =  Sign * (Tmp + 0.25 * TmpSzSz);  
+		  this->InteractionFactorsdowndowndowndown[this->NbrIntraSectorSums][0] =  Sign * (Tmp1 + 0.25 * TmpSzSz);  
+		  this->InteractionFactorsupupdowndown[this->NbrIntraSectorSums][0] = 0.25 * Sign * (TmpSxSx - TmpSySy);
+		  this->InteractionFactorsdowndownupup[this->NbrIntraSectorSums][0] = 0.25 * Sign * (TmpSxSx - TmpSySy);
+// 		  if ((TmpSxSx == 0.0) && (TmpSySy == 0.0))
+// 		    {
+// 		      this->InteractionFactorsupdownupup[this->NbrIntraSectorSums] = new Complex [1];
+// 		      this->InteractionFactorsupdowndowndown[this->NbrIntraSectorSums] = new Complex [1];
+// 		      this->InteractionFactorsupdownupup[this->NbrIntraSectorSums][0] = 0.0;
+// 		      this->InteractionFactorsupdowndowndown[this->NbrIntraSectorSums][0] = 0.0;
+// 		    }
+// 		  else
+// 		    {
+		      this->InteractionFactorsupdownupup[this->NbrIntraSectorSums] = new Complex [2];
+		      this->InteractionFactorsupdowndowndown[this->NbrIntraSectorSums] = new Complex [2];
+		      this->InteractionFactorsupdownupup[this->NbrIntraSectorSums][0] = 0.0;
+		      this->InteractionFactorsupdowndowndown[this->NbrIntraSectorSums][0] = 0.0;
+		      this->InteractionFactorsupdownupup[this->NbrIntraSectorSums][1] = 0.0;
+		      this->InteractionFactorsupdowndowndown[this->NbrIntraSectorSums][1] = 0.0;
+		      //		    }
 		  ++this->NbrIntraSectorSums;
 		}
 	    }
 	}
+    }
+  else
+    {
+      this->InteractionFactorsupupupup = 0;
+      this->InteractionFactorsdowndowndowndown = 0;
+      this->InteractionFactorsupupdowndown = 0;
+      this->InteractionFactorsdowndownupup = 0;
+      this->InteractionFactorsupdownupup = 0;
+      this->InteractionFactorsupdowndowndown = 0;
     }
 }
   

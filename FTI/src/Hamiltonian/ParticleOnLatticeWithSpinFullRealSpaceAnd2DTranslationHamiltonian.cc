@@ -76,6 +76,9 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
 // densityDensityupup = matrix that gives the amplitude of each density-density interaction term between particles with spin up
 // densityDensitydowndown = matrix that gives the amplitude of each density-density interaction term between particles with spin down
 // densityDensityupdown = matrix that gives the amplitude of each density-density interaction term between particles with spin up and down
+// sxSx = matrix that gives the amplitude of each Sx_i Sx_j term
+// sySy = matrix that gives the amplitude of each Sy_i Sy_j term
+// szSz = matrix that gives the amplitude of each Sz_i Sz_j term
 // architecture = architecture to use for precalculation
 // memory = maximum amount of memory that can be allocated for fast multiplication (negative if there is no limit)
 
@@ -85,6 +88,8 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
 																     RealSymmetricMatrix& densityDensityupup, 
 																     RealSymmetricMatrix& densityDensitydowndown, 
 																     RealSymmetricMatrix& densityDensityupdown, 
+																     RealSymmetricMatrix& sxSx,
+																     RealSymmetricMatrix& sySy, RealSymmetricMatrix& szSz, 
 																     AbstractArchitecture* architecture, long memory)
 {
   this->Particles = particles;
@@ -117,7 +122,7 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
   
   this->EvaluateExponentialFactors();
   this->EvaluateOneBodyFactorsFromTightBingding(tightBinding);
-  this->EvaluateInteractionFactorsFromDensityDensity(densityDensityupup, densityDensitydowndown, densityDensityupdown);
+  this->EvaluateInteractionFactorsFromDensityDensityAndHeisenberg(densityDensityupup, densityDensitydowndown, densityDensityupdown, sxSx, sySy, szSz);
   
 //   cout << this->InteractionFactorsupup[0][0] << endl;
     
@@ -153,8 +158,6 @@ ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::ParticleOnLat
 
 ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian::~ParticleOnLatticeWithSpinFullRealSpaceAnd2DTranslationHamiltonian()
 {
-  if (this->DiagonalElements != 0)
-    delete[] this->DiagonalElements;
   for (int i = 0; i < this->MaxXMomentum; ++i)
     { 
       delete[] this->ExponentialFactors[i];
