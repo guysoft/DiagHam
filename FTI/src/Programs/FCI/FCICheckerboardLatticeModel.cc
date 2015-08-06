@@ -67,15 +67,6 @@ void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingO
 							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
 							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel);
 
-// compute the index in real space lattice starting from the cartesian coordinates
-//
-// i = cartesian coordinate in the x direction of the Bravais lattice
-// j = cartesian coordinate in the y direction of the Bravais lattice
-// p = reference on the first lattice index
-// q = reference on the second lattice index
-// offset = integer shift in coordinate for tilted lattice
-void GetRealSpaceIndex (int i, int j, int& p, int& q, int offsetReal);
-
 
 int main(int argc, char** argv)
 {
@@ -775,17 +766,4 @@ void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingO
 	  ++Index;
 	}
     }
-}
-
-// compute the index in real space lattice starting from the cartesian coordinates
-//
-// i = cartesian coordinate in the x direction of the Bravais lattice
-// j = cartesian coordinate in the y direction of the Bravais lattice
-// p = reference on the first lattice index
-// q = reference on the second lattice index
-// offset = integer shift in coordinate for tilted lattice
-void GetRealSpaceIndex (int i, int j, int& p, int& q, int offsetReal)
-{
-  p = i - offsetReal * j;
-  q = j;
 }

@@ -52,9 +52,10 @@ using std::ofstream;
 // bosonFlag = true if we are dealing with bosons
 // uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
 // vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+// tightBindingModel = tight binding model
 void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
 							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
-							   bool bosonFlag, double uPotential, double vPotential);
+							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel);
 
 
 int main(int argc, char** argv)
@@ -84,6 +85,11 @@ int main(int argc, char** argv)
   (*SystemGroup) += new BooleanOption  ('\n', "szsymmetrized-basis", "use the Sz <-> -Sz symmetry");
   (*SystemGroup) += new SingleIntegerOption  ('\n', "sz-parity", "select the  Sz <-> -Sz parity (can be 1 or -1, 0 if both sectors have to be computed", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "full-momentum", "compute the spectrum for all momentum sectors, disregarding symmetries");
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx1", "first coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny1", "second coordinate of the first spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "nx2", "first coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "ny2", "second coordinate of the second spanning vector of the tilted lattice", 0);
+  (*SystemGroup) += new SingleIntegerOption  ('\n', "real-offset", "second coordinate in real space of the second spanning vector of the real space lattice (0 if lattice is untilted)", 0);
   (*SystemGroup) += new BooleanOption  ('\n', "boson", "use bosonic statistics instead of fermionic statistics");
   (*SystemGroup) += new SingleStringOption  ('\n', "model-name", "name of the one-body model", "unknown");
   (*SystemGroup) += new BooleanOption  ('\n', "checkerboard", "use checkerboard tightbiding model for both spins");
@@ -153,6 +159,43 @@ int main(int argc, char** argv)
   long Memory = ((unsigned long) Manager.GetInteger("memory")) << 20;
   long S2Memory = ((long) Manager.GetInteger("s2-memory")) << 20;
   bool CheckerboardFlag = Manager.GetBoolean("checkerboard");
+  
+  int nx1 = Manager.GetInteger("nx1");
+  int ny1 = Manager.GetInteger("ny1");
+  int nx2 = Manager.GetInteger("nx2");
+  int ny2 = Manager.GetInteger("ny2");
+  int Offset = 0;
+  int OffsetReal = Manager.GetInteger("real-offset");
+  if (Manager.GetBoolean("real-space") == false)
+    OffsetReal = 0;
+  else
+    Offset = 0;
+  bool TiltedFlag = true;
+  if ( ((nx1 == 0) && (ny1 == 0)) || ((nx2 == 0) && (ny2 == 0)) )
+    TiltedFlag = false;
+  else
+    {
+      if ((nx1*ny2 - nx2*ny1) != NbrSitesX * NbrSitesY)
+	{
+	  cout << "Boundary conditions define a lattice that has a number of sites different from NbrSiteX * NbrSiteY - should have (nx1*ny2 - nx2*ny1) = NbrSiteX * NbrSiteY " << endl;
+	  return 0;
+	}
+      
+      if ((Manager.GetBoolean("real-space") == false) && (((Offset*ny2 - ny1) % NbrSitesX) != 0 || ((nx1 - Offset*nx2) % NbrSitesX != 0)))
+	{
+	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 - ny1) % NbrSiteX) = 0 and ((nx1 - offset*nx2) % NbrSiteX = 0) to verify momentum conservation" << endl;
+	  return 0;
+	}
+      
+      if ( (Manager.GetBoolean("real-space") == true) && (((OffsetReal*ny2 + nx2) % NbrSitesX) != 0 || ((nx1 + OffsetReal*ny1) % NbrSitesX != 0)))
+      {
+	  cout << "Tilted lattice not properly defined. Should have ((offset*ny2 + nx2) % NbrSiteX) = 0 and ((nx1 + offset*ny1) % NbrSiteX = 0) to verify momentum conservation" << endl;
+	  return 0;
+      }
+	
+	
+      cout << "Using tilted boundary conditions" << endl;
+    }
 
   char* StatisticPrefix = new char [64];
   if (Manager.GetBoolean("boson") == false)
@@ -176,19 +219,45 @@ int main(int argc, char** argv)
          if ( Manager.GetBoolean("no-translation") == false)
 	   {
 	     if ( Manager.GetBoolean ("gutzwiller") == false)
-	       sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	     {
+	       if (TiltedFlag == false)
+		  sprintf (FilePrefix, "%s_realspace_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	       else
+		  sprintf (FilePrefix, "%s_realspace_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+		 
+	     }
 	     else
-	       sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	     {
+	       if (TiltedFlag == false)
+		  sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	       else
+		  sprintf (FilePrefix, "%s_realspace_gutzwiller_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	     }
 	   }
 	 else
 	   {
 	     if ( Manager.GetBoolean ("gutzwiller") == false)
 	       if (Manager.GetBoolean ("szsymmetrized-basis") == false)
-		 sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	       {
+		 if (TiltedFlag == false)
+		    sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_notranslation_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
 	       else
-		 sprintf (FilePrefix, "%s_realspace_notranslation_szsymmetrized_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	       {
+		 if (TiltedFlag == false)
+		    sprintf (FilePrefix, "%s_realspace_notranslation_szsymmetrized_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+		 else
+		   sprintf (FilePrefix, "%s_realspace_notranslation_szsymmetrized_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	       }
 	     else
-	       sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	     {
+	       if (TiltedFlag == false)
+		  sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticewithspin_n_%d_ns_%d_x_%d_y_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY);
+	       else
+		  sprintf (FilePrefix, "%s_realspace_gutzwiller_notranslation_checkerboardlatticetiltedwithspin_n_%d_ns_%d_x_%d_y_%d_nx1_%d_ny1_%d_nx2_%d_ny2_%d", StatisticPrefix, NbrParticles, NbrSites, NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2);
+	     }
 	   }
 	}
     }
@@ -304,7 +373,10 @@ int main(int argc, char** argv)
 
   if (Manager.GetString("import-onebodyup") == 0)
     {
-      TightBindingModelUp = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+      if (TiltedFlag == false)
+	TightBindingModelUp = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+      else
+	TightBindingModelUp = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, Offset,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), OffsetReal, true, !(Manager.GetBoolean("single-band")));
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModelUp->WriteBandStructure(BandStructureOutputFile);
@@ -320,7 +392,10 @@ int main(int argc, char** argv)
     Sign = -1; 
    if (Manager.GetString("import-onebodydown") == 0)
     {
-      TightBindingModelDown = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Sign * Manager.GetDouble("gamma-x"), Sign * Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+      if (TiltedFlag == false)
+	TightBindingModelDown = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Sign * Manager.GetDouble("gamma-x"), Sign * Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), true, !(Manager.GetBoolean("single-band")));
+      else
+	TightBindingModelDown = new TightBindingModelCheckerboardLattice (NbrSitesX, NbrSitesY, nx1, ny1, nx2, ny2, Offset,  Manager.GetDouble("t1"), Manager.GetDouble("t2"), Manager.GetDouble("tpp"), Manager.GetDouble("mu-s"), Manager.GetDouble("gamma-x"), Manager.GetDouble("gamma-y"), Architecture.GetArchitecture(), OffsetReal, true, !(Manager.GetBoolean("single-band")));
       char* BandStructureOutputFile = new char [1024];
       sprintf (BandStructureOutputFile, "%s_%s_tightbinding.dat", FilePrefix, FileParameterString);
       TightBindingModelDown->WriteBandStructure(BandStructureOutputFile);
@@ -404,20 +479,20 @@ int main(int argc, char** argv)
 		    {
 		      FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsupup, InteractingOrbitalsOrbitalIndicesupup, 
 									    InteractingOrbitalsSpatialIndicesupup, InteractingOrbitalsPotentialsupup,
-									    false, Manager.GetDouble("vupup-potential"),0);
+									    false, Manager.GetDouble("vupup-potential"),0, TightBindingModelUp);
 		      FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsdowndown, InteractingOrbitalsOrbitalIndicesdowndown, 
 									    InteractingOrbitalsSpatialIndicesdowndown, InteractingOrbitalsPotentialsdowndown,
-									    false, Manager.GetDouble("vdowndown-potential"),0);
+									    false, Manager.GetDouble("vdowndown-potential"),0, TightBindingModelUp);
 		      FCICheckerboardLatticeModelComputeInteractingOrbitals(NbrInteractingOrbitalsupdown, InteractingOrbitalsOrbitalIndicesupdown, 
 									    InteractingOrbitalsSpatialIndicesupdown, InteractingOrbitalsPotentialsupdown,
-									    true, Manager.GetDouble("u-potential"),Manager.GetDouble("vupdown-potential"));
+									    true, Manager.GetDouble("u-potential"),Manager.GetDouble("vupdown-potential"), TightBindingModelUp);
 		    }
 		  
 		  
 		  
 		  if (Manager.GetBoolean("real-space") == false)
 		    {
-		      
+		      cout << "reciprocal space not implemented" << endl;
 		    }
 		  
 		  else
@@ -610,15 +685,18 @@ int main(int argc, char** argv)
 // bosonFlag = true if we are dealing with bosons
 // uPotential = nearest neighbor (for fermions) or on-site (for bosons) interaction amplitude
 // vPotential = next nearest neighbor (for fermions) or nearest neighbor (for bosons) interaction amplitude
+// tightBindingModel = tight binding model
 
 void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingOrbitals, int**& interactingOrbitalsOrbitalIndices,
 							   int**& interactingOrbitalsSpatialIndices, double**& interactingOrbitalsPotentials,
-							   bool bosonFlag, double uPotential, double vPotential)
+							   bool bosonFlag, double uPotential, double vPotential, Abstract2DTightBindingModel* tightBindingModel)
 {
   nbrInteractingOrbitals = new int[2];
   interactingOrbitalsOrbitalIndices = new int*[2];
   interactingOrbitalsSpatialIndices = new int*[2];
   interactingOrbitalsPotentials = new double*[2];
+  int p;
+  int q;
   if (bosonFlag == false)
     {
       nbrInteractingOrbitals[0] = 1;
@@ -637,49 +715,57 @@ void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingO
 
       int Index = 0;
       interactingOrbitalsOrbitalIndices[0][Index] = 1;
-      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
-      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[0][Index] = uPotential;
       ++Index;
       if (vPotential != 0.0)
 	{
 	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
-	  interactingOrbitalsSpatialIndices[0][2 * Index] = 1;
-	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[0][Index] = vPotential;
 	  ++Index;	  
 	  interactingOrbitalsOrbitalIndices[0][Index] = 0;
-	  interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
-	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 1;
+	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[0][Index] = vPotential;
 	  ++Index;	  
 	}
       Index = 0;
       interactingOrbitalsOrbitalIndices[1][Index] = 0;
-      interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
-      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+      tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[1][Index] = uPotential;		  
       ++Index;
       interactingOrbitalsOrbitalIndices[1][Index] = 0;
-      interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
-      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+      tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[1][Index] = uPotential;		  
       ++Index;
       interactingOrbitalsOrbitalIndices[1][Index] = 0;
-      interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
-      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+      tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
+      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
       interactingOrbitalsPotentials[1][Index] = uPotential;		  
       ++Index;
       if (vPotential != 0.0)
 	{
 	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[1][Index] = vPotential;
 	  ++Index;	  
 	  interactingOrbitalsOrbitalIndices[1][Index] = 1;
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[1][Index] = vPotential;
 	  ++Index;	  
 	}
@@ -702,38 +788,44 @@ void FCICheckerboardLatticeModelComputeInteractingOrbitals(int*& nbrInteractingO
   
       int Index = 0;
       interactingOrbitalsOrbitalIndices[0][Index] = 0;
-      interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
-      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
-      interactingOrbitalsPotentials[0][Index] =  uPotential;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[0][Index] = 0.5 * uPotential;
       ++Index;
       if (vPotential != 0.0)
 	{
 	  interactingOrbitalsOrbitalIndices[0][Index] = 1;
-	  interactingOrbitalsSpatialIndices[0][2 * Index] = 0;
-	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = 0;
+	  tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+	  interactingOrbitalsSpatialIndices[0][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[0][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[0][Index] = vPotential;	  
 	}
       Index = 0;
       interactingOrbitalsOrbitalIndices[1][Index] = 1;
-      interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
-      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
-      interactingOrbitalsPotentials[1][Index] =  uPotential;
+      tightBindingModel->GetRealSpaceIndex(0, 0, p, q);
+      interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+      interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
+      interactingOrbitalsPotentials[1][Index] = 0.5 * uPotential;
       ++Index;
       if (vPotential != 0.0)
 	{
 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 0;
+	  tightBindingModel->GetRealSpaceIndex(1, 0, p, q);
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
 	  ++Index;
 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = 0;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+	  tightBindingModel->GetRealSpaceIndex(0, 1, p, q);
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
 	  ++Index;
 	  interactingOrbitalsOrbitalIndices[1][Index] = 0;
-	  interactingOrbitalsSpatialIndices[1][2 * Index] = 1;
-	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = 1;
+	  tightBindingModel->GetRealSpaceIndex(1, 1, p, q);
+	  interactingOrbitalsSpatialIndices[1][2 * Index] = p;
+	  interactingOrbitalsSpatialIndices[1][(2 * Index) + 1] = q;
 	  interactingOrbitalsPotentials[1][Index] = vPotential;		  
 	  ++Index;
 	}
